@@ -22,20 +22,21 @@ AC_ARG_WITH([netgen],
         )
 
 
+
 # guion=true
 # AC_ARG_ENABLE([gui],
-#         [AC_HELP_STRING([--disable-gui],[don't build ngsxfem with GUI])],
+#         [AC_HELP_STRING([--disable-gui],[don't build ngsolve with GUI])],
 #         [if test "$enableval" = yes; then guion=true; else guion=false; fi])
 
-AM_CONDITIONAL([NGSGUI], [test x$guion = xtrue])
+# AM_CONDITIONAL([NGSGUI], [test x$guion = xtrue])
 
-if test a$guion = atrue ; then
-# Tcl configuration:
-TEA_INIT([3.6])
-TEA_PATH_TCLCONFIG
-TEA_LOAD_TCLCONFIG 
-TEA_PUBLIC_TCL_HEADERS
-fi
+# # Tcl configuration:
+# if test a$guion = atrue ; then
+# TEA_INIT([3.9])
+# TEA_PATH_TCLCONFIG
+# TEA_LOAD_TCLCONFIG 
+# TEA_PUBLIC_TCL_HEADERS
+# fi
 
 
 CXX=$netgendir/bin/ngscxx
@@ -108,9 +109,6 @@ AC_MSG_RESULT([
   $PACKAGE $VERSION:  Automatic configuration OK.
 
   Enabled functionality:
-
-    # SPECIAL: ...... $nse
-  # Chosen direct Solver:  $SOLVER
 
   Netgen/NGSolve: ...... $netgendir
 
