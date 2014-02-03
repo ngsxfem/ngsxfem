@@ -12,6 +12,9 @@
 #ifndef SPACETIME_FESPACE_HPP
 #define SPACETIME_FESPACE_HPP
 
+#include <comp.hpp>
+#include <fem.hpp> 
+
 namespace ngcomp
 {
 
@@ -21,7 +24,13 @@ namespace ngcomp
     /// space fespace
     FESpace * fes_space;
     /// space fespace
-    FiniteElement * fel_time;
+    DGFiniteElement<1> * fel_time;
+    ///
+    int dim;
+    /// 
+    int order_time;
+    /// 
+    int order_space;
     ///
     int nel;
     ///
@@ -32,9 +41,11 @@ namespace ngcomp
     int ndof_space;
     ///
     int ndof_time;
+    ///
+    Array<int> ndlevel;
   public:
     ///
-    SpaceTimeFESpace (const MeshAccess & ama, const Flags & flags, bool parseflags=false);
+    SpaceTimeFESpace (const MeshAccess & ama, const Flags & flags, bool checkflags=false);
     ///
     virtual ~SpaceTimeFESpace ();
     ///
@@ -51,6 +62,10 @@ namespace ngcomp
     virtual int GetNDof () const;
     ///
     virtual int GetNDofLevel (int level) const;
+    ///
+    virtual const FiniteElement & GetSpaceFE (int elnr, LocalHeap & lh) const;
+    ///
+    virtual const FiniteElement & GetTimeFE (LocalHeap & lh) const;
     ///
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
     ///

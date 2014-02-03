@@ -12,6 +12,7 @@ geometry = square.in2d
 mesh = square.vol.gz
 
 shared = libngsxfem_test
+shared = libngsxfem_common
 
 
 define constant cuteps = 0.0
@@ -21,13 +22,25 @@ define variable t = 0.0
 define coefficient lset
 (y-cuteps+0.0*(t)),
 
+define fespace fes_st 
+       -type=spacetimefes 
+       -type_space=l2ho
+       -order_space=1 
+       -order_time=1 
+       -print
+       -dirichlet=[0,1]
+
+define gridfunction u_st -fespace=fes_st
+
 numproc testxfem nptxfem 
     -levelset=lset 
-    -order_space=1
+    -fespace=fes_st
+    -approx_order_space=1
     -spacetime 
     -time=t
     -timeinterval=[0,1]
-    -order_time=0
+    -approx_order_time=0
+    -order_time=1
 
 
 
