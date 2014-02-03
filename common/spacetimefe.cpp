@@ -39,7 +39,37 @@ namespace ngfem
   template <int D>
   string ScalarSpaceTimeFiniteElement<D> :: ClassName(void) const {return "ScalarSpaceTimeFiniteElement";};
 
-  
+
+  template <int D>
+  bool ScalarSpaceTimeFiniteElement<D> :: IsDGFiniteElement() const
+  {
+    const DGFiniteElement<D> * dg_space = dynamic_cast<const DGFiniteElement<D> *>(& scalar_space);
+    return (dg_space != NULL);
+  }
+
+  /// diag mass
+  template <int D>
+  void ScalarSpaceTimeFiniteElement<D> :: GetDiagMassMatrix(FlatVector<> diagmass, LocalHeap & lh) const
+  {
+    HeapReset hr(lh);
+
+    const DGFiniteElement<D> * dg_space = dynamic_cast<const DGFiniteElement<D> *>(& scalar_space);
+
+    if (dg_space == NULL)
+      throw Exception(" ScalarSpaceTimeFiniteElement<D> :: GetDiagMassMatrix - cast failed");
+    
+    FlatVector<> massdiagspace(ndof_space,lh);
+    dg_space->GetDiagMassMatrix(massdiagspace);
+
+    FlatVector<> massdiagtime(ndof_time,lh);
+    scalar_time.GetDiagMassMatrix(massdiagtime);
+
+    for (int m = 0; m < ndof_time; m++)
+      for (int n = 0; n < ndof_space; n++)
+        diagmass(ndof_space*m+n) = (massdiagtime(m) * massdiagspace(n));
+  }
+
+
   /// compute shape
   template <int D>
   void ScalarSpaceTimeFiniteElement<D> :: CalcShapeTime (double time,

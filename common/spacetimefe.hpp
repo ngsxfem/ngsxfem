@@ -23,7 +23,6 @@ namespace ngfem
     int order_time;
     int ndof_space;
     int ndof_time;
-    int ndof;
   public:
     SpaceTimeFiniteElement(const FiniteElement & base_space,
                            const FiniteElement & base_time);
@@ -31,6 +30,12 @@ namespace ngfem
 
     /// the name
     virtual string ClassName(void) const;
+
+    int GetNDofSpace() const { return ndof_space;}
+    int GetNDofTime() const { return ndof_time;}
+    int OrderSpace() const { return order_space;}
+    int OrderTime() const { return order_time;}
+    virtual int GetNDof() const { return ndof;}
 
   };
 
@@ -45,8 +50,15 @@ namespace ngfem
                                  const DGFiniteElement<1> & base_time);
     virtual ~ScalarSpaceTimeFiniteElement();
 
+    virtual int GetNDof() const { return ndof;}
+
     /// the name
     virtual string ClassName(void) const;
+
+    virtual bool IsDGFiniteElement() const;
+    /// mass diag
+    virtual void GetDiagMassMatrix(FlatVector<> diagmass,
+                                   LocalHeap & lh) const;
 
     /// compute shape
     virtual void CalcShapeTime (double time,

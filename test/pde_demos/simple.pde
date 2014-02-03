@@ -14,6 +14,7 @@ mesh = square.vol.gz
 shared = libngsxfem_test
 shared = libngsxfem_common
 
+define constant one = 1.0
 
 define constant cuteps = 0.0
 
@@ -24,13 +25,16 @@ define coefficient lset
 
 define fespace fes_st 
        -type=spacetimefes 
-       -type_space=l2ho
+       -type_space=h1ho
        -order_space=1 
        -order_time=1 
        -print
        -dirichlet=[0,1]
 
 define gridfunction u_st -fespace=fes_st
+
+define bilinearform a -fespace=fes_st -printelmat -print
+STmass one 
 
 numproc testxfem nptxfem 
     -levelset=lset 
