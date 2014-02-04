@@ -55,6 +55,10 @@ namespace ngcomp
     }
   
     ///
+    virtual int OrderTime() const { return order_time; }
+    ///
+    virtual int OrderSpace() const { return order_space; }
+    ///
     virtual void Update(LocalHeap & lh);
     ///
     virtual void UpdateCouplingDofArray();    
