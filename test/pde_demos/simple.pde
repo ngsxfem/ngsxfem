@@ -36,6 +36,11 @@ define gridfunction u_st -fespace=fes_st
 define bilinearform a -fespace=fes_st -printelmat -print
 STmass one 
 
+define linearform f -fespace=fes_st 
+STsource one 
+
+numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct
+
 numproc testxfem nptxfem 
     -levelset=lset 
     -fespace=fes_st
