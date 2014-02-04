@@ -11,6 +11,8 @@ using namespace ngsolve;
 namespace ngfem
 {
 
+typedef std::pair<double,double> TimeInterval;
+
 /**
      
  */
@@ -70,21 +72,20 @@ namespace ngfem
     virtual void CalcShapeSpaceTime (const IntegrationPoint & ip, double time,
                                      FlatVector<> shape, LocalHeap & lh) const;
 
+    /// compute dshape, vector: ndof 
+    virtual void CalcDtShapeSpaceTime (const IntegrationPoint & ip, double time,
+                                       FlatVector<> dshape, LocalHeap & lh) const;
+
     virtual ELEMENT_TYPE ElementType() const{ return base_space.ElementType(); }
 
+    /// compute dshape, matrix: ndof x spacedim
+    virtual void CalcDxShapeSpaceTime (const IntegrationPoint & ip, double time,
+                                       FlatMatrixFixWidth<D> dshape, LocalHeap & lh) const;
+
+    /// compute dshape, matrix: ndof x spacedim
+    virtual void CalcMappedDxShapeSpaceTime (const SpecificIntegrationPoint<D,D> & sip, double time,
+                                             FlatMatrixFixWidth<D> dshape, LocalHeap & lh) const;
   };
-    
-    // /// compute dshape, matrix: ndof x spacedim
-    // virtual void CalcDxShapeSpaceTime (const IntegrationPoint & ip, double time
-    //                                    FlatMatrixFixWidth<D> dshape) const;
-
-    // /// compute dshape, vector: ndof 
-    // virtual void CalcDtShapeSpaceTime (const IntegrationPoint & ip, double time
-    //                                    FlatVector<> dshape) const;
-
-    // /// compute dshape, matrix: ndof x spacedim
-    // virtual void CalcMappedDxShapeSpaceTime (const SpecificIntegrationPoint<D,D> & sip, double time
-    //                                          FlatMatrixFixWidth<D> dshape) const;
     
     // /// compute dshape, vector: ndof 
     // virtual void CalcMappedDtShapeSpaceTime (const SpecificIntegrationPoint<D,D> & sip, double time

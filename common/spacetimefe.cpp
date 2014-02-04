@@ -101,7 +101,57 @@ namespace ngfem
       for (int i = 0; i < ndof_space; ++i)
         shape(ndof_space*j+i) = shapet(j) * shapex(i);
   };
-  
+
+  /// compute shape
+  template <int D>
+  void ScalarSpaceTimeFiniteElement<D> :: CalcDtShapeSpaceTime (const IntegrationPoint & ip, double time,
+                                                                FlatVector<> dshape, LocalHeap & lh) const
+  {
+    FlatVector<> shapex(ndof_space,lh);
+    FlatMatrixFixWidth<1> shapet(ndof_time,lh);
+    scalar_space.CalcShape(ip,shapex);
+    IntegrationPoint ipt(time,0.0,0.0);
+    scalar_time.CalcDShape(ipt,shapet);
+    for (int j = 0; j < ndof_time; ++j)
+      for (int i = 0; i < ndof_space; ++i)
+        dshape(ndof_space*j+i) = shapet(j,0) * shapex(i);
+  };
+
+  /// compute shape
+  template <int D>
+  void ScalarSpaceTimeFiniteElement<D> :: CalcDxShapeSpaceTime (const IntegrationPoint & ip, 
+                                                                double time,
+                                                                FlatMatrixFixWidth<D> dshape, 
+                                                                LocalHeap & lh) const
+  {
+    FlatMatrixFixWidth<D> dshapex(ndof_space,lh); 
+    FlatVector<> shapet(ndof_time,lh);
+    scalar_space.CalcDShape(ip,dshapex);
+    IntegrationPoint ipt(time,0.0,0.0);
+    scalar_time.CalcShape(ipt,shapet);
+    for (int j = 0; j < ndof_time; ++j)
+      for (int i = 0; i < ndof_space; ++i)
+        dshape(ndof_space*j+i) = shapet(j) * dshapex(i);
+  };
+
+  /// compute shape
+  template <int D>
+  void ScalarSpaceTimeFiniteElement<D> :: CalcMappedDxShapeSpaceTime (const SpecificIntegrationPoint<D,D> & sip, 
+                                                                      double time,
+                                                                      FlatMatrixFixWidth<D> dshape, 
+                                                                      LocalHeap & lh) const
+  {
+    FlatMatrixFixWidth<D> dshapex(ndof_space,lh); 
+    FlatVector<> shapet(ndof_time,lh);
+    scalar_space.CalcMappedDShape(sip,dshapex);
+    IntegrationPoint ipt(time,0.0,0.0);
+    scalar_time.CalcShape(ipt,shapet);
+    for (int j = 0; j < ndof_time; ++j)
+      for (int i = 0; i < ndof_space; ++i)
+        for (int k = 0; k < D; ++k)
+          dshape.Row(ndof_space*j+i) = shapet(j) * dshapex.Row(i);
+  };
+
 /*
   /// compute dshape, matrix: ndof x spacedim
   template <int D>
