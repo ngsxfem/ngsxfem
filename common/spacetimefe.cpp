@@ -12,6 +12,7 @@ namespace ngfem
   { 
     order_space = base_space.Order();
     order_time = base_time.Order();
+    order = order_space;
     ndof_space = base_space.GetNDof();
     ndof_time = base_time.GetNDof();
     ndof = ndof_space * ndof_time;
