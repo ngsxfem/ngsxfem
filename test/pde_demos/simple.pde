@@ -10,8 +10,8 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-mesh = square_trigs.vol.gz
-#mesh = square_quad_coarse.vol.gz
+#mesh = square_trigs.vol.gz
+mesh = square_quad_coarse.vol.gz
 
 shared = libngsxfem_test
 shared = libngsxfem_common
@@ -24,37 +24,37 @@ define constant cuteps = 0.0
 define variable t = 0.0
 
 define constant told = 0.0
-define constant tnew = 1
+define constant tnew = 0.1
 
 define coefficient lset
 (cos(2*pi*(x))),
 
 define fespace fes_st 
        -type=spacetimefes 
-       -type_space=h1ho
-       -order_space=4
+       -type_space=l2ho
+       -order_space=5
        -all_dofs_together
-       -order_time=2
+       -order_time=5
 #       -print
 #       -dirichlet=[2]
 
 define gridfunction u_st -fespace=fes_st
 
-define bilinearform a -fespace=fes_st # -printelmat -print
+define bilinearform a -fespace=fes_st -printelmat -print
 STtimeder one
-STlaplace told tnew one
+#STlaplace told tnew one
 #STmass told tnew one
 STtracepast one
 #STtracefuture one
 #STtracemass one one
 #STtracemass zero one
 
-define linearform f -fespace=fes_st #-print
-#STsource told tnew one
-STtracesource zero lset
+define linearform f -fespace=fes_st -printelvec #-print
+#STsource told tnew lset
+STtracesource zero one
 #STtracesource one lset
 
-numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct
+numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct -print
 
 # numproc testxfem nptxfem 
 #     -levelset=lset 

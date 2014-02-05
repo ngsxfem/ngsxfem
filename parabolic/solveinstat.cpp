@@ -40,6 +40,8 @@ class NumProcSolveInstat : public NumProc
 	// direct solver type
 	string inversetype;
 	string fesstr;
+	
+	bool userstepping;
 
 	public:
 	/*
@@ -58,6 +60,8 @@ class NumProcSolveInstat : public NumProc
 
 		inversetype = flags.GetStringFlag ("solver", "pardiso");
 		fesstr = flags.GetStringFlag ("fespace", "fes_st");
+
+		userstepping = flags.GetDefineFlag ("userstepping");
 
 		dt = flags.GetNumFlag ("dt", 0.001);
 		tend = flags.GetNumFlag ("tend", 1);
@@ -156,11 +160,12 @@ class NumProcSolveInstat : public NumProc
 	 		cout << flush;
 			// update visualization
 			Ng_Redraw ();
-			getchar();
+			if (userstepping)
+				getchar();
 			lfrhs -> Assemble(lh);
 			vecf = &(lfrhs -> GetVector());
 		}
-		cout << "\rt = " << t;
+		cout << "\r               \rt = " << tend;
 		cout << endl;
 		// delete &d;
 		// delete &w;
