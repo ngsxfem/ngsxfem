@@ -87,7 +87,6 @@ class NumProcSolveInstat : public NumProc
 	{
 		cout << "solve solveinstat pde" << endl;
 
-		// FESpace * fes = gfu.GetFESpace();
 		BilinearForm * bftau;
 		Flags massflags;
 		massflags.SetFlag ("fespace", fesstr.c_str());
@@ -115,7 +114,10 @@ class NumProcSolveInstat : public NumProc
 		LinearForm * lfrhs;
 		Flags massflags2;
 		massflags2.SetFlag ("fespace", fesstr.c_str());
-		lfrhs = pde.AddLinearForm ("lfrhs", massflags2);
+		// lfrhs = pde.AddLinearForm ("lfrhs", massflags2);
+
+		const FESpace * fes = &(gfu->GetFESpace());
+		lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
 
 		Array<CoefficientFunction *> coef_lr(2);
 		coef_lr[0] = new ConstantCoefficientFunction(0);
@@ -155,14 +157,13 @@ class NumProcSolveInstat : public NumProc
 			// update visualization
 			Ng_Redraw ();
 			getchar();
-
 			lfrhs -> Assemble(lh);
 			vecf = &(lfrhs -> GetVector());
 		}
 		cout << "\rt = " << t;
 		cout << endl;
-		delete &d;
-		delete &w;
+		// delete &d;
+		// delete &w;
 	}
 
 
