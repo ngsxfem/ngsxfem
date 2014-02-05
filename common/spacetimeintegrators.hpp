@@ -65,6 +65,12 @@ namespace ngfem
       // dt = tnew - told;
     }
 
+    ST_TimeDerivativeIntegrator (CoefficientFunction* coeffs) 
+      : BilinearFormIntegrator()
+    { 
+      coef_ = coeffs;
+    }
+
     virtual ~ST_TimeDerivativeIntegrator () { ; }
 
     virtual bool BoundaryForm () const 
@@ -218,6 +224,8 @@ namespace ngfem
   public:
     ///
     SpaceTimeTimeTraceIntegrator (Array<CoefficientFunction*> & coeffs);
+    ///
+    SpaceTimeTimeTraceIntegrator (CoefficientFunction* coeffs);
     ///
     virtual ~SpaceTimeTimeTraceIntegrator (){};
     ///

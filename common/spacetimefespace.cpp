@@ -1,6 +1,7 @@
 
 #include "spacetimefespace.hpp"
 #include "spacetimefe.hpp"
+#include "spacetimeintegrators.hpp"
 
 // #include "../fem/spacetimefe.hpp"
 
@@ -29,12 +30,13 @@ namespace ngcomp
     static ConstantCoefficientFunction one(1);
     if (ma.GetDimension() == 2)
     {
-      integrator = new MassIntegrator<2> (&one);
+      integrator = new SpaceTimeTimeTraceIntegrator<2,FUTURE>(&one) ;
       boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
-      integrator = new MassIntegrator<3> (&one);
+      integrator = new SpaceTimeTimeTraceIntegrator<3,FUTURE>(&one) ;
+      // integrator = new MassIntegrator<3> (&one);
       boundary_integrator = new RobinIntegrator<3> (&one);
     }
 

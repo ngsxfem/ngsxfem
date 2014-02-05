@@ -317,6 +317,11 @@ namespace ngfem
     : T_BDBIntegrator<DiffOpTimeTrace<D,t>, DiagDMat<1>, ScalarSpaceTimeFiniteElement<D> > (coeffs)
   { ; }
 
+  template <int D, TIME t>  
+  SpaceTimeTimeTraceIntegrator<D,t> :: SpaceTimeTimeTraceIntegrator (CoefficientFunction* coeffs)
+    : T_BDBIntegrator<DiffOpTimeTrace<D,t>, DiagDMat<1>, ScalarSpaceTimeFiniteElement<D> > (coeffs)
+  { ; }
+
   template class SpaceTimeTimeTraceIntegrator<2, PAST>;
   template class SpaceTimeTimeTraceIntegrator<3, PAST>;
   template class SpaceTimeTimeTraceIntegrator<2, FUTURE>;
