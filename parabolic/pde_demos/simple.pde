@@ -30,7 +30,7 @@ define constant told = 0.0
 define constant tnew = 0.1
 
 define coefficient lset
-( ( x - 0.2*sin(2*pi*y) > 0.7) + ( y - 0.2*sin(4*pi*x) < 0.5) + ( x - 0.2*sin(8*pi*y) < 0.3) ),
+( ( x - 0.2*sin(2*pi*y) > 0.7) + ( y - 0.2*sin(4*pi*x) < 0.5) + ( x - 0.2*sin(8*pi*y) < 0.3) - 1.0 ),
 #( ( x > 0.5) * cos(2*pi*(x+y))),
 
 define fespace fes_st 

@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = common test parabolic
+SUBDIRS = common parabolic xfem
 
 # dist_bin_SCRIPTS = common/ngsflow.tcl
