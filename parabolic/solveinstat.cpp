@@ -91,6 +91,12 @@ class NumProcSolveInstat : public NumProc
 	{
 		cout << "solve solveinstat pde" << endl;
 
+        // Array<Simplex<2+1> *> ret(0);
+        // DecomposeIntoSimplices<2>(ET_TRIG,ret,lh);
+
+        // Array<Simplex<3+1> *> ret2(0);
+        // DecomposeIntoSimplices<3>(ET_TET,ret2,lh);
+
 		BilinearForm * bftau;
 		Flags massflags;
 		massflags.SetFlag ("fespace", fesstr.c_str());
