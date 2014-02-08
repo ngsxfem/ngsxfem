@@ -91,11 +91,21 @@ class NumProcSolveInstat : public NumProc
 	{
 		cout << "solve solveinstat pde" << endl;
 
+		// PointContainer<2+1> pc;
         // Array<Simplex<2+1> *> ret(0);
-        // DecomposeIntoSimplices<2>(ET_TRIG,ret,lh);
+        // DecomposeIntoSimplices<2,3>(ET_TRIG,ET_SEGM,ret,pc,lh);
 
+		// PointContainer<3+1> pc2;
         // Array<Simplex<3+1> *> ret2(0);
-        // DecomposeIntoSimplices<3>(ET_TET,ret2,lh);
+        // DecomposeIntoSimplices<3,4>(ET_TET,ET_SEGM,ret2,pc2,lh);
+
+		// PointContainer<2> pc3;
+        // Array<Simplex<2> *> ret3(0);
+        // DecomposeIntoSimplices<2,2>(ET_TRIG,ET_POINT,ret3,pc3,lh);
+
+		// PointContainer<3> pc4;
+        // Array<Simplex<3> *> ret4(0);
+        // DecomposeIntoSimplices<3,3>(ET_TET,ET_POINT,ret4,pc4,lh);
 
 		BilinearForm * bftau;
 		Flags massflags;

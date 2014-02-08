@@ -115,14 +115,105 @@ typedef std::pair<double,double> TimeInterval;
 
 
 
+} // end of namespace
+
+
+
   /// Hat hier nichts zu suchen
+#include <set>
+#include <vector>
+
+using namespace ngfem;
+
+
+  /// struct which defines the relation a < b for Point4DCL (in order to use std::set-features)
+  template< int SD>
+  struct Pointless {
+    bool operator() (const Vec<SD> & a, const Vec<SD> & b) const {
+      // if you want to merge point which are "the same up 14 digits..."
+      const double EPS = 0.0; // 1e-14*abs(b[i])
+      for (int i=0; i<SD; i++)
+      {
+        if (a[i] < b[i] - EPS)
+          return true;
+        if (a[i] > b[i] + EPS)
+          return false;
+      }
+      return false;
+    }
+    typedef Vec<SD> first_argument_type;
+    typedef Vec<SD> second_argument_type;
+    typedef bool result_type;
+  };
+
+
+  /// Container set constitutes a collection of PointXDs 
+  /// main feature: the operator()(const PointXDCL & p)
+  /// The points in the container are owned and later 
+  /// released by Point4DContainer
+  template<int SD>
+  class PointContainer
+  {
+    typedef  std::set<Vec<SD>, Pointless<SD> > SetOfPoints;
+  protected:
+    SetOfPoints pset;
+#ifdef DEBUG
+    size_t k;
+#endif
+  public: 
+    PointContainer()
+    {
+#ifdef DEBUG
+      k=0;
+#endif
+      pset.clear();
+    };
+    
+    /// Access operator to points
+    /// Either point is already in the Container, 
+    ///   then return pointer to that point
+    /// or point is not in the Container yet,
+    ///   then add point to container and return pointer to new Point4D
+    /// The return value (pointer ) points to a Point4D which is owned
+    /// and later released by PointContainer
+    const Vec<SD>* operator()(const Vec<SD> & p)
+    {
+      typename SetOfPoints::iterator it;
+      it = pset.find(p);
+      if (it == pset.end())
+      {
+        pset.insert(p);
+        return &(*pset.find(p));
+      }
+      else
+      {
+#ifdef DEBUG
+        k++;
+#endif
+        return &(*it);
+      }
+    }
+
+    void Report(std::ostream & out) const
+    {
+      out << " PointContainer stored " << pset.size() << " points.\n";
+#ifdef DEBUG
+      out << " PointContainer rejected " << k << " points.\n";
+#endif
+    }
+
+    ~PointContainer(){};
+  };
+
 
   template <int D>
   class Simplex
   {
+  protected:
   public:
-    Array< Vec<D> > p;
-    Simplex(const Array< Vec<D> > & a_p): p(a_p)
+    bool cut;
+    Array< const Vec<D> * > p;
+    Simplex(const Array< const Vec<D> * > & a_p): p(a_p)
     {
       ;
     }
@@ -132,40 +223,51 @@ typedef std::pair<double,double> TimeInterval;
   inline ostream & operator<< (ostream & ost, const Simplex<D> & s)
   {
     for (int i = 0; i < D+1; i++)
-      ost << i << ":" << s.p[i] << "\t";
+      ost << i << ":" << *(s.p[i]) << "\t";
     ost << endl;
     return ost;
   }
 
-
-  template<int D>
-  void DecomposeIntoSimplices(ELEMENT_TYPE et, Array<Simplex<D+1> *>& ret, LocalHeap & lh)
+  // Decompose the geometry K = T x I with T \in {trig,tet} and I \in {segm, point} into simplices of corresponding dimensions
+  // D is the dimension of the spatial object, SD is the dimension of the resulting object T
+  template<int D, int SD>
+  void DecomposeIntoSimplices(ELEMENT_TYPE et_space, ELEMENT_TYPE et_time, 
+                              Array<Simplex<SD> *>& ret, PointContainer<SD> & pc, LocalHeap & lh)
   {
     ret.SetSize(0);
-	switch (et)
+    cout << " et_space : " << et_space << endl;
+    cout << " et_time : " << et_space << endl;
+    if (et_time == ET_SEGM)
+    {
+      switch (et_space)
 	  {
 	  case ET_TRIG:
 	  case ET_TET:
       {
-        const POINT3D * verts = ElementTopology::GetVertices(et);
-        Array< Vec<D+1> > p(2*(D+1));
-        for (int i = 0; i < D+1; ++i)
+        const POINT3D * verts = ElementTopology::GetVertices(et_space);
+        Array< const Vec<SD> * > p(2*(SD));
+        for (int i = 0; i < SD; ++i)
         {
+          Vec<SD> newpoint;
+          Vec<SD> newpoint2;
           for (int d = 0; d < D; ++d)
           {
-            p[i][d] = verts[i][d];
-            p[i+D+1][d] = verts[i][d];
+            newpoint[d] = verts[i][d];
+            newpoint2[d] = verts[i][d];
           }
-          p[i][D] = 0.0;
-          p[i+D+1][D] = 1.0;
+          newpoint[D] = 0.0;
+          newpoint2[D] = 1.0;
+
+          p[i] = pc(newpoint);
+          p[i+SD] = pc(newpoint2);
         }
 
-        Array< Vec<D+1> > tet(D+2);
-        for (int i = 0; i < D+1; ++i)
+        Array< const Vec<SD> * > tet(SD+1);
+        for (int i = 0; i < SD; ++i)
         {
-          for (int j = 0; j < D+2; ++j)
+          for (int j = 0; j < SD+1; ++j)
             tet[j] = p[i+j];
-          ret.Append(new (lh) Simplex<D+1> (tet));
+          ret.Append(new (lh) Simplex<SD> (tet));
         }
 
         cout << " report \n";
@@ -177,7 +279,55 @@ typedef std::pair<double,double> TimeInterval;
         throw Exception(" this ELEMENT_TYPE is not treated... yet ");
         break;
 	  }
+    }
+    else if (et_time == ET_POINT)
+    {
+      switch (et_space)
+	  {
+	  case ET_TRIG:
+	  case ET_TET:
+      {
+        const POINT3D * verts = ElementTopology::GetVertices(et_space);
+        Array< const Vec<SD> * > tet(D+1);
+        for (int i = 0; i < D+1; ++i)
+        {
+          Vec<SD> newpoint;
+          for (int d = 0; d < D; ++d)
+          {
+            newpoint[d] = verts[i][d];
+          }
+          tet[i] = pc(newpoint);
+        }
+
+        ret.Append(new (lh) Simplex<SD> (tet));
+
+        cout << " report \n";
+        for (int i = 0; i < ret.Size(); ++i)
+          cout << " simplex " << i << ": " << *ret[i] << endl;
+      }
+      break;
+      default:  // for the compiler
+        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
+        break;
+	  }
+    }
+    else
+      throw Exception(" this ELEMENT_TYPE et_time is not treated... yet ");
   }
+
+  template <int D, int SD>
+  void EvaluateLevelset (const ScalarSpaceTimeFEEvaluator<D> & lset, Array<Simplex<SD> *>& ret)
+  {
+    for (int i = 0; i < ret.Size(); ++i)
+    {
+      Simplex<SD> & simp = *ret[i];
+      for (int j = 0; j < SD+1; ++j)
+      {
+
+      }
+    }
+  }
+
 
   template<int D>
   void Decompose(ELEMENT_TYPE et, const ScalarSpaceTimeFEEvaluator<D> & stfeeval)
@@ -202,10 +352,5 @@ typedef std::pair<double,double> TimeInterval;
 
 
   }
-
-
-
-
-} // end of namespace
 
 #endif
