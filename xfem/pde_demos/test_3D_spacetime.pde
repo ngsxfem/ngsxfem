@@ -62,10 +62,10 @@ numproc testxfem nptxfem
         -num_int_ref_space=0
         -num_int_ref_time=0
 
-define bilinearform evalu_past -fespace=fes_st 
+define bilinearform evalu_past -fespace=fes_st -nonassemble
 STtracepast zero
 
-define bilinearform evalu_future -fespace=fes_st 
+define bilinearform evalu_future -fespace=fes_st -nonassemble
 STtracefuture zero
 
 numproc drawflux npdf -bilinearform=evalu_past -solution=u_st -label=u_past
