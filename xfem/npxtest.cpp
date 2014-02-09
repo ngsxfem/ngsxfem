@@ -9,12 +9,11 @@
  */
 
 #include <solve.hpp>
+#include "xintegration.hpp"
 #include "../common/spacetimefespace.hpp"
-// #include "geom.hpp"
-// #include "cuttriang.hpp"
-// #include "../fem/xfiniteelement.hpp"
 
 using namespace ngsolve;
+using namespace xintegration;
 
 typedef std::pair<double,double> TimeInterval;
 
@@ -57,67 +56,44 @@ template<int D>
 class NumProcTestXFEM : public NumProc
 {
 protected:
-
-    // CoefficientFunction levelset function
-    CoefficientFunction *coef_lset;
-    
-    // is space time?
     bool isspacetime;
-
-    double * time;
-
-    int approx_order_space;
-    int approx_order_time;
-
+    
+    int order_space;
     int order_time;
 
-    TimeInterval ti;
-    FESpace * fes;
-    GridFunction * gf_st;
+    int num_int_ref_space;
+    int num_int_ref_time;
+
+    GridFunction * gf_lset;
 public:
     
     NumProcTestXFEM (PDE & apde, const Flags & flags)
         : NumProc (apde)
     {
         cout << " \n\nNumProcTestXFEM - constructor start \n\n " << endl;
-        string lsetstr = flags.GetStringFlag("levelset","none");
+
+		gf_lset = pde.GetGridFunction (flags.GetStringFlag ("levelset", "lset"));
         isspacetime = flags.GetDefineFlag("spacetime");
-        approx_order_time = (int) flags.GetNumFlag("approx_order_time",1);
-        approx_order_space = (int) flags.GetNumFlag("approx_order_space",1);
-
-        Array<double> ti1;
-        ti1 = flags.GetNumListFlag ("timeinterval");
-        if (ti1.Size() >= 2)
-        {
-            ti.first = ti1[0]; ti.second = ti1[1];
-        }
-        else if (isspacetime)
-            throw Exception("please describe time interval");
-
-
-        string timestring = flags.GetStringFlag("time","t");
-        time = &(pde.GetVariable(timestring,1));
+        num_int_ref_space = (int) flags.GetNumFlag("num_int_ref_space",0);
+        num_int_ref_time = (int) flags.GetNumFlag("num_int_ref_time",0);
+        const FESpace & fes = gf_lset->GetFESpace();
         if (isspacetime)
-            cout << " is space time " << endl;
-        else 
-            cout << " is space only " << endl;
-
-        coef_lset = pde.GetCoefficientFunction(lsetstr,0);
-        if (coef_lset == NULL)
-            throw Exception("NumProcTestXFEM: levelset not given");
-
-        string fesstr = flags.GetStringFlag("fespace","fes");
-        fes = pde.GetFESpace(fesstr);
-
-        Flags noflags;
-        gf_st = CreateGridFunction(fes, "u_st", noflags);
+        {
+            const SpaceTimeFESpace & fes_st = dynamic_cast< const SpaceTimeFESpace & > (gf_lset->GetFESpace());
+            order_space = 2*fes_st.OrderSpace();
+            order_time = 2*fes_st.OrderTime();
+        }
+        else
+        {
+            order_time = 0;
+            order_space = 2 * fes.GetOrder();
+        }
 
         cout << " \n\nNumProcTestXFEM - constructor end \n\n " << endl;
     }
   
     ~NumProcTestXFEM()
     {
-        delete gf_st;
     }
 
     virtual string GetClassName () const
@@ -130,18 +106,8 @@ public:
     {
         HeapReset hr(lh);
 
-        ELEMENT_TYPE et_time;
-        DGFiniteElement<1> * fel_time;
-        if(isspacetime)
-        {
-            et_time = ET_SEGM;
-            fel_time = new (lh) L2HighOrderFE<ET_SEGM>  (approx_order_time);
-        }
-        else
-        {
-            et_time = ET_POINT;
-            fel_time = NULL;
-        }
+        Array<int> els_of_dt(3);
+        els_of_dt = 0.0;
 
         for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
@@ -150,101 +116,49 @@ public:
 
             ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
             ELEMENT_TYPE et_space = eltrans.GetElementType();
-
-            // project to a local respresentation of the level set function
+            ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             
-            DGFiniteElement<D> * fel_space;
-            switch (et_space)
+            const FESpace & fes = gf_lset->GetFESpace();
+            const FiniteElement & fel = fes.GetFE(elnr, lh);
+            Array<int> dnums;
+            fes.GetDofNrs(elnr,dnums);
+            
+            FlatVector<> linvec(dnums.Size(),lh);
+            gf_lset->GetVector().GetIndirect(dnums,linvec);
+
+            if( et_space == ET_TRIG && et_time == ET_SEGM)
             {
-            case ET_TRIG: 
-                fel_space = dynamic_cast<DGFiniteElement<D> * >(GetSpaceFE<ET_TRIG,2>(ngel, approx_order_space, lh)); 
-                break;
-            case ET_QUAD: 
-                fel_space = dynamic_cast<DGFiniteElement<D> * >(GetSpaceFE<ET_QUAD,2>(ngel, approx_order_space, lh)); 
-                break;
-            case ET_TET:
-                fel_space = dynamic_cast<DGFiniteElement<D> * >(GetSpaceFE<ET_TET,3>(ngel, approx_order_space, lh)); 
-                break;
-            default:
-                cout << "eltype is " << et_space << endl;
-                throw Exception ("illegal element for  GetSpaceFE");
+                const ScalarSpaceTimeFiniteElement<2> &  fel_st 
+                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
+                ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
+
+                PointContainer<3> pc;
+                NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc, 
+                                                                     order_space, order_time,
+                                                                     num_int_ref_space, 
+                                                                     num_int_ref_time);
+                els_of_dt[CheckIfCut(numint)]++;
             }
-
-            int ndof_space = fel_space->GetNDof();
-            int ndof_time = isspacetime ? fel_time->GetNDof() : 1;
-            int ndof_total = ndof_space * ndof_time;
-
-            // cout << " fel_space ndofs = " << ndof_space << endl;
-            // cout << " fel_time ndofs = " << ndof_time << endl;
-            // cout << " total ndofs = " << ndof_total << endl;
-
-            const IntegrationRule & ir_space = SelectIntegrationRule (et_space, 2*approx_order_space);
-            const IntegrationRule & ir_time = SelectIntegrationRule (et_time, 2*approx_order_time);
-            // const IntegrationRule & ir1d = SelectIntegrationRule (etfacet, GetIntegrationOrderFacets(order));
-
-            FlatVector<> massdiagspace(ndof_space,lh);
-            fel_space->GetDiagMassMatrix(massdiagspace);
-
-            FlatVector<> massdiagtime(ndof_time,lh);
-            if (isspacetime)
-                fel_time->GetDiagMassMatrix(massdiagtime);
-            else
-                massdiagtime = 1.0;
-
-
-            FlatVector<> massdiag(ndof_total,lh);
-            
-            for (int m = 0; m < ndof_time; m++)
-                for (int n = 0; n < ndof_space; n++)
-                    massdiag(ndof_space*m+n) = (massdiagtime(m) * massdiagspace(n));
-
-
-            FlatVector<> rhs(ndof_total,lh);
-            rhs = 0.0;
-            FlatVector<> shape_space(ndof_space,lh);
-            FlatVector<> shape_time(ndof_time,lh);
-
-            for (int l = 0; l < ir_time.GetNIP(); l++)
+            else if ( et_space == ET_TET && et_time == ET_SEGM)
             {
-                double current = ti.first +  ir_time[l](0) * (ti.second - ti.first);
-                *time = current;
-                if (isspacetime)
-                    fel_time->CalcShape(ir_time[l],shape_time);
-                else 
-                    shape_time = 1.0;
-                for (int k = 0; k < ir_space.GetNIP(); k++)
-                {
-                    double val = 0.0;
-                    MappedIntegrationPoint<D,D> mip (ir_space[k], eltrans);
-                    val = coef_lset->Evaluate(mip);
-                    fel_space->CalcShape(ir_space[k],shape_space);
+                const ScalarSpaceTimeFiniteElement<3> &  fel_st 
+                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<3> & >(fel);
+                ScalarSpaceTimeFEEvaluator<3> lset_eval(fel_st, linvec, lh);
 
-                    const double fac = ir_space[k].Weight() * (ti.second-ti.first);
-
-                    for (int m = 0; m < ndof_time; m++)
-                        for (int n = 0; n < ndof_space; n++)
-                            rhs(ndof_space*m+n) += shape_time(m) * shape_space(n) * val * fac;
-                }
+                PointContainer<4> pc;
+                NumericalIntegrationStrategy<ET_TET,ET_SEGM> numint(lset_eval, pc, 
+                                                                     order_space, order_time,
+                                                                     num_int_ref_space, 
+                                                                     num_int_ref_time);
+                els_of_dt[CheckIfCut(numint)]++;
             }
-
-            FlatVector<> lset_loc(ndof_total,lh);
             
-            for (int m = 0; m < ndof_total; m++)
-                lset_loc(m) = rhs(m) / massdiag(m);
-            
-            const FiniteElement & fel_local  = fes->GetFE(elnr,lh);
-
-            // make CompositeRule based :
-            // - on et_space and et_time:
-            //    * 2D   stationary: ET_TRIG + ET_POINT
-            //    * 2D instationary: ET_TRIG + ET_SEGM
-            //    * 3D   stationary: ET_TET  + ET_POINT
-            //    * 3D instationary: ET_TET  + ET_SEGM
-            // - levelset function as STFiniteElement:
-            //    * TP - FE of fel_space and fel_time 
-            //    * => Eval-Object
-
         }
+
+        cout << " pos elements : " << els_of_dt[POS] << endl;
+        cout << " neg elements : " << els_of_dt[NEG] << endl;
+        cout << " cut elements : " << els_of_dt[IF] << endl;
+
     }
 };
 

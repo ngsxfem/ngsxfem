@@ -186,13 +186,20 @@ namespace ngfem
   template class ScalarSpaceTimeFiniteElement<3>;
   
   template <int D>
-  double ScalarSpaceTimeFEEvaluator<D> :: operator()(const Vec<D+1>& point)
+  double ScalarSpaceTimeFEEvaluator<D> :: operator()(const Vec<D+1>& point) const
   {
     ip(0) = point(0);
     ip(1) = point(1);
     ip(2) = point(2);
-    fe.CalcShapeSpaceTime(ip,point(3),shape,lh);
-    return InnerProduct(shape,linvec);
+
+    double ret = 0;
+    {
+      HeapReset hr(lh);
+      FlatVector<> shape(linvec.Size(),lh);
+      fe.CalcShapeSpaceTime(ip,point(3),shape,lh);
+      ret = InnerProduct(shape,linvec);
+    }
+    return ret;
   }
 
   template class ScalarSpaceTimeFEEvaluator<1>;
