@@ -125,7 +125,8 @@ typedef std::pair<double,double> TimeInterval;
 
 using namespace ngfem;
 
-
+namespace xintegration
+{
   /// struct which defines the relation a < b for Point4DCL (in order to use std::set-features)
   template< int SD>
   struct Pointless {
@@ -205,6 +206,56 @@ using namespace ngfem;
     ~PointContainer(){};
   };
 
+
+  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  class NumericalIntegrationStrategy
+  {
+  public:
+
+    enum { D = ET_trait<ET_SPACE>::DIM };
+    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM };
+
+    const ScalarSpaceTimeFEEvaluator<D> & lset;
+    PointContainer<SD> & pc;
+
+    double scaling_space = 1.0;
+    double scaling_time = 1.0;
+    
+    Vec<D> offset_space = Vec<D>(0.);
+    double offset_time = 0.;
+
+    int ref_level_space = 0;
+    int ref_level_time = 0;
+    int int_order_space = 0;
+    int int_order_time = 0;
+
+    int GetIntegrationOrderMax() const{ return max(int_order_space, int_order_time); }
+
+    
+    NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a)
+      : lset(a.lset), pc(a.pc), 
+        int_order_space(a.int_order_space), int_order_time(a.int_order_time),
+        ref_level_space(a.ref_level_space), ref_level_time(a.ref_level_time)
+    {
+    }
+
+    NumericalIntegrationStrategy(const ScalarSpaceTimeFEEvaluator<D> & a_lset, PointContainer<SD> & a_pc, 
+                                 int a_int_order_space = 2, int a_int_order_time = 2, 
+                                 int a_ref_level_space = 0, int a_ref_level_time = 0 )
+      : lset(a_lset), pc(a_pc), 
+        ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
+        int_order_space(a_int_order_space), int_order_time(a_int_order_time)
+    {
+      ;
+    }
+  };
+
+  template class NumericalIntegrationStrategy<ET_TRIG, ET_SEGM>;
+  template class NumericalIntegrationStrategy<ET_TET, ET_SEGM>;
+  template class NumericalIntegrationStrategy<ET_TRIG, ET_POINT>;
+  template class NumericalIntegrationStrategy<ET_TET, ET_POINT>;
+
+  enum DOMAIN_TYPE { POS = 0, NEG = 1, IF = 2};
 
   template <int D>
   class Simplex
@@ -352,5 +403,5 @@ using namespace ngfem;
 
 
   }
-
+}
 #endif
