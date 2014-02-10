@@ -109,6 +109,9 @@ public:
         Array<int> els_of_dt(3);
         els_of_dt = 0.0;
 
+        Array<double> meas_of_dt(3);
+        meas_of_dt = 0.0;
+
         for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
             HeapReset hr(lh);
@@ -118,6 +121,10 @@ public:
             ELEMENT_TYPE et_space = eltrans.GetElementType();
             ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             
+            IntegrationPoint ip(0.0);
+            MappedIntegrationPoint<D,D> mip(ip,eltrans);
+            const double absdet = mip.GetJacobiDet();
+
             const FESpace & fes = gf_lset->GetFESpace();
             const FiniteElement & fel = fes.GetFE(elnr, lh);
             Array<int> dnums;
@@ -133,11 +140,24 @@ public:
                 ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
 
                 PointContainer<3> pc;
-                NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc, 
+                CompositeQuadratureRule<3> compositerule;
+                NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc,
+                                                                     compositerule, 
                                                                      order_space, order_time,
                                                                      num_int_ref_space, 
                                                                      num_int_ref_time);
-                els_of_dt[CheckIfCut(numint)]++;
+                numint.SetVerticesSpace();
+                numint.SetVerticesTime();
+
+                els_of_dt[MakeQuadRule(numint)]++;
+                
+                for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
+                    meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                    meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
+                    meas_of_dt[IF] += compositerule.quadrule_if.weights[i];
+                
             }
             else if ( et_space == ET_TET && et_time == ET_SEGM)
             {
@@ -146,11 +166,24 @@ public:
                 ScalarSpaceTimeFEEvaluator<3> lset_eval(fel_st, linvec, lh);
 
                 PointContainer<4> pc;
-                NumericalIntegrationStrategy<ET_TET,ET_SEGM> numint(lset_eval, pc, 
-                                                                     order_space, order_time,
-                                                                     num_int_ref_space, 
-                                                                     num_int_ref_time);
-                els_of_dt[CheckIfCut(numint)]++;
+                CompositeQuadratureRule<4> compositerule;
+                NumericalIntegrationStrategy<ET_TET,ET_SEGM> numint(lset_eval, pc,
+                                                                    compositerule, 
+                                                                    order_space, order_time,
+                                                                    num_int_ref_space, 
+                                                                    num_int_ref_time);
+                numint.SetVerticesSpace();
+                numint.SetVerticesTime();
+
+                els_of_dt[MakeQuadRule(numint)]++;
+
+                for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
+                    meas_of_dt[POS] += compositerule.quadrule_pos.weights[i];
+                for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                    meas_of_dt[NEG] += compositerule.quadrule_neg.weights[i];
+                for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
+                    meas_of_dt[IF] += compositerule.quadrule_if.weights[i];
+
             }
             
         }
@@ -158,6 +191,9 @@ public:
         cout << " pos elements : " << els_of_dt[POS] << endl;
         cout << " neg elements : " << els_of_dt[NEG] << endl;
         cout << " cut elements : " << els_of_dt[IF] << endl;
+        cout << " pos measure : " << meas_of_dt[POS] << endl;
+        cout << " neg measure : " << meas_of_dt[NEG] << endl;
+        cout << " cut measure : " << meas_of_dt[IF] << endl;
 
     }
 };

@@ -28,19 +28,19 @@ define constant cuteps = 0.0
 define variable t = 0.0
 
 define constant told = 0.0
-define constant tnew = 0.1
+define constant tnew = 1.0
 
 define coefficient lset0
-( sqrt((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))-0.133),
+( sqrt((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5))-1.0/sqrt(2*pi)),
 
 define coefficient lset1
-( sqrt((x-0.55)*(x-0.55)+(y-0.5)*(y-0.5))-0.133),
+( sqrt((x-0.55)*(x-0.55)+(y-0.5)*(y-0.5))-1.0/sqrt(2*pi)),
 #( ( x > 0.5) * cos(2*pi*(x+y))),
 
 define fespace fes_st 
        -type=spacetimefes 
        -type_space=h1ho
-       -order_space=4
+       -order_space=1
        -all_dofs_together
        -order_time=1
 #       -print
@@ -62,7 +62,7 @@ numproc testxfem nptxfem
         -levelset=u_st
         -spacetime
         -num_int_ref_space=1
-        -num_int_ref_time=0
+        -num_int_ref_time=1
 
 define bilinearform evalu_past -fespace=fes_st -nonassemble
 STtracepast zero
