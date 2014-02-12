@@ -712,8 +712,8 @@ namespace xintegration
       // cout << " dt = " << dt << endl;
       const double t0 = verts_time[0];
 
-      const IntegrationRule & ir_space = SelectIntegrationRule (ET_TIME, int_order_time);
-      const IntegrationRule & ir_time = SelectIntegrationRule (ET_SPACE, int_order_space);
+      const IntegrationRule & ir_time = SelectIntegrationRule (ET_TIME, int_order_time);
+      const IntegrationRule & ir_space = SelectIntegrationRule (ET_SPACE, int_order_space);
       
 
       for (int l = 0; l < ir_time.GetNIP(); l++)
@@ -722,10 +722,12 @@ namespace xintegration
         for (int k = 0; k < ir_space.GetNIP(); k++)
         {
           Vec<ET_trait<ET_SPACE>::DIM> point(0.0);
-          point = verts_space[0];
+          double originweight = 1.0;
+          for (int m = 0; m < D ;++m)
+            originweight -= ir_space[k](m);
+          point = originweight * verts_space[0];
           for (int m = 0; m < D ;++m)
             point += ir_space[k](m) * verts_space[m+1];
-
           const double weight = ir_time[l].Weight() * dt * ir_space[k].Weight() * trafofac;
           Vec<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> ipoint(0.0);
           
