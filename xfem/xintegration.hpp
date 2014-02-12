@@ -80,6 +80,22 @@ namespace xintegration
     int Size() { return points.Size(); }
   };
 
+  /// simple class that constitutes a quadrature
+  /// (here we don't use) IntegrationPoints or IntegrationRule
+  /// because of a potential 4th dimension
+  template < int SD >
+  struct QuadratureRuleCoDim1
+  {
+    /// the quadrature points
+    Array < Vec<SD> > points;
+    /// the quadrature weights
+    Array < double > weights;
+    /// the quadrature weights
+    Array < Vec<SD> > normals;
+    /// return number of integration points 
+    int Size() { return points.Size(); }
+  };
+
   /// class that constitutes the components of a composite 
   /// quadrature rule 
   template < int SD >
@@ -90,7 +106,7 @@ namespace xintegration
     /// Quadrature rule for negative domain
     QuadratureRule<SD> quadrule_neg;
     /// Quadrature rule for interface
-    QuadratureRule<SD> quadrule_if;
+    QuadratureRuleCoDim1<SD> quadrule_if;
     /// Interface for accessing the rules via DOMAIN_TYPE
     QuadratureRule<SD> & GetRule(DOMAIN_TYPE dt)
     {
@@ -102,14 +118,17 @@ namespace xintegration
       case POS: 
         return quadrule_pos;
         break;
-      case IF: 
-        return quadrule_if;
-        break;
       default:
         throw Exception(" DOMAIN_TYPE not known ");
-        return quadrule_if;
+        return quadrule_neg;
       }
     }
+
+    QuadratureRuleCoDim1<SD> & GetInterfaceRule()
+    {
+      return quadrule_if;
+    }
+
   };
 
   template <int D>
@@ -120,6 +139,15 @@ namespace xintegration
   void FillSimplexWithRule<3> (const Simplex<3> & s, QuadratureRule<3> & quaddom, int intorder);
   template <>
   void FillSimplexWithRule<4> (const Simplex<4> & s, QuadratureRule<4> & quaddom, int intorder);
+
+  template <int D>
+  void FillSimplexCoDim1WithRule (const Array< const Vec<D> *> & s, QuadratureRuleCoDim1<D> & quaddom, int intorder);
+  template <>
+  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, QuadratureRuleCoDim1<2> & quaddom, int intorder);
+  template <>
+  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, QuadratureRuleCoDim1<3> & quaddom, int intorder);
+  template <>
+  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, QuadratureRuleCoDim1<4> & quaddom, int intorder);
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>

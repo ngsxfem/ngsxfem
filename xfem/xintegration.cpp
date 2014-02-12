@@ -122,6 +122,45 @@ namespace xintegration
   }
 
 
+  template<>
+  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, QuadratureRuleCoDim1<3> & quaddom, int intorder)
+  {
+    Vec<3> a = *s[1] - *s[0];
+    Vec<3> b = *s[2] - *s[0];
+    Vec<3> c = Cross(a,b);
+    const double trafofac = L2Norm(c);
+    c /= trafofac;
+    const IntegrationRule & ir = SelectIntegrationRule (ET_TRIG, intorder);
+
+    for (int k = 0; k < ir.GetNIP(); k++)
+    {
+      Vec<3> point(0.0);
+      double originweight = 1.0;
+      for (int m = 0; m < 2 ;++m)
+        originweight -= ir[k](m);
+      point = originweight * (*s[0]);
+      for (int m = 0; m < 2 ;++m)
+        point += ir[k](m) * (*s[m+1]);
+      const double weight = ir[k].Weight() * trafofac;
+      quaddom.points.Append(point);
+      quaddom.weights.Append(weight);
+      quaddom.normals.Append(c);
+    }
+  }
+
+  template<>
+  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, QuadratureRuleCoDim1<4> & quaddom, int intorder)
+  {
+    throw Exception(" nonono - still no 4");
+  }
+
+  template<>
+  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, QuadratureRuleCoDim1<2> & quaddom, int intorder)
+  {
+    throw Exception(" nonono - still no 2");
+  }
+
+
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
@@ -363,6 +402,8 @@ namespace xintegration
 
     if (dt_self == IF)
     {
+      // cout << " cut " << endl;
+
       bool refine_time = ref_level_time > 0;
       bool refine_space = ref_level_space > 0;
 
@@ -486,13 +527,20 @@ namespace xintegration
                 newpoint[D] = K == 0? verts_time[0] : verts_time[verts_time.Size()-1];
             }
             verts[i+K*nvs] = pc(newpoint);
+            // cout << "verts["<<i+K*nvs<<"]:" << newpoint << endl;
           }
+
+        
 
         if (ET_TIME==ET_POINT)
           throw Exception(" don't know how to deal with this now... - perhaps I will come up with something");
 
         DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(verts, simplices, pc, lh);
-
+        // cout << "simplices:\n";
+        // for (int i = 0; i < simplices.Size(); ++i)
+        // {
+        //   cout << *simplices[i] << endl;
+        // }
         const ngfem::ScalarSpaceTimeFEEvaluator<D> & eval (lset);
 
         for (int i = 0; i < simplices.Size(); ++i)
@@ -618,9 +666,15 @@ namespace xintegration
                                           compquadrule.GetRule(dt_major), 
                                           GetIntegrationOrderMax());
                 }
+                
+                // and the interface:
+                FillSimplexCoDim1WithRule<SD> ( cutpoints, compquadrule.GetInterfaceRule(), GetIntegrationOrderMax());
+
+
               }
               else if (cutpoints.Size() == 4) // four intersections: prism + prism
               {
+                //pos domain
                 {
                   Array< const Vec<SD> *> posprism(0);
                   posprism.Append(pospoints[0]);
@@ -647,15 +701,29 @@ namespace xintegration
                   posprism.Append(cutpoints[cut3]);
                   posprism.Append(cutpoints[cut4]);
 
+                  // cout << " cutpoints vertices: " << endl;
+                  // for (int l = 0; l < 4; ++l)
+                  //   cout << *cutpoints[l] << endl;
+
+                  // cout << " pospoints vertices: " << endl;
+                  // for (int l = 0; l < 2; ++l)
+                  //   cout << *pospoints[l] << endl;
+                  
+                  // cout << " posprism vertices: " << endl;
+                  // for (int l = 0; l < 6; ++l)
+                  //   cout << *posprism[l] << endl;
+
                   Array< Simplex<SD> * > innersimplices(0);
                   DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(posprism, innersimplices, pc, lh);
                   for (int l = 0; l < innersimplices.Size(); ++l)
                   {
+                    // std::cout << " *innersimplices[l] = " << *innersimplices[l] << std::endl;
                     FillSimplexWithRule<SD>(innersimplices[l]->p, 
                                             compquadrule.GetRule(POS), 
                                             GetIntegrationOrderMax());
                   }
                 }
+                //neg domain
                 {
                   Array< const Vec<SD> *> negprism(0);
                   negprism.Append(negpoints[0]);
@@ -691,6 +759,48 @@ namespace xintegration
                                             GetIntegrationOrderMax());
                   }
                 }
+                //interface
+                {
+                  int diag1, diag2;
+                  int ndiag1, ndiag2;
+                  if (v2cut_1[negvidx[0]] == v2cut_1[posvidx[0]] || v2cut_2[negvidx[0]] == v2cut_1[posvidx[0]])
+                  {
+                    diag1 = v2cut_1[posvidx[0]];
+                    ndiag1 = v2cut_2[posvidx[0]];
+                  }
+                  else
+                  {
+                    diag1 = v2cut_2[posvidx[0]];
+                    ndiag1 = v2cut_1[posvidx[0]];
+                  }
+
+                  if (v2cut_1[negvidx[1]] == v2cut_1[posvidx[1]] || v2cut_2[negvidx[1]] == v2cut_1[posvidx[1]])
+                  {
+                    diag2 = v2cut_1[posvidx[1]];
+                    ndiag2 = v2cut_2[posvidx[1]];
+                  }
+                  else
+                  {
+                    diag2 = v2cut_2[posvidx[1]];
+                    ndiag2 = v2cut_1[posvidx[1]];
+                  }
+
+                  Array< const Vec<SD> * > trig1(3);
+                  Array< const Vec<SD> * > trig2(3);
+
+                  trig1[0] = cutpoints[diag1]; 
+                  trig1[1] = cutpoints[ndiag1]; 
+                  trig1[2] = cutpoints[diag2]; 
+
+                  trig2[0] = cutpoints[diag2]; 
+                  trig2[1] = cutpoints[ndiag2]; 
+                  trig2[2] = cutpoints[diag1]; 
+                  
+                  FillSimplexCoDim1WithRule<SD> ( trig1, compquadrule.GetInterfaceRule(), GetIntegrationOrderMax());
+                  FillSimplexCoDim1WithRule<SD> ( trig2, compquadrule.GetInterfaceRule(), GetIntegrationOrderMax());
+
+                }
+
               } // end of 3 or 4 cutpoints
               else
               {
@@ -718,6 +828,7 @@ namespace xintegration
     }
     else
     {
+      // cout << " uncut " << endl;
       double trafofac = 1.0; 
 
       if (D==2)

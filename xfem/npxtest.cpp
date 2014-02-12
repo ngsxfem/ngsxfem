@@ -112,7 +112,8 @@ public:
         Array<double> meas_of_dt(3);
         meas_of_dt = 0.0;
 
-        ofstream outs("negpoints.out");
+        ofstream outneg("negpoints.out");
+        ofstream outif("ifpoints.out");
 
         for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
@@ -172,8 +173,19 @@ public:
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
                     meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
                 for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
-                    meas_of_dt[IF] += compositerule.quadrule_if.weights[i];
-
+                {
+                    Vec<3> st_point = compositerule.quadrule_if.points[i];
+                    IntegrationPoint ip(st_point(0),st_point(1));
+                    MappedIntegrationPoint<D,D> mip(ip,eltrans);
+                    Mat<2,2> Finv = mip.GetJacobianInverse();
+                    Vec<3> nref = compositerule.quadrule_if.normals[i];
+                    Vec<2> nref_sp (nref(0),nref(1));
+                    Vec<2> n_sp = absdet * Trans(Finv) * nref_sp ;
+                    double n_t = nref(2) * absdet;
+                    Vec<3> n (n_sp(0),n_sp(1),n_t);
+                    double fac = L2Norm(n);
+                    meas_of_dt[IF] +=  compositerule.quadrule_if.weights[i] * fac;
+                }
 
 
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
@@ -182,11 +194,26 @@ public:
                     IntegrationPoint ip(st_point(0),st_point(1));
                     MappedIntegrationPoint<D,D> mip(ip,eltrans);
                     Vec<2> mapped_point = mip.GetPoint();
-                    outs << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    outneg << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                     // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
                     // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                 }
-                outs << endl;
+                outneg << endl;
+                outneg << endl;
+
+                for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
+                {
+                    Vec<3> st_point = compositerule.quadrule_if.points[i];
+                    IntegrationPoint ip(st_point(0),st_point(1));
+                    MappedIntegrationPoint<D,D> mip(ip,eltrans);
+                    Vec<2> mapped_point = mip.GetPoint();
+                    outif << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
+                    // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                }
+                outif << endl;
+                outif << endl;
+
                 
             }
             else if ( et_space == ET_TET && et_time == ET_SEGM)
