@@ -131,25 +131,6 @@ namespace xintegration
 
   };
 
-  template <int D>
-  void FillSimplexWithRule (const Simplex<D> & s, QuadratureRule<D> & quaddom, int intorder);
-  template <>
-  void FillSimplexWithRule<2> (const Simplex<2> & s, QuadratureRule<2> & quaddom, int intorder);
-  template <>
-  void FillSimplexWithRule<3> (const Simplex<3> & s, QuadratureRule<3> & quaddom, int intorder);
-  template <>
-  void FillSimplexWithRule<4> (const Simplex<4> & s, QuadratureRule<4> & quaddom, int intorder);
-
-  template <int D>
-  void FillSimplexCoDim1WithRule (const Array< const Vec<D> *> & s, QuadratureRuleCoDim1<D> & quaddom, int intorder);
-  template <>
-  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, QuadratureRuleCoDim1<2> & quaddom, int intorder);
-  template <>
-  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, QuadratureRuleCoDim1<3> & quaddom, int intorder);
-  template <>
-  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, QuadratureRuleCoDim1<4> & quaddom, int intorder);
-
-
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   class NumericalIntegrationStrategy
   {
@@ -242,6 +223,42 @@ namespace xintegration
     DOMAIN_TYPE MakeQuadRule() const;
     
   };
+
+
+  /// Different Decomposition for different dimensions 
+
+  // use a standard simplex rule to fill uncut simplices
+  template <int D>
+  void FillSimplexWithRule (const Simplex<D> & s, QuadratureRule<D> & quaddom, int intorder);
+  template <>
+  void FillSimplexWithRule<2> (const Simplex<2> & s, QuadratureRule<2> & quaddom, int intorder);
+  template <>
+  void FillSimplexWithRule<3> (const Simplex<3> & s, QuadratureRule<3> & quaddom, int intorder);
+  template <>
+  void FillSimplexWithRule<4> (const Simplex<4> & s, QuadratureRule<4> & quaddom, int intorder);
+
+  template <int D>
+  void FillSimplexCoDim1WithRule (const Array< const Vec<D> *> & s, 
+                                  QuadratureRuleCoDim1<D> & quaddom, int intorder);
+  template <>
+  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, 
+                                     QuadratureRuleCoDim1<2> & quaddom, int intorder);
+  template <>
+  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, 
+                                     QuadratureRuleCoDim1<3> & quaddom, int intorder);
+  template <>
+  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, 
+                                     QuadratureRuleCoDim1<4> & quaddom, int intorder);
+
+  /// cut rule for simplices using template specialization
+  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  void MakeQuadRuleOnCutSimplex(const Simplex <ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> & s, 
+                                const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+
+  /// implementation
+  template <>
+  void MakeQuadRuleOnCutSimplex<ET_TRIG,ET_SEGM>(const Simplex <3> & s, 
+                                                 const NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> & numint);
 
 
 }

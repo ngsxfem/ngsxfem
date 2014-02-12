@@ -516,7 +516,7 @@ namespace xintegration
         const int nvs = verts_space.Size();
         Array<const Vec<SD> * > verts(nvs * nvt);
 
-        for (int K = 0; K < 2; ++K)
+        for (int K = 0; K < nvt; ++K)
           for (int i = 0; i < nvs; ++i)
           {
             Vec<SD> newpoint;
@@ -524,18 +524,22 @@ namespace xintegration
             {
               newpoint[j] = verts_space[i][j]; 
               if (ET_TIME == ET_SEGM)
-                newpoint[D] = K == 0? verts_time[0] : verts_time[verts_time.Size()-1];
+                newpoint[D] = K == 0 ? verts_time[0] : verts_time[verts_time.Size()-1];
             }
             verts[i+K*nvs] = pc(newpoint);
             // cout << "verts["<<i+K*nvs<<"]:" << newpoint << endl;
           }
 
-        
 
         if (ET_TIME==ET_POINT)
-          throw Exception(" don't know how to deal with this now... - perhaps I will come up with something");
-
-        DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(verts, simplices, pc, lh);
+        {
+          simplices.SetSize(1);
+          simplices[0] = new (lh) Simplex<SD>(verts);
+        }
+        else
+        {
+          DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(verts, simplices, pc, lh);
+        }
         // cout << "simplices:\n";
         // for (int i = 0; i < simplices.Size(); ++i)
         // {
@@ -549,270 +553,7 @@ namespace xintegration
 
           if (dt_simplex == IF)
           {
-            if (SD==3 && ET_TIME == ET_SEGM)
-            {
-              Array< const Vec<SD> * > cutpoints(0);
-              Array< const Vec<SD> * > pospoints(0);
-              Array< const Vec<SD> * > negpoints(0);
-
-              Array<int> posvidx(0);
-              Array<int> negvidx(0);
-
-              // vertex idx connected to cut idx (just in case of 4 cut positions)
-              // connectivity information of cuts
-              Array<int> v2cut_1(4); 
-              Array<int> v2cut_2(4); 
-              v2cut_1 = -1;
-              v2cut_2 = -1;
-
-              const int edge[6][2] = { {0, 1},
-                                       {0, 2},
-                                       {0, 3},
-                                       {1, 2},
-                                       {1, 3},
-                                       {2, 3}};
-              
-              double vvals[4];
-              bool zero[4];
-              
-              for (int j = 0; j < 4; ++j)
-              {
-                zero[j] = false;
-                vvals[j] = lset(*simplices[i]->p[j]);
-                if (vvals[j] > 0)
-                {
-                  pospoints.Append(pc(*simplices[i]->p[j]));
-                  posvidx.Append(j);
-                }
-                else if (vvals[j] < 0)
-                {
-                  negpoints.Append(pc(*simplices[i]->p[j]));
-                  negvidx.Append(j);
-                }
-                else // (vvals[j] == 0.0)
-                {
-                  pospoints.Append(pc(*simplices[i]->p[j]));
-                  posvidx.Append(j);
-                  zero[j] = true;
-                }
-              }
-
-              // cout << " vvals = \n";
-              // for (int l = 0; l < 4; ++l)
-              //   cout << l << ":" << vvals[l] << endl;
-
-              int cntcuts = 0;
-              for (int j = 0; j < 6; ++j)
-              {
-                const int lv = edge[j][0];
-                const int rv = edge[j][1];
-                const double valleft = vvals[lv];
-                const double valright = vvals[rv];
-                bool hascut = (valleft * valright < 0);
-                if (zero[lv] && valright < 0)
-                  hascut = true;
-
-                if (zero[rv] && valleft < 0)
-                  hascut = true;
-
-                if (hascut)
-                {
-                  const double cutpos = valleft / (valleft - valright);
-                  // std::cout << " cutpos = " << cutpos << std::endl;
-                  Vec<SD> p = (1-cutpos) * (*simplices[i]->p[lv]) + cutpos * (*simplices[i]->p[rv]) ;
-                  cutpoints.Append(pc(p));
-                  // collect connectivity of cut and vertices
-                  if (v2cut_1[lv] == -1)
-                    v2cut_1[lv] = cntcuts;
-                  else
-                    v2cut_2[lv] = cntcuts;
-                  if (v2cut_1[rv] == -1)
-                    v2cut_1[rv] = cntcuts;
-                  else
-                    v2cut_2[rv] = cntcuts;
-                  cntcuts ++;
-                }
-              }
-
-              if (cutpoints.Size() == 3) // three intersections: prism + tetra
-              {
-
-                Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ? 
-                                                       pospoints : negpoints);
-                DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? POS : NEG;
-                Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ? 
-                                                       pospoints : negpoints);
-                DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? POS : NEG;
-
-                Array<int> & majvidx( negvidx.Size() > posvidx.Size() ? negvidx : posvidx);
-
-                for (int k = 0; k < 3; ++k)
-                  minorgroup.Append(cutpoints[k]);
-                // minorgroup is a simplex of type dt_minor
-                FillSimplexWithRule<SD>(minorgroup, 
-                                        compquadrule.GetRule(dt_minor), 
-                                        GetIntegrationOrderMax());
-
-                Array< Simplex<SD> * > innersimplices(0);
-                for (int k = 0; k < 3; ++k)
-                {
-                  int corresponding_cut = v2cut_1[majvidx[k]];
-                  majorgroup.Append(cutpoints[corresponding_cut]);
-                }
-                DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(majorgroup, innersimplices, pc, lh);
-                for (int l = 0; l < innersimplices.Size(); ++l)
-                {
-                  FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                          compquadrule.GetRule(dt_major), 
-                                          GetIntegrationOrderMax());
-                }
-                
-                // and the interface:
-                FillSimplexCoDim1WithRule<SD> ( cutpoints, compquadrule.GetInterfaceRule(), GetIntegrationOrderMax());
-
-
-              }
-              else if (cutpoints.Size() == 4) // four intersections: prism + prism
-              {
-                //pos domain
-                {
-                  Array< const Vec<SD> *> posprism(0);
-                  posprism.Append(pospoints[0]);
-                  const int idxn = posvidx[0];
-                  const int cut1 = v2cut_1[idxn];
-                  const int cut2 = v2cut_2[idxn];
-                  posprism.Append(cutpoints[cut1]);
-                  posprism.Append(cutpoints[cut2]);
-                  posprism.Append(pospoints[1]);
-                  int cut3 = -1;
-                  for (int l = 0; l < 4; ++l)
-                    if (cut1 != l && cut2 != l)
-                      cut3 = l;
-                  int cut4 = 6 - cut3 - cut2 - cut1;
-
-                  // possibly switch orientation of cut3 / cut4
-                  if ((v2cut_1[negvidx[0]] == cut1 && v2cut_2[negvidx[0]] == cut4)
-                      || (v2cut_1[negvidx[0]] == cut2 && v2cut_2[negvidx[0]] == cut3))
-                  {
-                    const int cutt = cut3;
-                    cut3 = cut4;
-                    cut4 = cutt;
-                  }
-                  posprism.Append(cutpoints[cut3]);
-                  posprism.Append(cutpoints[cut4]);
-
-                  // cout << " cutpoints vertices: " << endl;
-                  // for (int l = 0; l < 4; ++l)
-                  //   cout << *cutpoints[l] << endl;
-
-                  // cout << " pospoints vertices: " << endl;
-                  // for (int l = 0; l < 2; ++l)
-                  //   cout << *pospoints[l] << endl;
-                  
-                  // cout << " posprism vertices: " << endl;
-                  // for (int l = 0; l < 6; ++l)
-                  //   cout << *posprism[l] << endl;
-
-                  Array< Simplex<SD> * > innersimplices(0);
-                  DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(posprism, innersimplices, pc, lh);
-                  for (int l = 0; l < innersimplices.Size(); ++l)
-                  {
-                    // std::cout << " *innersimplices[l] = " << *innersimplices[l] << std::endl;
-                    FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                            compquadrule.GetRule(POS), 
-                                            GetIntegrationOrderMax());
-                  }
-                }
-                //neg domain
-                {
-                  Array< const Vec<SD> *> negprism(0);
-                  negprism.Append(negpoints[0]);
-                  const int idxn = negvidx[0];
-                  const int cut1 = v2cut_1[idxn];
-                  const int cut2 = v2cut_2[idxn];
-                  negprism.Append(cutpoints[cut1]);
-                  negprism.Append(cutpoints[cut2]);
-                  negprism.Append(negpoints[1]);
-                  int cut3 = -1;
-                  for (int l = 0; l < 4; ++l)
-                    if (cut1 != l && cut2 != l)
-                      cut3 = l;
-                  int cut4 = 6 - cut3 - cut2 - cut1;
-
-                  // possibly switch orientation of cut3 / cut4
-                  if ((v2cut_1[posvidx[0]] == cut1 && v2cut_2[posvidx[0]] == cut4)
-                      || (v2cut_1[posvidx[0]] == cut2 && v2cut_2[posvidx[0]] == cut3))
-                  {
-                    const int cutt = cut3;
-                    cut3 = cut4;
-                    cut4 = cutt;
-                  }
-                  negprism.Append(cutpoints[cut3]);
-                  negprism.Append(cutpoints[cut4]);
-
-                  Array< Simplex<SD> * > innersimplices(0);
-                  DecomposePrismIntoSimplices<ET_SPACE,ET_TIME>(negprism, innersimplices, pc, lh);
-                  for (int l = 0; l < innersimplices.Size(); ++l)
-                  {
-                    FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                            compquadrule.GetRule(NEG), 
-                                            GetIntegrationOrderMax());
-                  }
-                }
-                //interface
-                {
-                  int diag1, diag2;
-                  int ndiag1, ndiag2;
-                  if (v2cut_1[negvidx[0]] == v2cut_1[posvidx[0]] || v2cut_2[negvidx[0]] == v2cut_1[posvidx[0]])
-                  {
-                    diag1 = v2cut_1[posvidx[0]];
-                    ndiag1 = v2cut_2[posvidx[0]];
-                  }
-                  else
-                  {
-                    diag1 = v2cut_2[posvidx[0]];
-                    ndiag1 = v2cut_1[posvidx[0]];
-                  }
-
-                  if (v2cut_1[negvidx[1]] == v2cut_1[posvidx[1]] || v2cut_2[negvidx[1]] == v2cut_1[posvidx[1]])
-                  {
-                    diag2 = v2cut_1[posvidx[1]];
-                    ndiag2 = v2cut_2[posvidx[1]];
-                  }
-                  else
-                  {
-                    diag2 = v2cut_2[posvidx[1]];
-                    ndiag2 = v2cut_1[posvidx[1]];
-                  }
-
-                  Array< const Vec<SD> * > trig1(3);
-                  Array< const Vec<SD> * > trig2(3);
-
-                  trig1[0] = cutpoints[diag1]; 
-                  trig1[1] = cutpoints[ndiag1]; 
-                  trig1[2] = cutpoints[diag2]; 
-
-                  trig2[0] = cutpoints[diag2]; 
-                  trig2[1] = cutpoints[ndiag2]; 
-                  trig2[2] = cutpoints[diag1]; 
-                  
-                  FillSimplexCoDim1WithRule<SD> ( trig1, compquadrule.GetInterfaceRule(), GetIntegrationOrderMax());
-                  FillSimplexCoDim1WithRule<SD> ( trig2, compquadrule.GetInterfaceRule(), GetIntegrationOrderMax());
-
-                }
-
-              } // end of 3 or 4 cutpoints
-              else
-              {
-                cout << "cutpoints.Size() = " << cutpoints.Size() << endl;
-                throw Exception(" did not expect this..");
-              }
-
-
-              //TODO continue here...
-            }
-            else
-              throw Exception(" only space-time in 2D so far");
+            MakeQuadRuleOnCutSimplex<ET_SPACE,ET_TIME>(*simplices[i], *this);
           }
           else
           {
@@ -859,7 +600,7 @@ namespace xintegration
         double current = t0 + ir_time[l](0) * dt;
         for (int k = 0; k < ir_space.GetNIP(); k++)
         {
-          Vec<ET_trait<ET_SPACE>::DIM> point(0.0);
+          Vec<D> point(0.0);
           double originweight = 1.0;
           for (int m = 0; m < D ;++m)
             originweight -= ir_space[k](m);
@@ -867,7 +608,7 @@ namespace xintegration
           for (int m = 0; m < D ;++m)
             point += ir_space[k](m) * verts_space[m+1];
           const double weight = ir_time[l].Weight() * dt * ir_space[k].Weight() * trafofac;
-          Vec<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> ipoint(0.0);
+          Vec<SD> ipoint(0.0);
           
           for (int m = 0; m < D ;++m)
             ipoint(m) = point(m);
@@ -884,12 +625,291 @@ namespace xintegration
     }
   }
 
-
-
   template class NumericalIntegrationStrategy<ET_TRIG, ET_SEGM>;
   template class NumericalIntegrationStrategy<ET_TET, ET_SEGM>;
   template class NumericalIntegrationStrategy<ET_TRIG, ET_POINT>;
   template class NumericalIntegrationStrategy<ET_TET, ET_POINT>;
+
+
+  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  void MakeQuadRuleOnCutSimplex(const Simplex <ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> & s, 
+                                const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+  {
+    throw Exception("MakeQuadRuleOnCutSimplex --- no implementation for these Element Types");
+  }
+
+
+  template <>
+  void MakeQuadRuleOnCutSimplex<ET_TRIG,ET_SEGM>(const Simplex <3> & s, 
+                                                 const NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> & numint)
+  {
+    enum { D = 2 };
+    enum { SD = 3};
+
+////-------------------------------------------------------
+    Array< const Vec<SD> * > cutpoints(0);
+    Array< const Vec<SD> * > pospoints(0);
+    Array< const Vec<SD> * > negpoints(0);
+
+    Array<int> posvidx(0);
+    Array<int> negvidx(0);
+
+    // vertex idx connected to cut idx (just in case of 4 cut positions)
+    // connectivity information of cuts
+    Array<int> v2cut_1(4); 
+    Array<int> v2cut_2(4); 
+    v2cut_1 = -1;
+    v2cut_2 = -1;
+
+    const int edge[6][2] = { {0, 1},
+                             {0, 2},
+                             {0, 3},
+                             {1, 2},
+                             {1, 3},
+                             {2, 3}};
+              
+    double vvals[4];
+    bool zero[4];
+              
+    for (int j = 0; j < 4; ++j)
+    {
+      zero[j] = false;
+      vvals[j] = numint.lset(*(s.p[j]));
+      if (vvals[j] > 0)
+      {
+        pospoints.Append(numint.pc(*(s.p[j])));
+        posvidx.Append(j);
+      }
+      else if (vvals[j] < 0)
+      {
+        negpoints.Append(numint.pc(*(s.p[j])));
+        negvidx.Append(j);
+      }
+      else // (vvals[j] == 0.0)
+      {
+        pospoints.Append(numint.pc(*(s.p[j])));
+        posvidx.Append(j);
+        zero[j] = true;
+      }
+    }
+
+    // cout << " vvals = \n";
+    // for (int l = 0; l < 4; ++l)
+    //   cout << l << ":" << vvals[l] << endl;
+
+    int cntcuts = 0;
+    for (int j = 0; j < 6; ++j)
+    {
+      const int lv = edge[j][0];
+      const int rv = edge[j][1];
+      const double valleft = vvals[lv];
+      const double valright = vvals[rv];
+      bool hascut = (valleft * valright < 0);
+      if (zero[lv] && valright < 0)
+        hascut = true;
+
+      if (zero[rv] && valleft < 0)
+        hascut = true;
+
+      if (hascut)
+      {
+        const double cutpos = valleft / (valleft - valright);
+        // std::cout << " cutpos = " << cutpos << std::endl;
+        Vec<SD> p = (1-cutpos) * *(s.p[lv]) + cutpos * *(s.p[rv]) ;
+        cutpoints.Append(numint.pc(p));
+        // collect connectivity of cut and vertices
+        if (v2cut_1[lv] == -1)
+          v2cut_1[lv] = cntcuts;
+        else
+          v2cut_2[lv] = cntcuts;
+        if (v2cut_1[rv] == -1)
+          v2cut_1[rv] = cntcuts;
+        else
+          v2cut_2[rv] = cntcuts;
+        cntcuts ++;
+      }
+    }
+
+    if (cutpoints.Size() == 3) // three intersections: prism + tetra
+    {
+
+      Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ? 
+                                             pospoints : negpoints);
+      DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? POS : NEG;
+      Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ? 
+                                             pospoints : negpoints);
+      DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? POS : NEG;
+
+      Array<int> & majvidx( negvidx.Size() > posvidx.Size() ? negvidx : posvidx);
+
+      for (int k = 0; k < 3; ++k)
+        minorgroup.Append(cutpoints[k]);
+      // minorgroup is a simplex of type dt_minor
+      FillSimplexWithRule<SD>(minorgroup, 
+                              numint.compquadrule.GetRule(dt_minor), 
+                              numint.GetIntegrationOrderMax());
+
+      Array< Simplex<SD> * > innersimplices(0);
+      for (int k = 0; k < 3; ++k)
+      {
+        int corresponding_cut = v2cut_1[majvidx[k]];
+        majorgroup.Append(cutpoints[corresponding_cut]);
+      }
+      DecomposePrismIntoSimplices<ET_TRIG,ET_SEGM>(majorgroup, innersimplices, numint.pc, numint.lh);
+      for (int l = 0; l < innersimplices.Size(); ++l)
+      {
+        FillSimplexWithRule<SD>(innersimplices[l]->p, 
+                                numint.compquadrule.GetRule(dt_major), 
+                                numint.GetIntegrationOrderMax());
+      }
+                
+      // and the interface:
+      FillSimplexCoDim1WithRule<SD> ( cutpoints, numint.compquadrule.GetInterfaceRule(), 
+                                      numint.GetIntegrationOrderMax());
+
+
+    }
+    else if (cutpoints.Size() == 4) // four intersections: prism + prism
+    {
+      //pos domain
+      {
+        Array< const Vec<SD> *> posprism(0);
+        posprism.Append(pospoints[0]);
+        const int idxn = posvidx[0];
+        const int cut1 = v2cut_1[idxn];
+        const int cut2 = v2cut_2[idxn];
+        posprism.Append(cutpoints[cut1]);
+        posprism.Append(cutpoints[cut2]);
+        posprism.Append(pospoints[1]);
+        int cut3 = -1;
+        for (int l = 0; l < 4; ++l)
+          if (cut1 != l && cut2 != l)
+            cut3 = l;
+        int cut4 = 6 - cut3 - cut2 - cut1;
+
+        // possibly switch orientation of cut3 / cut4
+        if ((v2cut_1[negvidx[0]] == cut1 && v2cut_2[negvidx[0]] == cut4)
+            || (v2cut_1[negvidx[0]] == cut2 && v2cut_2[negvidx[0]] == cut3))
+        {
+          const int cutt = cut3;
+          cut3 = cut4;
+          cut4 = cutt;
+        }
+        posprism.Append(cutpoints[cut3]);
+        posprism.Append(cutpoints[cut4]);
+
+        // cout << " cutpoints vertices: " << endl;
+        // for (int l = 0; l < 4; ++l)
+        //   cout << *cutpoints[l] << endl;
+
+        // cout << " pospoints vertices: " << endl;
+        // for (int l = 0; l < 2; ++l)
+        //   cout << *pospoints[l] << endl;
+                  
+        // cout << " posprism vertices: " << endl;
+        // for (int l = 0; l < 6; ++l)
+        //   cout << *posprism[l] << endl;
+
+        Array< Simplex<SD> * > innersimplices(0);
+        DecomposePrismIntoSimplices<ET_TRIG,ET_SEGM>(posprism, innersimplices, numint.pc, numint.lh);
+        for (int l = 0; l < innersimplices.Size(); ++l)
+        {
+          // std::cout << " *innersimplices[l] = " << *innersimplices[l] << std::endl;
+          FillSimplexWithRule<SD>(innersimplices[l]->p, 
+                                  numint.compquadrule.GetRule(POS), 
+                                  numint.GetIntegrationOrderMax());
+        }
+      }
+      //neg domain
+      {
+        Array< const Vec<SD> *> negprism(0);
+        negprism.Append(negpoints[0]);
+        const int idxn = negvidx[0];
+        const int cut1 = v2cut_1[idxn];
+        const int cut2 = v2cut_2[idxn];
+        negprism.Append(cutpoints[cut1]);
+        negprism.Append(cutpoints[cut2]);
+        negprism.Append(negpoints[1]);
+        int cut3 = -1;
+        for (int l = 0; l < 4; ++l)
+          if (cut1 != l && cut2 != l)
+            cut3 = l;
+        int cut4 = 6 - cut3 - cut2 - cut1;
+
+        // possibly switch orientation of cut3 / cut4
+        if ((v2cut_1[posvidx[0]] == cut1 && v2cut_2[posvidx[0]] == cut4)
+            || (v2cut_1[posvidx[0]] == cut2 && v2cut_2[posvidx[0]] == cut3))
+        {
+          const int cutt = cut3;
+          cut3 = cut4;
+          cut4 = cutt;
+        }
+        negprism.Append(cutpoints[cut3]);
+        negprism.Append(cutpoints[cut4]);
+
+        Array< Simplex<SD> * > innersimplices(0);
+        DecomposePrismIntoSimplices<ET_TRIG,ET_SEGM>(negprism, innersimplices, numint.pc, numint.lh);
+        for (int l = 0; l < innersimplices.Size(); ++l)
+        {
+          FillSimplexWithRule<SD>(innersimplices[l]->p, 
+                                  numint.compquadrule.GetRule(NEG), 
+                                  numint.GetIntegrationOrderMax());
+        }
+      }
+      //interface
+      {
+        int diag1, diag2;
+        int ndiag1, ndiag2;
+        if (v2cut_1[negvidx[0]] == v2cut_1[posvidx[0]] || v2cut_2[negvidx[0]] == v2cut_1[posvidx[0]])
+        {
+          diag1 = v2cut_1[posvidx[0]];
+          ndiag1 = v2cut_2[posvidx[0]];
+        }
+        else
+        {
+          diag1 = v2cut_2[posvidx[0]];
+          ndiag1 = v2cut_1[posvidx[0]];
+        }
+
+        if (v2cut_1[negvidx[1]] == v2cut_1[posvidx[1]] || v2cut_2[negvidx[1]] == v2cut_1[posvidx[1]])
+        {
+          diag2 = v2cut_1[posvidx[1]];
+          ndiag2 = v2cut_2[posvidx[1]];
+        }
+        else
+        {
+          diag2 = v2cut_2[posvidx[1]];
+          ndiag2 = v2cut_1[posvidx[1]];
+        }
+
+        Array< const Vec<SD> * > trig1(3);
+        Array< const Vec<SD> * > trig2(3);
+
+        trig1[0] = cutpoints[diag1]; 
+        trig1[1] = cutpoints[ndiag1]; 
+        trig1[2] = cutpoints[diag2]; 
+
+        trig2[0] = cutpoints[diag2]; 
+        trig2[1] = cutpoints[ndiag2]; 
+        trig2[2] = cutpoints[diag1]; 
+                  
+        FillSimplexCoDim1WithRule<SD> ( trig1, numint.compquadrule.GetInterfaceRule(), 
+                                        numint.GetIntegrationOrderMax());
+        FillSimplexCoDim1WithRule<SD> ( trig2, numint.compquadrule.GetInterfaceRule(), 
+                                        numint.GetIntegrationOrderMax());
+
+      }
+
+    } // end of 3 or 4 cutpoints
+    else
+    {
+      cout << "cutpoints.Size() = " << cutpoints.Size() << endl;
+      throw Exception(" did not expect this..");
+    }
+
+
+  }
+  
 
 
 
