@@ -205,8 +205,8 @@ public:
                     // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
                     // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                 }
-                outif_s << endl;
-                outif_s << endl;
+                outif_st << endl;
+                outif_st << endl;
             }
 
             if( et_space == ET_TRIG && et_time == ET_POINT)
