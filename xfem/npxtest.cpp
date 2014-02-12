@@ -112,8 +112,10 @@ public:
         Array<double> meas_of_dt(3);
         meas_of_dt = 0.0;
 
-        ofstream outneg("negpoints.out");
-        ofstream outif("ifpoints.out");
+        ofstream outneg_st("negpoints_st.out");
+        ofstream outif_st("ifpoints_st.out");
+        ofstream outneg_s("negpoints_s.out");
+        ofstream outif_s("ifpoints_s.out");
 
         for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
@@ -141,7 +143,6 @@ public:
                 const ScalarSpaceTimeFiniteElement<2> &  fel_st 
                     = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
                 ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
-
                 PointContainer<3> pc;
                 CompositeQuadratureRule<3> compositerule;
                 NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc,
@@ -163,11 +164,7 @@ public:
                 // cout << "   " << mip1.GetPoint() << endl;
                 // cout << "   " << mip2.GetPoint() << endl;
                 // cout << "   " << mip3.GetPoint() << endl;
-
-                
-
                 els_of_dt[numint.MakeQuadRule()]++;
-                
                 for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
                     meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
@@ -186,37 +183,105 @@ public:
                     double fac = L2Norm(n);
                     meas_of_dt[IF] +=  compositerule.quadrule_if.weights[i] * fac;
                 }
-
-
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
                 {
                     Vec<3> st_point = compositerule.quadrule_neg.points[i];
                     IntegrationPoint ip(st_point(0),st_point(1));
                     MappedIntegrationPoint<D,D> mip(ip,eltrans);
                     Vec<2> mapped_point = mip.GetPoint();
-                    outneg << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    outneg_st << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                     // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
                     // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                 }
-                outneg << endl;
-                outneg << endl;
-
+                outneg_st << endl;
+                outneg_st << endl;
                 for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
                 {
                     Vec<3> st_point = compositerule.quadrule_if.points[i];
                     IntegrationPoint ip(st_point(0),st_point(1));
                     MappedIntegrationPoint<D,D> mip(ip,eltrans);
                     Vec<2> mapped_point = mip.GetPoint();
-                    outif << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    outif_s << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                     // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
                     // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                 }
-                outif << endl;
-                outif << endl;
-
-                
+                outif_s << endl;
+                outif_s << endl;
             }
-            else if ( et_space == ET_TET && et_time == ET_SEGM)
+
+            if( et_space == ET_TRIG && et_time == ET_POINT)
+            {
+                const ScalarSpaceTimeFiniteElement<2> &  fel_st 
+                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
+                ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
+                PointContainer<2> pc;
+                CompositeQuadratureRule<2> compositerule;
+                NumericalIntegrationStrategy<ET_TRIG,ET_POINT> numint(lset_eval, pc,
+                                                                      compositerule, 
+                                                                      lh,
+                                                                      order_space, order_time,
+                                                                      num_int_ref_space, 
+                                                                      num_int_ref_time);
+                numint.SetVerticesSpace();
+                numint.SetVerticesTime();
+                // numint.SetDistanceThreshold(0.125);
+                // IntegrationPoint ip1(0.0,0.0);
+                // IntegrationPoint ip2(1.0,0.0);
+                // IntegrationPoint ip3(0.0,1.0);
+                // MappedIntegrationPoint<D,D> mip1(ip1,eltrans);
+                // MappedIntegrationPoint<D,D> mip2(ip2,eltrans);
+                // MappedIntegrationPoint<D,D> mip3(ip3,eltrans);
+                // cout << " triangle is : \n" ;
+                // cout << "   " << mip1.GetPoint() << endl;
+                // cout << "   " << mip2.GetPoint() << endl;
+                // cout << "   " << mip3.GetPoint() << endl;
+                els_of_dt[numint.MakeQuadRule()]++;
+                for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
+                    meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                    meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
+                {
+                    // Vec<3> st_point = compositerule.quadrule_if.points[i];
+                    // IntegrationPoint ip(st_point(0),st_point(1));
+                    // MappedIntegrationPoint<D,D> mip(ip,eltrans);
+                    // Mat<2,2> Finv = mip.GetJacobianInverse();
+                    // Vec<3> nref = compositerule.quadrule_if.normals[i];
+                    // Vec<2> nref_sp (nref(0),nref(1));
+                    // Vec<2> n_sp = absdet * Trans(Finv) * nref_sp ;
+                    // double n_t = nref(2) * absdet;
+                    // Vec<3> n (n_sp(0),n_sp(1),n_t);
+                    double fac = 1.0; // L2Norm(n);
+                    meas_of_dt[IF] +=  compositerule.quadrule_if.weights[i] * fac;
+                }
+                for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                {
+                    Vec<2> st_point = compositerule.quadrule_neg.points[i];
+                    IntegrationPoint ip(st_point(0),st_point(1));
+                    MappedIntegrationPoint<2,2> mip(ip,eltrans);
+                    Vec<2> mapped_point = mip.GetPoint();
+                    outneg_s << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
+                    // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                }
+                outneg_s << endl;
+                outneg_s << endl;
+                for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
+                {
+                    Vec<2> st_point = compositerule.quadrule_if.points[i];
+                    IntegrationPoint ip(st_point(0),st_point(1));
+                    MappedIntegrationPoint<2,2> mip(ip,eltrans);
+                    Vec<2> mapped_point = mip.GetPoint();
+                    outif_s << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
+                    // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                }
+                outif_s << endl;
+                outif_s << endl;
+            }
+
+            
+            if ( et_space == ET_TET && et_time == ET_SEGM)
             {
                 const ScalarSpaceTimeFiniteElement<3> &  fel_st 
                     = dynamic_cast<const ScalarSpaceTimeFiniteElement<3> & >(fel);
