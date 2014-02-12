@@ -67,10 +67,10 @@ namespace xintegration
   // Decompose the geometry K = T x I with T \in {trig,tet} and I \in {segm, point} into simplices of corresponding dimensions
   // D is the dimension of the spatial object, SD is the dimension of the resulting object T
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void DecomposeIntoSimplices(Array<Vec<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> > & verts,
-                              Array<Simplex<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> *>& ret, 
-                              PointContainer<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> & pc, 
-                              LocalHeap & lh)
+  void DecomposePrismIntoSimplices(Array<const Vec<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> *> & verts,
+                                   Array<Simplex<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> *>& ret, 
+                                   PointContainer<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> & pc, 
+                                   LocalHeap & lh)
   {
     enum { D = ET_trait<ET_SPACE>::DIM };
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM};
@@ -85,28 +85,28 @@ namespace xintegration
 	  case ET_TRIG:
 	  case ET_TET:
       {
-        Array< const Vec<SD> * > p(2*(SD));
-        for (int i = 0; i < SD; ++i)
-        {
-          Vec<SD> newpoint;
-          Vec<SD> newpoint2;
-          for (int d = 0; d < D; ++d)
-          {
-            newpoint[d] = verts[i][d];
-            newpoint2[d] = verts[i][d];
-          }
-          newpoint[D] = 0.0;
-          newpoint2[D] = 1.0;
+        // Array< const Vec<SD> * > p(2*(SD));
+        // for (int i = 0; i < SD; ++i)
+        // {
+        //   Vec<SD> newpoint;
+        //   Vec<SD> newpoint2;
+        //   for (int d = 0; d < D; ++d)
+        //   {
+        //     newpoint[d] = (*verts[i])[d];
+        //     newpoint2[d]= (*verts[i])[d];
+        //   }
+        //   newpoint[D] = 0.0;
+        //   newpoint2[D] = 1.0;
 
-          p[i] = pc(newpoint);
-          p[i+SD] = pc(newpoint2);
-        }
+        //   p[i] = pc(newpoint);
+        //   p[i+SD] = pc(newpoint2);
+        // }
 
         Array< const Vec<SD> * > tet(SD+1);
         for (int i = 0; i < SD; ++i)
         {
           for (int j = 0; j < SD+1; ++j)
-            tet[j] = p[i+j];
+            tet[j] = verts[i+j];
           ret.Append(new (lh) Simplex<SD> (tet));
         }
 
@@ -127,18 +127,7 @@ namespace xintegration
 	  case ET_TRIG:
 	  case ET_TET:
       {
-        Array< const Vec<SD> * > tet(D+1);
-        for (int i = 0; i < D+1; ++i)
-        {
-          Vec<SD> newpoint;
-          for (int d = 0; d < D; ++d)
-          {
-            newpoint[d] = verts[i][d];
-          }
-          tet[i] = pc(newpoint);
-        }
-
-        ret.Append(new (lh) Simplex<SD> (tet));
+        ret.Append(new (lh) Simplex<SD> (verts));
 
         // cout << " report \n";
         // for (int i = 0; i < ret.Size(); ++i)
@@ -157,6 +146,7 @@ namespace xintegration
   template <int D, int SD>
   void EvaluateLevelset (const ScalarSpaceTimeFEEvaluator<D> & lset, Array<Simplex<SD> *>& ret)
   {
+    throw Exception(" Well, this is embarassing - not implemented yet ");
     for (int i = 0; i < ret.Size(); ++i)
     {
       Simplex<SD> & simp = *ret[i];
@@ -171,8 +161,6 @@ namespace xintegration
   template<int D>
   void Decompose(ELEMENT_TYPE et, const ScalarSpaceTimeFEEvaluator<D> & stfeeval)
   {
-
-    
 	switch (et)
 	  {
 	  case ET_TRIG:
@@ -188,9 +176,8 @@ namespace xintegration
         throw Exception(" this ELEMENT_TYPE is not treated... yet ");
         break;
 	  }
-
-
   }
+
 }
 
 #endif

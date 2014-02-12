@@ -40,7 +40,7 @@ define coefficient lset1
 define fespace fes_st 
        -type=spacetimefes 
        -type_space=h1ho
-       -order_space=1
+       -order_space=4
        -all_dofs_together
        -order_time=1
 #       -print
