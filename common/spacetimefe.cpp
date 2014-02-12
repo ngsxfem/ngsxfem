@@ -27,9 +27,9 @@ namespace ngfem
   template <int D>
   ScalarSpaceTimeFiniteElement<D> :: ScalarSpaceTimeFiniteElement(const ScalarFiniteElement<D> & a_base_space,
                                                                   const DGFiniteElement<1> & a_base_time)
-    :  scalar_space(a_base_space),
-       scalar_time(a_base_time),
-       SpaceTimeFiniteElement(a_base_space, a_base_time)
+    :  SpaceTimeFiniteElement(a_base_space, a_base_time),
+       scalar_space(a_base_space),
+       scalar_time(a_base_time)
   { 
   };
 

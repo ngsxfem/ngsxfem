@@ -115,7 +115,7 @@ public:
         for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
             HeapReset hr(lh);
-            Ngs_Element ngel = ma.GetElement(elnr);
+            // Ngs_Element ngel = ma.GetElement(elnr);
 
             ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
             ELEMENT_TYPE et_space = eltrans.GetElementType();
