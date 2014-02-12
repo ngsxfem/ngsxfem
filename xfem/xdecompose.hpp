@@ -34,14 +34,34 @@ namespace xintegration
       bool haspos = false;
       bool hasneg = false;
 
+      double sumneg = 0.0;
+      double sumpos = 0.0;
+      double sumposneg = 0.0;
+
       for (int i = 0; i < D+1; ++i)
       {
         const double lsetval = lset(*(p[i]));
         if (lsetval >= 0.0)
+        {
+          sumpos += lsetval;
           haspos = true;
+        }
         else
+        {
+          sumneg -= lsetval;
           hasneg = true;
+        }
       }
+
+      sumposneg = sumpos+sumneg;
+      sumpos/=sumposneg;
+      sumneg/=sumposneg;
+
+      if (sumpos < 1e-14)
+        haspos = false;
+
+      if (sumneg < 1e-14)
+        hasneg = false;
 
       if(haspos && hasneg)
       {
@@ -51,7 +71,13 @@ namespace xintegration
         if (haspos)
           return POS;
         else
-          return NEG;
+          if (hasneg)
+            return NEG;
+          else
+          {
+            throw Exception(" this is not possible, is it?");
+            return IF;
+          }
     }
   };
 
