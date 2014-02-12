@@ -284,6 +284,13 @@ namespace xintegration
           }
           const ngfem::ScalarSpaceTimeFEEvaluator<ET_trait<ET_SPACE>::DIM> & eval (lset);
           const double lsetval = eval(position);
+
+          if (lsetval > distance_threshold)
+            return POS;
+
+          if (lsetval < -distance_threshold)
+            return NEG;
+
           if (lsetval >= 0.0)
             haspos = true;
           else

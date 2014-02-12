@@ -155,6 +155,11 @@ namespace xintegration
     /// integration order in time (in case a tensor-product rule can be applied)
     int int_order_time = 0;
 
+    /// once a level absolute value is larger than threshold the prism is considered non-intersected
+    double distance_threshold = 1e99;
+
+    void SetDistanceThreshold( const double & a_distance_threshold ){ distance_threshold = distance_threshold; }
+
     LocalHeap & lh;
     /// 
     CompositeQuadratureRule<SD> & compquadrule;
