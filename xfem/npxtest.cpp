@@ -143,6 +143,7 @@ public:
                 CompositeQuadratureRule<3> compositerule;
                 NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc,
                                                                      compositerule, 
+                                                                     lh,
                                                                      order_space, order_time,
                                                                      num_int_ref_space, 
                                                                      num_int_ref_time);
@@ -169,6 +170,7 @@ public:
                 CompositeQuadratureRule<4> compositerule;
                 NumericalIntegrationStrategy<ET_TET,ET_SEGM> numint(lset_eval, pc,
                                                                     compositerule, 
+                                                                    lh,
                                                                     order_space, order_time,
                                                                     num_int_ref_space, 
                                                                     num_int_ref_time);

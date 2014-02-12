@@ -2,6 +2,7 @@
 #define FILE_XINTEGRATION_HPP
 
 #include "../common/spacetimefe.hpp"   // for ScalarSpaceTimeFiniteElement
+#include "xdecompose.hpp"
 
 #include <set>
 #include <vector>
@@ -10,7 +11,8 @@ using namespace ngfem;
 
 namespace xintegration
 {
-  /// struct which defines the relation a < b for Point4DCL (in order to use std::set-features)
+  /// struct which defines the relation a < b for Point4DCL 
+  /// (in order to use std::set-features)
   template< int SD>
   struct Pointless {
     bool operator() (const Vec<SD> & a, const Vec<SD> & b) const {
@@ -31,10 +33,10 @@ namespace xintegration
   };
 
 
-  /// Container set constitutes a collection of PointXDs 
+  /// Container set constitutes a collection of Vec<D> 
   /// main feature: the operator()(const PointXDCL & p)
   /// The points in the container are owned and later 
-  /// released by Point4DContainer
+  /// released by PointContainer
   template<int SD>
   class PointContainer
   {
@@ -57,8 +59,8 @@ namespace xintegration
     /// Either point is already in the Container, 
     ///   then return pointer to that point
     /// or point is not in the Container yet,
-    ///   then add point to container and return pointer to new Point4D
-    /// The return value (pointer ) points to a Point4D which is owned
+    ///   then add point to container and return pointer to new Vec<D>
+    /// The return value (pointer ) points to a Vec<D> which is owned
     /// and later released by PointContainer
     const Vec<SD>* operator()(const Vec<SD> & p)
     {
@@ -89,41 +91,35 @@ namespace xintegration
     ~PointContainer(){};
   };
 
-  enum DOMAIN_TYPE { POS = 0, NEG = 1, IF = 2};
+  /// outstream which add the identifier for the domain types
+  ostream & operator<<(ostream & s, DOMAIN_TYPE dt);
 
-  ostream & operator<<(ostream & s, DOMAIN_TYPE dt)
-  {
-    switch (dt)
-	{
-	case NEG: 
-      s << "NEG";
-      break;
-	case POS: 
-      s << "POS";
-      break;
-	case IF: 
-      s << "IF";
-      break;
-	default:
-      ;
-	}
-  }
-
+  /// simple class that constitutes a quadrature
+  /// (here we don't use) IntegrationPoints or IntegrationRule
+  /// because of a potential 4th dimension
   template < int SD >
   struct QuadratureRule
   {
+    /// the quadrature points
     Array < Vec<SD> > points;
+    /// the quadrature weights
     Array < double > weights;
+    /// return number of integration points 
     int Size() { return points.Size(); }
   };
 
+  /// class that constitutes the components of a composite 
+  /// quadrature rule 
   template < int SD >
   struct CompositeQuadratureRule
   {
+    /// Quadrature rule for positive domain
     QuadratureRule<SD> quadrule_pos;
+    /// Quadrature rule for negative domain
     QuadratureRule<SD> quadrule_neg;
+    /// Quadrature rule for interface
     QuadratureRule<SD> quadrule_if;
-    
+    /// Interface for accessing the rules via DOMAIN_TYPE
     QuadratureRule<SD> & GetRule(DOMAIN_TYPE dt)
     {
       switch (dt)
@@ -144,17 +140,31 @@ namespace xintegration
     }
   };
 
-  // does only make sense for D==3
+  /// Calculate Determinant of a Matrix (used for Transformation Weights)
   template < int D >
   inline double Determinant (const Vec<D> & col1,
 			     const Vec<D> & col2,
 			     const Vec<D> & col3)
   {
-    return
-      col1[0] * ( col2[1] * col3[2] - col2[2] * col3[1]) +
-      col1[1] * ( col2[2] * col3[0] - col2[0] * col3[2]) +
-      col1[2] * ( col2[0] * col3[1] - col2[1] * col3[0]);
+    if (D==3)
+      return
+        col1[0] * ( col2[1] * col3[2] - col2[2] * col3[1]) +
+        col1[1] * ( col2[2] * col3[0] - col2[0] * col3[2]) +
+        col1[2] * ( col2[0] * col3[1] - col2[1] * col3[0]);
+    else
+      return
+        col1(0) * col2(1) - col1(1) * col2(0);
   }
+
+  template <int D>
+  void FillSimplexWithRule (const Simplex<D> & s, QuadratureRule<D> & quaddom, int intorder);
+  template <>
+  void FillSimplexWithRule<2> (const Simplex<2> & s, QuadratureRule<2> & quaddom, int intorder);
+  template <>
+  void FillSimplexWithRule<3> (const Simplex<3> & s, QuadratureRule<3> & quaddom, int intorder);
+  template <>
+  void FillSimplexWithRule<4> (const Simplex<4> & s, QuadratureRule<4> & quaddom, int intorder);
+
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
@@ -162,113 +172,79 @@ namespace xintegration
   {
   public:
 
+    /// Space dimension 
     enum { D = ET_trait<ET_SPACE>::DIM };
+    /// Space-time dimension (if not space time SD==D)
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM };
-
+    /// Levelset function through the evaluator
     const ScalarSpaceTimeFEEvaluator<D> & lset;
+    /// PointContainer contains all points that are used during the decomposition
+    /// With this container multiple allocations are avoided
+    /// Since this (adaptive) strategy only needs to store the vertices locally
+    /// This Container might be dropped sooner or later
     PointContainer<SD> & pc;
 
+    /// vertices of the spatial element
     Array< Vec<D> > verts_space;
+    /// vertices of the temporal element (t0,t1,t2,t3,..,tN) 
+    /// with N = 2^rn + 1 with rn = ref_level_time
     Array< double > verts_time;
 
+    /// maximum number of refinements in space for numerical integration
     int ref_level_space = 0;
+    /// maximum number of refinements in time for numerical integration
     int ref_level_time = 0;
+    /// integration order in space (in case a tensor-product rule can be applied)
     int int_order_space = 0;
+    /// integration order in time (in case a tensor-product rule can be applied)
     int int_order_time = 0;
 
+    LocalHeap & lh;
+    /// 
     CompositeQuadratureRule<SD> & compquadrule;
 
-    int GetIntegrationOrderMax() const{ return max(int_order_space, int_order_time); }
-
-    
-    NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a, int reduce_ref_space = 0, int reduce_ref_time = 0)
-      : lset(a.lset), pc(a.pc), 
-        int_order_space(a.int_order_space), int_order_time(a.int_order_time),
-        ref_level_space(a.ref_level_space-reduce_ref_space), ref_level_time(a.ref_level_time-reduce_ref_time),
-        compquadrule(a.compquadrule)
-    {
+    /// Integration Order which is used on decomposed geometries
+    /// it's the maximum of int_order_space and int_order_time
+    int GetIntegrationOrderMax() const
+    { 
+      return max(int_order_space, int_order_time); 
     }
+    
+    /// constructor: basically copying from input, typically adapting ref_level 
+    /// in space or time. Typically called from an adaptive strategy.
+    NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a, 
+                                 int reduce_ref_space = 0, 
+                                 int reduce_ref_time = 0);
 
-    NumericalIntegrationStrategy(const ScalarSpaceTimeFEEvaluator<D> & a_lset, PointContainer<SD> & a_pc, 
+    /// constructor: prescribing all the input except for the vertices (space and time)
+    NumericalIntegrationStrategy(const ScalarSpaceTimeFEEvaluator<D> & a_lset, 
+                                 PointContainer<SD> & a_pc, 
                                  CompositeQuadratureRule<SD> & a_compquadrule,
-                                 int a_int_order_space = 2, int a_int_order_time = 2, 
-                                 int a_ref_level_space = 0, int a_ref_level_time = 0 )
-      : lset(a_lset), pc(a_pc), 
-        ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
-        int_order_space(a_int_order_space), int_order_time(a_int_order_time),
-      compquadrule(a_compquadrule)
-    {
-      ;
-    }
+                                 LocalHeap & lh,
+                                 int a_int_order_space = 2, 
+                                 int a_int_order_time = 2, 
+                                 int a_ref_level_space = 0, 
+                                 int a_ref_level_time = 0 );
     
-    void SetVerticesSpace(const Array<Vec<D> > & verts)
-    {
-      verts_space.SetSize(verts.Size());
-      for (int i = 0; i < verts.Size(); ++i)
-        verts_space[i] = verts[i];
-    }
+    /// Set Vertices according to input
+    void SetVerticesSpace(const Array<Vec<D> > & verts);
 
-    void SetVerticesSpace()
-    {
-      const POINT3D * verts = ElementTopology::GetVertices(ET_SPACE);
-      const int nv = ElementTopology::GetNVertices(ET_SPACE);
+    /// Set Vertices according reference geometry of ET_SPACE
+    void SetVerticesSpace();
 
-      verts_space.SetSize(nv);
-      for (int i = 0; i < nv; ++i)
-      {
-        Vec<D> newvert;
-        for (int d = 0; d < D; ++d)
-          verts_space[i][d] = verts[i][d];
-      }
-    }
+    /// Set Vertices according to input
+    void SetVerticesTime(const Array<double> & verts);
 
-    void SetVerticesTime(const Array<double> & verts)
-    {
-      verts_time.SetSize(verts.Size());
-      for (int i = 0; i < verts.Size(); ++i)
-        verts_time[i] = verts[i];
-    }
+    /// Set Vertices according int_order_time
+    void SetVerticesTime();
 
-    void SetVerticesTime()
-    {
-      const int np1dt = pow(2,ref_level_time);
-      const double ht = 1.0 / np1dt;
-      verts_time.SetSize(np1dt+1);
-      for (int i = 0; i < np1dt + 1; ++i)
-      {
-        verts_time[i] = i * ht;
-      }
-    }
+    /// Set Vertices according to latest half of input
+    void SetVerticesTimeFromUpperHalf(const Array< double >& verts_t);
 
-    void SetVerticesTimeFromUpperHalf(const Array< double >& verts_t)
-    {
-      const int newsize = (verts_t.Size()+1)/2;
-      const int offset = (verts_t.Size()-1)/2;
-      verts_time.SetSize(newsize);
-      for (int i = 0; i < newsize; ++i)
-      {
-        verts_time[i] = verts_t[offset+i];
-      }
-    }
-
-    void SetVerticesTimeFromLowerHalf(const Array< double >& verts_t)
-    {
-      const int newsize = (verts_t.Size()+1)/2;
-      verts_time.SetSize(newsize);
-      for (int i = 0; i < newsize; ++i)
-      {
-        verts_time[i] = verts_t[i];
-      }
-    }
-
-
+    /// Set Vertices according to first half of input
+    void SetVerticesTimeFromLowerHalf(const Array< double >& verts_t);
 
   };
-
-  template class NumericalIntegrationStrategy<ET_TRIG, ET_SEGM>;
-  template class NumericalIntegrationStrategy<ET_TET, ET_SEGM>;
-  template class NumericalIntegrationStrategy<ET_TRIG, ET_POINT>;
-  template class NumericalIntegrationStrategy<ET_TET, ET_POINT>;
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
@@ -284,14 +260,14 @@ namespace xintegration
     double dx_scalar = 1.0 / np1ds;
     
     Array<double> time (0);
-    double ht = 1.0;
+    // double ht = 1.0;
 
     switch (ET_SPACE)
     {
     case ET_TRIG:
     case ET_TET:
     {
-      int sum = 0;
+      // int sum = 0;
       INT< ET_trait<ET_SPACE>::DIM > I;
       Vec< ET_trait<ET_SPACE>::DIM + 1> position;
       for (int i = 0; i < ET_trait<ET_SPACE>::DIM; ++i)
@@ -385,18 +361,20 @@ namespace xintegration
         return NEG;
     }
     break;
-    default:  // for the compiler
+    default:
       throw Exception(" this CheckIfCut::ELEMENT_TYPE is not treated... yet ");
       break;
     }
   }
 
+
+  /// adaptive strategy to generate composite quadrature rule on tensor product geometry
+  /// ...
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   DOMAIN_TYPE MakeQuadRule(const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
   {
-
-    const int D = ET_trait<ET_SPACE>::DIM;
-    const int SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM;
+    enum { D = ET_trait<ET_SPACE>::DIM };
+    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM};
 
     DOMAIN_TYPE dt_self = CheckIfCut(numint);
 
@@ -425,13 +403,15 @@ namespace xintegration
         numint_upper.SetVerticesSpace(numint.verts_space);
         numint_upper.SetVerticesTimeFromUpperHalf(numint.verts_time);
         // cout << " call upper " << endl;
-        DOMAIN_TYPE dt_upper = MakeQuadRule(numint_upper);
+        // DOMAIN_TYPE dt_upper = 
+        MakeQuadRule(numint_upper);
 
         NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_lower (numint, 0, 1);
         numint_lower.SetVerticesSpace(numint.verts_space);
         numint_lower.SetVerticesTimeFromLowerHalf(numint.verts_time);
         // cout << " call lower " << endl;
-        DOMAIN_TYPE dt_lower = MakeQuadRule(numint_lower);
+        // DOMAIN_TYPE dt_lower = 
+        MakeQuadRule(numint_lower);
 
         // cout << " dt_upper: " << dt_upper << endl;
         // cout << " dt_lower: " << dt_lower << endl;
@@ -495,7 +475,8 @@ namespace xintegration
             numint_i.SetVerticesSpace(newverts);
             // getchar();
             // cout << " call s(" << i << ")" << endl;
-            DOMAIN_TYPE dt_i = MakeQuadRule(numint_i);
+            // DOMAIN_TYPE dt_i = 
+            MakeQuadRule(numint_i);
             // cout << " dt_s(" << i << "): " << dt_i << endl;
 
           }
@@ -503,8 +484,84 @@ namespace xintegration
         }
         else
           throw Exception(" tut tut - 3D not yet implemented");
+      } 
+      else
+      {
+        Array<Simplex<SD> *> simplices;
+        const int nvt = ET_TIME == ET_SEGM ? 2 : 1;
+        const int nvs = numint.verts_space.Size();
+        Array<Vec<SD> > verts(nvs * nvt);
+
+        for (int K = 0; K < 2; ++K)
+          for (int i = 0; i < nvs; ++i)
+          {
+            for (int j = 0; j < D; ++j)
+              verts[i+K*nvs][j] = numint.verts_space[i][j]; 
+            verts[i+K*nvs][D] = K == 0? numint.verts_time[0] : numint.verts_time[numint.verts_time.Size()-1];
+          }
+        
+        DecomposeIntoSimplices<ET_SPACE,ET_TIME>(verts, simplices, numint.pc, numint.lh);
+
+        const ngfem::ScalarSpaceTimeFEEvaluator<D> & eval (numint.lset);
+
+        for (int i = 0; i < simplices.Size(); ++i)
+        {
+          DOMAIN_TYPE dt_simplex = simplices[i]->CheckIfCut(eval);
+
+          if (dt_simplex == IF)
+          {
+            if (SD==3 && ET_TIME == ET_SEGM)
+            {
+              Array< Vec<SD> > cutpoints(0);
+              Array< Vec<SD> > pospoints(0);
+              Array< Vec<SD> > negpoints(0);
+              
+              const int edge[6][2] = { {0, 1},
+                                       {0, 2},
+                                       {0, 3},
+                                       {1, 2},
+                                       {1, 3},
+                                       {2, 3}};
+
+              double vvals[4];
+              for (int j = 0; j < 4; ++j)
+              {
+                vvals[j] = numint.lset(*simplices[i]->p[j]);
+                if (vvals[j] >= 0)
+                  pospoints.Append(*simplices[i]->p[j]);
+                else
+                  negpoints.Append(*simplices[i]->p[j]);
+              }
+              for (int j = 0; j < 6; ++j)
+              {
+                const int lv = edge[j][0];
+                const int rv = edge[j][0];
+                const double valleft = vvals[lv];
+                const double valright = vvals[rv];
+                if (valleft * valright < 0)
+                {
+                  const double cutpos = valleft / (valleft - valright);
+                  Vec<SD> p = (1-cutpos) * (*simplices[i]->p[lv]) + cutpos * (*simplices[i]->p[rv]) ;
+                  cutpoints.Append(p);
+                  negpoints.Append(p);
+                  pospoints.Append(p);
+                }
+              }
+              //TODO continue here...
+            }
+            else
+              throw Exception(" only space-time in 2D so far");
+          }
+          else
+          {
+            FillSimplexWithRule<SD>(*simplices[i], 
+                                    numint.compquadrule.GetRule(dt_simplex), 
+                                    numint.GetIntegrationOrderMax());
+          }
+        }
+        // cout << "TODO: Call Decomposition into uncut simplices" << endl;
+
       }
-      // cout << "TODO: Call Decomposition into uncut simplices" << endl;
       return IF;
     }
     else
@@ -542,14 +599,14 @@ namespace xintegration
           Vec<ET_trait<ET_SPACE>::DIM> point(0.0);
           point = numint.verts_space[0];
           for (int m = 0; m < D ;++m)
-            point += ir_space[k](m) * numint.verts_space[m];
+            point += ir_space[k](m) * numint.verts_space[m+1];
 
           const double weight = ir_time[l].Weight() * dt * ir_space[k].Weight() * trafofac;
           Vec<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> ipoint(0.0);
           
           for (int m = 0; m < D ;++m)
             ipoint(m) = point(m);
-          if (D != SD)
+          if (ET_trait<ET_TIME>::DIM > 0)
             ipoint(SD-1) = current;
           
           numint.compquadrule.GetRule(dt_self).points.Append(ipoint);
@@ -562,153 +619,6 @@ namespace xintegration
     }
   }
 
-
-  template <int D>
-  class Simplex
-  {
-  protected:
-  public:
-    bool cut;
-    Array< const Vec<D> * > p;
-    Simplex(const Array< const Vec<D> * > & a_p): p(a_p)
-    {
-      ;
-    }
-  };
-
-  template <int D>
-  inline ostream & operator<< (ostream & ost, const Simplex<D> & s)
-  {
-    for (int i = 0; i < D+1; i++)
-      ost << i << ":" << *(s.p[i]) << "\t";
-    ost << endl;
-    return ost;
-  }
-
-  // Decompose the geometry K = T x I with T \in {trig,tet} and I \in {segm, point} into simplices of corresponding dimensions
-  // D is the dimension of the spatial object, SD is the dimension of the resulting object T
-  template<int D, int SD>
-  void DecomposeIntoSimplices(ELEMENT_TYPE et_space, ELEMENT_TYPE et_time, 
-                              Array<Simplex<SD> *>& ret, PointContainer<SD> & pc, LocalHeap & lh)
-  {
-    ret.SetSize(0);
-    cout << " et_space : " << et_space << endl;
-    cout << " et_time : " << et_space << endl;
-    if (et_time == ET_SEGM)
-    {
-      switch (et_space)
-	  {
-	  case ET_TRIG:
-	  case ET_TET:
-      {
-        const POINT3D * verts = ElementTopology::GetVertices(et_space);
-        Array< const Vec<SD> * > p(2*(SD));
-        for (int i = 0; i < SD; ++i)
-        {
-          Vec<SD> newpoint;
-          Vec<SD> newpoint2;
-          for (int d = 0; d < D; ++d)
-          {
-            newpoint[d] = verts[i][d];
-            newpoint2[d] = verts[i][d];
-          }
-          newpoint[D] = 0.0;
-          newpoint2[D] = 1.0;
-
-          p[i] = pc(newpoint);
-          p[i+SD] = pc(newpoint2);
-        }
-
-        Array< const Vec<SD> * > tet(SD+1);
-        for (int i = 0; i < SD; ++i)
-        {
-          for (int j = 0; j < SD+1; ++j)
-            tet[j] = p[i+j];
-          ret.Append(new (lh) Simplex<SD> (tet));
-        }
-
-        cout << " report \n";
-        for (int i = 0; i < ret.Size(); ++i)
-          cout << " simplex " << i << ": " << *ret[i] << endl;
-      }
-      break;
-      default:  // for the compiler
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-        break;
-	  }
-    }
-    else if (et_time == ET_POINT)
-    {
-      switch (et_space)
-	  {
-	  case ET_TRIG:
-	  case ET_TET:
-      {
-        const POINT3D * verts = ElementTopology::GetVertices(et_space);
-        Array< const Vec<SD> * > tet(D+1);
-        for (int i = 0; i < D+1; ++i)
-        {
-          Vec<SD> newpoint;
-          for (int d = 0; d < D; ++d)
-          {
-            newpoint[d] = verts[i][d];
-          }
-          tet[i] = pc(newpoint);
-        }
-
-        ret.Append(new (lh) Simplex<SD> (tet));
-
-        cout << " report \n";
-        for (int i = 0; i < ret.Size(); ++i)
-          cout << " simplex " << i << ": " << *ret[i] << endl;
-      }
-      break;
-      default:  // for the compiler
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-        break;
-	  }
-    }
-    else
-      throw Exception(" this ELEMENT_TYPE et_time is not treated... yet ");
-  }
-
-  template <int D, int SD>
-  void EvaluateLevelset (const ScalarSpaceTimeFEEvaluator<D> & lset, Array<Simplex<SD> *>& ret)
-  {
-    for (int i = 0; i < ret.Size(); ++i)
-    {
-      Simplex<SD> & simp = *ret[i];
-      for (int j = 0; j < SD+1; ++j)
-      {
-
-      }
-    }
-  }
-
-
-  template<int D>
-  void Decompose(ELEMENT_TYPE et, const ScalarSpaceTimeFEEvaluator<D> & stfeeval)
-  {
-
-    
-	switch (et)
-	  {
-	  case ET_TRIG:
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-	    break;
-	  case ET_QUAD:
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-	    break;
-	  case ET_TET:
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-	    break;
-      default:  // for the compiler
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-        break;
-	  }
-
-
-  }
 }
 
 #endif
