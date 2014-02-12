@@ -97,7 +97,10 @@ namespace xintegration
     for (int k = 0; k < ir.GetNIP(); k++)
     {
       Vec<3> point(0.0);
-      point = *s.p[0];
+      double originweight = 1.0;
+      for (int m = 0; m < 3 ;++m)
+        originweight -= ir[k](m);
+      point = originweight * (*s.p[0]);
       for (int m = 0; m < 3 ;++m)
         point += ir[k](m) * (*s.p[m+1]);
       const double weight = ir[k].Weight() * trafofac;
@@ -513,20 +516,29 @@ namespace xintegration
                                        {1, 2},
                                        {1, 3},
                                        {2, 3}};
-
+              
               double vvals[4];
+              bool zero[4];
+              
               for (int j = 0; j < 4; ++j)
               {
+                zero[j] = false;
                 vvals[j] = lset(*simplices[i]->p[j]);
-                if (vvals[j] >= 0)
+                if (vvals[j] > 0)
                 {
                   pospoints.Append(pc(*simplices[i]->p[j]));
                   posvidx.Append(j);
                 }
-                else
+                else if (vvals[j] < 0)
                 {
                   negpoints.Append(pc(*simplices[i]->p[j]));
                   negvidx.Append(j);
+                }
+                else // (vvals[j] == 0.0)
+                {
+                  pospoints.Append(pc(*simplices[i]->p[j]));
+                  posvidx.Append(j);
+                  zero[j] = true;
                 }
               }
 
@@ -541,9 +553,17 @@ namespace xintegration
                 const int rv = edge[j][1];
                 const double valleft = vvals[lv];
                 const double valright = vvals[rv];
-                if (valleft * valright < 0)
+                bool hascut = (valleft * valright < 0);
+                if (zero[lv] && valright < 0)
+                  hascut = true;
+
+                if (zero[rv] && valleft < 0)
+                  hascut = true;
+
+                if (hascut)
                 {
                   const double cutpos = valleft / (valleft - valright);
+                  // std::cout << " cutpos = " << cutpos << std::endl;
                   Vec<SD> p = (1-cutpos) * (*simplices[i]->p[lv]) + cutpos * (*simplices[i]->p[rv]) ;
                   cutpoints.Append(pc(p));
                   // collect connectivity of cut and vertices
@@ -558,16 +578,16 @@ namespace xintegration
                   cntcuts ++;
                 }
               }
-              
+
               if (cutpoints.Size() == 3) // three intersections: prism + tetra
               {
 
                 Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ? 
                                                        pospoints : negpoints);
-                DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? NEG : POS;
+                DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? POS : NEG;
                 Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ? 
                                                        pospoints : negpoints);
-                DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? NEG : POS;
+                DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? POS : NEG;
 
                 Array<int> & majvidx( negvidx.Size() > posvidx.Size() ? negvidx : posvidx);
 
@@ -664,7 +684,7 @@ namespace xintegration
                                             GetIntegrationOrderMax());
                   }
                 }
-              }
+              } // end of 3 or 4 cutpoints
               else
               {
                 cout << "cutpoints.Size() = " << cutpoints.Size() << endl;
