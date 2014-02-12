@@ -201,7 +201,7 @@ public:
                     IntegrationPoint ip(st_point(0),st_point(1));
                     MappedIntegrationPoint<D,D> mip(ip,eltrans);
                     Vec<2> mapped_point = mip.GetPoint();
-                    outif_s << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    outif_st << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                     // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
                     // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
                 }
