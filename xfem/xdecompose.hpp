@@ -28,7 +28,8 @@ namespace xintegration
       ;
     }
 
-    DOMAIN_TYPE CheckIfCut(const ScalarSpaceTimeFEEvaluator<D-1> & lset) const
+    template <int LD>
+    DOMAIN_TYPE CheckIfCut(const ScalarSpaceTimeFEEvaluator<LD> & lset) const
     {
       bool haspos = false;
       bool hasneg = false;

@@ -150,7 +150,7 @@ public:
                 numint.SetVerticesSpace();
                 numint.SetVerticesTime();
 
-                els_of_dt[MakeQuadRule(numint)]++;
+                els_of_dt[numint.MakeQuadRule()]++;
                 
                 for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
                     meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
@@ -177,7 +177,7 @@ public:
                 numint.SetVerticesSpace();
                 numint.SetVerticesTime();
 
-                els_of_dt[MakeQuadRule(numint)]++;
+                els_of_dt[numint.MakeQuadRule()]++;
 
                 for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
                     meas_of_dt[POS] += compositerule.quadrule_pos.weights[i];
