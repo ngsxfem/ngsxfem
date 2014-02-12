@@ -112,6 +112,8 @@ public:
         Array<double> meas_of_dt(3);
         meas_of_dt = 0.0;
 
+        ofstream outs("negpoints.out");
+
         for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
             HeapReset hr(lh);
@@ -149,6 +151,19 @@ public:
                                                                      num_int_ref_time);
                 numint.SetVerticesSpace();
                 numint.SetVerticesTime();
+                // numint.SetDistanceThreshold(0.125);
+                // IntegrationPoint ip1(0.0,0.0);
+                // IntegrationPoint ip2(1.0,0.0);
+                // IntegrationPoint ip3(0.0,1.0);
+                // MappedIntegrationPoint<D,D> mip1(ip1,eltrans);
+                // MappedIntegrationPoint<D,D> mip2(ip2,eltrans);
+                // MappedIntegrationPoint<D,D> mip3(ip3,eltrans);
+                // cout << " triangle is : \n" ;
+                // cout << "   " << mip1.GetPoint() << endl;
+                // cout << "   " << mip2.GetPoint() << endl;
+                // cout << "   " << mip3.GetPoint() << endl;
+
+                
 
                 els_of_dt[numint.MakeQuadRule()]++;
                 
@@ -158,6 +173,20 @@ public:
                     meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
                 for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
                     meas_of_dt[IF] += compositerule.quadrule_if.weights[i];
+
+
+
+                for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                {
+                    Vec<3> st_point = compositerule.quadrule_neg.points[i];
+                    IntegrationPoint ip(st_point(0),st_point(1));
+                    MappedIntegrationPoint<D,D> mip(ip,eltrans);
+                    Vec<2> mapped_point = mip.GetPoint();
+                    outs << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    // cout << ip(0) << "\t" << ip(1) << "\t" << st_point(2) << endl;
+                    // cout << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                }
+                outs << endl;
                 
             }
             else if ( et_space == ET_TET && et_time == ET_SEGM)
