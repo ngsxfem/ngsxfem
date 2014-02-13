@@ -238,16 +238,16 @@ namespace xintegration
   void FillSimplexWithRule<4> (const Simplex<4> & s, QuadratureRule<4> & quaddom, int intorder);
 
   template <int D>
-  void FillSimplexCoDim1WithRule (const Array< const Vec<D> *> & s, 
+  void FillSimplexCoDim1WithRule (const Array< const Vec<D> *> & s, const Vec<D> & pospoint,
                                   QuadratureRuleCoDim1<D> & quaddom, int intorder);
   template <>
-  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, 
+  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, const Vec<2> & pospoint,
                                      QuadratureRuleCoDim1<2> & quaddom, int intorder);
   template <>
-  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, 
+  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, const Vec<3> & pospoint,
                                      QuadratureRuleCoDim1<3> & quaddom, int intorder);
   template <>
-  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, 
+  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, const Vec<4> & pospoint,
                                      QuadratureRuleCoDim1<4> & quaddom, int intorder);
 
   namespace DecompositionRules

@@ -115,19 +115,28 @@ namespace xintegration
 
 
   template<>
-  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, QuadratureRuleCoDim1<4> & quaddom, int intorder)
+  void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, const Vec<4> & pospoint,
+                                     QuadratureRuleCoDim1<4> & quaddom, int intorder)
   {
     throw Exception(" nonono - still no 4");
   }
 
   template<>
-  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, QuadratureRuleCoDim1<3> & quaddom, int intorder)
+  void FillSimplexCoDim1WithRule<3> (const Array< const Vec<3> *> & s, const Vec<3> & pospoint,
+                                     QuadratureRuleCoDim1<3> & quaddom, int intorder)
   {
     Vec<3> a = *s[1] - *s[0];
     Vec<3> b = *s[2] - *s[0];
     Vec<3> c = Cross(a,b);
     const double trafofac = L2Norm(c);
     c /= trafofac;
+
+    //sign check and probably switch
+    Vec<3> d = pospoint - *s[0];
+    if (InnerProduct(d,c) >= 0)
+      c *= -1.0;
+    
+
     const IntegrationRule & ir = SelectIntegrationRule (ET_TRIG, intorder);
 
     for (int k = 0; k < ir.GetNIP(); k++)
@@ -147,12 +156,19 @@ namespace xintegration
   }
 
   template<>
-  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, QuadratureRuleCoDim1<2> & quaddom, int intorder)
+  void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, const Vec<2> & pospoint,
+                                     QuadratureRuleCoDim1<2> & quaddom, int intorder)
   {
     Vec<2> a = *s[1] - *s[0];
     Vec<2> n(-a(1),a(0));
     const double trafofac = L2Norm(a);
     n /= trafofac;
+
+    //sign check and probably switch
+    Vec<2> d = pospoint - *s[0];
+    if (InnerProduct(d,n) >= 0)
+      n *= -1.0;
+
     const IntegrationRule & ir = SelectIntegrationRule (ET_SEGM, intorder);
 
     for (int k = 0; k < ir.GetNIP(); k++)
@@ -742,7 +758,8 @@ namespace xintegration
         }
                 
         // and the interface:
-        FillSimplexCoDim1WithRule<SD> ( cutpoints, numint.compquadrule.GetInterfaceRule(), 
+        FillSimplexCoDim1WithRule<SD> ( cutpoints, *pospoints[0],
+                                        numint.compquadrule.GetInterfaceRule(), 
                                         numint.GetIntegrationOrderMax());
 
 
@@ -871,9 +888,11 @@ namespace xintegration
           trig2[1] = cutpoints[ndiag2]; 
           trig2[2] = cutpoints[diag1]; 
                   
-          FillSimplexCoDim1WithRule<SD> ( trig1, numint.compquadrule.GetInterfaceRule(), 
+          FillSimplexCoDim1WithRule<SD> ( trig1, *pospoints[0],
+                                          numint.compquadrule.GetInterfaceRule(), 
                                           numint.GetIntegrationOrderMax());
-          FillSimplexCoDim1WithRule<SD> ( trig2, numint.compquadrule.GetInterfaceRule(), 
+          FillSimplexCoDim1WithRule<SD> ( trig2, *pospoints[0],
+                                          numint.compquadrule.GetInterfaceRule(), 
                                           numint.GetIntegrationOrderMax());
 
         }
@@ -1012,7 +1031,8 @@ namespace xintegration
         }
                 
         // and the interface:
-        FillSimplexCoDim1WithRule<SD> ( cutpoints, numint.compquadrule.GetInterfaceRule(), 
+        FillSimplexCoDim1WithRule<SD> ( cutpoints, *pospoints[0],
+                                        numint.compquadrule.GetInterfaceRule(), 
                                         numint.GetIntegrationOrderMax());
 
         
