@@ -99,19 +99,23 @@ typedef std::pair<double,double> TimeInterval;
   class ScalarSpaceTimeFEEvaluator
   {
   protected:
-    const ScalarSpaceTimeFiniteElement<D> & fe;
+    const ScalarSpaceTimeFiniteElement<D> * st_fe;
+    const ScalarFiniteElement<D> * s_fe;
     FlatVector<> linvec;
     mutable IntegrationPoint ip;
     LocalHeap & lh;
     mutable double fixedtime = 0;
     mutable bool timefixed = false;
   public:
-    ScalarSpaceTimeFEEvaluator(const ScalarSpaceTimeFiniteElement<D> & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
-      : fe(a_fe), 
-        linvec(a_linvec), 
+    ScalarSpaceTimeFEEvaluator(const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
+      : linvec(a_linvec), 
         lh(a_lh)
     {
-      ;
+      st_fe = dynamic_cast< const ScalarSpaceTimeFiniteElement<D> * >(&a_fe);
+      s_fe = dynamic_cast< const ScalarFiniteElement<D> * >(&a_fe);
+
+      if (st_fe == NULL && s_fe == NULL)
+        throw Exception("ScalarSpaceTimeFEEvaluator - constructor: cast failed...");
     }
     
     void FixTime(double a_fixedtime ) const 

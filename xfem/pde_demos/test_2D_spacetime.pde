@@ -93,7 +93,7 @@ numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct 
 
 numproc testxfem nptxfem 
         -levelset=u_st
-#        -spacetime
+        -spacetime
         -num_int_ref_space=0
         -num_int_ref_time=0
 

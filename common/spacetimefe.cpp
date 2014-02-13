@@ -188,16 +188,20 @@ namespace ngfem
   template <int D>
   double ScalarSpaceTimeFEEvaluator<D> :: operator()(const Vec<D+1>& point) const
   {
-    ip(0) = point(0);
-    ip(1) = point(1);
-    ip(2) = point(2);
+    for (int i = 0; i < D; ++i)
+      ip(i) = point(i);
 
     double ret = 0;
     {
       HeapReset hr(lh);
       FlatVector<> shape(linvec.Size(),lh);
-      const double time = timefixed ? fixedtime : point(D);
-      fe.CalcShapeSpaceTime(ip,time,shape,lh);
+      if (st_fe)
+      {
+        const double time = timefixed ? fixedtime : point(D);
+        st_fe->CalcShapeSpaceTime(ip,time,shape,lh);
+      }
+      else 
+        s_fe->CalcShape(ip,shape);
       ret = InnerProduct(shape,linvec);
     }
     

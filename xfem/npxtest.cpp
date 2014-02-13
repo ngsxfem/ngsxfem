@@ -211,10 +211,12 @@ public:
 
             if( et_space == ET_TRIG && et_time == ET_POINT)
             {
-                const ScalarSpaceTimeFiniteElement<2> &  fel_st 
-                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
-                ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
-                lset_eval.FixTime(0.0);
+                const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel
+                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
+
+                ScalarSpaceTimeFEEvaluator<2> lset_eval(fel, linvec, lh);
+                if (scal_st_fel != NULL)
+                  lset_eval.FixTime(0.0);
                 PointContainer<2> pc;
                 CompositeQuadratureRule<2> compositerule;
                 NumericalIntegrationStrategy<ET_TRIG,ET_POINT> numint(lset_eval, pc,
