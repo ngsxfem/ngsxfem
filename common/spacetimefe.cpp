@@ -196,9 +196,11 @@ namespace ngfem
     {
       HeapReset hr(lh);
       FlatVector<> shape(linvec.Size(),lh);
-      fe.CalcShapeSpaceTime(ip,point(D),shape,lh);
+      const double time = timefixed ? fixedtime : point(D);
+      fe.CalcShapeSpaceTime(ip,time,shape,lh);
       ret = InnerProduct(shape,linvec);
     }
+    
     return ret;
   }
 

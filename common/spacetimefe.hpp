@@ -103,6 +103,8 @@ typedef std::pair<double,double> TimeInterval;
     FlatVector<> linvec;
     mutable IntegrationPoint ip;
     LocalHeap & lh;
+    mutable double fixedtime = 0;
+    mutable bool timefixed = false;
   public:
     ScalarSpaceTimeFEEvaluator(const ScalarSpaceTimeFiniteElement<D> & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
       : fe(a_fe), 
@@ -110,6 +112,17 @@ typedef std::pair<double,double> TimeInterval;
         lh(a_lh)
     {
       ;
+    }
+    
+    void FixTime(double a_fixedtime ) const 
+    {
+      timefixed = true;
+      fixedtime = a_fixedtime;
+    }
+
+    void UnFixTime() const
+    {
+      timefixed = false;
     }
       
     double operator()(const Vec<D+1>& point) const;
