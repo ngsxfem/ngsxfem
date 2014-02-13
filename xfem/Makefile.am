@@ -6,7 +6,7 @@ AM_CPPFLAGS = -I$(netgendir)/include $(NETGEN_INCLUDES) $(LAPACK_INCLUDES) $(TCL
 
 lib_LTLIBRARIES = libngsxfem_test.la
 
-libngsxfem_test_la_SOURCES = npxtest.cpp xintegration.hpp xintegration.cpp
+libngsxfem_test_la_SOURCES = npxtest.cpp xintegration.hpp xintegration.cpp xdecompose.cpp xdecompose.hpp
 #libngsxfem_test_la_LIBADD = npxtest.la
 libngsxfem_test_la_LDFLAGS = -avoid-version -rdynamic $(SOLVER_LIBS) $(NETGEN_LIBS)
 

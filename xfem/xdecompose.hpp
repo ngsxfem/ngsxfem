@@ -81,6 +81,37 @@ namespace xintegration
     }
   };
 
+  /// helper function:
+  /// Calculate Determinant of a Matrix (used for Transformation Weights)
+  template < int D >
+  inline double Determinant (const Vec<D> & col1,
+			     const Vec<D> & col2,
+			     const Vec<D> & col3)
+  {
+    if (D==3)
+      return
+        col1[0] * ( col2[1] * col3[2] - col2[2] * col3[1]) +
+        col1[1] * ( col2[2] * col3[0] - col2[0] * col3[2]) +
+        col1[2] * ( col2[0] * col3[1] - col2[1] * col3[0]);
+    else
+      return
+        col1(0) * col2(1) - col1(1) * col2(0);
+  }
+
+  template<int D, int SD>
+  double Measure(const Array< const Vec<SD> *> & s);
+  template<>
+  double Measure<1,1>(const Array< const Vec<1> *> & s);
+  template<>
+  double Measure<1,2>(const Array< const Vec<2> *> & s);
+  template<>
+  double Measure<2,2>(const Array< const Vec<2> *> & s);
+  template<>
+  double Measure<2,3>(const Array< const Vec<3> *> & s);
+  template<>
+  double Measure<3,3>(const Array< const Vec<3> *> & s);
+
+
   template <int D>
   inline ostream & operator<< (ostream & ost, const Simplex<D> & s)
   {
@@ -91,117 +122,20 @@ namespace xintegration
   }
 
   // Decompose the geometry K = T x I with T \in {trig,tet} and I \in {segm, point} into simplices of corresponding dimensions
-  // D is the dimension of the spatial object, SD is the dimension of the resulting object T
-  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void DecomposePrismIntoSimplices(Array<const Vec<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> *> & verts,
-                                   Array<Simplex<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> *>& ret, 
-                                   PointContainer<ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> & pc, 
-                                   LocalHeap & lh)
+  template <int SD>
+  void DecomposePrismIntoSimplices(Array<const Vec<SD> *> & verts,
+                                    Array<Simplex<SD> *>& ret, 
+                                    PointContainer<SD> & pc, 
+                                    LocalHeap & lh)
   {
-    enum { D = ET_trait<ET_SPACE>::DIM };
-    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM};
-
-    ret.SetSize(0);
-    // cout << " et_space : " << ET_SPACE << endl;
-    // cout << " et_time : " << ET_TIME << endl;
-    if (ET_TIME == ET_SEGM)
+    ret.SetSize(SD);
+    Array< const Vec<SD> * > tet(SD+1);
+    for (int i = 0; i < SD; ++i)
     {
-      switch (ET_SPACE)
-	  {
-	  case ET_TRIG:
-	  case ET_TET:
-      {
-        // Array< const Vec<SD> * > p(2*(SD));
-        // for (int i = 0; i < SD; ++i)
-        // {
-        //   Vec<SD> newpoint;
-        //   Vec<SD> newpoint2;
-        //   for (int d = 0; d < D; ++d)
-        //   {
-        //     newpoint[d] = (*verts[i])[d];
-        //     newpoint2[d]= (*verts[i])[d];
-        //   }
-        //   newpoint[D] = 0.0;
-        //   newpoint2[D] = 1.0;
-
-        //   p[i] = pc(newpoint);
-        //   p[i+SD] = pc(newpoint2);
-        // }
-
-        Array< const Vec<SD> * > tet(SD+1);
-        for (int i = 0; i < SD; ++i)
-        {
-          for (int j = 0; j < SD+1; ++j)
-            tet[j] = verts[i+j];
-          ret.Append(new (lh) Simplex<SD> (tet));
-        }
-
-        // cout << " report \n";
-        // for (int i = 0; i < ret.Size(); ++i)
-        //   cout << " simplex " << i << ": " << *ret[i] << endl;
-      }
-      break;
-      default:  // for the compiler
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-        break;
-	  }
-    }
-    else if (ET_TIME == ET_POINT)
-    {
-      switch (ET_SPACE)
-	  {
-	  case ET_TRIG:
-	  case ET_TET:
-      {
-        ret.Append(new (lh) Simplex<SD> (verts));
-
-        // cout << " report \n";
-        // for (int i = 0; i < ret.Size(); ++i)
-        //   cout << " simplex " << i << ": " << *ret[i] << endl;
-      }
-      break;
-      default:  // for the compiler
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-        break;
-	  }
-    }
-    else
-      throw Exception(" this ELEMENT_TYPE et_time is not treated... yet ");
-  }
-
-  template <int D, int SD>
-  void EvaluateLevelset (const ScalarSpaceTimeFEEvaluator<D> & lset, Array<Simplex<SD> *>& ret)
-  {
-    throw Exception(" Well, this is embarassing - not implemented yet ");
-    for (int i = 0; i < ret.Size(); ++i)
-    {
-      Simplex<SD> & simp = *ret[i];
       for (int j = 0; j < SD+1; ++j)
-      {
-
-      }
+        tet[j] = verts[i+j];
+      ret[i] = new (lh) Simplex<SD> (tet);
     }
-  }
-
-
-  template<int D>
-  void Decompose(ELEMENT_TYPE et, const ScalarSpaceTimeFEEvaluator<D> & stfeeval)
-  {
-	switch (et)
-	  {
-	  case ET_TRIG:
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-	    break;
-	  case ET_QUAD:
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-	    break;
-	  case ET_TET:
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-	    break;
-      default:  // for the compiler
-        throw Exception(" this ELEMENT_TYPE is not treated... yet ");
-        break;
-	  }
   }
 
 }

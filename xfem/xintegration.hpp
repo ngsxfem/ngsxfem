@@ -261,6 +261,14 @@ namespace xintegration
 
     //partial specialization
     template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    struct CutSimplex<2,ET_SPACE,ET_TIME>
+    {
+        static void MakeQuad(const Simplex <2> & s, 
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+    };
+
+    //partial specialization
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
     struct CutSimplex<3,ET_SPACE,ET_TIME>
     {
         static void MakeQuad(const Simplex <3> & s, 
