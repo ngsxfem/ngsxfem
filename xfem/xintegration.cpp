@@ -150,7 +150,7 @@ namespace xintegration
   void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, QuadratureRuleCoDim1<2> & quaddom, int intorder)
   {
     Vec<2> a = *s[1] - *s[0];
-    Vec<2> n = (-a(1),a(0));
+    Vec<2> n(-a(1),a(0));
     const double trafofac = L2Norm(a);
     n /= trafofac;
     const IntegrationRule & ir = SelectIntegrationRule (ET_SEGM, intorder);
@@ -273,6 +273,8 @@ namespace xintegration
   DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
   :: CheckIfCut() const
   {
+    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
+    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     bool haspos = false;
     bool hasneg = false;
@@ -291,9 +293,9 @@ namespace xintegration
     case ET_TET:
     {
       // int sum = 0;
-      INT< ET_trait<ET_SPACE>::DIM > I;
-      Vec< ET_trait<ET_SPACE>::DIM + 1> position;
-      for (int i = 0; i < ET_trait<ET_SPACE>::DIM; ++i)
+      INT< D > I;
+      Vec< SD > position;
+      for (int i = 0; i < D; ++i)
         I[i] = 0;
 
       // cout << " index = ";
@@ -310,12 +312,12 @@ namespace xintegration
         // loop over time points
         for (int i = 0; i < np1dt + 1; ++i)
         {
-          for (int d = 0; d < ET_trait<ET_SPACE>::DIM; ++d)
+          for (int d = 0; d < D; ++d)
             position[d] = verts_space[0][d];
 
-          for (int j = 0; j < ET_trait<ET_SPACE>::DIM; ++j)
+          for (int j = 0; j < D; ++j)
           {
-            for (int d = 0; d < ET_trait<ET_SPACE>::DIM; ++d)
+            for (int d = 0; d < D; ++d)
             {
                position[d] += I[j] * dx_scalar * (verts_space[j+1][d] - verts_space[0][d]);
             }
@@ -328,7 +330,7 @@ namespace xintegration
             position[ET_trait<ET_SPACE>::DIM] = verts_time[i];
             // cout << position[ET_trait<ET_SPACE>::DIM] << ",\t";
           }
-          const ngfem::ScalarSpaceTimeFEEvaluator<ET_trait<ET_SPACE>::DIM> & eval (lset);
+          const ngfem::ScalarSpaceTimeFEEvaluator<D> & eval (lset);
           const double lsetval = eval(position);
 
           if (lsetval > distance_threshold)
@@ -355,15 +357,15 @@ namespace xintegration
         
         I[0]++;
         int sum = 0;
-        for (int checkdim = 0; checkdim < ET_trait<ET_SPACE>::DIM; ++checkdim)
+        for (int checkdim = 0; checkdim < D; ++checkdim)
         {
           sum = 0;
-          for (int i = 0; i < ET_trait<ET_SPACE>::DIM; ++i)
+          for (int i = 0; i < D; ++i)
             sum += I[i];
 
           if (sum >= np1ds + 1)
           {
-            if ( checkdim == ET_trait<ET_SPACE>::DIM - 1)
+            if ( checkdim == D - 1)
             {
               finish = true;
               break;
@@ -452,7 +454,7 @@ namespace xintegration
         if ( ET_SPACE == ET_TRIG)
         {
           // barycentric coordinates for new points
-          static double baryc[6][3] = { { 0.0, 0.0, 1.0},
+          const double baryc[6][3] = { { 0.0, 0.0, 1.0},
                                         { 0.5, 0.0, 0.5},
                                         { 1.0, 0.0, 0.0},
                                         { 0.0, 0.5, 0.5},
@@ -460,7 +462,7 @@ namespace xintegration
                                         { 0.0, 1.0, 0.0}};
 
           // new triangles as connectivity information of the vertices baryc above
-          static int trigs[4][3] = { { 0, 1, 3},
+          const int trigs[4][3] = { { 0, 1, 3},
                                      { 1, 2, 4},
                                      { 1, 3, 4},
                                      { 3, 4, 5}};
@@ -1018,6 +1020,9 @@ namespace xintegration
       else
       {
         cout << "cutpoints.Size() = " << cutpoints.Size() << endl;
+        cout << " Avvals = \n";
+        for (int i = 0; i < 3; ++i)
+          cout << i << ":" << vvals[i] << endl;
         throw Exception(" did not expect this.. -2-");
       }
     }
