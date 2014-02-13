@@ -214,6 +214,7 @@ public:
                 const ScalarSpaceTimeFiniteElement<2> &  fel_st 
                     = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
                 ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
+                lset_eval.FixTime(0.0);
                 PointContainer<2> pc;
                 CompositeQuadratureRule<2> compositerule;
                 NumericalIntegrationStrategy<ET_TRIG,ET_POINT> numint(lset_eval, pc,
@@ -249,11 +250,15 @@ public:
                     IntegrationPoint ip(st_point(0),st_point(1));
                     MappedIntegrationPoint<D,D> mip(ip,eltrans);
                     Mat<2,2> Finv = mip.GetJacobianInverse();
+                    // std::cout << " Finv = " << Finv << std::endl;
                     Vec<2> nref = compositerule.quadrule_if.normals[i];
-                    Vec<2> n = Trans(Finv) * nref ;
+                    // std::cout << " nref = " << nref << std::endl;
+                    Vec<2> n = absdet * Trans(Finv) * nref ;
+                    // std::cout << " n = " << n << std::endl;
                     double fac = L2Norm(n);
+                    // std::cout << " fac = " << fac << std::endl;
                     meas_of_dt[IF] += compositerule.quadrule_if.weights[i] * fac;
-                    std::cout << " compositerule.quadrule_if.weights[i] = " << compositerule.quadrule_if.weights[i] << std::endl;
+                    // std::cout << " compositerule.quadrule_if.weights[i] = " << compositerule.quadrule_if.weights[i] << std::endl;
                 }
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
                 {
