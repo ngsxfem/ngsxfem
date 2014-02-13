@@ -553,7 +553,7 @@ namespace xintegration
 
           if (dt_simplex == IF)
           {
-            MakeQuadRuleOnCutSimplex<SD,ET_SPACE,ET_TIME>(*simplices[i], *this);
+            MakeQuadRuleOnCutSimplex<SD>(*simplices[i], *this);
           }
           else
           {
