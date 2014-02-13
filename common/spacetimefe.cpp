@@ -186,7 +186,7 @@ namespace ngfem
   template class ScalarSpaceTimeFiniteElement<3>;
   
   template <int D>
-  double ScalarSpaceTimeFEEvaluator<D> :: operator()(const Vec<D+1>& point) const
+  double ScalarFEEvaluator<D> :: operator()(const Vec<D+1>& point) const
   {
     for (int i = 0; i < D; ++i)
       ip(i) = point(i);
@@ -208,9 +208,9 @@ namespace ngfem
     return ret;
   }
 
-  template class ScalarSpaceTimeFEEvaluator<1>;
-  template class ScalarSpaceTimeFEEvaluator<2>;
-  template class ScalarSpaceTimeFEEvaluator<3>;
+  template class ScalarFEEvaluator<1>;
+  template class ScalarFEEvaluator<2>;
+  template class ScalarFEEvaluator<3>;
 
 
 

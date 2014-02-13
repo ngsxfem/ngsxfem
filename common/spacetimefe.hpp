@@ -96,7 +96,7 @@ typedef std::pair<double,double> TimeInterval;
     // //                           FlatMatrix<> ddshape) const;
 
   template <int D>
-  class ScalarSpaceTimeFEEvaluator
+  class ScalarFEEvaluator
   {
   protected:
     const ScalarSpaceTimeFiniteElement<D> * st_fe;
@@ -107,7 +107,7 @@ typedef std::pair<double,double> TimeInterval;
     mutable double fixedtime = 0;
     mutable bool timefixed = false;
   public:
-    ScalarSpaceTimeFEEvaluator(const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
+    ScalarFEEvaluator(const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
       : linvec(a_linvec), 
         lh(a_lh)
     {
@@ -115,7 +115,7 @@ typedef std::pair<double,double> TimeInterval;
       s_fe = dynamic_cast< const ScalarFiniteElement<D> * >(&a_fe);
 
       if (st_fe == NULL && s_fe == NULL)
-        throw Exception("ScalarSpaceTimeFEEvaluator - constructor: cast failed...");
+        throw Exception("ScalarFEEvaluator - constructor: cast failed...");
     }
     
     void FixTime(double a_fixedtime ) const 

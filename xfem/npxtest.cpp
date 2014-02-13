@@ -142,7 +142,7 @@ public:
             {
                 const ScalarSpaceTimeFiniteElement<2> &  fel_st 
                     = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
-                ScalarSpaceTimeFEEvaluator<2> lset_eval(fel_st, linvec, lh);
+                ScalarFEEvaluator<2> lset_eval(fel_st, linvec, lh);
                 PointContainer<3> pc;
                 CompositeQuadratureRule<3> compositerule;
                 NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc,
@@ -214,9 +214,10 @@ public:
                 const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel
                     = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
 
-                ScalarSpaceTimeFEEvaluator<2> lset_eval(fel, linvec, lh);
+                ScalarFEEvaluator<2> lset_eval(fel, linvec, lh);
                 if (scal_st_fel != NULL)
                   lset_eval.FixTime(0.0);
+
                 PointContainer<2> pc;
                 CompositeQuadratureRule<2> compositerule;
                 NumericalIntegrationStrategy<ET_TRIG,ET_POINT> numint(lset_eval, pc,
@@ -294,7 +295,7 @@ public:
             {
                 const ScalarSpaceTimeFiniteElement<3> &  fel_st 
                     = dynamic_cast<const ScalarSpaceTimeFiniteElement<3> & >(fel);
-                ScalarSpaceTimeFEEvaluator<3> lset_eval(fel_st, linvec, lh);
+                ScalarFEEvaluator<3> lset_eval(fel_st, linvec, lh);
 
                 PointContainer<4> pc;
                 CompositeQuadratureRule<4> compositerule;

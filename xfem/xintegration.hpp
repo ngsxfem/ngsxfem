@@ -142,7 +142,7 @@ namespace xintegration
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM };
 
     /// Levelset function through the evaluator
-    const ScalarSpaceTimeFEEvaluator<D> & lset;
+    const ScalarFEEvaluator<D> & lset;
     /// PointContainer contains all points that are used during the decomposition
     /// With this container multiple allocations are avoided
     /// Since this (adaptive) strategy only needs to store the vertices locally
@@ -187,7 +187,7 @@ namespace xintegration
                                  int reduce_ref_time = 0);
 
     /// constructor: prescribing all the input except for the vertices (space and time)
-    NumericalIntegrationStrategy(const ScalarSpaceTimeFEEvaluator<D> & a_lset, 
+    NumericalIntegrationStrategy(const ScalarFEEvaluator<D> & a_lset, 
                                  PointContainer<SD> & a_pc, 
                                  CompositeQuadratureRule<SD> & a_compquadrule,
                                  LocalHeap & lh,

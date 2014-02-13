@@ -182,7 +182,7 @@ namespace xintegration
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
-  :: NumericalIntegrationStrategy(const ScalarSpaceTimeFEEvaluator<D> & a_lset, 
+  :: NumericalIntegrationStrategy(const ScalarFEEvaluator<D> & a_lset, 
                                   PointContainer<SD> & a_pc, 
                                   CompositeQuadratureRule<SD> & a_compquadrule,
                                   LocalHeap & a_lh,
@@ -330,7 +330,7 @@ namespace xintegration
             position[ET_trait<ET_SPACE>::DIM] = verts_time[i];
             // cout << position[ET_trait<ET_SPACE>::DIM] << ",\t";
           }
-          const ngfem::ScalarSpaceTimeFEEvaluator<D> & eval (lset);
+          const ngfem::ScalarFEEvaluator<D> & eval (lset);
           const double lsetval = eval(position);
 
           if (lsetval > distance_threshold)
@@ -527,7 +527,7 @@ namespace xintegration
         //   cout << *simplices[i] << endl;
         // }
 
-        const ngfem::ScalarSpaceTimeFEEvaluator<D> & eval (lset);
+        const ngfem::ScalarFEEvaluator<D> & eval (lset);
 
         for (int i = 0; i < simplices.Size(); ++i)
         {
