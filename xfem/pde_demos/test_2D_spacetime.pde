@@ -11,8 +11,8 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-mesh = square_trigs_2x2.vol.gz
-#mesh = square_trigs.vol.gz
+#mesh = square_trigs_2x2.vol.gz
+mesh = square_trigs.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 #shared = libngsxfem_test
@@ -38,8 +38,8 @@ define variable t = 0.0
 define constant told = 0.0
 define constant tnew = 1.0
 
-# define coefficient lset0
-# ( sqrt((x-0.45)*(x-0.45)+(y-0.5)*(y-0.5))-(1.0-t0*s)/sqrt(2*pi)),
+define coefficient lset0
+( sqrt((x-0.45)*(x-0.45)+(y-0.5)*(y-0.5))-(1.0-t0*s)/sqrt(2*pi)),
 
 # define coefficient lset1
 # ( sqrt((x-0.45-v*t1)*(x-0.45-v*t1)+(y-0.5)*(y-0.5))-(1.0-t1*s)/sqrt(2*pi)),
@@ -53,11 +53,11 @@ define constant tnew = 1.0
 define coefficient lset4
 ( sqrt((x-0.45-v*t4)*(x-0.45-v*t4)+(y-0.5)*(y-0.5))-(1.0-t4*s)/sqrt(2*pi)),
 
-define coefficient lset0
-(x-0.25),
+# define coefficient lset0
+# (x-0.26),
 
-# define coefficient lset1
-# (x-0.75),
+# define coefficient lset4
+# (x-0.26),
 #( ( x > 0.5) * cos(2*pi*(x+y))),
 
 define fespace fes_st 
