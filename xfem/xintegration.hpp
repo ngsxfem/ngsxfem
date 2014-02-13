@@ -250,15 +250,28 @@ namespace xintegration
   void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, 
                                      QuadratureRuleCoDim1<4> & quaddom, int intorder);
 
-  /// cut rule for simplices using template specialization
-  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void MakeQuadRuleOnCutSimplex(const Simplex <ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM> & s, 
-                                const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+  namespace DecompositionRules
+  {
+    template<int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    struct CutSimplex
+    {
+        static void MakeQuad(const Simplex <D> & s, 
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+    };
 
-  /// implementation
-  template <>
-  void MakeQuadRuleOnCutSimplex<ET_TRIG,ET_SEGM>(const Simplex <3> & s, 
-                                                 const NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> & numint);
+    //partial specialization
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    struct CutSimplex<3,ET_SPACE,ET_TIME>
+    {
+        static void MakeQuad(const Simplex <3> & s, 
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+    };
+
+  }
+
+  template <int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  void MakeQuadRuleOnCutSimplex(const Simplex <D> & s, 
+                                const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
 
 
 }
