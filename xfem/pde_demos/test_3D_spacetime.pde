@@ -56,7 +56,7 @@ STtracesource one lset1
 
 numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct -print
 
-numproc testxfem nptxfem 
+numproc testxfem3d nptxfem 
         -levelset=u_st
         -spacetime
         -num_int_ref_space=0
