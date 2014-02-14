@@ -11,8 +11,8 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-#mesh = square_trigs_2x2.vol.gz
-mesh = square_trigs_fine.vol.gz
+mesh = square_trigs_2x2.vol.gz
+#mesh = square_trigs_fine.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 #shared = libngsxfem_test
@@ -38,8 +38,8 @@ define variable t = 0.0
 define constant told = 0.0
 define constant tnew = 1.0
 
-define coefficient lset0
-( sqrt((x-0.45)*(x-0.45)+(y-0.5)*(y-0.5))-(1.0-t0*s)/sqrt(2*pi)),
+# define coefficient lset0
+# ( sqrt((x-0.45)*(x-0.45)+(y-0.5)*(y-0.5))-(1.3-t0*s)/sqrt(2*pi)),
 
 # define coefficient lset1
 # ( sqrt((x-0.45-v*t1)*(x-0.45-v*t1)+(y-0.5)*(y-0.5))-(1.0-t1*s)/sqrt(2*pi)),
@@ -50,20 +50,21 @@ define coefficient lset0
 # define coefficient lset3
 # ( sqrt((x-0.45-v*t3)*(x-0.45-v*t3)+(y-0.5)*(y-0.5))-(1.0-t3*s)/sqrt(2*pi)),
 
-define coefficient lset4
-( sqrt((x-0.45-v*t4)*(x-0.45-v*t4)+(y-0.5)*(y-0.5))-(1.0-t4*s)/sqrt(2*pi)),
-
-# define coefficient lset0
-# (x-0.26),
-
 # define coefficient lset4
-# (x-0.26),
+# ( sqrt((x-0.45-v*t4)*(x-0.45-v*t4)+(y-0.5)*(y-0.5))-(1.30-t4*s)/sqrt(2*pi)),
+
+define coefficient lset0
+(x-0.26),
+
+define coefficient lset4
+(x-0.26),
+
 #( ( x > 0.5) * cos(2*pi*(x+y))),
 
 define fespace fes_st 
        -type=spacetimefes 
        -type_space=h1ho
-       -order_space=4
+       -order_space=1
        -all_dofs_together
        -order_time=1
 #       -print
@@ -94,10 +95,13 @@ numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct 
 numproc testxfem nptxfem 
         -levelset=u_st
         -spacetime
-        -num_int_ref_space=4
-        -num_int_ref_time=4
+        -num_int_ref_space=0
+        -num_int_ref_time=0
         -int_order_space=2
         -int_order_time=2
+        -vmax=0
+        -dt=1
+        -bound
 
 define bilinearform evalu_past -fespace=fes_st -nonassemble
 STtracepast zero

@@ -315,6 +315,7 @@ namespace xintegration
 
     switch (ET_SPACE)
     {
+    case ET_SEGM:
     case ET_TRIG:
     case ET_TET:
     {
@@ -514,7 +515,35 @@ namespace xintegration
           
         }
         else
-          throw Exception(" refine_space in 3D in NumInt::MakeQuad not yet implemented");
+          if ( ET_SPACE == ET_SEGM)
+          {
+            // barycentric coordinates for new points
+            const double baryc[3][2] = { { 0.0, 1.0},
+                                         { 0.5, 0.5},
+                                         { 1.0, 0.0}};
+
+            // new segms as connectivity information of the vertices baryc above
+            const int segm[2][2] = { { 0, 1},
+                                      { 1, 2}};
+          
+            for (int i = 0; i < 2; ++i) // segms
+            {
+              NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
+              numint_i.SetVerticesTime(verts_time);
+              Array< Vec<D> > newverts(2);
+              for (int j = 0; j < 2; ++j) //vertices
+              {
+                newverts[j] = Vec<D>(0.0);
+                for (int d = 0; d < 2; ++d) 
+                  newverts[j] += baryc[segm[i][j]][d] * verts_space[d];
+              }
+              numint_i.SetVerticesSpace(newverts);
+              numint_i.SetDistanceThreshold(0.5*distance_threshold);
+              numint_i.MakeQuadRule(); // recursive call!
+            }
+          }
+          else
+            throw Exception(" refine_space in 3D in NumInt::MakeQuad not yet implemented");
       }
 
       if (!refine_space && !refine_time) // already on finest level: deal with cut situation
@@ -633,8 +662,10 @@ namespace xintegration
     }
   }
 
+  template class NumericalIntegrationStrategy<ET_SEGM, ET_SEGM>;
   template class NumericalIntegrationStrategy<ET_TRIG, ET_SEGM>;
   template class NumericalIntegrationStrategy<ET_TET, ET_SEGM>;
+  template class NumericalIntegrationStrategy<ET_SEGM, ET_POINT>;
   template class NumericalIntegrationStrategy<ET_TRIG, ET_POINT>;
   template class NumericalIntegrationStrategy<ET_TET, ET_POINT>;
 
