@@ -187,7 +187,7 @@ namespace xintegration
     /// once a level absolute value is larger than threshold the prism is considered non-intersected
     double distance_threshold = 1e99;
 
-    void SetDistanceThreshold( const double & a_distance_threshold ){ distance_threshold = distance_threshold; }
+    void SetDistanceThreshold( const double & a_distance_threshold ){ distance_threshold = a_distance_threshold; }
 
     LocalHeap & lh;
     /// 
