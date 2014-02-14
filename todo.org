@@ -1,7 +1,6 @@
 * cutting/decomposition/numint rules
 ** rename / move xfem-content: 
-*** rename/move whole directory from xfem to CutIntegration
-** Timer for NumIntStrategy
+*** rename npxtest to npcutinttest
 ** add possibility to neglect POS/NEG/IF for NumIntStrategy
 ** helper functions to transform normals / space-time normals / nu
 ** rethink use of PointContainer (use it more / less?)
@@ -10,8 +9,7 @@
 * npxtest and according stuff also for facets (or surface elements)
 
 * xFiniteElement
-** mostly copy from old implementation
-** add SpaceTime flexibility (generalize ScalarFiniteElement and ScalarSpaceTimeFiniteElement? - or template specialization?)
+** details ?
 
 * XFESpace: 
 ** mostly copy from old XFESpace implementation
