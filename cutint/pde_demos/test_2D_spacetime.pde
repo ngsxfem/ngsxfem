@@ -12,7 +12,7 @@ geometry = square.in2d
 # and mesh
 #mesh = square.vol.gz
 #mesh = square_trigs_2x2.vol.gz
-mesh = square_trigs.vol.gz
+mesh = square_trigs_fine.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 #shared = libngsxfem_test
@@ -94,8 +94,10 @@ numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct 
 numproc testxfem nptxfem 
         -levelset=u_st
         -spacetime
-        -num_int_ref_space=0
-        -num_int_ref_time=0
+        -num_int_ref_space=4
+        -num_int_ref_time=4
+        -int_order_space=2
+        -int_order_time=2
 
 define bilinearform evalu_past -fespace=fes_st -nonassemble
 STtracepast zero
