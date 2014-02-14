@@ -964,7 +964,7 @@ namespace xintegration
     { 
       enum { SD = 2};
 
-      static Timer timer ("CutSimplex<3>::MakeQuad");
+      static Timer timer ("CutSimplex<2>::MakeQuad");
       RegionTimer reg (timer);
 
       // cout << " simplex = " << s << endl;
