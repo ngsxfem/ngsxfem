@@ -95,7 +95,7 @@ AC_ARG_ENABLE([parallel],
 AC_SUBST([NETGEN_INCLUDES], [" "])
 AC_SUBST([NETGEN_LIBS], ["-L$netgendir/lib -lngsolve"])
 
-AC_CONFIG_HEADERS(config.h) AC_CONFIG_FILES(Makefile common/Makefile common/pde_demos/Makefile cutint/Makefile cutint/pde_demos/Makefile parabolic/Makefile parabolic/pde_demos/Makefile)
+AC_CONFIG_HEADERS(config.h) AC_CONFIG_FILES(Makefile common/Makefile common/pde_demos/Makefile cutint/Makefile cutint/pde_demos/Makefile parabolic/Makefile parabolic/pde_demos/Makefile xfem/Makefile)
 
 #programming_demos/Makefile
 #navierstokes/dev/Makefile 

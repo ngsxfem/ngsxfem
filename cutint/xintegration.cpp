@@ -185,6 +185,13 @@ namespace xintegration
 
 
 
+  double XLocalGeometryInformation::EvaluateLsetAtPoint( const IntegrationPoint & ip, double time)
+  {
+    throw Exception("base class member function XLocalGeometryInformation::EvaluateLsetAtPoint called!");
+    return 0.;
+  }
+
+
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
   :: NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a, int reduce_ref_space, int reduce_ref_time)

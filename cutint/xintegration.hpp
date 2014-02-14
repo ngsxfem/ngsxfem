@@ -131,8 +131,17 @@ namespace xintegration
 
   };
 
+  class XLocalGeometryInformation
+  {
+      // empty 
+  public:
+      XLocalGeometryInformation() {;}
+      ~XLocalGeometryInformation() {;}
+      virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0);
+  };
+
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  class NumericalIntegrationStrategy
+  class NumericalIntegrationStrategy : public XLocalGeometryInformation
   {
   public:
 
@@ -143,6 +152,17 @@ namespace xintegration
 
     /// Levelset function through the evaluator
     const ScalarFEEvaluator<D> & lset;
+
+    virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0)
+    {
+        Vec<SD> p;
+        for (int i = 0; i < D; ++i)
+            p(i) = ip(i);
+        if (ET_trait<ET_TIME>::DIM==1)
+            p(SD-1) = time;
+        return lset(p);
+    }
+      
     /// PointContainer contains all points that are used during the decomposition
     /// With this container multiple allocations are avoided
     /// Since this (adaptive) strategy only needs to store the vertices locally
