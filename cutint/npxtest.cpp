@@ -37,17 +37,17 @@ typedef std::pair<double,double> TimeInterval;
 //     double GetTime() const { return (1.0-tref) * ti.first + tref * ti.second; }
 // };
 
-template <ELEMENT_TYPE ET, int DIM>
-ScalarFiniteElement<DIM> * GetSpaceFE (const Ngs_Element & ngel, int order, LocalHeap & lh)
-{
-    L2HighOrderFE<ET> * hofe =  new (lh) L2HighOrderFE<ET> ();
+// template <ELEMENT_TYPE ET, int DIM>
+// ScalarFiniteElement<DIM> * GetSpaceFE (const Ngs_Element & ngel, int order, LocalHeap & lh)
+// {
+//     L2HighOrderFE<ET> * hofe =  new (lh) L2HighOrderFE<ET> ();
     
-    hofe -> SetVertexNumbers (ngel.vertices);
-    hofe -> SetOrder (order);
-    hofe -> ComputeNDof();
+//     hofe -> SetVertexNumbers (ngel.vertices);
+//     hofe -> SetOrder (order);
+//     hofe -> ComputeNDof();
     
-    return hofe;
-}
+//     return hofe;
+// }
 
 /* ---------------------------------------- 
    numproc
@@ -64,6 +64,8 @@ protected:
     int num_int_ref_space;
     int num_int_ref_time;
 
+    bool output = false;;
+
     GridFunction * gf_lset;
 public:
     
@@ -74,19 +76,27 @@ public:
 
 		gf_lset = pde.GetGridFunction (flags.GetStringFlag ("levelset", "lset"));
         isspacetime = flags.GetDefineFlag("spacetime");
+        output = flags.GetDefineFlag("output");
         num_int_ref_space = (int) flags.GetNumFlag("num_int_ref_space",0);
         num_int_ref_time = (int) flags.GetNumFlag("num_int_ref_time",0);
+
+        order_space = (int) flags.GetNumFlag("int_order_space",-1);
+        order_time = (int) flags.GetNumFlag("int_order_time",-1);
+
         const FESpace & fes = gf_lset->GetFESpace();
         if (isspacetime)
         {
             const SpaceTimeFESpace & fes_st = dynamic_cast< const SpaceTimeFESpace & > (gf_lset->GetFESpace());
-            order_space = 2*fes_st.OrderSpace();
-            order_time = 2*fes_st.OrderTime();
+            if (order_space == -1)
+                order_space = 2*fes_st.OrderSpace();
+            if (order_time == -1)
+                order_time = 2*fes_st.OrderTime();
         }
         else
         {
             order_time = 0;
-            order_space = 2 * fes.GetOrder();
+            if (order_space == -1)
+                order_space = 2 * fes.GetOrder();
         }
 
         cout << " \n\nNumProcTestXFEM - constructor end \n\n " << endl;
@@ -104,6 +114,9 @@ public:
 
     virtual void Do (LocalHeap & lh)
     {
+        static Timer timerdo ("NumProcTestXFEM::Do");
+        RegionTimer reg (timerdo);
+
         HeapReset hr(lh);
 
         Array<int> els_of_dt(3);
@@ -153,14 +166,20 @@ public:
                                                                      num_int_ref_time);
                 numint.SetVerticesSpace();
                 numint.SetVerticesTime();
-
-                els_of_dt[numint.MakeQuadRule()]++;
+                numint.SetDistanceThreshold(2*sqrt(absdet));
+                {
+                    static Timer timer ("npxtest - MakeQuadRule - total");
+                    RegionTimer reg (timer);
+                    els_of_dt[numint.MakeQuadRule()]++;
+                }
                 for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
                     meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
                     meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
                 for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
                 {
+                    static Timer timer ("npxtest - Transform n");
+                    RegionTimer reg (timer);
                     Vec<3> st_point = compositerule.quadrule_if.points[i];
                     IntegrationPoint ip(st_point(0),st_point(1));
                     MappedIntegrationPoint<D,D> mip(ip,eltrans);
@@ -173,26 +192,33 @@ public:
                     double fac = L2Norm(n);
                     meas_of_dt[IF] +=  compositerule.quadrule_if.weights[i] * fac;
                 }
-                for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                if (output)
                 {
-                    Vec<3> st_point = compositerule.quadrule_neg.points[i];
-                    IntegrationPoint ip(st_point(0),st_point(1));
-                    MappedIntegrationPoint<D,D> mip(ip,eltrans);
-                    Vec<2> mapped_point = mip.GetPoint();
-                    outneg_st << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
+                    {
+                        static Timer timer ("npxtest - output neg");
+                        RegionTimer reg (timer);
+                        Vec<3> st_point = compositerule.quadrule_neg.points[i];
+                        IntegrationPoint ip(st_point(0),st_point(1));
+                        MappedIntegrationPoint<D,D> mip(ip,eltrans);
+                        Vec<2> mapped_point = mip.GetPoint();
+                        outneg_st << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    }
+                    outneg_st << endl;
+                    outneg_st << endl;
+                    for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
+                    {
+                        static Timer timer ("npxtest - output if");
+                        RegionTimer reg (timer);
+                        Vec<3> st_point = compositerule.quadrule_if.points[i];
+                        IntegrationPoint ip(st_point(0),st_point(1));
+                        MappedIntegrationPoint<D,D> mip(ip,eltrans);
+                        Vec<2> mapped_point = mip.GetPoint();
+                        outif_st << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
+                    }
+                    outif_st << endl;
+                    outif_st << endl;
                 }
-                outneg_st << endl;
-                outneg_st << endl;
-                for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
-                {
-                    Vec<3> st_point = compositerule.quadrule_if.points[i];
-                    IntegrationPoint ip(st_point(0),st_point(1));
-                    MappedIntegrationPoint<D,D> mip(ip,eltrans);
-                    Vec<2> mapped_point = mip.GetPoint();
-                    outif_st << mapped_point(0) << "\t" << mapped_point(1) << "\t" << st_point(2) << endl;
-                }
-                outif_st << endl;
-                outif_st << endl;
             }
 
             if( et_space == ET_TRIG && et_time == ET_POINT)
@@ -216,7 +242,11 @@ public:
                 numint.SetVerticesTime();
                 // numint.SetDistanceThreshold(0.125);
 
-                els_of_dt[numint.MakeQuadRule()]++;
+                {
+                    static Timer timer ("MakeQuadRule - total");
+                    RegionTimer reg (timer);
+                    els_of_dt[numint.MakeQuadRule()]++;
+                }
                 for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
                     meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
@@ -303,7 +333,12 @@ public:
                 numint.SetVerticesTime();
                 // numint.SetDistanceThreshold(0.125);
 
-                els_of_dt[numint.MakeQuadRule()]++;
+                {
+                    static Timer timer ("MakeQuadRule - total");
+                    RegionTimer reg (timer);
+                    els_of_dt[numint.MakeQuadRule()]++;
+                }
+
                 for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
                     meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
                 for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
