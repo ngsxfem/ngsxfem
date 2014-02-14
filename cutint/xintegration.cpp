@@ -524,7 +524,7 @@ namespace xintegration
 
             // new segms as connectivity information of the vertices baryc above
             const int segm[2][2] = { { 0, 1},
-                                      { 1, 2}};
+                                     { 1, 2}};
           
             for (int i = 0; i < 2; ++i) // segms
             {
