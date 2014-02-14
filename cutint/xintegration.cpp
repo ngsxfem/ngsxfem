@@ -299,6 +299,9 @@ namespace xintegration
     enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
+    static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
+    RegionTimer reg (timer);
+
     bool haspos = false;
     bool hasneg = false;
 
@@ -420,6 +423,7 @@ namespace xintegration
       throw Exception(" this CheckIfCut::ELEMENT_TYPE is not treated... yet ");
       break;
     }
+
   }
 
 
@@ -445,12 +449,12 @@ namespace xintegration
       // decide which refinement should come first here:
       if (refine_time && refine_space)
       {
-        if (ref_level_time >= ref_level_space)
+        if (false && ref_level_time >= ref_level_space) //better suited for high (relative) velocities...
         {
           refine_time = true;
           refine_space = false;
         }
-        else
+        else //better suited for slow (relative) velocities...
         {
           refine_time = false;
           refine_space = true;
@@ -463,11 +467,13 @@ namespace xintegration
         NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_upper (*this, 0, 1);
         numint_upper.SetVerticesSpace(verts_space);
         numint_upper.SetVerticesTimeFromUpperHalf(verts_time);
+        numint_upper.SetDistanceThreshold(distance_threshold);
         numint_upper.MakeQuadRule();  // recursive call!
 
         NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_lower (*this, 0, 1);
         numint_lower.SetVerticesSpace(verts_space);
         numint_lower.SetVerticesTimeFromLowerHalf(verts_time);
+        numint_lower.SetDistanceThreshold(distance_threshold);
         numint_lower.MakeQuadRule();  // recursive call!
       }
 
@@ -502,6 +508,7 @@ namespace xintegration
                 newverts[j] += baryc[trigs[i][j]][d] * verts_space[d];
             }
             numint_i.SetVerticesSpace(newverts);
+            numint_i.SetDistanceThreshold(0.5*distance_threshold);
             numint_i.MakeQuadRule(); // recursive call!
           }
           
@@ -646,6 +653,9 @@ namespace xintegration
     void CutSimplex<3,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <3> & s, 
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
     { 
+      static Timer timer ("CutSimplex<3>::MakeQuad");
+      RegionTimer reg (timer);
+
       enum { SD = 3};
 
       Array< const Vec<SD> * > cutpoints(0);
@@ -917,6 +927,9 @@ namespace xintegration
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
     { 
       enum { SD = 2};
+
+      static Timer timer ("CutSimplex<3>::MakeQuad");
+      RegionTimer reg (timer);
 
       // cout << " simplex = " << s << endl;
 
