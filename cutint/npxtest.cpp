@@ -513,10 +513,24 @@ public:
 //                     outif_st << endl;
 //                 }
                 }
+
+                if( et_space == ET_TRIG && et_time == ET_SEGM)
+                {
+                  cout << " no implementation for testing boundary of space-time 3D example " << endl;
+                }
+
+                if( et_space == ET_SEGM && et_time == ET_POINT)
+                {
+                  cout << " no implementation for testing boundary of (stationary) 2D example " << endl;
+                }
+
+                if( et_space == ET_TRIG && et_time == ET_POINT)
+                {
+                  cout << " no implementation for testing boundary of (stationary) 3D example " << endl;
+                }
+
             }
 
-            cout << " bug.. " << endl;
-            
             cout << " pos surf. elements : " << sels_of_dt[POS] << endl;
             cout << " neg surf. elements : " << sels_of_dt[NEG] << endl;
             cout << " cut surf. elements : " << sels_of_dt[IF] << endl;

@@ -36,7 +36,7 @@ define coefficient lset
 
 define fespace fes 
        -type=l2ho
-       -order=4
+       -order=3
        -all_dofs_together
 
 define gridfunction u -fespace=fes
@@ -52,6 +52,9 @@ numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u -solver=direct -pr
 numproc testxfem nptxfem 
         -levelset=u
         -num_int_ref_space=3
+        -int_order_space=2
+        -bound
+        
 
 numproc visualization npvis -scalarfunction=u -nolineartexture -deformationscale=1.0 -subdivision=2 
         -minval=-1e-6 -maxval=1e-6
