@@ -158,8 +158,27 @@ namespace ngcomp
 // ------------------------------------------------------------------------
   const FiniteElement & SpaceTimeFESpace :: GetSFE (int selnr, LocalHeap & lh) const
   {
-    throw Exception("SpaceTimeFESpace :: GetSFE - not implemented yet");
-    // take space-fespaces GetSFE and tp-extend with fel_time
+
+    const DGFiniteElement<1> & fel_time = *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
+        
+    const FiniteElement * fel_space = &(fes_space->GetSFE(selnr,lh));   
+    if ( dim == 2 ) 
+    {
+      const ScalarFiniteElement<1> * fel_scalar = dynamic_cast<const ScalarFiniteElement<1> *>(fel_space);    
+      if (fel_scalar == NULL)
+        throw Exception("SpaceTimeFESpace :: GetFE Cast to ScalarFiniteElement failed!");
+      return *(new (lh) ScalarSpaceTimeFiniteElement<1>(*fel_scalar,fel_time));
+    }
+    else
+    {
+      const ScalarFiniteElement<2> * fel_scalar = dynamic_cast<const ScalarFiniteElement<2> *>(fel_space);    
+      if (fel_scalar == NULL)
+        throw Exception("SpaceTimeFESpace :: GetFE Cast to ScalarFiniteElement failed!");
+      return *(new (lh) ScalarSpaceTimeFiniteElement<2>(*fel_scalar,fel_time));
+    }
+
+    // throw Exception("SpaceTimeFESpace :: GetSFE - not implemented yet");
+    // // take space-fespaces GetSFE and tp-extend with fel_time
   }
 
 
