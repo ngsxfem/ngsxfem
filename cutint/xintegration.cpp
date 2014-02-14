@@ -618,12 +618,17 @@ namespace xintegration
         Vec<D> b = verts_space[2] - verts_space[0];
         trafofac = abs(a(0) * b(1) - a(1) * b(0));
       }
-      else
+      else if (D==3)
       {
         Vec<D> a = verts_space[1] - verts_space[0];
         Vec<D> b = verts_space[2] - verts_space[0];
         Vec<D> c = verts_space[3] - verts_space[0];
         trafofac = abs(Determinant(a,b,c));
+      }
+      else // D==1
+      {
+        Vec<D> a = verts_space[1] - verts_space[0];
+        trafofac = abs(a(0));
       }
 
       const double dt = verts_time[verts_time.Size()-1] - verts_time[0];
