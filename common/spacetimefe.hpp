@@ -95,8 +95,34 @@ typedef std::pair<double,double> TimeInterval;
     // // virtual void CalcDDShape (const IntegrationPoint & ip, 
     // //                           FlatMatrix<> ddshape) const;
 
+  class ScalarFieldEvaluator
+  {
+  public:
+    virtual double operator()(const Vec<1>& point) const
+    {
+      throw Exception(" nonono 1");
+    }
+
+    virtual double operator()(const Vec<2>& point) const
+    {
+      throw Exception(" nonono 2");
+    }
+
+    virtual double operator()(const Vec<3>& point) const
+    {
+      throw Exception(" nonono 3");
+    }
+
+    virtual double operator()(const Vec<4>& point) const
+    {
+      throw Exception(" nonono 4");
+    }
+
+    static ScalarFieldEvaluator* Create(int dim, const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh);
+  };
+
   template <int D>
-  class ScalarFEEvaluator
+  class ScalarFEEvaluator : public ScalarFieldEvaluator
   {
   protected:
     const ScalarSpaceTimeFiniteElement<D> * st_fe;
@@ -129,7 +155,8 @@ typedef std::pair<double,double> TimeInterval;
       timefixed = false;
     }
       
-    double operator()(const Vec<D+1>& point) const;
+    virtual double operator()(const Vec<D>& point) const;
+    virtual double operator()(const Vec<D+1>& point) const;
   };
 
 
