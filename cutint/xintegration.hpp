@@ -135,9 +135,17 @@ namespace xintegration
   {
       // empty 
   public:
-      XLocalGeometryInformation() {;}
-      ~XLocalGeometryInformation() {;}
-      virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0);
+    XLocalGeometryInformation() {;}
+    ~XLocalGeometryInformation() {;}
+    virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
+    virtual DOMAIN_TYPE MakeQuadRule() const ;
+    // static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
+    //                                           ELEMENT_TYPE ET_TIME,
+    //                                           const ScalarFEEvaluator<D> & a_lset, 
+    //                                           CompositeQuadratureRule<SD> & a_compquadrule,
+    //                                           LocalHeap & a_lh,
+    //                                           int a_int_order_space, int a_int_order_time, 
+    //                                           int a_ref_level_space, int a_ref_level_time);
   };
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
@@ -151,15 +159,16 @@ namespace xintegration
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM };
 
     /// Levelset function through the evaluator
-    const ScalarFEEvaluator<D> & lset;
+    // const ScalarFEEvaluator<D> & lset;
+    const ScalarFieldEvaluator & lset;
 
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0)
     {
         Vec<SD> p;
         for (int i = 0; i < D; ++i)
-            p(i) = ip(i);
+          p[i] = ip(i);
         if (ET_trait<ET_TIME>::DIM==1)
-            p(SD-1) = time;
+          p[SD-1] = time;
         return lset(p);
     }
       
@@ -187,6 +196,9 @@ namespace xintegration
     /// once a level absolute value is larger than threshold the prism is considered non-intersected
     double distance_threshold = 1e99;
 
+    /// top level
+    bool ownpc = false;
+
     void SetDistanceThreshold( const double & a_distance_threshold ){ distance_threshold = a_distance_threshold; }
 
     LocalHeap & lh;
@@ -207,15 +219,24 @@ namespace xintegration
                                  int reduce_ref_time = 0);
 
     /// constructor: prescribing all the input except for the vertices (space and time)
-    NumericalIntegrationStrategy(const ScalarFEEvaluator<D> & a_lset, 
-                                 PointContainer<SD> & a_pc, 
+    NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset, 
+                                 PointContainer<SD> & a_pc,
                                  CompositeQuadratureRule<SD> & a_compquadrule,
                                  LocalHeap & lh,
                                  int a_int_order_space = 2, 
                                  int a_int_order_time = 2, 
                                  int a_ref_level_space = 0, 
                                  int a_ref_level_time = 0 );
-    
+
+    /// constructor: prescribing all the input except for the vertices (space and time)
+    NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset, 
+                                 CompositeQuadratureRule<SD> & a_compquadrule,
+                                 LocalHeap & lh,
+                                 int a_int_order_space = 2, 
+                                 int a_int_order_time = 2, 
+                                 int a_ref_level_space = 0, 
+                                 int a_ref_level_time = 0 );
+
     /// Set Vertices according to input
     void SetVerticesSpace(const Array<Vec<D> > & verts);
 
@@ -240,7 +261,7 @@ namespace xintegration
     /// Call adaptive strategy to generate quadrature rule
     /// adaptive strategy to generate composite quadrature rule on tensor product geometry
     /// ...
-    DOMAIN_TYPE MakeQuadRule() const;
+    virtual DOMAIN_TYPE MakeQuadRule() const;
     
   };
 

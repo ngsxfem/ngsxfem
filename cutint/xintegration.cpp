@@ -185,12 +185,84 @@ namespace xintegration
 
 
 
-  double XLocalGeometryInformation::EvaluateLsetAtPoint( const IntegrationPoint & ip, double time)
+  double XLocalGeometryInformation::EvaluateLsetAtPoint( const IntegrationPoint & ip, double time) const
   {
     throw Exception("base class member function XLocalGeometryInformation::EvaluateLsetAtPoint called!");
     return 0.;
   }
 
+  DOMAIN_TYPE XLocalGeometryInformation::MakeQuadRule() const
+  {
+    throw Exception("base class member function XLocalGeometryInformation::MakeQuadRule called!");
+    return IF;
+  }
+
+/*
+  XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
+                                                                ELEMENT_TYPE ET_TIME,
+                                                                const ScalarFEEvaluator<D> & a_lset, 
+                                                                CompositeQuadratureRule<SD> & a_compquadrule,
+                                                                LocalHeap & a_lh,
+                                                                int a_int_order_space, int a_int_order_time, 
+                                                                int a_ref_level_space, int a_ref_level_time)
+  {
+    if (ET_TIME == ET_POINT)
+    {
+      switch (ET_SPACE)
+      {
+      case ET_SEGM:
+        return 
+          new (lh) NumericalIntegrationStrategy<ET_SEGM,ET_POINT>
+          (a_lset, a_compquadrule, a_lh, 
+           a_int_order_space, a_int_order_time, 
+           a_ref_level_space, a_ref_level_time);
+      case ET_TRIG:
+        return 
+          new (lh) NumericalIntegrationStrategy<ET_TRIG,ET_POINT>
+          (a_lset, a_compquadrule, a_lh, 
+           a_int_order_space, a_int_order_time, 
+           a_ref_level_space, a_ref_level_time);
+      case ET_TET:
+        return 
+          new (lh) NumericalIntegrationStrategy<ET_TET,ET_POINT>
+          (a_lset, a_compquadrule, a_lh, 
+           a_int_order_space, a_int_order_time, 
+           a_ref_level_space, a_ref_level_time);
+      default:
+        throw Exception(" XLocalGeometryInformation * Create | ELEMENT_TYPE is not treated ");
+        break;
+      }
+    }
+    else // ET_SEGM
+    {
+      switch (ET_SPACE)
+      {
+      case ET_SEGM:
+        return 
+          new (lh) NumericalIntegrationStrategy<ET_SEGM,ET_SEGM>
+          (a_lset, a_compquadrule, a_lh, 
+           a_int_order_space, a_int_order_time, 
+           a_ref_level_space, a_ref_level_time);
+      case ET_TRIG:
+        return 
+          new (lh) NumericalIntegrationStrategy<ET_TRIG,ET_SEGM>
+          (a_lset, a_compquadrule, a_lh, 
+           a_int_order_space, a_int_order_time, 
+           a_ref_level_space, a_ref_level_time);
+      case ET_TET:
+        return 
+          new (lh) NumericalIntegrationStrategy<ET_TET,ET_SEGM>
+          (a_lset, a_compquadrule, a_lh, 
+           a_int_order_space, a_int_order_time, 
+           a_ref_level_space, a_ref_level_time);
+      default:
+        throw Exception(" XLocalGeometryInformation * Create | ELEMENT_TYPE is not treated ");
+        break;
+      }
+    }
+
+  }
+*/
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
@@ -205,7 +277,7 @@ namespace xintegration
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
-  :: NumericalIntegrationStrategy(const ScalarFEEvaluator<D> & a_lset, 
+  :: NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset, 
                                   PointContainer<SD> & a_pc, 
                                   CompositeQuadratureRule<SD> & a_compquadrule,
                                   LocalHeap & a_lh,
@@ -216,8 +288,27 @@ namespace xintegration
       int_order_space(a_int_order_space), int_order_time(a_int_order_time),
       lh(a_lh), compquadrule(a_compquadrule)
   {
-    ;
+    SetVerticesSpace();
+    SetVerticesTime();
   }
+
+
+  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  :: NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset, 
+                                  CompositeQuadratureRule<SD> & a_compquadrule,
+                                  LocalHeap & a_lh,
+                                  int a_int_order_space, int a_int_order_time, 
+                                  int a_ref_level_space, int a_ref_level_time)
+    : lset(a_lset), pc(*(new (a_lh) PointContainer<SD>())), 
+      ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
+      int_order_space(a_int_order_space), int_order_time(a_int_order_time),
+    lh(a_lh), compquadrule(a_compquadrule), ownpc(true)
+  {
+    SetVerticesSpace();
+    SetVerticesTime();
+  }
+
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
@@ -357,7 +448,7 @@ namespace xintegration
             position[ET_trait<ET_SPACE>::DIM] = verts_time[i];
             // cout << position[ET_trait<ET_SPACE>::DIM] << ",\t";
           }
-          const ngfem::ScalarFEEvaluator<D> & eval (lset);
+          const ngfem::ScalarFieldEvaluator & eval (lset);
           const double lsetval = eval(position);
 
           if (lsetval > distance_threshold)
@@ -586,7 +677,7 @@ namespace xintegration
         //   cout << *simplices[i] << endl;
         // }
 
-        const ngfem::ScalarFEEvaluator<D> & eval (lset);
+        const ScalarFieldEvaluator & eval (lset);
 
         for (int i = 0; i < simplices.Size(); ++i)
         {

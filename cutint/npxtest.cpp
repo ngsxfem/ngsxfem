@@ -171,19 +171,15 @@ public:
 
                 if( et_space == ET_TRIG && et_time == ET_SEGM)
                 {
-                    const ScalarSpaceTimeFiniteElement<2> &  fel_st 
-                        = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> & >(fel);
-                    ScalarFEEvaluator<2> lset_eval(fel_st, linvec, lh);
-                    PointContainer<3> pc;
+                    // ScalarFEEvaluator<2> lset_eval(fel, linvec, lh);
+                    ScalarFieldEvaluator & lset_eval (* ScalarFieldEvaluator::Create(2,fel,linvec,lh));
                     CompositeQuadratureRule<3> compositerule;
-                    NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval, pc,
+                    NumericalIntegrationStrategy<ET_TRIG,ET_SEGM> numint(lset_eval,
                                                                          compositerule, 
                                                                          lh,
                                                                          order_space, order_time,
                                                                          num_int_ref_space, 
                                                                          num_int_ref_time);
-                    numint.SetVerticesSpace();
-                    numint.SetVerticesTime();
                     numint.SetDistanceThreshold(2.0*sqrt(absdet)+vmax/dt);
                     {
                         static Timer timer ("npxtest - MakeQuadRule - total");
@@ -251,16 +247,13 @@ public:
                     if (scal_st_fel != NULL)
                         lset_eval.FixTime(0.0);
 
-                    PointContainer<2> pc;
                     CompositeQuadratureRule<2> compositerule;
-                    NumericalIntegrationStrategy<ET_TRIG,ET_POINT> numint(lset_eval, pc,
+                    NumericalIntegrationStrategy<ET_TRIG,ET_POINT> numint(lset_eval,
                                                                           compositerule, 
                                                                           lh,
                                                                           order_space, order_time,
                                                                           num_int_ref_space, 
                                                                           num_int_ref_time);
-                    numint.SetVerticesSpace();
-                    numint.SetVerticesTime();
                     // numint.SetDistanceThreshold(0.125);
 
                     {
@@ -311,16 +304,13 @@ public:
                         = dynamic_cast<const ScalarSpaceTimeFiniteElement<3> & >(fel);
                     ScalarFEEvaluator<3> lset_eval(fel_st, linvec, lh);
 
-                    PointContainer<4> pc;
                     CompositeQuadratureRule<4> compositerule;
-                    NumericalIntegrationStrategy<ET_TET,ET_SEGM> numint(lset_eval, pc,
+                    NumericalIntegrationStrategy<ET_TET,ET_SEGM> numint(lset_eval,
                                                                         compositerule, 
                                                                         lh,
                                                                         order_space, order_time,
                                                                         num_int_ref_space, 
                                                                         num_int_ref_time);
-                    numint.SetVerticesSpace();
-                    numint.SetVerticesTime();
 
                     els_of_dt[numint.MakeQuadRule()]++;
 
@@ -342,16 +332,13 @@ public:
                     if (scal_st_fel != NULL)
                         lset_eval.FixTime(0.0);
 
-                    PointContainer<3> pc;
                     CompositeQuadratureRule<3> compositerule;
-                    NumericalIntegrationStrategy<ET_TET,ET_POINT> numint(lset_eval, pc,
+                    NumericalIntegrationStrategy<ET_TET,ET_POINT> numint(lset_eval,
                                                                          compositerule, 
                                                                          lh,
                                                                          order_space, order_time,
                                                                          num_int_ref_space, 
                                                                          num_int_ref_time);
-                    numint.SetVerticesSpace();
-                    numint.SetVerticesTime();
                     // numint.SetDistanceThreshold(0.125);
 
                     {
@@ -446,16 +433,13 @@ public:
                     const ScalarSpaceTimeFiniteElement<1> &  fel_st 
                         = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> & >(fel);
                     ScalarFEEvaluator<1> lset_eval(fel_st, linvec, lh);
-                    PointContainer<2> pc;
                     CompositeQuadratureRule<2> compositerule;
-                    NumericalIntegrationStrategy<ET_SEGM,ET_SEGM> numint(lset_eval, pc,
+                    NumericalIntegrationStrategy<ET_SEGM,ET_SEGM> numint(lset_eval,
                                                                          compositerule, 
                                                                          lh,
                                                                          order_space, order_time,
                                                                          num_int_ref_space, 
                                                                          num_int_ref_time);
-                    numint.SetVerticesSpace();
-                    numint.SetVerticesTime();
                     // numint.SetDistanceThreshold(2.0*absdet+vmax/dt);
                     {
                         static Timer timer ("npxtest - MakeQuadRule - total");
