@@ -115,6 +115,22 @@ namespace xintegration
 
 
   template<>
+  void FillSimplexWithRule<1> (const Simplex<1> & s, QuadratureRule<1> & quaddom, int intorder)
+  {
+    const double trafofac = Measure<1,1>(s.p);
+    const IntegrationRule & ir = SelectIntegrationRule (ET_SEGM, intorder);
+
+    for (int k = 0; k < ir.GetNIP(); k++)
+    {
+      Vec<2> point = (1.0 - ir[k](0)) * (*s.p[0]) + ir[k](1) * (*s.p[1]);
+      const double weight = ir[k].Weight() * trafofac;
+      quaddom.points.Append(point);
+      quaddom.weights.Append(weight);
+    }
+  }
+
+
+  template<>
   void FillSimplexCoDim1WithRule<4> (const Array< const Vec<4> *> & s, const Vec<4> & pospoint,
                                      QuadratureRuleCoDim1<4> & quaddom, int intorder)
   {
@@ -1193,7 +1209,63 @@ namespace xintegration
         throw Exception(" did not expect this.. -2-");
       }
     }
-  }
+
+
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    void CutSimplex<1,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <1> & s, 
+                                                  const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+    { 
+      enum { SD = 1};
+
+      static Timer timer ("CutSimplex<1>::MakeQuad");
+      RegionTimer reg (timer);
+
+      const Vec<1> & left = *(s.p[0]);
+      const Vec<1> & right = *(s.p[1]);
+      
+      double valleft = numint.lset(left);
+      double valright = numint.lset(right);
+
+      const double cutpos = valleft / (valleft - valright);
+      Vec<SD> mid = (1-cutpos) * *(s.p[0]) + cutpos * *(s.p[1]) ;
+      const Vec<SD> * p = numint.pc(mid);
+
+      Array < const Vec<SD> * > leftint(2);
+      leftint[0] = s.p[0]; leftint[1] = p;
+
+      Array < const Vec<SD> * > rightint(2);
+      rightint[0] = p; rightint[1] = s.p[1];
+
+      Simplex<1> leftsimplex (leftint);
+      Simplex<1> rightsimplex (rightint);
+
+      DOMAIN_TYPE dt_left, dt_right;
+
+      if (valleft > 0)
+      {
+        dt_left = POS;
+        dt_right = NEG;
+      }
+      else
+      {
+        dt_left = NEG;
+        dt_right = POS;
+      }
+
+
+      FillSimplexWithRule<SD>(leftsimplex, 
+                              numint.compquadrule.GetRule(dt_left), 
+                              numint.GetIntegrationOrderMax());
+
+      FillSimplexWithRule<SD>(rightsimplex, 
+                              numint.compquadrule.GetRule(dt_right), 
+                              numint.GetIntegrationOrderMax());
+                
+    }
+
+
+  } // end of namespace DecompositionRules
+
 
 
 

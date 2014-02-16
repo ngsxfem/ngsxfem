@@ -272,6 +272,8 @@ namespace xintegration
   template <int D>
   void FillSimplexWithRule (const Simplex<D> & s, QuadratureRule<D> & quaddom, int intorder);
   template <>
+  void FillSimplexWithRule<1> (const Simplex<1> & s, QuadratureRule<1> & quaddom, int intorder);
+  template <>
   void FillSimplexWithRule<2> (const Simplex<2> & s, QuadratureRule<2> & quaddom, int intorder);
   template <>
   void FillSimplexWithRule<3> (const Simplex<3> & s, QuadratureRule<3> & quaddom, int intorder);
@@ -297,6 +299,14 @@ namespace xintegration
     struct CutSimplex
     {
         static void MakeQuad(const Simplex <D> & s, 
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+    };
+
+    //partial specialization
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    struct CutSimplex<1,ET_SPACE,ET_TIME>
+    {
+        static void MakeQuad(const Simplex <1> & s, 
                              const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
     };
 
