@@ -186,6 +186,38 @@ namespace ngfem
   template class ScalarSpaceTimeFiniteElement<3>;
   
 
+  ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans,  LocalHeap & a_lh)
+  {
+    switch (dim)
+    {
+    case 1:
+      return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans);
+    case 2:
+      return new (a_lh) EvalFunctionEvaluator<2>(evalf, eltrans);
+    case 3:
+      return new (a_lh) EvalFunctionEvaluator<3>(evalf, eltrans);
+    default:
+      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
+      break;
+    }
+  }
+
+  ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans, const TimeInterval & ti, LocalHeap & a_lh)
+  {
+    switch (dim)
+    {
+    case 1:
+      return new (a_lh) SpaceTimeEvalFunctionEvaluator<1>(evalf, eltrans, ti);
+    case 2:
+      return new (a_lh) SpaceTimeEvalFunctionEvaluator<2>(evalf, eltrans, ti);
+    case 3:
+      return new (a_lh) SpaceTimeEvalFunctionEvaluator<3>(evalf, eltrans, ti);
+    default:
+      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
+      break;
+    }
+  }
+
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
   {
     switch (dim)
@@ -200,8 +232,6 @@ namespace ngfem
       throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
       break;
     }
-      
-
   }
 
 

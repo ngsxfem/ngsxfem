@@ -119,6 +119,9 @@ typedef std::pair<double,double> TimeInterval;
     }
 
     static ScalarFieldEvaluator* Create(int dim, const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh);
+    static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, LocalHeap & a_lh);
+    static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, const TimeInterval & ti, LocalHeap & a_lh);
+
   };
 
   template <int D>
@@ -141,7 +144,10 @@ typedef std::pair<double,double> TimeInterval;
       s_fe = dynamic_cast< const ScalarFiniteElement<D> * >(&a_fe);
 
       if (st_fe == NULL && s_fe == NULL)
+      {
+        cout << " D = " << D << endl;
         throw Exception("ScalarFEEvaluator - constructor: cast failed...");
+      }
     }
     
     void FixTime(double a_fixedtime ) const 
@@ -157,6 +163,88 @@ typedef std::pair<double,double> TimeInterval;
       
     virtual double operator()(const Vec<D>& point) const;
     virtual double operator()(const Vec<D+1>& point) const;
+  };
+
+
+  template <int D> // D : resulting space dimension..
+  class EvalFunctionEvaluator : public ScalarFieldEvaluator
+  {
+  protected:
+    EvalFunction eval;
+    const ElementTransformation & eltrans;
+  public:
+    EvalFunctionEvaluator( const string & str, const ElementTransformation & a_eltrans) 
+      : eval(str), eltrans(a_eltrans) { ; }
+
+    EvalFunctionEvaluator( const EvalFunction & str, const ElementTransformation & a_eltrans) 
+      : eval(str), eltrans(a_eltrans) { ; }
+
+    virtual double operator()(const Vec<1>& point) const
+    {
+      IntegrationPoint ip(point(0));
+      MappedIntegrationPoint<1,D> mip(ip, eltrans);
+      return eval.Eval(& mip.GetPoint()(0));
+    }
+
+    virtual double operator()(const Vec<2>& point) const
+    {
+      IntegrationPoint ip(point(0),point(1));
+      MappedIntegrationPoint<2,D> mip(ip, eltrans);
+      return eval.Eval(& mip.GetPoint()(0));
+    }
+
+    virtual double operator()(const Vec<3>& point) const
+    {
+      IntegrationPoint ip(point(0),point(1),point(2));
+      MappedIntegrationPoint<3,D> mip(ip, eltrans);
+      return eval.Eval(& mip.GetPoint()(0));
+    }
+
+  };
+
+  template <int D> // D : resulting space dimension..
+  class SpaceTimeEvalFunctionEvaluator : public ScalarFieldEvaluator
+  {
+  protected:
+    EvalFunction eval;
+    const ElementTransformation & eltrans;
+    TimeInterval ti;
+  public:
+    SpaceTimeEvalFunctionEvaluator( const string & str, 
+                                    const ElementTransformation & a_eltrans, 
+                                    const TimeInterval & a_ti) 
+      : eval(str), eltrans(a_eltrans), ti(a_ti) { ; }
+
+    SpaceTimeEvalFunctionEvaluator( const EvalFunction & str, 
+                                    const ElementTransformation & a_eltrans, 
+                                    const TimeInterval & a_ti) 
+      : eval(str), eltrans(a_eltrans), ti(a_ti) { ; }
+
+    virtual double operator()(const Vec<1>& point) const
+    {
+      Vec<3> p(0.0); 
+      p(0) = ( (1.0-point(0)) * ti.first + point(0) * ti.second );
+      return eval.Eval(& p(0));
+    }
+
+    virtual double operator()(const Vec<2>& point) const
+    {
+      IntegrationPoint ip(point(0));
+      MappedIntegrationPoint<1,D> mip(ip, eltrans);
+      Vec<3> p = mip.GetPoint();
+      p(D) = ( (1.0-point(1)) * ti.first + point(1) * ti.second );
+      return eval.Eval(& p(0));
+    }
+
+    virtual double operator()(const Vec<3>& point) const
+    {
+      IntegrationPoint ip(point(0),point(1));
+      MappedIntegrationPoint<2,D> mip(ip, eltrans);
+      Vec<3> p = mip.GetPoint();
+      p(D) = ( (1.0-point(2)) * ti.first + point(2) * ti.second );
+      return eval.Eval(& p(0));
+    }
+
   };
 
 
