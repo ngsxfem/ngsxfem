@@ -54,10 +54,10 @@ define constant tnew = 1.0
 # ( sqrt((x-0.45-v*t4)*(x-0.45-v*t4)+(y-0.5)*(y-0.5))-(1.30-t4*s)/sqrt(2*pi)),
 
 define coefficient lset0
-(x-0.26),
+(x+y-0.5),
 
 define coefficient lset4
-(x-0.26),
+(x+y-0.5),
 
 #( ( x > 0.5) * cos(2*pi*(x+y))),
 
@@ -93,15 +93,19 @@ STtracesource t4 lset4
 numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct -print
 
 numproc testxfem nptxfem 
-        -levelset=u_st
+#        -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.16)
+#        -levelset=u_st
+#        -levelset=(x-y+z-0.5)
+        -levelset=(x+y-0.5)
         -spacetime
-        -num_int_ref_space=0
+        -num_int_ref_space=1
         -num_int_ref_time=0
         -int_order_space=2
         -int_order_time=2
-        -vmax=0
+        -vmax=5
         -dt=1
-        -bound
+        -bound 
+        -output
 
 define bilinearform evalu_past -fespace=fes_st -nonassemble
 STtracepast zero

@@ -32,11 +32,12 @@ define constant cuteps = 0.0
 define variable t = 0.0
 
 define coefficient lset
-( sqrt((x-0.45)*(x-0.45)+(y-0.5)*(y-0.5))-(1.0-t0*s)/sqrt(2*pi)),
+#( sqrt((x-0.45)*(x-0.45)+(y-0.5)*(y-0.5))-(1.0-t0*s)/sqrt(2*pi)),
+(x-0.51),
 
 define fespace fes 
-       -type=l2ho
-       -order=3
+       -type=h1ho
+       -order=1
        -all_dofs_together
 
 define gridfunction u -fespace=fes
@@ -50,7 +51,8 @@ source lset
 numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u -solver=direct -print
 
 numproc testxfem nptxfem 
-        -levelset=u
+#        -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.16)
+        -levelset=(x-0.51)
         -num_int_ref_space=3
         -int_order_space=2
         -bound
