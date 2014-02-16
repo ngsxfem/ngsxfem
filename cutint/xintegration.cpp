@@ -145,6 +145,11 @@ namespace xintegration
     Vec<3> b = *s[2] - *s[0];
     Vec<3> c = Cross(a,b);
     const double trafofac = L2Norm(c);
+    const double rel = max(L2Norm(a),L2Norm(b));
+
+    if (trafofac < 1e-14 * rel)
+      return;
+
     c /= trafofac;
 
     //sign check and probably switch
@@ -178,6 +183,11 @@ namespace xintegration
     Vec<2> a = *s[1] - *s[0];
     Vec<2> n(-a(1),a(0));
     const double trafofac = L2Norm(a);
+
+    const double rel = L2Norm(a);
+    if (trafofac < 1e-14 * rel)
+      return;
+
     n /= trafofac;
 
     //sign check and probably switch
