@@ -788,6 +788,7 @@ namespace xintegration
     void CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <D> & s, 
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
     { 
+      cout << " ET_SPACE = " << ET_SPACE << ", ET_TIME = " << ET_TIME << endl;
       throw Exception("CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad --- no implementation for these Element Types");
     }
 
@@ -1265,7 +1266,6 @@ namespace xintegration
 
 
   } // end of namespace DecompositionRules
-
 
 
 
