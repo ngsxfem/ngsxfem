@@ -26,7 +26,7 @@ namespace ngcomp
     /// space fespace
     DGFiniteElement<1> * fel_time;
     ///
-    int dim;
+    int spacedim;  
     /// 
     int order_time;
     /// 

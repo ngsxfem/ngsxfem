@@ -18,9 +18,8 @@ namespace ngcomp
 
     if(checkflags) CheckFlags(flags);
     
-    dim=ma.GetDimension();
-    
     // ndlevel.SetSize(0);
+    spacedim = ma.GetDimension();
     
     // TODO: Evaluator for shape tester 
     order_time = flags.GetNumFlag("order_time",1);
@@ -28,7 +27,7 @@ namespace ngcomp
     fel_time = new L2HighOrderFE<ET_SEGM> (order_time);
 
     static ConstantCoefficientFunction one(1);
-    if (ma.GetDimension() == 2)
+    if (spacedim == 2)
     {
       integrator = new SpaceTimeTimeTraceIntegrator<2,FUTURE>(&one) ;
       boundary_integrator = new RobinIntegrator<2> (&one);
@@ -127,7 +126,7 @@ namespace ngcomp
     const DGFiniteElement<1> & fel_time = *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
         
     const FiniteElement * fel_space = &(fes_space->GetFE(elnr,lh));   
-    if ( dim == 2 ) 
+    if ( spacedim == 2 ) 
     {
       const ScalarFiniteElement<2> * fel_scalar = dynamic_cast<const ScalarFiniteElement<2> *>(fel_space);    
       if (fel_scalar == NULL)
@@ -162,7 +161,7 @@ namespace ngcomp
     const DGFiniteElement<1> & fel_time = *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
         
     const FiniteElement * fel_space = &(fes_space->GetSFE(selnr,lh));   
-    if ( dimension == 2 ) 
+    if ( spacedim == 2 ) 
     {
       const ScalarFiniteElement<1> * fel_scalar = dynamic_cast<const ScalarFiniteElement<1> *>(fel_space);    
       if (fel_scalar == NULL)
