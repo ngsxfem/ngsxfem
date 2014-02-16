@@ -162,7 +162,7 @@ namespace ngcomp
     const DGFiniteElement<1> & fel_time = *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
         
     const FiniteElement * fel_space = &(fes_space->GetSFE(selnr,lh));   
-    if ( dim == 2 ) 
+    if ( dimension == 2 ) 
     {
       const ScalarFiniteElement<1> * fel_scalar = dynamic_cast<const ScalarFiniteElement<1> *>(fel_space);    
       if (fel_scalar == NULL)

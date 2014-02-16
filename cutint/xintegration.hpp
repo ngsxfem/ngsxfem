@@ -196,14 +196,14 @@ namespace xintegration
     /// once a level absolute value is larger than threshold the prism is considered non-intersected
     double distance_threshold = 1e99;
 
-    /// top level
-    bool ownpc = false;
-
     void SetDistanceThreshold( const double & a_distance_threshold ){ distance_threshold = a_distance_threshold; }
 
     LocalHeap & lh;
     /// 
     CompositeQuadratureRule<SD> & compquadrule;
+
+    /// top level
+    bool ownpc = false;
 
     /// Integration Order which is used on decomposed geometries
     /// it's the maximum of int_order_space and int_order_time
