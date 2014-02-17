@@ -21,7 +21,7 @@ define fespace fesx
        -spacetime
        -t0=0.0
        -t1=0.499
-       -levelset=(x+z-1.0)
+       -levelset=(x-0.45)
 
 numproc informxfem npix 
         -fespace=fesh1
@@ -33,4 +33,19 @@ define fespace fescomp
 
 define gridfunction u -fespace=fescomp
 
-#numproc shapetester npst -gridfunction=u
+define coefficient lset
+(x-0.45),       
+       
+numproc shapetester npst -gridfunction=u
+
+define bilinearform evalx_past -fespace=fescomp -nonassemble
+visx_st_past lset
+
+define bilinearform evalx_future -fespace=fescomp -nonassemble
+visx_st_future lset
+
+numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -applyd
+numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
+
+numproc visualization npviz -scalarfunction=u_future -comp=0
+

@@ -1,11 +1,4 @@
 
-#
-# solve the Poisson equation -Delta u = f
-#
-# with boundary conditions
-#      u = 0  on Gamma1
-#  du/dn = 1  on Gamma2
-
 # load geometry
 geometry = square.in2d
 
@@ -15,23 +8,37 @@ geometry = square.in2d
 mesh = square_trigs.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
-#shared = libngsxfem_test
 shared = libngsxfem_xfem
-#shared = libngsxfem_spacetime
-#shared = libngsxfem_test
 
 define constant heapsize = 1e7
 
 define fespace fesh1
        -type=h1ho
-       -order=1
+       -order=2
 #       -dirichlet=[1,2,3,4]
 
 define fespace fesx
        -type=xfespace
-       -levelset=(x-0.5)
+       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09)
 
-
+define coefficient lset
+((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09),       
+       
 numproc informxfem npix 
         -fespace=fesh1
         -xfespace=fesx
+
+define fespace fescomp
+       -type=compound
+       -spaces=[fesh1,fesx]
+
+define gridfunction u -fespace=fescomp
+
+numproc shapetester npst -gridfunction=u
+
+define bilinearform evalx -fespace=fescomp -nonassemble
+visx lset
+
+numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
+
+numproc visualization npviz -scalarfunction=utry -comp=0
