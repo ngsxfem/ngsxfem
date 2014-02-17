@@ -19,28 +19,28 @@ namespace ngfem
   /**
      a placeholder finite element
    */
-  template< class FE >
-  class XDummyFE : public FE
+  class XDummyFE : public FiniteElement
   {
   protected:
     const DOMAIN_TYPE sign;
+    const ELEMENT_TYPE et;
   public:
-    XDummyFE (DOMAIN_TYPE a_sign);
+    XDummyFE (DOMAIN_TYPE a_sign, ELEMENT_TYPE et);
     DOMAIN_TYPE GetDomainType() const { return sign;}
+    virtual ELEMENT_TYPE ElementType() const { return et; }
   };
 
   /**
      surrounds a FiniteElement and adds information about signs of dofs and local geometry
    */
-  template< class FE >
   class XFiniteElement : public FiniteElement
   {
   protected:
-    const FE& base;
+    const FiniteElement & base;
     const Array<DOMAIN_TYPE> localsigns;
     const XLocalGeometryInformation& localgeom;
   public:
-    XFiniteElement(const FE& a_base,
+    XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
                    const XLocalGeometryInformation& a_localgeom);
     virtual ~XFiniteElement();
@@ -50,6 +50,9 @@ namespace ngfem
     const Array<DOMAIN_TYPE>& GetSignsOfDof() const; 
 
     const XLocalGeometryInformation& GetLocalGeometry() const; 
+
+    virtual ELEMENT_TYPE ElementType() const { return base.ElementType(); }
+
   };
 
 } // end of namespace

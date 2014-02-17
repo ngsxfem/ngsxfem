@@ -5,32 +5,27 @@
 namespace ngfem
 {
 
-  template< class FE >
-  XDummyFE<FE>::XDummyFE (DOMAIN_TYPE a_sign)
-    : FE(), sign(a_sign) { ; }
+  XDummyFE::XDummyFE (DOMAIN_TYPE a_sign, ELEMENT_TYPE a_et)
+    : // FiniteElement(),
+    sign(a_sign), et(a_et) { ; }
 
-  template< class FE >
-  XFiniteElement<FE>::XFiniteElement(const FE & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                     const XLocalGeometryInformation& a_localgeom)
+  XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
+                                 const XLocalGeometryInformation& a_localgeom)
     : base(a_base), localsigns(a_localsigns), localgeom(a_localgeom)
   { ; };
 
 
-  template< class FE >
-  XFiniteElement<FE>::~XFiniteElement() { ; };
+  XFiniteElement::~XFiniteElement() { ; };
 
   /// the name
-  template< class FE >
-  string XFiniteElement<FE>::ClassName(void) const {return "X-"+base.ClassName();};
+  string XFiniteElement::ClassName(void) const {return "X-"+base.ClassName();};
 
-  template< class FE >
-  const Array<DOMAIN_TYPE>& XFiniteElement<FE>::GetSignsOfDof() const  
+  const Array<DOMAIN_TYPE>& XFiniteElement::GetSignsOfDof() const  
   {
     return localsigns;
   };
 
-  template< class FE >
-  const XLocalGeometryInformation& XFiniteElement<FE>::GetLocalGeometry() const
+  const XLocalGeometryInformation& XFiniteElement::GetLocalGeometry() const
   {
     return localgeom;
   };

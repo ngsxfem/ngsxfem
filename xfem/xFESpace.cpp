@@ -10,13 +10,14 @@ namespace ngcomp
   XFESpace<D,SD> :: XFESpace (const MeshAccess & ama, const Flags & flags)
     : FESpace (ama, flags)
   {
-    cout << "Constructor of XFESpace" << endl;
+    cout << "Constructor of XFESpace begin" << endl;
 
-    throw Exception(" wooohooo - not a good constructor yet ");
-    basefes = NULL;
-       
-    static ConstantCoefficientFunction one(1);
-    integrator = new MassIntegrator<D> (&one);
+    string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
+    eval_lset = new EvalFunction(eval_lset_str);
+
+    cout << "Constructor of XFESpace end" << endl;
+    // static ConstantCoefficientFunction one(1);
+    // integrator = new MassIntegrator<D> (&one);
   }
     
   
@@ -25,13 +26,20 @@ namespace ngcomp
   {
     if (el2dofs) delete el2dofs; 
     if (sel2dofs) delete sel2dofs; 
+    if (eval_lset) delete eval_lset;
     // nothing to do
   }
   
   template <int D, int SD>
   void XFESpace<D,SD> :: Update(LocalHeap & lh)
   {
-    FESpace<D,SD>::Update(lh);
+    if ( basefes == NULL )
+    {
+      cout << " no basefes, Update postponed " << endl;
+      return;
+    }
+    
+    FESpace::Update(lh);
 
     int ne=ma.GetNE();
     int nedges=ma.GetNEdges();
@@ -46,36 +54,43 @@ namespace ngcomp
     BitArray activedofs(basefes->GetNDof());
     activedofs.Clear();
 
+    domofel.SetSize(ne);
+    domofsel.SetSize(nse);
+
+    ELEMENT_TYPE et_time = D == SD ? ET_POINT : ET_SEGM;
+
     TableCreator<int> creator;
     for ( ; !creator.Done(); creator++)
     {
-      for (int i = 0; i < ne; ++i)
+      for (int elnr = 0; elnr < ne; ++elnr)
       {
+        HeapReset hr(lh);
 
-        const FESpace & fes = gf_lset->GetFESpace();
-        const FiniteElement & fel = fes.GetFE(elnr, lh);
+        netgen::Ng_Element ngel = ma.GetElement(elnr);
+        ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
 
-        // if (fel.ElementType() / 10 + 1 == 2)
-        // { 
-        //   ScalarFEEvaluator<2> lset_eval(fel, linvec, lh);
+        ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
+        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
 
+        CompositeQuadratureRule<SD> cquad;
+        XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                                              cquad, lh, 1, 1, 0, 0);
+        DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
-// ----------- V ----------- CONTINUE HERE ----------- V -----------
-        const ScalarSpaceTimeFiniteElement<2> *  fel_2d_st 
-          = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
+        domofel[elnr] = dt;
 
-
-        if (gci->IsElementCut(i))
+        if (dt == IF)// IsElementCut ?
         {
-          activeelem.Set(i);
+          activeelem.Set(elnr);
           Array<int> basednums;
-          basefes->GetDofNrs(i,basednums);
+          basefes->GetDofNrs(elnr,basednums);
           for (int k = 0; k < basednums.Size(); ++k)
           {
             activedofs.Set(basednums[k]);
-            creator.Add(i,basednums[k]);
+            creator.Add(elnr,basednums[k]);
           }
         }
+        
       }
     }
     el2dofs = creator.GetTable();
@@ -83,20 +98,36 @@ namespace ngcomp
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
     {
-      for (int i = 0; i < nse; ++i)
+      for (int selnr = 0; selnr < nse; ++selnr)
       {
+        HeapReset hr(lh);
+
+        netgen::Ng_Element ngel = ma.GetSElement(selnr);
+        ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+
+        ElementTransformation & seltrans = ma.GetTrafo (selnr, BND, lh);
+        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
+
+        CompositeQuadratureRule<SD-1> cquad;
+        XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                                              cquad, lh, 1, 1, 0, 0);
+        DOMAIN_TYPE dt = xgeom->MakeQuadRule();
+
         Array<int> fnums;
-        ma.GetSElFacets(i,fnums);
+        ma.GetSElFacets(selnr,fnums);
         int ed = fnums[0];
-        if (gci->IsFacetCut(ed))
+
+        domofsel[selnr] = dt;
+
+        if (dt == IF) // IsFacetCut(ed)
         {
-          activeselem.Set(i);
+          activeselem.Set(selnr);
           Array<int> basednums;
-          basefes->GetSDofNrs(i,basednums);
+          basefes->GetSDofNrs(selnr,basednums);
           for (int k = 0; k < basednums.Size(); ++k)
           {
             activedofs.Set(basednums[k]); // might be twice, but who cares..
-            creator2.Add(i,basednums[k]);
+            creator2.Add(selnr,basednums[k]);
           }
         }
       }
@@ -135,8 +166,9 @@ namespace ngcomp
    
     // domain of dof
     domofdof.SetSize(ndof);
+    domofdof = IF;
 
-
+    /*
     int domain = 0;
     Array<int> vdofs;
     for (int i = 0; i < nv; i++)
@@ -173,7 +205,10 @@ namespace ngcomp
           domofdof[basedof2xdof[indofs[j]]] = domain;
       }
     }
+    */
 
+    UpdateCouplingDofArray();
+    FinalizeUpdate (lh);
 
     dirichlet_dofs.SetSize (GetNDof());
     dirichlet_dofs.Clear();
@@ -185,12 +220,16 @@ namespace ngcomp
         dirichlet_dofs.Set (dof);
     }
     
-    UpdateCouplingDofArray();
-    FinalizeUpdate (lh);
+    free_dofs.SetSize (GetNDof());
+    free_dofs = dirichlet_dofs;
+    free_dofs.Invert();
 
     *testout << "ndof = " << ndof << endl;
+    *testout << "basedof2xdof = " << basedof2xdof << endl;
     *testout << "el2dofs = " << *el2dofs << endl;
+    *testout << "sel2dofs = " << *sel2dofs << endl;
     *testout << "domain of dofs = " << domofdof << endl;
+    *testout << "free_dofs = " << free_dofs << endl;
   }
   
   template <int D, int SD>
@@ -203,7 +242,7 @@ namespace ngcomp
   }
   
   template <int D, int SD>
-  void XFESpace<D,SD> :: GetDomainNrs (int elnr, Array<int> & domnums) const
+  void XFESpace<D,SD> :: GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const
   {
     if (activeelem.Test(elnr))
     {
@@ -219,7 +258,7 @@ namespace ngcomp
   }
 
   template <int D, int SD>
-  void XFESpace<D,SD> :: GetSurfaceDomainNrs (int selnr, Array<int> & domnums) const
+  void XFESpace<D,SD> :: GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const
   {
     if (activeselem.Test(selnr))
     {
@@ -258,116 +297,44 @@ namespace ngcomp
     else
       dnums.SetSize(0);
   }
-
   template <int D, int SD>
   const FiniteElement & XFESpace<D,SD> :: GetFE (int elnr, LocalHeap & lh) const
   {
-    Ng_Element ngel = ma.GetElement(elnr);
+    netgen::Ng_Element ngel = ma.GetElement(elnr);
     ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
     if (!activeelem.Test(elnr))
     {
-      const int sign = gci->DomainOfElement(elnr);
-      switch (eltype)
-      {
-        case ET_SEGM:    
-          return *(new (lh) XDummyFE<1>(eltype, sign)); break;
-        case ET_TRIG:    
-        case ET_QUAD:    
-          return *(new (lh) XDummyFE<2>(eltype,sign)); break;
-        case ET_TET:
-        case ET_PYRAMID:
-        case ET_PRISM:
-        case ET_HEX:
-          return *(new (lh) XDummyFE<3>(eltype,sign)); break;
-        default:
-        {
-          throw Exception ("GetFE not supported for element");
-        }
-      }
-
+      DOMAIN_TYPE dt = domofel[elnr];
+      return *(new (lh) XDummyFE(dt,eltype));
     }
     else
     {
-      Array<int> domnrs;
+      Array<DOMAIN_TYPE> domnrs;
       GetDomainNrs(elnr,domnrs);  
-      const MasterElement& masterelement = *(gci->GetCutElement(elnr));
-      
-      const ScalarFiniteElement<1> * basefel1 = NULL;
-      const ScalarFiniteElement<2> * basefel2 = NULL;
-      const ScalarFiniteElement<3> * basefel3 = NULL;
-      switch (eltype)
-      {
-        case ET_SEGM:    
-          basefel1 = dynamic_cast<const ScalarFiniteElement<1>*>(&(basefes->GetFE(elnr,lh)));
-          return *(new (lh) XFiniteElement<1>(*basefel1,domnrs,masterelement)); break;
-        case ET_TRIG:    
-        case ET_QUAD:    
-          basefel2 = dynamic_cast<const ScalarFiniteElement<2>*>(&(basefes->GetFE(elnr,lh)));
-          return *(new (lh) XFiniteElement<2>(*basefel2,domnrs,masterelement)); break;
-        case ET_TET:     
-        case ET_PYRAMID: 
-        case ET_PRISM:   
-        case ET_HEX:     
-          basefel3 = dynamic_cast<const ScalarFiniteElement<3>*>(&(basefes->GetFE(elnr,lh)));
-          return *(new (lh) XFiniteElement<3>(*basefel3,domnrs,masterelement)); break;
-        default:
-        {
-          throw Exception ("GetFE not supported for element");
-        }
-      }
+      XLocalGeometryInformation * localgeominfo = NULL; //TODO
+      //localgeominfo->MakeQuadRule...
+      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,*localgeominfo));
     }
   }
 
-  /// the same for the surface elements
+
   template <int D, int SD>
   const FiniteElement & XFESpace<D,SD> :: GetSFE (int selnr, LocalHeap & lh) const
   {
-    Array<int> fnums;
-    ma.GetSElFacets(selnr,fnums);
-    int ed = fnums[0];
- 
-    ELEMENT_TYPE eltype = ma.GetSElType(selnr);
+    netgen::Ng_Element ngsel = ma.GetSElement(selnr);
+    ELEMENT_TYPE eltype = ConvertElementType(ngsel.GetType());
     if (!activeselem.Test(selnr))
     {
-      const int sign = gci->DomainOfEdge(ed);
-      switch (eltype)
-      {
-        case ET_SEGM:   
-          return *(new (lh) XDummyFE<1>(eltype, sign )); break;
-        case ET_TRIG:    
-        case ET_QUAD:    
-          return *(new (lh) XDummyFE<2>(eltype, sign )); break;
-        default:
-        {
-          throw Exception ("GetSFE not supported for element");
-        }
-      }
-
+      DOMAIN_TYPE dt = domofel[selnr];
+      return *(new (lh) XDummyFE(dt,eltype));
     }
     else
     {
-      Array<int> sdomnrs;
-      GetSurfaceDomainNrs(selnr,sdomnrs); 
-      const Edge & edge = *gci->GetBaseEdge(ed);
-      // adapt (see GetFE)
-      const ScalarFiniteElement<1> * basefel1 = NULL;
-      const ScalarFiniteElement<2> * basefel2 = NULL;
-      // const ScalarFiniteElement<3> * basefel3 = NULL;
-
-      switch (eltype)
-      {
-        case ET_SEGM:    
-          basefel1 = dynamic_cast<const ScalarFiniteElement<1>*>(&(basefes->GetSFE(selnr,lh)));
-          return *(new (lh) XFiniteElement<1>(*basefel1,sdomnrs,edge)); break;
-        case ET_TRIG:
-        case ET_QUAD: 
-          basefel1 = dynamic_cast<const ScalarFiniteElement<1>*>(&(basefes->GetSFE(selnr,lh)));
-          return *(new (lh) XFiniteElement<2>(*basefel2,sdomnrs,edge)); break;
-        default:
-        {
-          throw Exception ("GetSFE not supported for element");
-        }
-      }
+      Array<DOMAIN_TYPE> domnrs;
+      GetSurfaceDomainNrs(selnr,domnrs);  
+      XLocalGeometryInformation * localgeominfo = NULL; //TODO
+      //localgeominfo->MakeQuadRule...
+      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,*localgeominfo));
     }
   }
 
@@ -385,7 +352,63 @@ namespace ngcomp
 
   */
 
-  /*
+
+    
+  NumProcInformXFESpace::NumProcInformXFESpace (PDE & apde, const Flags & flags)
+    : NumProc (apde)
+  { 
+    FESpace* xfes = pde.GetFESpace(flags.GetStringFlag("xfespace","vx"));
+    FESpace* basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
+    
+    int mD = pde.GetMeshAccess().GetDimension();
+    
+    SpaceTimeFESpace * fes_st = dynamic_cast<SpaceTimeFESpace *>(basefes);
+    int mSD = fes_st == NULL ? mD : mD + 1;
+
+    if (mD == 2)
+      if (mSD == 2)
+        dynamic_cast<XFESpace<2,2>* >(xfes) -> SetBaseFESpace (basefes);
+      else
+        dynamic_cast<XFESpace<2,3>* >(xfes) -> SetBaseFESpace (basefes);
+    else
+      if (mSD == 2)
+        dynamic_cast<XFESpace<3,2>* >(xfes) -> SetBaseFESpace (basefes);
+      else
+        dynamic_cast<XFESpace<3,3>* >(xfes) -> SetBaseFESpace (basefes);
+
+    // if (xfes_ != NULL)
+    // {
+    //   xfes_->SetBaseFESpace(basefes);
+    // }
+    // else
+    // {
+    //   CompoundFESpace* cfes = dynamic_cast<CompoundFESpace*>(xfes);
+    //   if (cfes != NULL)
+    //   {
+    //     for (int i=0; i < cfes->GetNSpaces(); ++i)
+    //     {
+    //       XFESpace* xfes_2 = dynamic_cast<XFESpace*>((*cfes)[i]);
+    //       if (xfes_2 != NULL)
+    //       {
+    //         xfes_2->SetBaseFESpace(basefes);
+    //       }
+    //     }
+    //   }
+    //   else
+    //     throw Exception("FESpace is not compatible to x-fespaces!");
+    // }
+  }
+
+  NumProcInformXFESpace::~NumProcInformXFESpace(){ ; }
+  string NumProcInformXFESpace::GetClassName () const {return "InformXFESpace";  }
+  void NumProcInformXFESpace::Do (LocalHeap & lh)  { ; }
+  
+  static RegisterNumProc<NumProcInformXFESpace> npinfoxfe("informxfem");
+
+
+
+
+
   namespace xfespace_cpp
   {
     class Init
@@ -396,11 +419,10 @@ namespace ngcomp
   
     Init::Init()
     {
-      GetFESpaceClasses().AddFESpace ("xfespace", XFESpace::Create);
-      GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
+      GetFESpaceClasses().AddFESpace ("xfespace", XFESpace<2,2>::Create);
+      // GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
     }
   
     Init init;
   }
-  */
 }
