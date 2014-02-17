@@ -16,7 +16,7 @@ mesh = square_trigs.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 #shared = libngsxfem_test
-shared = libngsxfem_common
+shared = libngsxfem_spacetime
 shared = libngsxfem_test
 
 define constant heapsize = 1e7

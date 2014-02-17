@@ -7,7 +7,7 @@ AM_CPPFLAGS = -I$(netgendir)/include $(NETGEN_INCLUDES) $(LAPACK_INCLUDES) $(TCL
 lib_LTLIBRARIES = libngsxfem_parabolic.la
 
 libngsxfem_parabolic_la_SOURCES = solveinstat.cpp
-libngsxfem_parabolic_la_LIBADD = ../common/libngsxfem_common.la
+libngsxfem_parabolic_la_LIBADD = ../spacetime/libngsxfem_spacetime.la
 libngsxfem_parabolic_la_LDFLAGS = -avoid-version -rdynamic $(SOLVER_LIBS) $(NETGEN_LIBS)
 
 

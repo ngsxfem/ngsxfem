@@ -13,7 +13,7 @@ geometry = cube.geo
 mesh = cube.vol.gz
 
 #shared = libngsxfem_test
-shared = libngsxfem_common
+shared = libngsxfem_spacetime
 shared = libngsxfem_test
 
 define constant heapsize = 1e7

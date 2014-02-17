@@ -1,7 +1,7 @@
 #ifndef FILE_XDECOMPOSE_HPP
 #define FILE_XDECOMPOSE_HPP
 
-#include "../common/spacetimefe.hpp"   // for ScalarSpaceTimeFiniteElement
+#include "../spacetime/spacetimefe.hpp"   // for ScalarSpaceTimeFiniteElement
 
 #include <set>
 #include <vector>

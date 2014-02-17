@@ -10,7 +10,7 @@
 
 #include <solve.hpp>
 #include "xintegration.hpp"
-#include "../common/spacetimefespace.hpp"
+#include "../spacetime/spacetimefespace.hpp"
 
 using namespace ngsolve;
 using namespace xintegration;
@@ -107,7 +107,7 @@ public:
 
         if (gf_lset == NULL)
         {
-          if (!coef_lset == NULL)
+          if (coef_lset != NULL)
           {
             cout << " LEVELSET AS COEFFICIENTFUNCTION " << endl;
           }

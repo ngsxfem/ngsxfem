@@ -11,7 +11,7 @@ Please include this file to the src files given in netgen/ngsolve/Makefile
 
 
 #include <solve.hpp>
-#include "../common/spacetimeintegrators.hpp"
+#include "../spacetime/spacetimeintegrators.hpp"
 
 using namespace ngsolve;
 
