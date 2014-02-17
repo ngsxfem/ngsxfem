@@ -28,9 +28,14 @@ namespace ngcomp
       
     Table<int> * el2dofs = NULL;
     Table<int> * sel2dofs = NULL;
+
     Array<DOMAIN_TYPE> domofdof;
     Array<DOMAIN_TYPE> domofel;
     Array<DOMAIN_TYPE> domofsel;
+    Array<DOMAIN_TYPE> domofface;
+    Array<DOMAIN_TYPE> domofedge;
+    Array<DOMAIN_TYPE> domofvertex;
+
     Array<int> basedof2xdof;
     // Table<int> sel2dofs;
     const FESpace * basefes = NULL;

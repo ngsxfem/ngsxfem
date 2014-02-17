@@ -49,6 +49,7 @@ namespace ngcomp
 
     int ne=ma.GetNE();
     int nedges=ma.GetNEdges();
+    int nf=ma.GetNFaces();
     int nv=ma.GetNV();
     int nse=ma.GetNSE();
 
@@ -184,6 +185,111 @@ namespace ngcomp
     domofdof.SetSize(ndof);
     domofdof = IF;
 
+    if (D==3)
+    {
+      domofface.SetSize(nf);
+      for (int facnr = 0; facnr < nf; ++facnr)
+      {
+        bool haspos = false;
+        bool hasneg = false;
+
+        Array<int> elnums;
+        ma.GetFaceElements (facnr, elnums);
+
+        for (int k = 0; k < elnums.Size(); ++k)
+        {
+          DOMAIN_TYPE dt_cur = domofel[elnums[k]];
+          if (dt_cur == NEG)
+            hasneg = true;
+
+          if (dt_cur == POS)
+            haspos = true;
+        }
+
+        if (haspos)
+          domofface[facnr] = NEG;
+        else
+          domofface[facnr] = POS;
+
+        Array<int> dnums;
+        basefes->GetFaceDofNrs(facnr, dnums);
+        for (int l = 0; l < dnums.Size(); ++l)
+        {
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+            domofdof[xdof] = domofface[facnr];
+        }
+      }
+    }
+
+    domofedge.SetSize(nedges);
+    for (int edgnr = 0; edgnr < nedges; ++edgnr)
+    {
+      bool haspos = false;
+      bool hasneg = false;
+
+      Array<int> elnums;
+      ma.GetEdgeElements (edgnr, elnums);
+
+      for (int k = 0; k < elnums.Size(); ++k)
+      {
+        DOMAIN_TYPE dt_cur = domofel[elnums[k]];
+        if (dt_cur == NEG)
+          hasneg = true;
+
+        if (dt_cur == POS)
+          haspos = true;
+      }
+
+      if (haspos)
+        domofedge[edgnr] = NEG;
+      else
+        domofedge[edgnr] = POS;
+
+      Array<int> dnums;
+      basefes->GetEdgeDofNrs(edgnr, dnums);
+      for (int l = 0; l < dnums.Size(); ++l)
+      {
+        int xdof = basedof2xdof[dnums[l]];
+        if ( xdof != -1)
+          domofdof[xdof] = domofedge[edgnr];
+      }
+    }
+
+    domofvertex.SetSize(nv);
+    for (int vnr = 0; vnr < nv; ++vnr)
+    {
+      bool haspos = false;
+      bool hasneg = false;
+
+      Array<int> elnums;
+      ma.GetVertexElements (vnr, elnums);
+
+      for (int k = 0; k < elnums.Size(); ++k)
+      {
+        DOMAIN_TYPE dt_cur = domofel[elnums[k]];
+        if (dt_cur == NEG)
+          hasneg = true;
+
+        if (dt_cur == POS)
+          haspos = true;
+      }
+
+      if (haspos)
+        domofvertex[vnr] = NEG;
+      else
+        domofvertex[vnr] = POS;
+
+      Array<int> dnums;
+      basefes->GetVertexDofNrs(vnr, dnums);
+      for (int l = 0; l < dnums.Size(); ++l)
+      {
+        int xdof = basedof2xdof[dnums[l]];
+        if ( xdof != -1)
+          domofdof[xdof] = domofvertex[vnr];
+      }
+    }
+
     /*
     int domain = 0;
     Array<int> vdofs;
@@ -248,6 +354,7 @@ namespace ngcomp
     *testout << "free_dofs = " << free_dofs << endl;
   }
   
+
   template <int D, int SD>
   void XFESpace<D,SD> :: GetDofNrs (int elnr, Array<int> & dnums) const
   {
