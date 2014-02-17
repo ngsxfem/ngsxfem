@@ -25,7 +25,7 @@ define constant heapsize = 1e7
 define fespace fesh1
        -type=h1ho
        -order=1
-       -dirichlet=[1,2,3,4]
+#       -dirichlet=[1,2,3,4]
 
 define fespace fesx
        -type=xfespace

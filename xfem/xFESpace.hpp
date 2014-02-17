@@ -22,7 +22,10 @@ namespace ngcomp
   {
   protected:  
     int ndof;
-
+      
+    bool spacetime = false;
+    TimeInterval ti;
+      
     Table<int> * el2dofs = NULL;
     Table<int> * sel2dofs = NULL;
     Array<DOMAIN_TYPE> domofdof;
@@ -33,7 +36,7 @@ namespace ngcomp
     const FESpace * basefes = NULL;
     BitArray activeelem;
     BitArray activeselem;
-
+      
     const GridFunction * gf_lset = NULL;
     const CoefficientFunction * coef_lset = NULL;
     EvalFunction * eval_lset = NULL;
@@ -94,6 +97,7 @@ namespace ngcomp
     void SetLevelSet(const GridFunction* lset_){ gf_lset = lset_;};
     void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
     void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
+    void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
   };
 
   

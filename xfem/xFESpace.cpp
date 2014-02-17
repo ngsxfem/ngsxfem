@@ -11,6 +11,10 @@ namespace ngcomp
     : FESpace (ama, flags)
   {
     cout << "Constructor of XFESpace begin" << endl;
+    spacetime = flags.GetDefineFlag("spacetime");
+
+    ti.first = flags.GetNumFlag("t0",0.0);
+    ti.second = flags.GetNumFlag("t1",1.0);
 
     string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
     eval_lset = new EvalFunction(eval_lset_str);
@@ -38,6 +42,8 @@ namespace ngcomp
       cout << " no basefes, Update postponed " << endl;
       return;
     }
+    
+    
     
     FESpace::Update(lh);
 
@@ -70,7 +76,12 @@ namespace ngcomp
         ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
 
         ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
-        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+        
+        ScalarFieldEvaluator * lset_eval_p = NULL;
+        if (spacetime)
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+        else
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
 
         CompositeQuadratureRule<SD> cquad;
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
@@ -106,7 +117,12 @@ namespace ngcomp
         ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
 
         ElementTransformation & seltrans = ma.GetTrafo (selnr, BND, lh);
-        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
+
+        ScalarFieldEvaluator * lset_eval_p = NULL;
+        if (spacetime)
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,ti,lh);
+        else
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
 
         CompositeQuadratureRule<SD-1> cquad;
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
