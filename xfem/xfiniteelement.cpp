@@ -7,12 +7,12 @@ namespace ngfem
 
   XDummyFE::XDummyFE (DOMAIN_TYPE a_sign, ELEMENT_TYPE a_et)
     : // FiniteElement(),
-    sign(a_sign), et(a_et) { ; }
+    sign(a_sign), et(a_et) { ndof = 0; }
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
                                  const XLocalGeometryInformation& a_localgeom)
     : base(a_base), localsigns(a_localsigns), localgeom(a_localgeom)
-  { ; };
+  { ndof = base.GetNDof(); };
 
 
   XFiniteElement::~XFiniteElement() { ; };
