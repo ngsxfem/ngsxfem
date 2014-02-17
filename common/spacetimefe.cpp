@@ -218,6 +218,38 @@ namespace ngfem
     }
   }
 
+  ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const CoefficientFunction & evalf, const ElementTransformation & eltrans,  LocalHeap & a_lh)
+  {
+    switch (dim)
+    {
+    case 1:
+      return new (a_lh) CoefficientFunctionEvaluator<1>(evalf, eltrans);
+    case 2:
+      return new (a_lh) CoefficientFunctionEvaluator<2>(evalf, eltrans);
+    case 3:
+      return new (a_lh) CoefficientFunctionEvaluator<3>(evalf, eltrans);
+    default:
+      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
+      break;
+    }
+  }
+
+  ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const CoefficientFunction & evalf, const ElementTransformation & eltrans, const TimeInterval & ti, LocalHeap & a_lh)
+  {
+    switch (dim)
+    {
+    case 1:
+      return new (a_lh) SpaceTimeCoefficientFunctionEvaluator<1>(evalf, eltrans, ti);
+    case 2:
+      return new (a_lh) SpaceTimeCoefficientFunctionEvaluator<2>(evalf, eltrans, ti);
+    case 3:
+      return new (a_lh) SpaceTimeCoefficientFunctionEvaluator<3>(evalf, eltrans, ti);
+    default:
+      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
+      break;
+    }
+  }
+
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
   {
     switch (dim)

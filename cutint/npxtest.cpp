@@ -71,6 +71,7 @@ protected:
     double dt = 1.0;
 
     GridFunction * gf_lset;
+    CoefficientFunction * coef_lset;
     EvalFunction * eval_lset;
 
     TimeInterval ti;
@@ -83,6 +84,12 @@ public:
 
         string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
 		gf_lset = pde.GetGridFunction (eval_lset_str,true);
+
+        if (gf_lset == NULL)
+          coef_lset = pde.GetCoefficientFunction (eval_lset_str,true);
+        else
+          coef_lset = NULL;
+
         output = flags.GetDefineFlag("output");
         bound = flags.GetDefineFlag("bound");
         isspacetime = flags.GetDefineFlag("spacetime");
@@ -100,8 +107,15 @@ public:
 
         if (gf_lset == NULL)
         {
-          cout << " LEVELSET AS EVAL FUNCTION " << endl;
-          eval_lset = new EvalFunction(eval_lset_str);
+          if (!coef_lset == NULL)
+          {
+            cout << " LEVELSET AS COEFFICIENTFUNCTION " << endl;
+          }
+          else
+          {
+            cout << " LEVELSET AS EVAL FUNCTION " << endl;
+            eval_lset = new EvalFunction(eval_lset_str);
+          }
           if (order_space == -1)
           {
             cout << "please prescribe order_space - now default (1) is used." << endl;
@@ -113,7 +127,6 @@ public:
             cout << "please prescribe order_time - now default (1) is used." << endl;
             order_time = 1;
           }
-          
         }
         else
         {
@@ -219,10 +232,20 @@ public:
                 }
                 else
                 {
-                  if (!isspacetime)
-                    lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+                  if (coef_lset)
+                  {
+                    if (!isspacetime)
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
+                    else
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
+                  }
                   else
-                    lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+                  {
+                    if (!isspacetime)
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+                    else
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+                  }
                 }
 
                 ScalarFieldEvaluator & lset_eval(* lset_eval_p);
@@ -495,10 +518,20 @@ public:
                 }
                 else
                 {
-                  if (!isspacetime)
-                    lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
+                  if (coef_lset)
+                  {
+                    if (!isspacetime)
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
+                    else
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,ti,lh);
+                  }
                   else
-                    lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,ti,lh);
+                  {
+                    if (!isspacetime)
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
+                    else
+                      lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,ti,lh);
+                  }
                 }
 
                 ScalarFieldEvaluator & lset_eval(* lset_eval_p);

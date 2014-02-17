@@ -96,7 +96,7 @@ numproc testxfem nptxfem
 #        -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.16)
 #        -levelset=u_st
 #        -levelset=(x-y+z-0.5)
-        -levelset=(x+y-0.5)
+        -levelset=lset0 #(x+y-0.5)
         -spacetime
         -num_int_ref_space=1
         -num_int_ref_time=0

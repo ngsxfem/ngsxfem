@@ -121,6 +121,8 @@ typedef std::pair<double,double> TimeInterval;
     static ScalarFieldEvaluator* Create(int dim, const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh);
     static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, LocalHeap & a_lh);
     static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, const TimeInterval & ti, LocalHeap & a_lh);
+    static ScalarFieldEvaluator* Create(int dim, const CoefficientFunction & coeff, const ElementTransformation& eltrans, LocalHeap & a_lh);
+    static ScalarFieldEvaluator* Create(int dim, const CoefficientFunction & coeff, const ElementTransformation& eltrans, const TimeInterval & ti, LocalHeap & a_lh);
 
   };
 
@@ -243,6 +245,74 @@ typedef std::pair<double,double> TimeInterval;
       Vec<3> p = mip.GetPoint();
       p(D) = ( (1.0-point(2)) * ti.first + point(2) * ti.second );
       return eval.Eval(& p(0));
+    }
+
+  };
+
+  template <int D> // D : resulting space dimension..
+  class CoefficientFunctionEvaluator : public ScalarFieldEvaluator
+  {
+  protected:
+    const CoefficientFunction & eval;
+    const ElementTransformation & eltrans;
+  public:
+    CoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans) 
+      : eval(a_eval), eltrans(a_eltrans) { ; }
+
+    virtual double operator()(const Vec<1>& point) const
+    {
+      IntegrationPoint ip(point(0));
+      MappedIntegrationPoint<1,D> mip(ip, eltrans);
+      return eval.Evaluate(mip);
+    }
+
+    virtual double operator()(const Vec<2>& point) const
+    {
+      IntegrationPoint ip(point(0),point(1));
+      MappedIntegrationPoint<2,D> mip(ip, eltrans);
+      return eval.Evaluate(mip);
+    }
+
+    virtual double operator()(const Vec<3>& point) const
+    {
+      IntegrationPoint ip(point(0),point(1),point(2));
+      MappedIntegrationPoint<3,D> mip(ip, eltrans);
+      return eval.Evaluate(mip);
+    }
+  };
+
+
+  template <int D> // D : resulting space dimension..
+  class SpaceTimeCoefficientFunctionEvaluator : public ScalarFieldEvaluator
+  {
+  protected:
+    const CoefficientFunction & eval;
+    const ElementTransformation & eltrans;
+    TimeInterval ti;
+  public:
+    SpaceTimeCoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans, const TimeInterval & a_ti) 
+      : eval(a_eval), eltrans(a_eltrans), ti(a_ti) 
+    { 
+      static bool first = true;
+      if (first)
+      {
+        cout << " WARNING SpaceTimeCoefficientFunctionEvaluator only evaluates as a time-independent lset " << endl;
+        first = false;
+      }
+    }
+
+    virtual double operator()(const Vec<2>& point) const
+    {
+      IntegrationPoint ip(point(0));
+      MappedIntegrationPoint<1,D> mip(ip, eltrans);
+      return eval.Evaluate(mip);
+    }
+
+    virtual double operator()(const Vec<3>& point) const
+    {
+      IntegrationPoint ip(point(0),point(1));
+      MappedIntegrationPoint<2,D> mip(ip, eltrans);
+      return eval.Evaluate(mip);
     }
 
   };
