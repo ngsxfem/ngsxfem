@@ -139,13 +139,46 @@ namespace xintegration
     ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
-    // static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
-    //                                           ELEMENT_TYPE ET_TIME,
-    //                                           const ScalarFEEvaluator<D> & a_lset, 
-    //                                           CompositeQuadratureRule<SD> & a_compquadrule,
-    //                                           LocalHeap & a_lh,
-    //                                           int a_int_order_space, int a_int_order_time, 
-    //                                           int a_ref_level_space, int a_ref_level_time);
+
+    // template <int SD>
+    static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
+                                              ELEMENT_TYPE ET_TIME,
+                                              const ScalarFieldEvaluator & a_lset, 
+                                              CompositeQuadratureRule<1> & a_compquadrule,
+                                              LocalHeap & a_lh,
+                                              int a_int_order_space = 1, int a_int_order_time = 1, 
+                                              int a_ref_level_space = 0, int a_ref_level_time = 0);
+    static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
+                                              ELEMENT_TYPE ET_TIME,
+                                              const ScalarFieldEvaluator & a_lset, 
+                                              CompositeQuadratureRule<2> & a_compquadrule,
+                                              LocalHeap & a_lh,
+                                              int a_int_order_space = 1, int a_int_order_time = 1, 
+                                              int a_ref_level_space = 0, int a_ref_level_time = 0);
+    static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
+                                              ELEMENT_TYPE ET_TIME,
+                                              const ScalarFieldEvaluator & a_lset, 
+                                              CompositeQuadratureRule<3> & a_compquadrule,
+                                              LocalHeap & a_lh,
+                                              int a_int_order_space = 1, int a_int_order_time = 1, 
+                                              int a_ref_level_space = 0, int a_ref_level_time = 0);
+    static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
+                                              ELEMENT_TYPE ET_TIME,
+                                              const ScalarFieldEvaluator & a_lset, 
+                                              CompositeQuadratureRule<4> & a_compquadrule,
+                                              LocalHeap & a_lh,
+                                              int a_int_order_space = 1, int a_int_order_time = 1, 
+                                              int a_ref_level_space = 0, int a_ref_level_time = 0);
+    static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
+                                              ELEMENT_TYPE ET_TIME,
+                                              const ScalarFieldEvaluator & a_lset, 
+                                              CompositeQuadratureRule<1> * a_compquadrule1,
+                                              CompositeQuadratureRule<2> * a_compquadrule2,
+                                              CompositeQuadratureRule<3> * a_compquadrule3,
+                                              CompositeQuadratureRule<4> * a_compquadrule4,
+                                              LocalHeap & a_lh,
+                                              int a_int_order_space = 1, int a_int_order_time = 1, 
+                                              int a_ref_level_space = 0, int a_ref_level_time = 0);
   };
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
