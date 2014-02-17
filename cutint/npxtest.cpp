@@ -11,6 +11,7 @@
 #include <solve.hpp>
 #include "xintegration.hpp"
 #include "../spacetime/spacetimefespace.hpp"
+#include "../utils/fieldeval.hpp"
 
 using namespace ngsolve;
 using namespace xintegration;
