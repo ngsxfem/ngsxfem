@@ -77,7 +77,7 @@ namespace xintegration
     /// the quadrature weights
     Array < double > weights;
     /// return number of integration points 
-    int Size() { return points.Size(); }
+    int Size() const { return points.Size(); }
   };
 
   /// simple class that constitutes a quadrature
@@ -93,7 +93,7 @@ namespace xintegration
     /// the quadrature weights
     Array < Vec<SD> > normals;
     /// return number of integration points 
-    int Size() { return points.Size(); }
+    int Size() const { return points.Size(); }
   };
 
   /// class that constitutes the components of a composite 
@@ -124,6 +124,22 @@ namespace xintegration
       }
     }
 
+    const QuadratureRule<SD> & GetRule(DOMAIN_TYPE dt) const
+    {
+      switch (dt)
+      {
+      case NEG: 
+        return quadrule_neg;
+        break;
+      case POS: 
+        return quadrule_pos;
+        break;
+      default:
+        throw Exception(" DOMAIN_TYPE not known ");
+        return quadrule_neg;
+      }
+    }
+
     QuadratureRuleCoDim1<SD> & GetInterfaceRule()
     {
       return quadrule_if;
@@ -139,6 +155,30 @@ namespace xintegration
     ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
+
+    virtual const CompositeQuadratureRule<1> * GetRule1() const { return NULL; }
+    virtual const CompositeQuadratureRule<2> * GetRule2() const { return NULL; }
+    virtual const CompositeQuadratureRule<3> * GetRule3() const { return NULL; }
+    virtual const CompositeQuadratureRule<4> * GetRule4() const { return NULL; }
+
+    template <int SD>
+    const CompositeQuadratureRule<SD> * GetCompositeRule() const
+    {
+      switch(SD)
+      {
+      case 1:
+        return reinterpret_cast<const CompositeQuadratureRule<SD>*>(GetRule1()); break;
+      case 2:
+        return reinterpret_cast<const CompositeQuadratureRule<SD>*>(GetRule2()); break;
+      case 3:
+        return reinterpret_cast<const CompositeQuadratureRule<SD>*>(GetRule3()); break;
+      case 4:
+        return reinterpret_cast<const CompositeQuadratureRule<SD>*>(GetRule4()); break;
+      default:
+        return NULL;
+        break;
+      }
+    }
 
     // template <int SD>
     static XLocalGeometryInformation * Create(ELEMENT_TYPE ET_SPACE,
@@ -234,6 +274,26 @@ namespace xintegration
     LocalHeap & lh;
     /// 
     CompositeQuadratureRule<SD> & compquadrule;
+
+    virtual const CompositeQuadratureRule<1> * GetRule1() const  { 
+      if (SD==1) return reinterpret_cast<CompositeQuadratureRule<1>*>(&compquadrule); 
+      else return NULL; 
+    }
+    virtual const CompositeQuadratureRule<2> * GetRule2() const { 
+      if (SD==2) return reinterpret_cast<CompositeQuadratureRule<2>*>(&compquadrule); 
+      else return NULL; 
+    }
+    virtual const CompositeQuadratureRule<3> * GetRule3() const { 
+      if (SD==3) return reinterpret_cast<CompositeQuadratureRule<3>*>(&compquadrule); 
+      else return NULL; 
+    }
+    virtual const CompositeQuadratureRule<4> * GetRule4() const { 
+      if (SD==4) return reinterpret_cast<CompositeQuadratureRule<4>*>(&compquadrule); 
+      else return NULL; 
+    }
+
+
+
 
     /// top level
     bool ownpc = false;
