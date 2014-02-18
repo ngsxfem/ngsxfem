@@ -39,10 +39,10 @@ define coefficient lset
 numproc shapetester npst -gridfunction=u
 
 define bilinearform evalx_past -fespace=fescomp -nonassemble
-visx_st_past lset
+xvis_st_past lset
 
 define bilinearform evalx_future -fespace=fescomp -nonassemble
-visx_st_future lset
+xvis_st_future lset
 
 numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -applyd
 numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
