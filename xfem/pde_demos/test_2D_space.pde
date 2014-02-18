@@ -14,17 +14,17 @@ define constant heapsize = 1e7
 
 define fespace fesh1
        -type=h1ho
-       -order=4
-#       -dirichlet=[1,2,3,4]
+       -order=1
+       -dirichlet=[1,2]
 
 define fespace fesx
        -type=xfespace
 #       -levelset=(x-0.55)
-       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09)
+       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.16)
 
 define coefficient lset
 #(x-0.55),
-((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09),       
+((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.16),       
        
 numproc informxfem npix 
         -fespace=fesh1
@@ -46,12 +46,14 @@ numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 define constant one = 1.0
 define constant zero = 0.0
 
-define bilinearform a -fespace=fescomp -printelmat -print
+define bilinearform a -fespace=fescomp # -printelmat -print
 xmass one one
 
-define linearform f -fespace=fescomp -print
-xsource one lset
+define linearform f -fespace=fescomp # -print
+xsource zero one
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct -print
+numproc setvalues npsv -gridfunction=u.1 -coefficient=one -boundary
+
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 
 numproc visualization npviz -scalarfunction=utry -comp=0

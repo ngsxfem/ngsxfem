@@ -39,6 +39,7 @@ namespace ngcomp
     Array<DOMAIN_TYPE> domofvertex;
 
     Array<int> basedof2xdof;
+    Array<int> xdof2basedof;
     // Table<int> sel2dofs;
     const FESpace * basefes = NULL;
     BitArray activeelem;

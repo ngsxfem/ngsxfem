@@ -161,6 +161,17 @@ namespace ngcomp
       if (activedofs.Test(i))
         basedof2xdof[i] = ndof++;
     }
+
+    xdof2basedof.SetSize(ndof);
+    xdof2basedof = -1;
+
+    ndof = 0;
+    for (int i = 0; i < nbdofs; i++)
+    {
+      if (activedofs.Test(i))
+        xdof2basedof[ndof++] = i;
+    }
+
     for (int i = 0; i < ne; ++i)
     {
       if (activeelem.Test(i))
@@ -290,56 +301,54 @@ namespace ngcomp
       }
     }
 
-    /*
-    int domain = 0;
-    Array<int> vdofs;
-    for (int i = 0; i < nv; i++)
+    // domof dof on boundary
+    for (int selnr = 0; selnr < nse; ++selnr)
     {
-      basefes->GetVertexDofNrs(i,vdofs);
-      domain = gci->DomainOfVertex(i);
-      for (int j = 0; j < vdofs.Size(); j++)
-      {
-        if (activedofs.Test(vdofs[j]))
-          domofdof[basedof2xdof[vdofs[j]]] = domain;
-      }
-    }
-    Array<int> edofs;
-    for (int i = 0; i < nedges; i++)
-    {
-      basefes->GetEdgeDofNrs(i,edofs);
-      domain = gci->DomainOfEdge(i);
-      for (int j = 0; j < edofs.Size(); j++)
-      {
-        if (activedofs.Test(edofs[j]))
-          domofdof[basedof2xdof[edofs[j]]] = domain;
-      }
+        DOMAIN_TYPE dt = domofsel[selnr];
+        Array<int> dnums;
+        basefes->GetSDofNrs(selnr, dnums);
+
+        for (int i = 0; i < dnums.Size(); ++i)
+        {
+            const int xdof = basedof2xdof[dnums[i]];
+            if (xdof != -1)
+            {
+                if (dt != IF)
+                    domofdof[xdof] = dt == POS ? NEG : POS;
+            }
+        }
     }
 
+    BitArray dofs_with_cut_on_boundary(GetNDof());
+    dofs_with_cut_on_boundary.Clear();
 
-    Array<int> indofs;
-    for (int i = 0; i < ne; i++)
+    for (int selnr = 0; selnr < nse; ++selnr)
     {
-      basefes->GetInnerDofNrs(i,indofs);
-      domain = gci->DomainOfElement(i);
-      for (int j = 0; j < indofs.Size(); j++)
-      {
-        if (activedofs.Test(indofs[j]))
-          domofdof[basedof2xdof[indofs[j]]] = domain;
-      }
+        DOMAIN_TYPE dt = domofsel[selnr];
+        if (dt!=IF) continue;
+
+        Array<int> dnums;
+        GetSDofNrs(selnr, dnums);
+
+        for (int i = 0; i < dnums.Size(); ++i)
+        {
+            const int xdof = dnums[i];
+            dofs_with_cut_on_boundary.Set(xdof);
+        }
     }
-    */
 
     UpdateCouplingDofArray();
     FinalizeUpdate (lh);
 
     dirichlet_dofs.SetSize (GetNDof());
     dirichlet_dofs.Clear();
-    Array<int> dnums;
+
     for (int i = 0; i < basedof2xdof.Size(); ++i)
     {
       const int dof = basedof2xdof[i];
       if (dof != -1 && basefes->IsDirichletDof(i))
-        dirichlet_dofs.Set (dof);
+          if (dofs_with_cut_on_boundary.Test(dof))
+              dirichlet_dofs.Set (dof);
     }
     
     free_dofs.SetSize (GetNDof());
@@ -351,6 +360,9 @@ namespace ngcomp
     *testout << "el2dofs = " << *el2dofs << endl;
     *testout << "sel2dofs = " << *sel2dofs << endl;
     *testout << "domain of dofs = " << domofdof << endl;
+
+    *testout << "basefes -> free_dofs = " << *basefes->GetFreeDofs() << endl;
+
     *testout << "free_dofs = " << free_dofs << endl;
   }
   

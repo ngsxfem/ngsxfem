@@ -18,12 +18,13 @@ define fespace fesh1
        -type_space=h1ho
        -order_space=1
        -order_time=1
+#       -dirichlet=[1,2]
 
 define fespace fesx
        -type=xfespace
        -spacetime
-       -t0=told
-       -t1=tnew
+       -t0=0.0
+       -t1=0.1
        # -levelset=(x-y+z-0.375)
        -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-z)
 
@@ -59,18 +60,25 @@ numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_fut
 define constant one = 1.0
 
 define coefficient rhs1
-(sin(x)),
+0,
+#(sin(x)),
 
 define coefficient rhs2
-(cos(x)),
+1,
+#(cos(x)),
 
-define bilinearform a -fespace=fescomp -printelmat -print
+define bilinearform a -fespace=fescomp # -printelmat -print
 stxmass one one told tnew
 
-define linearform f -fespace=fescomp -print
+define linearform f -fespace=fescomp # -print
 stxsource rhs1 rhs2 told tnew
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct -print
+
+#numproc setvalues npsv -gridfunction=u.1 -coefficient=one 
+#-boundary
+
+
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 
 
 numproc visualization npviz -scalarfunction=u_future -comp=0
