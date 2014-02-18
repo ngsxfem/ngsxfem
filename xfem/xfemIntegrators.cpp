@@ -90,6 +90,93 @@ namespace ngfem
     } // loop over domain types
   }
 
+
+  template<int D>
+  void XLaplaceIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatMatrix<double> & elmat,
+		     LocalHeap & lh) const
+  {
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+
+    const XFiniteElement * xfe = NULL;
+    const XDummyFE * dummfe = NULL;
+    const ScalarFiniteElement<D> * scafe = NULL;
+
+    for (int i = 0; i < cfel.GetNComponents(); ++i)
+    {
+      if (xfe==NULL)
+        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
+      if (dummfe==NULL)
+        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
+      if (scafe==NULL)
+        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+    }
+    
+    elmat = 0.0;
+
+    if (!xfe && !dummfe) 
+      throw Exception(" not containing X-elements?");
+
+    int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
+    int ndof = scafe->GetNDof();
+    int ndof_total = ndof+ndof_x;
+    FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
+    FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
+    FlatMatrixFixWidth<D> dshapex(ndof,&dshape_total(ndof,0));
+
+    int p = scafe->Order();
+    
+    DOMAIN_TYPE dt = POS;
+    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    {
+      if(!xfe)
+      { 
+        if (dummfe->GetDomainType() != dt)
+          continue;
+        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*p);
+        for (int i = 0 ; i < pir.GetNIP(); i++)
+        {
+          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
+          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+          scafe->CalcMappedDShape(mip, dshape);
+          double fac = mip.GetWeight();
+          elmat += (fac*coef) * dshape * Trans(dshape);
+        }
+      }
+      else
+      {
+        const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
+        if (lset_eval_p == NULL)
+          throw Exception(" no local geometry");
+        const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
+        const QuadratureRule<D> & quad(compr->GetRule(dt));
+        for (int i = 0; i < quad.Size(); ++i)
+        {
+          IntegrationPoint ip;
+          for (int d = 0; d < D; ++d)
+            ip(d) = quad.points[i](d);
+          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+          
+          scafe->CalcMappedDShape(mip, dshape);
+          dshapex = dshape;
+
+          for (int l = 0; l < ndof_x; ++l)
+          {
+            if (xfe->GetSignsOfDof()[l] != dt)
+              dshapex.Row(l) = 0.0;
+          }
+
+          double fac = mip.GetMeasure() * quad.weights[i];
+          elmat += (fac*coef) * dshape_total * Trans(dshape_total);
+        } // quad rule
+      } // if xfe
+    } // loop over domain types
+  }
+
   template<int D>
   void XSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
@@ -927,11 +1014,17 @@ namespace ngfem
   template class XMassIntegrator<2>;
   template class XMassIntegrator<3>;
 
+  template class XLaplaceIntegrator<2>;
+  template class XLaplaceIntegrator<3>;
+
   template class XSourceIntegrator<2>;
   template class XSourceIntegrator<3>;
 
   static RegisterBilinearFormIntegrator<XMassIntegrator<2> > initxh1cut2d ("xmass", 2, 2);
   static RegisterBilinearFormIntegrator<XMassIntegrator<3> > initxh1cut3d ("xmass", 3, 2);
+
+  static RegisterBilinearFormIntegrator<XLaplaceIntegrator<2> > initxh1cut2dlap ("xlaplace", 2, 2);
+  static RegisterBilinearFormIntegrator<XLaplaceIntegrator<3> > initxh1cut3dlap ("xlaplace", 3, 2);
 
   static RegisterLinearFormIntegrator<XSourceIntegrator<2> > initxh1source2d ("xsource", 2, 2);
   static RegisterLinearFormIntegrator<XSourceIntegrator<3> > initxh1source3d ("xsource", 3, 2);
