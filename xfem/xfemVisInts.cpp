@@ -3,6 +3,116 @@
 namespace ngfem
 {
 
+  template <int D, TIME t>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpEvalSTX<D,t>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                          MAT & mat, LocalHeap & lh)
+  {
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (bfel);
+
+    const ScalarSpaceTimeFiniteElement<D> & scafe = 
+      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> & > (cfel[0]);
+
+    const int ndof = scafe.GetNDof();
+    FlatVector<> shape (ndof,lh);
+
+    scafe.CalcShapeSpaceTime(mip.IP(),1.0,shape,lh);
+
+    IntRange range = cfel.GetRange(0);
+    mat.Row(0).Range(range) = shape;
+    const XFiniteElement * xfe = 
+      dynamic_cast<const XFiniteElement *> (&cfel[1]);
+
+    if (xfe)
+    {
+      const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
+      const double lsetval = lset_eval_p->EvaluateLsetAtPoint(mip.IP(),t == PAST ? 0.0 : 1.0);
+      DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
+      const Array<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      for (int i =0; i < ndof; i++)
+        if (xsign[i]==dt_here)
+          mat(0,ndof+i) = shape(i);
+        else
+          mat(0,ndof+i) = 0.0;
+    } 
+  }
+
+
+  template <int D, TIME t>  STXVisIntegrator<D,t> :: STXVisIntegrator  (CoefficientFunction * coeff)
+    : T_BDBIntegrator<DiffOpEvalSTX<D,t>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
+  { ; }
+
+  template <int D, TIME t>  STXVisIntegrator<D,t> :: STXVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+    : T_BDBIntegrator<DiffOpEvalSTX<D,t>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
+  { ; }
+
+  template <int D, TIME t>  STXVisIntegrator<D,t> :: ~STXVisIntegrator () { ; }
+
+  template class STXVisIntegrator<2,PAST>;
+  template class STXVisIntegrator<3,PAST>;
+  template class STXVisIntegrator<2,FUTURE>;
+  template class STXVisIntegrator<3,FUTURE>;
+
+  static RegisterBilinearFormIntegrator<STXVisIntegrator<2,PAST> > initxwmass0p ("stxvis_past", 2, 1);
+  static RegisterBilinearFormIntegrator<STXVisIntegrator<3,PAST> > initxwmass1p ("stxvis_past", 3, 1);
+
+  static RegisterBilinearFormIntegrator<STXVisIntegrator<2,FUTURE> > initxwmass0f ("stxvis_future", 2, 1);
+  static RegisterBilinearFormIntegrator<STXVisIntegrator<3,FUTURE> > initxwmass1f ("stxvis_future", 3, 1);
+
+  template <int D>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpEvalX<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                          MAT & mat, LocalHeap & lh)
+  {
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (bfel);
+
+    const ScalarFiniteElement<D> & scafe = 
+      dynamic_cast<const ScalarFiniteElement<D> & > (cfel[0]);
+
+    const int ndof = scafe.GetNDof();
+    FlatVector<> shape (ndof,lh);
+
+    shape = scafe.GetShape(mip.IP(), lh);
+    IntRange range = cfel.GetRange(0);
+    mat.Row(0).Range(range) = shape;
+    const XFiniteElement * xfe = 
+      dynamic_cast<const XFiniteElement *> (&cfel[1]);
+
+    if (xfe)
+    {
+      const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
+      const double lsetval = lset_eval_p->EvaluateLsetAtPoint(mip.IP(),0);
+      DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
+      const Array<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      for (int i =0; i < ndof; i++)
+        if (xsign[i]==dt_here)
+          mat(0,ndof+i) = shape(i);
+        else
+          mat(0,ndof+i) = 0.0;
+    } 
+  }
+
+
+  template <int D>  XVisIntegrator<D> :: XVisIntegrator  (CoefficientFunction * coeff)
+    : T_BDBIntegrator<DiffOpEvalX<D>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
+  { ; }
+
+  template <int D>  XVisIntegrator<D> :: XVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+    : T_BDBIntegrator<DiffOpEvalX<D>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
+  { ; }
+
+  template <int D>  XVisIntegrator<D> :: ~XVisIntegrator () { ; }
+
+  template class XVisIntegrator<2>;
+  template class XVisIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<XVisIntegrator<2> > initxwmass0 ("xvis", 2, 1);
+  static RegisterBilinearFormIntegrator<XVisIntegrator<3> > initxwmass1 ("xvis", 3, 1);
+
+
+
   template <int D>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpEvalSigned<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
@@ -110,8 +220,8 @@ namespace ngfem
   template class SignedXMassIntegrator<2>;
   template class SignedXMassIntegrator<3>;
 
-  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<2> > initxvmass0 ("xvis", 2, 1);
-  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<3> > initxvmass1 ("xvis", 3, 1);
+  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<2> > initxvmass0 ("xvis_sign", 2, 1);
+  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<3> > initxvmass1 ("xvis_sign", 3, 1);
 
   template <int D>  SignedXMassIntegrator<D> :: ~SignedXMassIntegrator () { ; }
 

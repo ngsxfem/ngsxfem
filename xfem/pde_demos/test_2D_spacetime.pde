@@ -13,6 +13,8 @@ define constant heapsize = 1e7
 define constant told = 0.0
 define constant tnew = 0.1
 
+define constant one = 1.0
+
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
@@ -49,15 +51,13 @@ define coefficient lset_future
 #numproc shapetester npst -gridfunction=u
 
 define bilinearform evalx_past -fespace=fescomp -nonassemble
-xvis_st_past lset_past
+stxvis_past one
 
 define bilinearform evalx_future -fespace=fescomp -nonassemble
-xvis_st_future lset_future
+stxvis_future one
 
 numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -applyd
 numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
-
-define constant one = 1.0
 
 define coefficient rhs1
 0,
@@ -81,5 +81,5 @@ stxsource rhs1 rhs2 told tnew
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 
 
-numproc visualization npviz -scalarfunction=u_future -comp=0
+numproc visualization npviz -scalarfunction=u_future
 
