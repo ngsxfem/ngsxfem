@@ -110,8 +110,8 @@ namespace ngfem
   template class SignedXMassIntegrator<2>;
   template class SignedXMassIntegrator<3>;
 
-  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<2> > initxvmass0 ("visx", 2, 1);
-  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<3> > initxvmass1 ("visx", 3, 1);
+  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<2> > initxvmass0 ("xvis", 2, 1);
+  static RegisterBilinearFormIntegrator<SignedXMassIntegrator<3> > initxvmass1 ("xvis", 3, 1);
 
   template <int D>  SignedXMassIntegrator<D> :: ~SignedXMassIntegrator () { ; }
 
@@ -132,11 +132,10 @@ namespace ngfem
   template class SignedSpaceTimeXMassIntegrator<2,FUTURE>;
   template class SignedSpaceTimeXMassIntegrator<3,FUTURE>;
 
-  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<2,PAST> > initxv_stp_mass0 ("visx_st_past", 2, 1);
-  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,PAST> > initxv_stp_mass1 ("visx_st_past", 3, 1);
-  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<2,FUTURE> > initxv_stf_mass0 ("visx_st_future", 2, 1);
-  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,FUTURE> > initxv_stf_mass1 ("visx_st_future", 3, 1);
-
+  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<2,PAST> > initxv_stp_mass0 ("xvis_st_past", 2, 1);
+  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,PAST> > initxv_stp_mass1 ("xvis_st_past", 3, 1);
+  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<2,FUTURE> > initxv_stf_mass0 ("xvis_st_future", 2, 1);
+  static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,FUTURE> > initxv_stf_mass1 ("xvis_st_future", 3, 1);
 
 }
 

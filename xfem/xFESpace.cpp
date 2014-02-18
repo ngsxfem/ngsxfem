@@ -436,7 +436,27 @@ namespace ngcomp
       GetDomainNrs(elnr,domnrs);  
       XLocalGeometryInformation * localgeominfo = NULL; //TODO
       //localgeominfo->MakeQuadRule...
-      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,*localgeominfo));
+
+      netgen::Ng_Element ngel = ma.GetElement(elnr);
+      ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+
+      ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
+        
+      ScalarFieldEvaluator * lset_eval_p = NULL;
+      if (spacetime)
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+      else
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+
+      CompositeQuadratureRule<SD> * cquad = new (lh) CompositeQuadratureRule<SD>() ;
+
+      ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
+
+      XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                                            *cquad, lh, 1, 1, 0, 0);
+      DOMAIN_TYPE dt = xgeom->MakeQuadRule();
+
+      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom));
     }
   }
 
@@ -457,7 +477,7 @@ namespace ngcomp
       GetSurfaceDomainNrs(selnr,domnrs);  
       XLocalGeometryInformation * localgeominfo = NULL; //TODO
       //localgeominfo->MakeQuadRule...
-      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,*localgeominfo));
+      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,localgeominfo));
     }
   }
 

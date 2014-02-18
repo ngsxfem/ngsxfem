@@ -57,10 +57,6 @@ namespace ngfem
     
     XHeavisideDMat (Array<CoefficientFunction*> & acoefs) : lvlset(acoefs[0]) { ; }
     
-    // template <typename SCAL>
-    // static XAdhocDMat GetMatrixType(SCAL s) { return SCAL(0); }
-
-    
     template <typename FEL, typename MIP, typename MAT>
     void GenerateMatrix (const FEL & fel, const MIP & mip,
                          MAT & mat, LocalHeap & lh) const;
