@@ -22,6 +22,8 @@ namespace ngcomp
   {
   protected:  
     int ndof;
+
+    int order_space = 1;
       
     bool spacetime = false;
     TimeInterval ti;

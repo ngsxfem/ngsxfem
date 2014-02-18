@@ -43,7 +43,7 @@ namespace ngcomp
       return;
     }
     
-    
+    order_space = basefes->GetOrder();
     
     FESpace::Update(lh);
 
@@ -86,7 +86,7 @@ namespace ngcomp
 
         CompositeQuadratureRule<SD> cquad;
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                              cquad, lh, 1, 1, 0, 0);
+                                                                              cquad, lh, 2*order_space, 1, 0, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
         domofel[elnr] = dt;
@@ -127,7 +127,7 @@ namespace ngcomp
 
         CompositeQuadratureRule<SD-1> cquad;
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                              cquad, lh, 1, 1, 0, 0);
+                                                                              cquad, lh, 2*order_space, 1, 0, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
         Array<int> fnums;
@@ -453,7 +453,7 @@ namespace ngcomp
       ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
 
       XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                            *cquad, lh, 1, 1, 0, 0);
+                                                                            *cquad, lh, 2*order_space, 1, 0, 0);
       DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
       return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom));
