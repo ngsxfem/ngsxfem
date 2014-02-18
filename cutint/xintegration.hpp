@@ -145,6 +145,11 @@ namespace xintegration
       return quadrule_if;
     }
 
+    const QuadratureRuleCoDim1<SD> & GetInterfaceRule() const
+    {
+      return quadrule_if;
+    }
+
   };
 
   class XLocalGeometryInformation
@@ -235,7 +240,7 @@ namespace xintegration
     // const ScalarFEEvaluator<D> & lset;
     const ScalarFieldEvaluator & lset;
 
-    virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0)
+    virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const
     {
         Vec<SD> p;
         for (int i = 0; i < D; ++i)
