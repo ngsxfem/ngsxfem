@@ -10,6 +10,9 @@ shared = libngsxfem_xfem
 
 define constant heapsize = 1e7
 
+define constant told = 0.0
+define constant tnew = 0.1
+
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
@@ -19,9 +22,10 @@ define fespace fesh1
 define fespace fesx
        -type=xfespace
        -spacetime
-       -t0=0.0
-       -t1=1.0
-       -levelset=(x-y+z-0.45)
+       -t0=told
+       -t1=tnew
+       # -levelset=(x-y+z-0.375)
+       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-z)
 
 numproc informxfem npix 
         -fespace=fesh1
@@ -34,10 +38,12 @@ define fespace fescomp
 define gridfunction u -fespace=fescomp
 
 define coefficient lset_past
-(x-y-0.45),       
+#(x-y+told-0.375),       
+((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-told)
 
 define coefficient lset_future
-(x-y+1-0.45),       
+#(x-y+tnew-0.375),       
+((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-tnew)
        
 #numproc shapetester npst -gridfunction=u
 
@@ -51,13 +57,18 @@ numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -a
 numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
 
 define constant one = 1.0
-define constant zero = 0.0
+
+define coefficient rhs1
+(sin(x)),
+
+define coefficient rhs2
+(cos(x)),
 
 define bilinearform a -fespace=fescomp -printelmat -print
-stxmass one one
+stxmass one one told tnew
 
 define linearform f -fespace=fescomp -print
-stxsource one zero
+stxsource rhs1 rhs2 told tnew
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct -print
 

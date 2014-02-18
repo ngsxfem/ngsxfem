@@ -72,9 +72,11 @@ namespace ngfem
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
+    CoefficientFunction * coef_told;
+    CoefficientFunction * coef_tnew;
   public:
     SpaceTimeXMassIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
     virtual ~SpaceTimeXMassIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXMassIntegrator"; }
@@ -100,9 +102,11 @@ namespace ngfem
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
+    CoefficientFunction * coef_told;
+    CoefficientFunction * coef_tnew;
   public:
     SpaceTimeXSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
     virtual ~SpaceTimeXSourceIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXSourceIntegrator"; }

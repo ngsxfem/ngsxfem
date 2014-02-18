@@ -216,8 +216,8 @@ namespace ngfem
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
     
-    const double t1 = 1.0;
-    const double t0 = 0.0;
+    const double t1 = coef_tnew->EvaluateConst(); 
+    const double t0 = coef_told->EvaluateConst();
     const double tau = t1 - t0;
 
     DOMAIN_TYPE dt = POS;
@@ -310,8 +310,8 @@ namespace ngfem
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
     
-    const double t1 = 1.0;
-    const double t0 = 0.0;
+    const double t1 = coef_tnew->EvaluateConst(); 
+    const double t0 = coef_told->EvaluateConst();
     const double tau = t1 - t0;
 
     DOMAIN_TYPE dt = POS;
@@ -942,11 +942,11 @@ namespace ngfem
   template class SpaceTimeXSourceIntegrator<2>;
   template class SpaceTimeXSourceIntegrator<3>;
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXMassIntegrator<2> > initstxh1cut2d ("stxmass", 2, 2);
-  static RegisterBilinearFormIntegrator<SpaceTimeXMassIntegrator<3> > initstxh1cut3d ("stxmass", 3, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXMassIntegrator<2> > initstxh1cut2d ("stxmass", 2, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXMassIntegrator<3> > initstxh1cut3d ("stxmass", 3, 4);
 
-  static RegisterLinearFormIntegrator<SpaceTimeXSourceIntegrator<2> > initstxh1source2d ("stxsource", 2, 2);
-  static RegisterLinearFormIntegrator<SpaceTimeXSourceIntegrator<3> > initstxh1source3d ("stxsource", 3, 2);
+  static RegisterLinearFormIntegrator<SpaceTimeXSourceIntegrator<2> > initstxh1source2d ("stxsource", 2, 4);
+  static RegisterLinearFormIntegrator<SpaceTimeXSourceIntegrator<3> > initstxh1source3d ("stxsource", 3, 4);
 
 /*
   static RegisterBilinearFormIntegrator<XLaplaceIntegrator<2> > initxlap2d ("xlaplace", 2, 2);
