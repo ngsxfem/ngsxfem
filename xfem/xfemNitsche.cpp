@@ -408,21 +408,21 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_5 ("xnitsche_alpha", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche3d_6 ("xnitsche_alphabeta", 3, 5);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_st_1 ("stxnitsche_halfhalf", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2 ("stxnitsche_hansbo", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2b ("stxnitsche", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche2d_st_3 ("stxnitsche_hansbobeta", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitsche2d_st_4 ("stxnitsche_beta", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitsche2d_st_5 ("stxnitsche_alpha", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche2d_st_6 ("stxnitsche_alphabeta", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_st_1 ("stx_nitsche_halfhalf", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2 ("stx_nitsche_hansbo", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2b ("stx_nitsche", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche2d_st_3 ("stx_nitsche_hansbobeta", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitsche2d_st_4 ("stx_nitsche_beta", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitsche2d_st_5 ("stx_nitsche_alpha", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche2d_st_6 ("stx_nitsche_alphabeta", 2, 7);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_st_1 ("stxnitsche_halfhalf", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2 ("stxnitsche_hansbo", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2b ("stxnitsche", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche3d_st_3 ("stxnitsche_hansbobeta", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitsche3d_st_4 ("stxnitsche_beta", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_st_5 ("stxnitsche_alpha", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche3d_st_6 ("stxnitsche_alphabeta", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_st_1 ("stx_nitsche_halfhalf", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2 ("stx_nitsche_hansbo", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2b ("stx_nitsche", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche3d_st_3 ("stx_nitsche_hansbobeta", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitsche3d_st_4 ("stx_nitsche_beta", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_st_5 ("stx_nitsche_alpha", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche3d_st_6 ("stx_nitsche_alphabeta", 3, 7);
 
 }
 
