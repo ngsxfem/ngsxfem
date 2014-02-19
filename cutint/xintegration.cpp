@@ -607,6 +607,7 @@ namespace xintegration
   DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
   :: MakeQuadRule() const
   {
+
     enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
@@ -781,6 +782,7 @@ namespace xintegration
           }
         }
       }
+      quaded = true;
       return IF;
     }
     else // no cut
@@ -838,6 +840,7 @@ namespace xintegration
 
         }
       }
+      quaded = true;
       return dt_self;
     }
   }

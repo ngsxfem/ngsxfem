@@ -37,6 +37,7 @@ namespace ngfem
     static ScalarFieldEvaluator* Create(int dim, const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh);
     static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, LocalHeap & a_lh);
     static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, const TimeInterval & ti, LocalHeap & a_lh);
+    static ScalarFieldEvaluator* Create(int dim, const EvalFunction & evalf, const ElementTransformation& eltrans, double t, LocalHeap & a_lh);
     static ScalarFieldEvaluator* Create(int dim, const CoefficientFunction & coeff, const ElementTransformation& eltrans, LocalHeap & a_lh);
     static ScalarFieldEvaluator* Create(int dim, const CoefficientFunction & coeff, const ElementTransformation& eltrans, const TimeInterval & ti, LocalHeap & a_lh);
 
@@ -90,32 +91,79 @@ namespace ngfem
   protected:
     EvalFunction eval;
     const ElementTransformation & eltrans;
+    bool use_fixedtime = false;
+    double fixedtime = 0.0;
   public:
     EvalFunctionEvaluator( const string & str, const ElementTransformation & a_eltrans) 
       : eval(str), eltrans(a_eltrans) { ; }
 
+    EvalFunctionEvaluator( const string & str, const ElementTransformation & a_eltrans, double a_fixedtime) 
+      : eval(str), eltrans(a_eltrans), use_fixedtime(true), fixedtime(a_fixedtime) { ; }
+
     EvalFunctionEvaluator( const EvalFunction & str, const ElementTransformation & a_eltrans) 
       : eval(str), eltrans(a_eltrans) { ; }
 
+    EvalFunctionEvaluator( const EvalFunction & str, const ElementTransformation & a_eltrans, double a_fixedtime) 
+      : eval(str), eltrans(a_eltrans), use_fixedtime(true), fixedtime(a_fixedtime) { ; }
+
     virtual double operator()(const Vec<1>& point) const
     {
-      IntegrationPoint ip(point(0));
-      MappedIntegrationPoint<1,D> mip(ip, eltrans);
-      return eval.Eval(& mip.GetPoint()(0));
+      if (!fixedtime)
+      {
+        IntegrationPoint ip(point(0));
+        MappedIntegrationPoint<1,D> mip(ip, eltrans);
+        return eval.Eval(& mip.GetPoint()(0));
+      }
+      else
+      {
+        IntegrationPoint ip(point(0));
+        MappedIntegrationPoint<1,D> mip(ip, eltrans);
+        Vec<D+1> p; 
+        for (int d = 0; d < D; ++d)
+          p(d) = mip.GetPoint()(d);
+        p(D) = fixedtime;
+        return eval.Eval(&p(0));
+      }
     }
 
     virtual double operator()(const Vec<2>& point) const
     {
-      IntegrationPoint ip(point(0),point(1));
-      MappedIntegrationPoint<2,D> mip(ip, eltrans);
-      return eval.Eval(& mip.GetPoint()(0));
+      if (!fixedtime)
+      {
+        IntegrationPoint ip(point(0),point(1));
+        MappedIntegrationPoint<2,D> mip(ip, eltrans);
+        return eval.Eval(& mip.GetPoint()(0));
+      }
+      else
+      {
+        IntegrationPoint ip(point(0),point(1));
+        MappedIntegrationPoint<2,D> mip(ip, eltrans);
+        Vec<D+1> p; 
+        for (int d = 0; d < D; ++d)
+          p(d) = mip.GetPoint()(d);
+        p(D) = fixedtime;
+        return eval.Eval(&p(0));
+      }
     }
 
     virtual double operator()(const Vec<3>& point) const
     {
-      IntegrationPoint ip(point(0),point(1),point(2));
-      MappedIntegrationPoint<3,D> mip(ip, eltrans);
-      return eval.Eval(& mip.GetPoint()(0));
+      if (!fixedtime)
+      {
+        IntegrationPoint ip(point(0),point(1),point(2));
+        MappedIntegrationPoint<3,D> mip(ip, eltrans);
+        return eval.Eval(& mip.GetPoint()(0));
+      }
+      else
+      {
+        IntegrationPoint ip(point(0),point(1),point(2));
+        MappedIntegrationPoint<3,D> mip(ip, eltrans);
+        Vec<D+1> p; 
+        for (int d = 0; d < D; ++d)
+          p(d) = mip.GetPoint()(d);
+        p(D) = fixedtime;
+        return eval.Eval(&p(0));
+      }
     }
 
   };

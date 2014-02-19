@@ -154,6 +154,10 @@ namespace xintegration
 
   class XLocalGeometryInformation
   {
+  protected:
+      XLocalGeometryInformation * pasttracegeom = 0;
+      XLocalGeometryInformation * futuretracegeom = 0;
+      mutable bool quaded = false;
       // empty 
   public:
     XLocalGeometryInformation() {;}
@@ -224,6 +228,36 @@ namespace xintegration
                                               LocalHeap & a_lh,
                                               int a_int_order_space = 1, int a_int_order_time = 1, 
                                               int a_ref_level_space = 0, int a_ref_level_time = 0);
+      bool IsDecomposed(){ return quaded; }
+      
+      void SetPastTrace(XLocalGeometryInformation * xlocal)
+      {
+          pasttracegeom = xlocal;
+      }
+
+      void SetFutureTrace(XLocalGeometryInformation * xlocal)
+      {
+          futuretracegeom = xlocal;
+      }
+
+      XLocalGeometryInformation * GetPastTrace() const 
+      {
+          if (pasttracegeom == NULL)
+              throw Exception("XLocalGeometryInformation::GetPastTrace() called but pasttracegeom == NULL");
+          if (! pasttracegeom->IsDecomposed())
+              pasttracegeom->MakeQuadRule();
+          return pasttracegeom;
+      }
+
+      XLocalGeometryInformation * GetFutureTrace() const
+      {
+          if (futuretracegeom == NULL)
+              throw Exception("XLocalGeometryInformation::GetFutureTrace() called but futuretracegeom == NULL");
+          if (! futuretracegeom->IsDecomposed())
+              futuretracegeom->MakeQuadRule();
+          return futuretracegeom;
+      }
+
   };
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>

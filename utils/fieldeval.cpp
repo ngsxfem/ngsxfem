@@ -20,6 +20,24 @@ namespace ngfem
     }
   }
 
+  ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans, double t, LocalHeap & a_lh)
+  {
+    switch (dim)
+    {
+    case 1:
+      return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans, t);
+    case 2:
+      return new (a_lh) EvalFunctionEvaluator<2>(evalf, eltrans, t);
+    case 3:
+      cout << " ScalarFieldEvaluator::Create - eval functions only evaluate in 3 dimensions" 
+           << " - prescribing the 4th dimension does not make sense" << endl;
+      return new (a_lh) EvalFunctionEvaluator<3>(evalf, eltrans, t);
+    default:
+      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
+      break;
+    }
+  }
+
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans, const TimeInterval & ti, LocalHeap & a_lh)
   {
     switch (dim)
