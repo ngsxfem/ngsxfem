@@ -7,6 +7,7 @@
 
 #include "../cutint/xintegration.hpp"
 #include "xfiniteelement.hpp"
+#include "../spacetime/spacetimeintegrators.hpp"
 
 namespace ngfem
 {
@@ -68,6 +69,91 @@ namespace ngfem
 
   };
 
+  template <int D>
+  class SpaceTimeXConvectionIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+    CoefficientFunction * coef_told;
+    CoefficientFunction * coef_tnew;
+  public:
+    SpaceTimeXConvectionIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+    virtual ~SpaceTimeXConvectionIntegrator(){ ; };
+
+    virtual string Name () const { return "SpaceTimeXConvectionIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+
+  template <int D>
+  class SpaceTimeXTimeDerivativeIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+  public:
+    SpaceTimeXTimeDerivativeIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    virtual ~SpaceTimeXTimeDerivativeIntegrator(){ ; };
+
+    virtual string Name () const { return "SpaceTimeXTimeDerivativeIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+  template <int D, TIME t>
+  class SpaceTimeXTraceMassIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+  public:
+    SpaceTimeXTraceMassIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    virtual ~SpaceTimeXTraceMassIntegrator(){ ; };
+
+    virtual string Name () const { return "SpaceTimeXTraceMassIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+
 
   template <int D>
   class SpaceTimeXSourceIntegrator : public LinearFormIntegrator
@@ -82,6 +168,33 @@ namespace ngfem
     virtual ~SpaceTimeXSourceIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXSourceIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element vector
+    virtual void
+    CalcElementVector (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatVector<double> & elvec,
+                       LocalHeap & lh) const;
+
+  };
+
+  template <int D, TIME t>
+  class SpaceTimeXTraceSourceIntegrator : public LinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+  public:
+    SpaceTimeXTraceSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    virtual ~SpaceTimeXTraceSourceIntegrator(){ ; };
+
+    virtual string Name () const { return "SpaceTimeXTraceSourceIntegrator"; }
 
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
