@@ -10,17 +10,28 @@ shared = libngsxfem_xfem
 
 define constant heapsize = 1e7
 
+define constant zero = 0.0
+define constant one = 1.0
+
+define constant two = 2.0
+
+define constant bneg = 2.0
+define constant bpos = 1.0
+
+define constant aneg = 1.0
+define constant apos = 1.0
+
+define constant lambda = 10.0
+
 define constant told = 0.0
 define constant tnew = 0.1
-
-define constant one = 1.0
 
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
        -order_space=1
        -order_time=1
-#       -dirichlet=[1,2]
+       -dirichlet=[1,2]
 
 define fespace fesx
        -type=xfespace
@@ -60,7 +71,7 @@ numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -a
 numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
 
 define coefficient rhs1
-0,
+1,
 #(sin(x)),
 
 define coefficient rhs2
@@ -68,7 +79,10 @@ define coefficient rhs2
 #(cos(x)),
 
 define bilinearform a -fespace=fescomp # -printelmat -print
-stxmass one one told tnew
+#stxmass one zero told tnew
+stxlaplace aneg apos told tnew
+stxnitsche_halfhalf aneg apos bneg bpos lambda told tnew
+
 
 define linearform f -fespace=fescomp # -print
 stxsource rhs1 rhs2 told tnew

@@ -21,9 +21,9 @@ define constant bneg = 1.0
 define constant bpos = 1.0
 
 define constant aneg = 1.0
-define constant apos = 50.0
+define constant apos = 5.0
 
-define constant lambda = 500.0
+define constant lambda = 50.0
 
 define fespace fesh1
        -type=h1ho

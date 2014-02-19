@@ -10,18 +10,48 @@
 
 namespace ngfem
 {
-
   template <int D>
-  class XMassIntegrator : public BilinearFormIntegrator
+  class SpaceTimeXMassIntegrator : public BilinearFormIntegrator
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
+    CoefficientFunction * coef_told;
+    CoefficientFunction * coef_tnew;
   public:
-    XMassIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
-    virtual ~XMassIntegrator(){ ; };
+    SpaceTimeXMassIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+    virtual ~SpaceTimeXMassIntegrator(){ ; };
 
-    virtual string Name () const { return "XMassIntegrator"; }
+    virtual string Name () const { return "SpaceTimeXMassIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+  template <int D>
+  class SpaceTimeXLaplaceIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+    CoefficientFunction * coef_told;
+    CoefficientFunction * coef_tnew;
+  public:
+    SpaceTimeXLaplaceIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+    virtual ~SpaceTimeXLaplaceIntegrator(){ ; };
+
+    virtual string Name () const { return "SpaceTimeXLaplaceIntegrator"; }
 
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
@@ -40,44 +70,18 @@ namespace ngfem
 
 
   template <int D>
-  class XLaplaceIntegrator : public BilinearFormIntegrator
+  class SpaceTimeXSourceIntegrator : public LinearFormIntegrator
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
+    CoefficientFunction * coef_told;
+    CoefficientFunction * coef_tnew;
   public:
-    XLaplaceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
-    virtual ~XLaplaceIntegrator(){ ; };
+    SpaceTimeXSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+    virtual ~SpaceTimeXSourceIntegrator(){ ; };
 
-    virtual string Name () const { return "XLaplaceIntegrator"; }
-
-    virtual int DimElement () const { return D; }
-    virtual int DimSpace () const { return D; }
-    // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
-
-
-    // Calculates the element matrix
-    virtual void
-    CalcElementMatrix (const FiniteElement & fel,
-                       const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
-                       LocalHeap & lh) const;
-
-  };
-
-
-  template <int D>
-  class XSourceIntegrator : public LinearFormIntegrator
-  {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
-  public:
-    XSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
-    virtual ~XSourceIntegrator(){ ; };
-
-    virtual string Name () const { return "XSourceIntegrator"; }
+    virtual string Name () const { return "SpaceTimeXSourceIntegrator"; }
 
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }

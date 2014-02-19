@@ -1,11 +1,10 @@
-#include "xfemIntegrators.hpp"
+#include "stxfemIntegrators.hpp"
 
 namespace ngfem
 {
 
-
   template<int D>
-  void XMassIntegrator<D> ::
+  void SpaceTimeXMassIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
 		     FlatMatrix<double> & elmat,
@@ -16,7 +15,7 @@ namespace ngfem
 
     const XFiniteElement * xfe = NULL;
     const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
+    const ScalarSpaceTimeFiniteElement<D> * scafe = NULL;
 
     for (int i = 0; i < cfel.GetNComponents(); ++i)
     {
@@ -25,7 +24,7 @@ namespace ngfem
       if (dummfe==NULL)
         dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
       if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+        scafe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[i]);
     }
     
     elmat = 0.0;
@@ -40,8 +39,13 @@ namespace ngfem
     FlatVector<> shape(ndof,&shape_total(0));
     FlatVector<> shapex(ndof,&shape_total(ndof));
 
-    int p = scafe->Order();
+    int ps = scafe->OrderSpace();
+    int pt = scafe->OrderTime();
     
+    const double t1 = coef_tnew->EvaluateConst(); 
+    const double t0 = coef_told->EvaluateConst();
+    const double tau = t1 - t0;
+
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
     {
@@ -49,32 +53,35 @@ namespace ngfem
       { 
         if (dummfe->GetDomainType() != dt)
           continue;
-        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*p);
-        for (int i = 0 ; i < pir.GetNIP(); i++)
-        {
-          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          shape.Range(0,ndof) = scafe->GetShape(mip.IP(), lh);
-          double fac = mip.GetWeight();
-          elmat += (fac*coef) * shape * Trans(shape);
-        }
+        IntegrationRule irs = SelectIntegrationRule (eltrans.GetElementType(), 2*ps);
+        IntegrationRule irt = SelectIntegrationRule (ET_SEGM, 2*pt);
+        for (int k = 0; k < irt.GetNIP(); ++k)
+          for (int l = 0 ; l < irs.GetNIP(); l++)
+          {
+            MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
+            double coef = dt == POS ? coef_pos->Evaluate(mip) 
+              : coef_neg->Evaluate(mip);
+            scafe->CalcShapeSpaceTime(mip.IP(), irt[k](0), shape, lh);
+            double fac = mip.GetWeight() * irt[k].Weight() * tau;
+            elmat += (fac*coef) * shape * Trans(shape);
+          }
       }
       else
       {
         const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
         if (lset_eval_p == NULL)
           throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
-        const QuadratureRule<D> & quad(compr->GetRule(dt));
+        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
+        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
         for (int i = 0; i < quad.Size(); ++i)
         {
-          IntegrationPoint ip;
+          IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ip(d) = quad.points[i](d);
-          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+            ips(d) = quad.points[i](d);
+          MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          
-          shape = scafe->GetShape(mip.IP(), lh);
+
+          scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
           shapex = shape;
 
           for (int l = 0; l < ndof_x; ++l)
@@ -83,7 +90,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i];
+          double fac = mip.GetMeasure() * quad.weights[i] * tau;
           elmat += (fac*coef) * shape_total * Trans(shape_total);
         } // quad rule
       } // if xfe
@@ -92,7 +99,7 @@ namespace ngfem
 
 
   template<int D>
-  void XLaplaceIntegrator<D> ::
+  void SpaceTimeXLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
 		     FlatMatrix<double> & elmat,
@@ -103,7 +110,7 @@ namespace ngfem
 
     const XFiniteElement * xfe = NULL;
     const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
+    const ScalarSpaceTimeFiniteElement<D> * scafe = NULL;
 
     for (int i = 0; i < cfel.GetNComponents(); ++i)
     {
@@ -112,7 +119,7 @@ namespace ngfem
       if (dummfe==NULL)
         dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
       if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+        scafe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[i]);
     }
     
     elmat = 0.0;
@@ -127,8 +134,13 @@ namespace ngfem
     FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
     FlatMatrixFixWidth<D> dshapex(ndof,&dshape_total(ndof,0));
 
-    int p = scafe->Order();
+    int ps = scafe->OrderSpace();
+    int pt = scafe->OrderTime();
     
+    const double t1 = coef_tnew->EvaluateConst(); 
+    const double t0 = coef_told->EvaluateConst();
+    const double tau = t1 - t0;
+
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
     {
@@ -136,32 +148,37 @@ namespace ngfem
       { 
         if (dummfe->GetDomainType() != dt)
           continue;
-        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*p);
-        for (int i = 0 ; i < pir.GetNIP(); i++)
-        {
-          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          scafe->CalcMappedDShape(mip, dshape);
-          double fac = mip.GetWeight();
-          elmat += (fac*coef) * dshape * Trans(dshape);
-        }
+        IntegrationRule irs = SelectIntegrationRule (eltrans.GetElementType(), 2*ps);
+        IntegrationRule irt = SelectIntegrationRule (ET_SEGM, 2*pt);
+        for (int k = 0; k < irt.GetNIP(); ++k)
+          for (int l = 0 ; l < irs.GetNIP(); l++)
+          {
+            MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
+            double coef = dt == POS ? coef_pos->Evaluate(mip) 
+              : coef_neg->Evaluate(mip);
+
+            scafe->CalcMappedDxShapeSpaceTime(mip, irt[k](0), dshape, lh);
+
+            double fac = mip.GetWeight() * irt[k].Weight() * tau;
+            elmat += (fac*coef) * dshape * Trans(dshape);
+          }
       }
       else
       {
         const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
         if (lset_eval_p == NULL)
           throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
-        const QuadratureRule<D> & quad(compr->GetRule(dt));
+        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
+        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
         for (int i = 0; i < quad.Size(); ++i)
         {
-          IntegrationPoint ip;
+          IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ip(d) = quad.points[i](d);
-          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+            ips(d) = quad.points[i](d);
+          MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          
-          scafe->CalcMappedDShape(mip, dshape);
+
+          scafe->CalcMappedDxShapeSpaceTime(mip, quad.points[i](D), dshape, lh);
           dshapex = dshape;
 
           for (int l = 0; l < ndof_x; ++l)
@@ -170,7 +187,7 @@ namespace ngfem
               dshapex.Row(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i];
+          double fac = mip.GetMeasure() * quad.weights[i] * tau;
           elmat += (fac*coef) * dshape_total * Trans(dshape_total);
         } // quad rule
       } // if xfe
@@ -178,7 +195,7 @@ namespace ngfem
   }
 
   template<int D>
-  void XSourceIntegrator<D> ::
+  void SpaceTimeXSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
 		     FlatVector<double> & elvec,
@@ -189,7 +206,7 @@ namespace ngfem
 
     const XFiniteElement * xfe = NULL;
     const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
+    const ScalarSpaceTimeFiniteElement<D> * scafe = NULL;
 
     for (int i = 0; i < cfel.GetNComponents(); ++i)
     {
@@ -198,7 +215,7 @@ namespace ngfem
       if (dummfe==NULL)
         dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
       if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+        scafe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[i]);
     }
     
     elvec = 0.0;
@@ -213,8 +230,13 @@ namespace ngfem
     FlatVector<> shape(ndof,&shape_total(0));
     FlatVector<> shapex(ndof,&shape_total(ndof));
 
-    int p = scafe->Order();
+    int ps = scafe->OrderSpace();
+    int pt = scafe->OrderTime();
     
+    const double t1 = coef_tnew->EvaluateConst(); 
+    const double t0 = coef_told->EvaluateConst();
+    const double tau = t1 - t0;
+
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
     {
@@ -222,32 +244,35 @@ namespace ngfem
       { 
         if (dummfe->GetDomainType() != dt)
           continue;
-        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*p);
-        for (int i = 0 ; i < pir.GetNIP(); i++)
-        {
-          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          shape = scafe->GetShape(mip.IP(), lh);
-          double fac = mip.GetWeight();
-          elvec += (fac*coef) * shape;
-        }
+        IntegrationRule irs = SelectIntegrationRule (eltrans.GetElementType(), 2*ps);
+        IntegrationRule irt = SelectIntegrationRule (ET_SEGM, 2*pt);
+        for (int k = 0; k < irt.GetNIP(); ++k)
+          for (int l = 0 ; l < irs.GetNIP(); l++)
+          {
+            MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
+            double coef = dt == POS ? coef_pos->Evaluate(mip) 
+              : coef_neg->Evaluate(mip);
+            scafe->CalcShapeSpaceTime(mip.IP(), irt[k](0), shape, lh);
+            double fac = mip.GetWeight() * irt[k].Weight() * tau;
+            elvec += (fac*coef) * shape;
+          }
       }
       else
       {
         const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
         if (lset_eval_p == NULL)
           throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
-        const QuadratureRule<D> & quad(compr->GetRule(dt));
+        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
+        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
         for (int i = 0; i < quad.Size(); ++i)
         {
-          IntegrationPoint ip;
+          IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ip(d) = quad.points[i](d);
-          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+            ips(d) = quad.points[i](d);
+          MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          
-          shape = scafe->GetShape(mip.IP(), lh);
+
+          scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
           shapex = shape;
 
           for (int l = 0; l < ndof_x; ++l)
@@ -256,12 +281,14 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i];
+          double fac = mip.GetMeasure() * quad.weights[i] * tau;
           elvec += (fac*coef) * shape_total;
         } // quad rule
       } // if xfe
     } // loop over domain types
   }
+
+
 
 /*  
   template<int D>
@@ -639,28 +666,25 @@ namespace ngfem
   }
 */
 
-  template class XMassIntegrator<2>;
-  template class XMassIntegrator<3>;
+  template class SpaceTimeXMassIntegrator<2>;
+  template class SpaceTimeXMassIntegrator<3>;
 
-  template class XLaplaceIntegrator<2>;
-  template class XLaplaceIntegrator<3>;
+  template class SpaceTimeXSourceIntegrator<2>;
+  template class SpaceTimeXSourceIntegrator<3>;
 
-  template class XSourceIntegrator<2>;
-  template class XSourceIntegrator<3>;
+  template class SpaceTimeXLaplaceIntegrator<2>;
+  template class SpaceTimeXLaplaceIntegrator<3>;
 
-  static RegisterBilinearFormIntegrator<XMassIntegrator<2> > initxh1cut2d ("xmass", 2, 2);
-  static RegisterBilinearFormIntegrator<XMassIntegrator<3> > initxh1cut3d ("xmass", 3, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXMassIntegrator<2> > initstxh1cut2d ("stxmass", 2, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXMassIntegrator<3> > initstxh1cut3d ("stxmass", 3, 4);
 
-  static RegisterBilinearFormIntegrator<XLaplaceIntegrator<2> > initxh1cut2dlap ("xlaplace", 2, 2);
-  static RegisterBilinearFormIntegrator<XLaplaceIntegrator<3> > initxh1cut3dlap ("xlaplace", 3, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXLaplaceIntegrator<2> > initstxh1cut2dlap ("stxlaplace", 2, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXLaplaceIntegrator<3> > initstxh1cut3dlap ("stxlaplace", 3, 4);
 
-  static RegisterLinearFormIntegrator<XSourceIntegrator<2> > initxh1source2d ("xsource", 2, 2);
-  static RegisterLinearFormIntegrator<XSourceIntegrator<3> > initxh1source3d ("xsource", 3, 2);
+  static RegisterLinearFormIntegrator<SpaceTimeXSourceIntegrator<2> > initstxh1source2d ("stxsource", 2, 4);
+  static RegisterLinearFormIntegrator<SpaceTimeXSourceIntegrator<3> > initstxh1source3d ("stxsource", 3, 4);
 
 /*
-  static RegisterBilinearFormIntegrator<XLaplaceIntegrator<2> > initxlap2d ("xlaplace", 2, 2);
-  static RegisterBilinearFormIntegrator<XLaplaceIntegrator<3> > initxlap3d ("xlaplace", 3, 2);
-
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<2> > initxconv2d ("xconvection", 2, 2);
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<3> > initxconv3d ("xconvection", 3, 2);
 
@@ -673,5 +697,3 @@ namespace ngfem
 */
 
 }
-
-/// coefficientfunction statt function-pointer
