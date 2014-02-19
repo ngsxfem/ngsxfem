@@ -446,8 +446,6 @@ namespace ngcomp
     {
       Array<DOMAIN_TYPE> domnrs;
       GetDomainNrs(elnr,domnrs);  
-      XLocalGeometryInformation * localgeominfo = NULL; //TODO
-      //localgeominfo->MakeQuadRule...
 
       netgen::Ng_Element ngel = ma.GetElement(elnr);
       ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
@@ -468,6 +466,23 @@ namespace ngcomp
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
       DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
+      if (spacetime)
+      {
+          ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.first,lh);
+          ScalarFieldEvaluator * lset_eval_future_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.second,lh);
+          CompositeQuadratureRule<D> * cquadp = new (lh) CompositeQuadratureRule<D>() ;
+          CompositeQuadratureRule<D> * cquadf = new (lh) CompositeQuadratureRule<D>() ;
+          XLocalGeometryInformation * xgeom_past = 
+              XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
+                                                *cquadp, lh, 2*order_space, 1, 0, 0);
+          XLocalGeometryInformation * xgeom_future = 
+              XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
+                                                *cquadf, lh, 2*order_space, 1, 0, 0);
+          xgeom->SetPastTrace(xgeom_past);
+          xgeom->SetFutureTrace(xgeom_future);
+      }
+
+
       return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom));
     }
   }
@@ -487,9 +502,25 @@ namespace ngcomp
     {
       Array<DOMAIN_TYPE> domnrs;
       GetSurfaceDomainNrs(selnr,domnrs);  
-      XLocalGeometryInformation * localgeominfo = NULL; //TODO
-      //localgeominfo->MakeQuadRule...
-      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,localgeominfo));
+
+      netgen::Ng_Element ngel = ma.GetSElement(selnr);
+      ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+
+      ElementTransformation & eltrans = ma.GetTrafo (selnr, BND, lh);
+        
+      ScalarFieldEvaluator * lset_eval_p = NULL;
+      if (spacetime)
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+      else
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+
+      CompositeQuadratureRule<SD-1> * cquad = new (lh) CompositeQuadratureRule<SD-1>() ;
+
+      ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
+
+      XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                                            *cquad, lh, 2*order_space, 1, 0, 0);
+      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom));
     }
   }
 
