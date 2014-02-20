@@ -231,8 +231,8 @@ namespace ngfem
     FlatVector<> shapex(ndof,&shape_total(ndof));
 
     FlatVector<> dtshape_total(ndof_total,lh);
-    FlatVector<> dtshape(ndof,&shape_total(0));
-    FlatVector<> dtshapex(ndof,&shape_total(ndof));
+    FlatVector<> dtshape(ndof,&dtshape_total(0));
+    FlatVector<> dtshapex(ndof,&dtshape_total(ndof));
 
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
@@ -276,7 +276,6 @@ namespace ngfem
             ips(d) = quad.points[i](d);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-
           scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
           scafe->CalcDtShapeSpaceTime(ips, quad.points[i](D), dtshape, lh);
 
@@ -291,8 +290,8 @@ namespace ngfem
               dtshapex(l) = 0.0;
             }
           }
-
           double fac = mip.GetMeasure() * quad.weights[i];
+          
           elmat += (fac*coef) * shape_total * Trans(dtshape_total);
         } // quad rule
       } // if xfe
@@ -337,8 +336,8 @@ namespace ngfem
     FlatVector<> shapex(ndof,&shape_total(ndof));
 
     FlatVector<> bgradshape_total(ndof_total,lh);
-    FlatVector<> bgradshape(ndof,&shape_total(0));
-    FlatVector<> bgradshapex(ndof,&shape_total(ndof));
+    FlatVector<> bgradshape(ndof,&bgradshape_total(0));
+    FlatVector<> bgradshapex(ndof,&bgradshape_total(ndof));
 
     FlatMatrixFixWidth<D> gradshape(ndof,lh);
 
@@ -877,8 +876,8 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<2> > initstxh1cut2dconv ("stx_convection", 2, 4);
   static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<3> > initstxh1cut3dconv ("stx_convection", 3, 4);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<2> > initstxh1cut2dtimeder ("stx_timeder", 2, 4);
-  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<3> > initstxh1cut3dtimeder ("stx_timeder", 3, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<2> > initstxh1cut2dtimeder ("stx_timeder", 2, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<3> > initstxh1cut3dtimeder ("stx_timeder", 3, 2);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXTraceMassIntegrator<2,PAST> > initstxh1cut2dtracmp ("stx_tracemass_past", 2, 2);
   static RegisterBilinearFormIntegrator<SpaceTimeXTraceMassIntegrator<3,PAST> > initstxh1cut3dtracmp ("stx_tracemass_past", 3, 2);

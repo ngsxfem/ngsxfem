@@ -21,10 +21,25 @@ define constant bpos = 1.0
 define constant aneg = 1.0
 define constant apos = 1.0
 
+define constant abneg = (aneg*bneg)
+define constant abpos = (apos*bpos)
+
 define constant lambda = 10.0
 
 define constant told = 0.0
-define constant tnew = 0.01
+define constant tnew = 0.005
+
+define constant wx = 1.0
+define constant wy = 1.0
+
+define constant binineg = 0.0
+define constant binipos = 1.0
+
+define coefficient bconvneg
+(bneg*wx,bpos*wy),
+
+define coefficient bconvpos
+(bneg*wx,bpos*wy),
 
 define fespace fesh1
        -type=spacetimefes 
@@ -37,9 +52,9 @@ define fespace fesx
        -type=xfespace
        -spacetime
        -t0=0.0
-       -t1=0.01
+       -t1=0.005
        # -levelset=(x-y+z-0.375)
-       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-z)
+       -levelset=((x-1.0*z-0.25)*(x-1.0*z-0.25)+(y-1.0*z-0.25)*(y-1.0*z-0.25)-0.04)
 
 numproc informxfem npix 
         -fespace=fesh1
@@ -50,14 +65,6 @@ define fespace fescomp
        -spaces=[fesh1,fesx]
 
 define gridfunction u -fespace=fescomp
-
-define coefficient lset_past
-#(x-y+told-0.375),       
-((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-told)
-
-define coefficient lset_future
-#(x-y+tnew-0.375),       
-((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09-tnew)
        
 #numproc shapetester npst -gridfunction=u
 
@@ -70,27 +77,27 @@ stxvis_future one
 numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -applyd
 numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
 
-define coefficient rhs1
-1,
+define coefficient rhsneg
+((bneg)*1),
 #(sin(x)),
 
-define coefficient rhs2
-2,
+define coefficient rhspos
+((bpos)*1),
 #(cos(x)),
 
 define bilinearform a -fespace=fescomp # -printelmat -print
-#stx_mass one one told tnew
-# stx_laplace aneg apos told tnew
-# stx_nitsche_halfhalf aneg apos bneg bpos lambda told tnew
-stx_tracemass_past one one 
-stx_tracemass_future one one
+#stx_mass bneg bpos told tnew
+stx_laplace abneg abpos told tnew
+stx_nitsche_halfhalf aneg apos bneg bpos lambda told tnew
+stx_timeder bneg bpos
+stx_convection bconvneg bconvpos told tnew
+stx_tracemass_past bneg bpos
+
 
 
 define linearform f -fespace=fescomp # -print
-#stx_source rhs1 rhs2 told tnew
-stx_tracesource_past rhs1 rhs2
-stx_tracesource_future rhs1 rhs2
-#stx_tracesource_past zero zero
+#stx_source rhsneg rhspos told tnew
+stx_tracesource_past binineg binipos
 
 
 #numproc setvalues npsv -gridfunction=u.1 -coefficient=one 
@@ -100,5 +107,5 @@ stx_tracesource_future rhs1 rhs2
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 
 
-numproc visualization npviz -scalarfunction=u_future
+numproc visualization npviz -scalarfunction=u_future -subdivision=3
 
