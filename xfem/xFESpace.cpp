@@ -568,10 +568,10 @@ namespace ngcomp
       else
         dynamic_cast<XFESpace<2,3>* >(xfes) -> SetBaseFESpace (basefes);
     else
-      if (mSD == 2)
-        dynamic_cast<XFESpace<3,2>* >(xfes) -> SetBaseFESpace (basefes);
-      else
+      if (mSD == 3)
         dynamic_cast<XFESpace<3,3>* >(xfes) -> SetBaseFESpace (basefes);
+      else
+        dynamic_cast<XFESpace<3,4>* >(xfes) -> SetBaseFESpace (basefes);
 
     // if (xfes_ != NULL)
     // {
