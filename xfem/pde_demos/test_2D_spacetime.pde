@@ -18,8 +18,8 @@ define constant two = 2.0
 define constant bneg = 2.0
 define constant bpos = 1.0
 
-define constant aneg = 1.0
-define constant apos = 1.0
+define constant aneg = 10.0
+define constant apos = 10.0
 
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
@@ -32,8 +32,8 @@ define constant tnew = 0.005
 define constant wx = 1.0
 define constant wy = 1.0
 
-define constant binineg = 0.0
-define constant binipos = 1.0
+define constant binineg = 1.0
+define constant binipos = 0.0
 
 define coefficient bconvneg
 (bneg*wx,bpos*wy),
