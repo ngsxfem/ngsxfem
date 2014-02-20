@@ -605,6 +605,10 @@ namespace ngcomp
 
 
 
+  template class XFESpace<2,2>;
+  template class XFESpace<2,3>;
+  template class XFESpace<3,3>;
+  template class XFESpace<3,4>;
 
   namespace xfespace_cpp
   {
