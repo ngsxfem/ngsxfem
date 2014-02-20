@@ -37,6 +37,9 @@ protected:
   // LinearForm * lff; //initial condition
   // solution vector
   GridFunction * gfu;
+
+  GridFunction * gfu_vis = NULL;
+
   // time step
   double dt;
   // total time
@@ -90,7 +93,9 @@ public:
 	// bfa = pde.GetBilinearForm (flags.GetStringFlag ("bilinearforma", "a"));
 	// bfm = pde.GetBilinearForm (flags.GetStringFlag ("bilinearformm", "m"));
 	// lff = pde.GetLinearForm (flags.GetStringFlag ("linearform", "f"));
+
 	gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction", "u"));
+	gfu_vis = pde.GetGridFunction (flags.GetStringFlag ("gf_vis", "u_vis"),true);
 
 	inversetype = flags.GetStringFlag ("solver", "pardiso");
 	fesstr = flags.GetStringFlag ("fespace", "fes_st");
@@ -164,26 +169,26 @@ public:
   {
 
 	
-	cout << "TESTING" << endl;
+	// cout << "TESTING" << endl;
 
-	Array <EvalFunction*> evals(1);
+	// Array <EvalFunction*> evals(1);
 	
-	std::cout << " a " << std::endl;
-	evals[0] = new EvalFunction("x+y+z");
-	std::cout << " b " << std::endl;
-	// SpaceTimeDomainVariableCoefficientFunction<D> coef_test( evals );
-	DomainVariableCoefficientFunction<D+1> coef_test( evals );
-	std::cout << " c " << std::endl;
-	ElementTransformation & eltrans = pde.GetMeshAccess().GetTrafo (0, VOL, lh);
-	IntegrationPoint ip (0.0);
-	MappedIntegrationPoint<D,D> mip(ip,eltrans);
-	DimMappedIntegrationPoint<D+1> mip2(ip,eltrans);
-	mip2.Point().Range(0,D) = mip.GetPoint();
-	mip2.Point()[D] = 1.0;
-	Vec<1> test;
-	coef_test.Evaluate(mip2,test);	
-	std::cout << " mip2.GetPoint() = " << mip2.GetPoint() << std::endl;
-	cout << " test: " << test  << endl;
+	// std::cout << " a " << std::endl;
+	// evals[0] = new EvalFunction("x+y+z");
+	// std::cout << " b " << std::endl;
+	// // SpaceTimeDomainVariableCoefficientFunction<D> coef_test( evals );
+	// DomainVariableCoefficientFunction<D+1> coef_test( evals );
+	// std::cout << " c " << std::endl;
+	// ElementTransformation & eltrans = pde.GetMeshAccess().GetTrafo (0, VOL, lh);
+	// IntegrationPoint ip (0.0);
+	// MappedIntegrationPoint<D,D> mip(ip,eltrans);
+	// DimMappedIntegrationPoint<D+1> mip2(ip,eltrans);
+	// mip2.Point().Range(0,D) = mip.GetPoint();
+	// mip2.Point()[D] = 1.0;
+	// Vec<1> test;
+	// coef_test.Evaluate(mip2,test);	
+	// std::cout << " mip2.GetPoint() = " << mip2.GetPoint() << std::endl;
+	// cout << " test: " << test  << endl;
 	
 	cout << "solve solveinstatx pde" << endl;
 
@@ -332,7 +337,9 @@ public:
 	  delete &invmat;
 	  delete &d;
 	  delete &w;
-	  
+
+	  getchar();
+	  xfes.XToNegPos(*gfu,*gfu_vis);
 	  Ng_Redraw ();
 	  
 	  if (userstepping)
@@ -362,11 +369,11 @@ public:
   virtual void PrintReport (ostream & ost)
   {
 	ost << GetClassName() << endl
-		<< "NOT UP TO DATE\n " << endl
+		<< "NOT UP TO DATE\n " << endl;
 		// << "Linear-form     = " << lff->GetName() << endl
-		<< "Gridfunction    = " << gfu->GetName() << endl
-		<< "dt              = " << dt << endl
-		<< "tend            = " << tend << endl;
+		// << "Gridfunction    = " << gfu->GetName() << endl
+		// << "dt              = " << dt << endl
+		// << "tend            = " << tend << endl;
   }
 
 

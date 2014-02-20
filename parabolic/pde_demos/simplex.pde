@@ -14,7 +14,7 @@ mesh = square_trigs.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 #shared = libngsxfem_test
-#shared = libngsxfem_common
+shared = libngsxfem_xfem
 shared = libngsxfem_parabolic
 
 define constant heapsize = 1e7
@@ -62,7 +62,12 @@ define fespace fescomp
        -type=compound
        -spaces=[fesh1,fesx]
 
+define fespace fesnegpos
+       -type=compound
+       -spaces=[fesh1,fesh1]
+
 define gridfunction u -fespace=fescomp
+define gridfunction u_vis -fespace=fesnegpos
 
 numproc stx_solveinstat npsi 
         -initialneg=binineg
@@ -71,6 +76,7 @@ numproc stx_solveinstat npsi
         -beta_conv_pos=bconvpos
         -beta_rhs_neg=brhsneg
         -beta_rhs_pos=brhspos
+        -gf_vis=u_vis
         # -linearform=f 
         -gridfunction=u
         -solver=pardiso 
@@ -90,8 +96,17 @@ stxvis_past one
 define bilinearform evalx_future -fespace=fescomp -nonassemble
 stxvis_future one
 
+define bilinearform evalx_neg -fespace=fesnegpos -nonassemble
+STtracefuture one -comp=1
+
+define bilinearform evalx_pos -fespace=fesnegpos -nonassemble
+STtracefuture one -comp=2
+
 numproc drawflux npdf_past -solution=u -bilinearform=evalx_past -label=u_past -applyd
 numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_future -applyd
+
+numproc drawflux npdf_past -solution=u_vis -bilinearform=evalx_neg -label=u_neg -applyd
+numproc drawflux npdf_future -solution=u_vis -bilinearform=evalx_pos -label=u_pos -applyd
 
 numproc visualization npviz 
         -scalarfunction=u_future 
