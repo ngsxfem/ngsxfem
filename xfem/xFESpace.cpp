@@ -1,5 +1,6 @@
 
 #include "xFESpace.hpp"
+//#include "xfemVisInts.hpp"
 using namespace ngsolve;
 using namespace ngfem;
 
@@ -18,6 +19,15 @@ namespace ngcomp
 
     string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
     eval_lset = new EvalFunction(eval_lset_str);
+
+    /* 
+    static ConstantCoefficientFunction one(1);
+    if (spacetime)
+      integrator = new STXVisIntegrator<D,FUTURE>(&one) ;
+    else
+      integrator = new XVisIntegrator<D>(&one) ;
+    // boundary_integrator = new RobinIntegrator<2> (&one);
+    */
 
     cout << "Constructor of XFESpace end" << endl;
     // static ConstantCoefficientFunction one(1);
@@ -192,6 +202,7 @@ namespace ngcomp
       }
     }
    
+    *testout << " x ndof : " << ndof << endl;
     // domain of dof
     domofdof.SetSize(ndof);
     domofdof = IF;
