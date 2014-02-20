@@ -41,10 +41,6 @@ namespace ngfem
 
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
-    
-    const double t1 = coef_tnew->EvaluateConst(); 
-    const double t0 = coef_told->EvaluateConst();
-    const double tau = t1 - t0;
 
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
@@ -137,10 +133,6 @@ namespace ngfem
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
     
-    const double t1 = coef_tnew->EvaluateConst(); 
-    const double t0 = coef_told->EvaluateConst();
-    const double tau = t1 - t0;
-
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
     {
@@ -236,10 +228,6 @@ namespace ngfem
 
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
-    
-    // const double t1 = coef_tnew->EvaluateConst(); 
-    // const double t0 = coef_told->EvaluateConst();
-    // const double tau = t1 - t0;
 
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
@@ -343,10 +331,6 @@ namespace ngfem
 
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
-    
-    const double t1 = coef_tnew->EvaluateConst(); 
-    const double t0 = coef_told->EvaluateConst();
-    const double tau = t1 - t0;
 
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
@@ -550,10 +534,6 @@ namespace ngfem
 
     int ps = scafe->OrderSpace();
     int pt = scafe->OrderTime();
-    
-    const double t1 = coef_tnew->EvaluateConst(); 
-    const double t0 = coef_told->EvaluateConst();
-    const double tau = t1 - t0;
 
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
@@ -567,11 +547,15 @@ namespace ngfem
         for (int k = 0; k < irt.GetNIP(); ++k)
           for (int l = 0 ; l < irs.GetNIP(); l++)
           {
-            MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
+            MappedIntegrationPoint<D,D> mips(irs[l], eltrans);
+            DimMappedIntegrationPoint<D+1> mip(irs[l],eltrans);
+            mip.Point().Range(0,D) = mips.GetPoint();
+            mip.Point()[D] = t0 + irt[k](0) * tau;
             double coef = dt == POS ? coef_pos->Evaluate(mip) 
               : coef_neg->Evaluate(mip);
-            scafe->CalcShapeSpaceTime(mip.IP(), irt[k](0), shape, lh);
-            double fac = mip.GetWeight() * irt[k].Weight() * tau;
+
+            scafe->CalcShapeSpaceTime(mips.IP(), irt[k](0), shape, lh);
+            double fac = mips.GetWeight() * irt[k].Weight() * tau;
             elvec += (fac*coef) * shape;
           }
       }
@@ -587,8 +571,13 @@ namespace ngfem
           IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
             ips(d) = quad.points[i](d);
-          MappedIntegrationPoint<D,D> mip(ips, eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+
+          MappedIntegrationPoint<D,D> mips(ips, eltrans);
+          DimMappedIntegrationPoint<D+1> mip(ips,eltrans);
+          mip.Point().Range(0,D) = mips.GetPoint();
+          mip.Point()[D] = t0 + quad.points[i](D) * tau;
+          double coef = dt == POS ? coef_pos->Evaluate(mip) 
+            : coef_neg->Evaluate(mip);
 
           scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
           shapex = shape;
@@ -599,7 +588,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i] * tau;
+          double fac = mips.GetMeasure() * quad.weights[i] * tau;
           elvec += (fac*coef) * shape_total;
         } // quad rule
       } // if xfe

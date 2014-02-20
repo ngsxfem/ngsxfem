@@ -16,11 +16,18 @@ namespace ngfem
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
-    CoefficientFunction * coef_told;
-    CoefficientFunction * coef_tnew;
+    double t1;
+    double t0;
+    double tau;
+
   public:
     SpaceTimeXMassIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) 
+    {
+      t0 = coeffs[2]->EvaluateConst(); 
+      t1 = coeffs[3]->EvaluateConst();
+      tau = t1 - t0;
+    }
     virtual ~SpaceTimeXMassIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXMassIntegrator"; }
@@ -38,6 +45,9 @@ namespace ngfem
                        FlatMatrix<double> & elmat,
                        LocalHeap & lh) const;
 
+    virtual void SetTimeInterval (const TimeInterval & ti)
+    { t0 = ti.first; t1=ti.second; tau = t1-t0; }
+
   };
 
   template <int D>
@@ -45,11 +55,17 @@ namespace ngfem
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
-    CoefficientFunction * coef_told;
-    CoefficientFunction * coef_tnew;
+    double t1;
+    double t0;
+    double tau;
   public:
     SpaceTimeXLaplaceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) 
+    { 
+      t0 = coeffs[2]->EvaluateConst(); 
+      t1 = coeffs[3]->EvaluateConst();
+      tau = t1 - t0;
+    }
     virtual ~SpaceTimeXLaplaceIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXLaplaceIntegrator"; }
@@ -67,6 +83,9 @@ namespace ngfem
                        FlatMatrix<double> & elmat,
                        LocalHeap & lh) const;
 
+    virtual void SetTimeInterval (const TimeInterval & ti)
+    { t0 = ti.first; t1=ti.second; tau = t1-t0; }
+
   };
 
   template <int D>
@@ -74,11 +93,17 @@ namespace ngfem
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
-    CoefficientFunction * coef_told;
-    CoefficientFunction * coef_tnew;
+    double t1;
+    double t0;
+    double tau;
   public:
     SpaceTimeXConvectionIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) 
+    {
+      t0 = coeffs[2]->EvaluateConst(); 
+      t1 = coeffs[3]->EvaluateConst();
+      tau = t1 - t0;
+    }
     virtual ~SpaceTimeXConvectionIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXConvectionIntegrator"; }
@@ -95,6 +120,9 @@ namespace ngfem
                        const ElementTransformation & eltrans,
                        FlatMatrix<double> & elmat,
                        LocalHeap & lh) const;
+
+    virtual void SetTimeInterval (const TimeInterval & ti)
+    { t0 = ti.first; t1=ti.second; tau = t1-t0; }
 
   };
 
@@ -160,11 +188,49 @@ namespace ngfem
   {
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
-    CoefficientFunction * coef_told;
-    CoefficientFunction * coef_tnew;
+    
+    double t1;
+    double t0;
+    double tau;
+
   public:
     SpaceTimeXSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]),coef_told(coeffs[2]),coef_tnew(coeffs[3]) { ; }
+    {
+      t0 = coeffs[2]->EvaluateConst(); 
+      t1 = coeffs[3]->EvaluateConst();
+      tau = t1 - t0;
+
+      DomainVariableCoefficientFunction<D> * coefneg = dynamic_cast<DomainVariableCoefficientFunction<D> * > (coeffs[0]);
+      if (coefneg != NULL)
+      {
+        int numreg = coefneg->NumRegions();
+        if (numreg == INT_MAX) numreg = 1;
+        Array< EvalFunction* > evals;
+        evals.SetSize(numreg);
+        for (int i = 0; i < numreg; ++i)
+        {
+          evals[i] = &coefneg->GetEvalFunction(i);
+        }
+        coef_neg = new DomainVariableCoefficientFunction<D+1>(evals); 
+      }
+      else
+        coef_neg = coeffs[0];
+
+      DomainVariableCoefficientFunction<D> * coefpos = dynamic_cast<DomainVariableCoefficientFunction<D> * > (coeffs[1]);
+      if (coefpos != NULL)
+      {
+        int numreg = coefneg->NumRegions();
+        if (numreg == INT_MAX) numreg = 1;
+        Array< EvalFunction* > evals(numreg);
+        for (int i = 0; i < numreg; ++i)
+        {
+          evals[i] = &coefpos->GetEvalFunction(i);
+        }
+        coef_pos = new DomainVariableCoefficientFunction<D+1>(evals); 
+      }
+      else
+        coef_pos = coeffs[1];
+    }
     virtual ~SpaceTimeXSourceIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXSourceIntegrator"; }
@@ -174,6 +240,8 @@ namespace ngfem
     // it is not a boundary integral (but a domain integral)
     virtual bool BoundaryForm () const { return false; }
 
+    virtual void SetTimeInterval (const TimeInterval & ti)
+    { t0 = ti.first; t1=ti.second; tau = t1-t0; }
 
     // Calculates the element vector
     virtual void
