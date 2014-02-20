@@ -17,7 +17,7 @@ namespace ngfem
     const int ndof = scafe.GetNDof();
     FlatVector<> shape (ndof,lh);
 
-    scafe.CalcShapeSpaceTime(mip.IP(),1.0,shape,lh);
+    scafe.CalcShapeSpaceTime(mip.IP(),t == PAST ? 0.0 : 1.0,shape,lh);
 
     IntRange range = cfel.GetRange(0);
     mat.Row(0).Range(range) = shape;
