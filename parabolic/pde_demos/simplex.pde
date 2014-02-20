@@ -33,6 +33,12 @@ define coefficient bconvneg
 define coefficient bconvpos
 (bneg*wx,bpos*wy),
 
+define coefficient brhsneg
+(z),
+
+define coefficient brhspos
+(0),
+
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
@@ -63,6 +69,8 @@ numproc stx_solveinstat npsi
         -initialpos=binipos
         -beta_conv_neg=bconvneg
         -beta_conv_pos=bconvpos
+        -beta_rhs_neg=brhsneg
+        -beta_rhs_pos=brhspos
         # -linearform=f 
         -gridfunction=u
         -solver=pardiso 

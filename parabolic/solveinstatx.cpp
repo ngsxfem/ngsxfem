@@ -15,6 +15,7 @@
 #include "../xfem/stxfemIntegrators.hpp"
 #include "../xfem/xfemNitsche.hpp"
 #include "../xfem/xFESpace.hpp"
+// #include "../utils/stcoeff.hpp"
 
 using namespace ngsolve;
 
@@ -73,6 +74,9 @@ protected:
   CoefficientFunction* coef_upwneg = NULL;
   CoefficientFunction* coef_upwpos = NULL;
 
+  CoefficientFunction* coef_brhsneg = NULL;
+  CoefficientFunction* coef_brhspos = NULL;
+
 public:
   /*
 	In the constructor, the solver class gets the flags from the pde - input file.
@@ -106,6 +110,9 @@ public:
 	coef_bconvneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_neg", "bconvneg"));
 	coef_bconvpos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_pos", "bconvpos"));
 
+	coef_brhsneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_neg", "brhsneg"));
+	coef_brhspos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_pos", "brhspos"));
+
 	coef_aneg = new ConstantCoefficientFunction(aneg);
 	coef_apos = new ConstantCoefficientFunction(apos);
 	coef_bneg = new ConstantCoefficientFunction(bneg);
@@ -118,9 +125,8 @@ public:
 	coef_zero = new ConstantCoefficientFunction(0.0);
 	coef_one = new ConstantCoefficientFunction(1.0);
 
-	coef_told = new ConstantCoefficientFunction(0.0);
-	coef_tnew = new ConstantCoefficientFunction(dt);
-
+	coef_told = new ConstantCoefficientFunction(10.0);
+	coef_tnew = new ConstantCoefficientFunction(10.0+dt);
 
   }
 
@@ -156,6 +162,29 @@ public:
   */
   virtual void Do(LocalHeap & lh)
   {
+
+	
+	cout << "TESTING" << endl;
+
+	Array <EvalFunction*> evals(1);
+	
+	std::cout << " a " << std::endl;
+	evals[0] = new EvalFunction("x+y+z");
+	std::cout << " b " << std::endl;
+	// SpaceTimeDomainVariableCoefficientFunction<D> coef_test( evals );
+	DomainVariableCoefficientFunction<D+1> coef_test( evals );
+	std::cout << " c " << std::endl;
+	ElementTransformation & eltrans = pde.GetMeshAccess().GetTrafo (0, VOL, lh);
+	IntegrationPoint ip (0.0);
+	MappedIntegrationPoint<D,D> mip(ip,eltrans);
+	DimMappedIntegrationPoint<D+1> mip2(ip,eltrans);
+	mip2.Point().Range(0,D) = mip.GetPoint();
+	mip2.Point()[D] = 1.0;
+	Vec<1> test;
+	coef_test.Evaluate(mip2,test);	
+	std::cout << " mip2.GetPoint() = " << mip2.GetPoint() << std::endl;
+	cout << " test: " << test  << endl;
+	
 	cout << "solve solveinstatx pde" << endl;
 
 	// PointContainer<2+1> pc;
@@ -186,8 +215,8 @@ public:
 	coefs_timeder[0] = coef_bneg;
 	coefs_timeder[1] = coef_bpos;
 
-	BilinearFormIntegrator * bfidt = new SpaceTimeXTimeDerivativeIntegrator<D> (coefs_timeder);
-	bftau -> AddIntegrator (bfidt);
+	SpaceTimeXTimeDerivativeIntegrator<D> bfidt(coefs_timeder);
+	bftau -> AddIntegrator (&bfidt);
 
 	Array<CoefficientFunction*> coefs_xlaplace(4);
 	coefs_xlaplace[0] = coef_abneg;
@@ -195,8 +224,8 @@ public:
 	coefs_xlaplace[2] = coef_told;
 	coefs_xlaplace[3] = coef_tnew;
 
-	BilinearFormIntegrator * bfilap = new SpaceTimeXLaplaceIntegrator<D> (coefs_xlaplace);
-	bftau -> AddIntegrator (bfilap);
+	SpaceTimeXLaplaceIntegrator<D> bfilap(coefs_xlaplace);
+	bftau -> AddIntegrator (&bfilap);
 
 	Array<CoefficientFunction *> coefs_xnitsche(7);
 	coefs_xnitsche[0] = coef_aneg;
@@ -207,8 +236,8 @@ public:
 	coefs_xnitsche[5] = coef_told;
 	coefs_xnitsche[6] = coef_tnew;
 
-	BilinearFormIntegrator * bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HALFHALF> (coefs_xnitsche);
-	bftau -> AddIntegrator (bfixnit);
+	SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HALFHALF> bfixnit (coefs_xnitsche);
+	bftau -> AddIntegrator (&bfixnit);
 
 	Array<CoefficientFunction*> coefs_xconvection(4);
 	coefs_xconvection[0] = coef_bconvneg;
@@ -216,16 +245,16 @@ public:
 	coefs_xconvection[2] = coef_told;
 	coefs_xconvection[3] = coef_tnew;
 
-	BilinearFormIntegrator * bfixconv = new SpaceTimeXConvectionIntegrator<D> (coefs_xconvection);
-	bftau -> AddIntegrator (bfixconv);
+	SpaceTimeXConvectionIntegrator<D> bfixconv(coefs_xconvection);
+	bftau -> AddIntegrator (&bfixconv);
 
 
 	Array<CoefficientFunction*> coefs_timetr(2);
 	coefs_timetr[0] = coef_bneg;
 	coefs_timetr[1] = coef_bpos;
 
-	BilinearFormIntegrator * bfitimetr = new SpaceTimeXTraceMassIntegrator<D,PAST> (coefs_timetr);
-	bftau -> AddIntegrator (bfitimetr);
+	SpaceTimeXTraceMassIntegrator<D,PAST> bfitimetr(coefs_timetr);
+	bftau -> AddIntegrator (&bfitimetr);
 
 	cout << " B " << endl;
 
@@ -246,39 +275,45 @@ public:
 	
 	lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
 
+	/*
 	Array<CoefficientFunction *> coef_upw(2);
-	coef_upw[0] = coef_one;
-	coef_upw[1] = coef_zero;
+	coef_upw[0] = coef_brhsneg;
+	coef_upw[1] = coef_brhspos;
 	LinearFormIntegrator * lfi_tr = new SpaceTimeXTraceSourceIntegrator<D,PAST> (coef_upw);
 
 	lfrhs -> AddIntegrator (lfi_tr);
+	*/
 
 	// just for testing
-	// Array<CoefficientFunction *> coef_rhs(4);
-	// coef_rhs[0] = coef_one;
-	// coef_rhs[1] = coef_zero;
-	// coef_rhs[2] = coef_told;
-	// coef_rhs[3] = coef_tnew;
-	// LinearFormIntegrator * lfi_rhs = new SpaceTimeXSourceIntegrator<D> (coef_rhs);
-
-	// lfrhs -> AddIntegrator (lfi_rhs);
+	Array<CoefficientFunction *> coef_rhs(4);
+	coef_rhs[0] = coef_brhsneg;
+	coef_rhs[1] = coef_brhspos;
+	coef_rhs[2] = coef_told;
+	coef_rhs[3] = coef_tnew;
+	SpaceTimeXSourceIntegrator<D> lfi_rhs(coef_rhs);
+	lfrhs -> AddIntegrator (&lfi_rhs);
 
 	// time stepping
 	double t;
 	for (t = 0; t < tend; t += dt)
 	{
-	  xfes.SetTimeInterval(TimeInterval(t,t+dt));
+	  TimeInterval ti(t,t+dt);
+	  xfes.SetTimeInterval(ti);
 	  fes->Update(lh);
 	  gfu->Update();
 
 	  BaseVector & vecu = gfu->GetVector();
+
+	  bfilap.SetTimeInterval(ti);
+	  bfixnit.SetTimeInterval(ti);
+	  bfixconv.SetTimeInterval(ti);
 
 	  bftau -> ReAssemble(lh,true);
 	  BaseMatrix & mata = bftau->GetMatrix();
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
 
-
+	  lfi_rhs.SetTimeInterval(ti);
 	  lfrhs -> Assemble(lh);
 	  const BaseVector * vecf = &(lfrhs->GetVector());
 	  
@@ -302,6 +337,8 @@ public:
 	  
 	  if (userstepping)
 		getchar();
+	  
+
 	}
 	cout << "\r               \rt = " << tend;
 	cout << endl;
