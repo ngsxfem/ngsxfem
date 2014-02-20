@@ -535,6 +535,42 @@ namespace ngcomp
     }
   }
 
+  template <int D, int SD>
+  void XFESpace<D,SD>::XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const
+  {
+    GridFunction & gf_neg = *gf_neg_pos.GetComponent(0);
+    BaseVector & bv_neg = gf_neg.GetVector();
+    FlatVector<> vneg = bv_neg.FVDouble();
+
+    GridFunction & gf_pos = *gf_neg_pos.GetComponent(1);
+    BaseVector & bv_pos = gf_pos.GetVector();
+    FlatVector<> vpos = bv_pos.FVDouble();
+
+    GridFunction & gf_base = *gf.GetComponent(0);
+    BaseVector & bv_base = gf_base.GetVector();
+    FlatVector<> vbase = bv_base.FVDouble();
+
+    GridFunction & gf_x = *gf.GetComponent(1);
+    BaseVector & bv_x = gf_x.GetVector();
+    FlatVector<> vx = bv_x.FVDouble();
+
+    const int basendof = vneg.Size();
+    for (int i = 0; i < basendof; ++i)
+    {
+      vneg(i) = vbase(i);
+      vpos(i) = vbase(i);
+      const int xdof = basedof2xdof[i];
+      if (xdof != -1)
+      {
+        if (domofdof[xdof] == POS)
+          vpos(i) += vx(xdof);
+        else
+          vneg(i) += vx(xdof);
+      }
+    }
+  }
+
+
   /*
   XH1FESpace :: XH1FESpace (const MeshAccess & ama, 
                             const Array<FESpace*> & aspaces,

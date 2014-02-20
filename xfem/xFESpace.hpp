@@ -106,6 +106,8 @@ namespace ngcomp
     void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
     void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
+    
+    void XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const;
   };
 
   
