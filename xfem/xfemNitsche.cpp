@@ -224,10 +224,6 @@ namespace ngfem
         throw Exception(" not containing X-elements?");
     }
 
-    const double t0 = t_old->EvaluateConst();
-    const double t1 = t_new->EvaluateConst();
-    const double dt = t1-t0;
-
     int ndof_x = xfe->GetNDof();
     int ndof_h1 = scafe->GetNDof();
     int ndof = ndof_h1+ndof_x;
@@ -313,7 +309,7 @@ namespace ngfem
       Vec<D> nref_space; 
       for (int d = 0; d < D; ++d) 
         nref_space[d] = quad.normals[i][d];
-      Vec<D> normal_space = dt * absdet * Trans(Finv) * nref_space;
+      Vec<D> normal_space = tau * absdet * Trans(Finv) * nref_space;
       double n_t = quad.normals[i][D] * absdet;
 
       Vec<D+1> normal_st; 

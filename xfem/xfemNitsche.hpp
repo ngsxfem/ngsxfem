@@ -65,15 +65,21 @@ namespace ngfem
     CoefficientFunction * beta_neg;
     CoefficientFunction * beta_pos;
     CoefficientFunction * lambda;
-    CoefficientFunction * t_old;
-    CoefficientFunction * t_new;
+
+    double t1;
+    double t0;
+    double tau;
+
   public:
     SpaceTimeXNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
-        lambda(coeffs[4]),
-        t_old(coeffs[5]), t_new(coeffs[6])
-      { ; }
+        lambda(coeffs[4])
+    { 
+      t0 = coeffs[2]->EvaluateConst(); 
+      t1 = coeffs[3]->EvaluateConst();
+      tau = t1 - t0;
+    }
     virtual ~SpaceTimeXNitscheIntegrator(){ ; };
 
     virtual string Name () const { return "SpaceTimeXNitscheIntegrator"; }
@@ -91,6 +97,8 @@ namespace ngfem
                        FlatMatrix<double> & elmat,
                        LocalHeap & lh) const;
 
+    virtual void SetTimeInterval (const TimeInterval & ti)
+    { t0 = ti.first; t1=ti.second; tau = t1-t0; }
   };
 
 }
