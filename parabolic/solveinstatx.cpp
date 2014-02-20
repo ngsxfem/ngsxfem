@@ -1,0 +1,360 @@
+/*
+  Solver for a parabolic pde
+
+  Solves
+  M du/dt  +  A u = f
+  by an implicite Euler method
+
+  Please include this file to the src files given in netgen/ngsolve/Makefile
+*/
+
+
+
+#include <solve.hpp>
+//#include "../spacetime/spacetimeintegrators.hpp"
+#include "../xfem/stxfemIntegrators.hpp"
+#include "../xfem/xfemNitsche.hpp"
+#include "../xfem/xFESpace.hpp"
+
+using namespace ngsolve;
+
+
+
+/*
+  Every solver is a class derived from the class NumProc.
+  It collects objects (such as bilinear-forms, gridfunctions) and parameters.
+*/
+template <int D>
+class NumProcSolveInstatX : public NumProc
+{
+protected:
+  // // bilinear-form for matrix
+  //BilinearForm * bftau;
+  // // bilinear-form for the mass-matrix
+  // BilinearForm * bfm;
+  // linear-form providing the right hand side
+  // LinearForm * lff; //initial condition
+  // solution vector
+  GridFunction * gfu;
+  // time step
+  double dt;
+  // total time
+  double tend;
+  // direct solver type
+  string inversetype;
+  string fesstr;
+	
+  bool userstepping;
+
+  double bneg = 1.0;
+  double bpos = 1.0;
+  double aneg = 1.0;
+  double apos = 1.0;
+  double lambda = 10.0;
+
+  CoefficientFunction* coef_bconvneg = NULL;
+  CoefficientFunction* coef_bconvpos = NULL;
+
+  CoefficientFunction* coef_bneg = NULL;
+  CoefficientFunction* coef_bpos = NULL;
+  CoefficientFunction* coef_aneg = NULL;
+  CoefficientFunction* coef_apos = NULL;
+  CoefficientFunction* coef_abneg = NULL;
+  CoefficientFunction* coef_abpos = NULL;
+
+  CoefficientFunction* coef_lambda = NULL;
+
+  CoefficientFunction* coef_zero = NULL;
+  CoefficientFunction* coef_one = NULL;
+
+  CoefficientFunction* coef_told = NULL;
+  CoefficientFunction* coef_tnew = NULL;
+
+  CoefficientFunction* coef_upwneg = NULL;
+  CoefficientFunction* coef_upwpos = NULL;
+
+public:
+  /*
+	In the constructor, the solver class gets the flags from the pde - input file.
+	the PDE class apde constains all bilinear-forms, etc...
+  */
+  NumProcSolveInstatX (PDE & apde, const Flags & flags) : NumProc (apde)
+  {
+	// in the input-file, you specify the bilinear-forms for the stiffness and for the mass-term
+	// like  "-bilinearforma=k". Default arguments are 'a' and 'm'
+
+	// bfa = pde.GetBilinearForm (flags.GetStringFlag ("bilinearforma", "a"));
+	// bfm = pde.GetBilinearForm (flags.GetStringFlag ("bilinearformm", "m"));
+	// lff = pde.GetLinearForm (flags.GetStringFlag ("linearform", "f"));
+	gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction", "u"));
+
+	inversetype = flags.GetStringFlag ("solver", "pardiso");
+	fesstr = flags.GetStringFlag ("fespace", "fes_st");
+
+	userstepping = flags.GetDefineFlag ("userstepping");
+
+	dt = flags.GetNumFlag ("dt", 0.001);
+	tend = flags.GetNumFlag ("tend", 1);
+
+	aneg = flags.GetNumFlag ("aneg", 1.0);
+	apos = flags.GetNumFlag ("apos", 1.0);
+	bneg = flags.GetNumFlag ("bneg", 1.0);
+	bpos = flags.GetNumFlag ("bpos", 1.0);
+	lambda = flags.GetNumFlag ("lambda", 10.0);
+	
+
+	coef_bconvneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_neg", "bconvneg"));
+	coef_bconvpos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_pos", "bconvpos"));
+
+	coef_aneg = new ConstantCoefficientFunction(aneg);
+	coef_apos = new ConstantCoefficientFunction(apos);
+	coef_bneg = new ConstantCoefficientFunction(bneg);
+	coef_bpos = new ConstantCoefficientFunction(bpos);
+	coef_abneg = new ConstantCoefficientFunction(aneg*bneg);
+	coef_abpos = new ConstantCoefficientFunction(apos*bpos);
+
+	coef_lambda = new ConstantCoefficientFunction(lambda);
+
+	coef_zero = new ConstantCoefficientFunction(0.0);
+	coef_one = new ConstantCoefficientFunction(1.0);
+
+	coef_told = new ConstantCoefficientFunction(0.0);
+	coef_tnew = new ConstantCoefficientFunction(dt);
+
+
+  }
+
+
+  virtual ~NumProcSolveInstatX() 
+  { 
+	delete coef_lambda;
+	delete coef_zero;
+	delete coef_one;
+	delete coef_told;
+	delete coef_tnew;
+
+	delete coef_aneg;
+	delete coef_bneg;
+	delete coef_abneg;
+	delete coef_apos;
+	delete coef_bpos;
+	delete coef_abpos;
+  }
+
+
+  /*
+	creates an solver object
+  */
+  static NumProc * Create (PDE & pde, const Flags & flags)
+  {
+	return new NumProcSolveInstatX (pde, flags);
+  }
+
+
+  /*
+	solve at one level
+  */
+  virtual void Do(LocalHeap & lh)
+  {
+	cout << "solve solveinstatx pde" << endl;
+
+	// PointContainer<2+1> pc;
+	// Array<Simplex<2+1> *> ret(0);
+	// DecomposeIntoSimplices<2,3>(ET_TRIG,ET_SEGM,ret,pc,lh);
+
+	// PointContainer<3+1> pc2;
+	// Array<Simplex<3+1> *> ret2(0);
+	// DecomposeIntoSimplices<3,4>(ET_TET,ET_SEGM,ret2,pc2,lh);
+
+	// PointContainer<2> pc3;
+	// Array<Simplex<2> *> ret3(0);
+	// DecomposeIntoSimplices<2,2>(ET_TRIG,ET_POINT,ret3,pc3,lh);
+
+	// PointContainer<3> pc4;
+	// Array<Simplex<3> *> ret4(0);
+	// DecomposeIntoSimplices<3,3>(ET_TET,ET_POINT,ret4,pc4,lh);
+
+	BilinearForm * bftau;
+	Flags massflags;
+	massflags.SetFlag ("fespace", fesstr.c_str());
+	bftau = pde.AddBilinearForm ("bftau", massflags);
+	bftau -> SetUnusedDiag (0);
+
+	cout << " A " << endl;
+
+	Array<CoefficientFunction*> coefs_timeder(2);
+	coefs_timeder[0] = coef_bneg;
+	coefs_timeder[1] = coef_bpos;
+
+	BilinearFormIntegrator * bfidt = new SpaceTimeXTimeDerivativeIntegrator<D> (coefs_timeder);
+	bftau -> AddIntegrator (bfidt);
+
+	Array<CoefficientFunction*> coefs_xlaplace(4);
+	coefs_xlaplace[0] = coef_abneg;
+	coefs_xlaplace[1] = coef_abpos;
+	coefs_xlaplace[2] = coef_told;
+	coefs_xlaplace[3] = coef_tnew;
+
+	BilinearFormIntegrator * bfilap = new SpaceTimeXLaplaceIntegrator<D> (coefs_xlaplace);
+	bftau -> AddIntegrator (bfilap);
+
+	Array<CoefficientFunction *> coefs_xnitsche(7);
+	coefs_xnitsche[0] = coef_aneg;
+	coefs_xnitsche[1] = coef_apos;
+	coefs_xnitsche[2] = coef_bneg;
+	coefs_xnitsche[3] = coef_bpos;
+	coefs_xnitsche[4] = coef_lambda;
+	coefs_xnitsche[5] = coef_told;
+	coefs_xnitsche[6] = coef_tnew;
+
+	BilinearFormIntegrator * bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HALFHALF> (coefs_xnitsche);
+	bftau -> AddIntegrator (bfixnit);
+
+	Array<CoefficientFunction*> coefs_xconvection(4);
+	coefs_xconvection[0] = coef_bconvneg;
+	coefs_xconvection[1] = coef_bconvpos;
+	coefs_xconvection[2] = coef_told;
+	coefs_xconvection[3] = coef_tnew;
+
+	BilinearFormIntegrator * bfixconv = new SpaceTimeXConvectionIntegrator<D> (coefs_xconvection);
+	bftau -> AddIntegrator (bfixconv);
+
+
+	Array<CoefficientFunction*> coefs_timetr(2);
+	coefs_timetr[0] = coef_bneg;
+	coefs_timetr[1] = coef_bpos;
+
+	BilinearFormIntegrator * bfitimetr = new SpaceTimeXTraceMassIntegrator<D,PAST> (coefs_timetr);
+	bftau -> AddIntegrator (bfitimetr);
+
+	cout << " B " << endl;
+
+	cout << " C " << endl;
+
+	// DifferentialOperator * traceop = new SpaceTimeTimeTraceIntegrator<D,FUTURE>(new ConstantCoefficientFunction(1.0));
+
+	GridFunctionCoefficientFunction coef_u (*gfu); //, traceop);
+
+	LinearForm * lfrhs;
+	Flags massflags2;
+	// massflags2.SetFlag ("fespace", fesstr.c_str());
+	// lfrhs = pde.AddLinearForm ("lfrhs", massflags2);
+
+	FESpace * fes = const_cast<FESpace*>(&(gfu->GetFESpace()));
+	CompoundFESpace & compfes = *dynamic_cast<CompoundFESpace * >(fes);
+	XFESpace<D,D+1> & xfes = *dynamic_cast<XFESpace<D,D+1> * >(compfes[1]);
+	
+	lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
+
+	Array<CoefficientFunction *> coef_upw(2);
+	coef_upw[0] = coef_one;
+	coef_upw[1] = coef_zero;
+	LinearFormIntegrator * lfi_tr = new SpaceTimeXTraceSourceIntegrator<D,PAST> (coef_upw);
+
+	lfrhs -> AddIntegrator (lfi_tr);
+
+	// just for testing
+	// Array<CoefficientFunction *> coef_rhs(4);
+	// coef_rhs[0] = coef_one;
+	// coef_rhs[1] = coef_zero;
+	// coef_rhs[2] = coef_told;
+	// coef_rhs[3] = coef_tnew;
+	// LinearFormIntegrator * lfi_rhs = new SpaceTimeXSourceIntegrator<D> (coef_rhs);
+
+	// lfrhs -> AddIntegrator (lfi_rhs);
+
+	// time stepping
+	double t;
+	for (t = 0; t < tend; t += dt)
+	{
+	  xfes.SetTimeInterval(TimeInterval(t,t+dt));
+	  fes->Update(lh);
+	  gfu->Update();
+
+	  BaseVector & vecu = gfu->GetVector();
+
+	  bftau -> ReAssemble(lh,true);
+	  BaseMatrix & mata = bftau->GetMatrix();
+	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
+	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
+
+
+	  lfrhs -> Assemble(lh);
+	  const BaseVector * vecf = &(lfrhs->GetVector());
+	  
+	  // vecu = 0.0;
+	  BaseVector & d = *vecu.CreateVector();
+	  BaseVector & w = *vecu.CreateVector();
+	  
+	  d = *vecf - mata * vecu;
+	  w = invmat * d;
+	  vecu += w;
+	  
+	  // update status text
+	  cout << "\rt = " << t;
+	  cout << flush;
+	  // update visualization
+	  delete &invmat;
+	  delete &d;
+	  delete &w;
+	  
+	  Ng_Redraw ();
+	  
+	  if (userstepping)
+		getchar();
+	}
+	cout << "\r               \rt = " << tend;
+	cout << endl;
+	// delete &d;
+	// delete &w;
+  }
+
+
+  /*
+	GetClassName
+  */
+  virtual string GetClassName () const
+  {
+	return "SolveInstatX Solver";
+  }
+
+
+  /*
+	PrintReport
+  */
+  virtual void PrintReport (ostream & ost)
+  {
+	ost << GetClassName() << endl
+		<< "NOT UP TO DATE\n " << endl
+		// << "Linear-form     = " << lff->GetName() << endl
+		<< "Gridfunction    = " << gfu->GetName() << endl
+		<< "dt              = " << dt << endl
+		<< "tend            = " << tend << endl;
+  }
+
+
+  /*
+	PrintDoc
+  */
+  static void PrintDoc (ostream & ost)
+  {
+	ost << 
+	  "\n\n NOT UP TO DATE!!!\nNumproc SolveInstat:\n" \
+	  "------------------\n" \
+	  "Solves a solveinstat partial differential equation by an implicite Euler method\n\n" \
+	  "Required flags:\n" 
+	  "-linearform=<lfname>\n" \
+	  "    linear-form providing the right hand side\n" \
+	  "-gridfunction=<gfname>\n" \
+	  "    grid-function to store the solution vector\n" 
+	  "-dt=<value>\n"
+	  "    time step\n"
+	  "-tend=<value>\n"
+	  "    total time\n"
+		<< endl;
+  }
+};
+
+
+static RegisterNumProc<NumProcSolveInstatX<2> > npst_solveinstat2dx("stx_solveinstat");
+static RegisterNumProc<NumProcSolveInstatX<3> > npst_solveinstat3dx("stx_solveinstat");
