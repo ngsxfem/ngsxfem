@@ -6,13 +6,19 @@
 ** rethink use of PointContainer (use it more / less?)
 ** more advanced (faster) CheckIfCut strategies
 
-* npxtest and according stuff also for facets (or surface elements)
-
-* xFiniteElement
-** details ?
-
+** calculate kappa
+** 4D - implementation...
+* stx-visualization
+** visualization for negpos-composition
+** output to other format ... (tikz ?)... 
 * XFESpace: 
-** mostly copy from old XFESpace implementation
-** add SpaceTime flexibility
-** Add Update-flexibility (should FESpace hold the geometry information?)
-    
+** check memory consumption of fes->Update()    
+
+* solveinstatx
+** check strange behavior in first time step (where is this coming from?)
+** move diffop_impl.hpp include to correct location
+** boundary conditions ? 
+** test cases...
+
+* stationary stokes test case...
+** start with that

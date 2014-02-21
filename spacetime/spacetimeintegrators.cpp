@@ -7,8 +7,10 @@
 /*  
     Finite Element Integrators for space time elements
 */
-  
+
+#define FILE_SPACETIMEINT_CPP  
 #include "spacetimeintegrators.hpp"
+#include <diffop_impl.hpp>
 
 namespace ngfem
 {
@@ -293,24 +295,6 @@ namespace ngfem
 
   static RegisterLinearFormIntegrator<ST_TimeTraceSourceIntegrator<2> > initsttrsrc21 ("STtracesource", 2, 2);
   static RegisterLinearFormIntegrator<ST_TimeTraceSourceIntegrator<3> > initsttrsrc31 ("STtracesource", 3, 2);
-
-
-  template <int D, TIME t>
-  template <typename FEL, typename MIP, typename MAT>
-  void DiffOpTimeTrace<D,t>::GenerateMatrix (const FEL & bfel, const MIP & mip,
-                                             MAT & mat, LocalHeap & lh)
-  {
-    const ScalarSpaceTimeFiniteElement<D> & cstfel = 
-      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> &> (bfel);
-
-    const int nd = cstfel.GetNDof();
-    FlatVector<> shape_st (nd,lh);
-    if (t == PAST)
-      cstfel.CalcShapeSpaceTime(mip.IP(),0.0,shape_st,lh);
-    else if (t==FUTURE)
-      cstfel.CalcShapeSpaceTime(mip.IP(),1.0,shape_st,lh);
-    mat = Trans(shape_st);
-  }
 
   template <int D, TIME t>  
   SpaceTimeTimeTraceIntegrator<D,t> :: SpaceTimeTimeTraceIntegrator (Array<CoefficientFunction*> & coeffs)

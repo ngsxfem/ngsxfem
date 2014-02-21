@@ -10,10 +10,10 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-mesh = square_trigs.vol.gz
+mesh = square_trigs_fine.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
-#shared = libngsxfem_test
+shared = libngsxfem_spacetime
 shared = libngsxfem_xfem
 shared = libngsxfem_parabolic
 
@@ -21,8 +21,8 @@ define constant heapsize = 1e7
 
 define constant one = 1.0
 
-define constant bneg = 1.0
-define constant bpos = 2.0
+define constant bneg = 2.0
+define constant bpos = 1.0
 
 define constant wx = 1.0
 define constant wy = 1.0
@@ -33,8 +33,14 @@ define coefficient bconvneg
 define coefficient bconvpos
 (bneg*wx,bpos*wy),
 
+define coefficient binineg
+(1),
+
+define coefficient binipos
+(0),
+
 define coefficient brhsneg
-(z),
+(0),
 
 define coefficient brhspos
 (0),
@@ -76,6 +82,8 @@ numproc stx_solveinstat npsi
         -beta_conv_pos=bconvpos
         -beta_rhs_neg=brhsneg
         -beta_rhs_pos=brhspos
+        -beta_ini_neg=binineg
+        -beta_ini_pos=binipos
         -gf_vis=u_vis
         # -linearform=f 
         -gridfunction=u
@@ -84,10 +92,10 @@ numproc stx_solveinstat npsi
         -dt=0.0005
         -tend=0.1
         -userstepping
-        -aneg=10.0
-        -apos=10.0
-        -bneg=1.0
-        -bpos=2.0
+        -aneg=1.0
+        -apos=1.0
+        -bneg=2.0
+        -bpos=1.0
         -lambda=100.0
 
 define bilinearform evalx_past -fespace=fescomp -nonassemble
@@ -118,4 +126,4 @@ numproc visualization npviz
         # -maxval=1.0
 
 
-numproc visualization npvis -scalarfunction=u_future -nolineartexture -deformationscale=0.3 -subdivision=2 #-minval=0.0 -maxval=1.0
+numproc visualization npvis -scalarfunction=u_pos -nolineartexture -deformationscale=1.0 -subdivision=2 -minval=0.0 -maxval=0.5

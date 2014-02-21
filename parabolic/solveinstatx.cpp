@@ -8,13 +8,17 @@
   Please include this file to the src files given in netgen/ngsolve/Makefile
 */
 
-
+#define FILE_SOLVEINSTATX_CPP
+#define FILE_SPACETIMEINT_CPP  
 
 #include <solve.hpp>
-//#include "../spacetime/spacetimeintegrators.hpp"
+#include "../spacetime/spacetimeintegrators.hpp"
 #include "../xfem/stxfemIntegrators.hpp"
 #include "../xfem/xfemNitsche.hpp"
 #include "../xfem/xFESpace.hpp"
+
+#include <diffop_impl.hpp>
+
 // #include "../utils/stcoeff.hpp"
 
 using namespace ngsolve;
@@ -80,6 +84,9 @@ protected:
   CoefficientFunction* coef_brhsneg = NULL;
   CoefficientFunction* coef_brhspos = NULL;
 
+  CoefficientFunction* coef_binineg = NULL;
+  CoefficientFunction* coef_binipos = NULL;
+
 public:
   /*
 	In the constructor, the solver class gets the flags from the pde - input file.
@@ -117,6 +124,9 @@ public:
 
 	coef_brhsneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_neg", "brhsneg"));
 	coef_brhspos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_pos", "brhspos"));
+
+	coef_binineg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_ini_neg", "binineg"));
+	coef_binipos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_ini_pos", "binipos"));
 
 	coef_aneg = new ConstantCoefficientFunction(aneg);
 	coef_apos = new ConstantCoefficientFunction(apos);
@@ -214,8 +224,6 @@ public:
 	bftau = pde.AddBilinearForm ("bftau", massflags);
 	bftau -> SetUnusedDiag (0);
 
-	cout << " A " << endl;
-
 	Array<CoefficientFunction*> coefs_timeder(2);
 	coefs_timeder[0] = coef_bneg;
 	coefs_timeder[1] = coef_bpos;
@@ -261,13 +269,11 @@ public:
 	SpaceTimeXTraceMassIntegrator<D,PAST> bfitimetr(coefs_timetr);
 	bftau -> AddIntegrator (&bfitimetr);
 
-	cout << " B " << endl;
+	//DifferentialOperator * traceop = new SpaceTimeTimeTraceIntegrator<D,FUTURE>(new ConstantCoefficientFunction(1.0));
 
-	cout << " C " << endl;
-
-	// DifferentialOperator * traceop = new SpaceTimeTimeTraceIntegrator<D,FUTURE>(new ConstantCoefficientFunction(1.0));
-
-	GridFunctionCoefficientFunction coef_u (*gfu); //, traceop);
+	DifferentialOperator * uptrace = new T_DifferentialOperator<DiffOpTimeTrace<D,FUTURE> >();
+	GridFunctionCoefficientFunction coef_u_neg (*(gfu_vis->GetComponent(0)), uptrace); //, traceop);
+	GridFunctionCoefficientFunction coef_u_pos (*(gfu_vis->GetComponent(1)), uptrace); //, traceop);
 
 	LinearForm * lfrhs;
 	Flags massflags2;
@@ -280,14 +286,12 @@ public:
 	
 	lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
 
-	/*
+	
 	Array<CoefficientFunction *> coef_upw(2);
-	coef_upw[0] = coef_brhsneg;
-	coef_upw[1] = coef_brhspos;
-	LinearFormIntegrator * lfi_tr = new SpaceTimeXTraceSourceIntegrator<D,PAST> (coef_upw);
-
-	lfrhs -> AddIntegrator (lfi_tr);
-	*/
+	coef_upw[0] = coef_binineg;
+	coef_upw[1] = coef_binipos;
+	SpaceTimeXTraceSourceIntegrator<D,PAST> lfi_tr(coef_upw);
+    lfrhs -> AddIntegrator (&lfi_tr);
 
 	// just for testing
 	Array<CoefficientFunction *> coef_rhs(4);
@@ -296,17 +300,20 @@ public:
 	coef_rhs[2] = coef_told;
 	coef_rhs[3] = coef_tnew;
 	SpaceTimeXSourceIntegrator<D> lfi_rhs(coef_rhs);
+
 	lfrhs -> AddIntegrator (&lfi_rhs);
 
 	// time stepping
 	double t;
 	for (t = 0; t < tend; t += dt)
 	{
+	  HeapReset hr(lh);
 	  TimeInterval ti(t,t+dt);
 	  xfes.SetTimeInterval(ti);
 	  fes->Update(lh);
 	  gfu->Update();
 
+	  // /*
 	  BaseVector & vecu = gfu->GetVector();
 
 	  bfilap.SetTimeInterval(ti);
@@ -320,6 +327,7 @@ public:
 
 	  lfi_rhs.SetTimeInterval(ti);
 	  lfrhs -> Assemble(lh);
+
 	  const BaseVector * vecf = &(lfrhs->GetVector());
 	  
 	  // vecu = 0.0;
@@ -338,13 +346,14 @@ public:
 	  delete &d;
 	  delete &w;
 
-	  getchar();
 	  xfes.XToNegPos(*gfu,*gfu_vis);
+
+	  lfi_tr.ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, bneg, bpos);
 	  Ng_Redraw ();
 	  
 	  if (userstepping)
 		getchar();
-	  
+	  // */
 
 	}
 	cout << "\r               \rt = " << tend;

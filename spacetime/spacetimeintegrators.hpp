@@ -211,10 +211,94 @@ namespace ngfem
     enum { DIM_DMAT = 1 };     // D-matrix is 1x1
     enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
     
-    template <typename FEL, typename MIP, typename MAT>
-    static void GenerateMatrix (const FEL & bfel, const MIP & sip,
+    static const ScalarSpaceTimeFiniteElement<D> & Cast (const FiniteElement & fel) 
+    { return static_cast<const ScalarSpaceTimeFiniteElement<D>&> (fel); }
+
+    template <typename MIP, typename MAT>
+    static void GenerateMatrix (const FiniteElement & bfel, const MIP & sip,
                                 MAT & mat, LocalHeap & lh);
+
+    static void GenerateMatrix (const FiniteElement & bfel,
+                                const MappedIntegrationPoint<D,D> & mip,
+                                FlatMatrix<> & mat, LocalHeap & lh);
+
+    static void GenerateMatrix (const FiniteElement & bfel,
+                                const MappedIntegrationPoint<D,D> & mip,
+                                FlatMatrixFixHeight<1> & mat, LocalHeap & lh);
+
+    static void GenerateMatrix (const FiniteElement & bfel,
+                                const MappedIntegrationPoint<D,D> & mip,
+                                SliceMatrixColMajor<> & mat, LocalHeap & lh);
   };
+
+
+  template <int D, TIME t>
+  template <typename MIP, typename MAT>
+  void DiffOpTimeTrace<D,t>::GenerateMatrix (const FiniteElement & bfel, const MIP & mip,
+                                             MAT & mat, LocalHeap & lh)
+  {
+    const ScalarSpaceTimeFiniteElement<D> & cstfel = 
+      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> &> (bfel);
+
+    const int nd = cstfel.GetNDof();
+    FlatVector<> shape_st (nd,lh);
+    if (t == PAST)
+      cstfel.CalcShapeSpaceTime(mip.IP(),0.0,shape_st,lh);
+    else if (t==FUTURE)
+      cstfel.CalcShapeSpaceTime(mip.IP(),1.0,shape_st,lh);
+    mat = Trans(shape_st);
+  }
+
+  template <int D, TIME t>
+  void DiffOpTimeTrace<D,t>::GenerateMatrix (const FiniteElement & bfel,
+                                             const MappedIntegrationPoint<D,D> & mip,
+                                             FlatMatrixFixHeight<1> & mat, LocalHeap & lh)
+  {
+    const ScalarSpaceTimeFiniteElement<D> & cstfel = 
+      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> &> (bfel);
+
+    const int nd = cstfel.GetNDof();
+    FlatVector<> shape_st (nd,lh);
+    if (t == PAST)
+      cstfel.CalcShapeSpaceTime(mip.IP(),0.0,shape_st,lh);
+    else if (t==FUTURE)
+      cstfel.CalcShapeSpaceTime(mip.IP(),1.0,shape_st,lh);
+    mat = Trans(shape_st);
+  }
+
+  template <int D, TIME t>
+  void DiffOpTimeTrace<D,t>::GenerateMatrix (const FiniteElement & bfel,
+                                             const MappedIntegrationPoint<D,D> & mip,
+                                             SliceMatrixColMajor<> & mat, LocalHeap & lh)
+  {
+    const ScalarSpaceTimeFiniteElement<D> & cstfel = 
+      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> &> (bfel);
+
+    const int nd = cstfel.GetNDof();
+    FlatVector<> shape_st (nd,lh);
+    if (t == PAST)
+      cstfel.CalcShapeSpaceTime(mip.IP(),0.0,shape_st,lh);
+    else if (t==FUTURE)
+      cstfel.CalcShapeSpaceTime(mip.IP(),1.0,shape_st,lh);
+    mat = Trans(shape_st);
+  }
+
+  template <int D, TIME t>
+  void DiffOpTimeTrace<D,t>::GenerateMatrix (const FiniteElement & bfel,
+                                             const MappedIntegrationPoint<D,D> & mip,
+                                             FlatMatrix<> & mat, LocalHeap & lh)
+  {
+    const ScalarSpaceTimeFiniteElement<D> & cstfel = 
+      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> &> (bfel);
+
+    const int nd = cstfel.GetNDof();
+    FlatVector<> shape_st (nd,lh);
+    if (t == PAST)
+      cstfel.CalcShapeSpaceTime(mip.IP(),0.0,shape_st,lh);
+    else if (t==FUTURE)
+      cstfel.CalcShapeSpaceTime(mip.IP(),1.0,shape_st,lh);
+    mat = Trans(shape_st);
+  }
 
   ///
   template <int D, TIME t>
@@ -231,6 +315,22 @@ namespace ngfem
     ///
     virtual string Name () const { return "SpaceTimeTimeTraceIntegratorMass"; }
   };
+
+
+#ifdef FILE_SPACETIMEINT_CPP
+#define SPACETIMEINT_EXTERN
+#else
+#define SPACETIMEINT_EXTERN extern
+  SPACETIMEINT_EXTERN template class DiffOpTimeTrace<2,PAST>;
+  SPACETIMEINT_EXTERN template class DiffOpTimeTrace<3,PAST>;
+  SPACETIMEINT_EXTERN template class DiffOpTimeTrace<2,FUTURE>;
+  SPACETIMEINT_EXTERN template class DiffOpTimeTrace<3,FUTURE>;
+  SPACETIMEINT_EXTERN template class T_DifferentialOperator<DiffOpTimeTrace<2,PAST> >;
+  SPACETIMEINT_EXTERN template class T_DifferentialOperator<DiffOpTimeTrace<3,PAST> >;
+  SPACETIMEINT_EXTERN template class T_DifferentialOperator<DiffOpTimeTrace<2,FUTURE> >;
+  SPACETIMEINT_EXTERN template class T_DifferentialOperator<DiffOpTimeTrace<3,FUTURE> >;
+#endif
+
 
 }
 
