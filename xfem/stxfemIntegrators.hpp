@@ -186,8 +186,8 @@ namespace ngfem
   template <int D>
   class SpaceTimeXSourceIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    const CoefficientFunction * coef_neg;
+    const CoefficientFunction * coef_pos;
     
     double t1;
     double t0;
@@ -249,14 +249,15 @@ namespace ngfem
                        const ElementTransformation & eltrans,
                        FlatVector<double> & elvec,
                        LocalHeap & lh) const;
-
   };
 
   template <int D, TIME t>
   class SpaceTimeXTraceSourceIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    const CoefficientFunction * coef_neg;
+    const CoefficientFunction * coef_pos;
+    double scale_pos = 1.0;
+    double scale_neg = 1.0;
   public:
     SpaceTimeXTraceSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -276,6 +277,14 @@ namespace ngfem
                        const ElementTransformation & eltrans,
                        FlatVector<double> & elvec,
                        LocalHeap & lh) const;
+
+    virtual void ChangeNegPosCoefficient(const CoefficientFunction * neg, const CoefficientFunction * pos, double dneg = 0.0, double dpos = 0.0)
+    {
+      coef_neg = neg;
+      coef_pos = pos;
+      scale_neg = dneg;
+      scale_pos = dpos;
+    }
 
   };
 

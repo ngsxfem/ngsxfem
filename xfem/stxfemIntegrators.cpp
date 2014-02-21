@@ -648,8 +648,8 @@ namespace ngfem
         for (int l = 0 ; l < irs.GetNIP(); l++)
         {
             MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
-            double coef = dt == POS ? coef_pos->Evaluate(mip) 
-                : coef_neg->Evaluate(mip);
+            double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos
+                : coef_neg->Evaluate(mip) * scale_neg;
             scafe->CalcShapeSpaceTime(mip.IP(), tracetime, shape, lh);
             double fac = mip.GetWeight();
             elvec += (fac*coef) * shape;
@@ -667,7 +667,7 @@ namespace ngfem
         {
           IntegrationPoint ips(quad.points[i]);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+          double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos : coef_neg->Evaluate(mip) * scale_neg;
 
           scafe->CalcShapeSpaceTime(ips, tracetime, shape, lh);
           shapex = shape;
