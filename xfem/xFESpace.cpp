@@ -494,7 +494,7 @@ namespace ngcomp
       }
 
 
-      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom));
+      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom, lh));
     }
   }
 
@@ -531,7 +531,7 @@ namespace ngcomp
 
       XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
-      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom));
+      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh));
     }
   }
 
