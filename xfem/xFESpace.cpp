@@ -98,6 +98,7 @@ namespace ngcomp
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                               cquad, lh, 2*order_space, 1, 0, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
+        FlatCompositeQuadratureRule<SD> fquad(cquad,lh);
 
         domofel[elnr] = dt;
 
