@@ -37,17 +37,18 @@ namespace ngfem
   {
   protected:
     const FiniteElement & base;
-    const Array<DOMAIN_TYPE> localsigns;
+    const FlatArray<DOMAIN_TYPE> localsigns;
     const XLocalGeometryInformation* localgeom;
   public:
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
-                   const XLocalGeometryInformation* a_localgeom);
+                   const XLocalGeometryInformation* a_localgeom,
+                   LocalHeap & lh);
     virtual ~XFiniteElement();
     /// the name
     virtual string ClassName(void) const;
 
-    const Array<DOMAIN_TYPE>& GetSignsOfDof() const; 
+    const FlatArray<DOMAIN_TYPE>& GetSignsOfDof() const; 
 
     const XLocalGeometryInformation * GetLocalGeometry() const; 
 

@@ -297,19 +297,19 @@ namespace xintegration
       {
       case ET_SEGM:
         return 
-          new (a_lh) NumericalIntegrationStrategy<ET_SEGM,ET_POINT>
+          new NumericalIntegrationStrategy<ET_SEGM,ET_POINT>
           (a_lset, *a_compquadrule1, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TRIG:
         return 
-          new (a_lh) NumericalIntegrationStrategy<ET_TRIG,ET_POINT>
+          new NumericalIntegrationStrategy<ET_TRIG,ET_POINT>
           (a_lset, *a_compquadrule2, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TET:
         return 
-          new (a_lh) NumericalIntegrationStrategy<ET_TET,ET_POINT>
+          new NumericalIntegrationStrategy<ET_TET,ET_POINT>
           (a_lset, *a_compquadrule3, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
@@ -324,19 +324,19 @@ namespace xintegration
       {
       case ET_SEGM:
         return 
-          new (a_lh) NumericalIntegrationStrategy<ET_SEGM,ET_SEGM>
+          new NumericalIntegrationStrategy<ET_SEGM,ET_SEGM>
           (a_lset, *a_compquadrule2, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TRIG:
         return 
-          new (a_lh) NumericalIntegrationStrategy<ET_TRIG,ET_SEGM>
+          new NumericalIntegrationStrategy<ET_TRIG,ET_SEGM>
           (a_lset, *a_compquadrule3, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TET:
         return 
-          new (a_lh) NumericalIntegrationStrategy<ET_TET,ET_SEGM>
+          new NumericalIntegrationStrategy<ET_TET,ET_SEGM>
           (a_lset, *a_compquadrule4, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
@@ -384,7 +384,7 @@ namespace xintegration
                                   LocalHeap & a_lh,
                                   int a_int_order_space, int a_int_order_time, 
                                   int a_ref_level_space, int a_ref_level_time)
-    : lset(a_lset), pc(*(new (a_lh) PointContainer<SD>())), 
+    : lset(a_lset), pc(*(new PointContainer<SD>())), 
       ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
       int_order_space(a_int_order_space), int_order_time(a_int_order_time),
     lh(a_lh), compquadrule(a_compquadrule), ownpc(true)
@@ -749,7 +749,7 @@ namespace xintegration
         if (ET_TIME==ET_POINT)
         {
           simplices.SetSize(1);
-          simplices[0] = new (lh) Simplex<SD>(verts);
+          simplices[0] = new Simplex<SD>(verts);
         }
         else
         {
@@ -780,6 +780,7 @@ namespace xintegration
                                     compquadrule.GetRule(dt_simplex), 
                                     GetIntegrationOrderMax());
           }
+          delete simplices[i];
         }
       }
       quaded = true;
@@ -987,6 +988,7 @@ namespace xintegration
           FillSimplexWithRule<SD>(innersimplices[l]->p, 
                                   numint.compquadrule.GetRule(dt_major), 
                                   numint.GetIntegrationOrderMax());
+          delete innersimplices[l];
         }
                 
         // and the interface:
@@ -1045,6 +1047,7 @@ namespace xintegration
             FillSimplexWithRule<SD>(innersimplices[l]->p, 
                                     numint.compquadrule.GetRule(POS), 
                                     numint.GetIntegrationOrderMax());
+            delete innersimplices[l];
           }
         }
         //neg domain
@@ -1081,6 +1084,7 @@ namespace xintegration
             FillSimplexWithRule<SD>(innersimplices[l]->p, 
                                     numint.compquadrule.GetRule(NEG), 
                                     numint.GetIntegrationOrderMax());
+            delete innersimplices[l];
           }
         }
         //interface
@@ -1263,6 +1267,7 @@ namespace xintegration
           FillSimplexWithRule<SD>(innersimplices[l]->p, 
                                   numint.compquadrule.GetRule(dt_major), 
                                   numint.GetIntegrationOrderMax());
+          delete innersimplices[l];
         }
                 
         // and the interface:

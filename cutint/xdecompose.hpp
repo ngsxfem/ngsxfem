@@ -133,7 +133,7 @@ namespace xintegration
     {
       for (int j = 0; j < SD+1; ++j)
         tet[j] = verts[i+j];
-      ret[i] = new (lh) Simplex<SD> (tet);
+      ret[i] = new Simplex<SD> (tet);
     }
   }
 

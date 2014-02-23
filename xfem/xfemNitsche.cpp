@@ -48,7 +48,7 @@ namespace ngfem
     FlatMatrixFixWidth<D> dshape_h1(ndof_h1,lh);
     FlatMatrixFixWidth<D> dshape_x(ndof_x,lh);
     FlatVector<> dshape(ndof,lh);
-    const Array<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
+    const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
     int p = scafe->Order();
 
     const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
@@ -232,7 +232,7 @@ namespace ngfem
     FlatMatrixFixWidth<D> dshape_h1(ndof_h1,lh);
     FlatMatrixFixWidth<D> dshape_x(ndof_x,lh);
     FlatVector<> dshape(ndof,lh);
-    const Array<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
+    const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
     int ps = scafe->OrderSpace();
     // int pt = scafe->OrderTime();
 

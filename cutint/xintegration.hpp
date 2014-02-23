@@ -161,7 +161,7 @@ namespace xintegration
       // empty 
   public:
     XLocalGeometryInformation() {;}
-    ~XLocalGeometryInformation() {;}
+    virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
 
@@ -368,6 +368,8 @@ namespace xintegration
                                  int a_int_order_time = 2, 
                                  int a_ref_level_space = 0, 
                                  int a_ref_level_time = 0 );
+    
+    virtual ~NumericalIntegrationStrategy() { if (ownpc) delete &pc; }
 
     /// Set Vertices according to input
     void SetVerticesSpace(const Array<Vec<D> > & verts);

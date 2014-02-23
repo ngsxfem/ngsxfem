@@ -10,9 +10,16 @@ namespace ngfem
     sign(a_sign), et(a_et) { ndof = 0; }
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                 const XLocalGeometryInformation* a_localgeom)
-    : base(a_base), localsigns(a_localsigns), localgeom(a_localgeom)
-  { ndof = base.GetNDof(); };
+                                 const XLocalGeometryInformation* a_localgeom,
+                                 LocalHeap & lh)
+    : base(a_base), 
+      localsigns(a_localsigns.Size(),lh), 
+      localgeom(a_localgeom)
+  { 
+    ndof = base.GetNDof(); 
+    for (int l = 0; l < localsigns.Size(); ++l)
+      localsigns[l] = a_localsigns[l];
+  };
 
 
   XFiniteElement::~XFiniteElement() { ; };
@@ -20,7 +27,7 @@ namespace ngfem
   /// the name
   string XFiniteElement::ClassName(void) const {return "X-"+base.ClassName();};
 
-  const Array<DOMAIN_TYPE>& XFiniteElement::GetSignsOfDof() const  
+  const FlatArray<DOMAIN_TYPE>& XFiniteElement::GetSignsOfDof() const  
   {
     return localsigns;
   };

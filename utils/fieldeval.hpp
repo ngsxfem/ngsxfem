@@ -89,7 +89,7 @@ namespace ngfem
   class EvalFunctionEvaluator : public ScalarFieldEvaluator
   {
   protected:
-    EvalFunction eval;
+    const EvalFunction & eval;
     const ElementTransformation & eltrans;
     bool use_fixedtime = false;
     double fixedtime = 0.0;
@@ -172,7 +172,7 @@ namespace ngfem
   class SpaceTimeEvalFunctionEvaluator : public ScalarFieldEvaluator
   {
   protected:
-    EvalFunction eval;
+    const EvalFunction & eval;
     const ElementTransformation & eltrans;
     TimeInterval ti;
   public:

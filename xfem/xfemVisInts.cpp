@@ -29,7 +29,7 @@ namespace ngfem
       const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
       const double lsetval = lset_eval_p->EvaluateLsetAtPoint(mip.IP(),t == PAST ? 0.0 : 1.0);
       DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
-      const Array<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < ndof; i++)
         if (xsign[i]==dt_here)
           mat(0,ndof+i) = shape(i);
@@ -85,7 +85,7 @@ namespace ngfem
       const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
       const double lsetval = lset_eval_p->EvaluateLsetAtPoint(mip.IP(),0);
       DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
-      const Array<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < ndof; i++)
         if (xsign[i]==dt_here)
           mat(0,ndof+i) = shape(i);
@@ -136,7 +136,7 @@ namespace ngfem
 
     if (xfe)
     {
-      const Array<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < xfe->GetNDof(); i++)
         if (xsign[i]==POS){
           mat(0,ndof+i) = shape(i);
@@ -179,7 +179,7 @@ namespace ngfem
 
     if (xfe)
     {
-      const Array<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < xfe->GetNDof(); i++)
         if (xsign[i]==POS){
           mat(0,ndof+i) = shape(i);
