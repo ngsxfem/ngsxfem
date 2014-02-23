@@ -470,7 +470,7 @@ namespace ngcomp
       else
         lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
 
-      CompositeQuadratureRule<SD> * cquad = new (lh) CompositeQuadratureRule<SD>() ;
+      CompositeQuadratureRule<SD> * cquad = new CompositeQuadratureRule<SD>() ;
 
       ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
 
@@ -478,6 +478,7 @@ namespace ngcomp
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
       DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
+      FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
       if (spacetime)
       {
           ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.first,lh);
@@ -495,7 +496,7 @@ namespace ngcomp
       }
 
 
-      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom, lh));
+      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,fxgeom, lh));
     }
   }
 
@@ -526,13 +527,16 @@ namespace ngcomp
       else
         lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
 
-      CompositeQuadratureRule<SD-1> * cquad = new (lh) CompositeQuadratureRule<SD-1>() ;
+      CompositeQuadratureRule<SD-1> * cquad = new CompositeQuadratureRule<SD-1>() ;
 
       ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
 
       XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
-      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh));
+
+      FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
+
+      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,fxgeom,lh));
     }
   }
 

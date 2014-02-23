@@ -39,10 +39,12 @@ namespace ngfem
     const FiniteElement & base;
     const FlatArray<DOMAIN_TYPE> localsigns;
     const XLocalGeometryInformation* localgeom;
+    FlatXLocalGeometryInformation fxgeom;
   public:
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
                    const XLocalGeometryInformation* a_localgeom,
+                   FlatXLocalGeometryInformation a_fxgeom,
                    LocalHeap & lh);
     virtual ~XFiniteElement();
     /// the name

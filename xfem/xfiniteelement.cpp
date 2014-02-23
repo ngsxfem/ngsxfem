@@ -11,10 +11,12 @@ namespace ngfem
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
                                  const XLocalGeometryInformation* a_localgeom,
+                                 FlatXLocalGeometryInformation a_fxgeom,
                                  LocalHeap & lh)
     : base(a_base), 
       localsigns(a_localsigns.Size(),lh), 
-      localgeom(a_localgeom)
+      localgeom(a_localgeom),
+      fxgeom(a_fxgeom)
   { 
     ndof = base.GetNDof(); 
     for (int l = 0; l < localsigns.Size(); ++l)
