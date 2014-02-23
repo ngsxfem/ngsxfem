@@ -80,6 +80,26 @@ namespace xintegration
     int Size() const { return points.Size(); }
   };
 
+  /// simple class that constitutes a quadrature rule
+  /// with Flat memory layout
+  template < int SD >
+  class FlatQuadratureRule
+  {
+  public:
+    /// the quadrature points
+    FlatMatrixFixWidth<SD> points;
+    /// the quadrature weights
+    FlatVector<double> weights;
+    /// return number of integration points 
+    int Size() const { return points.Height(); }
+    FlatQuadratureRule( const QuadratureRule<SD> & orig, LocalHeap & lh)
+      : points(orig.Size(),lh), weights(orig.Size(),lh)
+    {
+      ;
+    }
+  };
+
+
   /// simple class that constitutes a quadrature
   /// (here we don't use) IntegrationPoints or IntegrationRule
   /// because of a potential 4th dimension
@@ -94,6 +114,32 @@ namespace xintegration
     Array < Vec<SD> > normals;
     /// return number of integration points 
     int Size() const { return points.Size(); }
+  };
+
+  /// simple class that constitutes a quadrature rule
+  /// with Flat memory layout
+  template < int SD >
+  class FlatQuadratureRuleCoDim1
+  {
+  public:
+    /// the quadrature points
+    FlatMatrixFixWidth<SD> points;
+    /// the quadrature weights
+    FlatVector<double> weights;
+    /// the quadrature weights
+    FlatMatrixFixWidth<SD> normals;
+    /// return number of integration points 
+    int Size() const { return points.Height(); }
+    FlatQuadratureRuleCoDim1( const QuadratureRuleCoDim1<SD> & orig, LocalHeap & lh)
+      : points(orig.Size(),lh), weights(orig.Size(),lh), normals(orig.Size(),lh)
+    {
+      for (int i = 0; i < orig.Size(); ++i)
+      {
+        points.Row(i) = orig.points[i];
+        weights(i) = orig.weights[i];
+        normals.Row(i) = orig.normals[i];
+      }
+    }
   };
 
   /// class that constitutes the components of a composite 
@@ -152,6 +198,84 @@ namespace xintegration
 
   };
 
+  /// class that constitutes the components of a composite 
+  /// quadrature rule 
+  template < int SD >
+  class FlatCompositeQuadratureRule
+  {
+  public:
+    /// Quadrature rule for positive domain
+    FlatQuadratureRule<SD> quadrule_pos;
+    /// Quadrature rule for negative domain
+    FlatQuadratureRule<SD> quadrule_neg;
+    /// Quadrature rule for interface
+    FlatQuadratureRuleCoDim1<SD> quadrule_if;
+
+    FlatCompositeQuadratureRule( const CompositeQuadratureRule<SD> & orig, LocalHeap &lh)
+      : quadrule_pos(orig.quadrule_pos,lh),
+        quadrule_neg(orig.quadrule_neg,lh),
+        quadrule_if(orig.quadrule_if,lh)
+    {
+      ;
+    }
+
+    /// Interface for accessing the rules via DOMAIN_TYPE
+    FlatQuadratureRule<SD> & GetRule(DOMAIN_TYPE dt)
+    {
+      switch (dt)
+      {
+      case NEG: 
+        return quadrule_neg;
+        break;
+      case POS: 
+        return quadrule_pos;
+        break;
+      default:
+        throw Exception(" DOMAIN_TYPE not known ");
+        return quadrule_neg;
+      }
+    }
+
+    const FlatQuadratureRule<SD> & GetRule(DOMAIN_TYPE dt) const
+    {
+      switch (dt)
+      {
+      case NEG: 
+        return quadrule_neg;
+        break;
+      case POS: 
+        return quadrule_pos;
+        break;
+      default:
+        throw Exception(" DOMAIN_TYPE not known ");
+        return quadrule_neg;
+      }
+    }
+
+    FlatQuadratureRuleCoDim1<SD> & GetInterfaceRule()
+    {
+      return quadrule_if;
+    }
+
+    const FlatQuadratureRuleCoDim1<SD> & GetInterfaceRule() const
+    {
+      return quadrule_if;
+    }
+
+  };
+
+
+  template class FlatQuadratureRule<2>;
+  template class FlatQuadratureRule<3>;
+  template class FlatQuadratureRule<4>;
+  template class FlatQuadratureRuleCoDim1<2>;
+  template class FlatQuadratureRuleCoDim1<3>;
+  template class FlatQuadratureRuleCoDim1<4>;
+  template class FlatCompositeQuadratureRule<2>;
+  template class FlatCompositeQuadratureRule<3>;
+  template class FlatCompositeQuadratureRule<4>;
+
+
   class XLocalGeometryInformation
   {
   protected:
@@ -164,6 +288,8 @@ namespace xintegration
     virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
+
+    virtual int Dimension()const { return -1; }
 
     virtual const CompositeQuadratureRule<1> * GetRule1() const { return NULL; }
     virtual const CompositeQuadratureRule<2> * GetRule2() const { return NULL; }
@@ -257,8 +383,94 @@ namespace xintegration
               futuretracegeom->MakeQuadRule();
           return futuretracegeom;
       }
-
+    
   };
+
+  class FlatXLocalGeometryInformation
+  {
+  protected:
+    FlatXLocalGeometryInformation * pasttracegeom = 0;
+    FlatXLocalGeometryInformation * futuretracegeom = 0;
+  public:
+    FlatCompositeQuadratureRule<1> * compquadrule1 = 0;
+    FlatCompositeQuadratureRule<2> * compquadrule2 = 0;
+    FlatCompositeQuadratureRule<3> * compquadrule3 = 0;
+    FlatCompositeQuadratureRule<4> * compquadrule4 = 0;
+
+    int Dimension = -1;
+
+    FlatXLocalGeometryInformation(const XLocalGeometryInformation & xgeom, LocalHeap & lh) 
+      : Dimension(xgeom.Dimension())
+      // :
+    {
+      switch(Dimension)
+      {
+      case 1:
+        compquadrule1 = new (lh) FlatCompositeQuadratureRule<1>(*xgeom.GetCompositeRule<1>(),lh);
+      case 2:
+        compquadrule2 = new (lh) FlatCompositeQuadratureRule<2>(*xgeom.GetCompositeRule<2>(),lh);
+      case 3:
+        compquadrule3 = new (lh) FlatCompositeQuadratureRule<3>(*xgeom.GetCompositeRule<3>(),lh);
+      case 4:
+        compquadrule4 = new (lh) FlatCompositeQuadratureRule<4>(*xgeom.GetCompositeRule<4>(),lh);
+      default:
+        throw Exception("Dimension not in {1,2,3,4}");
+        break;
+      }
+      
+      ;
+    }
+    virtual ~FlatXLocalGeometryInformation() {;}
+
+    template <int SD>
+    const FlatCompositeQuadratureRule<SD> * GetCompositeRule() const
+    {
+      switch(SD)
+      {
+      case 1:
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule1); break;
+      case 2:
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule2); break;
+      case 3:
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule3); break;
+      case 4:
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule4); break;
+      default:
+        return NULL;
+        break;
+      }
+    }
+
+    void SetPastTrace(FlatXLocalGeometryInformation * xlocal)
+    {
+      pasttracegeom = xlocal;
+    }
+
+    void SetFutureTrace(FlatXLocalGeometryInformation * xlocal)
+    {
+      futuretracegeom = xlocal;
+    }
+
+    FlatXLocalGeometryInformation * GetPastTrace() const 
+    {
+      if (pasttracegeom == NULL)
+        throw Exception("FlatXLocalGeometryInformation::GetPastTrace() called but pasttracegeom == NULL");
+      // if (! pasttracegeom->IsDecomposed())
+      //     pasttracegeom->MakeQuadRule();
+      return pasttracegeom;
+    }
+
+    FlatXLocalGeometryInformation * GetFutureTrace() const
+    {
+      if (futuretracegeom == NULL)
+        throw Exception("FlatXLocalGeometryInformation::GetFutureTrace() called but futuretracegeom == NULL");
+      // if (! futuretracegeom->IsDecomposed())
+      //     futuretracegeom->MakeQuadRule();
+      return futuretracegeom;
+    }
+    
+  };
+
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   class NumericalIntegrationStrategy : public XLocalGeometryInformation
@@ -269,6 +481,8 @@ namespace xintegration
     enum { D = ET_trait<ET_SPACE>::DIM };
     /// Space-time dimension (if not space time SD==D)
     enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM };
+
+    virtual int Dimension() const{ return SD; }
 
     /// Levelset function through the evaluator
     // const ScalarFEEvaluator<D> & lset;
