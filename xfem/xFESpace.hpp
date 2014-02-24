@@ -24,6 +24,10 @@ namespace ngcomp
     int ndof;
 
     int order_space = 1;
+    int order_time = 1;
+
+    int ref_lvl_space = 0;
+    int ref_lvl_time = 0;
       
     bool spacetime = false;
     TimeInterval ti;
@@ -49,6 +53,8 @@ namespace ngcomp
     const GridFunction * gf_lset = NULL;
     const CoefficientFunction * coef_lset = NULL;
     EvalFunction * eval_lset = NULL;
+
+    double vmax = 1e99;
 
   public:
     /*
