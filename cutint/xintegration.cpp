@@ -891,9 +891,13 @@ namespace xintegration
 
       enum { SD = 3};
 
-      Array< const Vec<SD> * > cutpoints(0);
-      Array< const Vec<SD> * > pospoints(0);
-      Array< const Vec<SD> * > negpoints(0);
+      Array< const Vec<SD> * > cutpoints(4);
+      Array< const Vec<SD> * > pospoints(8);
+      Array< const Vec<SD> * > negpoints(8);
+
+      int ncutpoints = 0;
+      int npospoints = 0;
+      int nnegpoints = 0;
 
       Array<int> posvidx(0);
       Array<int> negvidx(0);
@@ -922,17 +926,17 @@ namespace xintegration
         vvals[j] = (*numint.lset)(*(s.p[j]));
         if (vvals[j] > 0)
         {
-          pospoints.Append(numint.pc(*(s.p[j])));
+          pospoints[npospoints++] = numint.pc(*(s.p[j]));
           posvidx.Append(j);
         }
         else if (vvals[j] < 0)
         {
-          negpoints.Append(numint.pc(*(s.p[j])));
+          negpoints[nnegpoints++] = numint.pc(*(s.p[j]));
           negvidx.Append(j);
         }
         else // (vvals[j] == 0.0)
         {
-          pospoints.Append(numint.pc(*(s.p[j])));
+          pospoints[npospoints++] = numint.pc(*(s.p[j]));
           posvidx.Append(j);
           zero[j] = true;
         }
@@ -963,7 +967,7 @@ namespace xintegration
           const double cutpos = valleft / (valleft - valright);
           // std::cout << " cutpos = " << cutpos << std::endl;
           Vec<SD> p = (1-cutpos) * *(s.p[lv]) + cutpos * *(s.p[rv]) ;
-          cutpoints.Append(numint.pc(p));
+          cutpoints[ncutpoints++] = numint.pc(p);
           // collect connectivity of cut and vertices
           if (v2cut_1[lv] == -1)
             v2cut_1[lv] = cntcuts;
@@ -979,22 +983,24 @@ namespace xintegration
       timer2.Stop();
 
 
-      if (cutpoints.Size() == 3) // three intersections: prism + tetra
+      if (ncutpoints == 3) // three intersections: prism + tetra
       {
         static Timer timer ("CutSimplex<3>::cutpoints.Size=3");
         RegionTimer reg3 (timer);
 
-        Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ? 
+        Array< const Vec<SD> *> & minorgroup ( nnegpoints > npospoints ? 
                                                pospoints : negpoints);
-        DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? POS : NEG;
-        Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ? 
+        int & nminorgroup ( nnegpoints > npospoints ? npospoints : nnegpoints);
+        DOMAIN_TYPE dt_minor = nnegpoints > npospoints ? POS : NEG;
+        Array< const Vec<SD> *> & majorgroup ( nnegpoints <= npospoints ? 
                                                pospoints : negpoints);
-        DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? POS : NEG;
+        int & nmajorgroup ( nnegpoints <= npospoints ? npospoints : nnegpoints);
+        DOMAIN_TYPE dt_major = nnegpoints <= npospoints ? POS : NEG;
 
         Array<int> & majvidx( negvidx.Size() > posvidx.Size() ? negvidx : posvidx);
 
         for (int k = 0; k < 3; ++k)
-          minorgroup.Append(cutpoints[k]);
+          minorgroup[nminorgroup++] = cutpoints[k];
         // minorgroup is a simplex of type dt_minor
         FillSimplexWithRule<SD>(minorgroup, 
                                 numint.compquadrule.GetRule(dt_minor), 
@@ -1004,7 +1010,7 @@ namespace xintegration
         for (int k = 0; k < 3; ++k)
         {
           int corresponding_cut = v2cut_1[majvidx[k]];
-          majorgroup.Append(cutpoints[corresponding_cut]);
+          majorgroup[nmajorgroup++] = cutpoints[corresponding_cut];
         }
         DecomposePrismIntoSimplices<SD>(majorgroup, innersimplices, numint.pc, numint.lh);
         for (int l = 0; l < innersimplices.Size(); ++l)
@@ -1022,20 +1028,20 @@ namespace xintegration
 
 
       }
-      else if (cutpoints.Size() == 4) // four intersections: prism + prism
+      else if (ncutpoints == 4) // four intersections: prism + prism
       {
         static Timer timer ("CutSimplex<3>::cutpoints.Size=4");
         RegionTimer reg4 (timer);
         //pos domain
         {
-          Array< const Vec<SD> *> posprism(0);
-          posprism.Append(pospoints[0]);
+          Array< const Vec<SD> *> posprism(6);
+          posprism[0] = pospoints[0];
           const int idxn = posvidx[0];
           const int cut1 = v2cut_1[idxn];
           const int cut2 = v2cut_2[idxn];
-          posprism.Append(cutpoints[cut1]);
-          posprism.Append(cutpoints[cut2]);
-          posprism.Append(pospoints[1]);
+          posprism[1] = cutpoints[cut1];
+          posprism[2] = cutpoints[cut2];
+          posprism[3] = pospoints[1];
           int cut3 = -1;
           for (int l = 0; l < 4; ++l)
             if (cut1 != l && cut2 != l)
@@ -1050,8 +1056,8 @@ namespace xintegration
             cut3 = cut4;
             cut4 = cutt;
           }
-          posprism.Append(cutpoints[cut3]);
-          posprism.Append(cutpoints[cut4]);
+          posprism[4] = cutpoints[cut3];
+          posprism[5] = cutpoints[cut4];
 
           // cout << " cutpoints vertices: " << endl;
           // for (int l = 0; l < 4; ++l)
@@ -1080,14 +1086,14 @@ namespace xintegration
         }
         //neg domain
         {
-          Array< const Vec<SD> *> negprism(0);
-          negprism.Append(negpoints[0]);
+          Array< const Vec<SD> *> negprism(6);
+          negprism[0] = negpoints[0];
           const int idxn = negvidx[0];
           const int cut1 = v2cut_1[idxn];
           const int cut2 = v2cut_2[idxn];
-          negprism.Append(cutpoints[cut1]);
-          negprism.Append(cutpoints[cut2]);
-          negprism.Append(negpoints[1]);
+          negprism[1] = cutpoints[cut1];
+          negprism[2] = cutpoints[cut2];
+          negprism[3] = negpoints[1];
           int cut3 = -1;
           for (int l = 0; l < 4; ++l)
             if (cut1 != l && cut2 != l)
@@ -1102,8 +1108,8 @@ namespace xintegration
             cut3 = cut4;
             cut4 = cutt;
           }
-          negprism.Append(cutpoints[cut3]);
-          negprism.Append(cutpoints[cut4]);
+          negprism[4] = cutpoints[cut3];
+          negprism[5] = cutpoints[cut4];
 
           Array< Simplex<SD> * > innersimplices(0);
           timer3.Start();
