@@ -393,6 +393,10 @@ namespace xintegration
           return futuretracegeom;
       }
     
+      virtual void SetDistanceThreshold( double a_distance_threshold )
+      {  
+        std::cout << " base class is doing nothing " << std::endl;
+      }
   };
 
   class FlatXLocalGeometryInformation
@@ -401,6 +405,7 @@ namespace xintegration
     FlatXLocalGeometryInformation * pasttracegeom = 0;
     FlatXLocalGeometryInformation * futuretracegeom = 0;
   public:
+    double kappa[2];
 
     const ScalarFieldEvaluator * lset;
 
@@ -423,25 +428,53 @@ namespace xintegration
       : lset(xgeom.lset), Dimension(xgeom.Dimension()), empty(false)
         // :
     {
+      kappa[NEG] = kappa[POS] = 0.0;
       switch(Dimension)
       {
       case 1:
         compquadrule1 = new (lh) FlatCompositeQuadratureRule<1>(*xgeom.GetCompositeRule<1>(),lh);
+        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        {
+          FlatQuadratureRule<1> qr (compquadrule1->GetRule(dt));
+          for (int i = 0; i < qr.Size(); ++i)
+            kappa[dt] += qr.weights(i);
+        }
         break;
       case 2:
         compquadrule2 = new (lh) FlatCompositeQuadratureRule<2>(*xgeom.GetCompositeRule<2>(),lh);
+        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        {
+          FlatQuadratureRule<2> qr (compquadrule2->GetRule(dt));
+          for (int i = 0; i < qr.Size(); ++i)
+            kappa[dt] += qr.weights(i);
+        }
         break;
       case 3:
         compquadrule3 = new (lh) FlatCompositeQuadratureRule<3>(*xgeom.GetCompositeRule<3>(),lh);
+        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        {
+          FlatQuadratureRule<3> qr (compquadrule3->GetRule(dt));
+          for (int i = 0; i < qr.Size(); ++i)
+            kappa[dt] += qr.weights(i);
+        }
         break;
       case 4:
         compquadrule4 = new (lh) FlatCompositeQuadratureRule<4>(*xgeom.GetCompositeRule<4>(),lh);
+        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        {
+          FlatQuadratureRule<4> qr (compquadrule4->GetRule(dt));
+          for (int i = 0; i < qr.Size(); ++i)
+            kappa[dt] += qr.weights(i);
+        }
         break;
       default:
         throw Exception("Dimension not in {1,2,3,4}");
         break;
       }
       
+      const double sum = kappa[NEG] + kappa[POS];
+      kappa[NEG] /= sum;
+      kappa[POS] /= sum;
       ;
     }
     virtual ~FlatXLocalGeometryInformation() {;}
@@ -554,7 +587,7 @@ namespace xintegration
     /// once a level absolute value is larger than threshold the prism is considered non-intersected
     double distance_threshold = 1e99;
 
-    void SetDistanceThreshold( const double & a_distance_threshold ){ distance_threshold = a_distance_threshold; }
+    virtual void SetDistanceThreshold( double a_distance_threshold ){ distance_threshold = a_distance_threshold; }
 
     LocalHeap & lh;
     /// 
@@ -576,9 +609,6 @@ namespace xintegration
       if (SD==4) return reinterpret_cast<CompositeQuadratureRule<4>*>(&compquadrule); 
       else return NULL; 
     }
-
-
-
 
     /// top level
     bool ownpc = false;

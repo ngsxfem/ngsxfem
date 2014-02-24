@@ -685,7 +685,10 @@ namespace xintegration
                 newverts[j] += baryc[trigs[i][j]][d] * verts_space[d];
             }
             numint_i.SetVerticesSpace(newverts);
-            numint_i.SetDistanceThreshold(0.5*distance_threshold);
+            if (ET_TIME == ET_POINT)
+              numint_i.SetDistanceThreshold(0.5*distance_threshold);
+            else
+              numint_i.SetDistanceThreshold(distance_threshold);
             numint_i.MakeQuadRule(); // recursive call!
           }
           
