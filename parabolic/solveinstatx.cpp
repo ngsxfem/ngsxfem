@@ -253,7 +253,7 @@ public:
 	coefs_xnitsche[5] = coef_told;
 	coefs_xnitsche[6] = coef_tnew;
 
-	SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HALFHALF> bfixnit (coefs_xnitsche);
+	SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBOBETA> bfixnit (coefs_xnitsche);
 	bftau -> AddIntegrator (&bfixnit);
 
 	Array<CoefficientFunction*> coefs_xconvection(4);
