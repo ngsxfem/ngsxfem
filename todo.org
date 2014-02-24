@@ -4,15 +4,14 @@
 ** add possibility to neglect POS/NEG/IF for NumIntStrategy
 ** helper functions to transform normals / space-time normals / nu
 ** rethink use of PointContainer (use it more / less?)
+** more timing
 ** more advanced (faster) CheckIfCut strategies
-
 ** calculate kappa
 ** 4D - implementation...
 * stx-visualization
 ** visualization for negpos-composition
 ** output to other format ... (tikz ?)... 
 * XFESpace: 
-** check memory consumption of fes->Update()    
 
 * solveinstatx
 ** check strange behavior in first time step (where is this coming from?)
