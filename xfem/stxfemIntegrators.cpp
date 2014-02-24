@@ -64,20 +64,19 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
-        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+        const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ips(d) = quad.points[i](d);
+            ips(d) = fquad.points(i,d);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
 
-          scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
+          scafe->CalcShapeSpaceTime(ips, fquad.points(i,D), shape, lh);
           shapex = shape;
 
           for (int l = 0; l < ndof_x; ++l)
@@ -86,7 +85,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i] * tau;
+          double fac = mip.GetMeasure() * fquad.weights(i) * tau;
           elmat += (fac*coef) * shape_total * Trans(shape_total);
         } // quad rule
       } // if xfe
@@ -157,20 +156,19 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
-        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+        const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ips(d) = quad.points[i](d);
+            ips(d) = fquad.points(i,d);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
 
-          scafe->CalcMappedDxShapeSpaceTime(mip, quad.points[i](D), dshape, lh);
+          scafe->CalcMappedDxShapeSpaceTime(mip, fquad.points(i,D), dshape, lh);
           dshapex = dshape;
 
           for (int l = 0; l < ndof_x; ++l)
@@ -179,7 +177,7 @@ namespace ngfem
               dshapex.Row(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i] * tau;
+          double fac = mip.GetMeasure() * fquad.weights(i) * tau;
           elmat += (fac*coef) * dshape_total * Trans(dshape_total);
         } // quad rule
       } // if xfe
@@ -252,20 +250,20 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
-        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+        const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ips(d) = quad.points[i](d);
+            ips(d) = fquad.points(i,d);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
-          scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
-          scafe->CalcDtShapeSpaceTime(ips, quad.points[i](D), dtshape, lh);
+          scafe->CalcShapeSpaceTime(ips, fquad.points(i,D), shape, lh);
+          scafe->CalcDtShapeSpaceTime(ips, fquad.points(i,D), dtshape, lh);
 
           shapex = shape;
           dtshapex = dtshape;
@@ -278,7 +276,7 @@ namespace ngfem
               dtshapex(l) = 0.0;
             }
           }
-          double fac = mip.GetMeasure() * quad.weights[i];
+          double fac = mip.GetMeasure() * fquad.weights(i);
           
           elmat += (fac*coef) * shape_total * Trans(dtshape_total);
         } // quad rule
@@ -361,16 +359,15 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
-        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+        const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ips(d) = quad.points[i](d);
+            ips(d) = fquad.points(i,d);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
 
           Vec<D> conv;
@@ -379,8 +376,8 @@ namespace ngfem
           else
               coef_neg->Evaluate(mip,conv);
 
-          scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
-          scafe->CalcMappedDxShapeSpaceTime(mip, quad.points[i](D), gradshape, lh);
+          scafe->CalcShapeSpaceTime(ips, fquad.points(i,D), shape, lh);
+          scafe->CalcMappedDxShapeSpaceTime(mip, fquad.points(i,D), gradshape, lh);
           bgradshape = gradshape * conv;
 
           shapex = shape;
@@ -395,7 +392,7 @@ namespace ngfem
             }
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i] * tau;
+          double fac = mip.GetMeasure() * fquad.weights(i) * tau;
           elmat += fac * shape_total * Trans(bgradshape_total);
         } // quad rule
       } // if xfe
@@ -464,18 +461,16 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_st_p = xfe->GetLocalGeometry();
 
-        const XLocalGeometryInformation * lset_eval_p = t == PAST ? 
-            xfe->GetLocalGeometry()->GetPastTrace() : xfe->GetLocalGeometry()->GetFutureTrace();
+        const FlatXLocalGeometryInformation & xgeom( t == PAST ?
+                                                     xfe->GetFlatLocalGeometryDownTrace() :
+                                                     xfe->GetFlatLocalGeometryUpTrace() );
+        const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+        const FlatQuadratureRule<D> & fquad(fcompr.GetRule(dt));
 
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
-        const QuadratureRule<D> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+        for (int i = 0; i < fquad.Size(); ++i)
         {
-          IntegrationPoint ips(quad.points[i]);
+          IntegrationPoint ips(&fquad.points(i,0),fquad.weights(i));
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
 
@@ -488,7 +483,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i];
+          double fac = mip.GetWeight();
           elmat += (fac*coef) * shape_total * Trans(shape_total);
         } // quad rule
       } // if xfe
@@ -561,25 +556,24 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
-        const QuadratureRule<D+1> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+        const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ips;
           for (int d = 0; d < D; ++d)
-            ips(d) = quad.points[i](d);
+            ips(d) = fquad.points(i,d);
 
           MappedIntegrationPoint<D,D> mips(ips, eltrans);
           DimMappedIntegrationPoint<D+1> mip(ips,eltrans);
           mip.Point().Range(0,D) = mips.GetPoint();
-          mip.Point()[D] = t0 + quad.points[i](D) * tau;
+          mip.Point()[D] = t0 + fquad.points(i,D) * tau;
           double coef = dt == POS ? coef_pos->Evaluate(mip) 
             : coef_neg->Evaluate(mip);
 
-          scafe->CalcShapeSpaceTime(ips, quad.points[i](D), shape, lh);
+          scafe->CalcShapeSpaceTime(ips, fquad.points(i,D), shape, lh);
           shapex = shape;
 
           for (int l = 0; l < ndof_x; ++l)
@@ -588,7 +582,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mips.GetMeasure() * quad.weights[i] * tau;
+          double fac = mips.GetMeasure() * fquad.weights(i) * tau;
           elvec += (fac*coef) * shape_total;
         } // quad rule
       } // if xfe
@@ -657,18 +651,17 @@ namespace ngfem
       }
       else
       {
-        const XLocalGeometryInformation * lset_eval_p = t == PAST ? 
-            xfe->GetLocalGeometry()->GetPastTrace() : xfe->GetLocalGeometry()->GetFutureTrace();
-        if (lset_eval_p == NULL)
-          throw Exception(" no local geometry");
-        const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
-        const QuadratureRule<D> & quad(compr->GetRule(dt));
-        for (int i = 0; i < quad.Size(); ++i)
+        const FlatXLocalGeometryInformation & xgeom( t == PAST ?
+                                                     xfe->GetFlatLocalGeometryDownTrace() :
+                                                     xfe->GetFlatLocalGeometryUpTrace() );
+        const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+        const FlatQuadratureRule<D> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
         {
-          IntegrationPoint ips(quad.points[i]);
+          IntegrationPoint ips(&fquad.points(i,0),fquad.weights(i));
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos : coef_neg->Evaluate(mip) * scale_neg;
-
           scafe->CalcShapeSpaceTime(ips, tracetime, shape, lh);
           shapex = shape;
 
@@ -678,7 +671,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetMeasure() * quad.weights[i];
+          double fac = mip.GetWeight();
           elvec += (fac*coef) * shape_total;
         } // quad rule
       } // if xfe

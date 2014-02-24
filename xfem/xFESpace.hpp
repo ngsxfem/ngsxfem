@@ -40,6 +40,7 @@ namespace ngcomp
 
     Array<int> basedof2xdof;
     Array<int> xdof2basedof;
+
     // Table<int> sel2dofs;
     const FESpace * basefes = NULL;
     BitArray activeelem;
@@ -84,6 +85,8 @@ namespace ngcomp
     {
       return "XFESpace";
     }
+    
+    void CleanUp();
 
     virtual void Update(LocalHeap & lh);
     virtual void UpdateCouplingDofArray();

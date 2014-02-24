@@ -51,11 +51,9 @@ namespace ngfem
     const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
     int p = scafe->Order();
 
-    const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-    if (lset_eval_p == NULL)
-      throw Exception(" no local geometry");
-    const CompositeQuadratureRule<D> * compr (lset_eval_p->GetCompositeRule<D>());
-    const QuadratureRuleCoDim1<D> & quad(compr->GetInterfaceRule());
+    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
 
     IntegrationPoint ipc(0.0,0.0,0.0);
     MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
@@ -110,9 +108,10 @@ namespace ngfem
       }
     }
 
-    for (int i = 0; i < quad.Size(); ++i)
+
+    for (int i = 0; i < fquad.Size(); ++i)
     {
-      IntegrationPoint ip(quad.points[i]);
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
       MappedIntegrationPoint<D,D> mip(ip, eltrans);
       
       Mat<D,D> Finv = mip.GetJacobianInverse();
@@ -120,12 +119,12 @@ namespace ngfem
 
       const double h = D == 2 ? sqrt(absdet) : cbrt(absdet);
 
-      Vec<D> nref = quad.normals[i];
+      Vec<D> nref = fquad.normals.Row(i);
       Vec<D> normal = absdet * Trans(Finv) * nref ;
       double len = L2Norm(normal);
       normal /= len;
 
-      const double weight = quad.weights[i] * len;
+      const double weight = fquad.weights(i) * len; 
       
       const double a_neg = alpha_neg->Evaluate(mip);
       const double a_pos = alpha_pos->Evaluate(mip);
@@ -236,11 +235,10 @@ namespace ngfem
     int ps = scafe->OrderSpace();
     // int pt = scafe->OrderTime();
 
-    const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-    if (lset_eval_p == NULL)
-      throw Exception(" no local geometry");
-    const CompositeQuadratureRule<D+1> * compr (lset_eval_p->GetCompositeRule<D+1>());
-    const QuadratureRuleCoDim1<D+1> & quad(compr->GetInterfaceRule());
+    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+    const FlatQuadratureRuleCoDim1<D+1> & fquad(fcompr.GetInterfaceRule());
+
 
     IntegrationPoint ipc(0.0,0.0,0.0);
     MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
@@ -295,10 +293,10 @@ namespace ngfem
       }
     }
 
-    for (int i = 0; i < quad.Size(); ++i)
+    for (int i = 0; i < fquad.Size(); ++i)
     {
-      IntegrationPoint ip(quad.points[i]);
-      const double time = quad.points[i][D];
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      const double time = fquad.points(i,D);
       MappedIntegrationPoint<D,D> mip(ip, eltrans);
       
       Mat<D,D> Finv = mip.GetJacobianInverse();
@@ -308,9 +306,9 @@ namespace ngfem
 
       Vec<D> nref_space; 
       for (int d = 0; d < D; ++d) 
-        nref_space[d] = quad.normals[i][d];
+        nref_space[d] = fquad.normals(i,d);
       Vec<D> normal_space = tau * absdet * Trans(Finv) * nref_space;
-      double n_t = quad.normals[i][D] * absdet;
+      double n_t = fquad.normals(i,D) * absdet;
 
       Vec<D+1> normal_st; 
       for (int d = 0; d < D; ++d) 
@@ -326,7 +324,7 @@ namespace ngfem
       const double nu = L2Norm(normal_space);
       normal_space /= nu;
 
-      const double weight = quad.weights[i] * len * nu;
+      const double weight = fquad.weights(i) * len * nu;
       
       const double a_neg = alpha_neg->Evaluate(mip);
       const double a_pos = alpha_pos->Evaluate(mip);

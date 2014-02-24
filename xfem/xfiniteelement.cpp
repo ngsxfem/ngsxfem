@@ -11,12 +11,26 @@ namespace ngfem
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
                                  const XLocalGeometryInformation* a_localgeom,
-                                 FlatXLocalGeometryInformation a_fxgeom,
+                                 const XLocalGeometryInformation* a_localgeom_downtrace,
+                                 const XLocalGeometryInformation* a_localgeom_uptrace,
                                  LocalHeap & lh)
     : base(a_base), 
       localsigns(a_localsigns.Size(),lh), 
-      localgeom(a_localgeom),
-      fxgeom(a_fxgeom)
+      fxgeom(*a_localgeom,lh),
+      fxgeom_downtrace(*a_localgeom_downtrace,lh),
+      fxgeom_uptrace(*a_localgeom_uptrace,lh)
+  { 
+    ndof = base.GetNDof(); 
+    for (int l = 0; l < localsigns.Size(); ++l)
+      localsigns[l] = a_localsigns[l];
+  };
+
+  XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
+                                 const XLocalGeometryInformation* a_localgeom,
+                                 LocalHeap & lh)
+    : base(a_base), 
+      localsigns(a_localsigns.Size(),lh), 
+      fxgeom(*a_localgeom,lh)
   { 
     ndof = base.GetNDof(); 
     for (int l = 0; l < localsigns.Size(); ++l)
@@ -32,11 +46,6 @@ namespace ngfem
   const FlatArray<DOMAIN_TYPE>& XFiniteElement::GetSignsOfDof() const  
   {
     return localsigns;
-  };
-
-  const XLocalGeometryInformation* XFiniteElement::GetLocalGeometry() const
-  {
-    return localgeom;
   };
 
   // template class XDummyFE<1>;

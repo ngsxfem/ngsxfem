@@ -36,12 +36,18 @@ namespace ngcomp
     
   
   template <int D, int SD>
-  XFESpace<D,SD> :: ~XFESpace ()
+  void XFESpace<D,SD> :: CleanUp ()
   {
+
     if (el2dofs) delete el2dofs; 
     if (sel2dofs) delete sel2dofs; 
+  }
+
+  template <int D, int SD>
+  XFESpace<D,SD> :: ~XFESpace ()
+  {
+    CleanUp();
     if (eval_lset) delete eval_lset;
-    // nothing to do
   }
   
   template <int D, int SD>
@@ -52,7 +58,7 @@ namespace ngcomp
       cout << " no basefes, Update postponed " << endl;
       return;
     }
-    
+    CleanUp();
     order_space = basefes->GetOrder();
     
     FESpace::Update(lh);
@@ -76,6 +82,9 @@ namespace ngcomp
 
     ELEMENT_TYPE et_time = D == SD ? ET_POINT : ET_SEGM;
 
+    static int first = -1;
+    first++;
+
     TableCreator<int> creator;
     for ( ; !creator.Done(); creator++)
     {
@@ -98,7 +107,8 @@ namespace ngcomp
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                               cquad, lh, 2*order_space, 1, 0, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
-        FlatCompositeQuadratureRule<SD> fquad(cquad,lh);
+
+        delete xgeom;
 
         domofel[elnr] = dt;
 
@@ -117,6 +127,7 @@ namespace ngcomp
       }
     }
     el2dofs = creator.GetTable();
+
 
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
@@ -140,6 +151,8 @@ namespace ngcomp
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                               cquad, lh, 2*order_space, 1, 0, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
+
+        delete xgeom;
 
         Array<int> fnums;
         ma.GetSElFacets(selnr,fnums);
@@ -478,25 +491,39 @@ namespace ngcomp
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
       DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
+      FiniteElement * retfel = NULL;
+
       FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
       if (spacetime)
       {
-          ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.first,lh);
-          ScalarFieldEvaluator * lset_eval_future_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.second,lh);
-          CompositeQuadratureRule<D> * cquadp = new (lh) CompositeQuadratureRule<D>() ;
-          CompositeQuadratureRule<D> * cquadf = new (lh) CompositeQuadratureRule<D>() ;
-          XLocalGeometryInformation * xgeom_past = 
-              XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
-                                                *cquadp, lh, 2*order_space, 1, 0, 0);
-          XLocalGeometryInformation * xgeom_future = 
-              XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
-                                                *cquadf, lh, 2*order_space, 1, 0, 0);
-          xgeom->SetPastTrace(xgeom_past);
-          xgeom->SetFutureTrace(xgeom_future);
+        ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.first,lh);
+        ScalarFieldEvaluator * lset_eval_future_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.second,lh);
+        CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
+        CompositeQuadratureRule<D> * cquadf = new CompositeQuadratureRule<D>() ;
+        XLocalGeometryInformation * xgeom_past = 
+          XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
+                                            *cquadp, lh, 2*order_space, 1, 0, 0);
+        XLocalGeometryInformation * xgeom_future = 
+          XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
+                                            *cquadf, lh, 2*order_space, 1, 0, 0);
+        DOMAIN_TYPE dtp = xgeom_past->MakeQuadRule();
+        DOMAIN_TYPE dtf = xgeom_future->MakeQuadRule();
+        // xgeom->SetPastTrace(xgeom_past);
+        // xgeom->SetFutureTrace(xgeom_future);
+        retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
+
+        delete xgeom_past;
+        delete xgeom_future;
+        delete cquadp;
+        delete cquadf;
       }
-
-
-      return *(new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,fxgeom, lh));
+      else
+      {
+        retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom, lh);
+      }
+      delete xgeom;
+      delete cquad;
+      return *retfel;
     }
   }
 
@@ -534,9 +561,16 @@ namespace ngcomp
       XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
 
+      FiniteElement * retfel = NULL;
+
       FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
 
-      return *(new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,fxgeom,lh));
+      retfel = new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh);
+
+      delete xgeom;
+      delete cquad;
+
+      return *retfel;
     }
   }
 

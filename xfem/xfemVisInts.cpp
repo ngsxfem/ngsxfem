@@ -26,8 +26,9 @@ namespace ngfem
 
     if (xfe)
     {
-      const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-      const double lsetval = lset_eval_p->EvaluateLsetAtPoint(mip.IP(),t == PAST ? 0.0 : 1.0);
+      const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+      const double lsetval = xgeom.EvaluateLsetAtPoint<D,D+1>(mip.IP(),t == PAST ? 0.0 : 1.0);
+      
       DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
       const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < ndof; i++)
@@ -82,8 +83,9 @@ namespace ngfem
 
     if (xfe)
     {
-      const XLocalGeometryInformation * lset_eval_p = xfe->GetLocalGeometry();
-      const double lsetval = lset_eval_p->EvaluateLsetAtPoint(mip.IP(),0);
+      const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+      const double lsetval = xgeom.EvaluateLsetAtPoint<D,D>(mip.IP(),0.0);
+
       DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
       const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < ndof; i++)

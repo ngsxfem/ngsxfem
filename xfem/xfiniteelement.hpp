@@ -38,13 +38,19 @@ namespace ngfem
   protected:
     const FiniteElement & base;
     const FlatArray<DOMAIN_TYPE> localsigns;
-    const XLocalGeometryInformation* localgeom;
     FlatXLocalGeometryInformation fxgeom;
+    FlatXLocalGeometryInformation fxgeom_downtrace;
+    FlatXLocalGeometryInformation fxgeom_uptrace;
   public:
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
                    const XLocalGeometryInformation* a_localgeom,
-                   FlatXLocalGeometryInformation a_fxgeom,
+                   const XLocalGeometryInformation* a_localgeom_downtrace,
+                   const XLocalGeometryInformation* a_localgeom_uptrace,
+                   LocalHeap & lh);
+    XFiniteElement(const FiniteElement & a_base,
+                   const Array<DOMAIN_TYPE>& a_localsigns, 
+                   const XLocalGeometryInformation* a_localgeom,
                    LocalHeap & lh);
     virtual ~XFiniteElement();
     /// the name
@@ -52,7 +58,29 @@ namespace ngfem
 
     const FlatArray<DOMAIN_TYPE>& GetSignsOfDof() const; 
 
-    const XLocalGeometryInformation * GetLocalGeometry() const; 
+    const FlatXLocalGeometryInformation & GetFlatLocalGeometry() const 
+    { 
+      if (fxgeom.empty)
+        throw Exception(" no geometry ");
+      else
+        return fxgeom;
+    } 
+
+    const FlatXLocalGeometryInformation & GetFlatLocalGeometryUpTrace() const 
+    { 
+      if (fxgeom_uptrace.empty)
+        throw Exception(" no geometry ");
+      else
+        return fxgeom_uptrace;
+    } 
+
+    const FlatXLocalGeometryInformation & GetFlatLocalGeometryDownTrace() const 
+    { 
+      if (fxgeom_downtrace.empty)
+        throw Exception(" no geometry ");
+      else
+        return fxgeom_downtrace;
+    } 
 
     virtual ELEMENT_TYPE ElementType() const { return base.ElementType(); }
 
