@@ -16,6 +16,10 @@ namespace xintegration
   template<int SD>
   const Vec<SD>* PointContainer<SD>::operator()(const Vec<SD> & p)
   {
+    
+    static Timer timer ("PointContainer::operator()");
+    RegionTimer reg (timer);
+    
     typename SetOfPoints::iterator it;
     it = pset.find(p);
     if (it == pset.end())
@@ -727,6 +731,8 @@ namespace xintegration
 
       if (!refine_space && !refine_time) // already on finest level: deal with cut situation
       {
+        static Timer timer ("MakeQuadRule::DecomposeAndFillCutSimplex");
+        RegionTimer reg (timer);
         // Generate list of vertices corresponding to simplex/prism
         Array<Simplex<SD> *> simplices;
         const int nvt = ET_TIME == ET_SEGM ? 2 : 1;
@@ -791,6 +797,9 @@ namespace xintegration
     }
     else // no cut
     {
+      static Timer timer ("MakeQuadRule::FillUnCutSimplex");
+      RegionTimer reg (timer);
+
       double trafofac = 1.0; 
 
       if (D==2)
@@ -875,6 +884,11 @@ namespace xintegration
       static Timer timer ("CutSimplex<3>::MakeQuad");
       RegionTimer reg (timer);
 
+      static Timer timer1 ("CutSimplex<3>::MakeQuad1");
+      static Timer timer2 ("CutSimplex<3>::MakeQuad2");
+      static Timer timer3 ("CutSimplex<3>::MakeQuad3");
+      static Timer timer4 ("CutSimplex<3>::MakeQuad4");
+
       enum { SD = 3};
 
       Array< const Vec<SD> * > cutpoints(0);
@@ -901,6 +915,7 @@ namespace xintegration
       double vvals[4];
       bool zero[4];
               
+      timer1.Start();
       for (int j = 0; j < 4; ++j)
       {
         zero[j] = false;
@@ -922,11 +937,13 @@ namespace xintegration
           zero[j] = true;
         }
       }
+      timer1.Stop();
 
       // cout << " vvals = \n";
       // for (int l = 0; l < 4; ++l)
       //   cout << l << ":" << vvals[l] << endl;
 
+      timer2.Start();
       int cntcuts = 0;
       for (int j = 0; j < 6; ++j)
       {
@@ -959,9 +976,13 @@ namespace xintegration
           cntcuts ++;
         }
       }
+      timer2.Stop();
+
 
       if (cutpoints.Size() == 3) // three intersections: prism + tetra
       {
+        static Timer timer ("CutSimplex<3>::cutpoints.Size=3");
+        RegionTimer reg3 (timer);
 
         Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ? 
                                                pospoints : negpoints);
@@ -1003,6 +1024,8 @@ namespace xintegration
       }
       else if (cutpoints.Size() == 4) // four intersections: prism + prism
       {
+        static Timer timer ("CutSimplex<3>::cutpoints.Size=4");
+        RegionTimer reg4 (timer);
         //pos domain
         {
           Array< const Vec<SD> *> posprism(0);
@@ -1043,6 +1066,7 @@ namespace xintegration
           //   cout << *posprism[l] << endl;
 
           Array< Simplex<SD> * > innersimplices(0);
+          timer3.Start();
           DecomposePrismIntoSimplices<SD>(posprism, innersimplices, numint.pc, numint.lh);
           for (int l = 0; l < innersimplices.Size(); ++l)
           {
@@ -1052,6 +1076,7 @@ namespace xintegration
                                     numint.GetIntegrationOrderMax());
             delete innersimplices[l];
           }
+          timer3.Stop();
         }
         //neg domain
         {
@@ -1081,6 +1106,7 @@ namespace xintegration
           negprism.Append(cutpoints[cut4]);
 
           Array< Simplex<SD> * > innersimplices(0);
+          timer3.Start();
           DecomposePrismIntoSimplices<SD>(negprism, innersimplices, numint.pc, numint.lh);
           for (int l = 0; l < innersimplices.Size(); ++l)
           {
@@ -1089,6 +1115,7 @@ namespace xintegration
                                     numint.GetIntegrationOrderMax());
             delete innersimplices[l];
           }
+          timer3.Stop();
         }
         //interface
         {
@@ -1127,13 +1154,14 @@ namespace xintegration
           trig2[1] = cutpoints[ndiag2]; 
           trig2[2] = cutpoints[diag1]; 
                   
+          timer4.Start();
           FillSimplexCoDim1WithRule<SD> ( trig1, *pospoints[0],
                                           numint.compquadrule.GetInterfaceRule(), 
                                           numint.GetIntegrationOrderMax());
           FillSimplexCoDim1WithRule<SD> ( trig2, *pospoints[0],
                                           numint.compquadrule.GetInterfaceRule(), 
                                           numint.GetIntegrationOrderMax());
-
+          timer4.Stop();
         }
 
       } // end of 3 or 4 cutpoints
