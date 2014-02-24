@@ -10,7 +10,7 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-mesh = square_trigs.vol.gz
+mesh = square_trigs_fine.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 shared = libngsxfem_spacetime
@@ -56,9 +56,12 @@ define fespace fesx
        -type=xfespace
        -spacetime
        -t0=0.0
-       -t1=0.0005
+       -t1=0.001
        # -levelset=(x-y+z-0.375)
        -levelset=((x-0.1*z-0.4)*(x-0.1*z-0.4)+(y-0.1*z-0.4)*(y-0.1*z-0.4)-0.04)
+       -vmax=0.1
+       -ref_space=0
+       -ref_time=0
 
 numproc informxfem npix 
         -fespace=fesh1
@@ -89,13 +92,13 @@ numproc stx_solveinstat npsi
         -solver=pardiso 
         -fespace=fescomp
         -dt=0.001
-        -tend=0.1
+        -tend=0.2
 #        -userstepping
         -aneg=0.1
         -apos=1.0
         -bneg=2.0
         -bpos=1.0
-        -lambda=100.0
+        -lambda=50.0
 
 define bilinearform evalx_past -fespace=fescomp -nonassemble
 stxvis_past one
@@ -115,10 +118,10 @@ numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_fut
 numproc drawflux npdf_past -solution=u_vis -bilinearform=evalx_neg -label=u_neg -applyd
 numproc drawflux npdf_future -solution=u_vis -bilinearform=evalx_pos -label=u_pos -applyd
 
-numproc visualization npviz 
-        -scalarfunction=u_future 
-        -subdivision=3
-        -nolineartexture        
+# numproc visualization npviz 
+#         -scalarfunction=u_future 
+#         -subdivision=3
+#         -nolineartexture        
         # -deformationscale=0.3 
         # -subdivision=2 
         # -minval=0.0 

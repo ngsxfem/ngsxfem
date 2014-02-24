@@ -408,6 +408,114 @@ namespace ngfem
     } // loop over domain types
   }
 
+/*
+  template<int D>
+  void SpaceTimeXTransportIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatMatrix<double> & elmat,
+		     LocalHeap & lh) const
+  {
+    static Timer timer ("SpaceTimeXLaplaceIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+
+    const XFiniteElement * xfe = NULL;
+    const XDummyFE * dummfe = NULL;
+    const ScalarSpaceTimeFiniteElement<D> * scafe = NULL;
+
+    for (int i = 0; i < cfel.GetNComponents(); ++i)
+    {
+      if (xfe==NULL)
+        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
+      if (dummfe==NULL)
+        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
+      if (scafe==NULL)
+        scafe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[i]);
+    }
+    
+    elmat = 0.0;
+
+    if (!xfe && !dummfe) 
+      throw Exception(" not containing X-elements?");
+
+    int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
+    int ndof = scafe->GetNDof();
+    int ndof_total = ndof+ndof_x;
+
+    FlatMatrixFixWidth<D+2> bmat_total(ndof_total,lh);
+    FlatMatrixFixWidth<D+2> bmat(ndof,&bmat_total(0,0));
+    FlatMatrixFixWidth<D+2> bmatx(ndof,&bmat_total(ndof,0));
+
+    FlatVector<> shape_total(ndof_total,lh);
+    FlatVector<> shape(ndof,&shape_total(0));
+    FlatVector<> shapex(ndof,&shape_total(ndof));
+
+    FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
+    FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
+    FlatMatrixFixWidth<D> dshapex(ndof,&dshape_total(ndof,0));
+
+    FlatVector<> dtshape_total(ndof_total,lh);
+    FlatVector<> dtshape(ndof,&dtshape_total(0));
+    FlatVector<> dtshapex(ndof,&dtshape_total(ndof));
+
+    int ps = scafe->OrderSpace();
+    int pt = scafe->OrderTime();
+    
+    DOMAIN_TYPE dt = POS;
+    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    {
+      if(!xfe)
+      { 
+        if (dummfe->GetDomainType() != dt)
+          continue;
+        IntegrationRule irs = SelectIntegrationRule (eltrans.GetElementType(), 2*ps);
+        IntegrationRule irt = SelectIntegrationRule (ET_SEGM, 2*pt);
+        for (int k = 0; k < irt.GetNIP(); ++k)
+          for (int l = 0 ; l < irs.GetNIP(); l++)
+          {
+            MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
+            double coef = dt == POS ? coef_pos->Evaluate(mip) 
+              : coef_neg->Evaluate(mip);
+
+            scafe->CalcMappedDxShapeSpaceTime(mip, irt[k](0), dshape, lh);
+
+            double fac = mip.GetWeight() * irt[k].Weight() * tau;
+            elmat += (fac*coef) * dshape * Trans(dshape);
+          }
+      }
+      else
+      {
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+        const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+
+        for (int i = 0; i < fquad.Size(); ++i)
+        {
+          IntegrationPoint ips;
+          for (int d = 0; d < D; ++d)
+            ips(d) = fquad.points(i,d);
+          MappedIntegrationPoint<D,D> mip(ips, eltrans);
+          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+
+          scafe->CalcMappedDxShapeSpaceTime(mip, fquad.points(i,D), dshape, lh);
+          dshapex = dshape;
+
+          for (int l = 0; l < ndof_x; ++l)
+          {
+            if (xfe->GetSignsOfDof()[l] != dt)
+              dshapex.Row(l) = 0.0;
+          }
+
+          double fac = mip.GetMeasure() * fquad.weights(i) * tau;
+          elmat += (fac*coef) * dshape_total * Trans(dshape_total);
+        } // quad rule
+      } // if xfe
+    } // loop over domain types
+  }
+
+*/
 
   template<int D, TIME t>
   void SpaceTimeXTraceMassIntegrator<D,t> ::
