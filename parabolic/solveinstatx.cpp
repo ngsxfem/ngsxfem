@@ -40,6 +40,9 @@ protected:
   // linear-form providing the right hand side
   // LinearForm * lff; //initial condition
   // solution vector
+  
+  FESpace * fes;
+
   GridFunction * gfu;
 
   GridFunction * gfu_vis = NULL;
@@ -106,6 +109,7 @@ public:
 
 	inversetype = flags.GetStringFlag ("solver", "pardiso");
 	fesstr = flags.GetStringFlag ("fespace", "fes_st");
+	fes = pde.GetFESpace (fesstr.c_str());
 
 	userstepping = flags.GetDefineFlag ("userstepping");
 
@@ -221,7 +225,7 @@ public:
 	BilinearForm * bftau;
 	Flags massflags;
 	massflags.SetFlag ("fespace", fesstr.c_str());
-	bftau = pde.AddBilinearForm ("bftau", massflags);
+	bftau = CreateBilinearForm (fes, "bftau", massflags);
 	bftau -> SetUnusedDiag (0);
 
 	Array<CoefficientFunction*> coefs_timeder(2);
@@ -313,7 +317,6 @@ public:
 	  fes->Update(lh);
 	  gfu->Update();
 
-	  // /*
 	  BaseVector & vecu = gfu->GetVector();
 
 	  bfilap.SetTimeInterval(ti);
@@ -321,6 +324,7 @@ public:
 	  bfixconv.SetTimeInterval(ti);
 
 	  bftau -> ReAssemble(lh,true);
+
 	  BaseMatrix & mata = bftau->GetMatrix();
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
@@ -337,7 +341,7 @@ public:
 	  d = *vecf - mata * vecu;
 	  w = invmat * d;
 	  vecu += w;
-	  
+
 	  // update status text
 	  cout << "\rt = " << t;
 	  cout << flush;
@@ -352,9 +356,7 @@ public:
 	  Ng_Redraw ();
 	  
 	  if (userstepping)
-		getchar();
-	  // */
-
+	  	getchar();
 	}
 	cout << "\r               \rt = " << tend;
 	cout << endl;
