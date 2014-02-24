@@ -1380,6 +1380,8 @@ namespace xintegration
   void MakeQuadRuleOnCutSimplex(const Simplex <D> & s, 
                                 const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
   {
+    static Timer timer ("MakeQuadRuleOnCutSimplex");
+    RegionTimer reg (timer);
     DecompositionRules::CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(s,numint);
   }
 
