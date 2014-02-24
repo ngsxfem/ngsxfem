@@ -72,11 +72,9 @@ namespace ngfem
       break;
     case NITSCHE_VARIANTS::HANSBOBETA:
       {
-        throw Exception("No Kappa yet");
-        // Vec<2> kappa = masterel.CalcKappa();
-        // double sum = kappa(0) * b_t_neg + kappa(1) * b_t_pos;
-        // kappa_neg = kappa(0) * b_t_neg / sum;
-        // kappa_pos = kappa(1) * b_t_pos / sum;
+        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
+        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
+        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
         break;
       }
     case NITSCHE_VARIANTS::BETA:
@@ -103,10 +101,8 @@ namespace ngfem
     case NITSCHE_VARIANTS::HANSBO:
     default:
       {
-        throw Exception("No Kappa yet");
-        // Vec<2> kappa = masterel.CalcKappa();
-        // kappa_neg = kappa(0);
-        // kappa_pos = kappa(1);
+        kappa_neg = xgeom.kappa[NEG];
+        kappa_pos = xgeom.kappa[POS];
         break;	      
       }
     }
@@ -255,16 +251,15 @@ namespace ngfem
 
     double kappa_neg = 0.5;
     double kappa_pos = 0.5;
+
     switch (kappa_choice){
     case NITSCHE_VARIANTS::HALFHALF:
       break;
     case NITSCHE_VARIANTS::HANSBOBETA:
       {
-        throw Exception("No Kappa yet");
-        // Vec<2> kappa = masterel.CalcKappa();
-        // double sum = kappa(0) * b_t_neg + kappa(1) * b_t_pos;
-        // kappa_neg = kappa(0) * b_t_neg / sum;
-        // kappa_pos = kappa(1) * b_t_pos / sum;
+        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
+        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
+        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
         break;
       }
     case NITSCHE_VARIANTS::BETA:
@@ -291,10 +286,8 @@ namespace ngfem
     case NITSCHE_VARIANTS::HANSBO:
     default:
       {
-        throw Exception("No Kappa yet");
-        // Vec<2> kappa = masterel.CalcKappa();
-        // kappa_neg = kappa(0);
-        // kappa_pos = kappa(1);
+        kappa_neg = xgeom.kappa[NEG];
+        kappa_pos = xgeom.kappa[POS];
         break;	      
       }
     }

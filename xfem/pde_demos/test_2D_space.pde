@@ -23,7 +23,7 @@ define constant bpos = 1.0
 define constant aneg = 1.0
 define constant apos = 5.0
 
-define constant lambda = 50.0
+define constant lambda = 15.0
 
 define fespace fesh1
        -type=h1ho
@@ -59,7 +59,7 @@ numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 define bilinearform a -fespace=fescomp # -printelmat -print
 #xmass one one
 xlaplace aneg apos
-xnitsche_halfhalf aneg apos bneg bpos lambda
+xnitsche_hansbo aneg apos bneg bpos lambda
 
 define linearform f -fespace=fescomp # -print
 xsource one one
