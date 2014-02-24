@@ -51,6 +51,11 @@ namespace ngfem
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
                    const XLocalGeometryInformation* a_localgeom,
+                   const XLocalGeometryInformation* a_localgeom_downtrace,
+                   LocalHeap & lh);
+    XFiniteElement(const FiniteElement & a_base,
+                   const Array<DOMAIN_TYPE>& a_localsigns, 
+                   const XLocalGeometryInformation* a_localgeom,
                    LocalHeap & lh);
     virtual ~XFiniteElement();
     /// the name

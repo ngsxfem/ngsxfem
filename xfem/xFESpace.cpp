@@ -59,6 +59,10 @@ namespace ngcomp
       return;
     }
     CleanUp();
+
+    static Timer timer ("XFESpace::Update");
+    RegionTimer reg (timer);
+
     order_space = basefes->GetOrder();
     
     FESpace::Update(lh);
@@ -460,6 +464,9 @@ namespace ngcomp
   template <int D, int SD>
   const FiniteElement & XFESpace<D,SD> :: GetFE (int elnr, LocalHeap & lh) const
   {
+    static Timer timer ("XFESpace::GetFE");
+    RegionTimer reg (timer);
+
     netgen::Ng_Element ngel = ma.GetElement(elnr);
     ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
     if (!activeelem.Test(elnr))
@@ -490,32 +497,40 @@ namespace ngcomp
       XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                             *cquad, lh, 2*order_space, 1, 0, 0);
       DOMAIN_TYPE dt = xgeom->MakeQuadRule();
-
       FiniteElement * retfel = NULL;
 
-      FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
       if (spacetime)
       {
+        bool also_future_trace = false;
+
         ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.first,lh);
-        ScalarFieldEvaluator * lset_eval_future_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.second,lh);
         CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
-        CompositeQuadratureRule<D> * cquadf = new CompositeQuadratureRule<D>() ;
         XLocalGeometryInformation * xgeom_past = 
           XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
                                             *cquadp, lh, 2*order_space, 1, 0, 0);
-        XLocalGeometryInformation * xgeom_future = 
-          XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
-                                            *cquadf, lh, 2*order_space, 1, 0, 0);
-        DOMAIN_TYPE dtp = xgeom_past->MakeQuadRule();
-        DOMAIN_TYPE dtf = xgeom_future->MakeQuadRule();
-        // xgeom->SetPastTrace(xgeom_past);
-        // xgeom->SetFutureTrace(xgeom_future);
-        retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
+        xgeom_past->MakeQuadRule();
+
+        if (also_future_trace)
+        {
+          XLocalGeometryInformation * xgeom_future = NULL;
+          CompositeQuadratureRule<D> * cquadf = NULL;
+          ScalarFieldEvaluator * lset_eval_future_p = NULL;
+          lset_eval_future_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.second,lh);
+          cquadf = new CompositeQuadratureRule<D>() ;
+          xgeom_future = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
+                                                           *cquadf, lh, 2*order_space, 1, 0, 0);
+          xgeom_future->MakeQuadRule();
+          retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
+
+          delete xgeom_future;
+          delete cquadf;
+        }
+        else
+          retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past, lh);
 
         delete xgeom_past;
-        delete xgeom_future;
         delete cquadp;
-        delete cquadf;
+
       }
       else
       {
@@ -531,6 +546,9 @@ namespace ngcomp
   template <int D, int SD>
   const FiniteElement & XFESpace<D,SD> :: GetSFE (int selnr, LocalHeap & lh) const
   {
+    static Timer timer ("XFESpace::GetSFE");
+    RegionTimer reg (timer);
+
     netgen::Ng_Element ngsel = ma.GetSElement(selnr);
     ELEMENT_TYPE eltype = ConvertElementType(ngsel.GetType());
     if (!activeselem.Test(selnr))

@@ -27,6 +27,20 @@ namespace ngfem
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
                                  const XLocalGeometryInformation* a_localgeom,
+                                 const XLocalGeometryInformation* a_localgeom_downtrace,
+                                 LocalHeap & lh)
+    : base(a_base), 
+      localsigns(a_localsigns.Size(),lh), 
+      fxgeom(*a_localgeom,lh),
+      fxgeom_downtrace(*a_localgeom_downtrace,lh)
+  { 
+    ndof = base.GetNDof(); 
+    for (int l = 0; l < localsigns.Size(); ++l)
+      localsigns[l] = a_localsigns[l];
+  };
+
+  XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
+                                 const XLocalGeometryInformation* a_localgeom,
                                  LocalHeap & lh)
     : base(a_base), 
       localsigns(a_localsigns.Size(),lh), 
