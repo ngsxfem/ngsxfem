@@ -10,7 +10,7 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-mesh = square_trigs_fine.vol.gz
+mesh = square_trigs.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 shared = libngsxfem_spacetime
@@ -24,8 +24,8 @@ define constant one = 1.0
 define constant bneg = 2.0
 define constant bpos = 1.0
 
-define constant wx = 1.0
-define constant wy = 1.0
+define constant wx = 0.1
+define constant wy = 0.1
 
 define coefficient bconvneg
 (bneg*wx,bpos*wy),
@@ -58,7 +58,7 @@ define fespace fesx
        -t0=0.0
        -t1=0.0005
        # -levelset=(x-y+z-0.375)
-       -levelset=((x-1.0*z-0.4)*(x-1.0*z-0.4)+(y-1.0*z-0.4)*(y-1.0*z-0.4)-0.04)
+       -levelset=((x-0.1*z-0.4)*(x-0.1*z-0.4)+(y-0.1*z-0.4)*(y-0.1*z-0.4)-0.04)
 
 numproc informxfem npix 
         -fespace=fesh1
@@ -85,14 +85,13 @@ numproc stx_solveinstat npsi
         -beta_ini_neg=binineg
         -beta_ini_pos=binipos
         -gf_vis=u_vis
-        # -linearform=f 
         -gridfunction=u
         -solver=pardiso 
         -fespace=fescomp
-        -dt=0.0005
+        -dt=0.001
         -tend=0.1
-        -userstepping
-        -aneg=1.0
+#        -userstepping
+        -aneg=0.1
         -apos=1.0
         -bneg=2.0
         -bpos=1.0
