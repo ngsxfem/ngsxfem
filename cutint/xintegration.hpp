@@ -95,7 +95,11 @@ namespace xintegration
     FlatQuadratureRule( const QuadratureRule<SD> & orig, LocalHeap & lh)
       : points(orig.Size(),lh), weights(orig.Size(),lh)
     {
-      ;
+      for (int i = 0; i < orig.Size(); ++i)
+      {
+        points.Row(i) = orig.points[i];
+        weights(i) = orig.weights[i];
+      }
     }
   };
 
@@ -279,12 +283,17 @@ namespace xintegration
   class XLocalGeometryInformation
   {
   protected:
-      XLocalGeometryInformation * pasttracegeom = 0;
-      XLocalGeometryInformation * futuretracegeom = 0;
-      mutable bool quaded = false;
-      // empty 
+    XLocalGeometryInformation * pasttracegeom = 0;
+    XLocalGeometryInformation * futuretracegeom = 0;
+    mutable bool quaded = false;
+    // empty 
   public:
-    XLocalGeometryInformation() {;}
+
+    /// Levelset function through the evaluator
+    // const ScalarFEEvaluator<D> & lset;
+    const ScalarFieldEvaluator * lset;
+
+    XLocalGeometryInformation(const ScalarFieldEvaluator * a_lset): lset(a_lset) {;}
     virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
@@ -392,6 +401,9 @@ namespace xintegration
     FlatXLocalGeometryInformation * pasttracegeom = 0;
     FlatXLocalGeometryInformation * futuretracegeom = 0;
   public:
+
+    const ScalarFieldEvaluator * lset;
+
     FlatCompositeQuadratureRule<1> * compquadrule1 = 0;
     FlatCompositeQuadratureRule<2> * compquadrule2 = 0;
     FlatCompositeQuadratureRule<3> * compquadrule3 = 0;
@@ -399,20 +411,32 @@ namespace xintegration
 
     int Dimension = -1;
 
+    bool empty;
+
+    FlatXLocalGeometryInformation()
+      : lset(NULL), Dimension(-1), empty(true)
+    {
+      ;
+    }
+
     FlatXLocalGeometryInformation(const XLocalGeometryInformation & xgeom, LocalHeap & lh) 
-      : Dimension(xgeom.Dimension())
-      // :
+      : lset(xgeom.lset), Dimension(xgeom.Dimension()), empty(false)
+        // :
     {
       switch(Dimension)
       {
       case 1:
         compquadrule1 = new (lh) FlatCompositeQuadratureRule<1>(*xgeom.GetCompositeRule<1>(),lh);
+        break;
       case 2:
         compquadrule2 = new (lh) FlatCompositeQuadratureRule<2>(*xgeom.GetCompositeRule<2>(),lh);
+        break;
       case 3:
         compquadrule3 = new (lh) FlatCompositeQuadratureRule<3>(*xgeom.GetCompositeRule<3>(),lh);
+        break;
       case 4:
         compquadrule4 = new (lh) FlatCompositeQuadratureRule<4>(*xgeom.GetCompositeRule<4>(),lh);
+        break;
       default:
         throw Exception("Dimension not in {1,2,3,4}");
         break;
@@ -423,22 +447,34 @@ namespace xintegration
     virtual ~FlatXLocalGeometryInformation() {;}
 
     template <int SD>
-    const FlatCompositeQuadratureRule<SD> * GetCompositeRule() const
+    const FlatCompositeQuadratureRule<SD> & GetCompositeRule() const
     {
       switch(SD)
       {
       case 1:
-        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule1); break;
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>&>(*compquadrule1); break;
       case 2:
-        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule2); break;
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>&>(*compquadrule2); break;
       case 3:
-        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule3); break;
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>&>(*compquadrule3); break;
       case 4:
-        return reinterpret_cast<FlatCompositeQuadratureRule<SD>*>(compquadrule4); break;
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>&>(*compquadrule4); break;
       default:
-        return NULL;
+        throw Exception(" SD not in {1,2,3,4} ");
+        return reinterpret_cast<FlatCompositeQuadratureRule<SD>&>(*compquadrule1); break;
         break;
       }
+    }
+
+    template <int D, int SD>
+    double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const
+    {
+        Vec<SD> p;
+        for (int i = 0; i < D; ++i)
+          p[i] = ip(i);
+        if (SD>D)
+          p[SD-1] = time;
+        return (*lset)(p);
     }
 
     void SetPastTrace(FlatXLocalGeometryInformation * xlocal)
@@ -484,10 +520,6 @@ namespace xintegration
 
     virtual int Dimension() const{ return SD; }
 
-    /// Levelset function through the evaluator
-    // const ScalarFEEvaluator<D> & lset;
-    const ScalarFieldEvaluator & lset;
-
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const
     {
         Vec<SD> p;
@@ -495,7 +527,7 @@ namespace xintegration
           p[i] = ip(i);
         if (ET_trait<ET_TIME>::DIM==1)
           p[SD-1] = time;
-        return lset(p);
+        return (*lset)(p);
     }
       
     /// PointContainer contains all points that are used during the decomposition

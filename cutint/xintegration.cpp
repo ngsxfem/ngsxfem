@@ -351,7 +351,7 @@ namespace xintegration
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
   :: NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a, int reduce_ref_space, int reduce_ref_time)
-    : lset(a.lset), pc(a.pc), 
+    : XLocalGeometryInformation(a.lset), pc(a.pc), 
       ref_level_space(a.ref_level_space-reduce_ref_space), ref_level_time(a.ref_level_time-reduce_ref_time),
       int_order_space(a.int_order_space), int_order_time(a.int_order_time),
       lh(a.lh), compquadrule(a.compquadrule)
@@ -367,7 +367,7 @@ namespace xintegration
                                   LocalHeap & a_lh,
                                   int a_int_order_space, int a_int_order_time, 
                                   int a_ref_level_space, int a_ref_level_time)
-    : lset(a_lset), pc(a_pc), 
+    : XLocalGeometryInformation(&a_lset), pc(a_pc), 
       ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
       int_order_space(a_int_order_space), int_order_time(a_int_order_time),
       lh(a_lh), compquadrule(a_compquadrule)
@@ -384,7 +384,7 @@ namespace xintegration
                                   LocalHeap & a_lh,
                                   int a_int_order_space, int a_int_order_time, 
                                   int a_ref_level_space, int a_ref_level_time)
-    : lset(a_lset), pc(*(new PointContainer<SD>())), 
+    : XLocalGeometryInformation(&a_lset), pc(*(new PointContainer<SD>())), 
       ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
       int_order_space(a_int_order_space), int_order_time(a_int_order_time),
     lh(a_lh), compquadrule(a_compquadrule), ownpc(true)
@@ -532,7 +532,7 @@ namespace xintegration
             position[ET_trait<ET_SPACE>::DIM] = verts_time[i];
             // cout << position[ET_trait<ET_SPACE>::DIM] << ",\t";
           }
-          const ngfem::ScalarFieldEvaluator & eval (lset);
+          const ngfem::ScalarFieldEvaluator & eval (*lset);
           const double lsetval = eval(position);
 
           if (lsetval > distance_threshold)
@@ -762,7 +762,7 @@ namespace xintegration
         //   cout << *simplices[i] << endl;
         // }
 
-        const ScalarFieldEvaluator & eval (lset);
+        const ScalarFieldEvaluator & eval (*lset);
 
         for (int i = 0; i < simplices.Size(); ++i)
         {
@@ -901,7 +901,7 @@ namespace xintegration
       for (int j = 0; j < 4; ++j)
       {
         zero[j] = false;
-        vvals[j] = numint.lset(*(s.p[j]));
+        vvals[j] = (*numint.lset)(*(s.p[j]));
         if (vvals[j] > 0)
         {
           pospoints.Append(numint.pc(*(s.p[j])));
@@ -1176,7 +1176,7 @@ namespace xintegration
       for (int j = 0; j < 3; ++j)
       {
         zero[j] = false;
-        vvals[j] = numint.lset(*(s.p[j]));
+        vvals[j] = (*numint.lset)(*(s.p[j]));
         if (vvals[j] > 0)
         {
           pospoints.Append(numint.pc(*(s.p[j])));
@@ -1300,8 +1300,8 @@ namespace xintegration
       const Vec<1> & left = *(s.p[0]);
       const Vec<1> & right = *(s.p[1]);
       
-      double valleft = numint.lset(left);
-      double valright = numint.lset(right);
+      double valleft = (*numint.lset)(left);
+      double valright = (*numint.lset)(right);
 
       const double cutpos = valleft / (valleft - valright);
       Vec<SD> mid = (1-cutpos) * *(s.p[0]) + cutpos * *(s.p[1]) ;
