@@ -10,6 +10,9 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -193,6 +196,9 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXNitscheIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 

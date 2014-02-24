@@ -10,6 +10,9 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXMassIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -100,6 +103,8 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXLaplaceIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -191,6 +196,8 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXTimeDerivativeIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -292,6 +299,8 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXConvectionIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -407,6 +416,8 @@ namespace ngfem
 		     FlatMatrix<double> & elmat,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXTraceMassIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -498,6 +509,8 @@ namespace ngfem
 		     FlatVector<double> & elvec,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXSourceIntegrator::CalcElementVector");
+    RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -597,6 +610,8 @@ namespace ngfem
 		     FlatVector<double> & elvec,
 		     LocalHeap & lh) const
   {
+    static Timer timer ("SpaceTimeXTraceSourceIntegrator::CalcElementVector");
+    RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
