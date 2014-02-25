@@ -9,6 +9,11 @@ namespace ngfem
     : // FiniteElement(),
     sign(a_sign), et(a_et) { ndof = 0; }
 
+  LevelsetContainerFE::LevelsetContainerFE(const CoefficientFunction * coeflset, double ta, double tb)
+    : // FiniteElement(),
+    coef_lset(coeflset), told(ta), tnew(tb) {ndof = 0; }
+
+
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
                                  const XLocalGeometryInformation* a_localgeom,
                                  const XLocalGeometryInformation* a_localgeom_downtrace,

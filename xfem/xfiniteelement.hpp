@@ -31,6 +31,22 @@ namespace ngfem
   };
 
   /**
+     a placeholder finite element
+   */
+  class LevelsetContainerFE : public FiniteElement
+  {
+  protected:
+    const CoefficientFunction * coef_lset = NULL;
+  public:
+    double tnew;
+    double told;
+    LevelsetContainerFE (const CoefficientFunction *, double ta = 0.0, double tb = 0.0);
+    virtual ELEMENT_TYPE ElementType() const { return ET_POINT; }
+    const CoefficientFunction * GetLevelsetCoefficient() const { return coef_lset; }
+  };
+
+
+  /**
      surrounds a FiniteElement and adds information about signs of dofs and local geometry
    */
   class XFiniteElement : public FiniteElement
