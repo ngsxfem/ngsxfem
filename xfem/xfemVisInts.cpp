@@ -61,6 +61,71 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<STXVisIntegrator<2,FUTURE> > initxwmass0f ("stxvis_future", 2, 1);
   static RegisterBilinearFormIntegrator<STXVisIntegrator<3,FUTURE> > initxwmass1f ("stxvis_future", 3, 1);
 
+
+  template <int D, TIME t>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpEvalSTNegPos<D,t>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                          MAT & mat, LocalHeap & lh)
+  {
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (bfel);
+
+    const ScalarSpaceTimeFiniteElement<D> & scafe = 
+      dynamic_cast<const ScalarSpaceTimeFiniteElement<D> & > (cfel[0]);
+
+    const LevelsetContainerFE & lsetcontfe = 
+      dynamic_cast<const LevelsetContainerFE & > (cfel[2]);
+
+    const int ndof = scafe.GetNDof();
+    FlatVector<> shape (ndof,lh);
+
+    scafe.CalcShapeSpaceTime(mip.IP(),t == PAST ? 0.0 : 1.0,shape,lh);
+
+    IntRange range0 = cfel.GetRange(0);
+    IntRange range1 = cfel.GetRange(1);
+
+    const CoefficientFunction * coef_lset = lsetcontfe.GetLevelsetCoefficient();
+
+    DimMappedIntegrationPoint<D+1> mipp(mip.IP(),mip.GetTransformation());
+    mipp.Point().Range(0,D) = mip.GetPoint();
+    mipp.Point()[D] = t == PAST ? lsetcontfe.told : lsetcontfe.tnew;
+
+    const double lsetval = coef_lset->Evaluate(mipp);
+
+    if (lsetval < 0)
+    {
+      mat.Row(0).Range(range0) = shape;
+      mat.Row(0).Range(range1) = 0.0;
+    }
+    else
+    {
+      mat.Row(0).Range(range0) = 0.0;
+      mat.Row(0).Range(range1) = shape;
+    }
+  }
+
+
+  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: STNegPosVisIntegrator  (CoefficientFunction * coeff)
+    : T_BDBIntegrator<DiffOpEvalSTNegPos<D,t>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
+  { ; }
+
+  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: STNegPosVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+    : T_BDBIntegrator<DiffOpEvalSTNegPos<D,t>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
+  { ; }
+
+  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: ~STNegPosVisIntegrator () { ; }
+
+  template class STNegPosVisIntegrator<2,PAST>;
+  template class STNegPosVisIntegrator<3,PAST>;
+  template class STNegPosVisIntegrator<2,FUTURE>;
+  template class STNegPosVisIntegrator<3,FUTURE>;
+
+  static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<2,PAST> > initnegposxwmass0p ("st_np_vis_past", 2, 1);
+  static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<3,PAST> > initnegposxwmass1p ("st_np_vis_past", 3, 1);
+
+  static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<2,FUTURE> > initnegposxwmass0f ("st_np_vis_future", 2, 1);
+  static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<3,FUTURE> > initnegposxwmass1f ("st_np_vis_future", 3, 1);
+
   template <int D>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpEvalX<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,

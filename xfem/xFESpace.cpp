@@ -119,10 +119,9 @@ namespace ngcomp
           const double h = D==2 ? sqrt(absdet) : cbrt(absdet);
           ScalarFieldEvaluator * lset_eval_p = NULL;
           if (spacetime)
-            lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,llh);
+            lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,llh);
           else
-            lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,llh);
-
+            lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
           CompositeQuadratureRule<SD> cquad;
           XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                                 cquad, llh, 2*order_space, 2*order_time, ref_lvl_space, ref_lvl_time);
@@ -165,9 +164,9 @@ namespace ngcomp
 
         ScalarFieldEvaluator * lset_eval_p = NULL;
         if (spacetime)
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,ti,lh);
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,ti,lh);
         else
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
 
         CompositeQuadratureRule<SD-1> cquad;
         XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
@@ -504,9 +503,9 @@ namespace ngcomp
         
       ScalarFieldEvaluator * lset_eval_p = NULL;
       if (spacetime)
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
       else
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
 
       CompositeQuadratureRule<SD> * cquad = new CompositeQuadratureRule<SD>() ;
 
@@ -528,7 +527,7 @@ namespace ngcomp
       {
         bool also_future_trace = false;
 
-        ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.first,lh);
+        ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.first,lh);
         CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
         XLocalGeometryInformation * xgeom_past = 
           XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
@@ -546,7 +545,7 @@ namespace ngcomp
           XLocalGeometryInformation * xgeom_future = NULL;
           CompositeQuadratureRule<D> * cquadf = NULL;
           ScalarFieldEvaluator * lset_eval_future_p = NULL;
-          lset_eval_future_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti.second,lh);
+          lset_eval_future_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.second,lh);
           cquadf = new CompositeQuadratureRule<D>() ;
           xgeom_future = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
                                                            *cquadf, lh, 
@@ -605,9 +604,9 @@ namespace ngcomp
         
       ScalarFieldEvaluator * lset_eval_p = NULL;
       if (spacetime)
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,ti,lh);
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
       else
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,eltrans,lh);
+        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
 
       CompositeQuadratureRule<SD-1> * cquad = new CompositeQuadratureRule<SD-1>() ;
 
@@ -665,45 +664,84 @@ namespace ngcomp
     }
   }
 
+  template class XFESpace<2,2>;
+  template class XFESpace<2,3>;
+  template class XFESpace<3,3>;
+  template class XFESpace<3,4>;
 
-  /*
-  XH1FESpace :: XH1FESpace (const MeshAccess & ama, 
-                            const Array<FESpace*> & aspaces,
-                            const Flags & flags)
-    : CompoundFESpace (ama, aspaces, flags)
-  { 
-    static ConstantCoefficientFunction one(1);
-    integrator = new SumMassIntegrator<D> (&one);
-    boundary_integrator = new RobinIntegrator<D> (&one);
-    boundary_integrator = new CompoundBilinearFormIntegrator (*boundary_integrator, 0);
+
+  LevelsetContainerFESpace::LevelsetContainerFESpace(const MeshAccess & ama, const Flags & flags)
+    : FESpace(ama,flags)
+  {
+    ;
   }
 
-  */
 
-
-    
   NumProcInformXFESpace::NumProcInformXFESpace (PDE & apde, const Flags & flags)
     : NumProc (apde)
   { 
     FESpace* xfes = pde.GetFESpace(flags.GetStringFlag("xfespace","vx"));
     FESpace* basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
-    
+    FESpace* fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"));
+    CoefficientFunction * coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
+
     int mD = pde.GetMeshAccess().GetDimension();
-    
+
     SpaceTimeFESpace * fes_st = dynamic_cast<SpaceTimeFESpace *>(basefes);
     int mSD = fes_st == NULL ? mD : mD + 1;
 
     if (mD == 2)
+    {
+      DomainVariableCoefficientFunction<2> * coef_lset_in_2 = dynamic_cast<DomainVariableCoefficientFunction<2> * > (coef_lset_in);
+      int numreg = coef_lset_in_2->NumRegions();
+      if (numreg == INT_MAX) numreg = 1;
+      Array< EvalFunction* > evals;
+      evals.SetSize(numreg);
+      for (int i = 0; i < numreg; ++i)
+      {
+        evals[i] = &coef_lset_in_2->GetEvalFunction(i);
+      }
       if (mSD == 2)
+      {
         dynamic_cast<XFESpace<2,2>* >(xfes) -> SetBaseFESpace (basefes);
+        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<2>(evals); 
+        dynamic_cast<XFESpace<2,2>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
+        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+      }
       else
+      {
         dynamic_cast<XFESpace<2,3>* >(xfes) -> SetBaseFESpace (basefes);
+        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
+        dynamic_cast<XFESpace<2,3>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
+        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+      }
+    }
     else
+    {
+      DomainVariableCoefficientFunction<3> * coef_lset_in_3 = dynamic_cast<DomainVariableCoefficientFunction<3> * > (coef_lset_in);
+      int numreg = coef_lset_in_3->NumRegions();
+      if (numreg == INT_MAX) numreg = 1;
+      Array< EvalFunction* > evals;
+      evals.SetSize(numreg);
+      for (int i = 0; i < numreg; ++i)
+      {
+        evals[i] = &coef_lset_in_3->GetEvalFunction(i);
+      }
       if (mSD == 3)
+      {
         dynamic_cast<XFESpace<3,3>* >(xfes) -> SetBaseFESpace (basefes);
+        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
+        dynamic_cast<XFESpace<3,3>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
+        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+      }
       else
+      {
         dynamic_cast<XFESpace<3,4>* >(xfes) -> SetBaseFESpace (basefes);
-
+        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<4>(evals); 
+        dynamic_cast<XFESpace<3,4>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
+        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+      }
+    }
     // if (xfes_ != NULL)
     // {
     //   xfes_->SetBaseFESpace(basefes);
@@ -733,14 +771,6 @@ namespace ngcomp
   
   static RegisterNumProc<NumProcInformXFESpace> npinfoxfe("informxfem");
 
-
-
-
-  template class XFESpace<2,2>;
-  template class XFESpace<2,3>;
-  template class XFESpace<3,3>;
-  template class XFESpace<3,4>;
-
   namespace xfespace_cpp
   {
     class Init
@@ -752,6 +782,7 @@ namespace ngcomp
     Init::Init()
     {
       GetFESpaceClasses().AddFESpace ("xfespace", XFESpace<2,2>::Create);
+      GetFESpaceClasses().AddFESpace ("lsetcontfespace", LevelsetContainerFESpace::Create);
       // GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
     }
   

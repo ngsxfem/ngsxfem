@@ -79,6 +79,43 @@ namespace ngfem
 
 
 
+
+  template <int D, TIME t>
+  class DiffOpEvalSTNegPos : public DiffOp<DiffOpEvalSTNegPos<D,t> >
+  {
+    
+  public:
+    enum { DIM = 1 };          // just one copy of the spaces
+    enum { DIM_SPACE = D };    // 2D space
+    enum { DIM_ELEMENT = D };  // 2D elements (in contrast to 1D boundary elements)
+    enum { DIM_DMAT = 1 };     // D-matrix is 2x2
+    enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
+    
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & sip,
+                                MAT & mat, LocalHeap & lh);
+  };
+
+  ///
+  template <int D, TIME t>
+  class STNegPosVisIntegrator 
+    : public T_BDBIntegrator<DiffOpEvalSTNegPos<D,t>, DiagDMat<1>, CompoundFiniteElement >
+  {
+  public:
+    ///
+    STNegPosVisIntegrator (CoefficientFunction * coeff);
+    ///
+    STNegPosVisIntegrator (Array<CoefficientFunction*> & coeffs);
+    ///
+    virtual ~STNegPosVisIntegrator ();
+    ///
+    virtual string Name () const { return "STNegPosVisIntegrator"; }
+  };
+
+
+
+
+
   template <int D>
   class DiffOpEvalSigned : public DiffOp<DiffOpEvalSigned<D> >
   {

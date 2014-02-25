@@ -114,21 +114,57 @@ namespace ngcomp
     void SetLevelSet(const GridFunction* lset_){ gf_lset = lset_;};
     void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
     void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
+    void SetLevelSetCoefficient(const CoefficientFunction* _coef_lset){ coef_lset = _coef_lset;};
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
     void XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const;
   };
 
-  
+
+
+  class LevelsetContainerFESpace : public FESpace
+  {
+    const CoefficientFunction * coef_lset = NULL;
+    double told;
+    double tnew;
+  public:
+    LevelsetContainerFESpace (const MeshAccess & ama, const Flags & flags);
+    virtual ~LevelsetContainerFESpace () { ; }
+    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    {
+      return new LevelsetContainerFESpace(ma,flags);
+    }
+    virtual void Update(LocalHeap & lh) { ; }
+    virtual void UpdateCouplingDofArray() { ; }
+
+    virtual int GetNDof () const { return 0; }
+
+    virtual void GetDofNrs (int elnr, Array<int> & dnums) const { dnums.SetSize(0); }
+    virtual void GetSDofNrs (int selnr, Array<int> & dnums) const { dnums.SetSize(0); }
+
+    virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const 
+    { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
+    virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const 
+    { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
+
+    void SetLevelSetCoefficient(const CoefficientFunction* _coef_lset)
+    { coef_lset = _coef_lset;}
+    void SetTime(double ta, double tb) { told=ta; tnew=tb; }
+
+    virtual string GetClassName () const { return "LevelsetContainerFESpace"; }
+  };  
+
+
   class NumProcInformXFESpace : public NumProc
   {
+    const CoefficientFunction * coef = NULL;
   public:
     NumProcInformXFESpace (PDE & apde, const Flags & flags);
     ~NumProcInformXFESpace();
     virtual string GetClassName () const;
     virtual void Do (LocalHeap & lh);
   };
-  
+
 
   // class XH1FESpace : public CompoundFESpace
   // {
