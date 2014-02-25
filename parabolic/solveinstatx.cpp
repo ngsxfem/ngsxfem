@@ -42,6 +42,7 @@ protected:
   // solution vector
   
   FESpace * fes;
+  FESpace * fesvis;
 
   GridFunction * gfu;
 
@@ -110,6 +111,9 @@ public:
 	inversetype = flags.GetStringFlag ("solver", "pardiso");
 	fesstr = flags.GetStringFlag ("fespace", "fes_st");
 	fes = pde.GetFESpace (fesstr.c_str());
+
+	string fesvisstr = flags.GetStringFlag ("fespacevis", "fes_negpos");
+	fesvis = pde.GetFESpace (fesvisstr.c_str());
 
 	userstepping = flags.GetDefineFlag ("userstepping");
 
@@ -288,6 +292,9 @@ public:
 	CompoundFESpace & compfes = *dynamic_cast<CompoundFESpace * >(fes);
 	XFESpace<D,D+1> & xfes = *dynamic_cast<XFESpace<D,D+1> * >(compfes[1]);
 	
+	CompoundFESpace & compfes2 = *dynamic_cast<CompoundFESpace * >(fesvis);
+	LevelsetContainerFESpace & lcfes = *dynamic_cast<LevelsetContainerFESpace * >(compfes2[2]);
+
 	lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
 
 	
@@ -314,6 +321,7 @@ public:
 	  HeapReset hr(lh);
 	  TimeInterval ti(t,t+dt);
 	  xfes.SetTimeInterval(ti);
+	  lcfes.SetTime(ti.first,ti.second);
 	  fes->Update(lh);
 	  gfu->Update();
 
