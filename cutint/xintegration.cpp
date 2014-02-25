@@ -1173,7 +1173,7 @@ namespace xintegration
       } // end of 3 or 4 cutpoints
       else
       {
-        cout << "cutpoints.Size() = " << cutpoints.Size() << endl;
+        cout << "ncutpoints = " << ncutpoints << endl;
         throw Exception(" did not expect this.. -3-");
       }
     }
