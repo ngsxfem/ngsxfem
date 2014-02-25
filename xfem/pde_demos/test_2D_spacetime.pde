@@ -48,6 +48,10 @@ define fespace fesh1
        -order_time=1
 #       -dirichlet=[1,2]
 
+define coefficient lset
+((x-1.0*z-0.25)*(x-1.0*z-0.25)+(y-1.0*z-0.25)*(y-1.0*z-0.25)-0.04),
+#(z),
+
 define fespace fesx
        -type=xfespace
        -spacetime
@@ -59,6 +63,7 @@ define fespace fesx
 numproc informxfem npix 
         -fespace=fesh1
         -xfespace=fesx
+        -coef_levelset=lset
 
 define fespace fescomp
        -type=compound

@@ -33,7 +33,7 @@ define fespace fesh1
 define fespace fesx
        -type=xfespace
 #       -levelset=(x-0.55)
-       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09)
+#       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09)
 
 define coefficient lset
 #(x-0.55),
@@ -42,6 +42,7 @@ define coefficient lset
 numproc informxfem npix 
         -fespace=fesh1
         -xfespace=fesx
+        -coef_levelset=lset
 
 define fespace fescomp
        -type=compound
