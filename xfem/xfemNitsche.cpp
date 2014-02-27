@@ -142,7 +142,7 @@ namespace ngfem
 
       for (int l = 0; l < ndof_x; ++l)
       {
-        if (xsign[l] == POS){
+        if (xsign[l] == NEG){
           jump(ndof_h1+l) *= -b_neg;
           dshape(ndof_h1+l) *= kappa_neg * a_neg;
         }
@@ -342,7 +342,7 @@ namespace ngfem
 
       for (int l = 0; l < ndof_x; ++l)
       {
-        if (xsign[l] == POS){
+        if (xsign[l] == NEG){
           jump(ndof_h1+l) *= -b_neg;
           dshape(ndof_h1+l) *= kappa_neg * a_neg;
         }
