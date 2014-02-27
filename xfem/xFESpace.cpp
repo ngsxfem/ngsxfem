@@ -589,7 +589,7 @@ namespace ngcomp
     ELEMENT_TYPE eltype = ConvertElementType(ngsel.GetType());
     if (!activeselem.Test(selnr))
     {
-      DOMAIN_TYPE dt = domofel[selnr];
+      DOMAIN_TYPE dt = domofsel[selnr];
       return *(new (lh) XDummyFE(dt,eltype));
     }
     else
