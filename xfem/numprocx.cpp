@@ -120,9 +120,29 @@ namespace ngcomp
 
          bfi->CalcElementMatrix (bfel, eltrans, elmat, lh);
          lfi->CalcElementVector (bfel, eltrans, elvec, lh);
-         
+
+         // for (int i = 0; i < elmat.Width(); ++i)
+         //   elmat(i,i) += 1e-8;
+
          fes.TransformMat (ei.Nr(), bound, elmat, TRANSFORM_MAT_LEFT_RIGHT);
          fes.TransformVec (ei.Nr(), bound, elvec, TRANSFORM_RHS);
+
+         bool regularize = false;
+         for (int i = 0; i < dnums.Size(); ++i)
+           if (abs(elmat(i,i)) < 1e-13)
+             regularize = true;
+
+         if (regularize)
+         {
+           for (int i = 0; i < dnums.Size(); ++i)
+             for (int j = dnums.Size()/2; j < dnums.Size(); ++j)
+             {
+               elmat(i,j) = 0.0;
+               elmat(j,i) = 0.0;
+             }
+           for (int j = dnums.Size()/2; j < dnums.Size(); ++j)
+             elmat(j,j) = 1.0;
+         }
               
          if (dnums.Size() < 50)
          {
@@ -133,6 +153,47 @@ namespace ngcomp
          {
            LapackInverse (elmat);
            elveci = elmat * elvec;
+         }
+
+         if (regularize)
+         {
+           const CompoundFiniteElement & cfel = 
+             dynamic_cast<const CompoundFiniteElement&> (bfel);
+
+           const XFiniteElement * xfe = NULL;
+
+           if (xfe==NULL)
+             xfe = dynamic_cast<const XFiniteElement* >(&cfel[1]);
+           
+           const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+           const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
+
+           DOMAIN_TYPE dt = xgeom.kappa[NEG] < 1e-12 ? POS : NEG;
+           std::cout << " xgeom.kappa[NEG] = " << xgeom.kappa[NEG] << std::endl;
+           std::cout << " xgeom.kappa[POS] = " << xgeom.kappa[POS] << std::endl;
+           // for (int i = 0; i < dnums.Size()/2; ++i)
+           // {
+           //   if(xsign[i] == dt)
+           //   {
+           //     cnti[dnums[i]]--;
+           //     elveci(dnums.Size()/2+i) = elveci(i);
+           //     elveci(i) = 0.0;
+           //   }
+           //   else
+           //     elveci(dnums.Size()/2+i) = 0.0;
+           // }
+         }
+
+         bool printmore = regularize;
+         // for (int i = 0; i < elveci.Size(); ++i)
+         //   if (abs(elveci(i)) > 1.21)
+         //     printmore = true;
+
+         if (printmore)
+         {
+           std::cout << " elveci = " << elveci << std::endl;
+           std::cout << " elmat = " << elmat << std::endl;
+           std::cout << " elvec = " << elvec << std::endl;
          }
 
          // fes.TransformVec (i, bound, elveci, TRANSFORM_SOL);
