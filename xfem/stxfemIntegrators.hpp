@@ -1,5 +1,5 @@
-#ifndef FILE_XFEMINTEGRATORS_HPP
-#define FILE_XFEMINTEGRATORS_HPP
+#ifndef FILE_SPACETIMEXFEMINTEGRATORS_HPP
+#define FILE_SPACETIMEXFEMINTEGRATORS_HPP
 
 /// from ngsolve
 #include <fem.hpp>   // for ScalarFiniteElement
@@ -219,9 +219,10 @@ namespace ngfem
       DomainVariableCoefficientFunction<D> * coefpos = dynamic_cast<DomainVariableCoefficientFunction<D> * > (coeffs[1]);
       if (coefpos != NULL)
       {
-        int numreg = coefneg->NumRegions();
+        int numreg = coefpos->NumRegions();
         if (numreg == INT_MAX) numreg = 1;
         Array< EvalFunction* > evals(numreg);
+        evals.SetSize(numreg);
         for (int i = 0; i < numreg; ++i)
         {
           evals[i] = &coefpos->GetEvalFunction(i);
@@ -364,9 +365,10 @@ namespace ngfem
       DomainVariableCoefficientFunction<D> * coefpos = dynamic_cast<DomainVariableCoefficientFunction<D> * > (coeffs[1]);
       if (coefpos != NULL)
       {
-        int numreg = coefneg->NumRegions();
+        int numreg = coefpos->NumRegions();
         if (numreg == INT_MAX) numreg = 1;
         Array< EvalFunction* > evals(numreg);
+        evals.SetSize(numreg);
         for (int i = 0; i < numreg; ++i)
         {
           evals[i] = &coefpos->GetEvalFunction(i);
