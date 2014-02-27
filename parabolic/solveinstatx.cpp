@@ -16,6 +16,7 @@
 #include "../xfem/stxfemIntegrators.hpp"
 #include "../xfem/xfemNitsche.hpp"
 #include "../xfem/xFESpace.hpp"
+#include "../xfem/setvaluesx.hpp"
 
 #include <diffop_impl.hpp>
 
@@ -91,6 +92,9 @@ protected:
   CoefficientFunction* coef_binineg = NULL;
   CoefficientFunction* coef_binipos = NULL;
 
+  CoefficientFunction* coef_bndneg = NULL;
+  CoefficientFunction* coef_bndpos = NULL;
+
 public:
   /*
 	In the constructor, the solver class gets the flags from the pde - input file.
@@ -135,6 +139,9 @@ public:
 
 	coef_binineg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_ini_neg", "binineg"));
 	coef_binipos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_ini_pos", "binipos"));
+
+	coef_bndneg = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_neg", "bndneg"));
+	coef_bndpos = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_pos", "bndpos"));
 
 	coef_aneg = new ConstantCoefficientFunction(aneg);
 	coef_apos = new ConstantCoefficientFunction(apos);
@@ -314,6 +321,10 @@ public:
 
 	lfrhs -> AddIntegrator (&lfi_rhs);
 
+	Array<CoefficientFunction* > bndcoefs(2);
+	bndcoefs[0] = coef_bndneg;
+	bndcoefs[1] = coef_bndpos;
+
 	// time stepping
 	double t;
 	for (t = 0; t < tend; t += dt)
@@ -324,6 +335,8 @@ public:
 	  lcfes.SetTime(ti.first,ti.second);
 	  fes->Update(lh);
 	  gfu->Update();
+
+	  SetValuesX<D,double>( bndcoefs, ti, *gfu, true, lh);
 
 	  BaseVector & vecu = gfu->GetVector();
 

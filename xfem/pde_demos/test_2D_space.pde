@@ -39,12 +39,12 @@ define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
 define constant lambda = 15.0
 
-define constant R = 0.3
+define constant R = 0.33333333
 
 define fespace fesh1
        -type=h1ho
        -order=1
-#       -dirichlet=[1,2]
+       -dirichlet=[1,2]
 
 define fespace fesx
        -type=xfespace
@@ -66,7 +66,7 @@ define fespace fescomp
 
 define gridfunction u -fespace=fescomp
 
-numproc shapetester npst -gridfunction=u
+#numproc shapetester npst -gridfunction=u
 
 define bilinearform evalx -fespace=fescomp -nonassemble
 xvis one
@@ -77,13 +77,15 @@ define bilinearform a -fespace=fescomp # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
 xnitsche_hansbo aneg apos bneg bpos lambda
-xrobin bneg_pen bpos_pen
+#xrobin bneg_pen bpos_pen
 
 define linearform f -fespace=fescomp # -print
 xsource bneg bpos
-xneumann bneg_bndvalneg_pen bpos_bndvalpos_pen
+#xneumann bneg_bndvalneg_pen bpos_bndvalpos_pen
 
-numproc setvalues npsv -gridfunction=u.1 -coefficient=zero -boundary
+#numproc setvalues npsv -gridfunction=u.1 -coefficient=zero -boundary
+
+numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 

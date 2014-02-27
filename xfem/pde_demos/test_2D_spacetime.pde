@@ -40,8 +40,11 @@ define constant pen = 1e7
 define constant bneg_pen = (bneg*pen)
 define constant bpos_pen = (bpos*pen)
 
-define constant bneg_bndneg_pen = (bneg*pen*0.8)
-define constant bpos_bndpos_pen = (bpos*pen*1.0)
+define constant bndneg = 0.8
+define constant bndpos = 1.0
+
+define constant bneg_bndneg_pen = (bneg*pen*bndneg)
+define constant bpos_bndpos_pen = (bpos*pen*bndpos)
 
 define constant x0 = 0
 define constant y0 = 0
@@ -57,7 +60,7 @@ define fespace fesh1
        -type_space=h1ho
        -order_space=1
        -order_time=1
-#       -dirichlet=[1,2]
+       -dirichlet=[1,2]
 
 define coefficient lset
 ((x-wx*z-x0)*(x-wx*z-x0)+(y-wy*z-y0)*(y-wy*z-y0)-0.04),
@@ -132,6 +135,12 @@ stx_tracesource_past binineg binipos
 #numproc setvalues npsv -gridfunction=u.1 -coefficient=one 
 #-boundary
 
+numproc setvaluesx npsvx -gridfunction=u 
+        -coefficient_neg=bndneg 
+        -coefficient_pos=bndpos 
+        -told=0.0
+        -tnew=0.05
+        -boundary -print
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 

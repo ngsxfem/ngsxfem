@@ -24,10 +24,10 @@ define constant one = 1.0
 define constant bneg = 1.0
 define constant bpos = 2.0
 
-define constant wx = 0.00
-define constant wy = 0.1
+define constant wx = 0.1
+define constant wy = 0.0
 
-define constant x0 = 0.5
+define constant x0 = 0.3333333333333
 define constant y0 = 0.5
 
 define constant R = 0.23
@@ -50,12 +50,18 @@ define coefficient brhsneg
 define coefficient brhspos
 (0),
 
+define coefficient bndneg
+(0),
+
+define coefficient bndpos
+(0.1*sin(10*pi*z)*exp(-50*(x-z)*(x-z))),
+
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
        -order_space=1
        -order_time=1
-#       -dirichlet=[1,2]
+       -dirichlet=[1,2]
 
 define coefficient coef_lset
 ((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
@@ -101,6 +107,8 @@ numproc stx_solveinstat npsi
         -beta_rhs_pos=brhspos
         -beta_ini_neg=binineg
         -beta_ini_pos=binipos
+        -boundary_neg=bndneg
+        -boundary_pos=bndpos
         -gf_vis=u_vis
         -gridfunction=u
         -solver=pardiso 
@@ -108,7 +116,7 @@ numproc stx_solveinstat npsi
         -fespacevis=fesnegpos
         -dt=0.01
         -tend=1.0
-        -userstepping
+#        -userstepping
         -aneg=0.02
         -apos=0.05
         -bneg=1.0
