@@ -618,6 +618,12 @@ namespace ngcomp
                                                                             ref_lvl_space, ref_lvl_time);
       FiniteElement * retfel = NULL;
 
+      {
+        static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
+        RegionTimer regq (timer);
+        xgeom->MakeQuadRule();
+      }
+
       FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
 
       retfel = new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh);
