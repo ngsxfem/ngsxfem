@@ -15,25 +15,36 @@ define constant one = 1.0
 
 define constant two = 2.0
 
-define constant bneg = 2.0
-define constant bpos = 1.0
+define constant bneg = 1.0
+define constant bpos = 0.8
 
-define constant aneg = 10.0
-define constant apos = 10.0
+define constant aneg = 1.0
+define constant apos = 1.0
 
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
-define constant lambda = 10.0
+define constant lambda = 25.0
 
 define constant told = 0.0
-define constant tnew = 0.005
+define constant tnew = 0.05
 
-define constant wx = 1.0
-define constant wy = 1.0
+define constant wx = 0.25
+define constant wy = 0.25
 
 define constant binineg = 1.0
 define constant binipos = 0.0
+
+define constant pen = 1e7
+
+define constant bneg_pen = (bneg*pen)
+define constant bpos_pen = (bpos*pen)
+
+define constant bneg_bndneg_pen = (bneg*pen*0.8)
+define constant bpos_bndpos_pen = (bpos*pen*1.0)
+
+define constant x0 = 0
+define constant y0 = 0
 
 define coefficient bconvneg
 (bneg*wx,bpos*wy),
@@ -49,20 +60,31 @@ define fespace fesh1
 #       -dirichlet=[1,2]
 
 define coefficient lset
-((x-1.0*z-0.25)*(x-1.0*z-0.25)+(y-1.0*z-0.25)*(y-1.0*z-0.25)-0.04),
+((x-wx*z-x0)*(x-wx*z-x0)+(y-wy*z-y0)*(y-wy*z-y0)-0.04),
 #(z),
 
 define fespace fesx
        -type=xfespace
        -spacetime
        -t0=0.0
-       -t1=0.005
+       -t1=0.05
        # -levelset=(x-y+z-0.375)
-       -levelset=((x-1.0*z-0.25)*(x-1.0*z-0.25)+(y-1.0*z-0.25)*(y-1.0*z-0.25)-0.04)
+       # -levelset=((x-1.0*z-0.25)*(x-1.0*z-0.25)+(y-1.0*z-0.25)*(y-1.0*z-0.25)-0.04)
+       -vmax=1.0
+       -ref_space=0
+       -ref_time=0
+
+define fespace fescl 
+       -type=lsetcontfespace
+
+define fespace fesnegpos
+       -type=compound
+       -spaces=[fesh1,fesh1,fescl]
 
 numproc informxfem npix 
         -fespace=fesh1
         -xfespace=fesx
+        -lsetcontfespace=fescl
         -coef_levelset=lset
 
 define fespace fescomp
@@ -70,7 +92,8 @@ define fespace fescomp
        -spaces=[fesh1,fesx]
 
 define gridfunction u -fespace=fescomp
-       
+define gridfunction u_vis -fespace=fesnegpos
+
 #numproc shapetester npst -gridfunction=u
 
 define bilinearform evalx_past -fespace=fescomp -nonassemble
@@ -93,17 +116,18 @@ define coefficient rhspos
 define bilinearform a -fespace=fescomp # -printelmat -print
 #stx_mass bneg bpos told tnew
 stx_laplace abneg abpos told tnew
-stx_nitsche_halfhalf aneg apos bneg bpos lambda told tnew
+stx_nitsche_hansbo aneg apos bneg bpos lambda told tnew
 stx_timeder bneg bpos
 stx_convection bconvneg bconvpos told tnew
 stx_tracemass_past bneg bpos
+#stx_robin bneg_pen bpos_pen told tnew
 
 
 
 define linearform f -fespace=fescomp # -print
 #stx_source rhsneg rhspos told tnew
 stx_tracesource_past binineg binipos
-
+#stx_neumann bneg_bndneg_pen bpos_bndpos_pen told tnew
 
 #numproc setvalues npsv -gridfunction=u.1 -coefficient=one 
 #-boundary
@@ -111,6 +135,10 @@ stx_tracesource_past binineg binipos
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
 
+# define bilinearform eval_negpos -fespace=fesnegpos -nonassemble
+# st_np_vis_future one
+
+# numproc drawflux npdf_np -solution=u_vis -bilinearform=eval_negpos -label=u_negpos -applyd
 
 numproc visualization npviz -scalarfunction=u_future -subdivision=3
 

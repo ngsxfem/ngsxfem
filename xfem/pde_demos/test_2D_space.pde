@@ -17,18 +17,34 @@ define constant one = 1.0
 
 define constant two = 2.0
 
-define constant bneg = 1.0
-define constant bpos = 1.0
+define constant pen = 1e7
 
-define constant aneg = 1.0
-define constant apos = 5.0
+define constant x0 = 0.2
+define constant y0 = 0.5
+
+define constant bneg = 1.0
+define constant bpos = 2.0
+
+define constant aneg = 0.1
+define constant apos = 0.1
+
+define constant abneg = (aneg*bneg)
+define constant abpos = (apos*bpos)
+
+define constant bneg_pen = (pen*bneg)
+define constant bpos_pen = (pen*bpos)
+
+define constant bneg_bndvalneg_pen = (pen*bneg*bpos)
+define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
 define constant lambda = 15.0
+
+define constant R = 0.3
 
 define fespace fesh1
        -type=h1ho
        -order=1
-       -dirichlet=[1,2]
+#       -dirichlet=[1,2]
 
 define fespace fesx
        -type=xfespace
@@ -37,7 +53,7 @@ define fespace fesx
 
 define coefficient lset
 #(x-0.55),
-((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09),       
+((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
        
 numproc informxfem npix 
         -fespace=fesh1
@@ -59,11 +75,13 @@ numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 
 define bilinearform a -fespace=fescomp # -printelmat -print
 #xmass one one
-xlaplace aneg apos
+xlaplace abneg abpos
 xnitsche_hansbo aneg apos bneg bpos lambda
+xrobin bneg_pen bpos_pen
 
 define linearform f -fespace=fescomp # -print
-xsource one one
+xsource bneg bpos
+xneumann bneg_bndvalneg_pen bpos_bndvalpos_pen
 
 numproc setvalues npsv -gridfunction=u.1 -coefficient=zero -boundary
 

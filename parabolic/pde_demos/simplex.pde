@@ -21,8 +21,8 @@ define constant heapsize = 1e7
 
 define constant one = 1.0
 
-define constant bneg = 2.0
-define constant bpos = 1.0
+define constant bneg = 1.0
+define constant bpos = 2.0
 
 define constant wx = 0.00
 define constant wy = 0.1
@@ -111,9 +111,9 @@ numproc stx_solveinstat npsi
         -userstepping
         -aneg=0.02
         -apos=0.05
-        -bneg=2.0
-        -bpos=1.0
-        -lambda=50.0
+        -bneg=1.0
+        -bpos=2.0
+        -lambda=20.0
 
 # define bilinearform evalx_past -fespace=fescomp -nonassemble
 # stxvis_past one
@@ -145,6 +145,10 @@ numproc drawflux npdf_future -solution=u -bilinearform=evalx_future -label=u_fut
 define bilinearform eval_negpos -fespace=fesnegpos -nonassemble
 st_np_vis_future one
 
+define bilinearform eval_negpos_past -fespace=fesnegpos -nonassemble
+st_np_vis_past one
+
 numproc drawflux npdf_np -solution=u_vis -bilinearform=eval_negpos -label=u_negpos -applyd
+numproc drawflux npdf_np_past -solution=u_vis -bilinearform=eval_negpos_past -label=u_negpos_past -applyd
 
 numproc visualization npvis -scalarfunction=u_negpos -nolineartexture -deformationscale=1.0 -subdivision=1 -minval=0.0 -maxval=0.5
