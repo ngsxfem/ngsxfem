@@ -20,6 +20,8 @@
 
 #include <diffop_impl.hpp>
 
+#include <unistd.h>
+
 // #include "../utils/stcoeff.hpp"
 
 using namespace ngsolve;
@@ -52,12 +54,14 @@ protected:
   // time step
   double dt;
   // total time
+  double tstart;
   double tend;
   // direct solver type
   string inversetype;
   string fesstr;
 	
   bool userstepping;
+  double sleep_time;
 
   double bneg = 1.0;
   double bpos = 1.0;
@@ -122,6 +126,7 @@ public:
 	userstepping = flags.GetDefineFlag ("userstepping");
 
 	dt = flags.GetNumFlag ("dt", 0.001);
+	tstart = flags.GetNumFlag ("start", 0.13);
 	tend = flags.GetNumFlag ("tend", 1);
 
 	aneg = flags.GetNumFlag ("aneg", 1.0);
@@ -130,6 +135,7 @@ public:
 	bpos = flags.GetNumFlag ("bpos", 1.0);
 	lambda = flags.GetNumFlag ("lambda", 10.0);
 	
+	sleep_time = flags.GetNumFlag ("pause_after_step", 0.0);
 
 	coef_bconvneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_neg", "bconvneg"));
 	coef_bconvpos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_pos", "bconvpos"));
@@ -327,7 +333,7 @@ public:
 
 	// time stepping
 	double t;
-	for (t = 0; t < tend; t += dt)
+	for (t = tstart; t < tend; t += dt)
 	{
 	  HeapReset hr(lh);
 	  TimeInterval ti(t,t+dt);
@@ -378,6 +384,9 @@ public:
 	  
 	  if (userstepping)
 	  	getchar();
+	  if (sleep_time>0)
+	  	usleep(sleep_time*1000);
+
 	}
 	cout << "\r               \rt = " << tend;
 	cout << endl;
