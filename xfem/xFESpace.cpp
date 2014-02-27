@@ -682,7 +682,7 @@ namespace ngcomp
   { 
     FESpace* xfes = pde.GetFESpace(flags.GetStringFlag("xfespace","vx"));
     FESpace* basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
-    FESpace* fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"));
+    FESpace* fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
     CoefficientFunction * coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
     int mD = pde.GetMeshAccess().GetDimension();
@@ -706,14 +706,16 @@ namespace ngcomp
         dynamic_cast<XFESpace<2,2>* >(xfes) -> SetBaseFESpace (basefes);
         CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<2>(evals); 
         dynamic_cast<XFESpace<2,2>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
-        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        if (fescl)
+          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
       }
       else
       {
         dynamic_cast<XFESpace<2,3>* >(xfes) -> SetBaseFESpace (basefes);
         CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
         dynamic_cast<XFESpace<2,3>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
-        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        if (fescl)
+          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
       }
     }
     else
@@ -732,14 +734,16 @@ namespace ngcomp
         dynamic_cast<XFESpace<3,3>* >(xfes) -> SetBaseFESpace (basefes);
         CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
         dynamic_cast<XFESpace<3,3>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
-        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        if (fescl)
+          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
       }
       else
       {
         dynamic_cast<XFESpace<3,4>* >(xfes) -> SetBaseFESpace (basefes);
         CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<4>(evals); 
         dynamic_cast<XFESpace<3,4>* >(xfes) -> SetLevelSetCoefficient (coef_lset);
-        dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        if (fescl)
+          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
       }
     }
     // if (xfes_ != NULL)
