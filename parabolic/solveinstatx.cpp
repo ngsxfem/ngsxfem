@@ -126,7 +126,7 @@ public:
 	userstepping = flags.GetDefineFlag ("userstepping");
 
 	dt = flags.GetNumFlag ("dt", 0.001);
-	tstart = flags.GetNumFlag ("start", 0.13);
+	tstart = flags.GetNumFlag ("tstart", 0.0);
 	tend = flags.GetNumFlag ("tend", 1);
 
 	aneg = flags.GetNumFlag ("aneg", 1.0);
