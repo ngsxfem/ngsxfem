@@ -149,5 +149,19 @@ numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct #
 
 # numproc drawflux npdf_np -solution=u_vis -bilinearform=eval_negpos -label=u_negpos -applyd
 
+define coefficient veczero
+(0,0),
+
+numproc xdifference npxd -solution=u 
+        -function_n=two
+        -function_p=one
+        -derivative_n=veczero
+        -derivative_p=veczero
+        -levelset=lset
+        -interorder=2
+        -henryweight_n=1.0
+        -henryweight_p=1.0
+
+
 numproc visualization npviz -scalarfunction=u_future -subdivision=3
 

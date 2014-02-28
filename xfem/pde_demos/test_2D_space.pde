@@ -10,7 +10,7 @@ mesh = square_trigs.vol.gz
 
 shared = libngsxfem_xfem
 
-define constant heapsize = 1e7
+define constant heapsize = 1e8
 
 define constant zero = 0.0
 define constant one = 1.0
@@ -19,7 +19,7 @@ define constant two = 2.0
 
 define constant pen = 1e7
 
-define constant x0 = 0.2
+define constant x0 = 0.5
 define constant y0 = 0.5
 
 define constant bneg = 1.0
@@ -88,5 +88,18 @@ xsource bneg bpos
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
+
+define coefficient veczero
+(0,0),
+
+# numproc xdifference npxd -solution=u 
+#         -function_n=two
+#         -function_p=one
+#         -derivative_n=veczero
+#         -derivative_p=veczero
+#         -levelset=lset
+#         -interorder=2
+#         -henryweight_n=1.0
+#         -henryweight_p=1.0
 
 numproc visualization npviz -scalarfunction=utry #-comp=0
