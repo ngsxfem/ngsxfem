@@ -8,6 +8,7 @@
 #include "../cutint/xintegration.hpp"
 #include "xfiniteelement.hpp"
 #include "../spacetime/spacetimeintegrators.hpp"
+#include "../utils/stcoeff.hpp"
 
 namespace ngfem
 {
@@ -91,11 +92,13 @@ namespace ngfem
   template <int D>
   class SpaceTimeXConvectionIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    const CoefficientFunction * coef_neg;
+    const CoefficientFunction * coef_pos;
     double t1;
     double t0;
     double tau;
+    bool made_neg;
+    bool made_pos;
   public:
     SpaceTimeXConvectionIntegrator (const Array<CoefficientFunction*> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) 
@@ -103,8 +106,14 @@ namespace ngfem
       t0 = coeffs[2]->EvaluateConst(); 
       t1 = coeffs[3]->EvaluateConst();
       tau = t1 - t0;
+      made_neg = MakeHigherDimensionCoefficientFunction<D>(coeffs[0], coef_neg);
+      made_pos = MakeHigherDimensionCoefficientFunction<D>(coeffs[1], coef_pos);
     }
-    virtual ~SpaceTimeXConvectionIntegrator(){ ; };
+    virtual ~SpaceTimeXConvectionIntegrator(){ 
+      if (made_neg) delete coef_neg;
+      if (made_pos) delete coef_pos;
+      ; 
+    };
 
     virtual string Name () const { return "SpaceTimeXConvectionIntegrator"; }
 
@@ -188,51 +197,25 @@ namespace ngfem
   {
     const CoefficientFunction * coef_neg;
     const CoefficientFunction * coef_pos;
-    
     double t1;
     double t0;
     double tau;
-
+    bool made_neg;
+    bool made_pos;
   public:
     SpaceTimeXSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
     {
       t0 = coeffs[2]->EvaluateConst(); 
       t1 = coeffs[3]->EvaluateConst();
       tau = t1 - t0;
-
-      DomainVariableCoefficientFunction<D> * coefneg = dynamic_cast<DomainVariableCoefficientFunction<D> * > (coeffs[0]);
-      if (coefneg != NULL)
-      {
-        int numreg = coefneg->NumRegions();
-        if (numreg == INT_MAX) numreg = 1;
-        Array< EvalFunction* > evals;
-        evals.SetSize(numreg);
-        for (int i = 0; i < numreg; ++i)
-        {
-          evals[i] = &coefneg->GetEvalFunction(i);
-        }
-        coef_neg = new DomainVariableCoefficientFunction<D+1>(evals); 
-      }
-      else
-        coef_neg = coeffs[0];
-
-      DomainVariableCoefficientFunction<D> * coefpos = dynamic_cast<DomainVariableCoefficientFunction<D> * > (coeffs[1]);
-      if (coefpos != NULL)
-      {
-        int numreg = coefpos->NumRegions();
-        if (numreg == INT_MAX) numreg = 1;
-        Array< EvalFunction* > evals(numreg);
-        evals.SetSize(numreg);
-        for (int i = 0; i < numreg; ++i)
-        {
-          evals[i] = &coefpos->GetEvalFunction(i);
-        }
-        coef_pos = new DomainVariableCoefficientFunction<D+1>(evals); 
-      }
-      else
-        coef_pos = coeffs[1];
+      made_neg = MakeHigherDimensionCoefficientFunction<D>(coeffs[0], coef_neg);
+      made_pos = MakeHigherDimensionCoefficientFunction<D>(coeffs[1], coef_pos);
     }
-    virtual ~SpaceTimeXSourceIntegrator(){ ; };
+    virtual ~SpaceTimeXSourceIntegrator()
+    { 
+      if (made_neg) delete coef_neg;
+      if (made_pos) delete coef_pos;
+    };
 
     virtual string Name () const { return "SpaceTimeXSourceIntegrator"; }
 
