@@ -525,7 +525,7 @@ namespace ngcomp
 
       if (spacetime)
       {
-        bool also_future_trace = false;
+        bool also_future_trace = true;
 
         ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.first,lh);
         CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
