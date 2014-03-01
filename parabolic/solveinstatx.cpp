@@ -370,12 +370,14 @@ public:
 	  vecu += w;
 
 	  // update status text
-	  cout << "\rt = " << t;
+	  cout << "\r          \rt = " << t;
 	  cout << flush;
 	  // update visualization
 	  delete &invmat;
 	  delete &d;
 	  delete &w;
+
+	  // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
 
 	  xfes.XToNegPos(*gfu,*gfu_vis);
 
@@ -388,7 +390,7 @@ public:
 	  	usleep(sleep_time*1000);
 
 	}
-	cout << "\r               \rt = " << tend;
+	cout << "\r          \rt = " << tend;
 	cout << endl;
 	// delete &d;
 	// delete &w;
