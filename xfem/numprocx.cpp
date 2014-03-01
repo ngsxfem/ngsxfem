@@ -347,6 +347,49 @@ namespace ngcomp
 
 
 
+  
+
+  template<int D>
+  void CalcDxShapeOfCoeff(const CoefficientFunction * coef, const MappedIntegrationPoint<D,D>& mip, 
+                          double time,
+                          Vec<D>& der, LocalHeap& lh)
+  {
+    HeapReset hr(lh);
+    // bmatu = 0;
+    // evaluate dshape by numerical diff
+    //fel_u, eltrans, sip, returnval, lh
+
+    const IntegrationPoint& ip = mip.IP();//volume_ir[i];
+    const ElementTransformation & eltrans = mip.GetTransformation();
+    
+    Vec<D> der_ref;
+  
+    double eps = 1e-7;
+    for (int j = 0; j < D; j++)   // d / dxj
+	{
+	  IntegrationPoint ipl(ip);
+	  ipl(j) -= eps;
+	  MappedIntegrationPoint<D,D> sipl(ipl, eltrans);
+    DimMappedIntegrationPoint<D+1> mipl(ipl, eltrans);
+    mipl.Point().Range(0,D) = sipl.GetPoint();
+    mipl.Point()[D] = time;
+
+    IntegrationPoint ipr(ip);
+    ipr(j) += eps;
+    MappedIntegrationPoint<D,D> sipr(ipr, eltrans);
+      DimMappedIntegrationPoint<D+1> mipr(ipr, eltrans);
+      mipr.Point().Range(0,D) = sipr.GetPoint();
+      mipr.Point()[D] = time;
+
+      const double valright = coef->Evaluate(mipr);
+      const double valleft = coef->Evaluate(mipl);
+      
+	  der_ref[j] = (1.0/(2*eps)) * (valright-valleft);
+	}
+                              
+    der = Trans(mip.GetJacobianInverse()) * der_ref;
+  }
+
 
 /* ---------------------------------------- 
    numproc
@@ -356,11 +399,16 @@ namespace ngcomp
   {
   protected:
     GridFunction * gfu;
-    CoefficientFunction * coef_n;
-    CoefficientFunction * coef_p;
-    CoefficientFunction * coef_d_n;
-    CoefficientFunction * coef_d_p;
-    CoefficientFunction * lset;
+    const CoefficientFunction * coef_n;
+    const CoefficientFunction * coef_p;
+    const CoefficientFunction * coef_d_n;
+    const CoefficientFunction * coef_d_p;
+    const CoefficientFunction * lset;
+    bool made_coef_n;
+    bool made_coef_p;
+    bool made_coef_d_n;
+    bool made_coef_d_p;
+    bool made_lset;
     double threshold;
     int intorder;
     double b_pos;
@@ -383,11 +431,23 @@ namespace ngcomp
       : NumProc (apde)
     { 
       gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
-      coef_n= pde.GetCoefficientFunction(flags.GetStringFlag("function_n",""));
-      coef_p= pde.GetCoefficientFunction(flags.GetStringFlag("function_p",""));
-      coef_d_n= pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""));
-      coef_d_p= pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""));
-      lset= pde.GetCoefficientFunction(flags.GetStringFlag("levelset",""));
+      coef_n= NULL;
+      coef_p= NULL;
+      made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
+        pde.GetCoefficientFunction(flags.GetStringFlag("function_n","")),
+        coef_n);
+      made_coef_p = MakeHigherDimensionCoefficientFunction<D>(
+        pde.GetCoefficientFunction(flags.GetStringFlag("function_p","")),
+        coef_p);
+      made_coef_d_n = MakeHigherDimensionCoefficientFunction<D>(
+        pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""),true),
+        coef_d_n);
+      made_coef_d_p = MakeHigherDimensionCoefficientFunction<D>(
+        pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""),true),
+        coef_d_p);
+      made_lset = MakeHigherDimensionCoefficientFunction<D>(
+        pde.GetCoefficientFunction(flags.GetStringFlag("levelset","")),
+        lset);
       threshold = flags.GetNumFlag ( "threshold", -0.1);
       intorder = (int) flags.GetNumFlag ( "intorder", 2);
       b_pos = flags.GetNumFlag ( "henryweight_p", 1.0);
@@ -405,7 +465,16 @@ namespace ngcomp
       h1err.SetSize(0);
       iferr.SetSize(0);
     }
-  
+
+    virtual ~NumProcXDifference()
+    {
+      if (made_coef_n) delete coef_n;
+      if (made_coef_p) delete coef_p;
+      if (made_coef_d_n) delete coef_d_n;
+      if (made_coef_d_p) delete coef_d_p;
+      if (made_lset) delete lset;
+    }
+
     virtual string GetClassName () const
     {
       return "NumProcXDifference";
@@ -515,11 +584,21 @@ namespace ngcomp
               double solval = dt == POS ? coef_p->Evaluate(mipp) : coef_n->Evaluate(mipp);
 
               Vec<D> soldval;
-              if (dt == POS)
-                coef_d_p->Evaluate(mipp,soldval);
+              if (coef_d_p != NULL && coef_d_n != NULL)
+              {
+                if (dt == POS)
+                  coef_d_p->Evaluate(mipp,soldval);
+                else
+                  coef_d_n->Evaluate(mipp,soldval);
+              }
               else
-                coef_d_n->Evaluate(mipp,soldval);
-          
+              {
+                if (dt == POS)
+                  CalcDxShapeOfCoeff<D>(coef_p,mip,time,soldval,lh);
+                else
+                  CalcDxShapeOfCoeff<D>(coef_n,mip,time,soldval,lh);
+              }
+
               if (!spacetime)
               {
                 shape = scafe->GetShape(mip.IP(), lh);
@@ -578,11 +657,20 @@ namespace ngcomp
             double solval = dt == POS ? coef_p->Evaluate(mipp) : coef_n->Evaluate(mipp);
 
             Vec<D> soldval;
-            if (dt == POS)
-              coef_d_p->Evaluate(mipp,soldval);
+            if (coef_d_p != NULL && coef_d_n != NULL)
+            {
+              if (dt == POS)
+                coef_d_p->Evaluate(mipp,soldval);
+              else
+                coef_d_n->Evaluate(mipp,soldval);
+            }
             else
-              coef_d_n->Evaluate(mipp,soldval);
-
+            {
+              if (dt == POS)
+                CalcDxShapeOfCoeff<D>(coef_p,mip,time,soldval,lh);
+              else
+                CalcDxShapeOfCoeff<D>(coef_n,mip,time,soldval,lh);
+            }
             if (!spacetime)
             {
               shape = scafe->GetShape(mip.IP(), lh);
