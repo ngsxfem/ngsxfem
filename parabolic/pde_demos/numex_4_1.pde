@@ -15,7 +15,7 @@ shared = libngsxfem_spacetime
 shared = libngsxfem_xfem
 shared = libngsxfem_parabolic
 
-define constant heapsize = 1e7
+define constant heapsize = 1e8
 
 define constant one = 1.0
 
@@ -50,7 +50,6 @@ define coefficient solneg
 define coefficient solpos
 (sin(k*pi*z) * sin(pi*(x-x0-wx*z))),
 
-
 define coefficient bconvneg
 (bneg*wx,bneg*wy),
 
@@ -58,10 +57,12 @@ define coefficient bconvpos
 (bpos*wx,bpos*wy),
 
 define coefficient binineg
-(bneg*(sin((k)*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z)))),
+0,
+#(bneg*(sin((k)*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z)))),
 
 define coefficient binipos
-(bpos*(sin(k*pi*z) * sin(pi*(x-x0-wx*z)))),
+0,
+#(bpos*(sin(k*pi*z) * sin(pi*(x-x0-wx*z)))),
 
 define coefficient brhsneg
 (bneg*
@@ -70,7 +71,7 @@ define coefficient brhsneg
 ),
 
 define coefficient brhspos
-(bneg*
+(bpos*
       (k*pi*cos(k*pi*z)*(sin(pi*(x-x0-wx*z)))
       -apos*sin(k*pi*z)*(-pi*pi*sin(pi*(x-x0-wx*z))) )
 ),
@@ -83,20 +84,16 @@ define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
        -order_space=1
-       -order_time=0
+       -order_time=1
        -dirichlet=[2,4]
 
 define coefficient coef_lset
 #((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
-((x-x0-wx*z)*(x-x0-wx*z)-R*R),
+(abs(x-x0-wx*z)-R),
 
 define fespace fesx
        -type=xfespace
        -spacetime
-       -t0=0.00
-       -t1=0.01
-       #-levelset=(x-y+z-0.375)
-       #-levelset=((x-0.1*z-0.4)*(x-0.1*z-0.4)+(y-0.1*z-0.4)*(y-0.1*z-0.4)-0.04)
        -vmax=0.25
        -ref_space=0
        -ref_time=0
@@ -138,9 +135,9 @@ numproc stx_solveinstat npsi
         -solver=pardiso 
         -fespace=fescomp
         -fespacevis=fesnegpos
-        -dt=0.1
+        -dt=0.03125
         -tstart=0.0
-        -tend=1.0
+        -tend=0.5
 #        -userstepping
         -aneg=1
         -apos=2
@@ -148,6 +145,23 @@ numproc stx_solveinstat npsi
         -bpos=1.0
         -lambda=20.0
         -pause_after_step=0
+
+
+define coefficient veczero
+(0,0),
+
+numproc xdifference npxd -solution=u 
+        -function_n=solneg
+        -function_p=solpos
+        # -derivative_n=veczero
+        # -derivative_p=veczero
+        -levelset=coef_lset
+        -interorder=4
+        -henryweight_n=1.5
+        -henryweight_p=1.0
+        -time=0.5 # coeff function not yet of higher dimension...
+
+
 
 # define bilinearform evalx_past -fespace=fescomp -nonassemble
 # stxvis_past one
@@ -185,5 +199,5 @@ st_np_vis_past one
 numproc drawflux npdf_np -solution=u_vis -bilinearform=eval_negpos -label=u_negpos -applyd
 numproc drawflux npdf_np_past -solution=u_vis -bilinearform=eval_negpos_past -label=u_negpos_past -applyd
 
-numproc visualization npvis -scalarfunction=u_negpos -nolineartexture -deformationscale=1.0 -subdivision=1 
-        -minval=-2.0 -maxval=2.0
+numproc visualization npvis -scalarfunction=u_negpos -nolineartexture -deformationscale=1.0 -subdivision=0 
+        -minval=-1.0 -maxval=1.0
