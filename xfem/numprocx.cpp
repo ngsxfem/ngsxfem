@@ -391,6 +391,42 @@ namespace ngcomp
   }
 
 
+  class SolutionCoefficients
+  {
+  protected:
+    const CoefficientFunction * coef_n;
+    const CoefficientFunction * coef_p;
+    const CoefficientFunction * coef_d_n;
+    const CoefficientFunction * coef_d_p;
+    const CoefficientFunction * lset;
+  public:
+    SolutionCoefficients(const CoefficientFunction * a_coef_n,
+                         const CoefficientFunction * a_coef_p,
+                         const CoefficientFunction * a_coef_d_n = 0,
+                         const CoefficientFunction * a_coef_d_p = 0,
+                         const CoefficientFunction * a_lset = 0)
+      : coef_n(a_coef_n),
+        coef_p(a_coef_p),
+        coef_d_n(a_coef_d_n),
+        coef_d_p(a_coef_d_p),
+        lset(a_lset)
+    {; }
+    
+    bool HasSolutionNeg() { return ! coef_n == NULL; }
+    bool HasSolutionPos() { return ! coef_p == NULL; }
+    bool HasSolutionDNeg() { return ! coef_d_n == NULL; }
+    bool HasSolutionDPos() { return ! coef_d_p == NULL; }
+    bool HasLevelSet() { return ! lset == NULL; }
+
+    const CoefficientFunction & GetSolutionNeg() { return *coef_n; }
+    const CoefficientFunction & GetSolutionPos() { return *coef_p; }
+    const CoefficientFunction & GetSolutionDNeg() { return *coef_d_n; }
+    const CoefficientFunction & GetSolutionDPos() { return *coef_d_p; }
+    const CoefficientFunction & GetLevelSet() { return *lset; }
+    
+  };
+
+
 /* ---------------------------------------- 
    numproc
    ---------------------------------------- */
@@ -399,16 +435,17 @@ namespace ngcomp
   {
   protected:
     GridFunction * gfu;
-    const CoefficientFunction * coef_n;
-    const CoefficientFunction * coef_p;
-    const CoefficientFunction * coef_d_n;
-    const CoefficientFunction * coef_d_p;
-    const CoefficientFunction * lset;
+    // const CoefficientFunction * coef_n;
+    // const CoefficientFunction * coef_p;
+    // const CoefficientFunction * coef_d_n;
+    // const CoefficientFunction * coef_d_p;
+    // const CoefficientFunction * lset;
     bool made_coef_n;
     bool made_coef_p;
     bool made_coef_d_n;
     bool made_coef_d_p;
     bool made_lset;
+    SolutionCoefficients * solcoef;
     double threshold;
     int intorder;
     double b_pos;
@@ -427,12 +464,13 @@ namespace ngcomp
     double time;
   public:
     
-    NumProcXDifference (PDE & apde, const Flags & flags)
-      : NumProc (apde)
-    { 
-      gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
-      coef_n= NULL;
-      coef_p= NULL;
+    SolutionCoefficients * InitializeSolutionCoefficient(PDE & apde, const Flags & flags)
+    {
+      const CoefficientFunction * coef_n = NULL;
+      const CoefficientFunction * coef_p = NULL;
+      const CoefficientFunction * coef_d_n = NULL;
+      const CoefficientFunction * coef_d_p = NULL;
+      const CoefficientFunction * lset = NULL;
       made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
         pde.GetCoefficientFunction(flags.GetStringFlag("function_n","")),
         coef_n);
@@ -448,6 +486,15 @@ namespace ngcomp
       made_lset = MakeHigherDimensionCoefficientFunction<D>(
         pde.GetCoefficientFunction(flags.GetStringFlag("levelset","")),
         lset);
+      return new SolutionCoefficients(coef_n, coef_p, coef_d_n, coef_d_p, lset);
+    }
+    
+
+    NumProcXDifference (PDE & apde, const Flags & flags)
+      : NumProc (apde)
+    { 
+      gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
+      solcoef = InitializeSolutionCoefficient(apde,flags);
       threshold = flags.GetNumFlag ( "threshold", -0.1);
       intorder = (int) flags.GetNumFlag ( "intorder", 2);
       b_pos = flags.GetNumFlag ( "henryweight_p", 1.0);
@@ -468,11 +515,12 @@ namespace ngcomp
 
     virtual ~NumProcXDifference()
     {
-      if (made_coef_n) delete coef_n;
-      if (made_coef_p) delete coef_p;
-      if (made_coef_d_n) delete coef_d_n;
-      if (made_coef_d_p) delete coef_d_p;
-      if (made_lset) delete lset;
+      if (made_coef_n) delete &(solcoef->GetSolutionNeg());
+      if (made_coef_p) delete &(solcoef->GetSolutionPos());
+      if (made_coef_d_n) delete &(solcoef->GetSolutionDNeg());
+      if (made_coef_d_p) delete &(solcoef->GetSolutionDPos());
+      if (made_lset) delete &(solcoef->GetLevelSet());
+      delete solcoef;
     }
 
     virtual string GetClassName () const
@@ -581,22 +629,22 @@ namespace ngcomp
               mipp.Point().Range(0,D) = mip.GetPoint();
               mipp.Point()[D] = time;
 
-              double solval = dt == POS ? coef_p->Evaluate(mipp) : coef_n->Evaluate(mipp);
+              double solval = dt == POS ? solcoef->GetSolutionPos().Evaluate(mipp) : solcoef->GetSolutionNeg().Evaluate(mipp);
 
               Vec<D> soldval;
-              if (coef_d_p != NULL && coef_d_n != NULL)
+              if (solcoef->HasSolutionDNeg() && solcoef->HasSolutionDPos())
               {
                 if (dt == POS)
-                  coef_d_p->Evaluate(mipp,soldval);
+                  solcoef->GetSolutionDPos().Evaluate(mipp,soldval);
                 else
-                  coef_d_n->Evaluate(mipp,soldval);
+                  solcoef->GetSolutionDNeg().Evaluate(mipp,soldval);
               }
               else
               {
                 if (dt == POS)
-                  CalcDxShapeOfCoeff<D>(coef_p,mip,time,soldval,lh);
+                  CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionPos()),mip,time,soldval,lh);
                 else
-                  CalcDxShapeOfCoeff<D>(coef_n,mip,time,soldval,lh);
+                  CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionNeg()),mip,time,soldval,lh);
               }
 
               if (!spacetime)
@@ -654,22 +702,23 @@ namespace ngcomp
             DimMappedIntegrationPoint<D+1> mipp(pir[i], eltrans);
             mipp.Point().Range(0,D) = mip.GetPoint();
             mipp.Point()[D] = time;
-            double solval = dt == POS ? coef_p->Evaluate(mipp) : coef_n->Evaluate(mipp);
+
+            double solval = dt == POS ? solcoef->GetSolutionPos().Evaluate(mipp) : solcoef->GetSolutionNeg().Evaluate(mipp);
 
             Vec<D> soldval;
-            if (coef_d_p != NULL && coef_d_n != NULL)
+            if (solcoef->HasSolutionDNeg() && solcoef->HasSolutionDPos())
             {
               if (dt == POS)
-                coef_d_p->Evaluate(mipp,soldval);
+                solcoef->GetSolutionDPos().Evaluate(mipp,soldval);
               else
-                coef_d_n->Evaluate(mipp,soldval);
+                solcoef->GetSolutionDNeg().Evaluate(mipp,soldval);
             }
             else
             {
               if (dt == POS)
-                CalcDxShapeOfCoeff<D>(coef_p,mip,time,soldval,lh);
+                CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionPos()),mip,time,soldval,lh);
               else
-                CalcDxShapeOfCoeff<D>(coef_n,mip,time,soldval,lh);
+                CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionNeg()),mip,time,soldval,lh);
             }
             if (!spacetime)
             {

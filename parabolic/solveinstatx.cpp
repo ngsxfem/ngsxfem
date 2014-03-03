@@ -356,6 +356,7 @@ public:
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
 
+	  lfi_tr.SetTime(ti.first);  //absolute time
 	  lfi_rhs.SetTimeInterval(ti);
 	  lfrhs -> Assemble(lh);
 
