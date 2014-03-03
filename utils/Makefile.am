@@ -6,7 +6,7 @@ AM_CPPFLAGS = -I$(netgendir)/include $(NETGEN_INCLUDES) $(LAPACK_INCLUDES) $(TCL
 
 lib_LTLIBRARIES = libngsxfem_utils.la
 
-libngsxfem_utils_la_SOURCES = fieldeval.cpp fieldeval.hpp
+libngsxfem_utils_la_SOURCES = fieldeval.cpp fieldeval.hpp error.cpp error.hpp
 #libngsxfem_utils_la_LIBADD = ../spacetime/libngsxfem_spacetime.la
 libngsxfem_utils_la_LDFLAGS = -avoid-version -rdynamic $(SOLVER_LIBS) $(NETGEN_LIBS)
 

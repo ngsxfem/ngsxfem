@@ -11,10 +11,10 @@
 #include <solve.hpp>
 // #include "xintegration.hpp"
 #include "../spacetime/spacetimefespace.hpp"
-// #include "../utils/fieldeval.hpp"
 #include "xfemIntegrators.hpp"
 #include "stxfemIntegrators.hpp"
 #include "setvaluesx.hpp"
+#include "../utils/error.hpp"
 
 using namespace ngsolve;
 // using namespace xintegration;
@@ -345,87 +345,7 @@ namespace ngcomp
   };
 
 
-
-
-  
-
-  template<int D>
-  void CalcDxShapeOfCoeff(const CoefficientFunction * coef, const MappedIntegrationPoint<D,D>& mip, 
-                          double time,
-                          Vec<D>& der, LocalHeap& lh)
-  {
-    HeapReset hr(lh);
-    // bmatu = 0;
-    // evaluate dshape by numerical diff
-    //fel_u, eltrans, sip, returnval, lh
-
-    const IntegrationPoint& ip = mip.IP();//volume_ir[i];
-    const ElementTransformation & eltrans = mip.GetTransformation();
-    
-    Vec<D> der_ref;
-  
-    double eps = 1e-7;
-    for (int j = 0; j < D; j++)   // d / dxj
-	{
-	  IntegrationPoint ipl(ip);
-	  ipl(j) -= eps;
-	  MappedIntegrationPoint<D,D> sipl(ipl, eltrans);
-    DimMappedIntegrationPoint<D+1> mipl(ipl, eltrans);
-    mipl.Point().Range(0,D) = sipl.GetPoint();
-    mipl.Point()[D] = time;
-
-    IntegrationPoint ipr(ip);
-    ipr(j) += eps;
-    MappedIntegrationPoint<D,D> sipr(ipr, eltrans);
-      DimMappedIntegrationPoint<D+1> mipr(ipr, eltrans);
-      mipr.Point().Range(0,D) = sipr.GetPoint();
-      mipr.Point()[D] = time;
-
-      const double valright = coef->Evaluate(mipr);
-      const double valleft = coef->Evaluate(mipl);
-      
-	  der_ref[j] = (1.0/(2*eps)) * (valright-valleft);
-	}
-                              
-    der = Trans(mip.GetJacobianInverse()) * der_ref;
-  }
-
-
-  class SolutionCoefficients
-  {
-  protected:
-    const CoefficientFunction * coef_n;
-    const CoefficientFunction * coef_p;
-    const CoefficientFunction * coef_d_n;
-    const CoefficientFunction * coef_d_p;
-    const CoefficientFunction * lset;
-  public:
-    SolutionCoefficients(const CoefficientFunction * a_coef_n,
-                         const CoefficientFunction * a_coef_p,
-                         const CoefficientFunction * a_coef_d_n = 0,
-                         const CoefficientFunction * a_coef_d_p = 0,
-                         const CoefficientFunction * a_lset = 0)
-      : coef_n(a_coef_n),
-        coef_p(a_coef_p),
-        coef_d_n(a_coef_d_n),
-        coef_d_p(a_coef_d_p),
-        lset(a_lset)
-    {; }
-    
-    bool HasSolutionNeg() { return ! coef_n == NULL; }
-    bool HasSolutionPos() { return ! coef_p == NULL; }
-    bool HasSolutionDNeg() { return ! coef_d_n == NULL; }
-    bool HasSolutionDPos() { return ! coef_d_p == NULL; }
-    bool HasLevelSet() { return ! lset == NULL; }
-
-    const CoefficientFunction & GetSolutionNeg() { return *coef_n; }
-    const CoefficientFunction & GetSolutionPos() { return *coef_p; }
-    const CoefficientFunction & GetSolutionDNeg() { return *coef_d_n; }
-    const CoefficientFunction & GetSolutionDPos() { return *coef_d_p; }
-    const CoefficientFunction & GetLevelSet() { return *lset; }
-    
-  };
-
+ 
 
 /* ---------------------------------------- 
    numproc
@@ -435,92 +355,30 @@ namespace ngcomp
   {
   protected:
     GridFunction * gfu;
-    // const CoefficientFunction * coef_n;
-    // const CoefficientFunction * coef_p;
-    // const CoefficientFunction * coef_d_n;
-    // const CoefficientFunction * coef_d_p;
-    // const CoefficientFunction * lset;
-    bool made_coef_n;
-    bool made_coef_p;
-    bool made_coef_d_n;
-    bool made_coef_d_p;
-    bool made_lset;
-    SolutionCoefficients * solcoef;
+    SolutionCoefficients<D> solcoef;
     double threshold;
     int intorder;
     double b_pos;
     double b_neg;
-    Array<double> l2err_p;
-    Array<double> l2err_n;
-    Array<double> l2err;
-    Array<double> h1xerr_p;
-    Array<double> h1xerr_n;
-    Array<double> h1yerr_p;
-    Array<double> h1yerr_n;
-    Array<double> h1xerr;
-    Array<double> h1yerr;
-    Array<double> h1err;
-    Array<double> iferr;
     double time;
+    ErrorTable errtab;
   public:
-    
-    SolutionCoefficients * InitializeSolutionCoefficient(PDE & apde, const Flags & flags)
-    {
-      const CoefficientFunction * coef_n = NULL;
-      const CoefficientFunction * coef_p = NULL;
-      const CoefficientFunction * coef_d_n = NULL;
-      const CoefficientFunction * coef_d_p = NULL;
-      const CoefficientFunction * lset = NULL;
-      made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
-        pde.GetCoefficientFunction(flags.GetStringFlag("function_n","")),
-        coef_n);
-      made_coef_p = MakeHigherDimensionCoefficientFunction<D>(
-        pde.GetCoefficientFunction(flags.GetStringFlag("function_p","")),
-        coef_p);
-      made_coef_d_n = MakeHigherDimensionCoefficientFunction<D>(
-        pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""),true),
-        coef_d_n);
-      made_coef_d_p = MakeHigherDimensionCoefficientFunction<D>(
-        pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""),true),
-        coef_d_p);
-      made_lset = MakeHigherDimensionCoefficientFunction<D>(
-        pde.GetCoefficientFunction(flags.GetStringFlag("levelset","")),
-        lset);
-      return new SolutionCoefficients(coef_n, coef_p, coef_d_n, coef_d_p, lset);
-    }
-    
+
 
     NumProcXDifference (PDE & apde, const Flags & flags)
-      : NumProc (apde)
+      : NumProc (apde), solcoef(apde,flags), errtab()
     { 
       gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
-      solcoef = InitializeSolutionCoefficient(apde,flags);
       threshold = flags.GetNumFlag ( "threshold", -0.1);
       intorder = (int) flags.GetNumFlag ( "intorder", 2);
       b_pos = flags.GetNumFlag ( "henryweight_p", 1.0);
       b_neg = flags.GetNumFlag ( "henryweight_n", 1.0);
       time = flags.GetNumFlag ( "time", 1.0);
-      l2err_p.SetSize(0);
-      l2err_n.SetSize(0);
-      l2err.SetSize(0);
-      h1xerr_p.SetSize(0);
-      h1xerr_n.SetSize(0);
-      h1yerr_p.SetSize(0);
-      h1yerr_n.SetSize(0);
-      h1xerr.SetSize(0);
-      h1yerr.SetSize(0);
-      h1err.SetSize(0);
-      iferr.SetSize(0);
     }
 
     virtual ~NumProcXDifference()
     {
-      if (made_coef_n) delete &(solcoef->GetSolutionNeg());
-      if (made_coef_p) delete &(solcoef->GetSolutionPos());
-      if (made_coef_d_n) delete &(solcoef->GetSolutionDNeg());
-      if (made_coef_d_p) delete &(solcoef->GetSolutionDPos());
-      if (made_lset) delete &(solcoef->GetLevelSet());
-      delete solcoef;
+      ;
     }
 
     virtual string GetClassName () const
@@ -532,426 +390,15 @@ namespace ngcomp
     virtual void Do (LocalHeap & lh)
     {
       static int refinements = 0;
-      refinements++;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
-      Array<int> dnums;
-      int activeels = 0;
-      double l2diff_n = 0;
-      double l2diff_p = 0;
-      double l2diff = 0;
-      double h1xdiff_n = 0;
-      double h1xdiff_p = 0;
-      double h1ydiff_n = 0;
-      double h1ydiff_p = 0;
-      double h1xdiff = 0;
-      double h1ydiff = 0;
-      double h1diff = 0;
-      double ifjumpl2 = 0;
-      for (int i = 0; i < pde.GetMeshAccess().GetNE(); ++i)
-      {
-        HeapReset hr(lh);
-        gfu -> GetFESpace().GetDofNrs (i, dnums);
-        const int size = dnums.Size();
+      refinements++;
+      CalcXError<D>(gfu, solcoef, intorder, b_neg, b_pos, time, errtab, lh);
+    }    
+    
 
-        FlatVector<double> elvec (size, lh);
-        gfu -> GetVector().GetIndirect (dnums, elvec);   
-
-        // ElementTransformation eltrans;
-        // ma.GetElementTransformation (i, eltrans, lh);
-
-        ElementTransformation & eltrans = ma.GetTrafo(i,false,lh);
-
-        // IntegrationRule pir;
-        // pir = SelectIntegrationRule (eltrans.GetElementType(), intorder);
-                  
-        // bool skip = false;
-        // for (int j = 0 ; j < pir.GetNIP(); j++)
-        // {
-        //   MappedIntegrationPoint<D,D> mip(pir[j], eltrans);
-        //   if (abs(lset->Evaluate(mip)) <= threshold)
-        //   {
-        //     skip = true;
-        //     break;
-        //   }
-        // }
-
-        const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(i,lh);
-        const CompoundFiniteElement & cfel = 
-          dynamic_cast<const CompoundFiniteElement&> (base_fel);
-
-        const XFiniteElement * xfe = NULL;
-        const XDummyFE * dummfe = NULL;
-        const ScalarFiniteElement<D> * scafe = NULL;
-        const ScalarSpaceTimeFiniteElement<D> * scastfe = NULL;
-
-        for (int j = 0; j < cfel.GetNComponents(); ++j)
-        {
-          if (xfe==NULL)
-            xfe = dynamic_cast<const XFiniteElement* >(&cfel[j]);
-          if (dummfe==NULL)
-            dummfe = dynamic_cast<const XDummyFE* >(&cfel[j]);
-          if (scafe==NULL)
-            scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[j]);
-          if (scastfe==NULL)
-            scastfe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[j]);
-        }
-
-        bool spacetime = scastfe != NULL;
-
-        int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
-        int ndof = spacetime ? scastfe->GetNDof() : scafe->GetNDof();
-        int ndof_total = ndof+ndof_x;
-        FlatVector<> shape_total(ndof_total,lh);
-        FlatVector<> shape(ndof,&shape_total(0));
-        FlatVector<> shapex(ndof,&shape_total(ndof));
-
-        FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
-        FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
-        FlatMatrixFixWidth<D> dshapex(ndof,&dshape_total(ndof,0));
-
-        if (xfe)
-        {
-
-          DOMAIN_TYPE dt = POS;
-          for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
-          {
-
-            const FlatXLocalGeometryInformation & xgeom( spacetime ? 
-                                                         xfe->GetFlatLocalGeometryUpTrace() : 
-                                                         xfe->GetFlatLocalGeometry());
-            const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
-            const FlatQuadratureRule<D> & fquad(fcompr.GetRule(dt));
-            for (int i = 0; i < fquad.Size(); ++i)
-            {
-              IntegrationPoint ip(&fquad.points(i,0),fquad.weights(i));
-              MappedIntegrationPoint<D,D> mip(ip, eltrans);
-              DimMappedIntegrationPoint<D+1> mipp(ip, eltrans);
-              mipp.Point().Range(0,D) = mip.GetPoint();
-              mipp.Point()[D] = time;
-
-              double solval = dt == POS ? solcoef->GetSolutionPos().Evaluate(mipp) : solcoef->GetSolutionNeg().Evaluate(mipp);
-
-              Vec<D> soldval;
-              if (solcoef->HasSolutionDNeg() && solcoef->HasSolutionDPos())
-              {
-                if (dt == POS)
-                  solcoef->GetSolutionDPos().Evaluate(mipp,soldval);
-                else
-                  solcoef->GetSolutionDNeg().Evaluate(mipp,soldval);
-              }
-              else
-              {
-                if (dt == POS)
-                  CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionPos()),mip,time,soldval,lh);
-                else
-                  CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionNeg()),mip,time,soldval,lh);
-              }
-
-              if (!spacetime)
-              {
-                shape = scafe->GetShape(mip.IP(), lh);
-                scafe->CalcMappedDShape(mip, dshape);
-              }
-              else
-              {
-                scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
-                scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
-              }
-
-              shapex = shape;
-              dshapex = dshape;
-
-              for (int l = 0; l < ndof_x; ++l)
-              {
-                if (xfe->GetSignsOfDof()[l] != dt)
-                {
-                  shapex(l) = 0.0;
-                  dshapex.Row(l) = 0.0;
-                }
-              }
-
-              double discval = InnerProduct(shape_total,elvec);
-              Vec<D> discdval = Trans(dshape_total) * elvec;
-              Vec<D> diffdval = soldval - discdval;
-              double diffdsqr = L2Norm2(diffdval);
-
-              double fac = mip.GetWeight();
-              if (dt == POS)
-              {
-                l2diff_p += b_pos*fac*sqr(discval-solval);
-                h1xdiff_p += b_pos*fac*diffdsqr;
-              }
-              else
-              {
-                l2diff_n += b_neg*fac*sqr(discval-solval);
-                h1xdiff_n += b_neg*fac*diffdsqr;
-              }
-            } // quad rule
-
-          }
-        } // loop over els.
-        else
-        {
-          DOMAIN_TYPE dt = dummfe->GetDomainType();
-
-
-          IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), intorder);
-          for (int i = 0 ; i < pir.GetNIP(); i++)
-          {
-            MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-            DimMappedIntegrationPoint<D+1> mipp(pir[i], eltrans);
-            mipp.Point().Range(0,D) = mip.GetPoint();
-            mipp.Point()[D] = time;
-
-            double solval = dt == POS ? solcoef->GetSolutionPos().Evaluate(mipp) : solcoef->GetSolutionNeg().Evaluate(mipp);
-
-            Vec<D> soldval;
-            if (solcoef->HasSolutionDNeg() && solcoef->HasSolutionDPos())
-            {
-              if (dt == POS)
-                solcoef->GetSolutionDPos().Evaluate(mipp,soldval);
-              else
-                solcoef->GetSolutionDNeg().Evaluate(mipp,soldval);
-            }
-            else
-            {
-              if (dt == POS)
-                CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionPos()),mip,time,soldval,lh);
-              else
-                CalcDxShapeOfCoeff<D>(&(solcoef->GetSolutionNeg()),mip,time,soldval,lh);
-            }
-            if (!spacetime)
-            {
-              shape = scafe->GetShape(mip.IP(), lh);
-              scafe->CalcMappedDShape(mip, dshape);
-            }
-            else
-            {
-              scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
-              scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
-            }
-
-            double discval = InnerProduct(shape,elvec);
-            Vec<D> discdval = Trans(dshape) * elvec;
-            Vec<D> diffdval = soldval - discdval;
-            double diffdsqr = L2Norm2(diffdval);
-
-            double fac = mip.GetWeight();
-            if (dt == POS)
-            {
-              l2diff_p += b_pos*fac*sqr(discval-solval);
-              h1xdiff_p += b_pos*fac*diffdsqr;
-            }
-            else
-            {
-              // cout << "discval, solval: " << discval << ", " << solval << endl;
-              l2diff_n += b_neg*fac*sqr(discval-solval);
-              h1xdiff_n += b_neg*fac*diffdsqr;
-            }
-          }
-          
-
-        }
-            /*
-            if (threshold<=0.0)
-            {
-              activeels++;
-              bool sign=false;
-              FlatMatrixFixWidth<D> dshape_h1(ndof_h1,&dshape(0,0)); //flat overlay
-              FlatMatrixFixWidth<D> dshape_x(ndof_x,&dshape(ndof_h1,0)); //flat overlay
-              int p = scafe->Order();
-
-              for (int k=0; k<2; sign=!sign, k++)
-              {
-                CoefficientFunction * sol = sign ? coef_p : coef_n;
-                CoefficientFunction * derx = sign ? coef_dx_p : coef_dx_n;
-                CoefficientFunction * dery = sign ? coef_dy_p : coef_dy_n;
-
-                IntegrationRule pir; //partial integration rule
-                if(!xfe)
-                { 
-                  if (dummfe->GetSign() != sign)
-                    continue;
-                  pir = SelectIntegrationRule (eltrans.GetElementType(), 2*p);
-                }
-                else{
-                  xfe->GetMasterElement().FillVolumeIntegrationRule(intorder,sign,pir);
-                }
-
-                for (int i = 0 ; i < pir.GetNIP(); i++)
-                {
-                  MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-                  scafe->CalcMappedDShape (mip,dshape_h1);
-                  shape.Range(0,ndof_h1) = scafe->GetShape(mip.IP(), lh);
-                  if (xfe)
-                  {
-                    xfe->CalcMappedDShape (mip,dshape_x);
-                    shape.Range(ndof_h1,ndof) = xfe->GetShape(mip.IP(), lh);
-                    for (int l = 0; l < ndof_x; ++l)
-                    {
-                      if (xfe->GetSignsOfDof()[l] == sign){
-                        dshape.Row(ndof_h1+l) = 0.0;
-                        shape(ndof_h1+l) = 0.0;
-                      }
-                    }
-                  }
-
-                  const double solval = sol->Evaluate(mip);
-                  const double discval = InnerProduct(elvec,shape);
-                  // const double absdet = mip.GetJacobiDet();
-                  const double derxval = derx->Evaluate(mip);
-                  const double deryval = dery->Evaluate(mip);
-                  const double weight = mip.GetWeight();
-                  Vec<2> gradu = Trans(dshape) * elvec;
-                  if (sign)
-                    l2diff_p += (solval-discval)*(solval-discval)*weight*b_pos;
-                  else
-                    l2diff_n += (solval-discval)*(solval-discval)*weight*b_neg;
-
-                  if (sign){
-                    h1xdiff_p += (derxval-gradu(0))*(derxval-gradu(0))*weight*b_pos;
-                    h1ydiff_p += (deryval-gradu(1))*(deryval-gradu(1))*weight*b_pos;
-                  }
-                  else
-                  {
-                    h1xdiff_n += (derxval-gradu(0))*(derxval-gradu(0))*weight*b_pos;
-                    h1ydiff_n += (deryval-gradu(1))*(deryval-gradu(1))*weight*b_pos;
-                  }
-                }
-                
-              }
-            }
-            */
-            
-          }
-          /*
-          else if (!skip)
-          {
-            activeels++;
-            if (!dummfe) throw Exception(" not an extended fespace?! ");
-
-            bool sign = dummfe->GetSign();
-            CoefficientFunction * sol = sign ? coef_p : coef_n;
-            CoefficientFunction * derx = sign ? coef_dx_p : coef_dx_n;
-            CoefficientFunction * dery = sign ? coef_dy_p : coef_dy_n;
-
-            for (int j = 0 ; j < pir.GetNIP(); j++)
-            {
-              MappedIntegrationPoint<D,D> mip(pir[j], eltrans);
-              const double solval = sol->Evaluate(mip);
-              const double discval = InnerProduct(elvec,scafe->GetShape(mip.IP(), lh));
-              // const double absdet = mip.GetJacobiDet();
-              scafe->CalcMappedDShape (mip,dshape);
-              const double derxval = derx->Evaluate(mip);
-              const double deryval = dery->Evaluate(mip);
-              const double weight = mip.GetWeight();
-              Vec<2> gradu = Trans(dshape) * elvec;
-              if (sign)
-                l2diff_p += (solval-discval)*(solval-discval)*weight*b_pos;
-              else
-                l2diff_n += (solval-discval)*(solval-discval)*weight*b_neg;
-
-                if (sign){
-                h1xdiff_p += (derxval-gradu(0))*(derxval-gradu(0))*weight*b_pos;
-                h1ydiff_p += (deryval-gradu(1))*(deryval-gradu(1))*weight*b_pos;
-                }
-                else
-                {
-                h1xdiff_n += (derxval-gradu(0))*(derxval-gradu(0))*weight*b_pos;
-                h1ydiff_n += (deryval-gradu(1))*(deryval-gradu(1))*weight*b_pos;
-                }
-                }
-                }*/ // if xfe
-
-      ifjumpl2 = sqrt(ifjumpl2); iferr.Append(ifjumpl2);
-      l2diff = l2diff_p + l2diff_n;
-      h1xdiff = h1xdiff_p + h1xdiff_n;
-      l2diff_p = sqrt(l2diff_p); l2err_p.Append(l2diff_p);
-      h1xdiff_p = sqrt(h1xdiff_p); h1xerr_p.Append(h1xdiff_p);
-      l2diff_n = sqrt(l2diff_n); l2err_n.Append(l2diff_n);
-      h1xdiff_n = sqrt(h1xdiff_n); h1xerr_n.Append(h1xdiff_n);
-      l2diff = sqrt(l2diff); l2err.Append(l2diff);
-      h1xdiff = sqrt(h1xdiff); h1xerr.Append(h1xdiff);
-      cout << " activeels = " << activeels << endl;
-      cout << setw(12) << "l2_n" << "\t|";
-      cout << setw(12) << "l2_p" << "\t|";
-      cout << setw(12) << "l2" << "\t|";
-      cout << setw(12) << "h1x_n" << "\t|";
-      cout << setw(12) << "h1x_p" << "\t|";
-      cout << setw(12) << "h1x" << "\t|";
-      cout << setw(12) << "ifl2" << endl;
-
-      for (int i = 0; i < refinements; ++i)
-      {
-        cout << setw(12) << l2err_n[i] << "\t|";
-        cout << setw(12) << l2err_p[i] << "\t|";
-        cout << setw(12) << l2err[i] << "\t|";
-        cout << setw(12) << h1xerr_n[i] << "\t|";
-        cout << setw(12) << h1xerr_p[i] << "\t|";
-        cout << setw(12) << h1xerr[i] << "\t|";
-        cout << setw(12) << iferr[i] << endl;
-      }
-      // cout << " l2diff_p = " << l2diff_p << endl;
-      // cout << " l2diff_n = " << l2diff_n << endl;
-      // cout << " l2diff = " << l2diff << endl;
-      // cout << " h1diff_p = " << h1diff_p << endl;
-      // cout << " h1diff_n = " << h1diff_n << endl;
-      // cout << " h1diff = " << h1diff << endl;
-      // cout << " ifjumpl2  = " << ifjumpl2  << endl;
-
-
-
-
-    }
   };
 
-
-/* ---------------------------------------- 
-                  numproc
-   ---------------------------------------- */
-/*
-    class NumProcMarkElementsOnInterface : public NumProc
-    {
-    protected:
-        string gciname;
-    public:
-    
-        NumProcMarkElementsOnInterface (PDE & apde, const Flags & flags)
-            : NumProc (apde)
-            { 
-                gciname = flags.GetStringFlag("cutname","cut");
-            }
-  
-        virtual string GetClassName () const
-            {
-                return "NPMarkElementsonInterface";
-            }
-
-
-        virtual void Do (LocalHeap & lh)
-            {
-                CutInfoContainer & cic = CutInfoContainer::getInstance();
-                AdLinCutTriang & gci = *cic.Get(gciname);
-                if (!gci.Finalized())
-                  throw Exception("gci not ready yet!");
-                for (int i = 0; i < pde.GetMeshAccess().GetNE(); ++i)
-                {
-                  if (gci.IsElementCut(i))
-                    Ng_SetRefinementFlag (i+1, 1);
-                  else
-                    Ng_SetRefinementFlag (i+1, 0);
-                }
-            }
-    };
-*/
-
-
-
-
 }
-
-// static RegisterNumProc<NumProcMarkElementsOnInterface> npinitmark("markinterface");
-
 
 static RegisterNumProc<NumProcSetValuesX> npinittestxfem2d("setvaluesx");
 static RegisterNumProc<NumProcXDifference<2> > npxdiff("xdifference");
