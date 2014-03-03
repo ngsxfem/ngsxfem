@@ -25,7 +25,7 @@ define constant apos = 2.0
 define constant bneg = 1.5
 define constant bpos = 1.0
 
-define constant wx = 0.25
+define constant wx = 0.025
 define constant wy = 0.0
 
 define constant x0 = 1.0
@@ -57,12 +57,12 @@ define coefficient bconvpos
 (bpos*wx,bpos*wy),
 
 define coefficient binineg
-0,
-#(bneg*(sin((k)*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z)))),
+#0,
+(bneg*(sin((k)*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z)))),
 
 define coefficient binipos
-0,
-#(bpos*(sin(k*pi*z) * sin(pi*(x-x0-wx*z)))),
+#0,
+(bpos*(sin(k*pi*z) * sin(pi*(x-x0-wx*z)))),
 
 define coefficient brhsneg
 (bneg*
@@ -135,8 +135,8 @@ numproc stx_solveinstat npsi
         -solver=pardiso 
         -fespace=fescomp
         -fespacevis=fesnegpos
-        -dt=0.03125
-        -tstart=0.0
+        -dt=0.25
+        -tstart=0
         -tend=0.5
 #        -userstepping
         -aneg=1
@@ -145,14 +145,17 @@ numproc stx_solveinstat npsi
         -bpos=1.0
         -lambda=20.0
         -pause_after_step=0
+        -solution_n=solneg
+        -solution_p=solpos
+        -levelset=coef_lset
 
 
 define coefficient veczero
 (0,0),
 
 numproc xdifference npxd -solution=u 
-        -function_n=solneg
-        -function_p=solpos
+        -solution_n=solneg
+        -solution_p=solpos
         # -derivative_n=veczero
         # -derivative_p=veczero
         -levelset=coef_lset

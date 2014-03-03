@@ -74,9 +74,20 @@ namespace ngfem
     Array<double> h1err_p;
     Array<double> h1err_n;
     Array<double> h1err;
-    Array<double> iferr;
+    Array<double> iferr;  
 
     ErrorTable();
+
+    void Reset()
+    {
+      l2err_p.SetSize(0);
+      l2err_n.SetSize(0);
+      l2err.SetSize(0);  
+      h1err_p.SetSize(0);
+      h1err_n.SetSize(0);
+      h1err.SetSize(0);  
+      iferr.SetSize(0);  
+    }
   };
 
   template<int D>

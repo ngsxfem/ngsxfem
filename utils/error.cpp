@@ -60,10 +60,10 @@ namespace ngfem
   SolutionCoefficients<D>::SolutionCoefficients(PDE & pde, const Flags & flags)
   {
     made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("function_n","")),
+      pde.GetCoefficientFunction(flags.GetStringFlag("solution_n","")),
       coef_n);
     made_coef_p = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("function_p","")),
+      pde.GetCoefficientFunction(flags.GetStringFlag("solution_p","")),
       coef_p);
     made_coef_d_n = MakeHigherDimensionCoefficientFunction<D>(
       pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""),true),
@@ -72,7 +72,7 @@ namespace ngfem
       pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""),true),
       coef_d_p);
     made_lset = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("levelset","")),
+      pde.GetCoefficientFunction(flags.GetStringFlag("levelset",""),true),
       lset);
   }
   

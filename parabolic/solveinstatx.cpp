@@ -17,6 +17,7 @@
 #include "../xfem/xfemNitsche.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/setvaluesx.hpp"
+#include "../utils/error.hpp"
 
 #include <diffop_impl.hpp>
 
@@ -99,12 +100,15 @@ protected:
   CoefficientFunction* coef_bndneg = NULL;
   CoefficientFunction* coef_bndpos = NULL;
 
+  ErrorTable errtab;
+  SolutionCoefficients<D> solcoef;
+
 public:
   /*
 	In the constructor, the solver class gets the flags from the pde - input file.
 	the PDE class apde constains all bilinear-forms, etc...
   */
-  NumProcSolveInstatX (PDE & apde, const Flags & flags) : NumProc (apde)
+  NumProcSolveInstatX (PDE & apde, const Flags & flags) : NumProc (apde), errtab(), solcoef(apde, flags)
   {
 	// in the input-file, you specify the bilinear-forms for the stiffness and for the mass-term
 	// like  "-bilinearforma=k". Default arguments are 'a' and 'm'
@@ -198,7 +202,10 @@ public:
   */
   virtual void Do(LocalHeap & lh)
   {
-
+    static int refinements = 0;
+    cout << " This is the Do-call on refinement level " << refinements << std::endl;
+    refinements++;
+    errtab.Reset();
 	
 	// cout << "TESTING" << endl;
 
@@ -379,6 +386,10 @@ public:
 	  delete &w;
 
 	  // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
+      {
+        CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh);
+      }
+
 
 	  xfes.XToNegPos(*gfu,*gfu_vis);
 
