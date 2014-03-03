@@ -768,12 +768,16 @@ namespace ngfem
         IntegrationRule irs = SelectIntegrationRule (eltrans.GetElementType(), 2*ps);
         for (int l = 0 ; l < irs.GetNIP(); l++)
         {
-            MappedIntegrationPoint<D,D> mip(irs[l], eltrans);
-            double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos
-                : coef_neg->Evaluate(mip) * scale_neg;
-            scafe->CalcShapeSpaceTime(mip.IP(), tracetime, shape, lh);
-            double fac = mip.GetWeight();
-            elvec += (fac*coef) * shape;
+          MappedIntegrationPoint<D,D> mips(irs[l], eltrans);
+          DimMappedIntegrationPoint<D+1> mip(irs[l],eltrans);
+          mip.Point().Range(0,D) = mips.GetPoint();
+          mip.Point()[D] = time;
+          double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos
+            : coef_neg->Evaluate(mip) * scale_neg;
+          
+          scafe->CalcShapeSpaceTime(mip.IP(), tracetime, shape, lh);
+          double fac = mips.GetWeight();
+          elvec += (fac*coef) * shape;
         }
       }
       else
@@ -787,8 +791,13 @@ namespace ngfem
         for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ips(&fquad.points(i,0),fquad.weights(i));
-          MappedIntegrationPoint<D,D> mip(ips, eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos : coef_neg->Evaluate(mip) * scale_neg;
+          MappedIntegrationPoint<D,D> mips(ips, eltrans);
+          DimMappedIntegrationPoint<D+1> mip(ips,eltrans);
+          mip.Point().Range(0,D) = mips.GetPoint();
+          mip.Point()[D] = time;
+          double coef = dt == POS ? coef_pos->Evaluate(mip) * scale_pos
+            : coef_neg->Evaluate(mip) * scale_neg;
+
           scafe->CalcShapeSpaceTime(ips, tracetime, shape, lh);
           shapex = shape;
 
@@ -798,7 +807,7 @@ namespace ngfem
               shapex(l) = 0.0;
           }
 
-          double fac = mip.GetWeight();
+          double fac = mips.GetWeight();
           elvec += (fac*coef) * shape_total;
         } // quad rule
       } // if xfe
@@ -1058,6 +1067,11 @@ namespace ngfem
   static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<3,PAST> > initstxh1cut3dtracsp ("stx_tracesource_past", 3, 2);
   static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<2,FUTURE> > initstxh1cut2dtracsf ("stx_tracesource_future", 2, 2);
   static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<3,FUTURE> > initstxh1cut3dtracsf ("stx_tracesource_future", 3, 2);
+
+  static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<2,PAST> > initstxh1cut2dtracsp_pt ("stx_tracesource_past", 2, 3);
+  static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<3,PAST> > initstxh1cut3dtracsp_pt ("stx_tracesource_past", 3, 3);
+  static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<2,FUTURE> > initstxh1cut2dtracsf_pt ("stx_tracesource_future", 2, 3);
+  static RegisterLinearFormIntegrator<SpaceTimeXTraceSourceIntegrator<3,FUTURE> > initstxh1cut3dtracsf_pt ("stx_tracesource_future", 3, 3);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXRobinIntegrator<2> > initstxh1cut_rob_2d ("stx_robin", 2, 4);
   static RegisterBilinearFormIntegrator<SpaceTimeXRobinIntegrator<3> > initstxh1cut_rob_3d ("stx_robin", 3, 4);

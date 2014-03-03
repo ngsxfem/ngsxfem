@@ -112,7 +112,6 @@ namespace ngfem
     virtual ~SpaceTimeXConvectionIntegrator(){ 
       if (made_neg) delete coef_neg;
       if (made_pos) delete coef_pos;
-      ; 
     };
 
     virtual string Name () const { return "SpaceTimeXConvectionIntegrator"; }
@@ -240,12 +239,22 @@ namespace ngfem
   {
     const CoefficientFunction * coef_neg;
     const CoefficientFunction * coef_pos;
+    bool made_neg;
+    bool made_pos;
     double scale_pos = 1.0;
     double scale_neg = 1.0;
+    double time = 0.0;
   public:
     SpaceTimeXTraceSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
-    virtual ~SpaceTimeXTraceSourceIntegrator(){ ; };
+    { 
+      made_neg = MakeHigherDimensionCoefficientFunction<D>(coeffs[0], coef_neg);
+      made_pos = MakeHigherDimensionCoefficientFunction<D>(coeffs[1], coef_pos);
+      if (coeffs.Size() > 2)
+        time = coeffs[2]->EvaluateConst();
+    }
+    virtual ~SpaceTimeXTraceSourceIntegrator(){
+      ;
+    }
 
     virtual string Name () const { return "SpaceTimeXTraceSourceIntegrator"; }
 
@@ -262,8 +271,12 @@ namespace ngfem
                        FlatVector<double> & elvec,
                        LocalHeap & lh) const;
 
+    void SetTime(double t_) { time = t_; }
+
     virtual void ChangeNegPosCoefficient(const CoefficientFunction * neg, const CoefficientFunction * pos, double dneg = 0.0, double dpos = 0.0)
     {
+      if (made_neg) {delete coef_neg; made_neg = false;}
+      if (made_pos) {delete coef_pos; made_pos = false;}
       coef_neg = neg;
       coef_pos = pos;
       scale_neg = dneg;
