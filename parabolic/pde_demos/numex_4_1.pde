@@ -9,7 +9,7 @@
 geometry = numex_4_1.in2d
 
 # and mesh
-mesh = numex_4_1.vol.gz
+mesh = numex_4_1_reg.vol.gz
 
 shared = libngsxfem_spacetime
 shared = libngsxfem_xfem
@@ -29,7 +29,7 @@ define constant wx = 0.025
 define constant wy = 0.0
 
 define constant x0 = 1.0
-define constant y0 = 0.0
+define constant y0 = 1.0
 
 define constant R = (1.0/3.0)
 define constant a = 1.02728
@@ -114,6 +114,7 @@ numproc informxfem npix
 define fespace fescomp
        -type=compound
        -spaces=[fesh1,fesx]
+       -dgjumps
 
 
 define gridfunction u -fespace=fescomp
@@ -135,7 +136,7 @@ numproc stx_solveinstat npsi
         -solver=pardiso 
         -fespace=fescomp
         -fespacevis=fesnegpos
-        -dt=0.25
+        -dt=0.0625
         -tstart=0
         -tend=0.5
 #        -userstepping
@@ -148,7 +149,9 @@ numproc stx_solveinstat npsi
         -solution_n=solneg
         -solution_p=solpos
         -levelset=coef_lset
-        -calccond
+#        -calccond
+#        -ghostpenalty
+        -delta=0.005
 
 define coefficient veczero
 (0,0),
@@ -159,7 +162,7 @@ numproc xdifference npxd -solution=u
         # -derivative_n=veczero
         # -derivative_p=veczero
         -levelset=coef_lset
-        -interorder=4
+        -intorder=4
         -henryweight_n=1.5
         -henryweight_p=1.0
         -time=0.5 # coeff function not yet of higher dimension...

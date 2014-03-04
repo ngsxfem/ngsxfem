@@ -17,6 +17,7 @@
 #include "../xfem/xfemNitsche.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/setvaluesx.hpp"
+#include "../xfem/ghostpenalty.hpp"
 #include "../utils/error.hpp"
 
 #include <diffop_impl.hpp>
@@ -63,6 +64,7 @@ protected:
 	
   bool userstepping;
   bool calccond;
+  bool ghostpenalty;
   double sleep_time;
 
   double bneg = 1.0;
@@ -70,6 +72,7 @@ protected:
   double aneg = 1.0;
   double apos = 1.0;
   double lambda = 10.0;
+  double delta = 0.1;
 
   CoefficientFunction* coef_bconvneg = NULL;
   CoefficientFunction* coef_bconvpos = NULL;
@@ -81,7 +84,8 @@ protected:
   CoefficientFunction* coef_abneg = NULL;
   CoefficientFunction* coef_abpos = NULL;
 
-  CoefficientFunction* coef_lambda = NULL;
+  CoefficientFunction* coef_lambda = NULL; // Nitsche
+  CoefficientFunction* coef_delta = NULL; // ghost penalty
 
   CoefficientFunction* coef_zero = NULL;
   CoefficientFunction* coef_one = NULL;
@@ -130,6 +134,7 @@ public:
 
 	userstepping = flags.GetDefineFlag ("userstepping");
 	calccond = flags.GetDefineFlag ("calccond");
+	ghostpenalty = flags.GetDefineFlag ("ghostpenalty");
 
 	dt = flags.GetNumFlag ("dt", 0.001);
 	tstart = flags.GetNumFlag ("tstart", 0.0);
@@ -140,6 +145,7 @@ public:
 	bneg = flags.GetNumFlag ("bneg", 1.0);
 	bpos = flags.GetNumFlag ("bpos", 1.0);
 	lambda = flags.GetNumFlag ("lambda", 10.0);
+	delta = flags.GetNumFlag ("delta", 0.1);
 	
 	sleep_time = flags.GetNumFlag ("pause_after_step", 0.0);
 
@@ -163,6 +169,7 @@ public:
 	coef_abpos = new ConstantCoefficientFunction(apos*bpos);
 
 	coef_lambda = new ConstantCoefficientFunction(lambda);
+	coef_delta = new ConstantCoefficientFunction(delta);
 
 	coef_zero = new ConstantCoefficientFunction(0.0);
 	coef_one = new ConstantCoefficientFunction(1.0);
@@ -175,6 +182,7 @@ public:
 
   virtual ~NumProcSolveInstatX() 
   { 
+	delete coef_delta;
 	delete coef_lambda;
 	delete coef_zero;
 	delete coef_one;
@@ -270,6 +278,17 @@ public:
 	SpaceTimeXLaplaceIntegrator<D> bfilap(coefs_xlaplace);
 	bftau -> AddIntegrator (&bfilap);
 
+	Array<CoefficientFunction*> coefs_ghostpen(5);
+	coefs_ghostpen[0] = coef_abneg;
+	coefs_ghostpen[1] = coef_abpos;
+	coefs_ghostpen[2] = coef_told;
+	coefs_ghostpen[3] = coef_tnew;
+	coefs_ghostpen[4] = coef_delta;
+
+	LowOrderGhostPenaltyIntegrator<D> bfigho(coefs_ghostpen);
+	if (ghostpenalty)
+	  bftau -> AddIntegrator (&bfigho);
+
 	Array<CoefficientFunction *> coefs_xnitsche(7);
 	coefs_xnitsche[0] = coef_aneg;
 	coefs_xnitsche[1] = coef_apos;
@@ -356,6 +375,8 @@ public:
 	  BaseVector & vecu = gfu->GetVector();
 
 	  bfilap.SetTimeInterval(ti);
+	  if (ghostpenalty)
+		bfigho.SetTimeInterval(ti);
 	  bfixnit.SetTimeInterval(ti);
 	  bfixconv.SetTimeInterval(ti);
 
@@ -364,6 +385,9 @@ public:
 	  BaseMatrix & mata = bftau->GetMatrix();
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
+	  // Flags empty;
+	  // LocalPreconditioner local(pde, empty, "l");
+	  // GMRESSolver<double> invmat(mata,local);
 
 	  lfi_tr.SetTime(ti.first);  //absolute time
 	  lfi_rhs.SetTimeInterval(ti);
@@ -380,10 +404,11 @@ public:
 	  vecu += w;
 
 	  // update status text
-	  cout << "\r          \rt = " << t;
+	  cout << "\r          \rt = " << ti.first << " to t = " << ti.second;
 	  cout << flush;
 	  
-	  CalcCond(mata,invmat,gfu->GetFESpace().GetFreeDofs());
+	  if (calccond)
+		CalcCond(mata,invmat,gfu->GetFESpace().GetFreeDofs());
 
 	  // update visualization
 	  delete &invmat;
@@ -409,6 +434,9 @@ public:
 	}
 	cout << "\r          \rt = " << tend;
 	cout << endl;
+
+	// CalcXError<D>(gfu, solcoef, 4, bneg, bpos, tend, errtab, lh, true);
+
 	// delete &d;
 	// delete &w;
   }
