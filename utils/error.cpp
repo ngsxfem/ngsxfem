@@ -101,9 +101,16 @@ namespace ngfem
   }
 
   template<int D>
-  void CalcXError (GridFunction * gfu, SolutionCoefficients<D> & solcoef, double intorder, 
-                   double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh)
+  void CalcXError (GridFunction * gfu, 
+                   SolutionCoefficients<D> & solcoef, 
+                   int intorder, 
+                   double b_neg, double b_pos, 
+                   double time, 
+                   ErrorTable & errtab, 
+                   LocalHeap & lh,
+                   bool output)
   {
+    cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
     int activeels = 0;
     double l2diff_n = 0;
@@ -311,31 +318,35 @@ namespace ngfem
     h1diff_n = sqrt(h1diff_n); errtab.h1err_n.Append(h1diff_n);
     l2diff = sqrt(l2diff); errtab.l2err.Append(l2diff);
     h1diff = sqrt(h1diff); errtab.h1err.Append(h1diff);
-    cout << " activeels = " << activeels << endl;
-    cout << setw(12) << "l2_n" << "\t|";
-    cout << setw(12) << "l2_p" << "\t|";
-    cout << setw(12) << "l2" << "\t|";
-    cout << setw(12) << "h1_n" << "\t|";
-    cout << setw(12) << "h1_p" << "\t|";
-    cout << setw(12) << "h1" << "\t|";
-    cout << setw(12) << "ifl2" << endl;
+    // cout << " activeels = " << activeels << endl;
 
-    for (int i = 0; i < errtab.l2err_n.Size(); ++i)
+    if (output)
     {
-      cout << setw(12) << errtab.l2err_n[i] << "\t|";
-      cout << setw(12) << errtab.l2err_p[i] << "\t|";
-      cout << setw(12) << errtab.l2err[i] << "\t|";
-      cout << setw(12) << errtab.h1err_n[i] << "\t|";
-      cout << setw(12) << errtab.h1err_p[i] << "\t|";
-      cout << setw(12) << errtab.h1err[i] << "\t|";
-      cout << setw(12) << errtab.iferr[i] << endl;
+      cout << setw(12) << "l2_n" << "\t|";
+      cout << setw(12) << "l2_p" << "\t|";
+      cout << setw(12) << "l2" << "\t|";
+      cout << setw(12) << "h1_n" << "\t|";
+      cout << setw(12) << "h1_p" << "\t|";
+      cout << setw(12) << "h1" << "\t|";
+      cout << setw(12) << "ifl2" << endl;
+
+      for (int i = 0; i < errtab.l2err_n.Size(); ++i)
+      {
+        cout << setw(12) << errtab.l2err_n[i] << "\t|";
+        cout << setw(12) << errtab.l2err_p[i] << "\t|";
+        cout << setw(12) << errtab.l2err[i] << "\t|";
+        cout << setw(12) << errtab.h1err_n[i] << "\t|";
+        cout << setw(12) << errtab.h1err_p[i] << "\t|";
+        cout << setw(12) << errtab.h1err[i] << "\t|";
+        cout << setw(12) << errtab.iferr[i] << endl;
+      }
     }
   }
 
-  template void CalcXError<2>(GridFunction * gfu, SolutionCoefficients<2> & solcoef, double intorder, 
-                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh);
-  template void CalcXError<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, double intorder, 
-                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh);
+  template void CalcXError<2>(GridFunction * gfu, SolutionCoefficients<2> & solcoef, int intorder, 
+                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
+  template void CalcXError<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, int intorder, 
+                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
 
 
 }

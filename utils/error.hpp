@@ -91,8 +91,15 @@ namespace ngfem
   };
 
   template<int D>
-  void CalcXError (GridFunction * gfu, SolutionCoefficients<D> & solcoef, double intorder, 
-                   double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh);
+  void CalcXError (GridFunction * gfu, 
+                   SolutionCoefficients<D> & solcoef, 
+                   int intorder, 
+                   double b_neg, 
+                   double b_pos, 
+                   double time, 
+                   ErrorTable & errtab, 
+                   LocalHeap & lh,
+                   bool output = true);
   
 
 

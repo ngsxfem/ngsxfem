@@ -386,10 +386,10 @@ public:
 	  delete &w;
 
 	  // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
-      {
-        CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh);
-      }
-
+      if (abs(ti.second - tend) < 1e-6*dt)
+        CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh, true);
+      else
+        CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh, false);
 
 	  xfes.XToNegPos(*gfu,*gfu_vis);
 

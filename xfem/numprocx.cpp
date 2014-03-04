@@ -392,7 +392,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      CalcXError<D>(gfu, solcoef, intorder, b_neg, b_pos, time, errtab, lh);
+      CalcXError<D>(gfu, solcoef, intorder, b_neg, b_pos, time, errtab, lh, true);
     }    
     
 
