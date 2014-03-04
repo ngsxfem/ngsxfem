@@ -39,7 +39,7 @@ define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
 define constant lambda = 15.0
 
-define constant R = 0.33333333
+define constant R = 0.1251 #0.33333333
 
 define fespace fesh1
        -type=h1ho
@@ -53,7 +53,8 @@ define fespace fesx
 
 define coefficient lset
 #(x-0.55),
-((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
+(abs(x-x0)-R),
+#((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
        
 numproc informxfem npix 
         -fespace=fesh1
@@ -63,6 +64,7 @@ numproc informxfem npix
 define fespace fescomp
        -type=compound
        -spaces=[fesh1,fesx]
+       -dgjumps
 
 define gridfunction u -fespace=fescomp
 
@@ -76,8 +78,9 @@ numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 define bilinearform a -fespace=fescomp # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
-xnitsche_hansbo aneg apos bneg bpos lambda
+xnitsche_halfhalf aneg apos bneg bpos lambda
 #xrobin bneg_pen bpos_pen
+lo_ghostpenalty aneg apos
 
 define linearform f -fespace=fescomp # -print
 xsource bneg bpos
@@ -87,7 +90,10 @@ xsource bneg bpos
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
+define preconditioner c -type=local -bilinearform=a
+#define preconditioner c -type=direct -bilinearform=a
+
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=gmres -preconditioner=c # -print
 
 define coefficient veczero
 (0,0),
