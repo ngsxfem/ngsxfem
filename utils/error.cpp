@@ -110,7 +110,7 @@ namespace ngfem
                    LocalHeap & lh,
                    bool output)
   {
-    cout << " CalcXError at time = " << time << endl;
+    // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
     int activeels = 0;
     double l2diff_n = 0;
@@ -121,18 +121,18 @@ namespace ngfem
     double h1diff = 0;
     double ifjumpl2 = 0;
     const MeshAccess & ma (gfu->GetFESpace().GetMeshAccess());
-    for (int i = 0; i < ma.GetNE(); ++i)
+    for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
     {
       HeapReset hr(lh);
-      gfu -> GetFESpace().GetDofNrs (i, dnums);
+      gfu -> GetFESpace().GetDofNrs (elnr, dnums);
       const int size = dnums.Size();
 
       FlatVector<double> elvec (size, lh);
       gfu -> GetVector().GetIndirect (dnums, elvec);   
 
-      ElementTransformation & eltrans = ma.GetTrafo(i,false,lh);
+      ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
 
-      const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(i,lh);
+      const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(elnr,lh);
       const CompoundFiniteElement & cfel = 
         dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -261,7 +261,6 @@ namespace ngfem
           mipp.Point()[D] = time;
 
           double solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mipp) : solcoef.GetSolutionNeg().Evaluate(mipp);
-
           Vec<D> soldval;
           if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
           {
