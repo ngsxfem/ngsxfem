@@ -26,7 +26,7 @@
 // #include "../utils/stcoeff.hpp"
 
 using namespace ngsolve;
-
+#include "../utils/calccond.hpp"
 
 
 /*
@@ -62,6 +62,7 @@ protected:
   string fesstr;
 	
   bool userstepping;
+  bool calccond;
   double sleep_time;
 
   double bneg = 1.0;
@@ -128,6 +129,7 @@ public:
 	fesvis = pde.GetFESpace (fesvisstr.c_str());
 
 	userstepping = flags.GetDefineFlag ("userstepping");
+	calccond = flags.GetDefineFlag ("calccond");
 
 	dt = flags.GetNumFlag ("dt", 0.001);
 	tstart = flags.GetNumFlag ("tstart", 0.0);
@@ -380,6 +382,9 @@ public:
 	  // update status text
 	  cout << "\r          \rt = " << t;
 	  cout << flush;
+	  
+	  CalcCond(mata,invmat,gfu->GetFESpace().GetFreeDofs());
+
 	  // update visualization
 	  delete &invmat;
 	  delete &d;

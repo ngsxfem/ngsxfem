@@ -148,7 +148,7 @@ numproc stx_solveinstat npsi
         -solution_n=solneg
         -solution_p=solpos
         -levelset=coef_lset
-
+        -calccond
 
 define coefficient veczero
 (0,0),
