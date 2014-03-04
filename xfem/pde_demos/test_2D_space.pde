@@ -53,8 +53,8 @@ define fespace fesx
 
 define coefficient lset
 #(x-0.55),
-(abs(x-x0)-R),
-#((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
+#(abs(x-x0)-R),
+((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
        
 numproc informxfem npix 
         -fespace=fesh1
@@ -80,7 +80,7 @@ define bilinearform a -fespace=fescomp # -printelmat -print
 xlaplace abneg abpos
 xnitsche_halfhalf aneg apos bneg bpos lambda
 #xrobin bneg_pen bpos_pen
-lo_ghostpenalty aneg apos
+lo_ghostpenalty aneg apos one
 
 define linearform f -fespace=fescomp # -print
 xsource bneg bpos

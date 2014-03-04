@@ -29,8 +29,8 @@ define constant lambda = 25.0
 define constant told = 0.0
 define constant tnew = 0.05
 
-define constant wx = 0.25
-define constant wy = 0.25
+define constant wx = 0.5
+define constant wy = 0.5
 
 define constant binineg = 1.0
 define constant binipos = 0.0
@@ -40,14 +40,16 @@ define constant pen = 1e7
 define constant bneg_pen = (bneg*pen)
 define constant bpos_pen = (bpos*pen)
 
-define constant bndneg = 0.8
-define constant bndpos = 1.0
+define constant bndneg = (0.8*0.0)
+define constant bndpos = (1.0*0.0)
 
 define constant bneg_bndneg_pen = (bneg*pen*bndneg)
 define constant bpos_bndpos_pen = (bpos*pen*bndpos)
 
-define constant x0 = 0
-define constant y0 = 0
+define constant x0 = 0.5
+define constant y0 = 0.5
+
+define constant R = 0.33333333
 
 define coefficient bconvneg
 (bneg*wx,bpos*wy),
@@ -59,11 +61,11 @@ define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
        -order_space=1
-       -order_time=1
+       -order_time=0
        -dirichlet=[1,2]
 
 define coefficient lset
-((x-wx*z-x0)*(x-wx*z-x0)+(y-wy*z-y0)*(y-wy*z-y0)-0.04),
+((x-wx*z-x0)*(x-wx*z-x0)+(y-wy*z-y0)*(y-wy*z-y0)-R*R),
 #(z),
 
 define fespace fesx
@@ -93,6 +95,7 @@ numproc informxfem npix
 define fespace fescomp
        -type=compound
        -spaces=[fesh1,fesx]
+       -dgjumps
 
 define gridfunction u -fespace=fescomp
 define gridfunction u_vis -fespace=fesnegpos
@@ -116,6 +119,8 @@ define coefficient rhspos
 ((bpos)*1),
 #(cos(x)),
 
+define constant delta = 1
+
 define bilinearform a -fespace=fescomp # -printelmat -print
 #stx_mass bneg bpos told tnew
 stx_laplace abneg abpos told tnew
@@ -123,6 +128,7 @@ stx_nitsche_hansbo aneg apos bneg bpos lambda told tnew
 stx_timeder bneg bpos
 stx_convection bconvneg bconvpos told tnew
 stx_tracemass_past bneg bpos
+stx_lo_ghostpenalty abneg abpos told tnew delta
 #stx_robin bneg_pen bpos_pen told tnew
 
 
@@ -153,8 +159,8 @@ define coefficient veczero
 (0,0),
 
 numproc xdifference npxd -solution=u 
-        -function_n=two
-        -function_p=one
+        -solution_n=two
+        -solution_p=one
         -derivative_n=veczero
         -derivative_p=veczero
         -levelset=lset

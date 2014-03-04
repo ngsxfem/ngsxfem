@@ -132,7 +132,7 @@ namespace ngfem
     scalar_time.CalcShape(ipt,shapet);
     for (int j = 0; j < ndof_time; ++j)
       for (int i = 0; i < ndof_space; ++i)
-        dshape(ndof_space*j+i) = shapet(j) * dshapex(i);
+        dshape.Row(ndof_space*j+i) = shapet(j) * dshapex.Row(i);
   };
 
   /// compute shape
@@ -149,7 +149,6 @@ namespace ngfem
     scalar_time.CalcShape(ipt,shapet);
     for (int j = 0; j < ndof_time; ++j)
       for (int i = 0; i < ndof_space; ++i)
-        for (int k = 0; k < D; ++k)
           dshape.Row(ndof_space*j+i) = shapet(j) * dshapex.Row(i);
   };
 
