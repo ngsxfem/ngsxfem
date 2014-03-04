@@ -53,6 +53,9 @@ protected:
 
   GridFunction * gfu_vis = NULL;
 
+  BilinearForm * bftau;
+  LinearForm * lfrhs;
+
   // time step
   double dt;
   // total time
@@ -107,6 +110,19 @@ protected:
 
   ErrorTable errtab;
   SolutionCoefficients<D> solcoef;
+
+  SpaceTimeXTimeDerivativeIntegrator<D> * bfidt;
+  SpaceTimeXLaplaceIntegrator<D> * bfilap; 
+  LowOrderGhostPenaltyIntegrator<D> * bfigho;
+  SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBOBETA> * bfixnit;
+  SpaceTimeXConvectionIntegrator<D> * bfixconv;
+  SpaceTimeXTraceMassIntegrator<D,PAST> * bfitimetr;
+
+  SpaceTimeXTraceSourceIntegrator<D,PAST> * lfi_tr;
+  SpaceTimeXSourceIntegrator<D> * lfi_rhs;
+
+  LocalPreconditioner * localprec;
+
 
 public:
   /*
@@ -177,11 +193,43 @@ public:
 	coef_told = new ConstantCoefficientFunction(10.0);
 	coef_tnew = new ConstantCoefficientFunction(10.0+dt);
 
+	Flags blflags;
+	blflags.SetFlag ("fespace", fesstr.c_str());
+	bftau = pde.AddBilinearForm("bftau", blflags);
+	// bftau = CreateBilinearForm (fes, "bftau", blflags);
+	bftau -> SetUnusedDiag (0);
+
+	FESpace * fes = const_cast<FESpace*>(&(gfu->GetFESpace()));
+	Flags lflags;
+	lfrhs = CreateLinearForm(fes,"lfrhs",lflags);
+
+
+	/*
+	Flags empty;
+	empty.SetFlag ("fespace", fesstr.c_str());
+	empty.SetFlag ("laterupdate");
+	localprec = new LocalPreconditioner (&pde, empty, "l");
+	*/
+	// GMRESSolver<double> invmat(mata,local);
+
   }
 
 
   virtual ~NumProcSolveInstatX() 
   { 
+
+	delete bfidt;
+	delete bfilap; 
+	delete bfigho;
+	delete bfixnit;
+	delete bfixconv;
+	delete bfitimetr;
+
+	delete lfi_tr;
+	delete lfi_rhs;
+
+	delete localprec;
+
 	delete coef_delta;
 	delete coef_lambda;
 	delete coef_zero;
@@ -207,67 +255,14 @@ public:
   }
 
 
-  /*
-	solve at one level
-  */
-  virtual void Do(LocalHeap & lh)
+  void AddBilinearFormIntegrators()
   {
-    static int refinements = 0;
-    cout << " This is the Do-call on refinement level " << refinements << std::endl;
-    refinements++;
-    errtab.Reset();
-	
-	// cout << "TESTING" << endl;
-
-	// Array <EvalFunction*> evals(1);
-	
-	// std::cout << " a " << std::endl;
-	// evals[0] = new EvalFunction("x+y+z");
-	// std::cout << " b " << std::endl;
-	// // SpaceTimeDomainVariableCoefficientFunction<D> coef_test( evals );
-	// DomainVariableCoefficientFunction<D+1> coef_test( evals );
-	// std::cout << " c " << std::endl;
-	// ElementTransformation & eltrans = pde.GetMeshAccess().GetTrafo (0, VOL, lh);
-	// IntegrationPoint ip (0.0);
-	// MappedIntegrationPoint<D,D> mip(ip,eltrans);
-	// DimMappedIntegrationPoint<D+1> mip2(ip,eltrans);
-	// mip2.Point().Range(0,D) = mip.GetPoint();
-	// mip2.Point()[D] = 1.0;
-	// Vec<1> test;
-	// coef_test.Evaluate(mip2,test);	
-	// std::cout << " mip2.GetPoint() = " << mip2.GetPoint() << std::endl;
-	// cout << " test: " << test  << endl;
-	
-	cout << "solve solveinstatx pde" << endl;
-
-	// PointContainer<2+1> pc;
-	// Array<Simplex<2+1> *> ret(0);
-	// DecomposeIntoSimplices<2,3>(ET_TRIG,ET_SEGM,ret,pc,lh);
-
-	// PointContainer<3+1> pc2;
-	// Array<Simplex<3+1> *> ret2(0);
-	// DecomposeIntoSimplices<3,4>(ET_TET,ET_SEGM,ret2,pc2,lh);
-
-	// PointContainer<2> pc3;
-	// Array<Simplex<2> *> ret3(0);
-	// DecomposeIntoSimplices<2,2>(ET_TRIG,ET_POINT,ret3,pc3,lh);
-
-	// PointContainer<3> pc4;
-	// Array<Simplex<3> *> ret4(0);
-	// DecomposeIntoSimplices<3,3>(ET_TET,ET_POINT,ret4,pc4,lh);
-
-	BilinearForm * bftau;
-	Flags massflags;
-	massflags.SetFlag ("fespace", fesstr.c_str());
-	bftau = CreateBilinearForm (fes, "bftau", massflags);
-	bftau -> SetUnusedDiag (0);
-
 	Array<CoefficientFunction*> coefs_timeder(2);
 	coefs_timeder[0] = coef_bneg;
 	coefs_timeder[1] = coef_bpos;
 
-	SpaceTimeXTimeDerivativeIntegrator<D> bfidt(coefs_timeder);
-	bftau -> AddIntegrator (&bfidt);
+	bfidt = new SpaceTimeXTimeDerivativeIntegrator<D> (coefs_timeder);
+	bftau -> AddIntegrator (bfidt);
 
 	Array<CoefficientFunction*> coefs_xlaplace(4);
 	coefs_xlaplace[0] = coef_abneg;
@@ -275,8 +270,8 @@ public:
 	coefs_xlaplace[2] = coef_told;
 	coefs_xlaplace[3] = coef_tnew;
 
-	SpaceTimeXLaplaceIntegrator<D> bfilap(coefs_xlaplace);
-	bftau -> AddIntegrator (&bfilap);
+	bfilap = new SpaceTimeXLaplaceIntegrator<D> (coefs_xlaplace);
+	bftau -> AddIntegrator (bfilap);
 
 	Array<CoefficientFunction*> coefs_ghostpen(5);
 	coefs_ghostpen[0] = coef_abneg;
@@ -285,9 +280,9 @@ public:
 	coefs_ghostpen[3] = coef_tnew;
 	coefs_ghostpen[4] = coef_delta;
 
-	LowOrderGhostPenaltyIntegrator<D> bfigho(coefs_ghostpen);
+	bfigho = new LowOrderGhostPenaltyIntegrator<D> (coefs_ghostpen);
 	if (ghostpenalty)
-	  bftau -> AddIntegrator (&bfigho);
+	  bftau -> AddIntegrator (bfigho);
 
 	Array<CoefficientFunction *> coefs_xnitsche(7);
 	coefs_xnitsche[0] = coef_aneg;
@@ -298,8 +293,8 @@ public:
 	coefs_xnitsche[5] = coef_told;
 	coefs_xnitsche[6] = coef_tnew;
 
-	SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBOBETA> bfixnit (coefs_xnitsche);
-	bftau -> AddIntegrator (&bfixnit);
+	bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBOBETA> (coefs_xnitsche);
+	bftau -> AddIntegrator (bfixnit);
 
 	Array<CoefficientFunction*> coefs_xconvection(4);
 	coefs_xconvection[0] = coef_bconvneg;
@@ -307,27 +302,55 @@ public:
 	coefs_xconvection[2] = coef_told;
 	coefs_xconvection[3] = coef_tnew;
 
-	SpaceTimeXConvectionIntegrator<D> bfixconv(coefs_xconvection);
-	bftau -> AddIntegrator (&bfixconv);
-
+	bfixconv = new SpaceTimeXConvectionIntegrator<D> (coefs_xconvection);
+	bftau -> AddIntegrator (bfixconv);
 
 	Array<CoefficientFunction*> coefs_timetr(2);
 	coefs_timetr[0] = coef_bneg;
 	coefs_timetr[1] = coef_bpos;
 
-	SpaceTimeXTraceMassIntegrator<D,PAST> bfitimetr(coefs_timetr);
-	bftau -> AddIntegrator (&bfitimetr);
+	bfitimetr = new SpaceTimeXTraceMassIntegrator<D,PAST> (coefs_timetr);
+	bftau -> AddIntegrator (bfitimetr);
+  }
 
-	//DifferentialOperator * traceop = new SpaceTimeTimeTraceIntegrator<D,FUTURE>(new ConstantCoefficientFunction(1.0));
+  void AddLinearFormIntegrators()
+  {
+	Array<CoefficientFunction *> coef_upw(2);
+	coef_upw[0] = coef_binineg;
+	coef_upw[1] = coef_binipos;
+	lfi_tr = new SpaceTimeXTraceSourceIntegrator<D,PAST> (coef_upw);
+    lfrhs -> AddIntegrator (lfi_tr);
+
+	// just for testing
+	Array<CoefficientFunction *> coef_rhs(4);
+	coef_rhs[0] = coef_brhsneg;
+	coef_rhs[1] = coef_brhspos;
+	coef_rhs[2] = coef_told;
+	coef_rhs[3] = coef_tnew;
+	lfi_rhs = new SpaceTimeXSourceIntegrator<D> (coef_rhs);
+	lfrhs -> AddIntegrator (lfi_rhs);
+  }
+  
+  /*
+	solve at one level
+  */
+  virtual void Do(LocalHeap & lh)
+  {
+	bftau -> SetNonAssemble(false);
+
+    static int refinements = 0;
+    cout << " This is the Do-call on refinement level " << refinements << std::endl;
+    refinements++;
+    errtab.Reset();
+
+	cout << "solve solveinstatx pde" << endl;
+
+	if (refinements==1)
+	  AddBilinearFormIntegrators();
 
 	DifferentialOperator * uptrace = new T_DifferentialOperator<DiffOpTimeTrace<D,FUTURE> >();
 	GridFunctionCoefficientFunction coef_u_neg (*(gfu_vis->GetComponent(0)), uptrace); //, traceop);
 	GridFunctionCoefficientFunction coef_u_pos (*(gfu_vis->GetComponent(1)), uptrace); //, traceop);
-
-	LinearForm * lfrhs;
-	Flags massflags2;
-	// massflags2.SetFlag ("fespace", fesstr.c_str());
-	// lfrhs = pde.AddLinearForm ("lfrhs", massflags2);
 
 	FESpace * fes = const_cast<FESpace*>(&(gfu->GetFESpace()));
 	CompoundFESpace & compfes = *dynamic_cast<CompoundFESpace * >(fes);
@@ -336,24 +359,10 @@ public:
 	CompoundFESpace & compfes2 = *dynamic_cast<CompoundFESpace * >(fesvis);
 	LevelsetContainerFESpace & lcfes = *dynamic_cast<LevelsetContainerFESpace * >(compfes2[2]);
 
-	lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
-
-	
-	Array<CoefficientFunction *> coef_upw(2);
-	coef_upw[0] = coef_binineg;
-	coef_upw[1] = coef_binipos;
-	SpaceTimeXTraceSourceIntegrator<D,PAST> lfi_tr(coef_upw);
-    lfrhs -> AddIntegrator (&lfi_tr);
-
-	// just for testing
-	Array<CoefficientFunction *> coef_rhs(4);
-	coef_rhs[0] = coef_brhsneg;
-	coef_rhs[1] = coef_brhspos;
-	coef_rhs[2] = coef_told;
-	coef_rhs[3] = coef_tnew;
-	SpaceTimeXSourceIntegrator<D> lfi_rhs(coef_rhs);
-
-	lfrhs -> AddIntegrator (&lfi_rhs);
+	if (refinements==1)
+	  AddLinearFormIntegrators();
+	else
+	  lfi_tr->ChangeNegPosCoefficient(coef_binineg, coef_binipos, bneg, bpos);
 
 	Array<CoefficientFunction* > bndcoefs(2);
 	bndcoefs[0] = coef_bndneg;
@@ -374,28 +383,24 @@ public:
 
 	  BaseVector & vecu = gfu->GetVector();
 
-	  bfilap.SetTimeInterval(ti);
+	  bfilap->SetTimeInterval(ti);
 	  if (ghostpenalty)
-		bfigho.SetTimeInterval(ti);
-	  bfixnit.SetTimeInterval(ti);
-	  bfixconv.SetTimeInterval(ti);
+		bfigho->SetTimeInterval(ti);
+	  bfixnit->SetTimeInterval(ti);
+	  bfixconv->SetTimeInterval(ti);
 
 	  bftau -> ReAssemble(lh,true);
 
 	  BaseMatrix & mata = bftau->GetMatrix();
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
-	  // Flags empty;
-	  // LocalPreconditioner local(pde, empty, "l");
-	  // GMRESSolver<double> invmat(mata,local);
 
-	  lfi_tr.SetTime(ti.first);  //absolute time
-	  lfi_rhs.SetTimeInterval(ti);
+	  lfi_tr->SetTime(ti.first);  //absolute time
+	  lfi_rhs->SetTimeInterval(ti);
 	  lfrhs -> Assemble(lh);
 
 	  const BaseVector * vecf = &(lfrhs->GetVector());
 	  
-	  // vecu = 0.0;
 	  BaseVector & d = *vecu.CreateVector();
 	  BaseVector & w = *vecu.CreateVector();
 	  
@@ -423,7 +428,7 @@ public:
 
 	  xfes.XToNegPos(*gfu,*gfu_vis);
 
-	  lfi_tr.ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, bneg, bpos);
+	  lfi_tr->ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, bneg, bpos);
 	  Ng_Redraw ();
 	  
 	  if (userstepping)
@@ -439,6 +444,8 @@ public:
 
 	// delete &d;
 	// delete &w;
+	bftau -> SetNonAssemble(true);
+	delete uptrace;
   }
 
 
