@@ -90,7 +90,7 @@ namespace ngcomp
       bfi = new (clh) XRobinIntegrator<D>(coefs_one);
     }
 
-    ProgressOutput progress (ma, "setvalues element", ma.GetNE());
+    ProgressOutput progress (ma, "setvaluesx element", ma.GetNE());
 
     IterateElements 
       (fes, vorb, clh, 

@@ -25,52 +25,68 @@ define constant apos = 2.0
 define constant bneg = 1.5
 define constant bpos = 1.0
 
-define constant wx = 0.025
+define constant wx = 1.0
 define constant wy = 0.0
 
-define constant x0 = 1.0
-define constant y0 = 1.0
-
 define constant R = (1.0/3.0)
-define constant a = 1.02728
+
+# define constant b = (0.5/(R*R)*(apos/aneg*pi*cos(pi*R)-bpos/bneg*sin(pi*R)/R))
+# define constant a = (bpos/bneg*sin(pi*R)/R - b*R*R)
+
 define constant b = 6.34294
+define constant a = 1.02728
+
 define constant k = 1.5
 
 define coefficient solneg
-(sin(k*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z))),
+(sin(k*pi*z)*( a*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+              +b*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))),
+
 
 define coefficient solpos
-(sin(k*pi*z) * sin(pi*(x-x0-wx*z))),
+(sin(k*pi*z) * sin(pi*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))),
 
 define coefficient bconvneg
-(bneg*wx,bneg*wy),
+((bneg*0.5*cos(2.0*pi*z)), 0.0),
 
 define coefficient bconvpos
-(bpos*wx,bpos*wy),
+((bpos*0.5*cos(2.0*pi*z)), 0.0),
 
 define coefficient binineg
-#0,
-(bneg*(sin((k)*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z)))),
+(bneg*sin(k*pi*z)*( a*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                   +b*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                     *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                     *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))),
+
 
 define coefficient binipos
-#0,
-(bpos*(sin(k*pi*z) * sin(pi*(x-x0-wx*z)))),
+(bpos*sin(k*pi*z) * sin(pi*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))),
 
 define coefficient brhsneg
 (bneg*
-      (k*pi*cos(k*pi*z)*(a*(x-x0-wx*z)+b*(x-x0-wx*z)*(x-x0-wx*z)*(x-x0-wx*z))
-      -aneg*sin(k*pi*z)*(6*b*(x-x0-wx*z)))
+      (k*pi*cos(k*pi*z)*(a*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                        +b*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                          *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                          *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))
+       -aneg*sin(k*pi*z)*( (1+y*y*(1-y)*(1-y)*(2-y)*(2-y))*(6*b*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))
+                          -((2-6*y+3*y*y)*(a+3*b*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                                                *(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))
+                                          )
+                           )
+                         )
+      )
 ),
 
 define coefficient brhspos
 (bpos*
-      (k*pi*cos(k*pi*z)*(sin(pi*(x-x0-wx*z)))
-      -apos*sin(k*pi*z)*(-pi*pi*sin(pi*(x-x0-wx*z))) )
+      (k*pi*cos(k*pi*z)*(sin(pi*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))))
+       -apos*sin(k*pi*z)*( (1+y*y*(1-y)*(1-y)*(2-y)*(2-y))*(-pi*pi*sin(pi*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))))
+                          -((2-6*y+3*y*y)*(pi*cos(pi*(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y))))))
+                         )
+      )
 ),
-
-# (sin(k*pi*z) * ),
-
-#(0.1*sin(10*pi*z)*exp(-50*(x-z)*(x-z))),
 
 define fespace fesh1
        -type=spacetimefes 
@@ -80,8 +96,7 @@ define fespace fesh1
        -dirichlet=[2,4]
 
 define coefficient coef_lset
-#((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
-(abs(x-x0-wx*z)-R),
+(abs(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))-R),
 
 define fespace fesx
        -type=xfespace
@@ -106,7 +121,7 @@ numproc informxfem npix
 define fespace fescomp
        -type=compound
        -spaces=[fesh1,fesx]
-       -dgjumps
+#       -dgjumps
 
 
 define gridfunction u -fespace=fescomp
@@ -130,7 +145,7 @@ numproc stx_solveinstat npsi
         -fespacevis=fesnegpos
         -dt=0.0625
         -tstart=0
-        -tend=0.5
+        -tend=1.0
 #        -userstepping
         -aneg=1
         -apos=2
@@ -144,6 +159,7 @@ numproc stx_solveinstat npsi
 #        -calccond
 #        -ghostpenalty
         -delta=0.005
+        -direct
 
 define coefficient veczero
 (0,0),
@@ -157,7 +173,7 @@ numproc xdifference npxd -solution=u
         -intorder=4
         -henryweight_n=1.5
         -henryweight_p=1.0
-        -time=0.5 # coeff function not yet of higher dimension...
+        -time=1.0 # coeff function not yet of higher dimension...
 
 
 

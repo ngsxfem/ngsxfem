@@ -68,6 +68,8 @@ protected:
   bool userstepping;
   bool calccond;
   bool ghostpenalty;
+  bool directsolve;
+
   double sleep_time;
 
   double bneg = 1.0;
@@ -151,6 +153,7 @@ public:
 	userstepping = flags.GetDefineFlag ("userstepping");
 	calccond = flags.GetDefineFlag ("calccond");
 	ghostpenalty = flags.GetDefineFlag ("ghostpenalty");
+	directsolve = flags.GetDefineFlag ("direct");
 
 	dt = flags.GetNumFlag ("dt", 0.001);
 	tstart = flags.GetNumFlag ("tstart", 0.0);
@@ -391,13 +394,19 @@ public:
 	  BaseMatrix & mata = bftau->GetMatrix();
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 	  BaseMatrix * directinvmat = NULL;
-	  if (calccond)
+	  GMRESSolver<double> * itinvmat = NULL;
+	  if (calccond || directsolve)
 		directinvmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
 
-	  localprec->Update();
-	  GMRESSolver<double> invmat (mata, *localprec);
-	  // invmat.SetPrintRates(true);
-	  invmat.SetMaxSteps(10000);
+	  if (!directsolve)
+	  {
+		localprec->Update();
+		itinvmat = new GMRESSolver<double> (mata, *localprec);
+		// invmat.SetPrintRates(true);
+		itinvmat->SetMaxSteps(10000);
+	  }
+
+	  BaseMatrix & invmat = directsolve ? *directinvmat : *itinvmat;
 
 	  lfi_tr->SetTime(ti.first);  //absolute time
 	  lfi_rhs->SetTimeInterval(ti);
@@ -414,7 +423,8 @@ public:
 
 	  // update status text
 	  cout << "\r          \rt = " << std::setw(6) << ti.first << " to t = " << std::setw(6) << ti.second;
-	  cout << " - number of its.: " << std::setw(4) << invmat.GetSteps();
+	  if (!directsolve)
+		cout << " - number of its.: " << std::setw(4) << itinvmat->GetSteps();
 	  cout << flush;
 	  
 	  if (calccond)
@@ -423,8 +433,11 @@ public:
 	  // update visualization
 	  // delete &d;
 	  delete &w;
-	  if (calccond)
-		directinvmat;
+	  if (calccond || directsolve)
+		delete directinvmat;
+
+	  if (!directsolve)
+		delete itinvmat;
 
 	  // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
       if (abs(ti.second - tend) < 1e-6*dt)
