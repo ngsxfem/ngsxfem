@@ -382,12 +382,15 @@ namespace ngfem
           for (int d = 0; d < D; ++d)
             ips(d) = fquad.points(i,d);
           MappedIntegrationPoint<D,D> mip(ips, eltrans);
+          DimMappedIntegrationPoint<D+1> mipp(ips,eltrans);
+          mipp.Point().Range(0,D) = mip.GetPoint();
+          mipp.Point()[D] = t0 + fquad.points(i,D) * tau;
 
           Vec<D> conv;
           if (dt == POS)
-              coef_pos->Evaluate(mip,conv);
+              coef_pos->Evaluate(mipp,conv);
           else
-              coef_neg->Evaluate(mip,conv);
+              coef_neg->Evaluate(mipp,conv);
 
           scafe->CalcShapeSpaceTime(ips, fquad.points(i,D), shape, lh);
           scafe->CalcMappedDxShapeSpaceTime(mip, fquad.points(i,D), gradshape, lh);
