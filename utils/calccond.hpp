@@ -44,7 +44,7 @@ void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector 
   delete &c;
 }
 
-void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs)
+void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true)
 {
   // BaseMatrix AT(A);
   // AT.AsVector() = 0.0;
@@ -83,8 +83,9 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs)
     bn = L2Norm(b);
     b /= bn;
     a = b;
-    std::cout << "\r                         \r"
-              << "it = " << i << ", bn = " << bn;
+    if (printmuch)
+      std::cout << "\r                         \r"
+                << "it = " << i << ", bn = " << bn;
     if (abs(bn-bn_last) < rel_acc * abs(bn_last)) break;
   }
   // cout << endl;
@@ -124,8 +125,9 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs)
     a = b;
     // std::cout << " a = " << a << std::endl;
     // getchar();
-    std::cout << "\r                         \r"
-              << "it = " << i << ", bn = " << bn;
+    if (printmuch)
+      std::cout << "\r                         \r"
+                << "it = " << i << ", bn = " << bn;
     if (abs(bn-bn_last) < rel_acc * abs(bn_last)) break;
   }
   // cout << endl;
@@ -135,9 +137,15 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs)
   // ApplyATA(A,a,b);
   // ApplyAAT(A,b,c);
   // while (
+  if (printmuch)
+    cout << "\r ";
+  else
+    cout << " - ";
 
-  cout << "\r condition number is = " << cup/clow 
-       << " (upper bound: " << cup << ", lower bound: " << clow << ")" << endl;
+  cout << "condition number: " << std::setw(12) << cup/clow 
+       << " (up: " << std::setw(12) << cup << ", low: " << std::setw(12) << clow << ")";
+  if (printmuch)
+    cout << endl;
 
   delete &a;
   delete &b;

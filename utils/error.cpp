@@ -321,6 +321,7 @@ namespace ngfem
 
     if (output)
     {
+      cout << endl;
       cout << setw(12) << "l2_n" << "\t|";
       cout << setw(12) << "l2_p" << "\t|";
       cout << setw(12) << "l2" << "\t|";
