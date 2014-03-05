@@ -114,14 +114,14 @@ protected:
   SpaceTimeXTimeDerivativeIntegrator<D> * bfidt;
   SpaceTimeXLaplaceIntegrator<D> * bfilap; 
   LowOrderGhostPenaltyIntegrator<D> * bfigho;
-  SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBOBETA> * bfixnit;
+  SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> * bfixnit;
   SpaceTimeXConvectionIntegrator<D> * bfixconv;
   SpaceTimeXTraceMassIntegrator<D,PAST> * bfitimetr;
 
   SpaceTimeXTraceSourceIntegrator<D,PAST> * lfi_tr;
   SpaceTimeXSourceIntegrator<D> * lfi_rhs;
 
-  LocalPreconditioner * localprec;
+  Preconditioner * localprec;
 
 
 public:
@@ -190,8 +190,8 @@ public:
 	coef_zero = new ConstantCoefficientFunction(0.0);
 	coef_one = new ConstantCoefficientFunction(1.0);
 
-	coef_told = new ConstantCoefficientFunction(10.0);
-	coef_tnew = new ConstantCoefficientFunction(10.0+dt);
+	coef_told = new ConstantCoefficientFunction(0.0);
+	coef_tnew = new ConstantCoefficientFunction(0.0+dt);
 
 	Flags blflags;
 	blflags.SetFlag ("fespace", fesstr.c_str());
@@ -203,15 +203,14 @@ public:
 	Flags lflags;
 	lfrhs = CreateLinearForm(fes,"lfrhs",lflags);
 
-
-	/*
 	Flags empty;
+	empty.SetFlag ("type", "local");
 	empty.SetFlag ("fespace", fesstr.c_str());
+	empty.SetFlag ("bilinearform", "bftau");
 	empty.SetFlag ("laterupdate");
-	localprec = new LocalPreconditioner (&pde, empty, "l");
-	*/
-	// GMRESSolver<double> invmat(mata,local);
-
+	// localprec = new LocalPreconditioner (&pde, empty, "l");
+	// localprec = new BDDC (&pde, empty, "l");
+	localprec = pde.AddPreconditioner("l",empty);
   }
 
 
@@ -227,8 +226,6 @@ public:
 
 	delete lfi_tr;
 	delete lfi_rhs;
-
-	delete localprec;
 
 	delete coef_delta;
 	delete coef_lambda;
@@ -293,7 +290,7 @@ public:
 	coefs_xnitsche[5] = coef_told;
 	coefs_xnitsche[6] = coef_tnew;
 
-	bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBOBETA> (coefs_xnitsche);
+	bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> (coefs_xnitsche);
 	bftau -> AddIntegrator (bfixnit);
 
 	Array<CoefficientFunction*> coefs_xconvection(4);
@@ -343,7 +340,7 @@ public:
     refinements++;
     errtab.Reset();
 
-	cout << "solve solveinstatx pde" << endl;
+	cout << "solve instatx pde" << endl;
 
 	if (refinements==1)
 	  AddBilinearFormIntegrators();
@@ -393,7 +390,14 @@ public:
 
 	  BaseMatrix & mata = bftau->GetMatrix();
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
-	  BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
+	  BaseMatrix * directinvmat = NULL;
+	  if (calccond)
+		directinvmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
+
+	  localprec->Update();
+	  GMRESSolver<double> invmat (mata, *localprec);
+	  // invmat.SetPrintRates(true);
+	  invmat.SetMaxSteps(10000);
 
 	  lfi_tr->SetTime(ti.first);  //absolute time
 	  lfi_rhs->SetTimeInterval(ti);
@@ -409,16 +413,18 @@ public:
 	  vecu += w;
 
 	  // update status text
-	  cout << "\r          \rt = " << ti.first << " to t = " << ti.second;
+	  cout << "\r          \rt = " << std::setw(6) << ti.first << " to t = " << std::setw(6) << ti.second;
+	  cout << " - number of its.: " << std::setw(4) << invmat.GetSteps();
 	  cout << flush;
 	  
 	  if (calccond)
-		CalcCond(mata,invmat,gfu->GetFESpace().GetFreeDofs());
+		CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false);
 
 	  // update visualization
-	  delete &invmat;
-	  delete &d;
+	  // delete &d;
 	  delete &w;
+	  if (calccond)
+		directinvmat;
 
 	  // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
       if (abs(ti.second - tend) < 1e-6*dt)
@@ -435,6 +441,7 @@ public:
 	  	getchar();
 	  if (sleep_time>0)
 	  	usleep(sleep_time*1000);
+	  cout << endl;
 
 	}
 	cout << "\r          \rt = " << tend;
