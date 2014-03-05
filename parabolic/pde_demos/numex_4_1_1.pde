@@ -6,10 +6,10 @@
 #  du/dn = 1  on Gamma2
 
 # load geometry
-geometry = numex_4_1.in2d
+geometry = numex_4_1_1.in2d
 
 # and mesh
-mesh = numex_4_1_reg.vol.gz
+mesh = numex_4_1_1_reg.vol.gz
 
 shared = libngsxfem_spacetime
 shared = libngsxfem_xfem
