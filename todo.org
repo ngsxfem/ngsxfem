@@ -6,18 +6,24 @@
 ** rethink use of PointContainer (use it more / less?)
 ** more timing
 ** more advanced (faster) CheckIfCut strategies
-** calculate kappa
 ** 4D - implementation...
+
 * stx-visualization
-** visualization for negpos-composition
 ** output to other format ... (tikz ?)... 
+
 * XFESpace: 
+** Update is called three times (just once is needed)..
 
 * solveinstatx
-** check strange behavior in first time step (where is this coming from?)
 ** move diffop_impl.hpp include to correct location
-** boundary conditions ? 
 ** test cases...
+** error calculation outputs error field (at least piecewise constant)
+
+* condition number stuff (finish... ) 
+
+* streamline diffusion
+** implement space-time x version.... 
 
 * stationary stokes test case...
 ** start with that
+

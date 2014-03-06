@@ -368,9 +368,10 @@ public:
 	bndcoefs[0] = coef_bndneg;
 	bndcoefs[1] = coef_bndpos;
 
+	std::ofstream outf("condition.out");
 	// time stepping
 	double t;
-	for (t = tstart; t < tend; t += dt)
+	for (t = tstart; t < tend-dt+1e-12; t += dt)
 	{
 	  HeapReset hr(lh);
 	  TimeInterval ti(t,t+dt);
@@ -400,6 +401,9 @@ public:
 
 	  if (!directsolve)
 	  {
+		static Timer timer ("localprec->Update()");
+		RegionTimer reg (timer);
+		
 		localprec->Update();
 		itinvmat = new GMRESSolver<double> (mata, *localprec);
 		// invmat.SetPrintRates(true);
@@ -428,9 +432,22 @@ public:
 	  cout << flush;
 	  
 	  if (calccond)
-		CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, false);
-	  // if (calccond)
-	  // 	CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, true);
+	  {
+		static Timer timer ("CalcCond");
+		RegionTimer reg (timer);
+		outf << t << "\t";
+		CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, false, &outf);
+	  	CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, true, &outf);
+		if (!directsolve)
+		  outf << itinvmat->GetSteps() << "\t";
+		outf << endl;
+	  }
+	  // if (!directsolve)
+	  // {
+	  // 	cout << " ... " << endl;
+	  // 	localprec->Test();
+	  // 	cout << " ... " << endl;
+	  // }
 
 	  // update visualization
 	  // delete &d;
@@ -442,10 +459,14 @@ public:
 		delete itinvmat;
 
 	  // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
-      if (abs(ti.second - tend) < 1e-6*dt)
-        CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh, true);
-      else
-        CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh, false);
+	  {
+		static Timer timer ("CalcXError");
+		RegionTimer reg (timer);
+		if (abs(ti.second - tend) < 1e-6*dt)
+		  CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh, true);
+		else
+		  CalcXError<D>(gfu, solcoef, 4, bneg, bpos, ti.second, errtab, lh, false);
+	  }
 
 	  xfes.XToNegPos(*gfu,*gfu_vis);
 

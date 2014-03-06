@@ -52,48 +52,17 @@ void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector 
   delete &c;
 }
 
-void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false)
+
+double PowerIteration(BaseMatrix & A, const BitArray * freedofs, FlatVector<double> fvdiaga, Array<BaseVector*> & evs, bool printmuch = false)
 {
-  BaseVector & diaga = *A.CreateVector();
-  FlatVector<double> fvdiaga = diaga.FVDouble();
-  fvdiaga = 1.0;
-  if (jacobiprec)
-  {
-    throw Exception("not working");
-    SparseMatrixTM<double> * AA = dynamic_cast<SparseMatrixTM<double> *>(&A);
-    if (AA != NULL)
-    {
-      for (int i = 0; i < freedofs->Size(); ++i)
-      {
-        if (!freedofs->Test(i))
-          fvdiaga(i) = (*AA)(i,i);
-      }
-    }
-    else
-      throw Exception("no diag access....");
-    std::cout << " diaga = " << diaga << std::endl;
-    std::cout << " fvdiaga = " << fvdiaga << std::endl;
-  }
-
-  // BaseMatrix AT(A);
-  // AT.AsVector() = 0.0;
-  
-  BaseMatrix & invAT = * dynamic_cast<BaseSparseMatrix&> (A) . InverseMatrix(freedofs,true);
-
   const int max_its = 100000;
   const double rel_acc = 1e-6;
+
   BaseVector & a = *A.CreateVector();
   BaseVector & b = *A.CreateVector();
-  BaseVector & c = *A.CreateVector();
 
   FlatVector<double> fva = a.FVDouble();
   FlatVector<double> fvb = b.FVDouble();
-  FlatVector<double> fvc = c.FVDouble();
-  // a.SetRandom();
-  // b = invAT * a;
-  // c = invAT * a;
-  // a = b - c;
-  // std::cout << " L2Norm(a) = " << L2Norm(a) << std::endl;
  
 
   a.SetRandom();
@@ -105,21 +74,53 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool
 
   double bn; //lambda
   double bn_last = an; //lambda
+  if (printmuch)
+    cout << endl;
   for (int i = 0; i < max_its; ++i)
   {
     bn_last = bn;
+
+    for (int j = 0; j < evs.Size(); ++j)
+    {
+      const double ab = InnerProduct(a,*(evs[j]) );
+      a -= ab * *(evs[j]);
+    }
+
     ApplyATA(A,NULL,a,b,freedofs, fvdiaga);
     bn = L2Norm(b);
     b /= bn;
     a = b;
     if (printmuch)
-      std::cout << "\r                         \r"
-                << "it = " << i << ", bn = " << bn;
+      std::cout << ""
+        // << "\r                         \r"
+                << "it = " << i << ", bn = " << bn << endl;
+
+      // std::cout << "\r                         \r"
+      //           << "it = " << i << ", bn = " << bn;
     if (abs(bn-bn_last) < rel_acc * abs(bn_last)) break;
   }
-  // cout << endl;
-  // cout << " sqrt(lambda_max(ATA)) = " << sqrt(bn) << endl;
-  const double cup = sqrt(bn);
+  evs.Append(&a);
+  delete &b;
+  // getchar();
+  return sqrt(bn);  
+}
+
+
+double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, FlatVector<double> fvdiaga, 
+                             Array<BaseVector*> & invevs, bool printmuch = false)
+{
+  BaseMatrix & invAT = * dynamic_cast<BaseSparseMatrix&> (A) . InverseMatrix(freedofs,true);
+
+  const int max_its = 100000;
+  const double rel_acc = 1e-6;
+  BaseVector & a = *A.CreateVector();
+  BaseVector & b = *A.CreateVector();
+
+  FlatVector<double> fva = a.FVDouble();
+  FlatVector<double> fvb = b.FVDouble();
+
+  double an;
+  double bn; //lambda
 
   a.SetRandom();
   for (int i = 0; i < freedofs->Size(); ++i)
@@ -128,57 +129,95 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool
   an = L2Norm(a);
   a /= an;
 
-  
-  bn_last = an; //lambda
+  if (printmuch)
+    cout << endl;
+
+  double bn_last = an; //lambda
+
   for (int i = 0; i < max_its; ++i)
   {
     bn_last = bn;
+
+    for (int j = 0; j < invevs.Size(); ++j)
+    {
+      const double ab = InnerProduct(a,*(invevs[j]) );
+      a -= ab * *(invevs[j]);
+    }
+
     ApplyAAT(invA,&invAT,a,b,freedofs, fvdiaga);
-    // b = invA * a;
-    // double sum = 0.0;
-    // int cnt = 0;
-    // for (int j = 0; j < freedofs->Size(); ++j)
-    //   if (!freedofs->Test(j))
-    //     fvb(j) = 0.0;
-    //   else
-    //   {
-    //     sum += fvb(j);
-    //     cnt ++;
-    //   }
-    // for (int j = 0; j < freedofs->Size(); ++j)
-    //   if (freedofs->Test(j))
-    //     fvb(j) -= sum/cnt;
 
     bn = L2Norm(b);
     b /= bn;
     a = b;
-    // std::cout << " a = " << a << std::endl;
-    // getchar();
     if (printmuch)
-      std::cout << "\r                         \r"
-                << "it = " << i << ", bn = " << bn;
+      std::cout << ""
+        // << "\r                         \r"
+                << "it = " << i << ", bn = " << bn << endl;
+
+      // std::cout << "\r                         \r"
+      //           << "it = " << i << ", bn = " << bn;
     if (abs(bn-bn_last) < rel_acc * abs(bn_last)) break;
   }
-  // cout << endl;
-  // cout << " sqrt(lambda_min(ATA)) = " << 1.0/sqrt(bn) << endl;
-  const double clow = 1.0/sqrt(bn);
 
-  // ApplyATA(A,a,b);
-  // ApplyAAT(A,b,c);
-  // while (
-  if (printmuch)
-    cout << "\r ";
-  else
-    cout << " - ";
+  invevs.Append(&b);
+
+  delete &a;
+  delete &invAT;
+  // getchar();
+  return 1.0/sqrt(bn);
+}
+
+
+
+
+
+
+void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL)
+{
+  Array<BaseVector*> evs(0);
+  Array<BaseVector*> invevs(0);
+
+  BaseVector & diaga = *A.CreateVector();
+  FlatVector<double> fvdiaga = diaga.FVDouble();
+  fvdiaga = 1.0;
+  if (jacobiprec)
+  {
+    SparseMatrixTM<double> * AA = dynamic_cast<SparseMatrixTM<double> *>(&A);
+    if (AA != NULL)
+    {
+      for (int i = 0; i < freedofs->Size(); ++i)
+      {
+        if (freedofs->Test(i))
+          fvdiaga(i) = (*AA)(i,i);
+      }
+    }
+    else
+      throw Exception("no diag access....");
+  }
+
+  const double cup = PowerIteration(A, freedofs, fvdiaga, evs, false);
+
+  // std::cout << "\n lambda max_0 : " << cup << std::endl;
+  // for (int i = 1; i < 100; ++i)
+  //   std::cout << "\n lambda max_" << i << " : " << PowerIteration( A, freedofs, fvdiaga, evs, true) << std::endl;
+
+  const double clow = InversePowerIteration( A, invA, freedofs, fvdiaga, invevs, false);
+
+  // std::cout << "\n lambda min_0 : " << cup << std::endl;
+  // for (int i = 1; i < 100; ++i)
+  //   std::cout << "\n lambda min_" << i << " : " << InversePowerIteration( A, invA, freedofs, fvdiaga, invevs, true) << std::endl;
+
+  // const double clow = 1.0/sqrt(bn);
 
   cout << "condition number: " << std::setw(12) << cup/clow 
        << " (up: " << std::setw(12) << cup << ", low: " << std::setw(12) << clow << ")";
   if (printmuch)
     cout << endl;
+
+  if (outs)
+  {
+    *outs << cup/clow << "\t";
+  }
   
   delete &diaga;
-  delete &a;
-  delete &b;
-  delete &c;
-  delete &invAT;
 }
