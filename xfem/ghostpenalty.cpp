@@ -48,9 +48,11 @@ namespace ngfem
     const CompoundFiniteElement & cfel2 = *dcfel2;       
 
     const XFiniteElement * xfe1 = NULL;
+    const XDummyFE * dummfe1 = NULL;
     const ScalarFiniteElement<D> * scafe1 = NULL;
     const ScalarSpaceTimeFiniteElement<D> * stscafe1 = NULL;
     const XFiniteElement * xfe2 = NULL;
+    const XDummyFE * dummfe2 = NULL;
     const ScalarFiniteElement<D> * scafe2 = NULL;
     const ScalarSpaceTimeFiniteElement<D> * stscafe2 = NULL;
       
@@ -58,6 +60,8 @@ namespace ngfem
     {
       if (xfe1==NULL)
         xfe1 = dynamic_cast<const XFiniteElement* >(&cfel1[i]);
+      if (dummfe1==NULL)
+        dummfe1 = dynamic_cast<const XDummyFE* >(&cfel1[i]);
       if (scafe1==NULL)
         scafe1 = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel1[i]);
       if (stscafe1==NULL)
@@ -68,6 +72,8 @@ namespace ngfem
     {
       if (xfe2==NULL)
         xfe2 = dynamic_cast<const XFiniteElement* >(&cfel2[i]);
+      if (dummfe2==NULL)
+        dummfe2 = dynamic_cast<const XDummyFE* >(&cfel2[i]);
       if (scafe2==NULL)
         scafe2 = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel2[i]);
       if (stscafe2==NULL)
@@ -77,13 +83,20 @@ namespace ngfem
     const bool spacetime = (stscafe1 != NULL);
     elmat = 0.0;
 
+    DOMAIN_TYPE facetdt = IF;
     if (!xfe1 || !xfe2){ // not a ghost edge
-      return;
+      if (true)
+        return; // only ghost penalty at the interface
+
+      if (!(xfe1 || xfe2))
+        return;
+      else
+        facetdt = xfe1 ? dummfe2->GetDomainType() : dummfe1->GetDomainType();
     }
 
     ELEMENT_TYPE eltype1 = volumefel1.ElementType();
     int nd1 = volumefel1.GetNDof();
-    int ndof_x1 = xfe1->GetNDof();
+    int ndof_x1 = xfe1 ? xfe1->GetNDof() : 0;
     int ndof_sca1 = spacetime ? stscafe1->GetNDof() : scafe1->GetNDof();
     FlatVector<> mat1_dudn(nd1, lh);
     FlatVector<> mat1_dudn_sca(ndof_sca1, &mat1_dudn(0));
@@ -93,7 +106,7 @@ namespace ngfem
 
     ELEMENT_TYPE eltype2 = volumefel2.ElementType();
     int nd2 = volumefel2.GetNDof();
-    int ndof_x2 = xfe2->GetNDof();
+    int ndof_x2 = xfe2 ? xfe2->GetNDof() : 0;
     int ndof_sca2 = spacetime ? stscafe2->GetNDof() : scafe2->GetNDof();
     FlatVector<> mat2_dudn(nd2, lh);
     FlatVector<> mat2_dudn_sca(ndof_sca2, &mat2_dudn(0));
@@ -150,13 +163,12 @@ namespace ngfem
 
     const int p = maxorder;
 
-    const FlatArray<DOMAIN_TYPE>& xsign1 = xfe1->GetSignsOfDof();
-    const FlatArray<DOMAIN_TYPE>& xsign2 = xfe2->GetSignsOfDof();
-      
     DOMAIN_TYPE dt = POS;
     for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
     {
-
+      if (facetdt==POS && dt==NEG) continue;
+      if (facetdt==NEG && dt==POS) continue;
+      
       const IntegrationRule & ir_facet =
         SelectIntegrationRule (etfacet, 2*p);
 
@@ -173,12 +185,7 @@ namespace ngfem
         {
           IntegrationPoint ip1 = transform1(LocalFacetNr1, ir_facet[l]);
           MappedIntegrationPoint<D,D> sip1 (ip1, eltrans1);
-
-          double lam = 0;
-          if (dt == POS)
-            lam = coef_lam_pos->Evaluate(sip1);
-          else
-            lam = coef_lam_neg->Evaluate(sip1);
+          double lam = (dt == POS) ? coef_lam_pos->Evaluate(sip1) : coef_lam_neg->Evaluate(sip1);
           Mat<D> inv_jac1 = sip1.GetJacobianInverse();
           double det1 = sip1.GetJacobiDet();
 
@@ -192,15 +199,15 @@ namespace ngfem
             mat1_dudn_sca = mat1_du_sca * invjac_normal1;
           }
           else
-          {
             mat1_dudn_sca = scafe1->GetDShape (sip1.IP(), lh) * invjac_normal1;
-          }
 
-          mat1_dudn_x = mat1_dudn_sca;
-          for (int i = 0; i < ndof_sca1; ++i)
-            if (xsign1[i]!=dt)
-              mat1_dudn_x(i) = 0;              
-          // mat1_dudn_x = xfe1->GetDShape (sip1.IP(), lh) * invjac_normal1;
+          if (xfe1)
+          {
+            mat1_dudn_x = mat1_dudn_sca;
+            for (int i = 0; i < ndof_sca1; ++i)
+              if (xfe1->GetSignsOfDof()[i]!=dt)
+                mat1_dudn_x(i) = 0;              
+          }
 
           const double orthdist = abs(InnerProduct(pointsdiff,normal1));
 
@@ -224,18 +231,14 @@ namespace ngfem
           }
           else
             mat2_dudn_sca = scafe2->GetDShape (sip2.IP(), lh) * invjac_normal2;
-          mat2_dudn_x = mat2_dudn_sca;
-          for (int i = 0; i < ndof_sca2; ++i)
-            if (xsign2[i]!=dt)
-              mat2_dudn_x(i) = 0;              
-          // mat2_dudn_x = xfe2->GetDShape (sip2.IP(), lh) * invjac_normal2;
 
-          // for (int k = 0; k < ndof_x1; ++k)
-          //   if (xsign1[k] != sign)
-          //     mat1_dudn_x(k) = 0;
-          // for (int k = 0; k < ndof_x2; ++k)
-          //   if (xsign2[k] != sign)
-          //     mat2_dudn_x(k) = 0;
+          if (xfe2)
+          {
+            mat2_dudn_x = mat2_dudn_sca;
+            for (int i = 0; i < ndof_sca2; ++i)
+              if (xfe2->GetSignsOfDof()[i]!=dt)
+                mat2_dudn_x(i) = 0;              
+          }
 
           bmat = 0.0;
           bmat.Col(0).Range(  0,    nd1) = mat1_dudn;

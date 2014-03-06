@@ -52,7 +52,7 @@ namespace ngfem
     }
 
     virtual void SetTimeInterval (const TimeInterval & ti)
-    { tnew = ti.first; told = ti.second; tau = tnew-told; }
+    { told = ti.first; tnew = ti.second; tau = tnew-told; }
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
