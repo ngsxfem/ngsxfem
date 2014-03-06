@@ -146,7 +146,6 @@ numproc stx_solveinstat npsi
         -dt=0.0625
         -tstart=0
         -tend=1.0
-#        -userstepping
         -aneg=1
         -apos=2
         -bneg=1.5
@@ -156,6 +155,7 @@ numproc stx_solveinstat npsi
         -solution_n=solneg
         -solution_p=solpos
         -levelset=coef_lset
+#        -userstepping
 #        -calccond
 #        -ghostpenalty
         -delta=0.005
