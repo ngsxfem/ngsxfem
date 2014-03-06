@@ -428,7 +428,9 @@ public:
 	  cout << flush;
 	  
 	  if (calccond)
-		CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false);
+		CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, false);
+	  // if (calccond)
+	  // 	CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, true);
 
 	  // update visualization
 	  // delete &d;

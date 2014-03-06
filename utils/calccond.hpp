@@ -1,4 +1,5 @@
-void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, const BitArray * freedofs)
+void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, 
+              const BitArray * freedofs, FlatVector<double> fvdiaga)
 {
   BaseVector & c = *A.CreateVector();
   FlatVector<double> fvc = c.FVDouble();
@@ -9,6 +10,8 @@ void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector 
   for (int i = 0; i < freedofs->Size(); ++i)
     if (!freedofs->Test(i))
       fvc(i) = 0.0;
+    else
+      fvc(i) = fvc(i) / sqr(fvdiaga(i));
 
   w = 0.0;
   if(AT!=NULL)
@@ -20,22 +23,27 @@ void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector 
     if (!freedofs->Test(i))
       fvw(i) = 0.0;
 
+  // delete &d;
   delete &c;
 }
 
-void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, const BitArray * freedofs)
+void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, 
+              const BitArray * freedofs, FlatVector<double> fvdiaga)
 {
   BaseVector & c = *A.CreateVector();
-  // FlatVector<double> fvc = c.FVDouble();
+  FlatVector<double> fvc = c.FVDouble();
   // FlatVector<double> fvw = w.FVDouble();
   c = 0.0;
   if(AT!=NULL)
     AT->MultAdd(1.0,v,c);
   else
     A.MultTransAdd(1.0,v,c);
-  // for (int i = 0; i < freedofs->Size(); ++i)
-  //   if (!freedofs->Test(i))
-  //     fvc(i) = 0.0;
+  for (int i = 0; i < freedofs->Size(); ++i)
+    if (!freedofs->Test(i))
+      fvc(i) = 0.0;
+    else
+      fvc(i) = fvc(i) * sqr(fvdiaga(i));
+
   w = 0.0;
   A.MultAdd(1.0,c,w);
   // for (int i = 0; i < freedofs->Size(); ++i)
@@ -44,8 +52,29 @@ void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector 
   delete &c;
 }
 
-void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true)
+void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false)
 {
+  BaseVector & diaga = *A.CreateVector();
+  FlatVector<double> fvdiaga = diaga.FVDouble();
+  fvdiaga = 1.0;
+  if (jacobiprec)
+  {
+    throw Exception("not working");
+    SparseMatrixTM<double> * AA = dynamic_cast<SparseMatrixTM<double> *>(&A);
+    if (AA != NULL)
+    {
+      for (int i = 0; i < freedofs->Size(); ++i)
+      {
+        if (!freedofs->Test(i))
+          fvdiaga(i) = (*AA)(i,i);
+      }
+    }
+    else
+      throw Exception("no diag access....");
+    std::cout << " diaga = " << diaga << std::endl;
+    std::cout << " fvdiaga = " << fvdiaga << std::endl;
+  }
+
   // BaseMatrix AT(A);
   // AT.AsVector() = 0.0;
   
@@ -79,7 +108,7 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool
   for (int i = 0; i < max_its; ++i)
   {
     bn_last = bn;
-    ApplyATA(A,NULL,a,b,freedofs);
+    ApplyATA(A,NULL,a,b,freedofs, fvdiaga);
     bn = L2Norm(b);
     b /= bn;
     a = b;
@@ -104,7 +133,7 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool
   for (int i = 0; i < max_its; ++i)
   {
     bn_last = bn;
-    ApplyATA(invA,&invAT,a,b,freedofs);
+    ApplyAAT(invA,&invAT,a,b,freedofs, fvdiaga);
     // b = invA * a;
     // double sum = 0.0;
     // int cnt = 0;
@@ -146,7 +175,8 @@ void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool
        << " (up: " << std::setw(12) << cup << ", low: " << std::setw(12) << clow << ")";
   if (printmuch)
     cout << endl;
-
+  
+  delete &diaga;
   delete &a;
   delete &b;
   delete &c;
