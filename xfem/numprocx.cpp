@@ -15,6 +15,7 @@
 #include "stxfemIntegrators.hpp"
 #include "setvaluesx.hpp"
 #include "../utils/error.hpp"
+#include "../utils/calccond.hpp"
 
 using namespace ngsolve;
 // using namespace xintegration;
@@ -398,7 +399,67 @@ namespace ngcomp
 
   };
 
+
+/* ---------------------------------------- 
+   numproc
+   ---------------------------------------- */
+  class NumProcCalcCondition : public NumProc
+  {
+  protected:
+    BilinearForm * bfa;
+    string inversetype;
+    bool symmetric;
+  public:
+
+
+    NumProcCalcCondition (PDE & apde, const Flags & flags)
+      : NumProc (apde)
+    { 
+      bfa = pde.GetBilinearForm (flags.GetStringFlag ("bilinearform","bfa"));
+      inversetype = flags.GetStringFlag ("inverse", "pardiso");
+      symmetric = flags.GetDefineFlag ("symmetric");
+    }
+
+    virtual ~NumProcCalcCondition()
+    {
+      ;
+    }
+
+    virtual string GetClassName () const
+    {
+      return "NumProcXDifference";
+    }
+
+
+    virtual void Do (LocalHeap & lh)
+    {
+      static int refinements = 0;
+      cout << " This is the Do-call for CalcCondition on refinement level " << refinements << std::endl;
+      refinements++;
+
+      BaseMatrix & mata = bfa->GetMatrix();
+
+	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
+
+	  BaseMatrix & invmat = *dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(bfa->GetFESpace().GetFreeDofs());
+
+      std::ofstream outf("condition_npcc.out");
+      std::ofstream outjf("condition_jac_npcc.out");
+      outf << refinements-1 << "\t";
+      outjf << refinements-1 << "\t";
+      CalcCond(mata, invmat, bfa->GetFESpace().GetFreeDofs(), true, false, &outf , symmetric);
+      CalcCond(mata, invmat, bfa->GetFESpace().GetFreeDofs(), true, true, &outjf, symmetric);
+      outjf << endl;
+
+      delete &invmat;
+               
+    }    
+    
+
+  };
+
 }
 
 static RegisterNumProc<NumProcSetValuesX> npinittestxfem2d("setvaluesx");
 static RegisterNumProc<NumProcXDifference<2> > npxdiff("xdifference");
+static RegisterNumProc<NumProcCalcCondition> npinitcalccond("calccond");
