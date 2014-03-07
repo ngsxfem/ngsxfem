@@ -19,7 +19,7 @@ define constant two = 2.0
 
 define constant pen = 1e7
 
-define constant x0 = 0.5
+define constant x0 = 0.51
 define constant y0 = 0.5
 
 define constant bneg = 1.0
@@ -39,7 +39,7 @@ define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
 define constant lambda = 15.0
 
-define constant R = 0.1251 #0.33333333
+define constant R = 0.33333333
 
 define fespace fesh1
        -type=h1ho
@@ -75,12 +75,12 @@ xvis one
 
 numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 
-define bilinearform a -fespace=fescomp # -printelmat -print
+define bilinearform a -fespace=fescomp #-symmetric # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
 xnitsche_halfhalf aneg apos bneg bpos lambda
 #xrobin bneg_pen bpos_pen
-lo_ghostpenalty aneg apos one
+#lo_ghostpenalty aneg apos one
 
 define linearform f -fespace=fescomp # -print
 xsource bneg bpos
@@ -90,13 +90,16 @@ xsource bneg bpos
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-define preconditioner c -type=local -bilinearform=a
-#define preconditioner c -type=direct -bilinearform=a
+define preconditioner c -type=local -bilinearform=a -test -print #-block
+#define preconditioner c -type=direct -bilinearform=a -test
+#define preconditioner c -type=bddc -bilinearform=a
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=gmres -preconditioner=c # -print
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
 
 define coefficient veczero
 (0,0),
+
+numproc calccond npcc -bilinearform=a -inverse=pardiso #-symmetric
 
 # numproc xdifference npxd -solution=u 
 #         -function_n=two
