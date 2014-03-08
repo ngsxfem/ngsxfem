@@ -19,7 +19,10 @@
 ** test cases...
 ** error calculation outputs error field (at least piecewise constant)
 
-* condition number stuff (finish... ) 
+* condition number stuff
+** stationary case:
+*** sliver test case
+*** block preconditioner for stationary case... 
 
 * streamline diffusion
 ** implement space-time x version.... 

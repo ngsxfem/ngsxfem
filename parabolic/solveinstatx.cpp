@@ -408,6 +408,7 @@ public:
 		itinvmat = new GMRESSolver<double> (mata, *localprec);
 		// invmat.SetPrintRates(true);
 		itinvmat->SetMaxSteps(10000);
+		itinvmat->SetPrecision(1e-6);
 	  }
 
 	  BaseMatrix & invmat = directsolve ? *directinvmat : *itinvmat;

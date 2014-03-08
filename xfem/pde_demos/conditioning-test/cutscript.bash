@@ -3,8 +3,8 @@ echo "# ---"  > out.stdmesh.cond.CinvA
 echo "# ---"  > out.stdmesh.cond.A
 echo "# ---"  > out.stdmesh.err
 echo "# ---"  > out.stdmesh.its
-LOW=300
-UP=700
+LOW=3000
+UP=3100
 EXP=$LOW
 while [  $EXP -lt $UP ]; do
     echo "$LOW / $EXP / $UP"
@@ -21,7 +21,7 @@ while [  $EXP -lt $UP ]; do
 #    cat out.stdmesh | grep "Condition A"
 #    cat out.stdmesh | grep Iterations
 #    cat out.stdmesh | grep "l2_n" -A 1 | tail -n 1
-let EXP=EXP+1
+let EXP=EXP+2
 done
 
 gnuplot stdmesh.gpl

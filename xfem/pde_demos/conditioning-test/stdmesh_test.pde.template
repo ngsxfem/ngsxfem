@@ -5,7 +5,7 @@ geometry = square.in2d
 # and mesh
 #mesh = square.vol.gz
 #mesh = square_trigs_2x2.vol.gz
-mesh = square_trigs.vol.gz
+mesh = square_trigs_med.vol
 #mesh = square_quad_coarse.vol.gz
 
 shared = libngsxfem_xfem
@@ -19,7 +19,7 @@ define constant two = 2.0
 
 define constant pen = 1e7
 
-define constant x0 = (var/1000)
+define constant x0 = (var/10000)
 define constant y0 = 0.5
 
 define constant bneg = 1.0
@@ -39,7 +39,7 @@ define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
 define constant lambda = 15.0
 
-define constant R = 0.33333333
+define constant R = 0.2
 
 define fespace fesh1
        -type=h1ho
@@ -64,7 +64,7 @@ numproc informxfem npix
 define fespace fescomp
        -type=compound
        -spaces=[fesh1,fesx]
-       -dgjumps
+#       -dgjumps
 
 define gridfunction u -fespace=fescomp
 
@@ -78,9 +78,9 @@ numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 define bilinearform a -fespace=fescomp # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
-xnitsche_halfhalf aneg apos bneg bpos lambda
+xnitsche_hansbobeta aneg apos bneg bpos lambda
 #xrobin bneg_pen bpos_pen
-lo_ghostpenalty aneg apos one
+#lo_ghostpenalty aneg apos one
 
 define linearform f -fespace=fescomp # -print
 xsource bneg bpos
