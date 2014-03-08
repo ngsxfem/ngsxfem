@@ -166,24 +166,27 @@ namespace ngcomp
   };
 
 
-  // class XH1FESpace : public CompoundFESpace
-  // {
-  // public:
-  //   XH1FESpace (const MeshAccess & ama, 
-  //               const Array<FESpace*> & aspaces,
-  //               const Flags & flags);
-  //   virtual ~XH1FESpace () { ; }
-  //   static FESpace * Create (const MeshAccess & ma, const Flags & flags)
-  //     {
-  //       Array<FESpace*> spaces(2);
-  //       spaces[0] = new H1HighOrderFESpace (ma, flags);    
-  //       spaces[1] = new XFESpace (ma, flags);        
-  //       XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
-  //       return fes;
-  //     }
-  //   virtual string GetClassName () const { return "XH1FESpace"; }
+  class XH1FESpace : public CompoundFESpace
+  {
+  public:
+    XH1FESpace (const MeshAccess & ama, 
+                const Array<FESpace*> & aspaces,
+                const Flags & flags);
+    virtual ~XH1FESpace () { ; }
+    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    {
+        Array<FESpace*> spaces(2);
+        spaces[0] = new H1HighOrderFESpace (ma, flags);    
+        if (ma.GetDimension() == 2)
+          spaces[1] = new XFESpace<2,2> (ma, flags);        
+        else
+          spaces[1] = new XFESpace<3,3> (ma, flags);        
+        XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
+        return fes;
+    }
+    virtual string GetClassName () const { return "XH1FESpace"; }
     
-  // };
+  };
   
 }    
 

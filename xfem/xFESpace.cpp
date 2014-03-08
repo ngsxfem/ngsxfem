@@ -1,6 +1,6 @@
 
 #include "xFESpace.hpp"
-//#include "xfemVisInts.hpp"
+#include "xfemVisInts.hpp"
 using namespace ngsolve;
 using namespace ngfem;
 
@@ -686,8 +686,22 @@ namespace ngcomp
   NumProcInformXFESpace::NumProcInformXFESpace (PDE & apde, const Flags & flags)
     : NumProc (apde)
   { 
-    FESpace* xfes = pde.GetFESpace(flags.GetStringFlag("xfespace","vx"));
-    FESpace* basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
+    
+    FESpace* xh1fes = pde.GetFESpace(flags.GetStringFlag("xh1fespace","v"), true);
+    FESpace* xfes = NULL;
+    FESpace* basefes = NULL;
+
+    if (xh1fes)
+    {
+      basefes = (*(dynamic_cast<CompoundFESpace*>(xh1fes)))[0];
+      xfes = (*(dynamic_cast<CompoundFESpace*>(xh1fes)))[1];
+    }
+    else
+    {
+      xfes = pde.GetFESpace(flags.GetStringFlag("xfespace","vx"));
+      basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
+    }
+
     FESpace* fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
     CoefficientFunction * coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
@@ -781,6 +795,30 @@ namespace ngcomp
   
   static RegisterNumProc<NumProcInformXFESpace> npinfoxfe("informxfem");
 
+
+
+  XH1FESpace::XH1FESpace (const MeshAccess & ama, 		   
+                          const Array<FESpace*> & aspaces,
+                          const Flags & flags)
+    : CompoundFESpace(ama, aspaces, flags)
+  {
+      name="XH1FESpace";
+
+      static ConstantCoefficientFunction one(1);
+      if (ma.GetDimension() == 2)
+      {
+        integrator = new XVisIntegrator<2> (&one);
+        // boundary_integrator = new RobinIntegrator<2> (&one);
+      }
+      else
+      {
+        integrator = new XVisIntegrator<3> (&one);
+        // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
+        // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
+      }
+  }
+
+
   namespace xfespace_cpp
   {
     class Init
@@ -793,7 +831,7 @@ namespace ngcomp
     {
       GetFESpaceClasses().AddFESpace ("xfespace", XFESpace<2,2>::Create);
       GetFESpaceClasses().AddFESpace ("lsetcontfespace", LevelsetContainerFESpace::Create);
-      // GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
+      GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
     }
   
     Init init;

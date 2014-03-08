@@ -41,30 +41,18 @@ define constant lambda = 15.0
 
 define constant R = 0.33333333
 
-define fespace fesh1
-       -type=h1ho
-       -order=1
-       -dirichlet=[1,2]
-
-define fespace fesx
-       -type=xfespace
-#       -levelset=(x-0.55)
-#       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09)
-
 define coefficient lset
-#(x-0.55),
-#(abs(x-x0)-R),
 ((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
-       
-numproc informxfem npix 
-        -fespace=fesh1
-        -xfespace=fesx
-        -coef_levelset=lset
 
 define fespace fescomp
-       -type=compound
-       -spaces=[fesh1,fesx]
-       -dgjumps
+       -type=xh1fespace
+       -order=1
+       -dirichlet=[1,2]
+       # -dgjumps
+
+numproc informxfem npix 
+        -xh1fespace=fescomp
+        -coef_levelset=lset
 
 define gridfunction u -fespace=fescomp
 
@@ -78,7 +66,7 @@ numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
 define bilinearform a -fespace=fescomp #-symmetric # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
-xnitsche_halfhalf aneg apos bneg bpos lambda
+xnitsche_hansbo aneg apos bneg bpos lambda
 #xrobin bneg_pen bpos_pen
 #lo_ghostpenalty aneg apos one
 
