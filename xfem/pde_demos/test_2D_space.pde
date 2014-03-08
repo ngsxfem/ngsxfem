@@ -78,7 +78,7 @@ xsource bneg bpos
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-define preconditioner c -type=local -bilinearform=a -test -print #-block
+define preconditioner c -type=local -bilinearform=a -test -print -block
 #define preconditioner c -type=direct -bilinearform=a -test
 #define preconditioner c -type=bddc -bilinearform=a
 

@@ -802,22 +802,82 @@ namespace ngcomp
                           const Flags & flags)
     : CompoundFESpace(ama, aspaces, flags)
   {
-      name="XH1FESpace";
+    name="XH1FESpace";
 
-      static ConstantCoefficientFunction one(1);
-      if (ma.GetDimension() == 2)
-      {
-        integrator = new XVisIntegrator<2> (&one);
-        // boundary_integrator = new RobinIntegrator<2> (&one);
-      }
-      else
-      {
-        integrator = new XVisIntegrator<3> (&one);
-        // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
-        // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
-      }
+    static ConstantCoefficientFunction one(1);
+    if (ma.GetDimension() == 2)
+    {
+      integrator = new XVisIntegrator<2> (&one);
+      // boundary_integrator = new RobinIntegrator<2> (&one);
+    }
+    else
+    {
+      integrator = new XVisIntegrator<3> (&one);
+      // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
+      // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
+    }
   }
 
+
+  ///SmoothingBlocks for good preconditioned iterative solvers
+  //TODO: 3D needs an update or at least a check!
+  Table<int> * XH1FESpace::CreateSmoothingBlocks (const Flags & precflags) const
+  {
+    Table<int> * it;
+
+    int nv = ma.GetNV();
+    int ne = ma.GetNE();
+    int nf = ma.GetNFaces();
+    int ned = ma.GetNEdges();      
+    Array<int> dnums, dnums2; //, verts, edges;
+      
+    FilteredTableCreator creator(GetFreeDofs());
+
+    if ( ma.GetDimension() == 2)
+    {
+	  for ( ; !creator.Done(); creator++)
+	  {      
+        if (true)
+	    for (int i = 0; i < nv; i++)
+        {
+          GetVertexDofNrs(i,dnums);
+          for (int j = 0; j < dnums.Size(); ++j)
+            creator.Add(dnums[j], dnums);
+        }
+
+        if (false)
+	    for (int i = 0; i < ned; i++)
+        {
+          Ng_Node<1> edge = ma.GetNode<1> (i);
+          // GetEdgeDofNrs(i,dnums);
+          dnums.SetSize(0);
+          for (int k = 0; k < 2; k++)
+          {
+            int vertex = edge.vertices[k];
+            GetVertexDofNrs(vertex,dnums2);
+            dnums.Append(dnums2);
+          }
+
+          for (int k = 0; k < 2; k++)
+          {
+            int vertex = edge.vertices[k];
+            GetVertexDofNrs(vertex,dnums2);
+            for (int j = 0; j < dnums2.Size(); ++j)
+              creator.Add(dnums2[j], dnums);
+          }
+        }
+	  }
+      it = creator.GetTable();
+    }
+    else
+    {
+      throw Exception("nono not 3D precond. yet");
+      // it = creator.GetTable();
+    }
+
+    *testout << "smoothingblocks: " << endl << *it << endl;
+    return it;
+  }
 
   namespace xfespace_cpp
   {

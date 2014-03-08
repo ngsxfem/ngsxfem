@@ -105,6 +105,23 @@ namespace ngcomp
     void GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const;
     void GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const;
 
+    virtual void GetVertexDofNrs (int vnr, Array<int> & dnums) const
+    {
+      dnums.SetSize(0);
+      Array<int> ldnums;
+      basefes->GetVertexDofNrs(vnr,ldnums);
+      for (int i = 0; i < ldnums.Size(); ++i)
+      {
+        int dof = basedof2xdof[ldnums[i]];
+        if (dof!=-1)
+          dnums.Append(dof);
+      }
+    }
+    // virtual void GetEdgeDofNrs (int ednr, Array<int> & dnums) const;
+    // virtual void GetFaceDofNrs (int fanr, Array<int> & dnums) const;
+    // virtual void GetInnerDofNrs (int elnr, Array<int> & dnums) const;
+
+
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
     virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
 
@@ -184,6 +201,9 @@ namespace ngcomp
         XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
         return fes;
     }
+
+    Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
+
     virtual string GetClassName () const { return "XH1FESpace"; }
     
   };
