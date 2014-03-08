@@ -117,9 +117,45 @@ namespace ngcomp
           dnums.Append(dof);
       }
     }
-    // virtual void GetEdgeDofNrs (int ednr, Array<int> & dnums) const;
-    // virtual void GetFaceDofNrs (int fanr, Array<int> & dnums) const;
-    // virtual void GetInnerDofNrs (int elnr, Array<int> & dnums) const;
+
+    virtual void GetEdgeDofNrs (int vnr, Array<int> & dnums) const
+    {
+      dnums.SetSize(0);
+      Array<int> ldnums;
+      basefes->GetEdgeDofNrs(vnr,ldnums);
+      for (int i = 0; i < ldnums.Size(); ++i)
+      {
+        int dof = basedof2xdof[ldnums[i]];
+        if (dof!=-1)
+          dnums.Append(dof);
+      }
+    }
+
+    virtual void GetFaceDofNrs (int vnr, Array<int> & dnums) const
+    {
+      dnums.SetSize(0);
+      Array<int> ldnums;
+      basefes->GetFaceDofNrs(vnr,ldnums);
+      for (int i = 0; i < ldnums.Size(); ++i)
+      {
+        int dof = basedof2xdof[ldnums[i]];
+        if (dof!=-1)
+          dnums.Append(dof);
+      }
+    }
+
+    virtual void GetInnerDofNrs (int vnr, Array<int> & dnums) const
+    {
+      dnums.SetSize(0);
+      Array<int> ldnums;
+      basefes->GetInnerDofNrs(vnr,ldnums);
+      for (int i = 0; i < ldnums.Size(); ++i)
+      {
+        int dof = basedof2xdof[ldnums[i]];
+        if (dof!=-1)
+          dnums.Append(dof);
+      }
+    }
 
 
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
