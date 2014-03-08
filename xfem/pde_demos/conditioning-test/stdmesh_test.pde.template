@@ -41,41 +41,25 @@ define constant lambda = 15.0
 
 define constant R = 0.2
 
-define fespace fesh1
-       -type=h1ho
-       -order=1
-       -dirichlet=[1,2]
-
-define fespace fesx
-       -type=xfespace
-#       -levelset=(x-0.55)
-#       -levelset=((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)-0.09)
 
 define coefficient lset
-#(x-0.55),
-#(abs(x-x0)-R),
 ((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
-       
-numproc informxfem npix 
-        -fespace=fesh1
-        -xfespace=fesx
-        -coef_levelset=lset
 
 define fespace fescomp
-       -type=compound
-       -spaces=[fesh1,fesx]
-#       -dgjumps
+       -type=xh1fespace
+       -order=1
+       -dirichlet=[1,2]
+       # -dgjumps
+
+numproc informxfem npix 
+        -xh1fespace=fescomp
+        -coef_levelset=lset
 
 define gridfunction u -fespace=fescomp
 
 #numproc shapetester npst -gridfunction=u
 
-define bilinearform evalx -fespace=fescomp -nonassemble
-xvis one
-
-numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
-
-define bilinearform a -fespace=fescomp # -printelmat -print
+define bilinearform a -fespace=fescomp# -printelmat -print
 #xmass one one
 xlaplace abneg abpos
 xnitsche_hansbobeta aneg apos bneg bpos lambda
@@ -90,7 +74,7 @@ xsource bneg bpos
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-define preconditioner c -type=local -bilinearform=a -test
+define preconditioner c -type=local -bilinearform=a -block -test
 #define preconditioner c -type=direct -bilinearform=a
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
@@ -110,4 +94,4 @@ numproc calccond npcc -bilinearform=a -symmetric -inverse=pardiso
 #         -henryweight_n=1.0
 #         -henryweight_p=1.0
 
-numproc visualization npviz -scalarfunction=utry #-comp=0
+numproc visualization npviz -scalarfunction=u

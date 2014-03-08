@@ -407,7 +407,8 @@ namespace ngcomp
     *testout << "sel2dofs = " << *sel2dofs << endl;
     *testout << "domain of dofs = " << domofdof << endl;
 
-    *testout << "basefes -> free_dofs = " << *basefes->GetFreeDofs() << endl;
+    *testout << " basefes = " << basefes << endl;
+    *testout << "basefes -> free_dofs = " << *(basefes->GetFreeDofs()) << endl;
 
     *testout << "free_dofs = " << free_dofs << endl;
   }
@@ -464,7 +465,7 @@ namespace ngcomp
     {
       const int dof = basedof2xdof[i];
       if (dof != -1)
-        ctofdof[dof] = basefes->GetDofCouplingType(i);
+        ctofdof[dof] = INTERFACE_DOF; //basefes->GetDofCouplingType(i);
     }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
   }
@@ -830,8 +831,17 @@ namespace ngcomp
     int nf = ma.GetNFaces();
     int ned = ma.GetNEdges();      
     Array<int> dnums, dnums2; //, verts, edges;
-      
-    FilteredTableCreator creator(GetFreeDofs());
+
+    bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
+    bool subassembled = precflags.GetDefineFlag("subassembled");
+    COUPLING_TYPE dof_mode = eliminate_internal? (subassembled? WIREBASKET_DOF : EXTERNAL_DOF) : ANY_DOF;
+    BitArray filter;
+    GetFilteredDofs(dof_mode, filter, true);
+    FilteredTableCreator creator(&filter);
+
+    // FilteredTableCreator creator(GetFreeDofs());
+
+    *testout << "*GetFreeDofs(): " << endl << *GetFreeDofs() << endl;
 
     if ( ma.GetDimension() == 2)
     {
@@ -845,25 +855,26 @@ namespace ngcomp
             creator.Add(dnums[j], dnums);
         }
 
-        if (false)
-	    for (int i = 0; i < ned; i++)
+        if (true)
         {
-          Ng_Node<1> edge = ma.GetNode<1> (i);
-          // GetEdgeDofNrs(i,dnums);
-          dnums.SetSize(0);
-          for (int k = 0; k < 2; k++)
-          {
-            int vertex = edge.vertices[k];
-            GetVertexDofNrs(vertex,dnums2);
-            dnums.Append(dnums2);
-          }
+          // for (int i = 0; i < GetNDof(); i++)
+          // {
+          //   creator.Add(i,i);
+          // }          
 
-          for (int k = 0; k < 2; k++)
+          for (int i = 0; i < ned; i++)
           {
-            int vertex = edge.vertices[k];
-            GetVertexDofNrs(vertex,dnums2);
-            for (int j = 0; j < dnums2.Size(); ++j)
-              creator.Add(dnums2[j], dnums);
+            Ng_Node<1> edge = ma.GetNode<1> (i);
+
+            GetVertexDofNrs(edge.vertices[0],dnums);
+            GetVertexDofNrs(edge.vertices[1],dnums2);
+            
+            for (int j = 0; j < dnums.Size(); ++j)
+              for (int k = 0; k < dnums2.Size(); ++k)
+              {
+                creator.Add(dnums[j],dnums2[k]);
+                creator.Add(dnums2[k],dnums[j]);
+              }
           }
         }
 	  }

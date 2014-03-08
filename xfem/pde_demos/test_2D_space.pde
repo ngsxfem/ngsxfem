@@ -25,7 +25,7 @@ define constant y0 = 0.5
 define constant bneg = 1.0
 define constant bpos = 2.0
 
-define constant aneg = 0.1
+define constant aneg = 0.2
 define constant apos = 0.1
 
 define constant abneg = (aneg*bneg)
@@ -56,23 +56,17 @@ numproc informxfem npix
 
 define gridfunction u -fespace=fescomp
 
-#numproc shapetester npst -gridfunction=u
+define linearform f -fespace=fescomp # -print
+xsource bneg bpos
+#xneumann bneg_bndvalneg_pen bpos_bndvalpos_pen
 
-define bilinearform evalx -fespace=fescomp -nonassemble
-xvis one
-
-numproc drawflux npdf -solution=u -bilinearform=evalx -label=utry -applyd
-
-define bilinearform a -fespace=fescomp #-symmetric # -printelmat -print
+define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
 xnitsche_hansbo aneg apos bneg bpos lambda
 #xrobin bneg_pen bpos_pen
 #lo_ghostpenalty aneg apos one
 
-define linearform f -fespace=fescomp # -print
-xsource bneg bpos
-#xneumann bneg_bndvalneg_pen bpos_bndvalpos_pen
 
 #numproc setvalues npsv -gridfunction=u.1 -coefficient=zero -boundary
 
@@ -80,7 +74,7 @@ numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=o
 
 define preconditioner c -type=local -bilinearform=a -test -print -block
 #define preconditioner c -type=direct -bilinearform=a -test
-#define preconditioner c -type=bddc -bilinearform=a
+#define preconditioner c -type=bddc -bilinearform=a -test # -block
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
 
@@ -99,4 +93,4 @@ numproc calccond npcc -bilinearform=a -inverse=pardiso #-symmetric
 #         -henryweight_n=1.0
 #         -henryweight_p=1.0
 
-numproc visualization npviz -scalarfunction=utry #-comp=0
+numproc visualization npviz -scalarfunction=u #-comp=0
