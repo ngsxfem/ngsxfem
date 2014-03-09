@@ -37,7 +37,7 @@ define constant bpos_pen = (pen*bpos)
 define constant bneg_bndvalneg_pen = (pen*bneg*bpos)
 define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
-define constant lambda = 15.0
+define constant lambda = setlam
 
 define constant R = 0.2
 
@@ -49,7 +49,7 @@ define fespace fescomp
        -type=xh1fespace
        -order=1
        -dirichlet=[1,2]
-       # -dgjumps
+#       -dgjumps
 
 numproc informxfem npix 
         -xh1fespace=fescomp

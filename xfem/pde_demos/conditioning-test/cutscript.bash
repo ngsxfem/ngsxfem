@@ -10,13 +10,17 @@ echo "# ---"  > out.stdmesh.its.BDDC
 echo "# ---"  > out.stdmesh.its.BBDDC
 echo "# ---"  > out.stdmesh.err
 LOW=3000
-UP=7000
+UP=3030
 # LOW=1
 # UP=4
 EXP=$LOW
+LAM=2
 while [  $EXP -lt $UP ]; do
+#while [  $LAM -lt $UP ]; do
     echo "$LOW / $EXP / $UP"
-    sed "s/var/$EXP/g" stdmesh_test.pde.template > stdmesh_test.pde
+    echo "LAM = $LAM"
+    sed "s/var/$EXP/g" stdmesh_test.pde.template > stdmesh_test.pde.temp
+    sed "s/setlam/$LAM/g" stdmesh_test.pde.temp > stdmesh_test.pde
     ngs stdmesh_test.pde > out.stdmesh
     # sed "s/var/5000/g" stdmesh_test.pde.template > stdmesh_test.pde
     # # echo "numproc quit npquit" >> stdmesh_test.pde
@@ -40,11 +44,9 @@ while [  $EXP -lt $UP ]; do
     cat out.stdmesh | grep "Iterations:" | tail -n 4 |tail -n 2 | head -n 1
     cat out.stdmesh | grep "Iterations:" | tail -n 4 |tail -n 1 
 #    cat out.stdmesh | grep "l2_n" -A 1 | tail -n 1 >> out.stdmesh.err
-#    cat out.stdmesh | grep "Condition CinvA"
-#    cat out.stdmesh | grep "Condition A"
-#    cat out.stdmesh | grep Iterations
 #    cat out.stdmesh | grep "l2_n" -A 1 | tail -n 1
 let EXP=EXP+1
+#let LAM=LAM*2
 done
 
 gnuplot stdmesh.gpl
