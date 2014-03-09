@@ -19,14 +19,14 @@ define constant two = 2.0
 
 define constant pen = 1e7
 
-define constant x0 = 0.51
+define constant x0 = 0.5
 define constant y0 = 0.5
 
 define constant bneg = 1.0
 define constant bpos = 2.0
 
 define constant aneg = 0.2
-define constant apos = 0.1
+define constant apos = 0.2
 
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
@@ -37,7 +37,7 @@ define constant bpos_pen = (pen*bpos)
 define constant bneg_bndvalneg_pen = (pen*bneg*bpos)
 define constant bpos_bndvalpos_pen = (pen*bpos*bneg)
 
-define constant lambda = 15.0
+define constant lambda = 2.0
 
 define constant R = 0.33333333
 
@@ -72,9 +72,9 @@ xnitsche_hansbo aneg apos bneg bpos lambda
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-define preconditioner c -type=local -bilinearform=a -test -print -block
+define preconditioner c -type=local -bilinearform=a -test -block
 #define preconditioner c -type=direct -bilinearform=a -test
-#define preconditioner c -type=bddc -bilinearform=a -test # -block
+#define preconditioner c -type=bddc -bilinearform=a -test -block
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
 

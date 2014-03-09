@@ -239,6 +239,7 @@ namespace ngcomp
     }
 
     Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
+    Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
 
     virtual string GetClassName () const { return "XH1FESpace"; }
     

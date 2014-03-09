@@ -821,7 +821,6 @@ namespace ngcomp
 
 
   ///SmoothingBlocks for good preconditioned iterative solvers
-  //TODO: 3D needs an update or at least a check!
   Table<int> * XH1FESpace::CreateSmoothingBlocks (const Flags & precflags) const
   {
     Table<int> * it;
@@ -889,6 +888,40 @@ namespace ngcomp
     *testout << "smoothingblocks: " << endl << *it << endl;
     return it;
   }
+
+
+  Array<int> * XH1FESpace :: CreateDirectSolverClusters (const Flags & flags) const
+  {
+    if (true || flags.GetDefineFlag("subassembled"))
+    {
+      cout << "creating bddc-coarse grid(vertices)" << endl;
+      Array<int> & clusters = *new Array<int> (GetNDof());
+      clusters = 0;
+      return &clusters;	
+    }
+    else
+    {
+      Array<int> & clusters = *new Array<int> (GetNDof());
+      clusters = 0;
+
+      Array<int> dnums;
+      int nfa = ma.GetNFacets();
+      int nv = ma.GetNV();
+
+      for (int i = 0; i < nv; i++)
+	  {
+        // basefes->GetVertexDofNrs (i, dnums);
+	    clusters[nv /*dnums[0]*/] = 1;
+	  }
+
+      const BitArray & freedofs = *GetFreeDofs();
+      for (int i = 0; i < freedofs.Size(); i++)
+        if (!freedofs.Test(i)) clusters[i] = 0;
+      *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
+      return &clusters;
+    }
+  }
+
 
   namespace xfespace_cpp
   {
