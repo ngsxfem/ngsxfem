@@ -4,8 +4,14 @@ set logscale y
 set y2tics
 offset=0.3
 plot "out.stdmesh.cond.A" u ($0/10000+offset):3 w l lw 2 title "cond(A)", \
-     "out.stdmesh.cond.CinvA" u ($0/10000+offset):3 w l lw 2 title "cond(CinvA)", \
-     "out.stdmesh.its" u ($0/10000+offset):2 w l axes x1y2 title "CG its. "
+     "out.stdmesh.cond.BDDCinvA" u ($0/10000+offset):2 w l lw 2 title "cond(BDDCinvA)", \
+     "out.stdmesh.cond.BBDDCinvA" u ($0/10000+offset):2 w l lw 2 title "cond(BlockBDDCinvA)", \
+     "out.stdmesh.cond.BJinvA" u ($0/10000+offset):2 w l lw 2 title "cond(BlockJacinvA)", \
+     "out.stdmesh.cond.JinvA" u ($0/10000+offset):2 w l lw 2 title "cond(JacinvA)", \
+     "out.stdmesh.its.BDDC" u ($0/10000+offset):2 w l axes x1y2 title "CG its. (BDDC) ", \
+     "out.stdmesh.its.BBDDC" u ($0/10000+offset):2 w l axes x1y2 title "CG its. (BlockBDDC) ", \
+     "out.stdmesh.its.BJ" u ($0/10000+offset):2 w l axes x1y2 title "CG its. (BlockJacobi) ", \
+     "out.stdmesh.its.J" u ($0/10000+offset):2 w l axes x1y2 title "CG its. (Jacobi) "
      
 #, \
 #     "xcoords_coarse.dat" u 1:(1e10) w impulse title "vertex pos."
