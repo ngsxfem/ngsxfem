@@ -804,6 +804,19 @@ namespace ngcomp
   {
     name="XH1FESpace";
 
+    const int sD = ma.GetDimension();
+    if (sD == 2)
+      if (dynamic_cast<const XFESpace<2,3> * >(spaces[1]) != NULL)
+        spacetime = true;
+      else
+        spacetime = false;
+    else
+      if (dynamic_cast<const XFESpace<3,4> * >(spaces[1]) != NULL)
+        spacetime = true;
+      else
+        spacetime = false;
+
+
     static ConstantCoefficientFunction one(1);
     if (ma.GetDimension() == 2)
     {
@@ -831,6 +844,7 @@ namespace ngcomp
     Array<int> dnums, dnums2; //, verts, edges;
 
     bool vertexpatch=true;
+    bool edgepatch=false;
     bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
     bool subassembled = precflags.GetDefineFlag("subassembled");
     COUPLING_TYPE dof_mode = eliminate_internal? (subassembled? WIREBASKET_DOF : EXTERNAL_DOF) : ANY_DOF;
@@ -849,75 +863,121 @@ namespace ngcomp
     {
 	  for ( ; !creator.Done(); creator++)
 	  {      
-        if (true)
+        int basendof = spaces[0]->GetNDof();
+
+        int offset = 0;
+        for (int i = 0; i < nv; i++)
         {
-          for (int i = 0; i < nv; i++)
-          {
-            GetVertexDofNrs(i,dnums);
-            for (int j = 0; j < dnums.Size(); ++j)
-              if (filter.Test(dnums[j]))
+          GetVertexDofNrs(i,dnums);
+          for (int j = 0; j < dnums.Size(); ++j)
+            if (filter.Test(dnums[j]))
+              if (dnums[j] < basendof)
                 creator.Add(dnums[j], dnums);
-          }
+        }
 
-          if (vertexpatch)
+        if (vertexpatch)
+        {
+          for (int i = 0; i < ned; i++)
           {
-            // for (int i = 0; i < GetNDof(); i++)
-            // {
-            //   creator.Add(i,i);
-            // }          
+            Ng_Node<1> edge = ma.GetNode<1> (i);
 
-            for (int i = 0; i < ned; i++)
-            {
-              Ng_Node<1> edge = ma.GetNode<1> (i);
-
-              GetVertexDofNrs(edge.vertices[0],dnums);
-              GetVertexDofNrs(edge.vertices[1],dnums2);
+            GetVertexDofNrs(edge.vertices[0],dnums);
+            GetVertexDofNrs(edge.vertices[1],dnums2);
             
-              for (int j = 0; j < dnums.Size(); ++j)
-                for (int k = 0; k < dnums2.Size(); ++k)
-                {
-                  if (filter.Test(dnums[j]))
+            for (int j = 0; j < dnums.Size(); ++j)
+              for (int k = 0; k < dnums2.Size(); ++k)
+              {
+                if (filter.Test(dnums[j]))
+                  if (dnums[j] < basendof)
                     creator.Add(dnums[j],dnums2[k]);
-                  if (filter.Test(dnums2[k]))
+                if (filter.Test(dnums2[k]))
+                  if (dnums2[k] < basendof)
                     creator.Add(dnums2[k],dnums[j]);
-                }
-            }
+              }
           }
         }
-        else // not a good idea...
+        offset += nv;
+
+        if (edgepatch)
         {
-          int basendof = spaces[0]->GetNDof();
-          for (int i = 0; i < nv; i++)
+          int nf = ma.GetNFacets();
+          Array<int> elnums;
+          Array<int> fnums;
+          Array<int> ednums;
+          Array<int> vnums;
+          const XFESpace<2,2>* xfes22 = NULL;
+          const XFESpace<2,3>* xfes23 = NULL;
+          const XFESpace<3,3>* xfes33 = NULL;
+          const XFESpace<3,4>* xfes34 = NULL;
+          const int sD = ma.GetDimension();
+          if (sD == 2)
+            if (spacetime)
+              xfes23 = dynamic_cast<const XFESpace<2,3> * >(spaces[1]);
+            else
+              xfes22 = dynamic_cast<const XFESpace<2,2> * >(spaces[1]);
+          else
+            if (spacetime)
+              xfes34 = dynamic_cast<const XFESpace<3,4> * >(spaces[1]);
+            else
+              xfes33 = dynamic_cast<const XFESpace<3,3> * >(spaces[1]);
+          // Array<int> elnums;
+          for (int i = 0; i < nf; i++)
           {
-            creator.Add(i,i);
-            GetVertexDofNrs(i,dnums);
-            for (int j = 0; j < dnums.Size(); ++j)
-              if (dnums[j] > basendof)
-                creator.Add(dnums[j], dnums);
-          }
-
-          {
-            // for (int i = 0; i < GetNDof(); i++)
-            // {
-            //   creator.Add(i,i);
-            // }          
-
-            for (int i = 0; i < ned; i++)
+            ma.GetFacetElements(i,elnums);
+            bool cutedge = false;
+            for (int k = 0; k < elnums.Size(); ++k)
             {
-              Ng_Node<1> edge = ma.GetNode<1> (i);
+              int elnr = elnums[k];
+              bool elcut = sD ? (spacetime ? xfes23->IsElementCut(elnr) 
+                                 : xfes22->IsElementCut(elnr) )
+                :(spacetime ? xfes34->IsElementCut(elnr) 
+                  : xfes33->IsElementCut(elnr) );
 
-              GetVertexDofNrs(edge.vertices[0],dnums);
-              GetVertexDofNrs(edge.vertices[1],dnums2);
-            
-              for (int j = 0; j < dnums.Size(); ++j)
-                for (int k = 0; k < dnums2.Size(); ++k)
-                {
-                  if (dnums[j] > basendof)
-                    creator.Add(dnums[j],dnums2[k]);
-                  if (dnums2[k] > basendof)
-                    creator.Add(dnums2[k],dnums[j]);
-                }
+              if (elcut)
+                cutedge = true;
+              else
+                break;
             }
+
+            if (!cutedge)
+              continue;
+
+            Ng_Node<1> edge = ma.GetNode<1> (i);
+            int v1 = edge.vertices[0];
+            int v2 = edge.vertices[1];
+
+            GetEdgeDofNrs(nf,dnums);
+            creator.Add(offset, dnums);
+
+            GetVertexDofNrs(edge.vertices[0],dnums);
+            creator.Add(offset, dnums);
+
+            GetVertexDofNrs(edge.vertices[1],dnums);
+            creator.Add(offset, dnums);
+              
+            for (int k = 0; k < elnums.Size(); ++k)
+            {
+              int elnr = elnums[k];
+              ma.GetElEdges(elnr,ednums);
+              for (int l = 0; l < ednums.Size(); ++l)
+                if (ednums[l] != nf)
+                {
+                  GetEdgeDofNrs(ednums[l],dnums);
+                  creator.Add(offset, dnums);
+                }
+
+              ma.GetElVertices(elnr,vnums);
+              for (int l = 0; l < vnums.Size(); ++l)
+                if (vnums[l] != v1 && vnums[l] != v2)
+                {
+                  GetVertexDofNrs(vnums[l],dnums);
+                  creator.Add(offset, dnums);
+                }
+                    
+              GetInnerDofNrs(elnr,dnums);
+              creator.Add(offset, dnums);
+            }
+            offset++;
           }
         }
 

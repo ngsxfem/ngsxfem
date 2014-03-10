@@ -171,6 +171,8 @@ namespace ngcomp
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
     void XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const;
+
+    bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
   };
 
 
@@ -221,6 +223,7 @@ namespace ngcomp
 
   class XH1FESpace : public CompoundFESpace
   {
+    bool spacetime = false;
   public:
     XH1FESpace (const MeshAccess & ama, 
                 const Array<FESpace*> & aspaces,
