@@ -46,7 +46,7 @@ define constant bndpos = (1.0*0.0)
 define constant bneg_bndneg_pen = (bneg*pen*bndneg)
 define constant bpos_bndpos_pen = (bpos*pen*bndpos)
 
-define constant x0 = 0.5
+define constant x0 = 0.5 #445
 define constant y0 = 0.5
 
 define constant R = 0.33333333
@@ -57,48 +57,29 @@ define coefficient bconvneg
 define coefficient bconvpos
 (bneg*wx,bpos*wy),
 
-define fespace fesh1
-       -type=spacetimefes 
-       -type_space=h1ho
-       -order_space=1
-       -order_time=0
-       -dirichlet=[1,2]
-
 define coefficient lset
 ((x-wx*z-x0)*(x-wx*z-x0)+(y-wy*z-y0)*(y-wy*z-y0)-R*R),
-#(z),
 
-define fespace fesx
-       -type=xfespace
+define fespace fescomp
+       -type=xh1fespace
+       -type_space=h1ho
+       -order_space=1
+       -order_time=1
+       -dirichlet=[1,2]
        -spacetime
        -t0=0.0
        -t1=0.05
-       # -levelset=(x-y+z-0.375)
-       # -levelset=((x-1.0*z-0.25)*(x-1.0*z-0.25)+(y-1.0*z-0.25)*(y-1.0*z-0.25)-0.04)
        -vmax=1.0
        -ref_space=0
        -ref_time=0
-
-define fespace fescl 
-       -type=lsetcontfespace
-
-define fespace fesnegpos
-       -type=compound
-       -spaces=[fesh1,fesh1,fescl]
+#       -dgjumps
 
 numproc informxfem npix 
-        -fespace=fesh1
-        -xfespace=fesx
-        -lsetcontfespace=fescl
+        -xh1fespace=fescomp
         -coef_levelset=lset
 
-define fespace fescomp
-       -type=compound
-       -spaces=[fesh1,fesx]
-       -dgjumps
 
 define gridfunction u -fespace=fescomp
-define gridfunction u_vis -fespace=fesnegpos
 
 #numproc shapetester npst -gridfunction=u
 
@@ -128,7 +109,7 @@ stx_nitsche_hansbo aneg apos bneg bpos lambda told tnew
 stx_timeder bneg bpos
 stx_convection bconvneg bconvpos told tnew
 stx_tracemass_past bneg bpos
-stx_lo_ghostpenalty abneg abpos told tnew delta
+#stx_lo_ghostpenalty abneg abpos told tnew delta
 #stx_robin bneg_pen bpos_pen told tnew
 
 
@@ -148,25 +129,25 @@ numproc setvaluesx npsvx -gridfunction=u
         -tnew=0.05
         -boundary -print
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=direct # -print
+define preconditioner c -type=local -bilinearform=a -test -block
+#define preconditioner c -type=bddc -bilinearform=a -test -block
 
-# define bilinearform eval_negpos -fespace=fesnegpos -nonassemble
-# st_np_vis_future one
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=gmres -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
 
-# numproc drawflux npdf_np -solution=u_vis -bilinearform=eval_negpos -label=u_negpos -applyd
+# define coefficient veczero
+# (0,0),
 
-define coefficient veczero
-(0,0),
+numproc calccond npcc -bilinearform=a -inverse=pardiso #-symmetric
 
-numproc xdifference npxd -solution=u 
-        -solution_n=two
-        -solution_p=one
-        -derivative_n=veczero
-        -derivative_p=veczero
-        -levelset=lset
-        -interorder=2
-        -henryweight_n=1.0
-        -henryweight_p=1.0
+# numproc xdifference npxd -solution=u 
+#         -solution_n=two
+#         -solution_p=one
+#         -derivative_n=veczero
+#         -derivative_p=veczero
+#         -levelset=lset
+#         -interorder=2
+#         -henryweight_n=1.0
+#         -henryweight_p=1.0
 
 
 numproc visualization npviz -scalarfunction=u_future -subdivision=3

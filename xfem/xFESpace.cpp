@@ -13,7 +13,6 @@ namespace ngcomp
   {
     cout << "Constructor of XFESpace begin" << endl;
     spacetime = flags.GetDefineFlag("spacetime");
-
     ti.first = flags.GetNumFlag("t0",0.0);
     ti.second = flags.GetNumFlag("t1",1.0);
 
@@ -831,14 +830,18 @@ namespace ngcomp
     int ned = ma.GetNEdges();      
     Array<int> dnums, dnums2; //, verts, edges;
 
+    bool vertexpatch=true;
     bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
     bool subassembled = precflags.GetDefineFlag("subassembled");
     COUPLING_TYPE dof_mode = eliminate_internal? (subassembled? WIREBASKET_DOF : EXTERNAL_DOF) : ANY_DOF;
+
     BitArray filter;
     GetFilteredDofs(dof_mode, filter, true);
     FilteredTableCreator creator(&filter);
 
     // FilteredTableCreator creator(GetFreeDofs());
+    *testout << " dof_mode = " << dof_mode << endl;
+    *testout << " filter = " << filter << endl;
 
     *testout << "*GetFreeDofs(): " << endl << *GetFreeDofs() << endl;
 
@@ -847,35 +850,78 @@ namespace ngcomp
 	  for ( ; !creator.Done(); creator++)
 	  {      
         if (true)
-	    for (int i = 0; i < nv; i++)
         {
-          GetVertexDofNrs(i,dnums);
-          for (int j = 0; j < dnums.Size(); ++j)
-            creator.Add(dnums[j], dnums);
-        }
-
-        if (true)
-        {
-          // for (int i = 0; i < GetNDof(); i++)
-          // {
-          //   creator.Add(i,i);
-          // }          
-
-          for (int i = 0; i < ned; i++)
+          for (int i = 0; i < nv; i++)
           {
-            Ng_Node<1> edge = ma.GetNode<1> (i);
-
-            GetVertexDofNrs(edge.vertices[0],dnums);
-            GetVertexDofNrs(edge.vertices[1],dnums2);
-            
+            GetVertexDofNrs(i,dnums);
             for (int j = 0; j < dnums.Size(); ++j)
-              for (int k = 0; k < dnums2.Size(); ++k)
-              {
-                creator.Add(dnums[j],dnums2[k]);
-                creator.Add(dnums2[k],dnums[j]);
-              }
+              if (filter.Test(dnums[j]))
+                creator.Add(dnums[j], dnums);
+          }
+
+          if (vertexpatch)
+          {
+            // for (int i = 0; i < GetNDof(); i++)
+            // {
+            //   creator.Add(i,i);
+            // }          
+
+            for (int i = 0; i < ned; i++)
+            {
+              Ng_Node<1> edge = ma.GetNode<1> (i);
+
+              GetVertexDofNrs(edge.vertices[0],dnums);
+              GetVertexDofNrs(edge.vertices[1],dnums2);
+            
+              for (int j = 0; j < dnums.Size(); ++j)
+                for (int k = 0; k < dnums2.Size(); ++k)
+                {
+                  if (filter.Test(dnums[j]))
+                    creator.Add(dnums[j],dnums2[k]);
+                  if (filter.Test(dnums2[k]))
+                    creator.Add(dnums2[k],dnums[j]);
+                }
+            }
           }
         }
+        else // not a good idea...
+        {
+          int basendof = spaces[0]->GetNDof();
+          for (int i = 0; i < nv; i++)
+          {
+            creator.Add(i,i);
+            GetVertexDofNrs(i,dnums);
+            for (int j = 0; j < dnums.Size(); ++j)
+              if (dnums[j] > basendof)
+                creator.Add(dnums[j], dnums);
+          }
+
+          {
+            // for (int i = 0; i < GetNDof(); i++)
+            // {
+            //   creator.Add(i,i);
+            // }          
+
+            for (int i = 0; i < ned; i++)
+            {
+              Ng_Node<1> edge = ma.GetNode<1> (i);
+
+              GetVertexDofNrs(edge.vertices[0],dnums);
+              GetVertexDofNrs(edge.vertices[1],dnums2);
+            
+              for (int j = 0; j < dnums.Size(); ++j)
+                for (int k = 0; k < dnums2.Size(); ++k)
+                {
+                  if (dnums[j] > basendof)
+                    creator.Add(dnums[j],dnums2[k]);
+                  if (dnums2[k] > basendof)
+                    creator.Add(dnums2[k],dnums[j]);
+                }
+            }
+          }
+        }
+
+
 	  }
       it = creator.GetTable();
     }
@@ -897,6 +943,10 @@ namespace ngcomp
       cout << "creating bddc-coarse grid(vertices)" << endl;
       Array<int> & clusters = *new Array<int> (GetNDof());
       clusters = 0;
+      // int nv = ma.GetNV();
+      // for (int i = 0; i < nv; i++)
+      //   if (!IsDirichletVertex(i))
+      //     clusters[i] = 1;		
       return &clusters;	
     }
     else

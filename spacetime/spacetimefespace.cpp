@@ -11,9 +11,11 @@ namespace ngcomp
   SpaceTimeFESpace ::  SpaceTimeFESpace (const MeshAccess & ama, const Flags & flags, bool checkflags)
     : FESpace(ama, flags)
   {
-    name="SpaceTimeFESpace(facet)";
+    name="SpaceTimeFESpace";
     // defined flags
     DefineNumFlag("order_time");
+    DefineNumFlag("order_space");
+    DefineStringFlag("type_space");
     // DefineDefineFlag("variableorder"); 
 
     if(checkflags) CheckFlags(flags);
@@ -21,7 +23,6 @@ namespace ngcomp
     // ndlevel.SetSize(0);
     spacedim = ma.GetDimension();
     
-    // TODO: Evaluator for shape tester 
     order_time = flags.GetNumFlag("order_time",1);
     order_space = flags.GetNumFlag("order_space",1);
     fel_time = new L2HighOrderFE<ET_SEGM> (order_time);

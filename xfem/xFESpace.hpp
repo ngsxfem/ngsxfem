@@ -228,14 +228,24 @@ namespace ngcomp
     virtual ~XH1FESpace () { ; }
     static FESpace * Create (const MeshAccess & ma, const Flags & flags)
     {
-        Array<FESpace*> spaces(2);
+      bool spacetime = flags.GetDefineFlag("spacetime");
+      Array<FESpace*> spaces(2);
+      if (spacetime)
+        spaces[0] = new SpaceTimeFESpace (ma, flags);    
+      else
         spaces[0] = new H1HighOrderFESpace (ma, flags);    
-        if (ma.GetDimension() == 2)
+      if (ma.GetDimension() == 2)
+        if (spacetime)
+          spaces[1] = new XFESpace<2,3> (ma, flags);        
+        else
           spaces[1] = new XFESpace<2,2> (ma, flags);        
+      else
+        if (spacetime)
+          spaces[1] = new XFESpace<3,4> (ma, flags);        
         else
           spaces[1] = new XFESpace<3,3> (ma, flags);        
-        XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
-        return fes;
+      XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
+      return fes;
     }
 
     Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
