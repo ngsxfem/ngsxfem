@@ -101,14 +101,14 @@ xsource rhsneg rhspos
 define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
-#xnitsche_minstab_hansbo aneg apos bneg bpos
-xnitsche_hansbo aneg apos bneg bpos lambda
+xnitsche_minstab_hansbo aneg apos bneg bpos
+#xnitsche_hansbo aneg apos bneg bpos lambda
 #lo_ghostpenalty aneg apos one
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary -print
 
-#define preconditioner c -type=local -bilinearform=a -test #-block
-define preconditioner c -type=direct -bilinearform=a -test
+define preconditioner c -type=local -bilinearform=a -test -block
+#define preconditioner c -type=direct -bilinearform=a -test
 #define preconditioner c -type=bddc -bilinearform=a -test -block
 
 ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block

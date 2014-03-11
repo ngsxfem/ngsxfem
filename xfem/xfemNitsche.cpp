@@ -235,11 +235,11 @@ namespace ngfem
       Lsys.Rows(ndof,ndof+2).Cols(0,ndof) = Trans(constrb);
       LapackInverse (Lsys);
 
-      L = Lsys.Cols(0,ndof).Rows(0,ndof) * Nc;
+      L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
 
       elmat = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ p/h * Ns; 
 
-      elmat += 2.0 * Trans(L) * A * L;
+      elmat += 1.5 * Trans(L) * A * L;
     }
     else
       elmat = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
