@@ -19,6 +19,7 @@
 ** test cases...
 ** error calculation outputs error field (at least piecewise constant)
 
+** minimal stabilization: space-time version also for higher (and lower) order
 * condition number stuff
 ** stationary case:
 *** sliver test case
