@@ -105,6 +105,7 @@ define constant delta = 1
 define bilinearform a -fespace=fescomp # -printelmat -print
 #stx_mass bneg bpos told tnew
 stx_laplace abneg abpos told tnew
+#stx_nitsche_min_stab_hansbo aneg apos bneg bpos told tnew
 stx_nitsche_hansbo aneg apos bneg bpos lambda told tnew
 stx_timeder bneg bpos
 stx_convection bconvneg bconvpos told tnew

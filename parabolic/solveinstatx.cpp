@@ -69,6 +69,7 @@ protected:
   bool calccond;
   bool ghostpenalty;
   bool directsolve;
+  bool minimal_stabilization;
 
   double sleep_time;
 
@@ -154,6 +155,7 @@ public:
 	calccond = flags.GetDefineFlag ("calccond");
 	ghostpenalty = flags.GetDefineFlag ("ghostpenalty");
 	directsolve = flags.GetDefineFlag ("direct");
+	minimal_stabilization = flags.GetDefineFlag ("minimal_stabilization");
 
 	dt = flags.GetNumFlag ("dt", 0.001);
 	tstart = flags.GetNumFlag ("tstart", 0.0);
@@ -208,6 +210,8 @@ public:
 
 	Flags empty;
 	empty.SetFlag ("type", "local");
+	// empty.SetFlag ("type", "bddc");
+	// empty.SetFlag ("block");
 	empty.SetFlag ("fespace", fesstr.c_str());
 	empty.SetFlag ("bilinearform", "bftau");
 	empty.SetFlag ("laterupdate");
@@ -284,14 +288,22 @@ public:
 	if (ghostpenalty)
 	  bftau -> AddIntegrator (bfigho);
 
-	Array<CoefficientFunction *> coefs_xnitsche(7);
+	Array<CoefficientFunction *> coefs_xnitsche(minimal_stabilization ? 6 : 7);
 	coefs_xnitsche[0] = coef_aneg;
 	coefs_xnitsche[1] = coef_apos;
 	coefs_xnitsche[2] = coef_bneg;
 	coefs_xnitsche[3] = coef_bpos;
-	coefs_xnitsche[4] = coef_lambda;
-	coefs_xnitsche[5] = coef_told;
-	coefs_xnitsche[6] = coef_tnew;
+	if (minimal_stabilization)
+	{
+	  coefs_xnitsche[4] = coef_told;
+	  coefs_xnitsche[5] = coef_tnew;
+	}
+	else
+	{
+	  coefs_xnitsche[4] = coef_lambda;
+	  coefs_xnitsche[5] = coef_told;
+	  coefs_xnitsche[6] = coef_tnew;
+	}
 
 	bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> (coefs_xnitsche);
 	bftau -> AddIntegrator (bfixnit);

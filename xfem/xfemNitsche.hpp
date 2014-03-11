@@ -8,6 +8,7 @@
 #include "../cutint/xintegration.hpp"
 #include "xfiniteelement.hpp"
 #include "xfemIntegrators.hpp"
+#include "stxfemIntegrators.hpp"
 
 namespace ngfem
 {
@@ -92,17 +93,51 @@ namespace ngfem
     double t0;
     double tau;
 
+    CoefficientFunction * ab_neg;
+    CoefficientFunction * ab_pos;
+    CoefficientFunction * t_old;
+    CoefficientFunction * t_new;
+
+    SpaceTimeXLaplaceIntegrator<D> * ablockintegrator;
+    bool minimal_stabilization;
+
   public:
     SpaceTimeXNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
-        lambda(coeffs[4])
+        lambda(coeffs.Size() > 6 ? coeffs[4] : NULL),
+        t0(coeffs.Size() > 6 ? coeffs[5]->EvaluateConst() : coeffs[4]->EvaluateConst()),
+        t1(coeffs.Size() > 6 ? coeffs[6]->EvaluateConst() : coeffs[5]->EvaluateConst())
     { 
+
+      minimal_stabilization = coeffs.Size() <= 6;
+
+      const double abn = alpha_neg->EvaluateConst() * beta_neg->EvaluateConst(); 
+      const double abp = alpha_pos->EvaluateConst() * beta_pos->EvaluateConst(); 
+
+      ab_neg = new ConstantCoefficientFunction(abn);
+      ab_pos = new ConstantCoefficientFunction(abp);
+      t_old = new ConstantCoefficientFunction(t0);
+      t_new = new ConstantCoefficientFunction(t1);
+
+      Array<CoefficientFunction * > lapcoeffs(4);
+
+      lapcoeffs[0] = ab_neg;
+      lapcoeffs[1] = ab_pos;
+      lapcoeffs[2] = t_old;
+      lapcoeffs[3] = t_new;
+      ablockintegrator = new SpaceTimeXLaplaceIntegrator<D>(lapcoeffs);
+
       t0 = coeffs[2]->EvaluateConst(); 
       t1 = coeffs[3]->EvaluateConst();
       tau = t1 - t0;
     }
-    virtual ~SpaceTimeXNitscheIntegrator(){ ; };
+    virtual ~SpaceTimeXNitscheIntegrator()
+    { 
+      if (ab_neg) delete ab_neg;
+      if (ab_pos) delete ab_pos;
+      if (ablockintegrator) delete ablockintegrator; 
+    }
 
     virtual string Name () const { return "SpaceTimeXNitscheIntegrator"; }
 
