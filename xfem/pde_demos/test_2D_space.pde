@@ -73,14 +73,15 @@ define coefficient veczero
 
 numproc calccond npcc -bilinearform=a -inverse=pardiso #-symmetric
 
-# numproc xdifference npxd -solution=u 
-#         -function_n=two
-#         -function_p=one
-#         -derivative_n=veczero
-#         -derivative_p=veczero
-#         -levelset=lset
-#         -interorder=2
-#         -henryweight_n=1.0
-#         -henryweight_p=1.0
+numproc xdifference npxd 
+        -solution=u 
+        -solution_n=two
+        -solution_p=one
+        -derivative_n=veczero
+        -derivative_p=veczero
+        -levelset=lset
+        -interorder=2
+        -henryweight_n=1.0
+        -henryweight_p=1.0
 
 numproc visualization npviz -scalarfunction=u #-comp=0
