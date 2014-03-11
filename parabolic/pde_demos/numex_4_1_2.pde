@@ -143,7 +143,7 @@ numproc stx_solveinstat npsi
         -solver=pardiso 
         -fespace=fescomp
         -fespacevis=fesnegpos
-        -dt=0.0625
+        -dt=0.1
         -tstart=0
         -tend=1.0
         -aneg=1
@@ -151,15 +151,16 @@ numproc stx_solveinstat npsi
         -bneg=1.5
         -bpos=1.0
         -lambda=20.0
-        -pause_after_step=0
+#        -pause_after_step=2000
         -solution_n=solneg
         -solution_p=solpos
         -levelset=coef_lset
 #        -userstepping
 #        -calccond
 #        -ghostpenalty
-        -delta=0.005
-        -direct
+#        -delta=0.5
+#        -direct
+#         -minimal_stabilization
 
 define coefficient veczero
 (0,0),
