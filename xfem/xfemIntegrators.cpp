@@ -142,7 +142,7 @@ namespace ngfem
         for (int i = 0 ; i < pir.GetNIP(); i++)
         {
           MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+          double coef = dt == POS ? alpha_pos : alpha_neg;
           scafe->CalcMappedDShape(mip, dshape);
           double fac = mip.GetWeight();
           elmat += (fac*coef) * dshape * Trans(dshape);
@@ -157,7 +157,7 @@ namespace ngfem
         {
           IntegrationPoint ip(&fquad.points(i,0),fquad.weights(i));
           MappedIntegrationPoint<D,D> mip(ip, eltrans);
-          double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
+          double coef = dt == POS ? alpha_pos : alpha_neg;
           
           scafe->CalcMappedDShape(mip, dshape);
           dshapex = dshape;

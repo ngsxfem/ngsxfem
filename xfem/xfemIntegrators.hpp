@@ -42,11 +42,14 @@ namespace ngfem
   template <int D>
   class XLaplaceIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    double alpha_neg;
+    double alpha_pos;
   public:
     XLaplaceIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    { 
+      alpha_neg = coeffs[0]->EvaluateConst();
+      alpha_pos = coeffs[1]->EvaluateConst();
+    }
     virtual ~XLaplaceIntegrator(){ ; };
 
     virtual string Name () const { return "XLaplaceIntegrator"; }
