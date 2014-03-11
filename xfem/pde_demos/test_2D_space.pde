@@ -29,7 +29,7 @@ define constant apos = 0.5
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
-define constant lambda = 3.0
+define constant lambda = 2.0
 
 define constant R = 0.33333333
 
@@ -40,7 +40,7 @@ define fespace fescomp
        -type=xh1fespace
        -order=1
        -dirichlet=[1,2]
-       # -dgjumps
+#       -dgjumps
 
 numproc informxfem npix 
         -xh1fespace=fescomp
@@ -54,14 +54,15 @@ xsource bneg bpos
 define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
-xnitsche_hansbo aneg apos bneg bpos lambda
+xnitsche_minstab_hansbo aneg apos bneg bpos
+#xnitsche_hansbo aneg apos bneg bpos lambda
 #lo_ghostpenalty aneg apos one
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-define preconditioner c -type=local -bilinearform=a -test -block
-#define preconditioner c -type=direct -bilinearform=a -test
-#define preconditioner c -type=bddc -bilinearform=a -test #-block
+#define preconditioner c -type=local -bilinearform=a -test #-block
+# define preconditioner c -type=direct -bilinearform=a -test
+define preconditioner c -type=bddc -bilinearform=a -test -block
 
 ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 

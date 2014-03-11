@@ -7,6 +7,7 @@
 
 #include "../cutint/xintegration.hpp"
 #include "xfiniteelement.hpp"
+#include "xfemIntegrators.hpp"
 
 namespace ngfem
 {
@@ -31,13 +32,34 @@ namespace ngfem
     CoefficientFunction * beta_neg;
     CoefficientFunction * beta_pos;
     CoefficientFunction * lambda;
+    CoefficientFunction * ab_neg;
+    CoefficientFunction * ab_pos;
+    XLaplaceIntegrator<D> * ablockintegrator;
+    bool minimal_stabilization;
   public:
     XNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
-        lambda(coeffs[4])
-      { ; }
-    virtual ~XNitscheIntegrator(){ ; };
+        lambda(coeffs.Size() > 4 ? coeffs[4] : NULL)
+    { 
+       minimal_stabilization = coeffs.Size() <= 4;
+
+      const double abn = alpha_neg->EvaluateConst() * beta_neg->EvaluateConst(); 
+      const double abp = alpha_pos->EvaluateConst() * beta_pos->EvaluateConst(); 
+      ab_neg = new ConstantCoefficientFunction(abn);
+      ab_pos = new ConstantCoefficientFunction(abp);
+      Array<CoefficientFunction * > lapcoeffs(2);
+      lapcoeffs[0] = ab_neg;
+      lapcoeffs[1] = ab_pos;
+      ablockintegrator = new XLaplaceIntegrator<D>(lapcoeffs);
+    }
+
+    virtual ~XNitscheIntegrator()
+    { 
+      if (ab_neg) delete ab_neg;
+      if (ab_pos) delete ab_pos;
+      if (ablockintegrator) delete ablockintegrator; 
+    }
 
     virtual string Name () const { return "XNitscheIntegrator"; }
 
