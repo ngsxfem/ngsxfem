@@ -244,9 +244,53 @@ namespace ngfem
               h1diff_n += b_neg*fac*diffdsqr;
             }
           } // quad rule
+        } // dt
+
+        if (spacetime)
+        {
 
         }
-      } // loop over els.
+        else
+        {
+
+          FlatVector<> jump(ndof_total,lh);
+
+          const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+          const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+          const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+          for (int i = 0; i < fquad.Size(); ++i)
+          {
+            IntegrationPoint ip(&fquad.points(i,0),0.0);
+            MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      
+            Mat<D,D> Finv = mip.GetJacobianInverse();
+            const double absdet = mip.GetMeasure();
+
+            Vec<D> nref = fquad.normals.Row(i);
+            Vec<D> normal = absdet * Trans(Finv) * nref ;
+            double len = L2Norm(normal);
+            normal /= len;
+
+            const double weight = fquad.weights(i) * len; 
+        
+            shape = scafe->GetShape(mip.IP(), lh);
+            jump.Range(0,ndof) = (b_pos-b_neg) * shape;
+            jump.Range(ndof,ndof_total) = shape;
+
+            for (int l = 0; l < ndof_x; ++l)
+            {
+              if (xfe->GetSignsOfDof()[l] == NEG)
+                jump(ndof+l) *= -b_neg;
+              else
+                jump(ndof+l) *= b_pos;
+            }
+            
+            const double jumpval = InnerProduct(jump,elvec);
+            ifjumpl2 += weight * sqr(jumpval);
+          }
+        }
+      } // is xfe 
       else
       {
         DOMAIN_TYPE dt = dummfe->GetDomainType();
@@ -322,23 +366,91 @@ namespace ngfem
     if (output)
     {
       cout << endl;
-      cout << setw(12) << "l2_n" << "\t|";
-      cout << setw(12) << "l2_p" << "\t|";
-      cout << setw(12) << "l2" << "\t|";
-      cout << setw(12) << "h1_n" << "\t|";
-      cout << setw(12) << "h1_p" << "\t|";
-      cout << setw(12) << "h1" << "\t|";
+      cout << setw(12) << "l2_n" << "       |";
+      cout << setw(12) << "l2_p" << "       |";
+      cout << setw(12) << "l2" << "       |";
+      cout << setw(12) << "h1_n" << "       |";
+      cout << setw(12) << "h1_p" << "       |";
+      cout << setw(12) << "h1" << "       |";
       cout << setw(12) << "ifl2" << endl;
+      for (int i = 0; i < 139; ++i)
+        cout << "-";
+      cout << endl;
 
-      for (int i = 0; i < errtab.l2err_n.Size(); ++i)
+      std::streamsize p = cout.precision();
+      const int N = errtab.l2err_n.Size();
+      for (int i = 0; i < N; ++i)
       {
-        cout << setw(12) << errtab.l2err_n[i] << "\t|";
-        cout << setw(12) << errtab.l2err_p[i] << "\t|";
-        cout << setw(12) << errtab.l2err[i] << "\t|";
-        cout << setw(12) << errtab.h1err_n[i] << "\t|";
-        cout << setw(12) << errtab.h1err_p[i] << "\t|";
-        cout << setw(12) << errtab.h1err[i] << "\t|";
-        cout << setw(12) << errtab.iferr[i] << endl;
+        cout << setw(12) << errtab.l2err_n[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "      |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.l2err_n[i]/errtab.l2err_n[i-1])/log(0.5) << "]|";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.l2err_p[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "      |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.l2err_p[i]/errtab.l2err_p[i-1])/log(0.5) << "]|";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.l2err[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "      |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.l2err[i]/errtab.l2err[i-1])/log(0.5) << "]|";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.h1err_n[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "      |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.h1err_n[i]/errtab.h1err_n[i-1])/log(0.5) << "]|";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.h1err_p[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "      |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.h1err_p[i]/errtab.h1err_p[i-1])/log(0.5) << "]|";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.h1err[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "      |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.h1err[i]/errtab.h1err[i-1])/log(0.5) << "]|";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.iferr[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "       ";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.iferr[i]/errtab.iferr[i-1])/log(0.5) << "] ";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+        cout << endl;
       }
     }
   }
