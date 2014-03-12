@@ -409,6 +409,9 @@ namespace ngcomp
     BilinearForm * bfa;
     string inversetype;
     bool symmetric;
+    bool printmatrix;
+    GridFunction * gfu;
+    Preconditioner * pre;
   public:
 
 
@@ -418,6 +421,9 @@ namespace ngcomp
       bfa = pde.GetBilinearForm (flags.GetStringFlag ("bilinearform","bfa"));
       inversetype = flags.GetStringFlag ("inverse", "pardiso");
       symmetric = flags.GetDefineFlag ("symmetric");
+      printmatrix = flags.GetDefineFlag ("printmatrix");
+      gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction","gfu"),true);
+      pre = pde.GetPreconditioner (flags.GetStringFlag ("preconditioner","c"),true);
     }
 
     virtual ~NumProcCalcCondition()
@@ -427,7 +433,7 @@ namespace ngcomp
 
     virtual string GetClassName () const
     {
-      return "NumProcXDifference";
+      return "NumProcCalcCond";
     }
 
 
@@ -441,6 +447,14 @@ namespace ngcomp
 
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 
+      if (printmatrix)
+      {
+          ofstream outf("matrix.out");
+          mata.Print(outf);
+
+          ofstream outf2("precond.out");
+          pre->GetMatrix().Print(outf2);
+      }
 	  BaseMatrix & invmat = *dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(bfa->GetFESpace().GetFreeDofs());
 
       std::ofstream outf("condition_npcc.out");
@@ -448,7 +462,7 @@ namespace ngcomp
       outf << refinements-1 << "\t";
       outjf << refinements-1 << "\t";
       CalcCond(mata, invmat, bfa->GetFESpace().GetFreeDofs(), true, false, &outf , symmetric);
-      CalcCond(mata, invmat, bfa->GetFESpace().GetFreeDofs(), true, true, &outjf, symmetric);
+      CalcCond(mata, invmat, bfa->GetFESpace().GetFreeDofs(), true, true, &outjf, symmetric, gfu);
       outjf << endl;
 
       delete &invmat;

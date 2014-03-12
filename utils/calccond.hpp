@@ -235,7 +235,7 @@ inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const Bit
 
 
 
-inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false)
+inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, GridFunction* gfu = NULL)
 {
   Array<BaseVector*> evs(0);
   Array<BaseVector*> invevs(0);
@@ -285,6 +285,12 @@ inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedof
   {
     *outs << cup/clow << "\t";
   }
+
+  if (gfu)
+    gfu->GetVector() = * invevs[0];
+
+  // if (gfu)
+  //   gfu->GetVector() = * evs[0];
   
   for (int i = 0; i < evs.Size(); ++i)
     delete evs[i];
@@ -294,3 +300,4 @@ inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedof
 
   delete &diaga;
 }
+
