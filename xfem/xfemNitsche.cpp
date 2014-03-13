@@ -127,22 +127,22 @@ namespace ngfem
     case NITSCHE_VARIANTS::BETA:
       {
         double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_neg / sum;
-        kappa_pos = b_t_pos / sum;
+        kappa_neg = b_t_pos / sum;
+        kappa_pos = b_t_neg / sum;
         break;
       }
     case NITSCHE_VARIANTS::ALPHA:
       {
         double sum = a_t_neg + a_t_pos;
-        kappa_neg = a_t_neg / sum;
-        kappa_pos = a_t_pos / sum;
+        kappa_neg = a_t_pos / sum;
+        kappa_pos = a_t_neg / sum;
         break;
       }
     case NITSCHE_VARIANTS::ALPHABETA:
       {
         double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        kappa_neg = a_t_neg / b_t_neg / sum;
-        kappa_pos = a_t_pos / b_t_pos / sum;
+        kappa_neg = a_t_pos / b_t_pos / sum;
+        kappa_pos = a_t_neg / b_t_neg / sum;
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -203,22 +203,27 @@ namespace ngfem
       switch (kappa_choice){
       case NITSCHE_VARIANTS::HALFHALF:
         {
-        ava = a_pos*0.5+a_neg*0.5;
-        break;
+          ava = a_pos*0.5+a_neg*0.5;
+          break;
         }
       case NITSCHE_VARIANTS::BETA:
       case NITSCHE_VARIANTS::ALPHA:
         {
           ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
         }
       case NITSCHE_VARIANTS::ALPHABETA:
         {
-          ava = a_pos*kappa_pos+a_neg*kappa_neg;
+          ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
+          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
+          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
         }
       case NITSCHE_VARIANTS::HANSBO:
       default:
         {
           ava = a_pos*kappa_pos+a_neg*kappa_neg;
+          break;
         }
       }
 
@@ -244,6 +249,7 @@ namespace ngfem
     }
     else
       elmat = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
+      // elmat = lam*(p+1)/p/h * Ns; 
 
   }
 
@@ -379,22 +385,22 @@ namespace ngfem
     case NITSCHE_VARIANTS::BETA:
       {
         double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_neg / sum;
-        kappa_pos = b_t_pos / sum;
+        kappa_neg = b_t_pos / sum;
+        kappa_pos = b_t_neg / sum;
         break;
       }
     case NITSCHE_VARIANTS::ALPHA:
       {
         double sum = a_t_neg + a_t_pos;
-        kappa_neg = a_t_neg / sum;
-        kappa_pos = a_t_pos / sum;
+        kappa_neg = a_t_pos / sum;
+        kappa_pos = a_t_neg / sum;
         break;
       }
     case NITSCHE_VARIANTS::ALPHABETA:
       {
         double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        kappa_neg = a_t_neg / b_t_neg / sum;
-        kappa_pos = a_t_pos / b_t_pos / sum;
+        kappa_neg = a_t_pos / b_t_pos / sum;
+        kappa_pos = a_t_neg / b_t_neg / sum;
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -469,25 +475,32 @@ namespace ngfem
 
       double ava = a_pos;
 
+
+
       switch (kappa_choice){
       case NITSCHE_VARIANTS::HALFHALF:
         {
-        ava = a_pos*0.5+a_neg*0.5;
-        break;
+          ava = a_pos*0.5+a_neg*0.5;
+          break;
         }
       case NITSCHE_VARIANTS::BETA:
       case NITSCHE_VARIANTS::ALPHA:
         {
           ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
         }
       case NITSCHE_VARIANTS::ALPHABETA:
         {
-          ava = a_pos*kappa_pos+a_neg*kappa_neg;
+          ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
+          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
+          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
         }
       case NITSCHE_VARIANTS::HANSBO:
       default:
         {
           ava = a_pos*kappa_pos+a_neg*kappa_neg;
+          break;
         }
       }
 
