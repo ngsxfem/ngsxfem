@@ -5,7 +5,8 @@ geometry = square.in2d
 # and mesh
 #mesh = square.vol.gz
 #mesh = square_trigs_2x2.vol.gz
-mesh = square_trigs_med.vol
+mesh = square_trigs_med.vol.gz
+#mesh = square_trigs.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 shared = libngsxfem_xfem
@@ -86,10 +87,10 @@ define gridfunction u -fespace=fescomp
 define bilinearform a -fespace=fescomp # -printelmat -print
 #xmass one one
 xlaplace abneg abpos
-xnitsche_hansbo aneg apos bneg bpos lambda
+#xnitsche_halfhalf aneg apos bneg bpos lambda
 #xnitsche_minstab_alpha aneg apos bneg bpos
 #xnitsche_minstab_halfhalf aneg apos bneg bpos
-#xnitsche_minstab_hansbo aneg apos bneg bpos
+xnitsche_minstab_halfhalf aneg apos bneg bpos
 #lo_ghostpenalty aneg apos one
 
 define linearform f -fespace=fescomp # -print
@@ -101,10 +102,10 @@ xsource rhsneg rhspos
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
 
-define preconditioner c1 -type=bddc -bilinearform=a -test
-define preconditioner c2 -type=bddc -bilinearform=a -test -block
-define preconditioner c3 -type=local -bilinearform=a -test -block
-define preconditioner c4 -type=local -bilinearform=a -test
+define preconditioner c1 -type=bddc -bilinearform=a #-lapacktest -skip_largest=0 
+define preconditioner c2 -type=bddc -bilinearform=a -block #-lapacktest -skip_largest=0
+define preconditioner c3 -type=local -bilinearform=a -block #-lapacktest -skip_smallest=0
+define preconditioner c4 -type=local -bilinearform=a #-lapacktest -skip_smallest=0 
 
 #define preconditioner c -type=direct -bilinearform=a -test
 

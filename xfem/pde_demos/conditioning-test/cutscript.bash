@@ -11,8 +11,8 @@ echo "# ---"  > out.stdmesh.its.BBDDC
 echo "# ---"  > out.stdmesh.err
 
 LAM=2
-ANEG=2
-
+ANEG=2048
+STEPPOS=25
 #***A***
 # POS=370500
 #***B***
@@ -21,12 +21,12 @@ POS=470500
 # POS=370500
 
 #***A***
-# LOW=3705
-# UP=371000
+# LOW=563500
+# UP=566001
 # POS=$LOW
 #***B***
 LOW=1
-UP=1700000
+UP=6500000
 LAM=$LOW
 #***C***
 # LOW=1
@@ -34,7 +34,7 @@ LAM=$LOW
 # ANEG=$LOW
 
 #***A***
-# sed "s/calcaxis/0.37+(\$0)*0.00001/g" stdmesh.gpl.template > stdmesh.gpl.temp
+# sed "s/calcaxis/($LOW\/1e6)+(\$0)*($STEPPOS\/1e6)/g" stdmesh.gpl.template > stdmesh.gpl.temp
 # sed "s/hiddenlogscalex/\#/g" stdmesh.gpl.temp > stdmesh.gpl
 #***B***
 sed "s/calcaxis/2**(\$0)/g" stdmesh.gpl.template > stdmesh.gpl.temp
@@ -45,14 +45,14 @@ sed "s/hiddenlogscalex//g" stdmesh.gpl.temp > stdmesh.gpl
 
 
 #***A***
-#while [  $POS -lt $UP ]; do
+# while [  $POS -lt $UP ]; do
 #***B***
 while [  $LAM -lt $UP ]; do
 #***C***
-#while [  $ANEG -lt $UP ]; do
+# while [  $ANEG -lt $UP ]; do
     echo "POS = $POS"
     echo "LAM = $LAM"
-    echo "ANEG = $ANEG"
+    echo "ANEG = $ANEG / 1024"
     sed "s/var/$POS/g" stdmesh_test.pde.template > stdmesh_test.pde.temp
     sed "s/setlam/$LAM/g" stdmesh_test.pde.temp > stdmesh_test.pde.temp2
     sed "s/ANEG/$ANEG/g" stdmesh_test.pde.temp2 > stdmesh_test.pde
@@ -82,11 +82,11 @@ while [  $LAM -lt $UP ]; do
 #    cat out.stdmesh | grep "l2_n" -A 1 | tail -n 1 >> out.stdmesh.err
 #    cat out.stdmesh | grep "l2_n" -A 1 | tail -n 1
 #***A***
-#let POS=POS+10
+# let POS=POS+STEPPOS
 #***B***
 let LAM=LAM*2
-#***A***
-#let ANEG=ANEG*2
+#***C***
+# let ANEG=ANEG*2
 done
 
 gnuplot stdmesh.gpl
