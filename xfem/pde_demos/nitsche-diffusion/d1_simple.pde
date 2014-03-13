@@ -126,7 +126,7 @@ numproc xdifference npxd
         -solution_p=f
         -levelset=lset
         -interorder=2
-        -henryweight_n=3
-        -henryweight_p=4
+        -henryweight_n=(bneg)
+        -henryweight_p=(bpos)
 
 numproc visualization npviz -scalarfunction=u #-comp=0
