@@ -13,6 +13,9 @@ namespace ngcomp
   {
     cout << "Constructor of XFESpace begin" << endl;
     spacetime = flags.GetDefineFlag("spacetime");
+    empty = flags.GetDefineFlag("empty");
+    if (empty)
+        cout << " EMPTY XFESPACE active..." << endl;
     ti.first = flags.GetNumFlag("t0",0.0);
     ti.second = flags.GetNumFlag("t1",1.0);
 
@@ -200,6 +203,7 @@ namespace ngcomp
     basedof2xdof.SetSize(nbdofs);
     basedof2xdof = -1;
     ndof = 0;
+
     for (int i = 0; i < nbdofs; i++)
     {
       if (activedofs.Test(i))
@@ -382,6 +386,9 @@ namespace ngcomp
         }
     }
 
+    if (empty)
+        ndof = 0;
+
     UpdateCouplingDofArray();
     FinalizeUpdate (lh);
 
@@ -416,7 +423,7 @@ namespace ngcomp
   template <int D, int SD>
   void XFESpace<D,SD> :: GetDofNrs (int elnr, Array<int> & dnums) const
   {
-    if (activeelem.Test(elnr))
+    if (activeelem.Test(elnr) && !empty)
       dnums = (*el2dofs)[elnr];
     else
       dnums.SetSize(0);
@@ -425,7 +432,7 @@ namespace ngcomp
   template <int D, int SD>
   void XFESpace<D,SD> :: GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const
   {
-    if (activeelem.Test(elnr))
+    if (activeelem.Test(elnr) && !empty)
     {
       FlatArray<int> dofs = (*el2dofs)[elnr];
       domnums.SetSize(dofs.Size());
@@ -441,7 +448,7 @@ namespace ngcomp
   template <int D, int SD>
   void XFESpace<D,SD> :: GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const
   {
-    if (activeselem.Test(selnr))
+    if (activeselem.Test(selnr) && !empty)
     {
       FlatArray<int> dofs = (*sel2dofs)[selnr];
       domnums.SetSize(dofs.Size());
@@ -460,12 +467,13 @@ namespace ngcomp
     ctofdof.SetSize(ndof);
     ctofdof = WIREBASKET_DOF;
 
-    for (int i = 0; i < basedof2xdof.Size(); ++i)
-    {
-      const int dof = basedof2xdof[i];
-      if (dof != -1)
-        ctofdof[dof] = INTERFACE_DOF; //basefes->GetDofCouplingType(i);
-    }
+    if (!empty)
+        for (int i = 0; i < basedof2xdof.Size(); ++i)
+        {
+            const int dof = basedof2xdof[i];
+            if (dof != -1)
+                ctofdof[dof] = INTERFACE_DOF; //basefes->GetDofCouplingType(i);
+        }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
   }
 
@@ -473,7 +481,7 @@ namespace ngcomp
   template <int D, int SD>
   void XFESpace<D,SD> :: GetSDofNrs (int selnr, Array<int> & dnums) const
   {
-    if (activeselem.Test(selnr))
+    if (activeselem.Test(selnr) && !empty)
       dnums = (*sel2dofs)[selnr];
     else
       dnums.SetSize(0);
@@ -521,7 +529,7 @@ namespace ngcomp
         RegionTimer regq (timer);
         dt = xgeom->MakeQuadRule();
       }
-      FiniteElement * retfel = NULL;
+      XFiniteElement * retfel = NULL;
 
       if (spacetime)
       {
@@ -574,6 +582,10 @@ namespace ngcomp
       }
       delete xgeom;
       delete cquad;
+
+      if (empty)
+          retfel->SetEmpty();
+      
       return *retfel;
     }
   }
@@ -616,7 +628,7 @@ namespace ngcomp
                                                                             *cquad, lh, 
                                                                             2*order_space, 2*order_time, 
                                                                             ref_lvl_space, ref_lvl_time);
-      FiniteElement * retfel = NULL;
+      XFiniteElement * retfel = NULL;
 
       {
         static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
@@ -630,6 +642,9 @@ namespace ngcomp
 
       delete xgeom;
       delete cquad;
+
+      if (empty)
+          retfel->SetEmpty();
 
       return *retfel;
     }

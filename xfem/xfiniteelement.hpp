@@ -57,6 +57,7 @@ namespace ngfem
     FlatXLocalGeometryInformation fxgeom;
     FlatXLocalGeometryInformation fxgeom_downtrace;
     FlatXLocalGeometryInformation fxgeom_uptrace;
+    bool empty = false;
   public:
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
@@ -104,6 +105,9 @@ namespace ngfem
     } 
 
     virtual ELEMENT_TYPE ElementType() const { return base.ElementType(); }
+
+    void SetEmpty(bool se = true){ empty = se; if (se) ndof = 0;}
+    bool Empty() const{ return empty;}
 
   };
 

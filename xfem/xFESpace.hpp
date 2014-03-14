@@ -56,6 +56,8 @@ namespace ngcomp
 
     double vmax = 1e99;
 
+    bool empty = false;
+
   public:
     /*
       constructor. 
