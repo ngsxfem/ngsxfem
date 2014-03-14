@@ -160,11 +160,11 @@ namespace ngfem
       int ndof_total = ndof+ndof_x;
       FlatVector<> shape_total(ndof_total,lh);
       FlatVector<> shape(ndof,&shape_total(0));
-      FlatVector<> shapex(ndof,&shape_total(ndof));
+      FlatVector<> shapex(ndof_x,&shape_total(ndof));
 
       FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
       FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
-      FlatMatrixFixWidth<D> dshapex(ndof,&dshape_total(ndof,0));
+      FlatMatrixFixWidth<D> dshapex(ndof_x,&dshape_total(ndof,0));
 
       if (xfe)
       {
