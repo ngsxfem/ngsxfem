@@ -468,6 +468,79 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<3> > initxconv3d ("xconvection", 3, 2);
 */
 
+  template<int D>
+  void NoXLaplaceIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatMatrix<double> & elmat,
+		     LocalHeap & lh) const
+  {
+    static Timer timer ("NoXLaplaceIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const ScalarFiniteElement<D> & scafe = 
+      dynamic_cast<const ScalarFiniteElement<D>&> (base_fel);
+    
+    int order=scafe.Order();
+    elmat = 0.0;
+    
+    ELEMENT_TYPE eltype = eltrans.GetElementType();
+
+    ScalarFieldEvaluator & lset_eval = * ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
+
+    CompositeQuadratureRule<D> * cquad = new CompositeQuadratureRule<D>() ;
+    XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, lset_eval, 
+                                                                          *cquad, lh, 
+                                                                          2*order, 2, 
+                                                                          0,0);
+    DOMAIN_TYPE dt_el = xgeom->MakeQuadRule();
+    FlatXLocalGeometryInformation fxgeom(*xgeom,lh);
+      
+    int ndof = scafe.GetNDof();
+    FlatMatrixFixWidth<D> dshape(ndof,lh);
+    DOMAIN_TYPE dt = POS;
+    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    {
+      if(dt_el == NEG || dt_el == POS)
+      { 
+        if (dt_el != dt)
+          continue;
+        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*order);
+        for (int i = 0 ; i < pir.GetNIP(); i++)
+        {
+          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
+          double coef = dt == POS ? alpha_pos : alpha_neg;
+          scafe.CalcMappedDShape(mip, dshape);
+          double fac = mip.GetWeight();
+          elmat += (fac*coef) * dshape * Trans(dshape);
+        }
+      }
+      else
+      {
+        QuadratureRule<D> dtquad(cquad->GetRule(dt));
+        for (int i = 0; i < dtquad.Size(); ++i)
+        {
+          IntegrationPoint ip(&dtquad.points[i](0),dtquad.weights[i]);
+          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+          double coef = dt == POS ? alpha_pos : alpha_neg;
+          scafe.CalcMappedDShape(mip, dshape);
+          double fac = mip.GetWeight();
+          elmat += (fac*coef) * dshape * Trans(dshape);
+        } // quad rule
+      } // if xfe
+    } // loop over domain types
+    delete xgeom;
+
+  }
+
+
+  template class NoXLaplaceIntegrator<2>;
+  template class NoXLaplaceIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<NoXLaplaceIntegrator<2> > initxh1cut2dnolap ("noxlaplace", 2, 3);
+  static RegisterBilinearFormIntegrator<NoXLaplaceIntegrator<3> > initxh1cut3dnolap ("noxlaplace", 3, 3);
+
+
 }
 
 /// coefficientfunction statt function-pointer

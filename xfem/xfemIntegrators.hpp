@@ -69,7 +69,6 @@ namespace ngfem
 
   };
 
-
   template <int D>
   class XSourceIntegrator : public LinearFormIntegrator
   {
@@ -181,6 +180,42 @@ namespace ngfem
                        LocalHeap & lh) const;
 
   };
+
+
+
+
+  template <int D>
+  class NoXLaplaceIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_lset;
+    double alpha_neg;
+    double alpha_pos;
+  public:
+    NoXLaplaceIntegrator (const Array<CoefficientFunction*> & coeffs)
+    { 
+      alpha_neg = coeffs[0]->EvaluateConst();
+      alpha_pos = coeffs[1]->EvaluateConst();
+      coef_lset = coeffs[2];
+    }
+    virtual ~NoXLaplaceIntegrator(){ ; };
+
+    virtual string Name () const { return "NoXLaplaceIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
 
 }
 
