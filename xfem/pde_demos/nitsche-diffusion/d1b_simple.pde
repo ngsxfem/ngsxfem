@@ -72,7 +72,8 @@ define coefficient ab
 define gridfunction u -fespace=fescomp
 
 define linearform f -fespace=fescomp # -print
-source coef_f -comp=1
+#source coef_f -comp=1
+#xsource solneg solpos
 
 define constant small = 1e-6
 
@@ -80,8 +81,9 @@ define constant lambda = 5
 
 define bilinearform a -fespace=fescomp 
        #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
+#xmass one one
 xlaplace aneg apos
-xnitsche_hansbo aneg apos bneg bpos lambda
+#xnitsche_hansbo aneg apos bneg bpos lambda
 #laplace ab  -comp=1
 
 
