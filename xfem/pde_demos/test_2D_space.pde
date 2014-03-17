@@ -84,4 +84,6 @@ numproc xdifference npxd
         -henryweight_n=1.0
         -henryweight_p=1.0
 
+numproc xoutput npxo -solution=u -solution_n=two -solution_p=one -subdivision=0
+
 numproc visualization npviz -scalarfunction=u #-comp=0

@@ -15,6 +15,7 @@
 #include "stxfemIntegrators.hpp"
 #include "setvaluesx.hpp"
 #include "../utils/error.hpp"
+#include "../utils/output.hpp"
 #include "../utils/calccond.hpp"
 
 using namespace ngsolve;
@@ -399,6 +400,48 @@ namespace ngcomp
 
   };
 
+/* ---------------------------------------- 
+   numproc
+   ---------------------------------------- */
+  template <int D> 
+  class NumProcSpecialOutput : public NumProc
+  {
+  protected:
+    GridFunction * gfu;
+    SolutionCoefficients<D> solcoef;
+    int subdivision;
+  public:
+
+
+    NumProcSpecialOutput (PDE & apde, const Flags & flags)
+      : NumProc (apde), solcoef(apde,flags)
+    { 
+      gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
+      subdivision = (int) flags.GetNumFlag ( "subdivision", 2);
+    }
+
+    virtual ~NumProcSpecialOutput()
+    {
+      ;
+    }
+
+    virtual string GetClassName () const
+    {
+      return "NumProcSpecialOutput";
+    }
+
+
+    virtual void Do (LocalHeap & lh)
+    {
+      static int refinements = 0;
+      cout << " This is the Do-call on refinement level " << refinements << std::endl;
+      refinements++;
+      DoSpecialOutput<D>(gfu, solcoef,subdivision, lh);
+    }    
+    
+
+  };
+
 
 /* ---------------------------------------- 
    numproc
@@ -476,4 +519,5 @@ namespace ngcomp
 
 static RegisterNumProc<NumProcSetValuesX> npinittestxfem2d("setvaluesx");
 static RegisterNumProc<NumProcXDifference<2> > npxdiff("xdifference");
+static RegisterNumProc<NumProcSpecialOutput<2> > npxoutp("xoutput");
 static RegisterNumProc<NumProcCalcCondition> npinitcalccond("calccond");
