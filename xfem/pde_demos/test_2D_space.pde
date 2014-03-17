@@ -17,11 +17,13 @@ define constant one = 1.0
 
 define constant two = 2.0
 
+define constant small = 0.5
+
 define constant x0 = 0.5
 define constant y0 = 0.5
 
 define constant bneg = 1.0
-define constant bpos = 3.0
+define constant bpos = 1.2
 
 define constant aneg = 0.2
 define constant apos = 0.5
@@ -33,8 +35,15 @@ define constant lambda = 2.0
 
 define constant R = 0.33333333
 
+# define coefficient lset
+# ((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
+
 define coefficient lset
-((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
+#( sqrt(0.25*(x-x0)*(x-x0)+(y-y0)*(y-y0))  - R),       
+(
+ 8*(x-x0)*(x-x0)+64*(y-y0)*(y-y0)*(y-y0)*(y-y0)-8*(y-y0)*(y-y0)*(1-(y-y0)*(y-y0))-0.1
+)
+
 
 define fespace fescomp
        -type=xh1fespace
@@ -52,10 +61,10 @@ define linearform f -fespace=fescomp # -print
 xsource bneg bpos
 
 define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
-#xmass one one
+#xmass small small
 xlaplace abneg abpos
-xnitsche_minstab_hansbo aneg apos bneg bpos
-#xnitsche_hansbo aneg apos bneg bpos lambda
+#xnitsche_minstab_hansbo aneg apos bneg bpos
+xnitsche_hansbo aneg apos bneg bpos lambda
 #lo_ghostpenalty aneg apos one
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print

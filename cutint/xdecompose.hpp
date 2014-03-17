@@ -28,6 +28,11 @@ namespace xintegration
       ;
     }
 
+    Simplex(Simplex<D> & a_s): p(a_s.p)
+    {
+      ;
+    }
+
     DOMAIN_TYPE CheckIfCut(const ScalarFieldEvaluator & lset) const
     {
       static Timer timer ("Simplex::CheckifCut (the simplex check)");

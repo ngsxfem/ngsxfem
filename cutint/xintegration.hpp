@@ -363,40 +363,54 @@ namespace xintegration
                                               LocalHeap & a_lh,
                                               int a_int_order_space = 1, int a_int_order_time = 1, 
                                               int a_ref_level_space = 0, int a_ref_level_time = 0);
-      bool IsDecomposed(){ return quaded; }
+    bool IsDecomposed(){ return quaded; }
       
-      void SetPastTrace(XLocalGeometryInformation * xlocal)
-      {
-          pasttracegeom = xlocal;
-      }
+    void SetPastTrace(XLocalGeometryInformation * xlocal)
+    {
+      pasttracegeom = xlocal;
+    }
 
-      void SetFutureTrace(XLocalGeometryInformation * xlocal)
-      {
-          futuretracegeom = xlocal;
-      }
+    void SetFutureTrace(XLocalGeometryInformation * xlocal)
+    {
+      futuretracegeom = xlocal;
+    }
 
-      XLocalGeometryInformation * GetPastTrace() const 
-      {
-          if (pasttracegeom == NULL)
-              throw Exception("XLocalGeometryInformation::GetPastTrace() called but pasttracegeom == NULL");
-          if (! pasttracegeom->IsDecomposed())
-              pasttracegeom->MakeQuadRule();
-          return pasttracegeom;
-      }
+    XLocalGeometryInformation * GetPastTrace() const 
+    {
+      if (pasttracegeom == NULL)
+        throw Exception("XLocalGeometryInformation::GetPastTrace() called but pasttracegeom == NULL");
+      if (! pasttracegeom->IsDecomposed())
+        pasttracegeom->MakeQuadRule();
+      return pasttracegeom;
+    }
 
-      XLocalGeometryInformation * GetFutureTrace() const
-      {
-          if (futuretracegeom == NULL)
-              throw Exception("XLocalGeometryInformation::GetFutureTrace() called but futuretracegeom == NULL");
-          if (! futuretracegeom->IsDecomposed())
-              futuretracegeom->MakeQuadRule();
-          return futuretracegeom;
-      }
+    XLocalGeometryInformation * GetFutureTrace() const
+    {
+      if (futuretracegeom == NULL)
+        throw Exception("XLocalGeometryInformation::GetFutureTrace() called but futuretracegeom == NULL");
+      if (! futuretracegeom->IsDecomposed())
+        futuretracegeom->MakeQuadRule();
+      return futuretracegeom;
+    }
     
-      virtual void SetDistanceThreshold( double a_distance_threshold )
-      {  
-        std::cout << " base class is doing nothing " << std::endl;
-      }
+    virtual void SetDistanceThreshold( double a_distance_threshold )
+    {  
+      std::cout << " base class is doing nothing " << std::endl;
+    }
+
+
+    virtual void SetSimplexArrays(Array<Simplex<2>*> & simplex_array_neg,
+                                  Array<Simplex<2>*> & simplex_array_pos)
+    { cout << " baseclass: doing nothing" << endl;} 
+    virtual void SetSimplexArrays(Array<Simplex<3>*> & simplex_array_neg,
+                                  Array<Simplex<3>*> & simplex_array_pos)
+    { cout << " baseclass: doing nothing" << endl;} 
+    virtual void SetSimplexArrays(Array<Simplex<4>*> & simplex_array_neg,
+                                  Array<Simplex<4>*> & simplex_array_pos)
+    { cout << " baseclass: doing nothing" << endl;} 
+    virtual void ClearArrays(){ cout << " baseclass: doing nothing" << endl;}
+
+
   };
 
   class FlatXLocalGeometryInformation
@@ -537,7 +551,6 @@ namespace xintegration
       //     futuretracegeom->MakeQuadRule();
       return futuretracegeom;
     }
-    
   };
 
 
@@ -575,6 +588,9 @@ namespace xintegration
     /// with N = 2^rn + 1 with rn = ref_level_time
     Array< double > verts_time;
 
+    Array< Simplex<SD> *> * simplex_array_neg = NULL;
+    Array< Simplex<SD> *> * simplex_array_pos = NULL;
+
     /// maximum number of refinements in space for numerical integration
     int ref_level_space = 0;
     /// maximum number of refinements in time for numerical integration
@@ -588,6 +604,63 @@ namespace xintegration
     double distance_threshold = 1e99;
 
     virtual void SetDistanceThreshold( double a_distance_threshold ){ distance_threshold = a_distance_threshold; }
+
+    virtual void SetSimplexArrays(Array<Simplex<2> *> & a_simplex_array_neg, 
+                                 Array<Simplex<2> *> & a_simplex_array_pos)
+    { 
+      if (2==SD)
+      {
+        simplex_array_neg = reinterpret_cast<Array<Simplex<SD>*>*> (&a_simplex_array_neg);
+        simplex_array_pos = reinterpret_cast<Array<Simplex<SD>*>*> (&a_simplex_array_pos);
+      }
+      else
+        throw Exception("Dimensions do not match 1337!");
+    } 
+
+    virtual void SetSimplexArrays(Array<Simplex<3> *> & a_simplex_array_neg, 
+                                 Array<Simplex<3> *> & a_simplex_array_pos)
+    { 
+      throw Exception("3D not yet checked...");
+      if (3==SD)
+      {
+        simplex_array_neg = reinterpret_cast<Array<Simplex<SD>*>*> (&a_simplex_array_neg);
+        simplex_array_pos = reinterpret_cast<Array<Simplex<SD>*>*> (&a_simplex_array_pos);
+      }
+      else
+        throw Exception("Dimensions do not match 1337!");
+    } 
+
+    virtual void SetSimplexArrays(Array<Simplex<4> *> & a_simplex_array_neg, 
+                                 Array<Simplex<4> *> & a_simplex_array_pos)
+    { 
+      throw Exception("4D not yet checked...");
+      if (4==SD)
+      {
+        simplex_array_neg = reinterpret_cast<Array<Simplex<SD>*>*> (&a_simplex_array_neg);
+        simplex_array_pos = reinterpret_cast<Array<Simplex<SD>*>*> (&a_simplex_array_pos);
+      }
+      else
+        throw Exception("Dimensions do not match 1337!");
+    } 
+
+    virtual void ClearArrays()
+    {
+      if (simplex_array_neg != NULL)
+      {
+        for (int i = 0; i < simplex_array_neg->Size(); ++i)
+          delete (*simplex_array_neg)[i];
+        simplex_array_neg->SetSize(0);
+      }
+      if (simplex_array_pos != NULL)
+      {
+        for (int i = 0; i < simplex_array_pos->Size(); ++i)
+          delete (*simplex_array_pos)[i];
+        simplex_array_pos->SetSize(0);
+      }
+      simplex_array_neg = NULL;
+      simplex_array_pos = NULL;
+    }
+
 
     LocalHeap & lh;
     /// 
@@ -645,7 +718,10 @@ namespace xintegration
                                  int a_ref_level_space = 0, 
                                  int a_ref_level_time = 0 );
     
-    virtual ~NumericalIntegrationStrategy() { if (ownpc) delete &pc; }
+    virtual ~NumericalIntegrationStrategy() 
+    { 
+      if (ownpc) delete &pc; 
+    }
 
     /// Set Vertices according to input
     void SetVerticesSpace(const Array<Vec<D> > & verts);

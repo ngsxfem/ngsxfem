@@ -236,10 +236,10 @@ namespace xintegration
                                                                 int a_int_order_space, int a_int_order_time, 
                                                                 int a_ref_level_space, int a_ref_level_time)
   {
-    XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
-                                      &a_compquadrule1, NULL, NULL, NULL,
-                                      a_lh, a_int_order_space, a_int_order_time,
-                                      a_ref_level_space, a_ref_level_time);
+    return  XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+                                              &a_compquadrule1, NULL, NULL, NULL,
+                                              a_lh, a_int_order_space, a_int_order_time,
+                                              a_ref_level_space, a_ref_level_time);
   }
 
   XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
@@ -250,10 +250,10 @@ namespace xintegration
                                                                 int a_int_order_space, int a_int_order_time, 
                                                                 int a_ref_level_space, int a_ref_level_time)
   {
-    XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
-                                      NULL, &a_compquadrule2, NULL, NULL,
-                                      a_lh, a_int_order_space, a_int_order_time,
-                                      a_ref_level_space, a_ref_level_time);
+    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+                                             NULL, &a_compquadrule2, NULL, NULL,
+                                             a_lh, a_int_order_space, a_int_order_time,
+                                             a_ref_level_space, a_ref_level_time);
   }
 
   XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
@@ -264,10 +264,10 @@ namespace xintegration
                                                                 int a_int_order_space, int a_int_order_time, 
                                                                 int a_ref_level_space, int a_ref_level_time)
   {
-    XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
-                                      NULL, NULL, &a_compquadrule3, NULL,
-                                      a_lh, a_int_order_space, a_int_order_time,
-                                      a_ref_level_space, a_ref_level_time);
+    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+                                             NULL, NULL, &a_compquadrule3, NULL,
+                                             a_lh, a_int_order_space, a_int_order_time,
+                                             a_ref_level_space, a_ref_level_time);
   }
 
   XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
@@ -278,10 +278,10 @@ namespace xintegration
                                                                 int a_int_order_space, int a_int_order_time, 
                                                                 int a_ref_level_space, int a_ref_level_time)
   {
-    XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
-                                      NULL, NULL, NULL, &a_compquadrule4,
-                                      a_lh, a_int_order_space, a_int_order_time,
-                                      a_ref_level_space, a_ref_level_time);
+    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+                                             NULL, NULL, NULL, &a_compquadrule4,
+                                             a_lh, a_int_order_space, a_int_order_time,
+                                             a_ref_level_space, a_ref_level_time);
   }
 
   XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
@@ -358,6 +358,8 @@ namespace xintegration
     : XLocalGeometryInformation(a.lset), pc(a.pc), 
       ref_level_space(a.ref_level_space-reduce_ref_space), ref_level_time(a.ref_level_time-reduce_ref_time),
       int_order_space(a.int_order_space), int_order_time(a.int_order_time),
+      simplex_array_neg(a.simplex_array_neg),
+      simplex_array_pos(a.simplex_array_pos),
       lh(a.lh), compquadrule(a.compquadrule)
   {
   }
@@ -788,6 +790,13 @@ namespace xintegration
             FillSimplexWithRule<SD>(*simplices[i], 
                                     compquadrule.GetRule(dt_simplex), 
                                     GetIntegrationOrderMax());
+            if (SD==2 && simplex_array_neg)
+            {
+              if (dt_simplex == NEG)
+                simplex_array_neg->Append(new Simplex<SD> (*simplices[i]));
+              else
+                simplex_array_pos->Append(new Simplex<SD> (*simplices[i]));
+            }
           }
           delete simplices[i];
         }
@@ -801,12 +810,22 @@ namespace xintegration
       RegionTimer reg (timer);
 
       double trafofac = 1.0; 
-
       if (D==2)
       {
         Vec<D> a = verts_space[1] - verts_space[0];
         Vec<D> b = verts_space[2] - verts_space[0];
         trafofac = abs(a(0) * b(1) - a(1) * b(0));
+        if (SD==2 && simplex_array_neg)
+        {
+          Array<const Vec<SD> *> simpl_verts(3);
+          simpl_verts[0] = pc(verts_space[0]);
+          simpl_verts[1] = pc(verts_space[1]);
+          simpl_verts[2] = pc(verts_space[2]);
+          if (dt_self == NEG)
+            simplex_array_neg->Append(new Simplex<SD> (simpl_verts));
+          else
+            simplex_array_pos->Append(new Simplex<SD> (simpl_verts));
+        }
       }
       else if (D==3)
       {
@@ -1291,6 +1310,12 @@ namespace xintegration
                                 numint.compquadrule.GetRule(dt_minor), 
                                 numint.GetIntegrationOrderMax());
 
+        // for result visualization
+        if (numint.simplex_array_neg && (dt_minor == NEG))
+            numint.simplex_array_neg->Append(new Simplex<SD> (minorgroup));
+        if (numint.simplex_array_pos && (dt_minor == POS))
+            numint.simplex_array_pos->Append(new Simplex<SD> (minorgroup));
+
         Array< Simplex<SD> * > innersimplices(0);
         for (int k = 0; k < 2; ++k)
         {
@@ -1304,6 +1329,13 @@ namespace xintegration
           FillSimplexWithRule<SD>(innersimplices[l]->p, 
                                   numint.compquadrule.GetRule(dt_major), 
                                   numint.GetIntegrationOrderMax());
+
+          // for result visualization
+          if (numint.simplex_array_neg && (dt_minor == POS))
+            numint.simplex_array_neg->Append(new Simplex<SD> (innersimplices[l]->p));
+          if (numint.simplex_array_pos && (dt_minor == NEG))
+            numint.simplex_array_pos->Append(new Simplex<SD> (innersimplices[l]->p));
+
           delete innersimplices[l];
         }
                 
