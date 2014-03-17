@@ -183,7 +183,7 @@ namespace ngfem
 
 
 
-
+  /* use xfem-implementation + "empty"-keyword
   template <int D>
   class NoXLaplaceIntegrator : public BilinearFormIntegrator
   {
@@ -215,7 +215,7 @@ namespace ngfem
                        LocalHeap & lh) const;
 
   };
-
+  */
 
 }
 

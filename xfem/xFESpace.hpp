@@ -41,6 +41,7 @@ namespace ngcomp
     Array<DOMAIN_TYPE> domofface;
     Array<DOMAIN_TYPE> domofedge;
     Array<DOMAIN_TYPE> domofvertex;
+    Array<DOMAIN_TYPE> domofinner;
 
     Array<int> basedof2xdof;
     Array<int> xdof2basedof;

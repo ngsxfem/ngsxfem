@@ -41,7 +41,7 @@ namespace ngfem
     int ndof_total = ndof+ndof_x;
     FlatVector<> shape_total(ndof_total,lh);
     FlatVector<> shape(ndof,&shape_total(0));
-    FlatVector<> shapex(ndof,&shape_total(ndof));
+    FlatVector<> shapex(ndof_x,&shape_total(ndof));
 
     int p = scafe->Order();
     
@@ -78,15 +78,26 @@ namespace ngfem
 
           for (int l = 0; l < ndof_x; ++l)
           {
+            // std::cout << " xfe->GetSignsOfDof()[l] = " << xfe->GetSignsOfDof()[l] << std::endl;
             if (xfe->GetSignsOfDof()[l] != dt)
               shapex(l) = 0.0;
           }
+
+          // std::cout << " shape = " << shape << std::endl;
+          // std::cout << " shapex = " << shapex << std::endl;
+          // getchar();
+
 
           double fac = mip.GetWeight();
           elmat += (fac*coef) * shape_total * Trans(shape_total);
         } // quad rule
       } // if xfe
     } // loop over domain types
+    // if (xfe)
+    // {
+    //   std::cout << " elmat = " << elmat << std::endl;
+    //   getchar();
+    // }
   }
 
 
@@ -127,7 +138,7 @@ namespace ngfem
     int ndof_total = ndof+ndof_x;
     FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
     FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
-    FlatMatrixFixWidth<D> dshapex(ndof,&dshape_total(ndof,0));
+    FlatMatrixFixWidth<D> dshapex(ndof_x,&dshape_total(ndof,0));
 
     int p = scafe->Order();
     
@@ -212,7 +223,7 @@ namespace ngfem
     int ndof_total = ndof+ndof_x;
     FlatVector<> shape_total(ndof_total,lh);
     FlatVector<> shape(ndof,&shape_total(0));
-    FlatVector<> shapex(ndof,&shape_total(ndof));
+    FlatVector<> shapex(ndof_x,&shape_total(ndof));
 
     int p = scafe->Order();
     
@@ -299,7 +310,7 @@ namespace ngfem
     int ndof_total = ndof+ndof_x;
     FlatVector<> shape_total(ndof_total,lh);
     FlatVector<> shape(ndof,&shape_total(0));
-    FlatVector<> shapex(ndof,&shape_total(ndof));
+    FlatVector<> shapex(ndof_x,&shape_total(ndof));
 
     int p = scafe->Order();
     
@@ -384,7 +395,7 @@ namespace ngfem
     int ndof_total = ndof+ndof_x;
     FlatVector<> shape_total(ndof_total,lh);
     FlatVector<> shape(ndof,&shape_total(0));
-    FlatVector<> shapex(ndof,&shape_total(ndof));
+    FlatVector<> shapex(ndof_x,&shape_total(ndof));
 
     int p = scafe->Order();
     
@@ -468,6 +479,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<3> > initxconv3d ("xconvection", 3, 2);
 */
 
+  /*
   template<int D>
   void NoXLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
@@ -540,6 +552,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<NoXLaplaceIntegrator<2> > initxh1cut2dnolap ("noxlaplace", 2, 3);
   static RegisterBilinearFormIntegrator<NoXLaplaceIntegrator<3> > initxh1cut3dnolap ("noxlaplace", 3, 3);
 
+  */
 
 }
 

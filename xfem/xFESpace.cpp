@@ -24,6 +24,9 @@ namespace ngcomp
     ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
     ref_lvl_time = (int) flags.GetNumFlag("ref_time",0);
 
+    std::cout << " ref_lvl_space = " << ref_lvl_space << std::endl;
+    std::cout << " ref_lvl_time = " << ref_lvl_time << std::endl;
+
     string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
     eval_lset = new EvalFunction(eval_lset_str);
 
@@ -99,6 +102,10 @@ namespace ngcomp
     static int first = -1;
     first++;
 
+    Array<double> kappa_pos(ne);
+    BitArray element_most_pos(ne);
+    element_most_pos.Clear();
+
     TableCreator<int> creator;
     for ( ; !creator.Done(); creator++)
     {
@@ -130,6 +137,17 @@ namespace ngcomp
           xgeom->SetDistanceThreshold(2.0*(h+(ti.second-ti.first)*vmax));
           DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
+          QuadratureRule<SD> & pquad =  cquad.GetRule(POS);
+          QuadratureRule<SD> & nquad =  cquad.GetRule(NEG);
+          double pospart_vol = 0.0;
+          double negpart_vol = 0.0;
+          for (int i = 0; i < pquad.Size(); ++i)
+            pospart_vol += pquad.weights[i];
+          for (int i = 0; i < nquad.Size(); ++i)
+            negpart_vol += nquad.weights[i];
+          if (pospart_vol > negpart_vol)
+            element_most_pos.Set(elnr);
+
           delete xgeom;
 
           domofel[elnr] = dt;
@@ -150,7 +168,6 @@ namespace ngcomp
       }
     }
     el2dofs = creator.GetTable();
-
 
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
@@ -347,6 +364,21 @@ namespace ngcomp
         int xdof = basedof2xdof[dnums[l]];
         if ( xdof != -1)
           domofdof[xdof] = domofvertex[vnr];
+      }
+    }
+
+    domofinner.SetSize(ne);
+    for (int elnr = 0; elnr < ne; ++elnr)
+    {
+      DOMAIN_TYPE dt_here = element_most_pos.Test(elnr) ? POS : NEG;
+      domofinner[elnr] = dt_here;
+      Array<int> dnums;
+      basefes->GetInnerDofNrs(elnr, dnums);
+      for (int l = 0; l < dnums.Size(); ++l)
+      {
+        int xdof = basedof2xdof[dnums[l]];
+        if ( xdof != -1)
+          domofdof[xdof] = dt_here;
       }
     }
 
@@ -856,7 +888,7 @@ namespace ngcomp
     int ne = ma.GetNE();
     int nf = ma.GetNFaces();
     int ned = ma.GetNEdges();      
-    Array<int> dnums, dnums2; //, verts, edges;
+    Array<int> dnums, dnums2, dnums3; //, verts, edges;
 
     bool vertexpatch=true;
     bool edgepatch=false;
@@ -898,6 +930,7 @@ namespace ngcomp
 
             GetVertexDofNrs(edge.vertices[0],dnums);
             GetVertexDofNrs(edge.vertices[1],dnums2);
+            GetEdgeDofNrs(i,dnums3);
             
             for (int j = 0; j < dnums.Size(); ++j)
               for (int k = 0; k < dnums2.Size(); ++k)
@@ -909,6 +942,18 @@ namespace ngcomp
                   if (dnums2[k] < basendof)
                     creator.Add(dnums2[k],dnums[j]);
               }
+
+            
+            for (int j = 0; j < dnums.Size(); ++j)
+              if (filter.Test(dnums[j]))
+                if (dnums[j] < basendof)
+                  creator.Add(dnums[j],dnums3);
+
+            for (int j = 0; j < dnums2.Size(); ++j)
+              if (filter.Test(dnums2[j]))
+                if (dnums2[j] < basendof)
+                  creator.Add(dnums2[j],dnums3);
+
           }
         }
         offset += nv;
