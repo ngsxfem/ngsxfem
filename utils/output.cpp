@@ -35,6 +35,9 @@ namespace ngfem
     ofstream outf_gnuplot("special.output.gnuplot");
     ofstream outf_tikz("special.output.tikz");
     MakeTikzHeader(outf_tikz);
+    
+    outf_tikz.precision(12);
+    outf_tikz << std::fixed;
 
     string negfillcolor ("green!60!gray");
     string negcolor ("green!60!black");
