@@ -136,18 +136,35 @@ namespace ngfem
             for (int i = 0; i < draw_simplices.Size(); ++i)
             {
 
-              if (dt == NEG)
-                outf_tikz << "\\draw [" << negcolor 
-                          << ", fill=" << negfillcolor 
-                          << ", fill opacity=" << fillnegopacity 
-                          << ", draw opacity=" << negopacity 
-                          << "] ";
-              else
-                outf_tikz << "\\draw [" << poscolor 
-                          << ", fill=" << posfillcolor 
-                          << ", fill opacity=" << fillposopacity 
-                          << ", draw opacity=" << posopacity 
-                          << "] ";
+              {
+                if (dt == NEG)
+                  outf_tikz << "\\draw ["
+                            << negfillcolor << ", " 
+                            << "fill=" << negfillcolor 
+                            << ", fill opacity=" << fillnegopacity 
+                            << ", draw opacity=" << posopacity
+                            << "] ";
+                else
+                  outf_tikz << "\\draw [" 
+                            << posfillcolor << ", "
+                            << "fill=" << posfillcolor 
+                            << ", fill opacity=" << fillposopacity 
+                            << ", draw opacity=" << posopacity
+                            << "] ";
+              }
+
+              // if (dt == NEG)
+              //   outf_tikz << "\\draw [" << negcolor 
+              //             << ", fill=" << negfillcolor 
+              //             << ", fill opacity=" << fillnegopacity 
+              //             << ", draw opacity=" << negopacity 
+              //             << "] ";
+              // else
+              //   outf_tikz << "\\draw [" << poscolor 
+              //             << ", fill=" << posfillcolor 
+              //             << ", fill opacity=" << fillposopacity 
+              //             << ", draw opacity=" << posopacity 
+              //             << "] ";
 
               for (int j = 0; j < D+2; ++j)
               {
