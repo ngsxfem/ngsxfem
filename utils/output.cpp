@@ -29,14 +29,23 @@ namespace ngfem
   template<int D>
   bool OnBound( Vec<D> p )
   {
+    bool ret;
+    // std::cout << " p = " << p << std::endl;
     if ( 
       (p[0] < 1e-14)
       ||(p[1] < 1e-14)
       ||((1-p[0]-p[1]) < 1e-14)
       )
-      return true;
+      ret = true;
     else
-      return false;
+      ret = false;
+
+    // if (ret)
+    //   std::cout << " true " << std::endl;
+    // else
+    //   std::cout << " false " << std::endl;
+
+    return ret;
   }
 
   template<int D>
@@ -262,8 +271,10 @@ namespace ngfem
                 //       h1diff_n += b_neg*fac*diffdsqr;
                 //     }
 
-                if (i>0)
-                  if (OnBound(p) && OnBound(lastp))
+                if (j>0)
+                {
+                  Vec<D> tmp = 0.5 * lastp + 0.5 * p;
+                  if (OnBound(p) && OnBound(lastp) && OnBound(tmp))
                   {
                     edges.Append(lastp);
                     edges.Append(p);
@@ -272,7 +283,7 @@ namespace ngfem
                     edges_val.Append(lastval);
                     edges_val.Append(discval);
                   }
-
+                }
                 lastp = p;
                 mlastp = mip.GetPoint();
                 lastval = discval;
@@ -280,10 +291,16 @@ namespace ngfem
               outf_gnuplot << endl << endl;
               outf_tikz << " cycle;" << endl;
 
+              string & color = dt == NEG ? negcolor : poscolor;
               for (int i = 0; i < edges.Size(); i+=2)
               {
-                cout << " left: \n" << medges[i] << "\t" << " val: " << edges_val[i] << "\n";
-                cout << " right: \n" << medges[i+1] << "\t" << " val: " << edges_val[i+1] << "\n";
+                outf_tikz << "\\draw [" 
+                          << color
+                          << "] " 
+                          << "(" << medges[i](0) << ", " << medges[i](1) << ", " << edges_val[i] << ")" 
+                          << " -- " 
+                          << "(" << medges[i+1](0) << ", " << medges[i+1](1) << ", " << edges_val[i+1] << ")" 
+                          << ";";
               }
               
             }
