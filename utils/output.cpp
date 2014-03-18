@@ -27,6 +27,19 @@ namespace ngfem
 
 
   template<int D>
+  bool OnBound( Vec<D> p )
+  {
+    if ( 
+      (p[0] < 1e-14)
+      ||(p[1] < 1e-14)
+      ||((1-p[0]-p[1]) < 1e-14)
+      )
+      return true;
+    else
+      return false;
+  }
+
+  template<int D>
   void DoSpecialOutput (GridFunction * gfu, 
                         SolutionCoefficients<D> & solcoef, 
                         int subdivision, 
@@ -120,6 +133,11 @@ namespace ngfem
                                                                                 *cquad, lh, 
                                                                                 0,0, 
                                                                                 subdivision,0);
+
+          Array<Vec<D> > edges(0);
+          Array<Vec<D> > medges(0);
+          Array<double > edges_val(0);
+
           xgeom->SetSimplexArrays(draw_simplices_neg, draw_simplices_pos);
           xgeom->MakeQuadRule();
           DOMAIN_TYPE dt = POS;
@@ -166,6 +184,9 @@ namespace ngfem
               //             << ", draw opacity=" << posopacity 
               //             << "] ";
 
+              Vec<D> lastp;
+              Vec<D> mlastp;
+              double lastval;
               for (int j = 0; j < D+2; ++j)
               {
                 int jj = j<D+1 ? j : 0; 
@@ -240,9 +261,31 @@ namespace ngfem
                 //       l2diff_n += b_neg*fac*sqr(discval-solval);
                 //       h1diff_n += b_neg*fac*diffdsqr;
                 //     }
+
+                if (i>0)
+                  if (OnBound(p) && OnBound(lastp))
+                  {
+                    edges.Append(lastp);
+                    edges.Append(p);
+                    medges.Append(mlastp);
+                    medges.Append(mip.GetPoint());
+                    edges_val.Append(lastval);
+                    edges_val.Append(discval);
+                  }
+
+                lastp = p;
+                mlastp = mip.GetPoint();
+                lastval = discval;
               } //simplex
               outf_gnuplot << endl << endl;
               outf_tikz << " cycle;" << endl;
+
+              for (int i = 0; i < edges.Size(); i+=2)
+              {
+                cout << " left: \n" << medges[i] << "\t" << " val: " << edges_val[i] << "\n";
+                cout << " right: \n" << medges[i+1] << "\t" << " val: " << edges_val[i+1] << "\n";
+              }
+              
             }
           } // dt
 
