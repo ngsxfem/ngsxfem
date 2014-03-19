@@ -273,12 +273,15 @@ namespace ngfem
 
     void SetTime(double t_) { time = t_; }
 
-    virtual void ChangeNegPosCoefficient(const CoefficientFunction * neg, const CoefficientFunction * pos, double dneg = 0.0, double dpos = 0.0)
+    virtual void ChangeNegPosCoefficient(CoefficientFunction * neg, CoefficientFunction * pos, double dneg = 0.0, double dpos = 0.0)
     {
       if (made_neg) {delete coef_neg; made_neg = false;}
       if (made_pos) {delete coef_pos; made_pos = false;}
-      coef_neg = neg;
-      coef_pos = pos;
+
+      made_neg = MakeHigherDimensionCoefficientFunction<D>(neg, coef_neg);
+      made_pos = MakeHigherDimensionCoefficientFunction<D>(pos, coef_pos);
+      // coef_neg = neg;
+      // coef_pos = pos;
       scale_neg = dneg;
       scale_pos = dpos;
     }
