@@ -34,7 +34,7 @@ namespace ngfem
   {
     outf_sketch << "}\n"
                 << "def viewpoint (-10.0,-20.0,30.0)\n"
-                << "def lookat (0.5,0.5,0)\n"
+                << "def lookat (5,5,0)\n"
                 << "put{ scale(2) then view((viewpoint),(lookat))}{\n"
                 << "  {tetrasandlines}\n"
                 << "}\n"
@@ -86,12 +86,12 @@ namespace ngfem
     outf_tikz.precision(12);
     outf_tikz << std::fixed;
 
-    string negfillcolor ("green!60!gray");
+    string edgenegcolor ("black");
     string negcolor ("green!60!black");
-    string posfillcolor ("blue!60!gray");
+    string edgeposcolor ("black");
     string poscolor ("blue!60!black");
-    double fillnegopacity = 1.0;
-    double fillposopacity = 1.0;
+    double fillnegopacity = 0.75;
+    double fillposopacity = 0.75;
     double drawnegopacity = 1.0;
     double drawposopacity = 1.0;
 
@@ -103,6 +103,11 @@ namespace ngfem
 
     DOMAIN_TYPE plotdt = POS;
     for (plotdt=POS; plotdt<IF; plotdt=(DOMAIN_TYPE)((int)plotdt+1))
+    {
+      Array<Vec<D> > edges(0);
+      Array<Vec<D> > medges(0);
+      Array<double > edges_val(0);
+
 
       for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
       {
@@ -168,10 +173,6 @@ namespace ngfem
                                                                                 0,0, 
                                                                                 subdivision,0);
 
-          Array<Vec<D> > edges(0);
-          Array<Vec<D> > medges(0);
-          Array<double > edges_val(0);
-
           xgeom->SetSimplexArrays(draw_simplices_neg, draw_simplices_pos);
           xgeom->MakeQuadRule();
           DOMAIN_TYPE dt = POS;
@@ -191,15 +192,15 @@ namespace ngfem
               {
                 if (dt == NEG)
                   outf_tikz << "\\draw ["
-                            << negfillcolor << ", " 
-                            << "fill=" << negfillcolor 
+                            << edgenegcolor << ", " 
+                            << "fill=" << negcolor 
                             << ", fill opacity=" << fillnegopacity 
                             << ", draw opacity=" << drawposopacity
                             << "] ";
                 else
                   outf_tikz << "\\draw [" 
-                            << posfillcolor << ", "
-                            << "fill=" << posfillcolor 
+                            << edgeposcolor << ", "
+                            << "fill=" << poscolor 
                             << ", fill opacity=" << fillposopacity 
                             << ", draw opacity=" << drawposopacity
                             << "] ";
@@ -313,44 +314,19 @@ namespace ngfem
               outf_gnuplot << endl << endl;
               outf_tikz << " cycle;" << endl;
               string & color = dt == NEG ? negcolor : poscolor;
+              string & edgecolor = dt == NEG ? edgenegcolor : edgeposcolor;
               double fillopacity = dt == NEG ? fillnegopacity : fillposopacity;
               double drawopacity = dt == NEG ? drawnegopacity : drawposopacity;
-              outf_sketch << "polygon["
-                          << "draw=" << color 
+              outf_sketch << "polygon[" //line style = dashed"
+                          << "draw=none" // << "red" // << color 
                           << ",fill=" << color 
                           << ",cull=false,fill opacity=" << fillopacity
-                          << ",draw opacity=" << drawopacity << "]"
+                          << ",draw opacity=" << fillopacity
+                          << "]"
                           << "(p" << cnt_sketch-3 << ")"
                           << "(p" << cnt_sketch-2 << ")"
                           << "(p" << cnt_sketch-1 << ")\n";
-
-              for (int i = 0; i < edges.Size(); i+=2)
-              {
-                outf_tikz << "\\draw [" 
-                          << color
-                          << "] " 
-                          << "(" << medges[i](0) << ", " << medges[i](1) << ", " << edges_val[i] << ")" 
-                          << " -- " 
-                          << "(" << medges[i+1](0) << ", " << medges[i+1](1) << ", " << edges_val[i+1] << ")" 
-                          << ";";
-                /*
-                outf_sketch << "  def p" << cnt_sketch++
-                            << "( " << medges[i](0) * scalex_sketch 
-                            << ", " << medges[i](1) * scaley_sketch 
-                            << ", " << edges_val[i] * scalez_sketch
-                            << ")\n";
-                outf_sketch << "  def p" << cnt_sketch++
-                            << "( " << medges[i+1](0) * scalex_sketch 
-                            << ", " << medges[i+1](1) * scaley_sketch 
-                            << ", " << edges_val[i+1] * scalez_sketch
-                            << ")\n";
-                outf_sketch << " line [draw=black,fill opacity=0.5]" 
-                            << "(p" << cnt_sketch-2 << ")"
-                            << "(p" << cnt_sketch-1 << ")\n";
-                */
-                //line style=thin
-              }
-              
+             
             }
           } // dt
 
@@ -421,14 +397,14 @@ namespace ngfem
         
 
           if (dt == NEG)
-            outf_tikz << "\\draw [" << negcolor 
-                      << ", fill=" << negfillcolor 
+            outf_tikz << "\\draw [" << edgenegcolor 
+                      << ", fill=" << negcolor 
                       << ", fill opacity=" << fillnegopacity 
                       << ", draw opacity=" << drawnegopacity 
                       << "] ";
           else
-            outf_tikz << "\\draw [" << poscolor 
-                      << ", fill=" << posfillcolor 
+            outf_tikz << "\\draw [" << edgeposcolor 
+                      << ", fill=" << poscolor 
                       << ", fill opacity=" << fillposopacity 
                       << ", draw opacity=" << drawposopacity 
                       << "] ";
@@ -503,10 +479,11 @@ namespace ngfem
             
 
           string & color = dt == NEG ? negcolor : poscolor;
+          string & edgecolor = dt == NEG ? edgenegcolor : edgeposcolor;
           double fillopacity = dt == NEG ? fillnegopacity : fillposopacity;
           double drawopacity = dt == NEG ? drawnegopacity : drawposopacity;
           outf_sketch << "polygon["
-                      << "draw=" << color 
+                      << "draw=" << edgecolor 
                       << ",fill=" << color 
                       << ",cull=false,fill opacity=" << fillopacity
                       << ",draw opacity=" << drawopacity << "]"
@@ -519,6 +496,40 @@ namespace ngfem
         }
       }
 
+
+      string & color = plotdt == NEG ? negcolor : poscolor;
+      string & edgecolor = plotdt == NEG ? edgenegcolor : edgeposcolor;
+      double fillopacity = plotdt == NEG ? fillnegopacity : fillposopacity;
+      double drawopacity = plotdt == NEG ? drawnegopacity : drawposopacity;
+
+      for (int i = 0; i < edges.Size(); i+=2)
+      {
+        outf_tikz << "\\draw [" 
+                  << color
+                  << "] " 
+                  << "(" << medges[i](0) << ", " << medges[i](1) << ", " << edges_val[i] << ")" 
+                  << " -- " 
+                  << "(" << medges[i+1](0) << ", " << medges[i+1](1) << ", " << edges_val[i+1] << ")" 
+                  << ";";
+                
+        outf_sketch << "  def p" << cnt_sketch++
+                    << "( " << medges[i](1) * scalex_sketch 
+                    << ", " << medges[i](0) * scaley_sketch 
+                    << ", " << edges_val[i] * scalez_sketch
+                    << ")\n";
+        outf_sketch << "  def p" << cnt_sketch++
+                    << "( " << medges[i+1](1) * scalex_sketch 
+                    << ", " << medges[i+1](0) * scaley_sketch 
+                    << ", " << edges_val[i+1] * scalez_sketch
+                    << ")\n";
+        outf_sketch << " line [draw=" << edgecolor << ",opacity=" << drawopacity << "]" 
+                    << "(p" << cnt_sketch-2 << ")"
+                    << "(p" << cnt_sketch-1 << ")\n";
+                
+        //line style=thin
+      }
+
+    }
     MakeTikzFooter(outf_tikz);
     MakeSketchFooter(outf_sketch);
 
