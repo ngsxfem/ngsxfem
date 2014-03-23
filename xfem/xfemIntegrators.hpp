@@ -217,6 +217,94 @@ namespace ngfem
   };
   */
 
+
+
+
+  template <int D>
+  class FictXSourceIntegrator : public LinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+  public:
+    FictXSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    virtual ~FictXSourceIntegrator(){ ; };
+
+    virtual string Name () const { return "FictXSourceIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element vector
+    virtual void
+    CalcElementVector (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatVector<double> & elvec,
+                       LocalHeap & lh) const;
+
+  };
+
+
+  template <int D>
+  class FictXMassIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+  public:
+    FictXMassIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    virtual ~FictXMassIntegrator(){ ; };
+
+    virtual string Name () const { return "FictXMassIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+
+
+  template <int D>
+  class FictXLaplaceIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * coef_neg;
+    CoefficientFunction * coef_pos;
+  public:
+    FictXLaplaceIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
+    virtual ~FictXLaplaceIntegrator(){ ; };
+
+    virtual string Name () const { return "FictXLaplaceIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+
+
+
 }
 
 #endif
