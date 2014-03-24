@@ -31,7 +31,7 @@ define constant apos = 0.5
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
-define constant lambda = 2.0
+define constant lambda = 2e4
 
 define constant R = 0.33333333
 
@@ -49,46 +49,30 @@ define coefficient lset
 define fespace fes
        -type=h1ho
        -order=1
-       -dirichlet=[1]
+      -dirichlet=[1,2]
 #       -dgjumps
-
-define fespace fespos
-       -type=fictdomfes
-       -order=1
-       -positive
-       -dirichlet=[1]
-#       -dgjumps
-
-define fespace fesneg
-       -type=fictdomfes
-       -order=1
-       -negative
-       -dirichlet=[1]
-
-numproc informfictdomfes npix 
-        -fictdomfes=fesneg
-        -fespace=fes
-        -coef_levelset=lset
-
-numproc informfictdomfes npix 
-        -fictdomfes=fespos
-        -fespace=fes
-        -coef_levelset=lset
 
 define fespace fescomp
-        -type=compound
-        -spaces=[fesneg,fespos]
+        -type=fictdom2fes
+       -dirichlet=[1,2]
 
-define gridfunction u -fespace=fespos
+numproc informfictdomfes npix 
+        -fictdomfes=fescomp
+        -pair
+        -fespace=fes
+        -coef_levelset=lset
+
+
+define gridfunction u -fespace=fescomp
 
 define linearform f -fespace=fescomp #-print
-fictxsource one two
+fictxsource bneg bpos
 
  define bilinearform a -fespace=fescomp -print  -printelmat
  #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
-fictxmass one one 
-#fictxlaplace one one 
-
+#fictxmass one one 
+fictxlaplace abneg abpos 
+fictxnitsche aneg apos bneg bpos lambda
 # #xmass small small
 # xlaplace abneg abpos
 # #xnitsche_minstab_hansbo aneg apos bneg bpos
@@ -97,13 +81,23 @@ fictxmass one one
 
 # numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-#define preconditioner c -type=local -bilinearform=a -test #-block
-define preconditioner c -type=direct -bilinearform=a #-test
+define preconditioner c -type=local -bilinearform=a -test -block
+#define preconditioner c -type=direct -bilinearform=a #-test
 # define preconditioner c -type=bddc -bilinearform=a -test -block
 
 # ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 -print
+
+# define bilinearform avis1 -fespace=fescomp -nonassemble
+# fictvis one -comp=1
+
+# define bilinearform avis2 -fespace=fescomp -nonassemble
+# fictvis one -comp=2
+
+# numproc drawflux npdf1 -bilinearform=avis1 -solution=u -label=uneg
+# numproc drawflux npdf2 -bilinearform=avis2 -solution=u -label=upos
+
 
 # define coefficient veczero
 # (0,0),

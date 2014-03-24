@@ -192,44 +192,56 @@ namespace ngcomp
     virtual void Do (LocalHeap & lh);
   };
 
-/*
-  class XH1FESpace : public CompoundFESpace
+  class CompFictDomFESpace : public CompoundFESpace
   {
     bool spacetime = false;
   public:
-    XH1FESpace (const MeshAccess & ama, 
+    CompFictDomFESpace (const MeshAccess & ama, 
                 const Array<FESpace*> & aspaces,
                 const Flags & flags);
-    virtual ~XH1FESpace () { ; }
+    virtual ~CompFictDomFESpace () { ; }
     static FESpace * Create (const MeshAccess & ma, const Flags & flags)
     {
+      Flags negflags(flags);
+      Flags posflags(flags);
+
+      negflags.SetFlag("negative");
+      posflags.SetFlag("positive");
+
       bool spacetime = flags.GetDefineFlag("spacetime");
       Array<FESpace*> spaces(2);
-      if (spacetime)
-        spaces[0] = new SpaceTimeFESpace (ma, flags);    
-      else
-        spaces[0] = new H1HighOrderFESpace (ma, flags);    
       if (ma.GetDimension() == 2)
         if (spacetime)
-          spaces[1] = new FictitiousDomainFESpace<2,3> (ma, flags);        
+        {
+          spaces[0] = new FictitiousDomainFESpace<2,3> (ma, negflags);        
+          spaces[1] = new FictitiousDomainFESpace<2,3> (ma, posflags);        
+        }
         else
-          spaces[1] = new FictitiousDomainFESpace<2,2> (ma, flags);        
+        {
+          spaces[0] = new FictitiousDomainFESpace<2,2> (ma, negflags);        
+          spaces[1] = new FictitiousDomainFESpace<2,2> (ma, posflags);        
+        }
       else
         if (spacetime)
-          spaces[1] = new FictitiousDomainFESpace<3,4> (ma, flags);        
+        {
+          spaces[0] = new FictitiousDomainFESpace<3,4> (ma, negflags);        
+          spaces[1] = new FictitiousDomainFESpace<3,4> (ma, posflags);        
+        }
         else
-          spaces[1] = new FictitiousDomainFESpace<3,3> (ma, flags);        
-      XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
+        {
+          spaces[0] = new FictitiousDomainFESpace<3,3> (ma, negflags);        
+          spaces[1] = new FictitiousDomainFESpace<3,3> (ma, posflags);        
+        }
+      CompFictDomFESpace * fes = new CompFictDomFESpace (ma, spaces, flags);
       return fes;
     }
 
     Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
     Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
 
-    virtual string GetClassName () const { return "XH1FESpace"; }
+    virtual string GetClassName () const { return "CompFictDomFESpace"; }
     
   };
-*/
   
 }    
 

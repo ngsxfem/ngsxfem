@@ -31,8 +31,7 @@ define constant apos = 0.5
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
-define constant lambda = 2.0
-
+define constant lambda = 2e4
 define constant R = 0.33333333
 
 # define coefficient lset
@@ -67,11 +66,11 @@ xlaplace abneg abpos
 xnitsche_hansbo aneg apos bneg bpos lambda
 #lo_ghostpenalty aneg apos one
 
-numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
+#numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=one -boundary -print
 
-#define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=local -bilinearform=a -test -block
 # define preconditioner c -type=direct -bilinearform=a -test
-define preconditioner c -type=bddc -bilinearform=a -test -block
+#define preconditioner c -type=bddc -bilinearform=a -test -block
 
 ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 

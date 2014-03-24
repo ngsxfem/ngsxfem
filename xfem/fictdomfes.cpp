@@ -47,7 +47,9 @@ namespace ngcomp
     // boundary_integrator = new RobinIntegrator<2> (&one);
     */
 
-    // static ConstantCoefficientFunction one(1);
+    static ConstantCoefficientFunction one(1);
+    integrator = new FictVisIntegrator<D>(&one) ;
+
     // integrator = new XVisIntegrator<D>(&one) ;
 
     cout << "Constructor of FictitiousDomainFESpace end" << endl;
@@ -739,7 +741,8 @@ namespace ngcomp
     : NumProc (apde)
   { 
     
-    FESpace* fictdomfes = pde.GetFESpace(flags.GetStringFlag("fictdomfes","v"), true);
+    bool pair = flags.GetDefineFlag("pair");
+    FESpace* fictdomfes_in = pde.GetFESpace(flags.GetStringFlag("fictdomfes","v"), true);
     FESpace* basefes = NULL;
     basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
 
@@ -752,84 +755,69 @@ namespace ngcomp
     // int mSD = fes_st == NULL ? mD : mD + 1;
 
     int mSD = mD;
+    
+    int loops = pair ? 2 : 1;
+    for (int i = 0; i < loops ; ++i)
+    {
+      FESpace * fictdomfes = pair ? (*(dynamic_cast<CompoundFESpace*>(fictdomfes_in)))[i] : fictdomfes_in;
 
-    if (mD == 2)
-    {
-      DomainVariableCoefficientFunction<2> * coef_lset_in_2 = dynamic_cast<DomainVariableCoefficientFunction<2> * > (coef_lset_in);
-      int numreg = coef_lset_in_2->NumRegions();
-      if (numreg == INT_MAX) numreg = 1;
-      Array< EvalFunction* > evals;
-      evals.SetSize(numreg);
-      for (int i = 0; i < numreg; ++i)
+      if (mD == 2)
       {
-        evals[i] = &coef_lset_in_2->GetEvalFunction(i);
-      }
-      if (mSD == 2)
-      {
-        dynamic_cast<FictitiousDomainFESpace<2,2>* >(fictdomfes) -> SetBaseFESpace (basefes);
-        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<2>(evals); 
-        dynamic_cast<FictitiousDomainFESpace<2,2>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
-        if (fescl)
-          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
-      }
-      else
-      {
-        dynamic_cast<FictitiousDomainFESpace<2,3>* >(fictdomfes) -> SetBaseFESpace (basefes);
-        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
-        dynamic_cast<FictitiousDomainFESpace<2,3>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
-        if (fescl)
-          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
-      }
-    }
-    else
-    {
-      DomainVariableCoefficientFunction<3> * coef_lset_in_3 = dynamic_cast<DomainVariableCoefficientFunction<3> * > (coef_lset_in);
-      int numreg = coef_lset_in_3->NumRegions();
-      if (numreg == INT_MAX) numreg = 1;
-      Array< EvalFunction* > evals;
-      evals.SetSize(numreg);
-      for (int i = 0; i < numreg; ++i)
-      {
-        evals[i] = &coef_lset_in_3->GetEvalFunction(i);
-      }
-      if (mSD == 3)
-      {
-        dynamic_cast<FictitiousDomainFESpace<3,3>* >(fictdomfes) -> SetBaseFESpace (basefes);
-        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
-        dynamic_cast<FictitiousDomainFESpace<3,3>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
-        if (fescl)
-          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        DomainVariableCoefficientFunction<2> * coef_lset_in_2 = dynamic_cast<DomainVariableCoefficientFunction<2> * > (coef_lset_in);
+        int numreg = coef_lset_in_2->NumRegions();
+        if (numreg == INT_MAX) numreg = 1;
+        Array< EvalFunction* > evals;
+        evals.SetSize(numreg);
+        for (int i = 0; i < numreg; ++i)
+        {
+          evals[i] = &coef_lset_in_2->GetEvalFunction(i);
+        }
+        if (mSD == 2)
+        {
+          dynamic_cast<FictitiousDomainFESpace<2,2>* >(fictdomfes) -> SetBaseFESpace (basefes);
+          CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<2>(evals); 
+          dynamic_cast<FictitiousDomainFESpace<2,2>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
+          if (fescl)
+            dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        }
+        else
+        {
+          dynamic_cast<FictitiousDomainFESpace<2,3>* >(fictdomfes) -> SetBaseFESpace (basefes);
+          CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
+          dynamic_cast<FictitiousDomainFESpace<2,3>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
+          if (fescl)
+            dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        }
       }
       else
       {
-        dynamic_cast<FictitiousDomainFESpace<3,4>* >(fictdomfes) -> SetBaseFESpace (basefes);
-        CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<4>(evals); 
-        dynamic_cast<FictitiousDomainFESpace<3,4>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
-        if (fescl)
-          dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        DomainVariableCoefficientFunction<3> * coef_lset_in_3 = dynamic_cast<DomainVariableCoefficientFunction<3> * > (coef_lset_in);
+        int numreg = coef_lset_in_3->NumRegions();
+        if (numreg == INT_MAX) numreg = 1;
+        Array< EvalFunction* > evals;
+        evals.SetSize(numreg);
+        for (int i = 0; i < numreg; ++i)
+        {
+          evals[i] = &coef_lset_in_3->GetEvalFunction(i);
+        }
+        if (mSD == 3)
+        {
+          dynamic_cast<FictitiousDomainFESpace<3,3>* >(fictdomfes) -> SetBaseFESpace (basefes);
+          CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<3>(evals); 
+          dynamic_cast<FictitiousDomainFESpace<3,3>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
+          if (fescl)
+            dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        }
+        else
+        {
+          dynamic_cast<FictitiousDomainFESpace<3,4>* >(fictdomfes) -> SetBaseFESpace (basefes);
+          CoefficientFunction * coef_lset = new DomainVariableCoefficientFunction<4>(evals); 
+          dynamic_cast<FictitiousDomainFESpace<3,4>* >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
+          if (fescl)
+            dynamic_cast<LevelsetContainerFESpace* >(fescl) -> SetLevelSetCoefficient (coef_lset);
+        }
       }
     }
-    // if (xfes_ != NULL)
-    // {
-    //   xfes_->SetBaseFESpace(basefes);
-    // }
-    // else
-    // {
-    //   CompoundFESpace* cfes = dynamic_cast<CompoundFESpace*>(xfes);
-    //   if (cfes != NULL)
-    //   {
-    //     for (int i=0; i < cfes->GetNSpaces(); ++i)
-    //     {
-    //       FictitiousDomainFESpace* xfes_2 = dynamic_cast<FictitiousDomainFESpace*>((*cfes)[i]);
-    //       if (xfes_2 != NULL)
-    //       {
-    //         xfes_2->SetBaseFESpace(basefes);
-    //       }
-    //     }
-    //   }
-    //   else
-    //     throw Exception("FESpace is not compatible to x-fespaces!");
-    // }
   }
 
   NumProcInformFictitiousDomainFESpace::~NumProcInformFictitiousDomainFESpace(){ ; }
@@ -838,14 +826,13 @@ namespace ngcomp
   
   static RegisterNumProc<NumProcInformFictitiousDomainFESpace> npinfoxfe("informfictdomfes");
 
-/*
 
-  XH1FESpace::XH1FESpace (const MeshAccess & ama, 		   
+  CompFictDomFESpace::CompFictDomFESpace (const MeshAccess & ama, 		   
                           const Array<FESpace*> & aspaces,
                           const Flags & flags)
     : CompoundFESpace(ama, aspaces, flags)
   {
-    name="XH1FESpace";
+    name="CompFictDomFESpace";
 
     const int sD = ma.GetDimension();
     if (sD == 2)
@@ -860,26 +847,27 @@ namespace ngcomp
         spacetime = false;
 
 
-    static ConstantCoefficientFunction one(1);
-    if (ma.GetDimension() == 2)
-    {
-      integrator = new XVisIntegrator<2> (&one);
-      // boundary_integrator = new RobinIntegrator<2> (&one);
-    }
-    else
-    {
-      integrator = new XVisIntegrator<3> (&one);
-      // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
-      // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
-    }
+    // static ConstantCoefficientFunction one(1);
+    // if (ma.GetDimension() == 2)
+    // {
+    //   integrator = new XVisIntegrator<2> (&one);
+    //   // boundary_integrator = new RobinIntegrator<2> (&one);
+    // }
+    // else
+    // {
+    //   integrator = new XVisIntegrator<3> (&one);
+    //   // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
+    //   // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
+    // }
   }
 
 
   ///SmoothingBlocks for good preconditioned iterative solvers
-  Table<int> * XH1FESpace::CreateSmoothingBlocks (const Flags & precflags) const
+  Table<int> * CompFictDomFESpace::CreateSmoothingBlocks (const Flags & precflags) const
   {
     Table<int> * it;
 
+    
     int nv = ma.GetNV();
     int ne = ma.GetNE();
     int nf = ma.GetNFaces();
@@ -909,13 +897,22 @@ namespace ngcomp
         int basendof = spaces[0]->GetNDof();
 
         int offset = 0;
+
+        Array<int> v2block(nv);
+        v2block = -1;
+
         for (int i = 0; i < nv; i++)
         {
           GetVertexDofNrs(i,dnums);
+          bool vertexactive = false;
           for (int j = 0; j < dnums.Size(); ++j)
             if (filter.Test(dnums[j]))
-              if (dnums[j] < basendof)
-                creator.Add(dnums[j], dnums);
+              vertexactive = true;
+          if (vertexactive)
+          {
+            v2block[i] = offset++;
+            creator.Add(v2block[i], dnums);
+          }
         }
 
         if (vertexpatch)
@@ -927,32 +924,24 @@ namespace ngcomp
             GetVertexDofNrs(edge.vertices[0],dnums);
             GetVertexDofNrs(edge.vertices[1],dnums2);
             GetEdgeDofNrs(i,dnums3);
-            
-            for (int j = 0; j < dnums.Size(); ++j)
-              for (int k = 0; k < dnums2.Size(); ++k)
-              {
-                if (filter.Test(dnums[j]))
-                  if (dnums[j] < basendof)
-                    creator.Add(dnums[j],dnums2[k]);
-                if (filter.Test(dnums2[k]))
-                  if (dnums2[k] < basendof)
-                    creator.Add(dnums2[k],dnums[j]);
-              }
 
-            
-            for (int j = 0; j < dnums.Size(); ++j)
-              if (filter.Test(dnums[j]))
-                if (dnums[j] < basendof)
-                  creator.Add(dnums[j],dnums3);
+            int block1 = v2block[edge.vertices[0]];
+            int block2 = v2block[edge.vertices[1]];
 
-            for (int j = 0; j < dnums2.Size(); ++j)
-              if (filter.Test(dnums2[j]))
-                if (dnums2[j] < basendof)
-                  creator.Add(dnums2[j],dnums3);
+            if (block1 != -1)
+            {
+              creator.Add(block1,dnums2);
+              creator.Add(block1,dnums3);
+            }
 
+            if (block2 != -1)
+            {
+              creator.Add(block2,dnums);
+              creator.Add(block2,dnums3);
+            }
           }
         }
-        offset += nv;
+        // offset += nv;
 
         if (edgepatch)
         {
@@ -1051,8 +1040,7 @@ namespace ngcomp
     return it;
   }
 
-
-  Array<int> * XH1FESpace :: CreateDirectSolverClusters (const Flags & flags) const
+  Array<int> * CompFictDomFESpace :: CreateDirectSolverClusters (const Flags & flags) const
   {
     if (true || flags.GetDefineFlag("subassembled"))
     {
@@ -1067,27 +1055,27 @@ namespace ngcomp
     }
     else
     {
-      Array<int> & clusters = *new Array<int> (GetNDof());
-      clusters = 0;
+      // Array<int> & clusters = *new Array<int> (GetNDof());
+      // clusters = 0;
 
-      Array<int> dnums;
-      int nfa = ma.GetNFacets();
-      int nv = ma.GetNV();
+      // Array<int> dnums;
+      // int nfa = ma.GetNFacets();
+      // int nv = ma.GetNV();
 
-      for (int i = 0; i < nv; i++)
-	  {
-        // basefes->GetVertexDofNrs (i, dnums);
-	    clusters[nv] = 1;
-	  }
+      // for (int i = 0; i < nv; i++)
+	  // {
+      //   // basefes->GetVertexDofNrs (i, dnums);
+	  //   clusters[nv] = 1;
+	  // }
 
-      const BitArray & freedofs = *GetFreeDofs();
-      for (int i = 0; i < freedofs.Size(); i++)
-        if (!freedofs.Test(i)) clusters[i] = 0;
-      *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
-      return &clusters;
+      // const BitArray & freedofs = *GetFreeDofs();
+      // for (int i = 0; i < freedofs.Size(); i++)
+      //   if (!freedofs.Test(i)) clusters[i] = 0;
+      // *testout << "CompFictDomFESpace, dsc = " << endl << clusters << endl;
+      // return &clusters;
     }
   }
-*/
+
 
   namespace fictdomfes_cpp
   {
@@ -1100,7 +1088,7 @@ namespace ngcomp
     Init::Init()
     {
       GetFESpaceClasses().AddFESpace ("fictdomfes", FictitiousDomainFESpace<2,2>::Create);
-      // GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
+      GetFESpaceClasses().AddFESpace ("fictdom2fes", CompFictDomFESpace::Create);
     }
   
     Init init;

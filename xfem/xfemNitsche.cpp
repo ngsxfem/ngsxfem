@@ -608,71 +608,71 @@ namespace ngfem
     static Timer timer ("FictXNitscheIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    throw Exception("no suitable implementation for fictitious domain stuff yet");
-
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
+    const XFiniteElement * xfe[2]; xfe[0] = NULL; xfe[1] = NULL;
+    const XDummyFE * dummfe[2]; dummfe[0] = NULL; dummfe[1] = NULL;
+
     const ScalarFiniteElement<D> * scafe = NULL;
 
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
-    }
+    xfe[0] = dynamic_cast<const XFiniteElement* >(&cfel[0]);
+    xfe[1] = dynamic_cast<const XFiniteElement* >(&cfel[1]);
+    dummfe[0] = dynamic_cast<const XDummyFE* >(&cfel[0]);
+    dummfe[1] = dynamic_cast<const XDummyFE* >(&cfel[1]);
 
     elmat = 0.0;
+    if (!xfe[0] || !xfe[1])
+      return;
+
+    if (xfe[0] != NULL)
+      scafe = &(dynamic_cast<const ScalarFiniteElement<D>& >(xfe[0]->GetBaseFE()));
+    else
+      scafe = &(dynamic_cast<const ScalarFiniteElement<D>& >(xfe[1]->GetBaseFE()));
+
     
     if (D==3)
       throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
 
-    if (!xfe) 
-    {
-      if(dummfe)
-        return;
-      else
-        throw Exception(" not containing X-elements?");
-    }
+    int p = scafe->Order();
 
-    int ndof_x = xfe->GetNDof();
-    int ndof_h1 = scafe->GetNDof();
-    int ndof = ndof_h1+ndof_x;
-    FlatVector<> jump(ndof,lh);
-    FlatVector<> shape_total(ndof,lh);
-    FlatVector<> shape(ndof_h1,&shape_total(0));
-    FlatVector<> shape_x(ndof_x,&shape_total(ndof_h1));
-    FlatMatrixFixWidth<D> dshape_h1(ndof_h1,lh);
-    FlatMatrixFixWidth<D> dshape_x(ndof_x,lh);
-    FlatVector<> dshape(ndof,lh);
+    const FlatXLocalGeometryInformation & xgeom(xfe[0]->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
 
-    FlatMatrix<> Nc(ndof,ndof,lh);
-    FlatMatrix<> Ns(ndof,ndof,lh);
-    FlatMatrix<> A(ndof,ndof,lh);
+    int ndof_sca = scafe->GetNDof();
+    int ndof_neg = xfe[0]!=NULL ? scafe->GetNDof() : 0;
+    int ndof_pos = xfe[1]!=NULL ? scafe->GetNDof() : 0;
+    int ndof_total = ndof_neg+ndof_pos;
 
-    FlatMatrix<> Lsys(ndof+2,ndof+2,lh);
-    FlatMatrix<> L(ndof,ndof,lh); // lifting matrix
+    FlatVector<> shape_sca(ndof_sca,lh);
+
+    FlatVector<> jump(ndof_total,lh);
+    FlatVector<> dnshape(ndof_total,lh);
+
+    FlatMatrixFixWidth<D> dshape_sca(ndof_sca,lh);
+
+    FlatMatrix<> elmat_neg(ndof_neg,ndof_neg,lh);
+    FlatMatrix<> elmat_pos(ndof_pos,ndof_pos,lh);
+
+    FlatMatrix<> Nc(ndof_total,ndof_total,lh);
+    FlatMatrix<> Ns(ndof_total,ndof_total,lh);
+
+    Ns = 0.0;
+    Nc = 0.0;
+
+    /*
+    FlatMatrix<> A(ndof_total,ndof_total,lh);
+
+    FlatMatrix<> Lsys(ndof_total+2,ndof_total+2,lh);
+    FlatMatrix<> L(ndof_total,ndof_total,lh); // lifting matrix
 
     ablockintegrator-> CalcElementMatrix (base_fel,
                                           eltrans, 
                                           A, lh);
-    Ns = 0.0;
-    Nc = 0.0;
 
-    FlatMatrixFixWidth<2> constrb(ndof,lh);
+    FlatMatrixFixWidth<2> constrb(ndof_total,lh);
     constrb = 0.0;
-
-    const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
-    int p = scafe->Order();
-
-    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
-    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
-    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
 
     { // calc constrb
       DOMAIN_TYPE dt = POS;
@@ -697,6 +697,7 @@ namespace ngfem
         } // quad rule
       }
     }
+    */
 
     IntegrationPoint ipc(0.0,0.0,0.0);
     MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
@@ -753,7 +754,6 @@ namespace ngfem
 
     const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
 
-
     for (int i = 0; i < fquad.Size(); ++i)
     {
       IntegrationPoint ip(&fquad.points(i,0),0.0);
@@ -774,26 +774,15 @@ namespace ngfem
       const double b_neg = beta_neg->Evaluate(mip);
       const double b_pos = beta_pos->Evaluate(mip);
         
-      shape = scafe->GetShape(mip.IP(), lh);
-      jump.Range(0,ndof_h1) = (b_pos-b_neg) * shape;
-      jump.Range(ndof_h1,ndof) = shape;
+      shape_sca = scafe->GetShape(mip.IP(), lh);
 
-      scafe->CalcMappedDShape (mip,dshape_h1);
+      jump.Range(0,ndof_neg) = (-b_neg) * shape_sca;
+      jump.Range(ndof_neg,ndof_total) = (b_pos) * shape_sca;
 
-      dshape.Range(0,ndof_h1) = (a_pos*kappa_pos+a_neg*kappa_neg) * (dshape_h1 * normal);
-      dshape.Range(ndof_h1,ndof) = dshape_h1 * normal;
+      scafe->CalcMappedDShape (mip,dshape_sca);
 
-      for (int l = 0; l < ndof_x; ++l)
-      {
-        if (xsign[l] == NEG){
-          jump(ndof_h1+l) *= -b_neg;
-          dshape(ndof_h1+l) *= kappa_neg * a_neg;
-        }
-        else{
-          jump(ndof_h1+l) *= b_pos;
-          dshape(ndof_h1+l) *= kappa_pos * a_pos;
-        }
-      }
+      dnshape.Range(0,ndof_neg) = (a_neg*kappa_neg) * (dshape_sca * normal);
+      dnshape.Range(ndof_neg,ndof_total) = (a_pos*kappa_pos) * (dshape_sca * normal);
 
       double ava = a_pos;
 
@@ -824,25 +813,26 @@ namespace ngfem
         }
       }
 
-      Nc -= weight * jump * Trans(dshape);
+      Nc -= weight * jump * Trans(dnshape);
       Ns += ava * weight * jump * Trans(jump);
 
     }
 
     if (minimal_stabilization)
     {
-      Lsys = 0.0;
+      throw Exception("not implemented");
+      // Lsys = 0.0;
 
-      Lsys.Cols(0,ndof).Rows(0,ndof) = A;
-      Lsys.Cols(ndof,ndof+2).Rows(0,ndof) = constrb;
-      Lsys.Rows(ndof,ndof+2).Cols(0,ndof) = Trans(constrb);
-      LapackInverse (Lsys);
+      // Lsys.Cols(0,ndof).Rows(0,ndof) = A;
+      // Lsys.Cols(ndof,ndof+2).Rows(0,ndof) = constrb;
+      // Lsys.Rows(ndof,ndof+2).Cols(0,ndof) = Trans(constrb);
+      // LapackInverse (Lsys);
 
-      L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
+      // L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
 
-      elmat = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ p/h * Ns; 
+      // elmat = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ p/h * Ns; 
 
-      elmat += 1.5 * Trans(L) * A * L;
+      // elmat += 1.5 * Trans(L) * A * L;
     }
     else
       elmat = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
@@ -850,6 +840,7 @@ namespace ngfem
 
   }
 
+  static RegisterBilinearFormIntegrator<FictXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initfictxnitsche2d_2b ("fictxnitsche", 2, 5);
 
 
 
