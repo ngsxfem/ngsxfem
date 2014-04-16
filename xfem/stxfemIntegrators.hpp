@@ -89,7 +89,7 @@ namespace ngfem
 
   };
 
-  template <int D>
+  template <int D, bool adjoint = false>
   class SpaceTimeXConvectionIntegrator : public BilinearFormIntegrator
   {
     const CoefficientFunction * coef_neg;
@@ -135,7 +135,7 @@ namespace ngfem
   };
 
 
-  template <int D>
+  template <int D, bool adjoint = false>
   class SpaceTimeXTimeDerivativeIntegrator : public BilinearFormIntegrator
   {
     CoefficientFunction * coef_neg;
