@@ -253,6 +253,149 @@ namespace ngfem
 
   }
 
+  template <int D>
+  void CalcSTCrazyKappaCoeffs( const FlatXLocalGeometryInformation & xgeom, const ElementTransformation & eltrans, const double tau, double & kappa_neg, double & kappa_pos)
+
+  {
+    IntegrationPoint ipc(0.0,0.0,0.0);
+    MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
+    const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+
+    double int_dom_1[2];
+    double int_dom_2[2];
+    double int_if_1 = 0;
+    double int_if_2 = 0;
+    DOMAIN_TYPE dt = POS;
+    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    {
+      int_dom_1[(int)dt] = 0;
+      int_dom_2[(int)dt] = 0;
+      const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+      const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+      for (int i = 0; i < fquad.Size(); ++i)
+      {
+        IntegrationPoint ips;
+        for (int d = 0; d < D; ++d)
+          ips(d) = fquad.points(i,d);
+        MappedIntegrationPoint<D,D> mip(ips, eltrans);
+
+        const double psi1sq = sqr(fquad.points(i,D));
+        const double psi2sq = sqr(1-fquad.points(i,D));
+        int_dom_1[(int)dt] += mip.GetMeasure() * fquad.weights(i) * psi1sq;
+        int_dom_2[(int)dt] += mip.GetMeasure() * fquad.weights(i) * psi2sq;
+      }
+    }
+
+    const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+    const FlatQuadratureRuleCoDim1<D+1> & fquad(fcompr.GetInterfaceRule());
+
+    for (int i = 0; i < fquad.Size(); ++i)
+    {
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      const double time = fquad.points(i,D);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      
+      Mat<D,D> Finv = mip.GetJacobianInverse();
+      const double absdet = mip.GetMeasure();
+
+      // const double h = D == 2 ? sqrt(absdet) : cbrt(absdet);
+
+      Vec<D> nref_space; 
+      for (int d = 0; d < D; ++d) 
+        nref_space[d] = fquad.normals(i,d);
+      Vec<D> normal_space = tau * absdet * Trans(Finv) * nref_space;
+      double n_t = fquad.normals(i,D) * absdet;
+
+      Vec<D+1> normal_st; 
+      for (int d = 0; d < D; ++d) 
+        normal_st[d] = normal_space[d];
+      normal_st[D] = n_t;
+      
+      double len = L2Norm(normal_st);
+      normal_st /= len;
+
+      for (int d = 0; d < D; ++d) 
+        normal_space[d] = normal_st[d];
+
+      const double nu = L2Norm(normal_space);
+      normal_space /= nu;
+
+      const double weight = fquad.weights(i) * len * nu;
+
+      const double psi1sq = sqr(fquad.points(i,D));
+      const double psi2sq = sqr(1-fquad.points(i,D));
+
+      int_if_1 += weight * psi1sq;
+      int_if_2 += weight * psi2sq;
+
+    }
+
+    // std::cout << " int_if_1 = " << int_if_1 << std::endl;
+    // std::cout << " int_if_2 = " << int_if_2 << std::endl;
+
+    // getchar();
+
+    const double qneg_1 = int_dom_1[NEG] / (h * int_if_1);
+    const double qneg_2 = int_dom_2[NEG] / (h * int_if_2);
+    const double qneg = max(qneg_1,qneg_2);
+    const double qpos_1 = int_dom_1[POS] / (h * int_if_1);
+    const double qpos_2 = int_dom_2[POS] / (h * int_if_2);
+    const double qpos = max(qpos_1,qpos_2);
+
+
+    // if (qneg > qpos)
+    // {
+    //   kappa_neg = 1.0;
+    //   kappa_pos = 0.0;
+    // }
+    // else
+    // {
+    //   kappa_neg = 1.0;
+    //   kappa_pos = 0.0;
+    // }
+
+    if (qneg < 1 || qpos < 1)
+    {
+      std::cout << " int_dom_1[POS] = " << int_dom_1[POS] << std::endl;
+      std::cout << " int_dom_1[NEG] = " << int_dom_1[NEG] << std::endl;
+      std::cout << " int_dom_2[POS] = " << int_dom_2[POS] << std::endl;
+      std::cout << " int_dom_2[NEG] = " << int_dom_2[NEG] << std::endl;
+
+      // getchar();
+
+      std::cout << " qneg = " << qneg << std::endl;
+      std::cout << " qpos = " << qpos << std::endl;
+
+      if (qneg < 1)
+      {
+        kappa_neg = 0.01*qneg;
+        kappa_pos = 1 - kappa_neg;
+      }
+      else
+      {
+        kappa_pos = 0.01*qpos;
+        kappa_neg = 1 - kappa_pos;
+      }
+      getchar();
+    }
+
+    // kappa_neg = 1.0 / (1.0 + sqrt(qpos/qneg));
+    // kappa_pos = 1.0 / (1.0 + sqrt(qneg/qpos));
+
+    // kappa_neg = qneg;
+    // kappa_pos = 1.0 / (1.0 + sqrt(qneg/qpos));
+
+    // std::cout << " kappa_neg = " << kappa_neg << std::endl;
+    // std::cout << " kappa_pos = " << kappa_pos << std::endl;
+
+    // std::cout << " kappa_neg * kappa_neg / qneg = " << kappa_neg * kappa_neg / qneg << std::endl;
+    // std::cout << " kappa_pos * kappa_pos / qpos = " << kappa_pos * kappa_pos / qpos << std::endl;
+
+    // getchar();
+
+  }
+
+
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   void SpaceTimeXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
@@ -411,6 +554,8 @@ namespace ngfem
         break;	      
       }
     }
+
+    // CalcSTCrazyKappaCoeffs<D>(xgeom,eltrans,tau, kappa_neg, kappa_pos);
 
     const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
 
