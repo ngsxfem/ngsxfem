@@ -19,6 +19,7 @@ shared = libngsxfem_parabolic
 
 define constant heapsize = 1e7
 
+define constant zero = 0.0
 define constant one = 1.0
 
 define constant bneg = 1.0
@@ -122,6 +123,13 @@ numproc stx_solveinstat npsi
         -bneg=1.0
         -bpos=2.0
         -lambda=20.0
+        # -pause_after_step=0
+        -solution_n=zero
+        -solution_p=zero
+#        -direct
+#        -ghostpenalty
+#        -delta=0.005
+#        -minimal_stabilization
 
 # define bilinearform evalx_past -fespace=fescomp -nonassemble
 # stxvis_past one
