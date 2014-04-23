@@ -370,12 +370,13 @@ namespace ngfem
     h1diff = sqrt(h1diff); errtab.h1err.Append(h1diff);
     // cout << " activeels = " << activeels << endl;
 
-    cout << " mass_n = " << mass_n << endl;
-    cout << " mass_p = " << mass_p << endl;
-    cout << " total mass = " << mass_p + mass_n << endl;
-
     if (output)
     {
+      cout << endl;
+      cout << " mass_n = " << mass_n << endl;
+      cout << " mass_p = " << mass_p << endl;
+      cout << " total mass = " << mass_p + mass_n << endl;
+
       cout << endl;
       cout << setw(12) << "l2_n" << "       |";
       cout << setw(12) << "l2_p" << "       |";
