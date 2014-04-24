@@ -254,12 +254,18 @@ namespace ngfem
   }
 
   template <int D>
-  void CalcSTCrazyKappaCoeffs( const FlatXLocalGeometryInformation & xgeom, const ElementTransformation & eltrans, const double tau, double & kappa_neg, double & kappa_pos)
+  void CalcSTCrazyKappaCoeffs( const FlatXLocalGeometryInformation & xgeom, const ElementTransformation & eltrans, const double tau, double & kappa_neg, double & kappa_pos, LocalHeap & lh)
 
   {
     IntegrationPoint ipc(0.0,0.0,0.0);
     MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+
+    Mat<2> mass_i[2];
+    mass_i[NEG] *= 0.0;
+    mass_i[POS] *= 0.0;
+
+    double gamma[2];
 
     double int_dom_1[2];
     double int_dom_2[2];
@@ -283,8 +289,50 @@ namespace ngfem
         const double psi2sq = sqr(1-fquad.points(i,D));
         int_dom_1[(int)dt] += mip.GetMeasure() * fquad.weights(i) * psi1sq;
         int_dom_2[(int)dt] += mip.GetMeasure() * fquad.weights(i) * psi2sq;
+        mass_i[dt](0,0) += 2.0 * fquad.weights(i) * (1-fquad.points(i,D)) * (1-fquad.points(i,D));
+        mass_i[dt](1,0) += 2.0 * fquad.weights(i) * fquad.points(i,D) * (1-fquad.points(i,D));
+        mass_i[dt](0,1) += 2.0 * fquad.weights(i) * fquad.points(i,D) * (1-fquad.points(i,D));
+        mass_i[dt](1,1) += 2.0 * fquad.weights(i) * fquad.points(i,D) * fquad.points(i,D);
       }
+
+      FlatMatrix<> Msys(2,2,&mass_i[dt](0,0));
+
+      // std::cout << " Msys = " << Msys << std::endl;
+      LapackInverse(Msys);
+      // std::cout << " Msys = " << Msys << std::endl;
+      
+      const double alpha = 4*Msys(0,0) + 2*Msys(0,1) + 2*Msys(1,0) + Msys(1,1);
+      gamma[dt] = 4.0 /alpha;
     }
+
+    if (false) {
+      std::cout << " gamma[NEG] = " << gamma[NEG] << std::endl;
+      std::cout << " gamma[POS] = " << gamma[POS] << std::endl;
+      // getchar();
+    }
+
+
+    if (false) {
+      std::cout << " gamma[NEG] + gamma[POS] = " << gamma[NEG] + gamma[POS] << std::endl;
+      // getchar();
+    }
+
+    // if (gamma[NEG] < gamma[POS])
+    // {
+    //   kappa_neg = gamma[NEG];
+    //   kappa_pos = 1.0 - kappa_neg;
+    // }
+    // else
+    // {
+    //   kappa_pos = gamma[POS];
+    //   kappa_neg = 1.0 - kappa_pos;
+    // }
+
+    // kappa_pos = 0.5;
+    // kappa_neg = 0.5;
+
+    return;
+
 
     const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
     const FlatQuadratureRuleCoDim1<D+1> & fquad(fcompr.GetInterfaceRule());
@@ -555,7 +603,7 @@ namespace ngfem
       }
     }
 
-    // CalcSTCrazyKappaCoeffs<D>(xgeom,eltrans,tau, kappa_neg, kappa_pos);
+    CalcSTCrazyKappaCoeffs<D>(xgeom,eltrans,tau, kappa_neg, kappa_pos, lh);
 
     const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
 
@@ -621,7 +669,9 @@ namespace ngfem
       double ava = a_pos;
 
 
+      ava = a_pos*0.5+a_neg*0.5;
 
+      /*
       switch (kappa_choice){
       case NITSCHE_VARIANTS::HALFHALF:
         {
@@ -648,6 +698,7 @@ namespace ngfem
           break;
         }
       }
+      */
 
       Nc -= weight * jump * Trans(dshape);
       Ns += ava * weight * jump * Trans(jump);
