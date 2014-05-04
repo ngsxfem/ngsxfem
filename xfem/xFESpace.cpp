@@ -117,8 +117,8 @@ namespace ngcomp
         {
           HeapReset hr(llh);
 
-          netgen::Ng_Element ngel = ma.GetElement(elnr);
-          ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+          Ngs_Element ngel = ma.GetElement(elnr);
+          ELEMENT_TYPE eltype = ngel.GetType();
 
           ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), llh);
         
@@ -176,8 +176,8 @@ namespace ngcomp
       {
         HeapReset hr(lh);
 
-        netgen::Ng_Element ngel = ma.GetSElement(selnr);
-        ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+        Ngs_Element ngel = ma.GetSElement(selnr);
+        ELEMENT_TYPE eltype = ngel.GetType();
 
         ElementTransformation & seltrans = ma.GetTrafo (selnr, BND, lh);
 
@@ -524,8 +524,8 @@ namespace ngcomp
     static Timer timer ("XFESpace::GetFE");
     RegionTimer reg (timer);
 
-    netgen::Ng_Element ngel = ma.GetElement(elnr);
-    ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+    Ngs_Element ngel = ma.GetElement(elnr);
+    ELEMENT_TYPE eltype = ngel.GetType();
     if (!activeelem.Test(elnr))
     {
       DOMAIN_TYPE dt = domofel[elnr];
@@ -536,8 +536,8 @@ namespace ngcomp
       Array<DOMAIN_TYPE> domnrs;
       GetDomainNrs(elnr,domnrs);  
 
-      netgen::Ng_Element ngel = ma.GetElement(elnr);
-      ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+      Ngs_Element ngel = ma.GetElement(elnr);
+      ELEMENT_TYPE eltype = ngel.GetType();
 
       ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
         
@@ -629,8 +629,8 @@ namespace ngcomp
     static Timer timer ("XFESpace::GetSFE");
     RegionTimer reg (timer);
 
-    netgen::Ng_Element ngsel = ma.GetSElement(selnr);
-    ELEMENT_TYPE eltype = ConvertElementType(ngsel.GetType());
+    Ngs_Element ngsel = ma.GetSElement(selnr);
+    ELEMENT_TYPE eltype = ngsel.GetType();
     if (!activeselem.Test(selnr))
     {
       DOMAIN_TYPE dt = domofsel[selnr];
@@ -641,8 +641,8 @@ namespace ngcomp
       Array<DOMAIN_TYPE> domnrs;
       GetSurfaceDomainNrs(selnr,domnrs);  
 
-      netgen::Ng_Element ngel = ma.GetSElement(selnr);
-      ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+      Ngs_Element ngel = ma.GetSElement(selnr);
+      ELEMENT_TYPE eltype = ngel.GetType();
 
       ElementTransformation & eltrans = ma.GetTrafo (selnr, BND, lh);
         

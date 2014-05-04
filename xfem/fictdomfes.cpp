@@ -128,8 +128,8 @@ namespace ngcomp
         {
           HeapReset hr(llh);
 
-          netgen::Ng_Element ngel = ma.GetElement(elnr);
-          ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+          Ngs_Element ngel = ma.GetElement(elnr);
+          ELEMENT_TYPE eltype = ngel.GetType();
 
           ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), llh);
         
@@ -187,8 +187,8 @@ namespace ngcomp
       {
         HeapReset hr(lh);
 
-        netgen::Ng_Element ngel = ma.GetSElement(selnr);
-        ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+        Ngs_Element ngel = ma.GetSElement(selnr);
+        ELEMENT_TYPE eltype = ngel.GetType();
 
         ElementTransformation & seltrans = ma.GetTrafo (selnr, BND, lh);
 
@@ -535,8 +535,8 @@ namespace ngcomp
     static Timer timer ("FictitiousDomainFESpace::GetFE");
     RegionTimer reg (timer);
 
-    netgen::Ng_Element ngel = ma.GetElement(elnr);
-    ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+    Ngs_Element ngel = ma.GetElement(elnr);
+    ELEMENT_TYPE eltype = ngel.GetType();
     if (!activeelem.Test(elnr))
     {
       DOMAIN_TYPE dt = domofel[elnr];
@@ -547,8 +547,8 @@ namespace ngcomp
       Array<DOMAIN_TYPE> domnrs;
       GetDomainNrs(elnr,domnrs);  
 
-      netgen::Ng_Element ngel = ma.GetElement(elnr);
-      ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+      Ngs_Element ngel = ma.GetElement(elnr);
+      ELEMENT_TYPE eltype = ngel.GetType();
 
       ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
         
@@ -640,8 +640,8 @@ namespace ngcomp
     static Timer timer ("FictitiousDomainFESpace::GetSFE");
     RegionTimer reg (timer);
 
-    netgen::Ng_Element ngsel = ma.GetSElement(selnr);
-    ELEMENT_TYPE eltype = ConvertElementType(ngsel.GetType());
+    Ngs_Element ngsel = ma.GetSElement(selnr);
+    ELEMENT_TYPE eltype = ngsel.GetType();
     if (!activeselem.Test(selnr))
     {
       DOMAIN_TYPE dt = domofsel[selnr];
@@ -652,8 +652,8 @@ namespace ngcomp
       Array<DOMAIN_TYPE> domnrs;
       GetSurfaceDomainNrs(selnr,domnrs);  
 
-      netgen::Ng_Element ngel = ma.GetSElement(selnr);
-      ELEMENT_TYPE eltype = ConvertElementType(ngel.GetType());
+      Ngs_Element ngel = ma.GetSElement(selnr);
+      ELEMENT_TYPE eltype = ngel.GetType();
 
       ElementTransformation & eltrans = ma.GetTrafo (selnr, BND, lh);
         
@@ -894,7 +894,20 @@ namespace ngcomp
     {
 	  for ( ; !creator.Done(); creator++)
 	  {      
-        int basendof = spaces[0]->GetNDof();
+
+        if (true)
+        {
+          int space1_ndof = spaces[0]->GetNDof();
+          int space2_ndof = spaces[1]->GetNDof();
+
+          IntRange ndof_r1(0,space1_ndof);
+          IntRange ndof_r2(space1_ndof,space1_ndof+space2_ndof);
+
+          creator.Add(0, ndof_r1);
+          creator.Add(1, ndof_r2);
+        
+          continue;
+        }
 
         int offset = 0;
 
