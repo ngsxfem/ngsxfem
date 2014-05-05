@@ -120,6 +120,9 @@ namespace ngfem
     double h1diff_p = 0;
     double h1diff = 0;
     double ifjumpl2 = 0;
+
+    double mass_n = 0;
+    double mass_p = 0;
     const MeshAccess & ma (gfu->GetFESpace().GetMeshAccess());
     for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
     {
@@ -237,11 +240,13 @@ namespace ngfem
             {
               l2diff_p += b_pos*fac*sqr(discval-solval);
               h1diff_p += b_pos*fac*diffdsqr;
+              mass_p += discval*fac;
             }
             else
             {
               l2diff_n += b_neg*fac*sqr(discval-solval);
               h1diff_n += b_neg*fac*diffdsqr;
+              mass_n += discval*fac;
             }
           } // quad rule
         } // dt
@@ -341,12 +346,14 @@ namespace ngfem
           {
             l2diff_p += b_pos*fac*sqr(discval-solval);
             h1diff_p += b_pos*fac*diffdsqr;
+            mass_p += discval*fac;
           }
           else
           {
             // cout << "discval, solval: " << discval << ", " << solval << endl;
             l2diff_n += b_neg*fac*sqr(discval-solval);
             h1diff_n += b_neg*fac*diffdsqr;
+            mass_n += discval*fac;
           }
         }
       }
@@ -365,6 +372,11 @@ namespace ngfem
 
     if (output)
     {
+      cout << endl;
+      cout << " mass_n = " << mass_n << endl;
+      cout << " mass_p = " << mass_p << endl;
+      cout << " total mass = " << mass_p + mass_n << endl;
+
       cout << endl;
       cout << setw(12) << "l2_n" << "       |";
       cout << setw(12) << "l2_p" << "       |";

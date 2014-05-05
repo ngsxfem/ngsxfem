@@ -198,6 +198,43 @@ namespace ngfem
     virtual string Name () const { return "SignedSpaceTimeXMassIntegrator"; }
   };
 
+
+
+  template <int D>
+  class DiffOpEvalFict : public DiffOp<DiffOpEvalFict<D> >
+  {
+    
+  public:
+    enum { DIM = 1 };          // just one copy of the spaces
+    enum { DIM_SPACE = D };    // 2D space
+    enum { DIM_ELEMENT = D };  // 2D elements (in contrast to 1D boundary elements)
+    enum { DIM_DMAT = 1 };     // D-matrix is 2x2
+    enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
+    
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & sip,
+                                MAT & mat, LocalHeap & lh);
+  };
+
+  ///
+  template <int D >
+  class FictVisIntegrator 
+    : public T_BDBIntegrator<DiffOpEvalFict<D>, DiagDMat<1>, FiniteElement >
+  {
+  public:
+    ///
+    FictVisIntegrator (CoefficientFunction * coeff);
+    ///
+    FictVisIntegrator (Array<CoefficientFunction*> & coeffs);
+    ///
+    virtual ~FictVisIntegrator ();
+    ///
+    virtual string Name () const { return "FictVisIntegrator"; }
+  };
+
+
+
+
 }
 
 #endif

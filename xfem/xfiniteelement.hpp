@@ -78,6 +78,8 @@ namespace ngfem
     /// the name
     virtual string ClassName(void) const;
 
+    const FiniteElement & GetBaseFE() const { return base; };
+
     const FlatArray<DOMAIN_TYPE>& GetSignsOfDof() const; 
 
     const FlatXLocalGeometryInformation & GetFlatLocalGeometry() const 

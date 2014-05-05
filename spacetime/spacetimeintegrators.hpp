@@ -226,9 +226,9 @@ namespace ngfem
                                 const MappedIntegrationPoint<D,D> & mip,
                                 FlatMatrixFixHeight<1> & mat, LocalHeap & lh);
 
-    static void GenerateMatrix (const FiniteElement & bfel,
-                                const MappedIntegrationPoint<D,D> & mip,
-                                SliceMatrixColMajor<> & mat, LocalHeap & lh);
+    // static void GenerateMatrix (const FiniteElement & bfel,
+    //                             const MappedIntegrationPoint<D,D> & mip,
+    //                             SliceMatrixColMajor<> & mat, LocalHeap & lh);
   };
 
 
@@ -266,6 +266,7 @@ namespace ngfem
     mat = Trans(shape_st);
   }
 
+  /*
   template <int D, TIME t>
   void DiffOpTimeTrace<D,t>::GenerateMatrix (const FiniteElement & bfel,
                                              const MappedIntegrationPoint<D,D> & mip,
@@ -282,6 +283,7 @@ namespace ngfem
       cstfel.CalcShapeSpaceTime(mip.IP(),1.0,shape_st,lh);
     mat = Trans(shape_st);
   }
+  */
 
   template <int D, TIME t>
   void DiffOpTimeTrace<D,t>::GenerateMatrix (const FiniteElement & bfel,

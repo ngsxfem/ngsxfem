@@ -314,5 +314,52 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<2,FUTURE> > initxv_stf_mass0 ("xvis_st_future", 2, 1);
   static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,FUTURE> > initxv_stf_mass1 ("xvis_st_future", 3, 1);
 
+
+
+
+  template <int D>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpEvalFict<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                          MAT & mat, LocalHeap & lh)
+  {
+    const XFiniteElement * xfe = 
+      dynamic_cast<const XFiniteElement *> (&bfel);
+
+    if (!xfe)
+    {
+      mat = 0.0;
+      return;
+    }
+
+    const ScalarFiniteElement<D> & scafe = 
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+
+    const int ndof = scafe.GetNDof();
+    FlatVector<> shape (ndof,lh);
+
+    shape = scafe.GetShape(mip.IP(), lh);
+    mat.Row(0) = shape;
+  }
+
+
+  template <int D>  FictVisIntegrator<D> :: FictVisIntegrator  (CoefficientFunction * coeff)
+    : T_BDBIntegrator<DiffOpEvalFict<D>, DiagDMat<1>, FiniteElement > (DiagDMat<1> (coeff))
+  { ; }
+
+  template <int D>  FictVisIntegrator<D> :: FictVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+    : T_BDBIntegrator<DiffOpEvalFict<D>, DiagDMat<1>, FiniteElement > (coeffs)
+  { ; }
+
+  template <int D>  FictVisIntegrator<D> :: ~FictVisIntegrator () { ; }
+
+  template class FictVisIntegrator<2>;
+  template class FictVisIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<FictVisIntegrator<2> > initfictwmass0 ("fictvis", 2, 1);
+  static RegisterBilinearFormIntegrator<FictVisIntegrator<3> > initfictwmass1 ("fictvis", 3, 1);
+
+
+
+
 }
 

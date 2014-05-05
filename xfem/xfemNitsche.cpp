@@ -253,6 +253,197 @@ namespace ngfem
 
   }
 
+  template <int D>
+  void CalcSTCrazyKappaCoeffs( const FlatXLocalGeometryInformation & xgeom, const ElementTransformation & eltrans, const double tau, double & kappa_neg, double & kappa_pos, LocalHeap & lh)
+
+  {
+    IntegrationPoint ipc(0.0,0.0,0.0);
+    MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
+    const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+
+    Mat<2> mass_i[2];
+    mass_i[NEG] *= 0.0;
+    mass_i[POS] *= 0.0;
+
+    double gamma[2];
+
+    double int_dom_1[2];
+    double int_dom_2[2];
+    double int_if_1 = 0;
+    double int_if_2 = 0;
+    DOMAIN_TYPE dt = POS;
+    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    {
+      int_dom_1[(int)dt] = 0;
+      int_dom_2[(int)dt] = 0;
+      const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+      const FlatQuadratureRule<D+1> & fquad(fcompr.GetRule(dt));
+      for (int i = 0; i < fquad.Size(); ++i)
+      {
+        IntegrationPoint ips;
+        for (int d = 0; d < D; ++d)
+          ips(d) = fquad.points(i,d);
+        MappedIntegrationPoint<D,D> mip(ips, eltrans);
+
+        const double psi1sq = sqr(fquad.points(i,D));
+        const double psi2sq = sqr(1-fquad.points(i,D));
+        int_dom_1[(int)dt] += mip.GetMeasure() * fquad.weights(i) * psi1sq;
+        int_dom_2[(int)dt] += mip.GetMeasure() * fquad.weights(i) * psi2sq;
+        mass_i[dt](0,0) += 2.0 * fquad.weights(i) * (1-fquad.points(i,D)) * (1-fquad.points(i,D));
+        mass_i[dt](1,0) += 2.0 * fquad.weights(i) * fquad.points(i,D) * (1-fquad.points(i,D));
+        mass_i[dt](0,1) += 2.0 * fquad.weights(i) * fquad.points(i,D) * (1-fquad.points(i,D));
+        mass_i[dt](1,1) += 2.0 * fquad.weights(i) * fquad.points(i,D) * fquad.points(i,D);
+      }
+
+      FlatMatrix<> Msys(2,2,&mass_i[dt](0,0));
+
+      // std::cout << " Msys = " << Msys << std::endl;
+      LapackInverse(Msys);
+      // std::cout << " Msys = " << Msys << std::endl;
+      
+      const double alpha = 4*Msys(0,0) + 2*Msys(0,1) + 2*Msys(1,0) + Msys(1,1);
+      gamma[dt] = 4.0 /alpha;
+    }
+
+    if (false) {
+      std::cout << " gamma[NEG] = " << gamma[NEG] << std::endl;
+      std::cout << " gamma[POS] = " << gamma[POS] << std::endl;
+      // getchar();
+    }
+
+
+    if (false) {
+      std::cout << " gamma[NEG] + gamma[POS] = " << gamma[NEG] + gamma[POS] << std::endl;
+      // getchar();
+    }
+
+    // if (gamma[NEG] < gamma[POS])
+    // {
+    //   kappa_neg = gamma[NEG];
+    //   kappa_pos = 1.0 - kappa_neg;
+    // }
+    // else
+    // {
+    //   kappa_pos = gamma[POS];
+    //   kappa_neg = 1.0 - kappa_pos;
+    // }
+
+    // kappa_pos = 0.5;
+    // kappa_neg = 0.5;
+
+    return;
+
+
+    const FlatCompositeQuadratureRule<D+1> & fcompr(xgeom.GetCompositeRule<D+1>());
+    const FlatQuadratureRuleCoDim1<D+1> & fquad(fcompr.GetInterfaceRule());
+
+    for (int i = 0; i < fquad.Size(); ++i)
+    {
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      const double time = fquad.points(i,D);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      
+      Mat<D,D> Finv = mip.GetJacobianInverse();
+      const double absdet = mip.GetMeasure();
+
+      // const double h = D == 2 ? sqrt(absdet) : cbrt(absdet);
+
+      Vec<D> nref_space; 
+      for (int d = 0; d < D; ++d) 
+        nref_space[d] = fquad.normals(i,d);
+      Vec<D> normal_space = tau * absdet * Trans(Finv) * nref_space;
+      double n_t = fquad.normals(i,D) * absdet;
+
+      Vec<D+1> normal_st; 
+      for (int d = 0; d < D; ++d) 
+        normal_st[d] = normal_space[d];
+      normal_st[D] = n_t;
+      
+      double len = L2Norm(normal_st);
+      normal_st /= len;
+
+      for (int d = 0; d < D; ++d) 
+        normal_space[d] = normal_st[d];
+
+      const double nu = L2Norm(normal_space);
+      normal_space /= nu;
+
+      const double weight = fquad.weights(i) * len * nu;
+
+      const double psi1sq = sqr(fquad.points(i,D));
+      const double psi2sq = sqr(1-fquad.points(i,D));
+
+      int_if_1 += weight * psi1sq;
+      int_if_2 += weight * psi2sq;
+
+    }
+
+    // std::cout << " int_if_1 = " << int_if_1 << std::endl;
+    // std::cout << " int_if_2 = " << int_if_2 << std::endl;
+
+    // getchar();
+
+    const double qneg_1 = int_dom_1[NEG] / (h * int_if_1);
+    const double qneg_2 = int_dom_2[NEG] / (h * int_if_2);
+    const double qneg = max(qneg_1,qneg_2);
+    const double qpos_1 = int_dom_1[POS] / (h * int_if_1);
+    const double qpos_2 = int_dom_2[POS] / (h * int_if_2);
+    const double qpos = max(qpos_1,qpos_2);
+
+
+    // if (qneg > qpos)
+    // {
+    //   kappa_neg = 1.0;
+    //   kappa_pos = 0.0;
+    // }
+    // else
+    // {
+    //   kappa_neg = 1.0;
+    //   kappa_pos = 0.0;
+    // }
+
+    if (qneg < 1 || qpos < 1)
+    {
+      std::cout << " int_dom_1[POS] = " << int_dom_1[POS] << std::endl;
+      std::cout << " int_dom_1[NEG] = " << int_dom_1[NEG] << std::endl;
+      std::cout << " int_dom_2[POS] = " << int_dom_2[POS] << std::endl;
+      std::cout << " int_dom_2[NEG] = " << int_dom_2[NEG] << std::endl;
+
+      // getchar();
+
+      std::cout << " qneg = " << qneg << std::endl;
+      std::cout << " qpos = " << qpos << std::endl;
+
+      if (qneg < 1)
+      {
+        kappa_neg = 0.01*qneg;
+        kappa_pos = 1 - kappa_neg;
+      }
+      else
+      {
+        kappa_pos = 0.01*qpos;
+        kappa_neg = 1 - kappa_pos;
+      }
+      getchar();
+    }
+
+    // kappa_neg = 1.0 / (1.0 + sqrt(qpos/qneg));
+    // kappa_pos = 1.0 / (1.0 + sqrt(qneg/qpos));
+
+    // kappa_neg = qneg;
+    // kappa_pos = 1.0 / (1.0 + sqrt(qneg/qpos));
+
+    // std::cout << " kappa_neg = " << kappa_neg << std::endl;
+    // std::cout << " kappa_pos = " << kappa_pos << std::endl;
+
+    // std::cout << " kappa_neg * kappa_neg / qneg = " << kappa_neg * kappa_neg / qneg << std::endl;
+    // std::cout << " kappa_pos * kappa_pos / qpos = " << kappa_pos * kappa_pos / qpos << std::endl;
+
+    // getchar();
+
+  }
+
+
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   void SpaceTimeXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
@@ -412,6 +603,8 @@ namespace ngfem
       }
     }
 
+    CalcSTCrazyKappaCoeffs<D>(xgeom,eltrans,tau, kappa_neg, kappa_pos, lh);
+
     const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
 
     for (int i = 0; i < fquad.Size(); ++i)
@@ -476,7 +669,9 @@ namespace ngfem
       double ava = a_pos;
 
 
+      ava = a_pos*0.5+a_neg*0.5;
 
+      /*
       switch (kappa_choice){
       case NITSCHE_VARIANTS::HALFHALF:
         {
@@ -503,6 +698,7 @@ namespace ngfem
           break;
         }
       }
+      */
 
       Nc -= weight * jump * Trans(dshape);
       Ns += ava * weight * jump * Trans(jump);
@@ -592,6 +788,258 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > init_min_stab_xnitsche3d_st_4 ("stx_nitsche_min_stab_beta", 3, 6);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > init_min_stab_xnitsche3d_st_5 ("stx_nitsche_min_stab_alpha", 3, 6);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > init_min_stab_xnitsche3d_st_6 ("stx_nitsche_min_stab_alphabeta", 3, 6);
+
+
+
+
+
+
+  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
+  void FictXNitscheIntegrator<D, kappa_choice> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatMatrix<double> & elmat,
+		     LocalHeap & lh) const
+  {
+    static Timer timer ("FictXNitscheIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+
+    const XFiniteElement * xfe[2]; xfe[0] = NULL; xfe[1] = NULL;
+    const XDummyFE * dummfe[2]; dummfe[0] = NULL; dummfe[1] = NULL;
+
+    const ScalarFiniteElement<D> * scafe = NULL;
+
+    xfe[0] = dynamic_cast<const XFiniteElement* >(&cfel[0]);
+    xfe[1] = dynamic_cast<const XFiniteElement* >(&cfel[1]);
+    dummfe[0] = dynamic_cast<const XDummyFE* >(&cfel[0]);
+    dummfe[1] = dynamic_cast<const XDummyFE* >(&cfel[1]);
+
+    elmat = 0.0;
+    if (!xfe[0] || !xfe[1])
+      return;
+
+    if (xfe[0] != NULL)
+      scafe = &(dynamic_cast<const ScalarFiniteElement<D>& >(xfe[0]->GetBaseFE()));
+    else
+      scafe = &(dynamic_cast<const ScalarFiniteElement<D>& >(xfe[1]->GetBaseFE()));
+
+    
+    if (D==3)
+      throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
+
+    int p = scafe->Order();
+
+    const FlatXLocalGeometryInformation & xgeom(xfe[0]->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+    int ndof_sca = scafe->GetNDof();
+    int ndof_neg = xfe[0]!=NULL ? scafe->GetNDof() : 0;
+    int ndof_pos = xfe[1]!=NULL ? scafe->GetNDof() : 0;
+    int ndof_total = ndof_neg+ndof_pos;
+
+    FlatVector<> shape_sca(ndof_sca,lh);
+
+    FlatVector<> jump(ndof_total,lh);
+    FlatVector<> dnshape(ndof_total,lh);
+
+    FlatMatrixFixWidth<D> dshape_sca(ndof_sca,lh);
+
+    FlatMatrix<> elmat_neg(ndof_neg,ndof_neg,lh);
+    FlatMatrix<> elmat_pos(ndof_pos,ndof_pos,lh);
+
+    FlatMatrix<> Nc(ndof_total,ndof_total,lh);
+    FlatMatrix<> Ns(ndof_total,ndof_total,lh);
+
+    Ns = 0.0;
+    Nc = 0.0;
+
+    /*
+    FlatMatrix<> A(ndof_total,ndof_total,lh);
+
+    FlatMatrix<> Lsys(ndof_total+2,ndof_total+2,lh);
+    FlatMatrix<> L(ndof_total,ndof_total,lh); // lifting matrix
+
+    ablockintegrator-> CalcElementMatrix (base_fel,
+                                          eltrans, 
+                                          A, lh);
+
+    FlatMatrixFixWidth<2> constrb(ndof_total,lh);
+    constrb = 0.0;
+
+    { // calc constrb
+      DOMAIN_TYPE dt = POS;
+      for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+      {
+        const FlatQuadratureRule<D> & fdomquad(fcompr.GetRule(dt));
+        for (int i = 0; i < fdomquad.Size(); ++i)
+        {
+          IntegrationPoint ip(&fdomquad.points(i,0),fdomquad.weights(i));
+          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+
+          shape = scafe->GetShape(ip, lh);
+          shape_x = shape;
+
+          for (int l = 0; l < ndof_x; ++l)
+          {
+            if (xfe->GetSignsOfDof()[l] != dt)
+              shape_x(l) = 0.0;
+          }
+
+          constrb.Col(dt) += mip.GetWeight() * shape_total;
+        } // quad rule
+      }
+    }
+    */
+
+    IntegrationPoint ipc(0.0,0.0,0.0);
+    MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
+
+    const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+
+    const double b_t_neg = beta_neg->Evaluate(mipc);
+    const double b_t_pos = beta_pos->Evaluate(mipc);
+    const double a_t_neg = alpha_neg->Evaluate(mipc);
+    const double a_t_pos = alpha_pos->Evaluate(mipc);
+
+    double kappa_neg = 0.5;
+    double kappa_pos = 0.5;
+
+    switch (kappa_choice){
+    case NITSCHE_VARIANTS::HALFHALF:
+      break;
+    case NITSCHE_VARIANTS::HANSBOBETA:
+      {
+        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
+        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
+        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::BETA:
+      {
+        double sum = b_t_neg + b_t_pos;
+        kappa_neg = b_t_pos / sum;
+        kappa_pos = b_t_neg / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::ALPHA:
+      {
+        double sum = a_t_neg + a_t_pos;
+        kappa_neg = a_t_pos / sum;
+        kappa_pos = a_t_neg / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::ALPHABETA:
+      {
+        double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
+        kappa_neg = a_t_pos / b_t_pos / sum;
+        kappa_pos = a_t_neg / b_t_neg / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::HANSBO:
+    default:
+      {
+        kappa_neg = xgeom.kappa[NEG];
+        kappa_pos = xgeom.kappa[POS];
+        break;	      
+      }
+    }
+
+    const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
+
+    for (int i = 0; i < fquad.Size(); ++i)
+    {
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      
+      Mat<D,D> Finv = mip.GetJacobianInverse();
+      const double absdet = mip.GetMeasure();
+
+      Vec<D> nref = fquad.normals.Row(i);
+      Vec<D> normal = absdet * Trans(Finv) * nref ;
+      double len = L2Norm(normal);
+      normal /= len;
+
+      const double weight = fquad.weights(i) * len; 
+      
+      const double a_neg = alpha_neg->Evaluate(mip);
+      const double a_pos = alpha_pos->Evaluate(mip);
+      const double b_neg = beta_neg->Evaluate(mip);
+      const double b_pos = beta_pos->Evaluate(mip);
+        
+      shape_sca = scafe->GetShape(mip.IP(), lh);
+
+      jump.Range(0,ndof_neg) = (-b_neg) * shape_sca;
+      jump.Range(ndof_neg,ndof_total) = (b_pos) * shape_sca;
+
+      scafe->CalcMappedDShape (mip,dshape_sca);
+
+      dnshape.Range(0,ndof_neg) = (a_neg*kappa_neg) * (dshape_sca * normal);
+      dnshape.Range(ndof_neg,ndof_total) = (a_pos*kappa_pos) * (dshape_sca * normal);
+
+      double ava = a_pos;
+
+      switch (kappa_choice){
+      case NITSCHE_VARIANTS::HALFHALF:
+        {
+          ava = a_pos*0.5+a_neg*0.5;
+          break;
+        }
+      case NITSCHE_VARIANTS::BETA:
+      case NITSCHE_VARIANTS::ALPHA:
+        {
+          ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
+        }
+      case NITSCHE_VARIANTS::ALPHABETA:
+        {
+          ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
+          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
+          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
+        }
+      case NITSCHE_VARIANTS::HANSBO:
+      default:
+        {
+          ava = a_pos*kappa_pos+a_neg*kappa_neg;
+          break;
+        }
+      }
+
+      Nc -= weight * jump * Trans(dnshape);
+      Ns += ava * weight * jump * Trans(jump);
+
+    }
+
+    if (minimal_stabilization)
+    {
+      throw Exception("not implemented");
+      // Lsys = 0.0;
+
+      // Lsys.Cols(0,ndof).Rows(0,ndof) = A;
+      // Lsys.Cols(ndof,ndof+2).Rows(0,ndof) = constrb;
+      // Lsys.Rows(ndof,ndof+2).Cols(0,ndof) = Trans(constrb);
+      // LapackInverse (Lsys);
+
+      // L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
+
+      // elmat = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ p/h * Ns; 
+
+      // elmat += 1.5 * Trans(L) * A * L;
+    }
+    else
+      elmat = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
+      // elmat = lam*(p+1)/p/h * Ns; 
+
+  }
+
+  static RegisterBilinearFormIntegrator<FictXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initfictxnitsche2d_2b ("fictxnitsche", 2, 5);
+
+
+
 
 }
 

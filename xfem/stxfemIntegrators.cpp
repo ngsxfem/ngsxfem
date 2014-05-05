@@ -189,8 +189,8 @@ namespace ngfem
     } // loop over domain types
   }
 
-  template<int D>
-  void SpaceTimeXTimeDerivativeIntegrator<D> ::
+  template<int D, bool adjoint>
+  void SpaceTimeXTimeDerivativeIntegrator<D, adjoint> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
 		     FlatMatrix<double> & elmat,
@@ -252,7 +252,10 @@ namespace ngfem
             scafe->CalcShapeSpaceTime(mip.IP(), irt[k](0), shape, lh);
             scafe->CalcDtShapeSpaceTime(mip.IP(), irt[k](0), dtshape, lh);
             double fac = mip.GetWeight() * irt[k].Weight();
-            elmat += (fac*coef) * shape * Trans(dtshape);
+            if (adjoint)
+              elmat -= (fac*coef) * dtshape * Trans(shape);
+            else
+              elmat += (fac*coef) * shape * Trans(dtshape);
           }
       }
       else
@@ -284,16 +287,18 @@ namespace ngfem
             }
           }
           double fac = mip.GetMeasure() * fquad.weights(i);
-          
-          elmat += (fac*coef) * shape_total * Trans(dtshape_total);
+          if (adjoint)
+            elmat -= (fac*coef) * dtshape_total * Trans(shape_total);
+          else
+            elmat += (fac*coef) * shape_total * Trans(dtshape_total);
         } // quad rule
       } // if xfe
     } // loop over domain types
   }
 
 
-  template<int D>
-  void SpaceTimeXConvectionIntegrator<D> ::
+  template<int D, bool adjoint>
+  void SpaceTimeXConvectionIntegrator<D, adjoint> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
 		     FlatMatrix<double> & elmat,
@@ -367,7 +372,10 @@ namespace ngfem
             bgradshape = gradshape * conv;
 
             double fac = mip.GetWeight() * irt[k].Weight() * tau;
-            elmat += fac * shape * Trans(bgradshape);
+            if (adjoint)
+              elmat -= fac * bgradshape * Trans(shape);
+            else
+              elmat += fac * shape * Trans(bgradshape);
           }
       }
       else
@@ -409,7 +417,10 @@ namespace ngfem
           }
 
           double fac = mip.GetMeasure() * fquad.weights(i) * tau;
-          elmat += fac * shape_total * Trans(bgradshape_total);
+          if (adjoint)
+            elmat -= fac * bgradshape_total * Trans(shape_total);
+          else
+            elmat += fac * shape_total * Trans(bgradshape_total);
         } // quad rule
       } // if xfe
     } // loop over domain types
@@ -1021,11 +1032,15 @@ namespace ngfem
   template class SpaceTimeXLaplaceIntegrator<2>;
   template class SpaceTimeXLaplaceIntegrator<3>;
 
-  template class SpaceTimeXConvectionIntegrator<2>;
-  template class SpaceTimeXConvectionIntegrator<3>;
+  template class SpaceTimeXConvectionIntegrator<2, false>;
+  template class SpaceTimeXConvectionIntegrator<3, false>;
+  template class SpaceTimeXConvectionIntegrator<2, true>;
+  template class SpaceTimeXConvectionIntegrator<3, true>;
 
-  template class SpaceTimeXTimeDerivativeIntegrator<2>;
-  template class SpaceTimeXTimeDerivativeIntegrator<3>;
+  template class SpaceTimeXTimeDerivativeIntegrator<2, false>;
+  template class SpaceTimeXTimeDerivativeIntegrator<3, false>;
+  template class SpaceTimeXTimeDerivativeIntegrator<2, true>;
+  template class SpaceTimeXTimeDerivativeIntegrator<3, true>;
 
   template class SpaceTimeXTraceMassIntegrator<2,PAST>;
   template class SpaceTimeXTraceMassIntegrator<3,PAST>;
@@ -1052,11 +1067,15 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<SpaceTimeXLaplaceIntegrator<2> > initstxh1cut2dlap ("stx_laplace", 2, 4);
   static RegisterBilinearFormIntegrator<SpaceTimeXLaplaceIntegrator<3> > initstxh1cut3dlap ("stx_laplace", 3, 4);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<2> > initstxh1cut2dconv ("stx_convection", 2, 4);
-  static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<3> > initstxh1cut3dconv ("stx_convection", 3, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<2,false> > initstxh1cut2dconv ("stx_convection", 2, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<3,false> > initstxh1cut3dconv ("stx_convection", 3, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<2,true> > initstxh1cut2dconvadj ("stx_convection_adj", 2, 4);
+  static RegisterBilinearFormIntegrator<SpaceTimeXConvectionIntegrator<3,true> > initstxh1cut3dconvadj ("stx_convection_adj", 3, 4);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<2> > initstxh1cut2dtimeder ("stx_timeder", 2, 2);
-  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<3> > initstxh1cut3dtimeder ("stx_timeder", 3, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<2,false> > initstxh1cut2dtimeder ("stx_timeder", 2, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<3,false> > initstxh1cut3dtimeder ("stx_timeder", 3, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<2,true> > initstxh1cut2dtimederadj ("stx_timeder_adj", 2, 2);
+  static RegisterBilinearFormIntegrator<SpaceTimeXTimeDerivativeIntegrator<3,true> > initstxh1cut3dtimederadj ("stx_timeder_adj", 3, 2);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXTraceMassIntegrator<2,PAST> > initstxh1cut2dtracmp ("stx_tracemass_past", 2, 2);
   static RegisterBilinearFormIntegrator<SpaceTimeXTraceMassIntegrator<3,PAST> > initstxh1cut3dtracmp ("stx_tracemass_past", 3, 2);

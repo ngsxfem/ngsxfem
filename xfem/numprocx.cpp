@@ -111,7 +111,9 @@ namespace ngcomp
          const FiniteElement & bfel = fes.GetFE (ei, lh);
 
          const ElementTransformation & eltrans = ma.GetTrafo (ei, lh); 
-         FlatArray<int> dnums = fes.GetDofNrs (ei, lh);
+
+         Array<int> dnums (bfel.GetNDof(), lh);
+         fes.GetDofNrs (ei, dnums);
 
          FlatVector<SCAL> elvec(dnums.Size() * dim, lh);
          FlatVector<SCAL> elveci(dnums.Size() * dim, lh);
