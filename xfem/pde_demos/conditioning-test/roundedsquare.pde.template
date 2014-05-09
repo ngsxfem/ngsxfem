@@ -15,7 +15,7 @@ define constant one = 1.0
 define constant two = 2.0
 
 #sliver case
-# define constant eps1 = (1.0/exp(log(2)*var))
+# define constant eps1 = (1.0/exp(0.5*log(2)*var))
 
 # define constant x0 = (0.5+eps1)
 # define constant y0 = (0.5+eps1)
@@ -142,7 +142,7 @@ define preconditioner c4 -type=local -bilinearform=a -lapacktest -skip_smallest=
 
 #numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary -print
 
-numproc bvp npbvp4 -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c4 -maxsteps=1000 -prec=1e-6 # -print
+numproc bvp npbvp4 -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c4 -maxsteps=2000 -prec=1e-6 # -print
 
 define coefficient veczero
 (0,0),
