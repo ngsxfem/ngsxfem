@@ -14,10 +14,17 @@ define constant zero = 0.0
 define constant one = 1.0
 define constant two = 2.0
 
-define constant eps1 = (1.0/exp(log(2)*11))
+#sliver case
+define constant eps1 = (1.0/exp(log(2)*6))
 
 define constant x0 = (0.5+eps1)
 define constant y0 = (0.5+eps1)
+
+#shifting case
+#define constant shift = (var/100000)
+
+#define constant x0 = (0.46+shift)
+#define constant y0 = (0.5)
 
 define constant bneg = 2.0
 define constant bpos = 1.0
@@ -78,14 +85,8 @@ define coefficient lset
  )
 )
 
- #  * (-d) 
- # +
- # ((x-x0-d) > 0) 
- #  * (-1) * (x-x0)
 
 
-#((x-x0)*(x-x0)+(y-y0)*(y-y0)-R*R),       
-#((x-x0)+0.06666),       
 
 define fespace fesl2
        -type=l2ho -order=2
@@ -98,7 +99,7 @@ define fespace fescomp
        -type=xh1fespace
        -order=1
        -dirichlet=[1,2]
-       -dgjumps
+#       -dgjumps
 
 numproc informxfem npix 
         -xh1fespace=fescomp
@@ -107,7 +108,7 @@ numproc informxfem npix
 define gridfunction u -fespace=fescomp
 
 define linearform f -fespace=fescomp # -print
-xsource bneg bpos
+xsource bneg zero
 
 define constant small = 0.025
 

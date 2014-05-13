@@ -890,11 +890,8 @@ namespace ngcomp
     int ned = ma.GetNEdges();      
     Array<int> dnums, dnums2, dnums3; //, verts, edges;
 
-    bool vertexdofs=false;  //put degrees of freedoms of a vertex together
-    bool vertexpatch=true;  //put all degrees of freedom surrounding a vertex together
-    bool edgepatch=false;   //put all degrees of freedom sitting on an edge together 
-    bool elementpatch=false; //put all degrees of freedom on an element together
-    bool interfacepatch=true; //put all degrees of freedom with support at the interface together (one large block)
+    bool vertexpatch=true;
+    bool edgepatch=false;
     bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
     bool subassembled = precflags.GetDefineFlag("subassembled");
     COUPLING_TYPE dof_mode = eliminate_internal? (subassembled? WIREBASKET_DOF : EXTERNAL_DOF) : ANY_DOF;
@@ -909,12 +906,31 @@ namespace ngcomp
 
     *testout << "*GetFreeDofs(): " << endl << *GetFreeDofs() << endl;
 
+    bool blocksystem = true;
+
     if ( ma.GetDimension() == 2)
     {
-	  for ( ; !creator.Done(); creator++)
-	  {      
-        int basendof = spaces[0]->GetNDof();
+      if (blocksystem)
+      {
+        for ( ; !creator.Done(); creator++)
+        {
+          int basendof = spaces[0]->GetNDof();
+          int xndof = spaces[1]->GetNDof();
+          for (int i = 0; i < basendof ; ++i)
+          {
+            creator.Add(0,i);
+          }
 
+          for (int i = 0; i < xndof ; ++i)
+          {
+            creator.Add(1,i+basendof);
+          }
+      }
+      else
+      {
+        for ( ; !creator.Done(); creator++)
+        {      
+          int basendof = spaces[0]->GetNDof();
         int offset = 0;
         if (vertexpatch || vertexdofs)
         {
