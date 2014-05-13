@@ -890,12 +890,13 @@ namespace ngcomp
     int ned = ma.GetNEdges();      
     Array<int> dnums, dnums2, dnums3; //, verts, edges;
 
-    bool blocksystem=true;    //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
-    bool vertexpatch=true;    //put all dofs of elements around a vertex together
+    bool blocksystem=false;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
+    bool vertexpatch=false;   //put all dofs of elements around a vertex together
     bool elementpatch=false;  //put all dofs of one element together
     bool edgepatch=false;     //put all dofs of neighbouring elements together
     bool vertexdofs=false;    //put all dofs of a vertex together
-    bool interfacepatch=false;//put all dofs located at (all) cut elements together (one large block)
+    bool interfacepatch= true;//put all dofs located at (all) cut elements together (one large block)
+    bool jacobi= true;        //each degree of freedom is one block
 
     bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
     bool subassembled = precflags.GetDefineFlag("subassembled");
@@ -936,7 +937,18 @@ namespace ngcomp
         for ( ; !creator.Done(); creator++)
         {      
           int basendof = spaces[0]->GetNDof();
+          int xndof = spaces[1]->GetNDof();
           int offset = 0;
+
+          if (jacobi)
+          {
+            for (int i = 0; i < basendof+xndof ; ++i)
+            {
+              creator.Add(i,i);
+            }
+            offset += basendof+xndof;
+          }
+
           if (vertexpatch || vertexdofs)
           {
             for (int i = 0; i < nv; i++)
