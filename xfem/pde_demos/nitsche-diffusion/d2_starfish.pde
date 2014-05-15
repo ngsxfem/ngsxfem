@@ -68,13 +68,13 @@ define coefficient solneg
 # define coefficient solnegy
 # (bpos/bneg*(df)),
 
-define constant lambda = 2.0
+define constant lambda = 2
 
 define fespace fescomp
        -type=xh1fespace
        -order=1
        -dirichlet=[1,2]
-       -ref_space=2
+       -ref_space=4
 #       -dgjumps
 
 numproc informxfem npix 
@@ -120,4 +120,44 @@ numproc xdifference npxd
 
 numproc visualization npviz -scalarfunction=u #-comp=0
 
-numproc xoutput npxo -solution=u -solution_n=solneg -solution_p=f -subdivision=0
+numproc xoutput npxo 
+        -solution=u 
+        -solution_n=solneg 
+        -solution_p=solpos 
+        -subdivision=2
+#        -showerror
+        -overlapeps=0e-2
+
+        -negcolor=white!80!black2 #white!20!black
+        -fillnegopacity=1.0
+
+        -edgenegcolor=black2
+        -edgenegstyle=thick
+        -drawnegopacity=1.0
+
+        -fineedgenegcolor=white!20!black2
+        -fineedgenegstyle=dashed
+        -fineedgenegopacity=0.5
+
+        -poscolor=white!40!black1
+        -fillposopacity=1.0
+
+        -edgeposcolor=black1
+        -edgeposstyle=thick
+        -drawposopacity=1.0
+
+        -fineedgeposcolor=black1
+        -fineedgeposstyle=dashed
+        -fineedgeposopacity=0.5
+
+        -viewpoint=(6.0,6.0,-3.0)
+        -lookat=(1.0,0.0,1.0)
+        -scalex=10.0        
+        -scaley=10.0        
+        -scalez=10.0
+
+        # -viewpoint=(0.0,5.0,5.0)
+        # -lookat=(0.0,0.0,0.0)
+        # -scalex=20.0        
+        # -scaley=20.0        
+        # -scalez=0.0

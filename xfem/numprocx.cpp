@@ -414,11 +414,12 @@ namespace ngcomp
     GridFunction * gfu;
     SolutionCoefficients<D> solcoef;
     int subdivision;
+    Flags myflags;
   public:
 
 
     NumProcSpecialOutput (PDE & apde, const Flags & flags)
-      : NumProc (apde), solcoef(apde,flags)
+      : NumProc (apde), solcoef(apde,flags), myflags(flags)
     { 
       gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
       subdivision = (int) flags.GetNumFlag ( "subdivision", 2);
@@ -440,7 +441,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      DoSpecialOutput<D>(gfu, solcoef,subdivision, lh);
+      DoSpecialOutput<D>(gfu, solcoef,subdivision, myflags, lh);
     }    
     
 

@@ -27,6 +27,7 @@ namespace ngfem
   void DoSpecialOutput (GridFunction * gfu, 
                         SolutionCoefficients<D> & solcoef, 
                         int subdivision, 
+                        Flags & flags,
                         LocalHeap & lh);
 
 

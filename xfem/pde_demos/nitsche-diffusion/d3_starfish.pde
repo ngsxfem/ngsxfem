@@ -30,7 +30,7 @@ define constant bneg = 1.0
 define constant bpos = 1.5
 
 define constant aneg = 1.0
-define constant apos = 1.5
+define constant apos = 2.5
 
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
@@ -72,7 +72,7 @@ define constant lambda = 2
 
 define fespace fescomp
        -type=xh1fespace
-       -order=2
+       -order=1
        -dirichlet=[1,2]
        -ref_space=2
 #       -dgjumps
@@ -113,7 +113,7 @@ define coefficient veczero
 ############### REFERENCE SOLUTION ###########
 define fespace fescomp2
        -type=xh1fespace
-       -order=4
+       -order=2
        -dirichlet=[1,2]
        -ref_space=2
 #       -dgjumps
@@ -137,13 +137,13 @@ xnitsche_hansbo aneg apos bneg bpos lambda
 
 numproc setvaluesx npsvx2 -gridfunction=u2 -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
 
-#define preconditioner c2 -type=local -bilinearform=a -test #-block
+#define preconditioner c2 -type=local -bilinearform=a2 -block -test
 define preconditioner c2 -type=direct -bilinearform=a2 #-test
-#define preconditioner c2 -type=bddc -bilinearform=a #-test -block
+#define preconditioner c2 -type=bddc -bilinearform=a2 # -block #-test -block
 
 ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
-numproc bvp npbvp2 -gridfunction=u2 -bilinearform=a2 -linearform=f2 -solver=cg -preconditioner=c2 -maxsteps=1000 -prec=1e-6 # -print
+numproc bvp npbvp2 -gridfunction=u2 -bilinearform=a2 -linearform=f2 -solver=cg -preconditioner=c2 -maxsteps=10000 -prec=1e-6 # -print
 
 
 ################################

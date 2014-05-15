@@ -30,11 +30,14 @@ namespace ngfem
     outf_sketch << "def tetrasandlines {\n";
   }
 
-  void MakeSketchFooter(ofstream & outf_sketch)
+  void MakeSketchFooter(ofstream & outf_sketch, Flags & flags)
   {
+    string viewpoint(flags.GetStringFlag("viewpoint","(10.0,10.0,10.0)"));
+    string lookat(flags.GetStringFlag("lookat","(0.0,0.0,0.0)"));
+
     outf_sketch << "}\n"
-                << "def viewpoint (-10.0,-20.0,30.0)\n"
-                << "def lookat (5,5,0)\n"
+                << "def viewpoint " << viewpoint << "\n"
+                << "def lookat " << lookat << "\n"
                 << "put{ scale(2) then view((viewpoint),(lookat))}{\n"
                 << "  {tetrasandlines}\n"
                 << "}\n"
@@ -69,16 +72,19 @@ namespace ngfem
   void DoSpecialOutput (GridFunction * gfu, 
                         SolutionCoefficients<D> & solcoef, 
                         int subdivision, 
+                        Flags & flags,
                         LocalHeap & lh)
   {
     ofstream outf_gnuplot("special.output.gnuplot");
     ofstream outf_tikz("special.output.tikz");
     ofstream outf_sketch("special.output.sketch");
 
+    bool showerror = flags.GetDefineFlag("showerror");
+
     int cnt_sketch = 1;
-    double scalex_sketch = 10.0;
-    double scaley_sketch = 10.0;
-    double scalez_sketch = 10.0;
+    double scalex_sketch = flags.GetNumFlag("scalex",10.0);
+    double scaley_sketch = flags.GetNumFlag("scaley",10.0);
+    double scalez_sketch = flags.GetNumFlag("scalez",10.0);
 
     MakeTikzHeader(outf_tikz);
     MakeSketchHeader(outf_sketch);
@@ -86,14 +92,29 @@ namespace ngfem
     outf_tikz.precision(12);
     outf_tikz << std::fixed;
 
-    string edgenegcolor ("black");
-    string negcolor ("green!60!black");
-    string edgeposcolor ("black");
-    string poscolor ("blue!60!black");
-    double fillnegopacity = 0.75;
-    double fillposopacity = 0.75;
-    double drawnegopacity = 1.0;
-    double drawposopacity = 1.0;
+    string fineedgenegcolor (flags.GetStringFlag("fineedgenegcolor","orange")); //("black");
+    string fineedgenegstyle (flags.GetStringFlag("fineedgenegstyle","dashed")); //("black");
+    string edgenegcolor (flags.GetStringFlag("edgenegcolor","white!20!black")); //("black");
+    string edgenegstyle (flags.GetStringFlag("edgenegstyle","solid")); //("black");
+    // string negcolor ("green!60!black");
+    string negcolor (flags.GetStringFlag("negcolor","white!20!black"));
+
+    string fineedgeposcolor (flags.GetStringFlag("fineedgeposcolor","orange")); //("black");
+    string fineedgeposstyle (flags.GetStringFlag("fineedgeposstyle","thin")); //("black");
+    string edgeposcolor (flags.GetStringFlag("edgeposcolor","white!70!black")); // ("black");
+    string edgeposstyle (flags.GetStringFlag("edgeposstyle","solid")); //("black");
+    // string poscolor ("blue!60!black");
+    string poscolor (flags.GetStringFlag("poscolor","white!70!black"));
+
+    double fineedgenegopacity = flags.GetNumFlag("fineedgenegopacity",1.0);
+    double fineedgeposopacity = flags.GetNumFlag("fineedgeposopacity",0.5);
+    double fillnegopacity = flags.GetNumFlag("fillnegopacity",1.0);
+    double fillposopacity = flags.GetNumFlag("fillposopacity",0.5);
+    double drawnegopacity = flags.GetNumFlag("drawnegopacity",1.0);
+    double drawposopacity = flags.GetNumFlag("drawposopacity",0.0);
+
+    double myeps = flags.GetNumFlag("overlapeps",0.0); //0.01
+
 
     const double time = 0.0;
     // cout << " CalcXError at time = " << time << endl;
@@ -189,6 +210,8 @@ namespace ngfem
             for (int i = 0; i < draw_simplices.Size(); ++i)
             {
 
+              bool edgeonbound[3];
+              int inner_cnt = 3;
               {
                 if (dt == NEG)
                   outf_tikz << "\\draw ["
@@ -209,10 +232,18 @@ namespace ngfem
               Vec<D> lastp;
               Vec<D> mlastp;
               double lastval;
+
+              Vec<D> center = 0.0;
+
+              for (int kk = 0; kk < 3; ++kk)
+              {
+                 center += 1.0/3.0 * *(draw_simplices[i]->p[kk]);
+              }
               for (int j = 0; j < D+2; ++j)
               {
                 int jj = j<D+1 ? j : 0; 
-                const Vec<D> & p = *(draw_simplices[i]->p[jj]);
+                // const Vec<D> & p = *(draw_simplices[i]->p[jj]);
+                const Vec<D> p = (1.0+myeps) * *(draw_simplices[i]->p[jj]) - myeps * center ;
                 IntegrationPoint ip(p);
                 MappedIntegrationPoint<D,D> mip(ip, eltrans);
                 DimMappedIntegrationPoint<D+1> mipp(ip, eltrans);
@@ -264,13 +295,24 @@ namespace ngfem
 
                 double discval = InnerProduct(shape_total,elvec);
 
+                if (showerror)
+                {
+                  double solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mip) : solcoef.GetSolutionNeg().Evaluate(mip);
+                  discval = abs(discval-solval);
+                }
+
 
                 if(j != D+1)
                 {
                   outf_sketch << "  def p" << cnt_sketch++
                               << "(" << mip.GetPoint()(1) * scalex_sketch 
-                              << "," << mip.GetPoint()(0) * scaley_sketch 
-                              << "," << discval * scalez_sketch << ")\n";
+                              << "," << discval * scalez_sketch 
+                              << "," << mip.GetPoint()(0) * scaley_sketch << ")\n";
+                  // inner_cnt--;
+                  // if (OnBound(p)) 
+                  //   inner_on_bound[inner_cnt] = true;
+                  // else
+                  //   inner_on_bound[inner_cnt] = false;
                 }
 
 
@@ -305,7 +347,10 @@ namespace ngfem
                     medges.Append(mip.GetPoint());
                     edges_val.Append(lastval);
                     edges_val.Append(discval);
+                    edgeonbound[j-1] = true;
                   }
+                  else
+                    edgeonbound[j-1] = false;
                 }
                 lastp = p;
                 mlastp = mip.GetPoint();
@@ -314,18 +359,45 @@ namespace ngfem
               outf_gnuplot << endl << endl;
               outf_tikz << " cycle;" << endl;
               string & color = dt == NEG ? negcolor : poscolor;
-              string & edgecolor = dt == NEG ? edgenegcolor : edgeposcolor;
+              string & edgecolor = dt == NEG ? fineedgenegcolor : fineedgeposcolor;
+              string & fineedgestyle = dt == NEG ? fineedgenegstyle : fineedgeposstyle;
               double fillopacity = dt == NEG ? fillnegopacity : fillposopacity;
-              double drawopacity = dt == NEG ? drawnegopacity : drawposopacity;
+              double drawopacity = dt == NEG ? fineedgenegopacity : fineedgeposopacity;
               outf_sketch << "polygon[" //line style = dashed"
-                          << "draw=none" // << "red" // << color 
+                          << "style=none"  // << "red" // << color 
+                          << ",color=" << edgecolor // << "red" // << color 
                           << ",fill=" << color 
                           << ",cull=false,fill opacity=" << fillopacity
-                          << ",draw opacity=" << fillopacity
+                          << ",draw opacity=" << 0 //*0.25
                           << "]"
                           << "(p" << cnt_sketch-3 << ")"
                           << "(p" << cnt_sketch-2 << ")"
                           << "(p" << cnt_sketch-1 << ")\n";
+
+              if (!edgeonbound[0])
+                outf_sketch << "line[" //line style = dashed"
+                            << "style=" << fineedgestyle // << "red" // << color 
+                            << ",color=" << edgecolor // << "red" // << color 
+                            << ",draw opacity=" << drawopacity //*0.25
+                            << "]"
+                            << "(p" << cnt_sketch-3 << ")"
+                            << "(p" << cnt_sketch-2 << ")\n";
+              if (!edgeonbound[1])
+                outf_sketch << "line[" //line style = dashed"
+                            << "style=" << fineedgestyle // << "red" // << color 
+                            << ",color=" << edgecolor // << "red" // << color 
+                            << ",draw opacity=" << drawopacity //*0.25
+                            << "]"
+                            << "(p" << cnt_sketch-2 << ")"
+                            << "(p" << cnt_sketch-1 << ")\n";
+              if (!edgeonbound[2])
+                outf_sketch << "line[" //line style = dashed"
+                            << "style=" << fineedgestyle // << "red" // << color 
+                            << ",color=" << edgecolor // << "red" // << color 
+                            << ",draw opacity=" << drawopacity //*0.25
+                            << "]"
+                            << "(p" << cnt_sketch-3 << ")"
+                            << "(p" << cnt_sketch-1 << ")\n";
              
             }
           } // dt
@@ -447,13 +519,18 @@ namespace ngfem
 
             double discval = InnerProduct(shape,elvec);
 
+            if (showerror)
+            {
+              double solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mip) : solcoef.GetSolutionNeg().Evaluate(mip);
+              discval = abs(discval-solval);
+            }
 
             if(i != ips.Size()-1)
             {
               outf_sketch << "  def p" << cnt_sketch++
                           << "(" << mip.GetPoint()(1) * scalex_sketch 
-                          << "," << mip.GetPoint()(0) * scaley_sketch 
-                          << "," << discval * scalez_sketch << ")\n";
+                          << "," << discval * scalez_sketch
+                          << "," << mip.GetPoint()(0) * scaley_sketch  << ")\n";
             }
 
             if(i != ips.Size()-1)
@@ -480,10 +557,12 @@ namespace ngfem
 
           string & color = dt == NEG ? negcolor : poscolor;
           string & edgecolor = dt == NEG ? edgenegcolor : edgeposcolor;
+          string & edgestyle = dt == NEG ? edgenegstyle : edgeposstyle;
           double fillopacity = dt == NEG ? fillnegopacity : fillposopacity;
           double drawopacity = dt == NEG ? drawnegopacity : drawposopacity;
           outf_sketch << "polygon["
-                      << "draw=" << edgecolor 
+                      << "color=" << edgecolor 
+                      << ",style=" << edgestyle 
                       << ",fill=" << color 
                       << ",cull=false,fill opacity=" << fillopacity
                       << ",draw opacity=" << drawopacity << "]"
@@ -501,6 +580,7 @@ namespace ngfem
       string & edgecolor = plotdt == NEG ? edgenegcolor : edgeposcolor;
       double fillopacity = plotdt == NEG ? fillnegopacity : fillposopacity;
       double drawopacity = plotdt == NEG ? drawnegopacity : drawposopacity;
+      string & edgestyle = plotdt == NEG ? edgenegstyle : edgeposstyle;
 
       for (int i = 0; i < edges.Size(); i+=2)
       {
@@ -514,15 +594,15 @@ namespace ngfem
                 
         outf_sketch << "  def p" << cnt_sketch++
                     << "( " << medges[i](1) * scalex_sketch 
-                    << ", " << medges[i](0) * scaley_sketch 
                     << ", " << edges_val[i] * scalez_sketch
+                    << ", " << medges[i](0) * scaley_sketch 
                     << ")\n";
         outf_sketch << "  def p" << cnt_sketch++
                     << "( " << medges[i+1](1) * scalex_sketch 
-                    << ", " << medges[i+1](0) * scaley_sketch 
                     << ", " << edges_val[i+1] * scalez_sketch
+                    << ", " << medges[i+1](0) * scaley_sketch 
                     << ")\n";
-        outf_sketch << " line [draw=" << edgecolor << ",opacity=" << drawopacity << "]" 
+        outf_sketch << " line [draw=" << edgecolor << ",style="<< edgestyle <<",draw opacity=" << drawopacity << "]" 
                     << "(p" << cnt_sketch-2 << ")"
                     << "(p" << cnt_sketch-1 << ")\n";
                 
@@ -531,15 +611,15 @@ namespace ngfem
 
     }
     MakeTikzFooter(outf_tikz);
-    MakeSketchFooter(outf_sketch);
+    MakeSketchFooter(outf_sketch, flags);
 
     // system("pdflatex special.output.tikz");
   }
 
   template void DoSpecialOutput<2>(GridFunction * gfu, SolutionCoefficients<2> & solcoef, 
-                                   int subdivision, LocalHeap & lh);
+                                   int subdivision, Flags & flags, LocalHeap & lh);
   template void DoSpecialOutput<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, 
-                                   int subdivision, LocalHeap & lh);
+                                   int subdivision, Flags & flags,LocalHeap & lh);
 
 
 }
