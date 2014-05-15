@@ -92,6 +92,7 @@ namespace ngfem
 
   template<int D>
   void CalcXError (GridFunction * gfu, 
+                   GridFunction * gfu2, 
                    SolutionCoefficients<D> & solcoef, 
                    int intorder, 
                    double b_neg, 

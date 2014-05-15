@@ -102,6 +102,7 @@ namespace ngfem
 
   template<int D>
   void CalcXError (GridFunction * gfu, 
+                   GridFunction * gfu2, 
                    SolutionCoefficients<D> & solcoef, 
                    int intorder, 
                    double b_neg, double b_pos, 
@@ -112,6 +113,7 @@ namespace ngfem
   {
     // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
+    Array<int> dnums2;
     int activeels = 0;
     double l2diff_n = 0;
     double l2diff_p = 0;
@@ -133,9 +135,26 @@ namespace ngfem
       FlatVector<double> elvec (size, lh);
       gfu -> GetVector().GetIndirect (dnums, elvec);   
 
+      int size2 = 0;
+
+      if (gfu2)
+      {
+        gfu2 -> GetFESpace().GetDofNrs (elnr, dnums2);
+        size2 = dnums2.Size();
+      }
+
+      FlatVector<double> elvec2 (size2, lh);
+
+      if (gfu2)
+      {
+        gfu2 -> GetVector().GetIndirect (dnums2, elvec2);   
+      }
+
+
       ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
 
       const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(elnr,lh);
+
       const CompoundFiniteElement & cfel = 
         dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -156,6 +175,31 @@ namespace ngfem
           scastfe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[j]);
       }
 
+      const XFiniteElement * xfe2 = NULL;
+      const XDummyFE * dummfe2 = NULL;
+      const ScalarFiniteElement<D> * scafe2 = NULL;
+      const ScalarSpaceTimeFiniteElement<D> * scastfe2 = NULL;
+
+
+      if (gfu2)
+      {
+        const FiniteElement & base_fel2 = gfu2 -> GetFESpace().GetFE(elnr,lh);
+
+        const CompoundFiniteElement & cfel2 = 
+          dynamic_cast<const CompoundFiniteElement&> (base_fel2);
+        for (int j = 0; j < cfel2.GetNComponents(); ++j)
+        {
+          if (xfe2==NULL)
+            xfe2 = dynamic_cast<const XFiniteElement* >(&cfel2[j]);
+          if (dummfe2==NULL)
+            dummfe2 = dynamic_cast<const XDummyFE* >(&cfel2[j]);
+          if (scafe2==NULL)
+            scafe2 = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel2[j]);
+          if (scastfe2==NULL)
+            scastfe2 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel2[j]);
+        }
+      }
+
       bool spacetime = scastfe != NULL;
 
       int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
@@ -168,6 +212,17 @@ namespace ngfem
       FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
       FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
       FlatMatrixFixWidth<D> dshapex(ndof_x,&dshape_total(ndof,0));
+
+      int ndof_x2 = xfe2!=NULL ? xfe2->GetNDof() : 0;
+      int ndof2 = gfu2 == NULL ? 0 : (spacetime ? scastfe2->GetNDof() : scafe2->GetNDof());
+      int ndof_total2 = gfu2 == NULL ? 0 : (ndof2+ndof_x2);
+      FlatVector<> shape_total2(ndof_total2,lh);
+      FlatVector<> shape2(ndof2,&shape_total2(0));
+      FlatVector<> shapex2(ndof_x2,&shape_total2(ndof2));
+
+      FlatMatrixFixWidth<D> dshape_total2(ndof_total2,lh);
+      FlatMatrixFixWidth<D> dshape2(ndof2,&dshape_total2(0,0));
+      FlatMatrixFixWidth<D> dshapex2(ndof_x2,&dshape_total2(ndof2,0));
 
       if (xfe)
       {
@@ -189,33 +244,25 @@ namespace ngfem
             mipp.Point().Range(0,D) = mip.GetPoint();
             mipp.Point()[D] = time;
 
-            double solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mipp) : solcoef.GetSolutionNeg().Evaluate(mipp);
-
-            Vec<D> soldval;
-            if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
-            {
-              if (dt == POS)
-                solcoef.GetSolutionDPos().Evaluate(mipp,soldval);
-              else
-                solcoef.GetSolutionDNeg().Evaluate(mipp,soldval);
-            }
-            else
-            {
-              if (dt == POS)
-                CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionPos()),mip,time,soldval,lh);
-              else
-                CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionNeg()),mip,time,soldval,lh);
-            }
-
             if (!spacetime)
             {
               shape = scafe->GetShape(mip.IP(), lh);
               scafe->CalcMappedDShape(mip, dshape);
+              if (gfu2)
+              {
+                shape2 = scafe2->GetShape(mip.IP(), lh);
+                scafe2->CalcMappedDShape(mip, dshape2);
+              }
             }
             else
             {
               scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
               scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
+              if (gfu2)
+              {
+                scastfe2->CalcShapeSpaceTime(mip.IP(), 1.0, shape2, lh);
+                scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
+              }
             }
 
             shapex = shape;
@@ -228,6 +275,47 @@ namespace ngfem
                 shapex(l) = 0.0;
                 dshapex.Row(l) = 0.0;
               }
+            }
+
+            double solval = 0.0;
+            Vec<D> soldval;
+            if (gfu2)
+            {
+              shapex2 = shape2;
+              dshapex2 = dshape2;
+
+
+              for (int l = 0; l < ndof_x2; ++l)
+              {
+                if (xfe2->GetSignsOfDof()[l] != dt)
+                {
+                  shapex2(l) = 0.0;
+                  dshapex2.Row(l) = 0.0;
+                }
+              }
+              solval = InnerProduct(shape_total2,elvec2);
+              soldval = Trans(dshape_total2) * elvec2;
+
+            }
+            else
+            {
+              solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mipp) : solcoef.GetSolutionNeg().Evaluate(mipp);
+              if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
+              {
+                if (dt == POS)
+                  solcoef.GetSolutionDPos().Evaluate(mipp,soldval);
+                else
+                  solcoef.GetSolutionDNeg().Evaluate(mipp,soldval);
+              }
+              else
+              {
+                if (dt == POS)
+                  CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionPos()),mip,time,soldval,lh);
+                else
+                  CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionNeg()),mip,time,soldval,lh);
+              }
+
+
             }
 
             double discval = InnerProduct(shape_total,elvec);
@@ -309,22 +397,45 @@ namespace ngfem
           mipp.Point().Range(0,D) = mip.GetPoint();
           mipp.Point()[D] = time;
 
-          double solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mipp) : solcoef.GetSolutionNeg().Evaluate(mipp);
+          
+          double solval = 0.0;
           Vec<D> soldval;
-          if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
+          if (gfu2)
           {
-            if (dt == POS)
-              solcoef.GetSolutionDPos().Evaluate(mipp,soldval);
+            if (!spacetime)
+            {
+              shape2 = scafe2->GetShape(mip.IP(), lh);
+              scafe2->CalcMappedDShape(mip, dshape2);
+            }
             else
-              solcoef.GetSolutionDNeg().Evaluate(mipp,soldval);
+            {
+              scastfe2->CalcShapeSpaceTime(mip.IP(), 1.0, shape2, lh);
+              scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
+            }
+
+            solval = InnerProduct(shape_total2,elvec2);
+            soldval = Trans(dshape_total2) * elvec2;
+
           }
           else
           {
-            if (dt == POS)
-              CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionPos()),mip,time,soldval,lh);
+            solval = dt == POS ? solcoef.GetSolutionPos().Evaluate(mipp) : solcoef.GetSolutionNeg().Evaluate(mipp);
+            if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
+            {
+              if (dt == POS)
+                solcoef.GetSolutionDPos().Evaluate(mipp,soldval);
+              else
+                solcoef.GetSolutionDNeg().Evaluate(mipp,soldval);
+            }
             else
-              CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionNeg()),mip,time,soldval,lh);
+            {
+              if (dt == POS)
+                CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionPos()),mip,time,soldval,lh);
+              else
+                CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionNeg()),mip,time,soldval,lh);
+            }
           }
+
           if (!spacetime)
           {
             shape = scafe->GetShape(mip.IP(), lh);
@@ -467,9 +578,9 @@ namespace ngfem
     }
   }
 
-  template void CalcXError<2>(GridFunction * gfu, SolutionCoefficients<2> & solcoef, int intorder, 
+  template void CalcXError<2>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<2> & solcoef, int intorder, 
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
-  template void CalcXError<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, int intorder, 
+  template void CalcXError<3>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<3> & solcoef, int intorder, 
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
 
 

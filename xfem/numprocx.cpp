@@ -359,6 +359,7 @@ namespace ngcomp
   {
   protected:
     GridFunction * gfu;
+    GridFunction * gfu2;
     SolutionCoefficients<D> solcoef;
     double threshold;
     int intorder;
@@ -373,6 +374,7 @@ namespace ngcomp
       : NumProc (apde), solcoef(apde,flags), errtab()
     { 
       gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
+      gfu2 = pde.GetGridFunction (flags.GetStringFlag ("solution2", flags.GetStringFlag("reference","")),true);
       threshold = flags.GetNumFlag ( "threshold", -0.1);
       intorder = (int) flags.GetNumFlag ( "intorder", 2);
       b_pos = flags.GetNumFlag ( "henryweight_p", 1.0);
@@ -396,7 +398,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      CalcXError<D>(gfu, solcoef, intorder, b_neg, b_pos, time, errtab, lh, true);
+      CalcXError<D>(gfu, gfu2, solcoef, intorder, b_neg, b_pos, time, errtab, lh, true);
     }    
     
 
