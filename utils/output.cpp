@@ -17,6 +17,9 @@ namespace ngfem
     outf_tikz << "\\begin{document}" << endl;
     outf_tikz << "\\tdplotsetmaincoords{60}{120}" << endl;
     outf_tikz << "\\begin{tikzpicture}[scale=100,tdplot_main_coords,spy using outlines={white, circle, magnification=4, size=25 * 3 *\myscale, connect spies, transform shape}]" << endl;
+    outf_tikz << "\\def\\mycolorstring{black}" << endl;
+    outf_tikz << "\\def\\mydrawopacity{0.5}" << endl;
+    outf_tikz << "\\def\\myfillopacity{1.0}" << endl;
   }
 
   void MakeTikzFooter(ofstream & outf_tikz)
@@ -540,6 +543,55 @@ namespace ngfem
                                    int subdivision, LocalHeap & lh);
   template void DoSpecialOutput<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, 
                                    int subdivision, LocalHeap & lh);
+
+
+  void OutputMeshOnly (const MeshAccess & ma, LocalHeap & lh)
+  {
+    // ofstream outf_gnuplot("special.output.gnuplot");
+    ofstream outf_tikz("mesh.output.tikz");
+    // ofstream outf_sketch("special.output.sketch");
+
+    // int cnt_sketch = 1;
+    // double scalex_sketch = 10.0;
+    // double scaley_sketch = 10.0;
+    // double scalez_sketch = 10.0;
+
+    MakeTikzHeader(outf_tikz);
+    // MakeSketchHeader(outf_sketch);
+    
+    outf_tikz.precision(12);
+    outf_tikz << std::fixed;
+
+    for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+    {
+      HeapReset hr(lh);
+      ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
+      ELEMENT_TYPE eltype = eltrans.GetElementType();
+      
+      IntegrationPoint ip1(0.0,0.0);
+      IntegrationPoint ip2(1.0,0.0);
+      IntegrationPoint ip3(0.0,1.0);
+      MappedIntegrationPoint<2,2> mip1(ip1, eltrans);
+      MappedIntegrationPoint<2,2> mip2(ip2, eltrans);
+      MappedIntegrationPoint<2,2> mip3(ip3, eltrans);
+
+      Vec<2> p1 = mip1.GetPoint();
+      Vec<2> p2 = mip2.GetPoint();
+      Vec<2> p3 = mip3.GetPoint();
+      
+      outf_tikz << "\\draw [\\mycolorstring, fill opacity=\\myfillopacity, draw opacity=\\mydrawopacity]" 
+                << " (" << p1(0) << ", " << p1(1) << ")"
+                << " -- "
+                << " (" << p2(0) << ", " << p2(1) << ")"
+                << " -- "
+                << " (" << p3(0) << ", " << p3(1) << ")"
+                << " -- cycle; \n";
+    }
+    MakeTikzFooter(outf_tikz);
+    // MakeSketchFooter(outf_sketch);
+
+    // system("pdflatex special.output.tikz");
+  }
 
 
 }

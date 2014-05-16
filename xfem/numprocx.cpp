@@ -410,21 +410,28 @@ namespace ngcomp
   {
   protected:
     GridFunction * gfu;
-    SolutionCoefficients<D> solcoef;
+    SolutionCoefficients<D> * solcoef;
     int subdivision;
+    bool onlygrid;
   public:
 
 
     NumProcSpecialOutput (PDE & apde, const Flags & flags)
-      : NumProc (apde), solcoef(apde,flags)
+        : NumProc (apde), solcoef(NULL)
     { 
-      gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
+        gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")),true);
       subdivision = (int) flags.GetNumFlag ( "subdivision", 2);
+      onlygrid = flags.GetDefineFlag ("onlymesh");
+      if (!onlygrid)
+      {
+          solcoef = new SolutionCoefficients<D>(apde,flags);
+      }
     }
 
     virtual ~NumProcSpecialOutput()
     {
-      ;
+      if (solcoef)
+        delete solcoef;
     }
 
     virtual string GetClassName () const
@@ -438,7 +445,14 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      DoSpecialOutput<D>(gfu, solcoef,subdivision, lh);
+      if (onlygrid)
+        OutputMeshOnly(ma, lh);
+      else
+      {
+        if (gfu==NULL)
+          throw Exception("oh no oh nooo - give me a gridfunction next time! pleeeeaaase!");
+        DoSpecialOutput<D>(gfu, *solcoef,subdivision, lh);
+      }
     }    
     
 

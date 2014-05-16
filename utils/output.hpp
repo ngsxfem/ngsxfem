@@ -30,5 +30,7 @@ namespace ngfem
                         LocalHeap & lh);
 
 
+  void OutputMeshOnly (const MeshAccess & ma, LocalHeap & lh);
+
 }
 #endif
