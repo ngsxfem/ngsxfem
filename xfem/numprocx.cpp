@@ -415,11 +415,12 @@ namespace ngcomp
     SolutionCoefficients<D> * solcoef;
     int subdivision;
     bool onlygrid;
+    Flags myflags;
   public:
 
 
     NumProcSpecialOutput (PDE & apde, const Flags & flags)
-        : NumProc (apde), solcoef(NULL)
+        : NumProc (apde), solcoef(NULL), myflags(flags)
     { 
         gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")),true);
       subdivision = (int) flags.GetNumFlag ( "subdivision", 2);
@@ -453,7 +454,7 @@ namespace ngcomp
       {
         if (gfu==NULL)
           throw Exception("oh no oh nooo - give me a gridfunction next time! pleeeeaaase!");
-        DoSpecialOutput<D>(gfu, *solcoef,subdivision, lh);
+        DoSpecialOutput<D>(gfu, *solcoef,subdivision, myflags, lh);
       }
     }    
     
