@@ -890,13 +890,15 @@ namespace ngcomp
     int ned = ma.GetNEdges();      
     Array<int> dnums, dnums2, dnums3; //, verts, edges;
 
+    bool stdblock=true;   //put all std. dofs in one block + one block for each xfem dof
+
     bool blocksystem=false;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
     bool vertexpatch=false;   //put all dofs of elements around a vertex together
     bool elementpatch=false;  //put all dofs of one element together
     bool edgepatch=false;     //put all dofs of neighbouring elements together
     bool vertexdofs=false;    //put all dofs of a vertex together
-    bool interfacepatch= true;//put all dofs located at (all) cut elements together (one large block)
-    bool jacobi= true;        //each degree of freedom is one block
+    bool interfacepatch= false;//put all dofs located at (all) cut elements together (one large block)
+    bool jacobi= false;        //each degree of freedom is one block
 
     bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
     bool subassembled = precflags.GetDefineFlag("subassembled");
@@ -914,7 +916,7 @@ namespace ngcomp
 
     if ( ma.GetDimension() == 2)
     {
-      if (blocksystem)
+      if (blocksystem || stdblock)
       {
         for ( ; !creator.Done(); creator++)
         {
@@ -925,9 +927,19 @@ namespace ngcomp
             creator.Add(0,i);
           }
 
-          for (int i = 0; i < xndof ; ++i)
+          if (blocksystem)
           {
-            creator.Add(1,i+basendof);
+            for (int i = 0; i < xndof ; ++i)
+            {
+              creator.Add(1,i+basendof);
+            }
+          }
+          else
+          {
+            for (int i = 0; i < xndof ; ++i)
+            {
+              creator.Add(i+1,i+basendof);
+            }
           }
         }
         it = creator.GetTable();
@@ -1155,7 +1167,7 @@ namespace ngcomp
 
   Array<int> * XH1FESpace :: CreateDirectSolverClusters (const Flags & flags) const
   {
-      bool bddc = true;
+    bool bddc = true;
 
     if (true || flags.GetDefineFlag("subassembled"))
     {
@@ -1170,84 +1182,84 @@ namespace ngcomp
     }
     else
     {
-        if(bddc)
+      if(bddc)
+      {
+        Array<int> & clusters = *new Array<int> (GetNDof());
+        clusters = 0;
+
+        Array<int> dnums;
+        int nfa = ma.GetNFacets();
+        int nv = ma.GetNV();
+
+        for (int i = 0; i < nv; i++)
         {
-            Array<int> & clusters = *new Array<int> (GetNDof());
-            clusters = 0;
-
-            Array<int> dnums;
-            int nfa = ma.GetNFacets();
-            int nv = ma.GetNV();
-
-            for (int i = 0; i < nv; i++)
-            {
-                // basefes->GetVertexDofNrs (i, dnums);
-                clusters[nv /*dnums[0]*/] = 1;
-            }
-
-            const BitArray & freedofs = *GetFreeDofs();
-            for (int i = 0; i < freedofs.Size(); i++)
-                if (!freedofs.Test(i)) clusters[i] = 0;
-            *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
-            return &clusters;
+          // basefes->GetVertexDofNrs (i, dnums);
+          clusters[nv /*dnums[0]*/] = 1;
         }
-        else // put all degrees of freedoms at the interface on the coarse grid
+
+        const BitArray & freedofs = *GetFreeDofs();
+        for (int i = 0; i < freedofs.Size(); i++)
+          if (!freedofs.Test(i)) clusters[i] = 0;
+        *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
+        return &clusters;
+      }
+      else // put all degrees of freedoms at the interface on the coarse grid
+      {
+        Array<int> dnums;
+        BitArray mark(GetNDof());
+        mark.Clear();
+        int epcnt = 0;
+        for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
         {
-            Array<int> dnums;
-            BitArray mark(GetNDof());
-            mark.Clear();
-            int epcnt = 0;
-            for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
-            {
-                const XFESpace<2,2>* xfes22 = NULL;
-                const XFESpace<2,3>* xfes23 = NULL;
-                const XFESpace<3,3>* xfes33 = NULL;
-                const XFESpace<3,4>* xfes34 = NULL;
-                const int sD = ma.GetDimension();
-                if (sD == 2)
-                    if (spacetime)
-                        xfes23 = dynamic_cast<const XFESpace<2,3> * >(spaces[1]);
-                    else
-                        xfes22 = dynamic_cast<const XFESpace<2,2> * >(spaces[1]);
-                else
-                    if (spacetime)
-                        xfes34 = dynamic_cast<const XFESpace<3,4> * >(spaces[1]);
-                    else
-                        xfes33 = dynamic_cast<const XFESpace<3,3> * >(spaces[1]);
-                bool elcut = sD ? 
-                    (spacetime ? xfes23->IsElementCut(elnr) 
-                     : xfes22->IsElementCut(elnr) )
-                    :(spacetime ? xfes34->IsElementCut(elnr) 
-                      : xfes33->IsElementCut(elnr) );
+          const XFESpace<2,2>* xfes22 = NULL;
+          const XFESpace<2,3>* xfes23 = NULL;
+          const XFESpace<3,3>* xfes33 = NULL;
+          const XFESpace<3,4>* xfes34 = NULL;
+          const int sD = ma.GetDimension();
+          if (sD == 2)
+            if (spacetime)
+              xfes23 = dynamic_cast<const XFESpace<2,3> * >(spaces[1]);
+            else
+              xfes22 = dynamic_cast<const XFESpace<2,2> * >(spaces[1]);
+          else
+            if (spacetime)
+              xfes34 = dynamic_cast<const XFESpace<3,4> * >(spaces[1]);
+            else
+              xfes33 = dynamic_cast<const XFESpace<3,3> * >(spaces[1]);
+          bool elcut = sD ? 
+            (spacetime ? xfes23->IsElementCut(elnr) 
+             : xfes22->IsElementCut(elnr) )
+            :(spacetime ? xfes34->IsElementCut(elnr) 
+              : xfes33->IsElementCut(elnr) );
             
-                GetDofNrs(elnr,dnums);
-                if (elcut)
-                    for (int i = 0; i < dnums.Size(); ++i)
-                    {
-                        if (!mark.Test(dnums[i]))
-                        {
-                            mark.Set(dnums[i]);
-                            epcnt++;
-                        }
-                    }
-        
-            }
-            std::cout << " epcnt = " << epcnt << std::endl;
-
-            Array<int> & clusters = *new Array<int> (GetNDof());
-            clusters = 0;
-
-            for (int i = 0; i < GetNDof(); i++)
+          GetDofNrs(elnr,dnums);
+          if (elcut)
+            for (int i = 0; i < dnums.Size(); ++i)
             {
-                if (mark.Test(i)) clusters[i] = 1;
+              if (!mark.Test(dnums[i]))
+              {
+                mark.Set(dnums[i]);
+                epcnt++;
+              }
             }
-
-            const BitArray & freedofs = *GetFreeDofs();
-            for (int i = 0; i < freedofs.Size(); i++)
-                if (!freedofs.Test(i)) clusters[i] = 0;
-            *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
-            return &clusters;
+        
         }
+        std::cout << " epcnt = " << epcnt << std::endl;
+
+        Array<int> & clusters = *new Array<int> (GetNDof());
+        clusters = 0;
+
+        for (int i = 0; i < GetNDof(); i++)
+        {
+          if (mark.Test(i)) clusters[i] = 1;
+        }
+
+        const BitArray & freedofs = *GetFreeDofs();
+        for (int i = 0; i < freedofs.Size(); i++)
+          if (!freedofs.Test(i)) clusters[i] = 0;
+        *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
+        return &clusters;
+      }
     }
   }
 
