@@ -30,6 +30,9 @@ namespace ngcomp
   SpaceTimePreconditioner :: ~SpaceTimePreconditioner ()
   {
     delete AssBlock;
+    delete InvAssBlock;
+    // delete blockjacobixtable;
+    delete blockjacobix;
     ;
   }
   
@@ -56,11 +59,15 @@ namespace ngcomp
 
     const FESpace & fesh1x = bfa->GetFESpace();
     const FESpace & fesh1 = *((dynamic_cast<const CompoundFESpace &>(fesh1x))[0]);
+    const FESpace & fesx = *((dynamic_cast<const CompoundFESpace &>(fesh1x))[1]);
 
     const MeshAccess & ma = fesh1.GetMeshAccess();
 
     int ndof_h1 = fesh1.GetNDof();
     int ndof_x = fesh1x.GetNDof() - fesh1.GetNDof();
+    int ndof = fesh1x.GetNDof();
+
+    Array<int> dnums;
 
     TableCreator<int> creator(ma.GetNE());
     for ( ; !creator.Done(); creator++)
@@ -71,7 +78,6 @@ namespace ngcomp
         int i = ei.Nr();
         ELEMENT_TYPE eltype = ma.GetElType(ei); 
       
-        Array<int> dnums;
         fesh1.GetDofNrs(i,dnums);
         for (int j = 0; j < dnums.Size(); ++j)
           creator.Add(i,dnums[j]);
@@ -117,11 +123,39 @@ namespace ngcomp
 	    }
     }
 
+
+    TableCreator<int> creator2(ndof_x/2);
+    for ( ; !creator2.Done(); creator2++)
+    {    
+      
+      int nv = ma.GetNV();
+      int cnt = 0;
+      for (int i = 0; i < nv; i++)
+      {
+        fesx.GetVertexDofNrs(i,dnums);
+        // std::cout << " dnums = " << dnums << std::endl;
+        if (dnums.Size()==0) continue;
+        for (int j = 0; j < dnums.Size(); ++j)
+          creator2.Add(cnt, ndof_h1 + dnums[j]);
+        cnt++;
+      }
+
+      // for (int i = 0; i < ndof_x; ++i)
+      // {	
+      //   creator2.Add(i, ndof_h1+i);
+      // }
+    }
+
+    delete blockjacobix; //also deletes the table
+    blockjacobixtable= creator2.GetTable();
+    // std::cout << " *blockjacobixtable = " << *blockjacobixtable << std::endl;
+    blockjacobix = new BlockJacobiPrecond<double> (mat, *blockjacobixtable);
+
     delete InvAssBlock;
     dynamic_cast<BaseSparseMatrix&> (*AssBlock) . SetInverseType (inversetype);
     InvAssBlock = AssBlock->InverseMatrix(fesh1.GetFreeDofs());
 
-
+    delete & element2dof;
   }
 
 
@@ -138,13 +172,26 @@ namespace ngcomp
     const FlatVector<double> fvf =f.FVDouble();
     FlatVector<double> fu =u.FVDouble();
     
-    FlatVector<double> fh1(ndof_h1,&fvf(0));
-    FlatVector<double> uh1(ndof_h1,&fu(0));
+    VFlatVector<double> fh1(ndof_h1,&fvf(0));
+    VFlatVector<double> uh1(ndof_h1,&fu(0));
     
+    // std::cout << " fh1 = " << fh1 << std::endl;
+    // std::cout << " uh1 = " << uh1 << std::endl;
+    // getchar();
+    u = 0.0;
+
+    // u = f;
+    u = *blockjacobix * f;
+    // uh1 = 0.0;
+    // std::cout << " f = " << f << std::endl;
+    // std::cout << " u = " << u << std::endl;
+    // getchar();
+    uh1 += *InvAssBlock * fh1;
+    // // std::cout << " f = " << f << std::endl;
+    // std::cout << " u = " << u << std::endl;
+    // getchar();
     
-
-    fu = fvf;
-
+    u=f;
 
   }
 

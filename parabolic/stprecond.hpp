@@ -22,7 +22,8 @@ class SpaceTimePreconditioner : public Preconditioner
   SparseMatrix<double> * AssBlock = NULL;
   BaseMatrix * InvAssBlock = NULL;
   string inversetype = "pardiso";
-
+  Table<int> * blockjacobixtable = NULL;
+  BaseBlockJacobiPrecond * blockjacobix = NULL;
   //Vector xdiag;
 
   const BitArray * freedofs;
