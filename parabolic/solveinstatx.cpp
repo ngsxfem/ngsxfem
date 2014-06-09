@@ -182,12 +182,12 @@ public:
     coef_bndneg = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_neg", "bndneg"));
     coef_bndpos = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_pos", "bndpos"));
 
-    coef_aneg = new ConstantCoefficientFunction(aneg);
-    coef_apos = new ConstantCoefficientFunction(apos);
-    coef_bneg = new ConstantCoefficientFunction(bneg);
-    coef_bpos = new ConstantCoefficientFunction(bpos);
-    coef_abneg = new ConstantCoefficientFunction(aneg*bneg);
-    coef_abpos = new ConstantCoefficientFunction(apos*bpos);
+    coef_aneg = new ConstantCoefficientFunction(aneg/bneg);
+    coef_apos = new ConstantCoefficientFunction(apos/bpos);
+    coef_bneg = new ConstantCoefficientFunction(1.0/bneg);
+    coef_bpos = new ConstantCoefficientFunction(1.0/bpos);
+    coef_abneg = new ConstantCoefficientFunction(aneg/bneg);
+    coef_abpos = new ConstantCoefficientFunction(apos/bpos);
 
     coef_lambda = new ConstantCoefficientFunction(lambda);
     coef_delta = new ConstantCoefficientFunction(delta);
@@ -209,9 +209,10 @@ public:
     lfrhs = CreateLinearForm(fes,"lfrhs",lflags);
 
     Flags empty;
-    empty.SetFlag ("type", "local");
+    empty.SetFlag ("type", "spacetime");
+    // empty.SetFlag ("type", "local");
     // empty.SetFlag ("type", "bddc");
-    // empty.SetFlag ("block");
+    empty.SetFlag ("block");
     empty.SetFlag ("fespace", fesstr.c_str());
     empty.SetFlag ("bilinearform", "bftau");
     empty.SetFlag ("laterupdate");
@@ -298,8 +299,8 @@ public:
     Array<CoefficientFunction *> coefs_xnitsche(minimal_stabilization ? 6 : 7);
     coefs_xnitsche[0] = coef_aneg;
     coefs_xnitsche[1] = coef_apos;
-    coefs_xnitsche[2] = coef_bneg;
-    coefs_xnitsche[3] = coef_bpos;
+    coefs_xnitsche[2] = coef_one;
+    coefs_xnitsche[3] = coef_one;
     if (minimal_stabilization)
       {
         coefs_xnitsche[4] = coef_told;
@@ -437,7 +438,7 @@ public:
 		
             localprec->Update();
             itinvmat = new GMRESSolver<double> (mata, *localprec);
-            // invmat.SetPrintRates(true);
+            itinvmat->SetPrintRates(true);
             itinvmat->SetMaxSteps(10000);
             itinvmat->SetPrecision(1e-6);
 	  }
@@ -502,7 +503,7 @@ public:
 
         xfes.XToNegPos(*gfu,*gfu_vis);
 
-        lfi_tr->ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, bneg, bpos);
+        lfi_tr->ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, 1.0/bneg, 1.0/bpos);
         Ng_Redraw ();
 	  
         if (userstepping)

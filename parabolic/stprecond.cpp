@@ -163,7 +163,7 @@ namespace ngcomp
 
     delete blockjacobix; //also deletes the table
     blockjacobixtable= creator2.GetTable();
-    std::cout << " *blockjacobixtable = " << *blockjacobixtable << std::endl;
+    // std::cout << " *blockjacobixtable = " << *blockjacobixtable << std::endl;
     blockjacobix = new BlockJacobiPrecond<double> (mat, *blockjacobixtable);
 
     delete InvAssBlock;

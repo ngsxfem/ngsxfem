@@ -23,27 +23,27 @@ define constant zero = 0.0
 define constant one = 1.0
 
 define constant bneg = 1.0
-define constant bpos = 2.0
+define constant bpos = 5.0
 
-define constant wx = 0.1
+define constant wx = 0.0
 define constant wy = 0.0
 
-define constant x0 = 0.3333333333333
+define constant x0 = 0.57
 define constant y0 = 0.5
 
 define constant R = 0.23
 
 define coefficient bconvneg
-(bneg*wx,bpos*wy),
+(1.0/bneg*wx,1.0/bneg*wy),
 
 define coefficient bconvpos
-(bneg*wx,bpos*wy),
+(1.0/bpos*wx,1.0/bpos*wy),
 
 define coefficient binineg
-(1),
+(1.0*bneg),
 
 define coefficient binipos
-(0),
+(0.0*bpos),
 
 define coefficient brhsneg
 (0),
@@ -55,7 +55,8 @@ define coefficient bndneg
 (0),
 
 define coefficient bndpos
-(0.1*sin(10*pi*z)*exp(-50*(x-z)*(x-z))),
+0,
+#(bpos*0.1*sin(10*pi*z)*exp(-50*(x-z)*(x-z))),
 
 define fespace fesh1
        -type=spacetimefes 
@@ -63,9 +64,28 @@ define fespace fesh1
        -order_space=1
        -order_time=1
        -dirichlet=[1,2]
+       # -dgjumps
 
 define coefficient coef_lset
 ((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
+
+define fespace fescomp
+       -type=xh1fespace
+       -spacetime 
+       -type_space=h1ho
+       -order_space=1
+       -order_time=1
+       -t0=0.0
+       -t1=0.01
+       -dirichlet=[1,2]
+       -vmax=0.1
+       -ref_space=0
+       -ref_time=0
+       # -dgjumps
+
+numproc informxfem npix 
+        -xh1fespace=fescomp
+        -coef_levelset=coef_lset
 
 define fespace fesx
        -type=xfespace
@@ -77,6 +97,7 @@ define fespace fesx
        -vmax=0.1
        -ref_space=0
        -ref_time=0
+       # -dgjumps
 
 define fespace fescl 
        -type=lsetcontfespace
@@ -91,9 +112,9 @@ numproc informxfem npix
         -lsetcontfespace=fescl
         -coef_levelset=coef_lset
 
-define fespace fescomp
-       -type=compound
-       -spaces=[fesh1,fesx]
+# define fespace fescomp2
+#        -type=compound
+#        -spaces=[fesh1,fesx]
 
 
 define gridfunction u -fespace=fescomp
@@ -117,19 +138,19 @@ numproc stx_solveinstat npsi
         -fespacevis=fesnegpos
         -dt=0.01
         -tend=1.0
-#        -userstepping
+       #-userstepping
         -aneg=0.02
         -apos=0.05
         -bneg=1.0
-        -bpos=2.0
+        -bpos=5.0
         -lambda=20.0
-        # -pause_after_step=0
+        # -pause_after_step=1
         -solution_n=zero
         -solution_p=zero
-#        -direct
-#        -ghostpenalty
+        #-direct
+        # -ghostpenalty
 #        -delta=0.005
-#        -minimal_stabilization
+      -minimal_stabilization
 
 # define bilinearform evalx_past -fespace=fescomp -nonassemble
 # stxvis_past one
