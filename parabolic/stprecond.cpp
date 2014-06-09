@@ -72,7 +72,9 @@ namespace ngcomp
 
     Array<int> dnums;
 
-    TableCreator<int> creator(ma.GetNE());
+    bool dgcoupl = fesh1x.UsesDGCoupling();
+
+    TableCreator<int> creator(dgcoupl ? ma.GetNE() + ma.GetNFacets() : ma.GetNE());
     for ( ; !creator.Done(); creator++)
     {    
       for (ElementId ei : ma.Elements(VOL))
@@ -84,6 +86,30 @@ namespace ngcomp
         fesh1.GetDofNrs(i,dnums);
         for (int j = 0; j < dnums.Size(); ++j)
           creator.Add(i,dnums[j]);
+      }
+
+
+      if (dgcoupl)
+      {
+        Array<int> nbelems;
+        Array<int> elnums;
+        //add dofs of neighbour elements as well
+        for (int i = 0; i < ma.GetNFacets(); i++)
+        {
+          nbelems.SetSize(0);
+          ma.GetFacetElements(i,elnums);
+          for (int k=0; k<elnums.Size(); k++)
+            nbelems.Append(elnums[k]);
+          
+          for (int k=0;k<nbelems.Size();k++){
+            int elnr=nbelems[k];
+            // if (!fesh1.DefinedOn (ma.GetElIndex(elnr))) continue;
+            fesh1.GetDofNrs (elnr, dnums);
+            for (int j = 0; j < dnums.Size(); j++)
+              if (dnums[j] != -1)
+                creator.Add (ma.GetNE()+i, dnums[j]);
+          }
+        }
       }
     }
 
