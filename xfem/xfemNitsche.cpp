@@ -32,8 +32,8 @@ namespace ngfem
 
     elmat = 0.0;
     
-    if (D==3)
-      throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
+    // if (D==3)
+    //   throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
 
     if (!xfe) 
     {
@@ -473,8 +473,8 @@ namespace ngfem
 
     elmat = 0.0;
     
-    if (D==3)
-      throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
+    // if (D==3)
+    //   throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
 
     if (!xfe) 
     {
@@ -827,8 +827,8 @@ namespace ngfem
       scafe = &(dynamic_cast<const ScalarFiniteElement<D>& >(xfe[1]->GetBaseFE()));
 
     
-    if (D==3)
-      throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
+    // if (D==3)
+    //   throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
 
     int p = scafe->Order();
 
