@@ -35,12 +35,14 @@ namespace ngfem
     const CoefficientFunction * coef_p = NULL;
     const CoefficientFunction * coef_d_n = NULL;
     const CoefficientFunction * coef_d_p = NULL;
+    const CoefficientFunction * coef_jumprhs = NULL;
     const CoefficientFunction * lset = NULL;
     bool made_coef_n = false;
     bool made_coef_p = false;
     bool made_coef_d_n = false;
     bool made_coef_d_p = false;
     bool made_lset = false;
+    bool made_jumprhs = false;
 
   public:
     // SolutionCoefficients(const CoefficientFunction * a_coef_n,
@@ -56,12 +58,14 @@ namespace ngfem
     bool HasSolutionDNeg() { return ! (coef_d_n == NULL); }
     bool HasSolutionDPos() { return ! (coef_d_p == NULL); }
     bool HasLevelSet() { return ! (lset == NULL); }
+    bool HasJumpRhs() { return ! (coef_jumprhs == NULL); }
 
     const CoefficientFunction & GetSolutionNeg() { return *coef_n; }
     const CoefficientFunction & GetSolutionPos() { return *coef_p; }
     const CoefficientFunction & GetSolutionDNeg() { return *coef_d_n; }
     const CoefficientFunction & GetSolutionDPos() { return *coef_d_p; }
     const CoefficientFunction & GetLevelSet() { return *lset; }
+    const CoefficientFunction & GetJumpRhs() { return *coef_jumprhs; }
 
   };
 
@@ -75,6 +79,8 @@ namespace ngfem
     Array<double> h1err_n;
     Array<double> h1err;
     Array<double> iferr;  
+    Array<double> ifdudnerr;  
+    Array<double> ifsigmanerr;  
 
     ErrorTable();
 
@@ -87,6 +93,8 @@ namespace ngfem
       h1err_n.SetSize(0);
       h1err.SetSize(0);  
       iferr.SetSize(0);  
+      ifdudnerr.SetSize(0);  
+      ifsigmanerr.SetSize(0);  
     }
   };
 
@@ -95,6 +103,8 @@ namespace ngfem
                    GridFunction * gfu2, 
                    SolutionCoefficients<D> & solcoef, 
                    int intorder, 
+                   double a_neg, 
+                   double a_pos, 
                    double b_neg, 
                    double b_pos, 
                    double time, 

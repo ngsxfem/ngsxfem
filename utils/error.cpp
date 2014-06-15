@@ -74,6 +74,9 @@ namespace ngfem
     made_lset = MakeHigherDimensionCoefficientFunction<D>(
       pde.GetCoefficientFunction(flags.GetStringFlag("levelset",""),true),
       lset);
+    made_jumprhs = MakeHigherDimensionCoefficientFunction<D>(
+      pde.GetCoefficientFunction(flags.GetStringFlag("jumprhs",""),true),
+      coef_jumprhs);
   }
   
   template<int D>
@@ -84,6 +87,7 @@ namespace ngfem
     if (made_coef_d_n) delete &(GetSolutionDNeg());
     if (made_coef_d_p) delete &(GetSolutionDPos());
     if (made_lset) delete &(GetLevelSet());
+    if (made_jumprhs) delete &(GetJumpRhs());
   }
 
   template class SolutionCoefficients<2>;
@@ -105,6 +109,7 @@ namespace ngfem
                    GridFunction * gfu2, 
                    SolutionCoefficients<D> & solcoef, 
                    int intorder, 
+                   double a_neg, double a_pos, 
                    double b_neg, double b_pos, 
                    double time, 
                    ErrorTable & errtab, 
@@ -114,7 +119,7 @@ namespace ngfem
     // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
     Array<int> dnums2;
-    int activeels = 0;
+    // int activeels = 0;
     double l2diff_n = 0;
     double l2diff_p = 0;
     double l2diff = 0;
@@ -122,6 +127,8 @@ namespace ngfem
     double h1diff_p = 0;
     double h1diff = 0;
     double ifjumpl2 = 0;
+    double ifdudnl2 = 0;
+    double ifsigmanl2 = 0;
 
     double mass_n = 0;
     double mass_p = 0;
@@ -212,6 +219,10 @@ namespace ngfem
       FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
       FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
       FlatMatrixFixWidth<D> dshapex(ndof_x,&dshape_total(ndof,0));
+
+      FlatVector<> dshapen_total(ndof_total,lh);
+      FlatVector<> dshapen(ndof,&dshapen_total(0));
+      FlatVector<> dshapenx(ndof_x,&dshapen_total(ndof));
 
       int ndof_x2 = xfe2!=NULL ? xfe2->GetNDof() : 0;
       int ndof2 = gfu2 == NULL ? 0 : (spacetime ? scastfe2->GetNDof() : scafe2->GetNDof());
@@ -346,6 +357,10 @@ namespace ngfem
         else
         {
 
+          IntegrationPoint ipc(0.0,0.0,0.0);
+          MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
+          const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+
           FlatVector<> jump(ndof_total,lh);
 
           const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
@@ -379,8 +394,109 @@ namespace ngfem
                 jump(ndof+l) *= b_pos;
             }
             
-            const double jumpval = InnerProduct(jump,elvec);
+            double jumpval = InnerProduct(jump,elvec);
+            if (solcoef.HasJumpRhs())
+              jumpval -= solcoef.GetJumpRhs().Evaluate(mip);
+
             ifjumpl2 += weight * sqr(jumpval);
+
+
+            if (!spacetime)
+            {
+              scafe->CalcMappedDShape(mip, dshape);
+              if (gfu2)
+                scafe2->CalcMappedDShape(mip, dshape2);
+            }
+            else
+            {
+              scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
+              if (gfu2)
+                scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
+            }
+
+            dshapex = dshape;
+
+            double kappa_neg = xgeom.kappa[NEG];
+            double kappa_pos = xgeom.kappa[POS];
+
+            dshapen = (a_pos*kappa_pos+a_neg*kappa_neg) * (dshape * normal);
+            dshapenx = dshape * normal;
+
+            for (int l = 0; l < ndof_x; ++l)
+              if (xfe->GetSignsOfDof()[l] == NEG)
+                dshapenx(l) *= kappa_neg * a_neg;
+              else
+                dshapenx(l) *= kappa_pos * a_pos;
+
+
+            double discdnval = InnerProduct(dshapen_total,elvec);
+
+            Vec<D> soldvalneg;
+            Vec<D> soldvalpos;
+            if (gfu2)
+            {
+              cout << " no H^-1/2 - norm for gfu2 yet" << endl;
+              // dshapex2 = dshape2;
+
+              // for (int l = 0; l < ndof_x2; ++l)
+              // {
+              //   if (xfe2->GetSignsOfDof()[l] != dt)
+              //   {
+              //     dshapex2.Row(l) = 0.0;
+              //   }
+              // }
+              // solval = InnerProduct(shape_total2,elvec2);
+              // soldval = Trans(dshape_total2) * elvec2;
+
+            }
+            else
+            {
+              if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
+              {
+                // if (dt == POS)
+                solcoef.GetSolutionDPos().Evaluate(mip,soldvalpos);
+                // else
+                solcoef.GetSolutionDNeg().Evaluate(mip,soldvalneg);
+              }
+              else
+              {
+                // if (dt == POS)
+                CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionPos()),mip,time,soldvalpos,lh);
+                // else
+                CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionNeg()),mip,time,soldvalneg,lh);
+              }
+            }
+            double soldnvalpos = a_pos * InnerProduct(soldvalpos,normal);
+            double soldnvalneg = a_neg * InnerProduct(soldvalneg,normal);
+            
+            if (abs(soldnvalpos-soldnvalneg)/max(abs(soldnvalpos),abs(soldnvalneg)) > 1e-4)
+            {
+              static bool warndudn = false;
+              if (!warndudn)
+              {
+                std::cout << " soldnvalpos = " << soldnvalpos << std::endl;
+                std::cout << " soldnvalneg = " << soldnvalneg << std::endl;
+                cout << "solutions neg/pos do not fit";
+              }
+              warndudn = true;
+            }            
+            
+            double soldnval = kappa_neg * soldnvalneg + kappa_pos * soldnvalpos;
+            
+            ifdudnl2 += weight * sqr(soldnval - discdnval);
+
+            const double ava = a_pos*kappa_pos+a_neg*kappa_neg;
+            const double lam = 2;
+            const double p = 1;
+            // std::cout << " discdnval = " << discdnval << std::endl;
+            discdnval -=  lam*(p+1)/p/h * ava * jumpval;
+            // std::cout << " orig_jumpval = " << orig_jumpval << std::endl;
+            // std::cout << " lam*(p+1)/p/h * ava * orig_jumpval = " << lam*(p+1)/p/h * ava * orig_jumpval << std::endl;
+
+            // std::cout << " discdnval = " << discdnval << std::endl;
+            // std::cout << " soldnval = " << soldnval << std::endl;
+
+            ifsigmanl2 += weight * sqr(soldnval - discdnval);
           }
         }
       } // is xfe 
@@ -471,6 +587,8 @@ namespace ngfem
     }
 
     ifjumpl2 = sqrt(ifjumpl2); errtab.iferr.Append(ifjumpl2);
+    ifdudnl2 = sqrt(ifdudnl2); errtab.ifdudnerr.Append(ifdudnl2);
+    ifsigmanl2 = sqrt(ifsigmanl2); errtab.ifsigmanerr.Append(ifsigmanl2);
     l2diff = l2diff_p + l2diff_n;
     h1diff = h1diff_p + h1diff_n;
     l2diff_p = sqrt(l2diff_p); errtab.l2err_p.Append(l2diff_p);
@@ -495,8 +613,10 @@ namespace ngfem
       cout << setw(12) << "h1_n" << "       |";
       cout << setw(12) << "h1_p" << "       |";
       cout << setw(12) << "h1" << "       |";
-      cout << setw(12) << "ifl2" << endl;
-      for (int i = 0; i < 139; ++i)
+      cout << setw(12) << "ifl2" << "       |";
+      cout << setw(12) << "ifdudnl2" << "        |";
+      cout << setw(12) << "ifsigml2" << endl;
+      for (int i = 0; i < 174; ++i)
         cout << "-";
       cout << endl;
 
@@ -568,19 +688,40 @@ namespace ngfem
         cout.setf(ios::fixed);
         cout.precision(2);
         if (N>0 && i==0)
-          cout << "       ";
+          cout << "      |";
         if (i>0)
-          cout << "[" << setw(4) << log(errtab.iferr[i]/errtab.iferr[i-1])/log(0.5) << "] ";
+          cout << "[" << setw(4) << log(errtab.iferr[i]/errtab.iferr[i-1])/log(0.5) << "]| ";
         cout.precision(p);
         cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.ifdudnerr[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "       |";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.ifdudnerr[i]/errtab.ifdudnerr[i-1])/log(0.5) << "]| ";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
+        cout << setw(12) << errtab.ifsigmanerr[i] << " ";
+        cout.setf(ios::fixed);
+        cout.precision(2);
+        if (N>0 && i==0)
+          cout << "       ";
+        if (i>0)
+          cout << "[" << setw(4) << log(errtab.ifsigmanerr[i]/errtab.ifsigmanerr[i-1])/log(0.5) << "] ";
+        cout.precision(p);
+        cout.unsetf(ios::fixed);
+
         cout << endl;
       }
     }
   }
 
-  template void CalcXError<2>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<2> & solcoef, int intorder, 
+  template void CalcXError<2>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<2> & solcoef, int intorder, double a_neg, double a_pos,
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
-  template void CalcXError<3>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<3> & solcoef, int intorder, 
+  template void CalcXError<3>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<3> & solcoef, int intorder, double a_neg, double a_pos,
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
 
 

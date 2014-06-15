@@ -363,6 +363,8 @@ namespace ngcomp
     SolutionCoefficients<D> solcoef;
     double threshold;
     int intorder;
+    double a_pos;
+    double a_neg;
     double b_pos;
     double b_neg;
     double time;
@@ -377,6 +379,8 @@ namespace ngcomp
       gfu2 = pde.GetGridFunction (flags.GetStringFlag ("solution2", flags.GetStringFlag("reference","")),true);
       threshold = flags.GetNumFlag ( "threshold", -0.1);
       intorder = (int) flags.GetNumFlag ( "intorder", 2);
+      a_pos = flags.GetNumFlag ( "diffusion_p", 1.0);
+      a_neg = flags.GetNumFlag ( "diffusion_n", 1.0);
       b_pos = flags.GetNumFlag ( "henryweight_p", 1.0);
       b_neg = flags.GetNumFlag ( "henryweight_n", 1.0);
       time = flags.GetNumFlag ( "time", 1.0);
@@ -398,7 +402,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      CalcXError<D>(gfu, gfu2, solcoef, intorder, b_neg, b_pos, time, errtab, lh, true);
+      CalcXError<D>(gfu, gfu2, solcoef, intorder, a_neg, a_pos, b_neg, b_pos, time, errtab, lh, true);
     }    
     
 

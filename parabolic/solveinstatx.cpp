@@ -496,9 +496,9 @@ public:
           static Timer timer ("CalcXError");
           RegionTimer reg (timer);
           if (abs(ti.second - tend) < 1e-6*dt)
-            CalcXError<D>(gfu, NULL, solcoef, 4, bneg, bpos, ti.second, errtab, lh, true);
+            CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, true);
           else
-            CalcXError<D>(gfu, NULL, solcoef, 4, bneg, bpos, ti.second, errtab, lh, false);
+            CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, false);
         }
 
         xfes.XToNegPos(*gfu,*gfu_vis);
