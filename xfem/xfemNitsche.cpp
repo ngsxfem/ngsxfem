@@ -253,6 +253,262 @@ namespace ngfem
 
   }
 
+
+  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
+  void XNitscheRhsJumpIntegrator<D, kappa_choice> ::
+  CalcElementVector (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatVector<double> & elvec,
+		     LocalHeap & lh) const
+  {
+    static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+
+    const XFiniteElement * xfe = NULL;
+    const XDummyFE * dummfe = NULL;
+    const ScalarFiniteElement<D> * scafe = NULL;
+
+    for (int i = 0; i < cfel.GetNComponents(); ++i)
+    {
+      if (xfe==NULL)
+        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
+      if (dummfe==NULL)
+        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
+      if (scafe==NULL)
+        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+    }
+
+    elvec = 0.0;
+    
+    // if (D==3)
+    //   throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
+
+    if (!xfe) 
+    {
+      if(dummfe)
+        return;
+      else
+        throw Exception(" not containing X-elements?");
+    }
+
+    int ndof_x = xfe->GetNDof();
+    int ndof_h1 = scafe->GetNDof();
+    int ndof = ndof_h1+ndof_x;
+    FlatVector<> jump(ndof,lh);
+    FlatVector<> shape_total(ndof,lh);
+    FlatVector<> shape(ndof_h1,&shape_total(0));
+    FlatVector<> shape_x(ndof_x,&shape_total(ndof_h1));
+    FlatMatrixFixWidth<D> dshape_h1(ndof_h1,lh);
+    FlatMatrixFixWidth<D> dshape_x(ndof_x,lh);
+    FlatVector<> dshape(ndof,lh);
+
+    FlatVector<> Nc(ndof,lh);
+    FlatVector<> Ns(ndof,lh);
+    FlatMatrix<> A(ndof,ndof,lh);
+
+    FlatMatrix<> Lsys(ndof+2,ndof+2,lh);
+    FlatMatrix<> L(ndof,ndof,lh); // lifting matrix
+
+    ablockintegrator-> CalcElementMatrix (base_fel,
+                                          eltrans, 
+                                          A, lh);
+    Ns = 0.0;
+    Nc = 0.0;
+
+    FlatMatrixFixWidth<2> constrb(ndof,lh);
+    constrb = 0.0;
+
+    const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
+    int p = scafe->Order();
+
+    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+    { // calc constrb
+      DOMAIN_TYPE dt = POS;
+      for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+      {
+        const FlatQuadratureRule<D> & fdomquad(fcompr.GetRule(dt));
+        for (int i = 0; i < fdomquad.Size(); ++i)
+        {
+          IntegrationPoint ip(&fdomquad.points(i,0),fdomquad.weights(i));
+          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+
+          shape = scafe->GetShape(ip, lh);
+          shape_x = shape;
+
+          for (int l = 0; l < ndof_x; ++l)
+          {
+            if (xfe->GetSignsOfDof()[l] != dt)
+              shape_x(l) = 0.0;
+          }
+
+          constrb.Col(dt) += mip.GetWeight() * shape_total;
+        } // quad rule
+      }
+    }
+
+    IntegrationPoint ipc(0.0,0.0,0.0);
+    MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
+
+    const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+
+    const double b_t_neg = beta_neg->Evaluate(mipc);
+    const double b_t_pos = beta_pos->Evaluate(mipc);
+    const double a_t_neg = alpha_neg->Evaluate(mipc);
+    const double a_t_pos = alpha_pos->Evaluate(mipc);
+
+    double kappa_neg = 0.5;
+    double kappa_pos = 0.5;
+
+    switch (kappa_choice){
+    case NITSCHE_VARIANTS::HALFHALF:
+      break;
+    case NITSCHE_VARIANTS::HANSBOBETA:
+      {
+        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
+        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
+        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::BETA:
+      {
+        double sum = b_t_neg + b_t_pos;
+        kappa_neg = b_t_pos / sum;
+        kappa_pos = b_t_neg / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::ALPHA:
+      {
+        double sum = a_t_neg + a_t_pos;
+        kappa_neg = a_t_pos / sum;
+        kappa_pos = a_t_neg / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::ALPHABETA:
+      {
+        double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
+        kappa_neg = a_t_pos / b_t_pos / sum;
+        kappa_pos = a_t_neg / b_t_neg / sum;
+        break;
+      }
+    case NITSCHE_VARIANTS::HANSBO:
+    default:
+      {
+        kappa_neg = xgeom.kappa[NEG];
+        kappa_pos = xgeom.kappa[POS];
+        break;	      
+      }
+    }
+
+    const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
+
+
+    for (int i = 0; i < fquad.Size(); ++i)
+    {
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      
+      double rhs = coef_rhs->Evaluate(mip);
+
+      Mat<D,D> Finv = mip.GetJacobianInverse();
+      const double absdet = mip.GetMeasure();
+
+      Vec<D> nref = fquad.normals.Row(i);
+      Vec<D> normal = absdet * Trans(Finv) * nref ;
+      double len = L2Norm(normal);
+      normal /= len;
+
+      const double weight = fquad.weights(i) * len; 
+      
+      const double a_neg = alpha_neg->Evaluate(mip);
+      const double a_pos = alpha_pos->Evaluate(mip);
+      const double b_neg = beta_neg->Evaluate(mip);
+      const double b_pos = beta_pos->Evaluate(mip);
+        
+      shape = scafe->GetShape(mip.IP(), lh);
+      jump.Range(0,ndof_h1) = (b_pos-b_neg) * shape;
+      jump.Range(ndof_h1,ndof) = shape;
+
+      scafe->CalcMappedDShape (mip,dshape_h1);
+
+      dshape.Range(0,ndof_h1) = (a_pos*kappa_pos+a_neg*kappa_neg) * (dshape_h1 * normal);
+      dshape.Range(ndof_h1,ndof) = dshape_h1 * normal;
+
+      for (int l = 0; l < ndof_x; ++l)
+      {
+        if (xsign[l] == NEG){
+          jump(ndof_h1+l) *= -b_neg;
+          dshape(ndof_h1+l) *= kappa_neg * a_neg;
+        }
+        else{
+          jump(ndof_h1+l) *= b_pos;
+          dshape(ndof_h1+l) *= kappa_pos * a_pos;
+        }
+      }
+
+      double ava = a_pos;
+
+      switch (kappa_choice){
+      case NITSCHE_VARIANTS::HALFHALF:
+        {
+          ava = a_pos*0.5+a_neg*0.5;
+          break;
+        }
+      case NITSCHE_VARIANTS::BETA:
+      case NITSCHE_VARIANTS::ALPHA:
+        {
+          ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
+        }
+      case NITSCHE_VARIANTS::ALPHABETA:
+        {
+          ava = 2*a_pos*a_neg/(a_neg+a_pos);
+          break;
+          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
+          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
+        }
+      case NITSCHE_VARIANTS::HANSBO:
+      default:
+        {
+          ava = a_pos*kappa_pos+a_neg*kappa_neg;
+          break;
+        }
+      }
+
+      Nc -= weight * rhs * dshape;
+      Ns += ava * weight * rhs * jump;
+
+    }
+
+    if (minimal_stabilization)
+    {
+      throw Exception("not yet minstabable");
+      /*
+      Lsys = 0.0;
+
+      Lsys.Cols(0,ndof).Rows(0,ndof) = A;
+      Lsys.Cols(ndof,ndof+2).Rows(0,ndof) = constrb;
+      Lsys.Rows(ndof,ndof+2).Cols(0,ndof) = Trans(constrb);
+      LapackInverse (Lsys);
+
+      L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
+      */
+      // elvec = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ p/h * Ns; 
+
+      // elvec += 1.5 * Trans(L) * A * L;
+    }
+    else
+      elvec = Nc + lam*(p+1)/p/h * Ns;
+      // elvec = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
+      // elmat = lam*(p+1)/p/h * Ns; 
+
+  }
+
   template <int D>
   void CalcSTCrazyKappaCoeffs( const FlatXLocalGeometryInformation & xgeom, const ElementTransformation & eltrans, const double tau, double & kappa_neg, double & kappa_pos, LocalHeap & lh)
 
@@ -740,6 +996,22 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitsche3d_4 ("xnitsche_beta", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_5 ("xnitsche_alpha", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche3d_6 ("xnitsche_alphabeta", 3, 5);
+
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitscherhsjump2d_1 ("xnitscherhsjump_halfhalf", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump2d_2 ("xnitscherhsjump_hansbo", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump2d_2b ("xnitscherhsjump", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitscherhsjump2d_3 ("xnitscherhsjump_hansbobeta", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitscherhsjump2d_4 ("xnitscherhsjump_beta", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitscherhsjump2d_5 ("xnitscherhsjump_alpha", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitscherhsjump2d_6 ("xnitscherhsjump_alphabeta", 2, 6);
+                                              
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitscherhsjump3d_1 ("xnitscherhsjump_halfhalf", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump3d_2 ("xnitscherhsjump_hansbo", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump3d_2b ("xnitscherhsjump", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitscherhsjump3d_3 ("xnitscherhsjump_hansbobeta", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitscherhsjump3d_4 ("xnitscherhsjump_beta", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitscherhsjump3d_5 ("xnitscherhsjump_alpha", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitscherhsjump3d_6 ("xnitscherhsjump_alphabeta", 3, 6);
 
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initx_min_stab_nitsche2d_1 ("xnitsche_minstab_halfhalf", 2, 4);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initx_min_stab_nitsche2d_2 ("xnitsche_minstab_hansbo", 2, 4);
