@@ -1,9 +1,9 @@
 
 # load geometry
-geometry = d1_simple.in2d
+geometry = d5_simple.in2d
 
 # and mesh
-mesh = d1_simple.vol.gz
+mesh = d5_simple.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -15,7 +15,7 @@ define constant one = 1.0
 define constant two = 2.0
 
 #geometry constants
-define constant r0 = 0.5
+define constant r0 = 0.33333
 define constant omega = 5
 define constant omega2 = 18  # winkel in grad
 
@@ -29,7 +29,7 @@ define constant omega2 = 18  # winkel in grad
 
 define coefficient lset
 (
-  sqrt(x*x+y*y)-r0
+  sqrt(x*x)-r0
 )
 
 
@@ -37,7 +37,7 @@ numproc draw npd -coefficient=lset -label=levelset
 
 # henry weights
 define constant bneg = 1.0
-define constant bpos = 1.5
+define constant bpos = 1.0
 
 define constant aneg = 1.0
 define constant apos = 1.0
@@ -46,23 +46,42 @@ define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
 define coefficient solpos
-(sin(omega*atan2(x,y)+omega2*pi/180)),
+(abs(x)),
 #((1-1.0/(sqrt(x*x+y*y)))*1.0*sin(omega*(atan2(x,y))+omega2*pi/180)),
 
+# define coefficient solposx
+# ((df)),
+
+# define coefficient solposy
+# ((df)),
+
 define coefficient solneg
-(r0*r0-x*x-y*y),
+r0,
+#(x*x+y*y),
+
+# define coefficient solnegx
+# (bpos/bneg*(df)),
+
+# define coefficient solnegy
+# (bpos/bneg*(df)),
 
 define coefficient rhspos
-(bpos*apos*omega*omega/(x*x+y*y)*sin(omega*atan2(x,y)+omega2*pi/180)),
+0,
+
+#*(omega*omega*(1.0/(x*x+y*y)-1.0/((x*x+y*y)*sqrt(x*x+y*y))) - (1.0/(sqrt(x*x+y*y))-1.0/((x*x+y*y)*sqrt(x*x+y*y))))
 
 define coefficient rhsneg
-(4*aneg),
+0,
+#(-4*aneg),
 
 define coefficient jumprhs 
-(bpos*sin(omega*atan2(x,y)+omega2*pi/180)-bneg*(r0*r0-x*x-y*y)),
+0,
+#(bpos*sin(omega*atan2(x,y)+omega2*pi/180)),#-bneg*(x*x+y*y)),
 
 define coefficient fluxjumprhs
-(-2*aneg*r0), 
+-1,
+#(2*aneg*r0), 
+
 
 
 define constant lambda = 2
@@ -70,7 +89,7 @@ define constant lambda = 2
 define fespace fescomp
        -type=xh1fespace
        -order=1
-       -dirichlet=[1,2]
+       -dirichlet=[2]
        -ref_space=1
 #       -dgjumps
 
@@ -118,7 +137,7 @@ numproc xdifference npxd
         -levelset=lset
         -interorder=5
         -henryweight_n=1
-        -henryweight_p=1.5
+        -henryweight_p=1
         -diffusion_n=1
         -diffusion_p=1
 

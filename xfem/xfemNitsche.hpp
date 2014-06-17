@@ -81,6 +81,40 @@ namespace ngfem
 
 
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
+  class XNitscheRhsFluxJumpIntegrator : public LinearFormIntegrator
+  {
+    CoefficientFunction * beta_neg;
+    CoefficientFunction * beta_pos;
+    CoefficientFunction * coef_rhs;
+  public:
+    XNitscheRhsFluxJumpIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : beta_neg(coeffs[0]),beta_pos(coeffs[1]), 
+        coef_rhs(coeffs[2])
+    { 
+    }
+
+    virtual ~XNitscheRhsFluxJumpIntegrator()
+    { 
+    }
+
+    virtual string Name () const { return "XNitscheRhsFluxJumpIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementVector (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatVector<double> & elvec,
+                       LocalHeap & lh) const;
+
+  };
+
+  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class XNitscheRhsJumpIntegrator : public LinearFormIntegrator
   {
     CoefficientFunction * alpha_neg;
