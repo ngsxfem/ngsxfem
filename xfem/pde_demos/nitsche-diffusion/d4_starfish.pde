@@ -14,24 +14,18 @@ define constant zero = 0.0
 define constant one = 1.0
 define constant two = 2.0
 
+define constant C1 = 1.0
+define constant C2 = 1.0
+
 #geometry constants
 define constant r0 = 0.5
 define constant omega = 5
-define constant omega2 = 18  # winkel in grad
-
-# define constant omega = 0
-# define constant omega2 = 90 # winkel in grad
-
-# define coefficient lset
-# (
-#   sqrt(x*x+y*y)-(r0+0.2*sin(omega*atan2(x,y)))
-# )
+define constant omega2 = 0  # winkel in grad
 
 define coefficient lset
 (
-  sqrt(x*x+y*y)-r0
+ sqrt(x*x+y*y)-(r0+0.2*sin(omega*atan2(x,y)))
 )
-
 
 numproc draw npd -coefficient=lset -label=levelset 
 
@@ -39,31 +33,43 @@ numproc draw npd -coefficient=lset -label=levelset
 define constant bneg = 1.0
 define constant bpos = 1.5
 
-define constant aneg = 1.0
+define constant aneg = 2.0
 define constant apos = 1.0
 
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
 define coefficient solpos
-(sin(omega*atan2(x,y)+omega2*pi/180)),
+(C1*sin(omega*atan2(x,y)+omega2*pi/180)),
 #((1-1.0/(sqrt(x*x+y*y)))*1.0*sin(omega*(atan2(x,y))+omega2*pi/180)),
 
 define coefficient solneg
-(r0*r0-x*x-y*y),
+(C2*(x*x+y*y)),
 
 define coefficient rhspos
-(bpos*apos*omega*omega/(x*x+y*y)*sin(omega*atan2(x,y)+omega2*pi/180)),
+(bpos*C1*apos*omega*omega/(x*x+y*y)*sin(omega*atan2(x,y)+omega2*pi/180)),
 
 define coefficient rhsneg
-(4*aneg),
+(-bneg*4*C2*aneg),
 
 define coefficient jumprhs 
-(bpos*sin(omega*atan2(x,y)+omega2*pi/180)-bneg*(r0*r0-x*x-y*y)),
+(bpos*C1*sin(omega*atan2(x,y)+omega2*pi/180)-bneg*C2*(x*x+y*y)),
 
 define coefficient fluxjumprhs
-(-2*aneg*r0), 
-
+(
+  (sqrt(x*x+y*y)/
+   (
+    sqrt(
+         1+(omega/5.0*cos(omega*atan2(x,y)))/(r0+0.2*sin(omega*atan2(x,y)))*(omega/5.0*cos(omega*atan2(x,y)))/(r0+0.2*sin(omega*atan2(x,y)))
+        )
+   )
+  )
+  *
+  (
+   aneg*2*C2+apos*omega*C1*cos(omega*atan2(x,y)+omega2*pi/180)*(omega/5.0*cos(omega*atan2(x,y)))/(r0+0.2*sin(omega*atan2(x,y)))*1.0/(x*x+y*y)
+  )
+)
+,
 
 define constant lambda = 2
 
@@ -84,6 +90,7 @@ define linearform f -fespace=fescomp # -print
 xsource rhsneg rhspos
 xnitscherhsjump_hansbo aneg apos bneg bpos jumprhs lambda
 xnitscherhsfluxjump_hansbo bneg bpos fluxjumprhs
+
 # xsource solneg solpos
 
 define bilinearform a -fespace=fescomp -printelmat #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
