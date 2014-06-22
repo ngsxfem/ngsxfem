@@ -102,6 +102,119 @@ namespace ngfem
 
 
   template<int D>
+  void XConvectionIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatMatrix<double> & elmat,
+		     LocalHeap & lh) const
+  {
+    static Timer timer ("XConvectionIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+
+    const XFiniteElement * xfe = NULL;
+    const XDummyFE * dummfe = NULL;
+    const ScalarFiniteElement<D> * scafe = NULL;
+
+    for (int i = 0; i < cfel.GetNComponents(); ++i)
+    {
+      if (xfe==NULL)
+        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
+      if (dummfe==NULL)
+        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
+      if (scafe==NULL)
+        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+    }
+    
+    elmat = 0.0;
+
+    if (!xfe && !dummfe) 
+      throw Exception(" not containing X-elements?");
+
+    int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
+    int ndof = scafe->GetNDof();
+    int ndof_total = ndof+ndof_x;
+    FlatMatrixFixWidth<D> dshape(ndof,lh);
+
+    FlatVector<> dudwshape_total(ndof_total,lh);
+    FlatVector<> dudwshape(ndof,&dudwshape_total(0));
+    FlatVector<> dudwshapex(ndof_x,&dudwshape_total(ndof));
+
+    FlatVector<> shape_total(ndof_total,lh);
+    FlatVector<> shape(ndof,&shape_total(0));
+    FlatVector<> shapex(ndof_x,&shape_total(ndof));
+
+    int p = scafe->Order();
+    
+    DOMAIN_TYPE dt = POS;
+    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    {
+      if(!xfe)
+      { 
+        if (dummfe->GetDomainType() != dt)
+          continue;
+        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*p);
+        for (int i = 0 ; i < pir.GetNIP(); i++)
+        {
+          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
+          Vec<D> conv;
+          if (dt == POS)
+              conv_pos->Evaluate(mip,conv);
+          else
+              conv_neg->Evaluate(mip,conv);
+
+          scafe->CalcMappedDShape(mip, dshape);
+          scafe->CalcShape(mip.IP(), shape);
+
+          dudwshape = dshape * conv;
+
+          double fac = mip.GetWeight();
+          elmat += fac * shape * Trans(dudwshape);
+        }
+      }
+      else
+      {
+        const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+        const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+        const FlatQuadratureRule<D> & fquad(fcompr.GetRule(dt));
+        for (int i = 0; i < fquad.Size(); ++i)
+        {
+          IntegrationPoint ip(&fquad.points(i,0),fquad.weights(i));
+          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+
+          Vec<D> conv;
+          if (dt == POS)
+              conv_pos->Evaluate(mip,conv);
+          else
+              conv_neg->Evaluate(mip,conv);
+          
+          scafe->CalcMappedDShape(mip, dshape);
+          scafe->CalcShape(mip.IP(), shape);
+
+          shapex = shape;
+          dudwshape = dshape * conv;
+          dudwshapex = dudwshape;
+
+          for (int l = 0; l < ndof_x; ++l)
+          {
+            if (xfe->GetSignsOfDof()[l] != dt)
+            {
+              shapex(l) = 0.0;
+              dudwshapex(l) = 0.0;
+            }
+          }
+
+          double fac = mip.GetWeight();
+          elmat += fac * shape_total * Trans(dudwshape_total);
+        } // quad rule
+      } // if xfe
+    } // loop over domain types
+  }
+
+
+  template<int D>
   void XLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
@@ -186,6 +299,7 @@ namespace ngfem
     } // loop over domain types
   }
 
+
   template<int D>
   void XSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
@@ -195,6 +309,7 @@ namespace ngfem
   {
     static Timer timer ("XSourceIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
+    HeapReset hr(lh);
 
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -449,6 +564,9 @@ namespace ngfem
   template class XLaplaceIntegrator<2>;
   template class XLaplaceIntegrator<3>;
 
+  template class XConvectionIntegrator<2>;
+  template class XConvectionIntegrator<3>;
+
   template class XSourceIntegrator<2>;
   template class XSourceIntegrator<3>;
 
@@ -474,10 +592,9 @@ namespace ngfem
   static RegisterLinearFormIntegrator<XNeumannIntegrator<2> > initxh1neumann2d ("xneumann", 2, 2);
   static RegisterLinearFormIntegrator<XNeumannIntegrator<3> > initxh1neumann3d ("xneumann", 3, 2);
 
-/*
+
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<2> > initxconv2d ("xconvection", 2, 2);
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<3> > initxconv3d ("xconvection", 3, 2);
-*/
 
   /*
   template<int D>

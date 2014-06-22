@@ -70,6 +70,34 @@ namespace ngfem
   };
 
   template <int D>
+  class XConvectionIntegrator : public BilinearFormIntegrator
+  {
+    CoefficientFunction * conv_neg;
+    CoefficientFunction * conv_pos;
+  public:
+    XConvectionIntegrator (const Array<CoefficientFunction*> & coeffs)
+      : conv_neg(coeffs[0]),conv_pos(coeffs[1]) { ; }
+
+    virtual ~XConvectionIntegrator(){ ; };
+
+    virtual string Name () const { return "XConvectionIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> & elmat,
+                       LocalHeap & lh) const;
+
+  };
+
+  template <int D>
   class XSourceIntegrator : public LinearFormIntegrator
   {
     CoefficientFunction * coef_neg;
@@ -95,36 +123,6 @@ namespace ngfem
                        LocalHeap & lh) const;
 
   };
-
-
-/*
-  template <int D>
-  class XConvectionIntegrator : public BilinearFormIntegrator
-  {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
-  public:
-    XConvectionIntegrator (const Array<CoefficientFunction*> & coeffs)
-      : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
-    virtual ~XConvectionIntegrator(){ ; };
-
-    virtual string Name () const { return "XConvectionIntegrator"; }
-
-    virtual int DimElement () const { return D; }
-    virtual int DimSpace () const { return D; }
-    // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
-
-
-    // Calculates the element matrix
-    virtual void
-    CalcElementMatrix (const FiniteElement & fel,
-                       const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
-                       LocalHeap & lh) const;
-
-  };
-*/
 
   template <int D>
   class XRobinIntegrator : public BilinearFormIntegrator
