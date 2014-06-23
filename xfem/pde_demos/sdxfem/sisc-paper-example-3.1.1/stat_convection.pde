@@ -1,5 +1,5 @@
 geometry = square_conv.in2d
-mesh = square_conv_240els.vol.gz
+mesh = square_conv_crs.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -36,14 +36,10 @@ define coefficient one
 
 define gridfunction uh1x -fespace=vh1x
 
-define constant a_n = (2e-7)
-define constant a_p = (1e-7)
+define constant a_n = (2e-5)
+define constant a_p = (1e-5)
 define constant b_n = 3.0
 define constant b_p = 2.0
-
-define constant mm = 0.0 #mass term?!
-define constant mb_n = (b_n*mm)
-define constant mb_p = (b_p*mm)
 
 define constant pen = 1e9
 
@@ -92,12 +88,6 @@ define coefficient lambda
 define coefficient zero
 0,
 
-define coefficient pen
-0,0,0,0,
-
-define coefficient cpen
-0,0,0,0,
-
 define coefficient bw_pos
 (b_p,0),
 
@@ -113,20 +103,8 @@ define coefficient w_neg
 define coefficient sol_n
 (2/3*sin(pi*(x+y)) ),
 
-define coefficient solx_n
-(2/3*pi*cos(pi*(x+y)) ),
-
-define coefficient soly_n
-(2/3*pi*cos(pi*(x+y)) ),
-
 define coefficient sol_p
 (sin(pi*(x+4/3*y)) ),
-
-define coefficient solx_p
-(    pi*cos(pi*(x+4/3*y)) ),
-
-define coefficient soly_p
-(4/3*pi*cos(pi*(x+4/3*y)) ),
 
 define coefficient neu_sol_n
 (2/3*pen*sin(pi*(x+y)) ),
@@ -153,8 +131,6 @@ pen,
 pen,
 
 
-
-
 numproc setvaluesx npsvx -gridfunction=uh1x -coefficient_neg=sol_n -coefficient_pos=sol_p -boundary #-print
 
 define bilinearform m -fespace=vh1x # -symmetric
@@ -171,6 +147,9 @@ xnitsche_hansbo alphaneg alphapos
                 betaneg betapos 
                 lambda
 
+# xnitsche_minstab alphaneg alphapos 
+#                  betaneg betapos 
+
 #xnitscheconv alphaneg alphapos 
 #             betaneg betapos 
 #             w_neg w_pos
@@ -181,9 +160,7 @@ xconvection bw_neg bw_pos
 sdstab betaneg betapos 
        alphaneg alphapos 
        w_neg w_pos 
-       mb_n mb_p
-
-xmass mb_n mb_p
+       zero zero
 
 #lo_ghostpenalty small
 
@@ -196,17 +173,18 @@ xsource brhsneg brhspos
 sdxsource betaneg betapos 
           alphaneg alphapos 
           w_neg w_pos 
-          mb_n mb_p
+          zero zero
           rhsneg rhspos 
 
 define linearform f2 -fespace=vh1x
 xsource rhsneg rhspos
 
-#define preconditioner cb -type=bddc -bilinearform=a -test
-#define preconditioner cl -type=local -bilinearform=a -test
-define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
+#define preconditioner c -type=bddc -bilinearform=a -block #-test
+define preconditioner c -type=local -bilinearform=a #-block #-test
+#define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
+#define preconditioner c -type=direct -bilinearform=a -inverse=sparsecholesky
 
-numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -preconditioner=c -prec=1e-22
+numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=gmres -preconditioner=c -prec=1e-12 -maxsteps=1000
 
 #numproc bvp npx -bilinearform=m -linearform=f2 -gridfunction=uh1x -preconditioner=c
 
@@ -221,6 +199,8 @@ numproc xdifference npxd
         -henryweight_p=2
         -diffusion_n=2e-7
         -diffusion_p=1e-7
+        -convection_n=w_neg
+        -convection_p=w_pos
 
 #numproc xdifference npxd 
 #        -solution=uh1x 
