@@ -59,6 +59,12 @@ namespace ngfem
   template<int D>
   SolutionCoefficients<D>::SolutionCoefficients(PDE & pde, const Flags & flags)
   {
+    made_conv_n = MakeHigherDimensionCoefficientFunction<D>(
+      pde.GetCoefficientFunction(flags.GetStringFlag("convection_n",""), true),
+      conv_n);
+    made_conv_p = MakeHigherDimensionCoefficientFunction<D>(
+      pde.GetCoefficientFunction(flags.GetStringFlag("convection_p",""), true),
+      conv_p);
     made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
       pde.GetCoefficientFunction(flags.GetStringFlag("solution_n","")),
       coef_n);
@@ -332,7 +338,20 @@ namespace ngfem
             double discval = InnerProduct(shape_total,elvec);
             Vec<D> discdval = Trans(dshape_total) * elvec;
             Vec<D> diffdval = soldval - discdval;
-            double diffdsqr = L2Norm2(diffdval);
+            Vec<D> conv;
+
+            double diffdsqr = 0; 
+
+            if (solcoef.HasConvectionNeg() && solcoef.HasConvectionPos())
+            {
+                if (dt == POS)
+                  solcoef.GetConvectionPos().Evaluate(mip,conv);
+                else
+                  solcoef.GetConvectionNeg().Evaluate(mip,conv);
+              diffdsqr = sqr(InnerProduct(diffdval,conv));
+            }
+            else
+              diffdsqr = L2Norm2(diffdval);
 
             double fac = mip.GetWeight();
             if (dt == POS)
@@ -566,7 +585,21 @@ namespace ngfem
           double discval = InnerProduct(shape,elvec);
           Vec<D> discdval = Trans(dshape) * elvec;
           Vec<D> diffdval = soldval - discdval;
-          double diffdsqr = L2Norm2(diffdval);
+
+          Vec<D> conv;
+
+          double diffdsqr = 0; 
+
+          if (solcoef.HasConvectionNeg() && solcoef.HasConvectionPos())
+          {
+            if (dt == POS)
+              solcoef.GetConvectionPos().Evaluate(mip,conv);
+            else
+              solcoef.GetConvectionNeg().Evaluate(mip,conv);
+            diffdsqr = sqr(InnerProduct(diffdval,conv));
+          }
+          else
+            diffdsqr = L2Norm2(diffdval);
 
           double fac = mip.GetWeight();
           if (dt == POS)

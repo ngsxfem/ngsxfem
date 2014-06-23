@@ -31,12 +31,16 @@ namespace ngfem
   class SolutionCoefficients
   {
   protected:
+    const CoefficientFunction * conv_n = NULL;
+    const CoefficientFunction * conv_p = NULL;
     const CoefficientFunction * coef_n = NULL;
     const CoefficientFunction * coef_p = NULL;
     const CoefficientFunction * coef_d_n = NULL;
     const CoefficientFunction * coef_d_p = NULL;
     const CoefficientFunction * coef_jumprhs = NULL;
     const CoefficientFunction * lset = NULL;
+    bool made_conv_n = false;
+    bool made_conv_p = false;
     bool made_coef_n = false;
     bool made_coef_p = false;
     bool made_coef_d_n = false;
@@ -53,6 +57,8 @@ namespace ngfem
     SolutionCoefficients(PDE & pde, const Flags & flags);
     ~SolutionCoefficients();
 
+    bool HasConvectionNeg() { return ! (conv_n == NULL); }
+    bool HasConvectionPos() { return ! (conv_p == NULL); }
     bool HasSolutionNeg() { return ! (coef_n == NULL); }
     bool HasSolutionPos() { return ! (coef_p == NULL); }
     bool HasSolutionDNeg() { return ! (coef_d_n == NULL); }
@@ -60,6 +66,8 @@ namespace ngfem
     bool HasLevelSet() { return ! (lset == NULL); }
     bool HasJumpRhs() { return ! (coef_jumprhs == NULL); }
 
+    const CoefficientFunction & GetConvectionNeg() { return *conv_n; }
+    const CoefficientFunction & GetConvectionPos() { return *conv_p; }
     const CoefficientFunction & GetSolutionNeg() { return *coef_n; }
     const CoefficientFunction & GetSolutionPos() { return *coef_p; }
     const CoefficientFunction & GetSolutionDNeg() { return *coef_d_n; }
