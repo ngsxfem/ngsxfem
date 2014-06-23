@@ -126,7 +126,7 @@ namespace xintegration
 
     for (int k = 0; k < ir.GetNIP(); k++)
     {
-      Vec<2> point = (1.0 - ir[k](0)) * (*s.p[0]) + ir[k](1) * (*s.p[1]);
+      Vec<2> point = ir[k](0) * (*s.p[1]) + (1.0 - ir[k](0)) * (*s.p[0]);
       const double weight = ir[k].Weight() * trafofac;
       quaddom.points.Append(point);
       quaddom.weights.Append(weight);
@@ -1373,7 +1373,7 @@ namespace xintegration
       double valright = (*numint.lset)(right);
 
       const double cutpos = valleft / (valleft - valright);
-      Vec<SD> mid = (1-cutpos) * *(s.p[0]) + cutpos * *(s.p[1]) ;
+      Vec<SD> mid = (1-cutpos) * left + cutpos * right ;
       const Vec<SD> * p = numint.pc(mid);
 
       Array < const Vec<SD> * > leftint(2);
