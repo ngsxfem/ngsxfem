@@ -48,8 +48,8 @@ namespace ngfem
     else
       conv_neg->Evaluate(mip,conv);
 
-    const double vol = (D == 2? 1.0 : 1.0) * mip.GetJacobiDet();
-    const double h = D == 2? sqrt(vol) : cbrt(vol);
+    const double vol = (D == 2? 0.5 : 1.0/6.0) * mip.GetJacobiDet();
+    const double h = D == 2? sqrt(2.0*vol) : cbrt(6.0*vol);
     const double Pe = 0.5 * h/p * convmax / alpha_av;
 
     // if (Pe < 1) {skip = true; continue;}
@@ -409,8 +409,8 @@ namespace ngfem
     else
       conv_neg->Evaluate(mip,conv);
 
-    const double vol = (D == 2? 1.0 : 1.0) * mip.GetJacobiDet();
-    const double h = D == 2? sqrt(vol) : cbrt(vol);
+    const double vol = (D == 2? 0.5 : 1.0/6.0) * mip.GetJacobiDet();
+    const double h = D == 2? sqrt(2.0*vol) : cbrt(6.0*vol);
     const double Pe = 0.5 * h/p * convmax / alpha_av;
 
     // if (Pe < 1) {skip = true; continue;}
@@ -418,7 +418,7 @@ namespace ngfem
 
     scafe->CalcMappedDShape (mip,dshape_h1);
           
-    dudwshape_h1 = dshape * conv;
+    dudwshape_h1 = dshape_h1 * conv;
 
     if (xfe)
     {
