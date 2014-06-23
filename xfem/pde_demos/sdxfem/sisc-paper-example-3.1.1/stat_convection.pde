@@ -1,5 +1,5 @@
 geometry = square_conv.in2d
-mesh = square_conv_crs.vol.gz
+mesh = square_conv_240els.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -36,12 +36,12 @@ define coefficient one
 
 define gridfunction uh1x -fespace=vh1x
 
-define constant a_n = (2e-5)
-define constant a_p = (1e-5)
+define constant a_n = (2e-7)
+define constant a_p = (1e-7)
 define constant b_n = 3.0
 define constant b_p = 2.0
 
-define constant pen = 1e9
+define constant pen = 1e12
 
 define coefficient one
 1,
@@ -107,31 +107,26 @@ define coefficient sol_p
 (sin(pi*(x+4/3*y)) ),
 
 define coefficient neu_sol_n
-(2/3*pen*sin(pi*(x+y)) ),
-(2/3*pen*sin(pi*(x+y)) ),
-(2/3*pen*sin(pi*(x+y)) ),
-(2/3*pen*sin(pi*(x+y)) ),
+(pen*(sol_n) ),
+(pen*(sol_n) ),
+(pen*(sol_n) ),
+(pen*(sol_n) ),
 
 define coefficient neu_sol_p
-(pen*sin(pi*(x+4/3*y)) ),
-(pen*sin(pi*(x+4/3*y)) ),
-(pen*sin(pi*(x+4/3*y)) ),
-(pen*sin(pi*(x+4/3*y)) ),
+(pen*(sol_p) ),
+(pen*(sol_p) ),
+(pen*(sol_p) ),
+(pen*(sol_p) ),
+
+define constant bndpen = 1e12
 
 define coefficient rob_n
-pen,
-pen,
-pen,
-pen,
+(bndpen),(bndpen),(bndpen),(bndpen),
 
 define coefficient rob_p
-pen,
-pen,
-pen,
-pen,
+(bndpen),(bndpen),(bndpen),(bndpen),
 
-
-numproc setvaluesx npsvx -gridfunction=uh1x -coefficient_neg=sol_n -coefficient_pos=sol_p -boundary #-print
+#numproc setvaluesx npsvx -gridfunction=uh1x -coefficient_neg=sol_n -coefficient_pos=sol_p -boundary #-print
 
 define bilinearform m -fespace=vh1x # -symmetric
 xmass b_n b_p 
