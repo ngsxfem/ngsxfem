@@ -228,7 +228,7 @@ namespace ngfem
       }
 
       Nc -= weight * jump * Trans(dshape);
-      Ns += ava * weight * jump * Trans(jump);
+      Ns += 1.0/len * ava * weight * jump * Trans(jump);
 
     }
 
@@ -248,7 +248,7 @@ namespace ngfem
       elmat += 1.5 * Trans(L) * A * L;
     }
     else
-      elmat = Nc + Trans(Nc) + lam*(p+1)*p/h * Ns; 
+      elmat = Nc + Trans(Nc) + lam*(p+1)*p * Ns; 
       // elmat = lam*(p+1)/p/h * Ns; 
 
   }
