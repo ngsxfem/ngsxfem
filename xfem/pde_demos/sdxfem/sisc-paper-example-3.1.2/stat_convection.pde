@@ -22,7 +22,7 @@ numproc draw npd -coefficient=lset -label=levelset
 define fespace vh1x
        -type=xh1fespace
        -order=1
-       -dirichlet=[4]
+#       -dirichlet=[4]
        -ref_space=0
 #       -dgjumps
 
@@ -51,7 +51,7 @@ define constant dp = 0.15
 define constant Bp = 1.0
 define constant Cp = (-log(gamma_tr)/dp)
 
-define constant bndpen = 0e9
+define constant bndpen = 1e9
 
 define coefficient brhsneg
 ( b_n * ( (Bn*Cn/x* (-0.5*y/sqrt(x) - a_n*(Cn-0.25*y/x*(-Cn*y/x-3/sqrt(x))) )) * exp(Cn/sqrt(x)*y)) ),
@@ -148,44 +148,36 @@ xmass b_n b_p
 define coefficient small
 1e-2,
 
-define bilinearform a -fespace=vh1x # -symmetric
-xrobin rob_n rob_p
+define bilinearform a -fespace=vh1x #-symmetric
 xlaplace alphabetaneg alphabetapos 
-xnitsche_hansbo alphaneg alphapos 
+xnitsche_conv alphaneg alphapos 
               betaneg betapos 
               lambda 
-#              w_neg w_pos
-
+             w_neg w_pos
 xconvection bw_neg bw_pos
-
 sdstab betaneg betapos 
        alphaneg alphapos 
        w_neg w_pos 
        zero zero
+xrobin rob_n rob_p
+
 
 #lo_ghostpenalty small
-
 
 define linearform f -fespace=vh1x
 xneumann neu_n neu_p
 xsource brhsneg brhspos
-
 sdxsource betaneg betapos 
           alphaneg alphapos 
           w_neg w_pos 
           zero zero
           rhsneg rhspos 
 
-define linearform f2 -fespace=vh1x
-xsource rhsneg rhspos
-
 #define preconditioner cb -type=bddc -bilinearform=a -test
-define preconditioner c -type=local -bilinearform=a #-test
-#define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
+#define preconditioner c -type=local -bilinearform=a #-test
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
 
-numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=gmres -preconditioner=c -prec=1e-10 -maxsteps=5000 -print
-
-#numproc bvp npx -bilinearform=m -linearform=f2 -gridfunction=uh1x -preconditioner=c
+numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=cg -preconditioner=c -prec=1e-10 -maxsteps=5000 -print
 
 numproc xdifference npxd 
         -solution=uh1x 
@@ -205,44 +197,44 @@ numproc xdifference npxd
 numproc visualization npviz -scalarfunction=uh1x #-comp=0
 
 
-# numproc xoutput npxo 
-#         -solution=u 
-#         -solution_n=solneg 
-#         -solution_p=solpos 
-#         -subdivision=1
-# #        -showerror
-#         -overlapeps=0e-2
+numproc xoutput npxo 
+        -solution=uh1x
+        -solution_n=sol_n
+        -solution_p=sol_p 
+        -subdivision=1
+#        -showerror
+        -overlapeps=0e-2
 
-#         -negcolor=green!40 #2 #white!20!black
-#         -fillnegopacity=1.0
+        -negcolor=green!40 #2 #white!20!black
+        -fillnegopacity=1.0
 
-#         -edgenegcolor=black #2
-#         -edgenegstyle=thick
-#         -drawnegopacity=1.0
+        -edgenegcolor=black #2
+        -edgenegstyle=thick
+        -drawnegopacity=1.0
 
-#         -fineedgenegcolor=white!20!black #2
-#         -fineedgenegstyle=dashed
-#         -fineedgenegopacity=0.3
+        -fineedgenegcolor=white!20!black #2
+        -fineedgenegstyle=dashed
+        -fineedgenegopacity=0.3
 
-#         -poscolor=white!40!black #1
-#         -fillposopacity=0.1
+        -poscolor=white!40!black #1
+        -fillposopacity=0.1
 
-#         -edgeposcolor=black #1
-#         -edgeposstyle=thick
-#         -drawposopacity=1.0
+        -edgeposcolor=black #1
+        -edgeposstyle=thick
+        -drawposopacity=1.0
 
-#         -fineedgeposcolor=black #1
-#         -fineedgeposstyle=dashed
-#         -fineedgeposopacity=0.3
+        -fineedgeposcolor=black #1
+        -fineedgeposstyle=dashed
+        -fineedgeposopacity=0.3
 
-#         -viewpoint=(6.0,9.0,-3.0)
-#         -lookat=(1.0,0.0,1.0)
-#         -scalex=10.0        
-#         -scaley=10.0        
-#         -scalez=2.0
+        -viewpoint=(6.0,9.0,-3.0)
+        -lookat=(1.0,0.0,1.0)
+        -scalex=10.0        
+        -scaley=10.0        
+        -scalez=2.0
 
-#         # -viewpoint=(0.0,5.0,5.0)
-#         # -lookat=(0.0,0.0,0.0)
-#         # -scalex=20.0        
-#         # -scaley=20.0        
-#         # -scalez=0.0
+        # -viewpoint=(0.0,5.0,5.0)
+        # -lookat=(0.0,0.0,0.0)
+        # -scalex=20.0        
+        # -scaley=20.0        
+        # -scalez=0.0

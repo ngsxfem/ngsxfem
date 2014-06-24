@@ -39,7 +39,7 @@ namespace ngfem
 
     const double beta = dt == POS ? beta_pos->Evaluate(mip) : beta_neg->Evaluate(mip);
     const double alpha = dt == POS ? alpha_pos->Evaluate(mip) : alpha_neg->Evaluate(mip);
-    const double alpha_av = 0.5 * (alpha_pos->Evaluate(mip) + alpha_neg->Evaluate(mip));
+    const double alpha_av = xfe ? 0.5 * (alpha_pos->Evaluate(mip) + alpha_neg->Evaluate(mip)) : alpha;
     const double mass = dt == POS ? mass_pos->Evaluate(mip) : mass_neg->Evaluate(mip);
         
     Vec<D> conv;
@@ -398,7 +398,7 @@ namespace ngfem
 
     const double beta = dt == POS ? beta_pos->Evaluate(mip) : beta_neg->Evaluate(mip);
     const double alpha = dt == POS ? alpha_pos->Evaluate(mip) : alpha_neg->Evaluate(mip);
-    const double alpha_av = 0.5 * (alpha_pos->Evaluate(mip) + alpha_neg->Evaluate(mip));
+    const double alpha_av = xfe ? 0.5 * (alpha_pos->Evaluate(mip) + alpha_neg->Evaluate(mip)) : alpha;
     const double mass = dt == POS ? mass_pos->Evaluate(mip) : mass_neg->Evaluate(mip);
 
     const double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
