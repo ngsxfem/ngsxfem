@@ -3,8 +3,8 @@
 namespace ngfem
 {
 
-  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
-  void XNitscheIntegrator<D, kappa_choice> ::
+  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice, NITSCHE_VARIANTS::SCALING_CHOICE scale_choice>
+  void XNitscheIntegrator<D, kappa_choice, scale_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
 		     FlatMatrix<double> & elmat,
@@ -76,6 +76,31 @@ namespace ngfem
     const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
     const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
     const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+
+
+
+    double convmax=0.0;
+    if (scale_choice == NITSCHE_VARIANTS::CONVECTIVE)
+    { // START estimate convmax;
+      DOMAIN_TYPE dt = POS;
+      for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+      {
+        const FlatQuadratureRule<D> & fquaddt(fcompr.GetRule(dt));
+        for (int i = 0; i < fquaddt.Size(); ++i)
+        {
+          IntegrationPoint ip(&fquaddt.points(i,0),fquaddt.weights(i));
+          MappedIntegrationPoint<D,D> mip(ip, eltrans);
+          Vec<D> conv;
+          if (dt == POS)
+            conv_pos->Evaluate(mip,conv);
+          else
+            conv_neg->Evaluate(mip,conv);
+          convmax = max( convmax, max(abs(conv(0)),abs(conv(1))) );
+        }
+      }
+    } // END estimate convmax;
+
 
     { // calc constrb
       DOMAIN_TYPE dt = POS;
@@ -157,6 +182,38 @@ namespace ngfem
     const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
 
 
+    double ava = a_t_pos;
+
+    switch (kappa_choice)
+    {
+      case NITSCHE_VARIANTS::HALFHALF:
+      {
+        ava = a_t_pos*0.5+a_t_neg*0.5;
+        break;
+      }
+      case NITSCHE_VARIANTS::BETA:
+      case NITSCHE_VARIANTS::ALPHA:
+      {
+        ava = 2*a_t_pos*a_t_neg/(a_t_neg+a_t_pos);
+        break;
+      }
+      case NITSCHE_VARIANTS::ALPHABETA:
+      {
+        ava = 2*a_t_pos*a_t_neg/(a_t_neg+a_t_pos);
+        break;
+        // ava = 2*a_t_pos*a_t_neg/(b_neg*b_pos)/(a_t_neg/b_neg+a_t_pos/b_pos);
+        // ava = a_t_pos*kappa_pos+a_t_neg*kappa_neg;
+      }
+      case NITSCHE_VARIANTS::HANSBO:
+      default:
+      {
+        ava = a_t_pos*kappa_pos+a_t_neg*kappa_neg;
+        break;
+      }
+    }
+
+    const double Pe = 0.5 * h/p * convmax / ava;
+
     for (int i = 0; i < fquad.Size(); ++i)
     {
       IntegrationPoint ip(&fquad.points(i,0),0.0);
@@ -198,38 +255,16 @@ namespace ngfem
         }
       }
 
-      double ava = a_pos;
-
-      switch (kappa_choice){
-      case NITSCHE_VARIANTS::HALFHALF:
-        {
-          ava = a_pos*0.5+a_neg*0.5;
-          break;
-        }
-      case NITSCHE_VARIANTS::BETA:
-      case NITSCHE_VARIANTS::ALPHA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-        }
-      case NITSCHE_VARIANTS::ALPHABETA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
-          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
-        }
-      case NITSCHE_VARIANTS::HANSBO:
-      default:
-        {
-          ava = a_pos*kappa_pos+a_neg*kappa_neg;
-          break;
-        }
-      }
-
       Nc -= weight * jump * Trans(dshape);
-      Ns += 1.0/len * ava * weight * jump * Trans(jump);
+      Ns += weight * jump * Trans(jump);
 
+    }
+
+    double avah = ava/h;
+    
+    if (scale_choice == NITSCHE_VARIANTS::CONVECTIVE)
+    {
+      avah *= max(1.0, Pe);
     }
 
     if (minimal_stabilization)
@@ -243,12 +278,12 @@ namespace ngfem
 
       L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
 
-      elmat = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ p/h * Ns; 
+      elmat = Nc + Trans(Nc) + avah * 1.0 * /*lam*(p+1)**/ p * Ns; 
 
       elmat += 1.5 * Trans(L) * A * L;
     }
     else
-      elmat = Nc + Trans(Nc) + lam*(p+1)*p * Ns; 
+      elmat = Nc + Trans(Nc) + lam*(p+1)*p * avah * Ns; 
       // elmat = lam*(p+1)/p/h * Ns; 
 
   }
@@ -1135,6 +1170,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_1 ("xnitsche_halfhalf", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_2 ("xnitsche_hansbo", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_2b ("xnitsche", 2, 5);
+  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO,NITSCHE_VARIANTS::CONVECTIVE> > initxnitscheconv2d_2b ("xnitsche_conv", 2, 7);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche2d_3 ("xnitsche_hansbobeta", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitsche2d_4 ("xnitsche_beta", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitsche2d_5 ("xnitsche_alpha", 2, 5);
@@ -1143,6 +1179,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_1 ("xnitsche_halfhalf", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_2 ("xnitsche_hansbo", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_2b ("xnitsche", 3, 5);
+  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO,NITSCHE_VARIANTS::CONVECTIVE> > initxnitscheconv3d_2b ("xnitsche_conv", 3, 7);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche3d_3 ("xnitsche_hansbobeta", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitsche3d_4 ("xnitsche_beta", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_5 ("xnitsche_alpha", 3, 5);

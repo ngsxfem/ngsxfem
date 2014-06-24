@@ -22,16 +22,22 @@ namespace ngfem
       ALPHABETA,
       HANSBOBETA
     };
+    enum SCALING_CHOICE{
+      DIFFUSIVE,
+      CONVECTIVE
+    };
   }
 
 
-  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
+  template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice, NITSCHE_VARIANTS::SCALING_CHOICE scale_choice = NITSCHE_VARIANTS::DIFFUSIVE>
   class XNitscheIntegrator : public BilinearFormIntegrator
   {
     CoefficientFunction * alpha_neg;
     CoefficientFunction * alpha_pos;
     CoefficientFunction * beta_neg;
     CoefficientFunction * beta_pos;
+    CoefficientFunction * conv_neg;
+    CoefficientFunction * conv_pos;
     CoefficientFunction * lambda;
     CoefficientFunction * ab_neg;
     CoefficientFunction * ab_pos;
@@ -41,7 +47,9 @@ namespace ngfem
     XNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
-        lambda(coeffs.Size() > 4 ? coeffs[4] : NULL)
+        lambda(coeffs.Size() > 4 ? coeffs[4] : NULL),
+        conv_neg( scale_choice == NITSCHE_VARIANTS::CONVECTIVE ? coeffs[coeffs.Size()-2] : NULL),
+        conv_pos( scale_choice == NITSCHE_VARIANTS::CONVECTIVE ? coeffs[coeffs.Size()-1] : NULL)
     { 
        minimal_stabilization = coeffs.Size() <= 4;
 
