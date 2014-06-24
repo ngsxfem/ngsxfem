@@ -118,7 +118,8 @@ namespace ngfem
                    double time, 
                    ErrorTable & errtab, 
                    LocalHeap & lh,
-                   bool output = true);
+                   bool output,
+                   const Flags & flags);
   
 
 

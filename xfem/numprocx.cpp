@@ -369,11 +369,12 @@ namespace ngcomp
     double b_neg;
     double time;
     ErrorTable errtab;
+    const Flags myflags;
   public:
 
 
     NumProcXDifference (PDE & apde, const Flags & flags)
-      : NumProc (apde), solcoef(apde,flags), errtab()
+        : NumProc (apde), solcoef(apde,flags), errtab(), myflags(flags)
     { 
       gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
       gfu2 = pde.GetGridFunction (flags.GetStringFlag ("solution2", flags.GetStringFlag("reference","")),true);
@@ -402,7 +403,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      CalcXError<D>(gfu, gfu2, solcoef, intorder, a_neg, a_pos, b_neg, b_pos, time, errtab, lh, true);
+      CalcXError<D>(gfu, gfu2, solcoef, intorder, a_neg, a_pos, b_neg, b_pos, time, errtab, lh, true, myflags);
     }    
     
 

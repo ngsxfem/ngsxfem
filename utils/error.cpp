@@ -120,8 +120,11 @@ namespace ngfem
                    double time, 
                    ErrorTable & errtab, 
                    LocalHeap & lh,
-                   bool output)
+                   bool output,
+                   const Flags & flags)
   {
+    double threshold  = flags.GetNumFlag ( "threshold", -1.0);
+
     // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
     Array<int> dnums2;
@@ -243,11 +246,10 @@ namespace ngfem
 
       if (xfe)
       {
-
+          
         DOMAIN_TYPE dt = POS;
         for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
         {
-
           const FlatXLocalGeometryInformation & xgeom( spacetime ? 
                                                        xfe->GetFlatLocalGeometryUpTrace() : 
                                                        xfe->GetFlatLocalGeometry());
@@ -353,17 +355,24 @@ namespace ngfem
             else
               diffdsqr = L2Norm2(diffdval);
 
+
             double fac = mip.GetWeight();
             if (dt == POS)
             {
-              l2diff_p += b_pos*fac*sqr(discval-solval);
-              h1diff_p += b_pos*fac*diffdsqr;
+              if (threshold <= 0.0)
+              {
+                l2diff_p += b_pos*fac*sqr(discval-solval);
+                h1diff_p += b_pos*fac*diffdsqr;
+              }
               mass_p += discval*fac;
             }
             else
             {
-              l2diff_n += b_neg*fac*sqr(discval-solval);
-              h1diff_n += b_neg*fac*diffdsqr;
+              if (threshold <= 0.0)
+              {
+                l2diff_n += b_neg*fac*sqr(discval-solval);
+                h1diff_n += b_neg*fac*diffdsqr;
+              }
               mass_n += discval*fac;
             }
           } // quad rule
@@ -525,6 +534,26 @@ namespace ngfem
 
 
         IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), intorder);
+
+        bool skip = false;
+        if (threshold > 0)
+        {
+          for (int i = 0 ; i < pir.GetNIP(); i++)
+          {
+
+            MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
+            DimMappedIntegrationPoint<D+1> mipp(pir[i], eltrans);
+            mipp.Point().Range(0,D) = mip.GetPoint();
+            mipp.Point()[D] = time;
+            if (threshold>0 && !solcoef.HasLevelSet())
+              throw Exception("threshold>0 but no levelset...");
+          
+            const double lsetval = solcoef.GetLevelSet().Evaluate(mip);
+            if (abs(lsetval) < threshold) skip = true;
+          }
+        }
+
+        if (!skip)
         for (int i = 0 ; i < pir.GetNIP(); i++)
         {
           MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
@@ -622,8 +651,8 @@ namespace ngfem
     ifjumpl2 = sqrt(ifjumpl2); errtab.iferr.Append(ifjumpl2);
     ifdudnl2 = sqrt(ifdudnl2); errtab.ifdudnerr.Append(ifdudnl2);
     ifsigmanl2 = sqrt(ifsigmanl2); errtab.ifsigmanerr.Append(ifsigmanl2);
-    l2diff = l2diff_p + l2diff_n;
-    h1diff = h1diff_p + h1diff_n;
+    l2diff = b_pos * l2diff_p + b_neg * l2diff_n;
+    h1diff = b_pos * h1diff_p + b_neg * h1diff_n;
     l2diff_p = sqrt(l2diff_p); errtab.l2err_p.Append(l2diff_p);
     h1diff_p = sqrt(h1diff_p); errtab.h1err_p.Append(h1diff_p);
     l2diff_n = sqrt(l2diff_n); errtab.l2err_n.Append(l2diff_n);
@@ -753,9 +782,9 @@ namespace ngfem
   }
 
   template void CalcXError<2>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<2> & solcoef, int intorder, double a_neg, double a_pos,
-                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
+                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output, const Flags & flags);
   template void CalcXError<3>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<3> & solcoef, int intorder, double a_neg, double a_pos,
-                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output);
+                              double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output, const Flags & flags);
 
 
 }

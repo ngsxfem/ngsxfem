@@ -22,7 +22,7 @@ numproc draw npd -coefficient=lset -label=levelset
 define fespace vh1x
        -type=xh1fespace
        -order=1
-#       -dirichlet=[1,2,3,4]
+       -dirichlet=[1,2,3,4]
        -ref_space=0
 #       -dgjumps
 
@@ -40,8 +40,6 @@ define constant a_n = (2e-7)
 define constant a_p = (1e-7)
 define constant b_n = 3.0
 define constant b_p = 2.0
-
-define constant pen = 1e12
 
 define coefficient one
 1,
@@ -106,19 +104,19 @@ define coefficient sol_n
 define coefficient sol_p
 (sin(pi*(x+4/3*y)) ),
 
+define constant bndpen = 1e9
+
 define coefficient neu_sol_n
-(pen*(sol_n) ),
-(pen*(sol_n) ),
-(pen*(sol_n) ),
-(pen*(sol_n) ),
+(bndpen*(sol_n) ),
+(bndpen*(sol_n) ),
+(bndpen*(sol_n) ),
+(bndpen*(sol_n) ),
 
 define coefficient neu_sol_p
-(pen*(sol_p) ),
-(pen*(sol_p) ),
-(pen*(sol_p) ),
-(pen*(sol_p) ),
-
-define constant bndpen = 1e12
+(bndpen*(sol_p) ),
+(bndpen*(sol_p) ),
+(bndpen*(sol_p) ),
+(bndpen*(sol_p) ),
 
 define coefficient rob_n
 (bndpen),(bndpen),(bndpen),(bndpen),
@@ -126,7 +124,7 @@ define coefficient rob_n
 define coefficient rob_p
 (bndpen),(bndpen),(bndpen),(bndpen),
 
-#numproc setvaluesx npsvx -gridfunction=uh1x -coefficient_neg=sol_n -coefficient_pos=sol_p -boundary #-print
+numproc setvaluesx npsvx -gridfunction=uh1x -coefficient_neg=sol_n -coefficient_pos=sol_p -boundary #-print
 
 define bilinearform m -fespace=vh1x # -symmetric
 xmass b_n b_p 
@@ -138,17 +136,11 @@ define coefficient small
 define bilinearform a -fespace=vh1x # -symmetric
 xrobin rob_n rob_p
 xlaplace alphabetaneg alphabetapos 
-xnitsche_hansbo alphaneg alphapos 
-                betaneg betapos 
-                lambda
+xnitsche_conv alphaneg alphapos 
+              betaneg betapos 
+              lambda 
+              w_neg w_pos
 
-# xnitsche_minstab alphaneg alphapos 
-#                  betaneg betapos 
-
-#xnitscheconv alphaneg alphapos 
-#             betaneg betapos 
-#             w_neg w_pos
-#             lambda
 
 xconvection bw_neg bw_pos
 
@@ -174,12 +166,12 @@ sdxsource betaneg betapos
 define linearform f2 -fespace=vh1x
 xsource rhsneg rhspos
 
-#define preconditioner c -type=bddc -bilinearform=a -block #-test
+#define preconditioner c -type=bddc -bilinearform=a #-block #-test
 define preconditioner c -type=local -bilinearform=a #-block #-test
 #define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
 #define preconditioner c -type=direct -bilinearform=a -inverse=sparsecholesky
 
-numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=gmres -preconditioner=c -prec=1e-12 -maxsteps=1000
+numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=gmres -preconditioner=c -prec=1e-10 -maxsteps=5000 -print
 
 #numproc bvp npx -bilinearform=m -linearform=f2 -gridfunction=uh1x -preconditioner=c
 
@@ -188,7 +180,7 @@ numproc xdifference npxd
         -solution_n=sol_n
         -solution_p=sol_p
         -levelset=lset
-        -interorder=4
+        -intorder=4
         #-threshold=-0.1
         -henryweight_n=3
         -henryweight_p=2
@@ -197,38 +189,5 @@ numproc xdifference npxd
         -convection_n=w_neg
         -convection_p=w_pos
 
-#numproc xdifference npxd 
-#        -solution=uh1x 
-#        -function_n=sol_n 
-#        -function_p=sol_p 
-#        -derivative_x_n=solx_n -derivative_y_n=soly_n 
-#        -derivative_x_p=solx_p -derivative_y_p=soly_p
-#        -levelset=lset -intorder=4 -threshold=-0.1
-#        -henryweight_p=2 - henryweight_n=3
-
-
-#define bilinearform mh1 -fespace=vh1x -nonassemble
-#mass one -comp=1
-
-#define bilinearform mx -fespace=vh1x -nonassemble
-#mass one -comp=2
-
-#define bilinearform mvish1 -fespace=vh1x -nonassemble
-#visx one 
-
-#define bilinearform mvish1_lset -fespace=vh1x -nonassemble
-#visx_lset lset 
-
-#define bilinearform mvish1_lset_cut -fespace=vh1x -nonassemble
-#visx_lset_sign lset 
-
-#numproc drawflux npdf0 -bilinearform=mvish1 -solution=uh1x -label=u
-#numproc drawflux npdf0 -bilinearform=mvish1_lset -solution=uh1x -label=u  -applyd
-#numproc drawflux npdf1 -bilinearform=mh1 -solution=uh1x -label=u_h1
-#numproc drawflux npdf2 -bilinearform=mx -solution=uh1x -label=u_x
-#numproc drawflux npdf3 -bilinearform=mvish1_lset -solution=uh1x -label=u_part
-#numproc drawflux npdf4 -bilinearform=mvish1_lset_cut -solution=uh1x -label=u_part_cut -applyd
-
-#numproc visualization mpviz -scalarfunction=u -comp=1 -deformationscale=1 -subdivision=2
 
 numproc visualization npviz -scalarfunction=uh1x #-comp=0

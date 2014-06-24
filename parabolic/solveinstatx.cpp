@@ -494,11 +494,12 @@ public:
         // *testout << " t = " << t << " \n vecu = \n " << vecu << endl;
         {
           static Timer timer ("CalcXError");
+          Flags emptyflags;
           RegionTimer reg (timer);
           if (abs(ti.second - tend) < 1e-6*dt)
-            CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, true);
+              CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, true, emptyflags);
           else
-            CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, false);
+              CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, false, emptyflags);
         }
 
         xfes.XToNegPos(*gfu,*gfu_vis);
