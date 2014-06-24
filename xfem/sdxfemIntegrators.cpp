@@ -72,15 +72,15 @@ namespace ngfem
     if (xfe)
     {
       shape_x = shape_h1;
-      dshape_x = dshape_h1;
+      // dshape_x = dshape_h1;
       lapshape_x = lapshape_h1;
       dudwshape_x = dudwshape_h1;
 
       for (int l = 0; l < ndof_x; ++l)
       {
-        if (xfe->GetSignsOfDof()[l] == dt){
+        if (xfe->GetSignsOfDof()[l] != dt){
           shape_x(l) = 0.0;
-          dshape_x.Row(l) = 0.0;
+          // dshape_x.Row(l) = 0.0;
           lapshape_x(l) = 0.0;
           dudwshape_x(l) = 0.0;
         }
@@ -426,7 +426,7 @@ namespace ngfem
 
       for (int l = 0; l < ndof_x; ++l)
       {
-        if (xfe->GetSignsOfDof()[l] == dt){
+        if (xfe->GetSignsOfDof()[l] != dt){
           dudwshape_x(l) = 0.0;
         }
       }
