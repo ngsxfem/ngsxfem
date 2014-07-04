@@ -28,7 +28,7 @@ define constant bpos = 5.0
 define constant wx = 0.0
 define constant wy = 0.0
 
-define constant x0 = 0.57
+define constant x0 = 0.3
 define constant y0 = 0.5
 
 define constant R = 0.23
@@ -64,6 +64,7 @@ define fespace fesh1
        -order_space=1
        -order_time=1
        -dirichlet=[1,2]
+       -gaussradau
        # -dgjumps
 
 define coefficient coef_lset
@@ -78,9 +79,10 @@ define fespace fescomp
        -t0=0.0
        -t1=0.01
        -dirichlet=[1,2]
-       -vmax=0.1
+       -vmax=1.0
        -ref_space=0
        -ref_time=0
+       -gaussradau
        # -dgjumps
 
 numproc informxfem npix 
@@ -97,6 +99,7 @@ define fespace fesx
        -vmax=0.1
        -ref_space=0
        -ref_time=0
+       -gaussradau
        # -dgjumps
 
 define fespace fescl 
@@ -133,12 +136,12 @@ numproc stx_solveinstat npsi
         -boundary_pos=bndpos
         -gf_vis=u_vis
         -gridfunction=u
-        -solver=pardiso 
+        -solver=pardiso
         -fespace=fescomp
         -fespacevis=fesnegpos
         -dt=0.01
         -tend=1.0
-       #-userstepping
+#        -userstepping
         -aneg=0.02
         -apos=0.05
         -bneg=1.0

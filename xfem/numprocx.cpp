@@ -543,5 +543,6 @@ namespace ngcomp
 
 static RegisterNumProc<NumProcSetValuesX> npinittestxfem2d("setvaluesx");
 static RegisterNumProc<NumProcXDifference<2> > npxdiff("xdifference");
+static RegisterNumProc<NumProcXDifference<3> > npxdiff3d("xdifference3d");
 static RegisterNumProc<NumProcSpecialOutput<2> > npxoutp("xoutput");
 static RegisterNumProc<NumProcCalcCondition> npinitcalccond("calccond");

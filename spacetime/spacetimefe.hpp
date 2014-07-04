@@ -13,6 +13,50 @@ namespace ngfem
 
 typedef std::pair<double,double> TimeInterval;
 
+  class GR2PFiniteElement : public DGFiniteElement<1>
+  {
+
+  protected:
+    int vnums[1<<1];  
+
+    using ScalarFiniteElement<1>::ndof;
+    using ScalarFiniteElement<1>::order;
+
+  public:
+
+    virtual string ClassName(void) const {return "GaussRadau2Point orthogonal Finite Element";}
+
+    virtual void SetOrder (INT<1> p){ order = 1;};
+    virtual void ComputeNDof(){};
+
+
+    virtual void PrecomputeTrace (){};
+    virtual void PrecomputeGrad (){};
+
+    virtual void GetDiagMassMatrix (FlatVector<> mass) const { mass(0) = 0.75; mass(1) = 0.25; };
+
+    virtual void CalcShape (const IntegrationPoint & ip, 
+                            SliceVector<> shape) const;
+    
+    virtual void CalcDShape (const IntegrationPoint & ip, 
+                             SliceMatrix<> dshape) const;
+
+    virtual ELEMENT_TYPE ElementType() const{ return ET_SEGM; }
+
+    GR2PFiniteElement()  
+    {
+      ndof=2;
+      order=1;
+    }
+
+  };
+  
+
+
+
+ // GR1FiniteElement:
+
+
 /**
      
  */

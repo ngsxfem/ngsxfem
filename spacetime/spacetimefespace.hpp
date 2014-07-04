@@ -42,6 +42,8 @@ namespace ngcomp
     ///
     int ndof_time;
     ///
+    bool gaussradau;
+    ///
     Array<int> ndlevel;
   public:
     ///

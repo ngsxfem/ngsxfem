@@ -5,6 +5,29 @@
 namespace ngfem
 {
 
+  void GR2PFiniteElement::CalcShape (const IntegrationPoint & ip, 
+                                    SliceVector<> shape) const
+  {
+    // std::cout << " GetNDof() = " << GetNDof() << std::endl;
+    // std::cout << " ip = " << ip << std::flush << std::endl;
+    // std::cout << " shape = " << shape << std::flush << std::endl;
+    shape(0) = 1.5*(1-ip(0));
+    shape(1) = 1.5*(ip(0)-1.0/3.0);
+    // std::cout << " shape = " << shape << std::flush << std::endl;
+    // getchar();
+  };
+
+  void GR2PFiniteElement::CalcDShape (const IntegrationPoint & ip, 
+                                     SliceMatrix<> dshape) const 
+  {
+    // std::cout << " ip = " << ip << std::flush << std::endl;
+    // std::cout << " dshape = " << dshape << std::flush << std::endl;
+    dshape(0,0) = -1.5;
+    dshape(1,0) = 1.5;
+    // std::cout << " dshape = " << dshape << std::flush << std::endl;
+    // getchar();
+  };
+
   SpaceTimeFiniteElement :: SpaceTimeFiniteElement(const FiniteElement & a_base_space,
                                                  const FiniteElement & a_base_time)
     : base_space(a_base_space),

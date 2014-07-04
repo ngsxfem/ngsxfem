@@ -15,7 +15,11 @@ mesh = square_trigs.vol.gz
 
 #shared = libngsxfem_test
 #shared = libngsxfem_common
+shared = libngsxfem_spacetime
+shared = libngsxfem_xfem
+# shared = libngsxfem_parabolic
 shared = libngsxfem_parabolic
+
 
 define constant heapsize = 1e7
 
@@ -36,22 +40,23 @@ define coefficient lset
 define fespace fes_st 
        -type=spacetimefes 
        -type_space=h1ho
-       -order_space=4
+       -order_space=1
        -all_dofs_together
        -order_time=1
+#       -gaussradau
 #       -print
 #       -dirichlet=[1]
 
 define gridfunction u_st -fespace=fes_st
 
-define bilinearform a -fespace=fes_st # -printelmat -print
-STtimeder one
-STlaplace told tnew one
-#STmass told tnew one
-STtracepast one
-#STtracefuture one
-#STtracemass one one
-#STtracemass zero one
+# define bilinearform a -fespace=fes_st # -printelmat -print
+# STtimeder one
+# STlaplace told tnew one
+# #STmass told tnew one
+# STtracepast one
+# #STtracefuture one
+# #STtracemass one one
+# #STtracemass zero one
 
 define linearform f -fespace=fes_st #-print
 #STsource told tnew one
@@ -61,11 +66,11 @@ STtracesource zero lset
 numproc st_solveinstat npsi 
         -linearform=f 
         -gridfunction=u_st 
-        -solver=pardiso 
+        -solver=sparsecholesky 
         -fespace=fes_st
-        -dt=5e-5
+        -dt=5e-3
         -tend=0.05
-#        -userstepping
+        -userstepping
 #numproc bvp nps -bilinearform=a -linearform=f -gridfunction=u_st -solver=direct
 
 # numproc testxfem nptxfem 

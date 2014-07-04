@@ -16,6 +16,7 @@ namespace ngcomp
     DefineNumFlag("order_time");
     DefineNumFlag("order_space");
     DefineStringFlag("type_space");
+    DefineDefineFlag("gaussradau");
     // DefineDefineFlag("variableorder"); 
 
     if(checkflags) CheckFlags(flags);
@@ -24,8 +25,12 @@ namespace ngcomp
     spacedim = ma.GetDimension();
     
     order_time = flags.GetNumFlag("order_time",1);
+    gaussradau = flags.GetDefineFlag("gaussradau");
     order_space = flags.GetNumFlag("order_space",1);
-    fel_time = new L2HighOrderFE<ET_SEGM> (order_time);
+    if (gaussradau)
+        fel_time = new GR2PFiniteElement();
+    else
+        fel_time = new L2HighOrderFE<ET_SEGM> (order_time);
 
     static ConstantCoefficientFunction one(1);
     if (spacedim == 2)
@@ -111,6 +116,7 @@ namespace ngcomp
       COUPLING_TYPE ct = fes_space->GetDofCouplingType(i);
       for (int j = 0; j < ndof_time; ++j)
         ctofdof[j*ndof_space+i] = ct;
+      
     }
     // take space-fespaces coupling dofs for all time levels
     if (print)
@@ -124,29 +130,34 @@ namespace ngcomp
   const FiniteElement & SpaceTimeFESpace :: GetFE (int elnr, LocalHeap & lh) const
   { 
 
-    const DGFiniteElement<1> & fel_time = *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
-        
+    const DGFiniteElement<1> * fel_time_radau = new (lh) GR2PFiniteElement();
+    const DGFiniteElement<1> * fel_time_dg = new (lh) L2HighOrderFE<ET_SEGM> (order_time);
+    const DGFiniteElement<1> * fel_time = gaussradau ? fel_time_radau : fel_time_dg;
+    
     const FiniteElement * fel_space = &(fes_space->GetFE(elnr,lh));   
     if ( spacedim == 2 ) 
     {
       const ScalarFiniteElement<2> * fel_scalar = dynamic_cast<const ScalarFiniteElement<2> *>(fel_space);    
       if (fel_scalar == NULL)
         throw Exception("SpaceTimeFESpace :: GetFE Cast to ScalarFiniteElement failed!");
-      return *(new (lh) ScalarSpaceTimeFiniteElement<2>(*fel_scalar,fel_time));
+      return *(new (lh) ScalarSpaceTimeFiniteElement<2>(*fel_scalar,*fel_time));
     }
     else
     {
       const ScalarFiniteElement<3> * fel_scalar = dynamic_cast<const ScalarFiniteElement<3> *>(fel_space);    
       if (fel_scalar == NULL)
         throw Exception("SpaceTimeFESpace :: GetFE Cast to ScalarFiniteElement failed!");
-      return *(new (lh) ScalarSpaceTimeFiniteElement<3>(*fel_scalar,fel_time));
+      return *(new (lh) ScalarSpaceTimeFiniteElement<3>(*fel_scalar,*fel_time));
     }
   }
 
 // ------------------------------------------------------------------------
   const FiniteElement & SpaceTimeFESpace :: GetTimeFE (LocalHeap & lh) const
   {
-    return *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
+    if (gaussradau)
+      return *(new (lh) GR2PFiniteElement() );
+    else
+      return *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
   }
 
 // ------------------------------------------------------------------------
@@ -158,8 +169,9 @@ namespace ngcomp
 // ------------------------------------------------------------------------
   const FiniteElement & SpaceTimeFESpace :: GetSFE (int selnr, LocalHeap & lh) const
   {
-
-    const DGFiniteElement<1> & fel_time = *(new (lh) L2HighOrderFE<ET_SEGM> (order_time));
+    const DGFiniteElement<1> * fel_time_radau = new (lh) GR2PFiniteElement();
+    const DGFiniteElement<1> * fel_time_dg = new (lh) L2HighOrderFE<ET_SEGM> (order_time);
+    const DGFiniteElement<1> * fel_time = gaussradau ? fel_time_radau : fel_time_dg;
         
     const FiniteElement * fel_space = &(fes_space->GetSFE(selnr,lh));   
     if ( spacedim == 2 ) 
@@ -167,14 +179,14 @@ namespace ngcomp
       const ScalarFiniteElement<1> * fel_scalar = dynamic_cast<const ScalarFiniteElement<1> *>(fel_space);    
       if (fel_scalar == NULL)
         throw Exception("SpaceTimeFESpace :: GetFE Cast to ScalarFiniteElement failed!");
-      return *(new (lh) ScalarSpaceTimeFiniteElement<1>(*fel_scalar,fel_time));
+      return *(new (lh) ScalarSpaceTimeFiniteElement<1>(*fel_scalar,*fel_time));
     }
     else
     {
       const ScalarFiniteElement<2> * fel_scalar = dynamic_cast<const ScalarFiniteElement<2> *>(fel_space);    
       if (fel_scalar == NULL)
         throw Exception("SpaceTimeFESpace :: GetFE Cast to ScalarFiniteElement failed!");
-      return *(new (lh) ScalarSpaceTimeFiniteElement<2>(*fel_scalar,fel_time));
+      return *(new (lh) ScalarSpaceTimeFiniteElement<2>(*fel_scalar,*fel_time));
     }
 
     // throw Exception("SpaceTimeFESpace :: GetSFE - not implemented yet");
