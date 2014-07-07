@@ -10,7 +10,7 @@ geometry = square.in2d
 
 # and mesh
 #mesh = square.vol.gz
-mesh = square_trigs.vol.gz
+mesh = square_trigs2.vol.gz
 #mesh = square_quad_coarse.vol.gz
 
 shared = libngsxfem_spacetime
@@ -28,10 +28,10 @@ define constant bpos = 5.0
 define constant wx = 0.0
 define constant wy = 0.0
 
-define constant x0 = 0.3
-define constant y0 = 0.5
+define constant x0 = 0.4
+define constant y0 = 0.4
 
-define constant R = 0.23
+define constant R = 0.16666666666
 
 define coefficient bconvneg
 (1.0/bneg*wx,1.0/bneg*wy),
@@ -44,6 +44,7 @@ define coefficient binineg
 
 define coefficient binipos
 (0.0*bpos),
+# (0.05*sin(15*x*x)*bpos),
 
 define coefficient brhsneg
 (0),
@@ -64,7 +65,7 @@ define fespace fesh1
        -order_space=1
        -order_time=1
        -dirichlet=[1,2]
-       -gaussradau
+#       -gaussradau
        # -dgjumps
 
 define coefficient coef_lset
@@ -82,7 +83,7 @@ define fespace fescomp
        -vmax=1.0
        -ref_space=0
        -ref_time=0
-       -gaussradau
+#       -gaussradau
        # -dgjumps
 
 numproc informxfem npix 
@@ -99,7 +100,7 @@ define fespace fesx
        -vmax=0.1
        -ref_space=0
        -ref_time=0
-       -gaussradau
+#       -gaussradau
        # -dgjumps
 
 define fespace fescl 
@@ -123,6 +124,9 @@ numproc informxfem npix
 define gridfunction u -fespace=fescomp
 define gridfunction u_vis -fespace=fesnegpos
 
+#define preconditioner c -type=spacetime -bilinearform=bftau -laterupdate -fespace=fescomp
+
+
 numproc stx_solveinstat npsi 
         -initialneg=binineg
         -initialpos=binipos
@@ -139,13 +143,13 @@ numproc stx_solveinstat npsi
         -solver=pardiso
         -fespace=fescomp
         -fespacevis=fesnegpos
-        -dt=0.01
-        -tend=1.0
-#        -userstepping
-        -aneg=0.02
-        -apos=0.05
+        -dt=0.001
+        -tend=2.0
+        -userstepping
+        -aneg=0.2
+        -apos=0.1
         -bneg=1.0
-        -bpos=5.0
+        -bpos=1.0
         -lambda=20.0
         # -pause_after_step=1
         -solution_n=zero
@@ -153,7 +157,7 @@ numproc stx_solveinstat npsi
         #-direct
         # -ghostpenalty
 #        -delta=0.005
-      -minimal_stabilization
+#      -minimal_stabilization
 
 # define bilinearform evalx_past -fespace=fescomp -nonassemble
 # stxvis_past one
@@ -191,4 +195,4 @@ st_np_vis_past one
 numproc drawflux npdf_np -solution=u_vis -bilinearform=eval_negpos -label=u_negpos -applyd
 numproc drawflux npdf_np_past -solution=u_vis -bilinearform=eval_negpos_past -label=u_negpos_past -applyd
 
-numproc visualization npvis -scalarfunction=u_negpos -nolineartexture -deformationscale=1.0 -subdivision=1 -minval=0.0 -maxval=0.5
+numproc visualization npvis -scalarfunction=u_negpos -nolineartexture -deformationscale=0.25 -subdivision=1 -minval=0.0 -maxval=1.0
