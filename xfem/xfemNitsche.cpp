@@ -181,36 +181,7 @@ namespace ngfem
 
     const double lam = minimal_stabilization ? 0.0 : lambda->EvaluateConst();
 
-
-    double ava = a_t_pos;
-
-    switch (kappa_choice)
-    {
-      case NITSCHE_VARIANTS::HALFHALF:
-      {
-        ava = a_t_pos*0.5+a_t_neg*0.5;
-        break;
-      }
-      case NITSCHE_VARIANTS::BETA:
-      case NITSCHE_VARIANTS::ALPHA:
-      {
-        ava = 2*a_t_pos*a_t_neg/(a_t_neg+a_t_pos);
-        break;
-      }
-      case NITSCHE_VARIANTS::ALPHABETA:
-      {
-        ava = 2*a_t_pos*a_t_neg/(a_t_neg+a_t_pos);
-        break;
-        // ava = 2*a_t_pos*a_t_neg/(b_neg*b_pos)/(a_t_neg/b_neg+a_t_pos/b_pos);
-        // ava = a_t_pos*kappa_pos+a_t_neg*kappa_neg;
-      }
-      case NITSCHE_VARIANTS::HANSBO:
-      default:
-      {
-        ava = a_t_pos*kappa_pos+a_t_neg*kappa_neg;
-        break;
-      }
-    }
+    double ava = a_t_pos*0.5+a_t_neg*0.5;
 
     const double Pe = 0.5 * h/p * convmax / ava;
 
@@ -486,34 +457,8 @@ namespace ngfem
         }
       }
 
-      double ava = a_pos;
 
-      switch (kappa_choice){
-      case NITSCHE_VARIANTS::HALFHALF:
-        {
-          ava = a_pos*0.5+a_neg*0.5;
-          break;
-        }
-      case NITSCHE_VARIANTS::BETA:
-      case NITSCHE_VARIANTS::ALPHA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-        }
-      case NITSCHE_VARIANTS::ALPHABETA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
-          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
-        }
-      case NITSCHE_VARIANTS::HANSBO:
-      default:
-        {
-          ava = a_pos*kappa_pos+a_neg*kappa_neg;
-          break;
-        }
-      }
+      double ava = a_pos*0.5+a_neg*0.5;
 
       Nc -= weight * rhs * dshape;
       Ns += ava * weight * rhs * jump;
@@ -1108,39 +1053,7 @@ namespace ngfem
         }
       }
 
-      double ava = a_pos;
-
-
-      ava = a_pos*0.5+a_neg*0.5;
-
-      /*
-      switch (kappa_choice){
-      case NITSCHE_VARIANTS::HALFHALF:
-        {
-          ava = a_pos*0.5+a_neg*0.5;
-          break;
-        }
-      case NITSCHE_VARIANTS::BETA:
-      case NITSCHE_VARIANTS::ALPHA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-        }
-      case NITSCHE_VARIANTS::ALPHABETA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
-          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
-        }
-      case NITSCHE_VARIANTS::HANSBO:
-      default:
-        {
-          ava = a_pos*kappa_pos+a_neg*kappa_neg;
-          break;
-        }
-      }
-      */
+      double ava = a_pos*0.5+a_neg*0.5;
 
       Nc -= weight * jump * Trans(dshape);
       Ns += ava * weight * jump * Trans(jump);
@@ -1448,34 +1361,7 @@ namespace ngfem
       dnshape.Range(0,ndof_neg) = (a_neg*kappa_neg) * (dshape_sca * normal);
       dnshape.Range(ndof_neg,ndof_total) = (a_pos*kappa_pos) * (dshape_sca * normal);
 
-      double ava = a_pos;
-
-      switch (kappa_choice){
-      case NITSCHE_VARIANTS::HALFHALF:
-        {
-          ava = a_pos*0.5+a_neg*0.5;
-          break;
-        }
-      case NITSCHE_VARIANTS::BETA:
-      case NITSCHE_VARIANTS::ALPHA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-        }
-      case NITSCHE_VARIANTS::ALPHABETA:
-        {
-          ava = 2*a_pos*a_neg/(a_neg+a_pos);
-          break;
-          // ava = 2*a_pos*a_neg/(b_neg*b_pos)/(a_neg/b_neg+a_pos/b_pos);
-          // ava = a_pos*kappa_pos+a_neg*kappa_neg;
-        }
-      case NITSCHE_VARIANTS::HANSBO:
-      default:
-        {
-          ava = a_pos*kappa_pos+a_neg*kappa_neg;
-          break;
-        }
-      }
+      double ava = a_pos*0.5+a_neg*0.5;
 
       Nc -= weight * jump * Trans(dnshape);
       Ns += ava * weight * jump * Trans(jump);
