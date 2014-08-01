@@ -142,32 +142,18 @@ namespace ngfem
     switch (kappa_choice){
     case NITSCHE_VARIANTS::HALFHALF:
       break;
-    case NITSCHE_VARIANTS::HANSBOBETA:
+    case NITSCHE_VARIANTS::HEAVISIDE:
       {
-        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
-        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
-        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::BETA:
-      {
-        double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_pos / sum;
-        kappa_pos = b_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHA:
-      {
-        double sum = a_t_neg + a_t_pos;
-        kappa_neg = a_t_pos / sum;
-        kappa_pos = a_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHABETA:
-      {
-        double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        kappa_neg = a_t_pos / b_t_pos / sum;
-        kappa_pos = a_t_neg / b_t_neg / sum;
+        if (xgeom.kappa[NEG] >= 0.5)
+          { 
+            kappa_neg = 1.0;
+            kappa_pos = 0.0;
+          }
+        else
+          { 
+            kappa_neg = 0.0;
+            kappa_pos = 1.0;
+          }
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -374,32 +360,18 @@ namespace ngfem
     switch (kappa_choice){
     case NITSCHE_VARIANTS::HALFHALF:
       break;
-    case NITSCHE_VARIANTS::HANSBOBETA:
+    case NITSCHE_VARIANTS::HEAVISIDE:
       {
-        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
-        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
-        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::BETA:
-      {
-        double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_pos / sum;
-        kappa_pos = b_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHA:
-      {
-        double sum = a_t_neg + a_t_pos;
-        kappa_neg = a_t_pos / sum;
-        kappa_pos = a_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHABETA:
-      {
-        double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        kappa_neg = a_t_pos / b_t_pos / sum;
-        kappa_pos = a_t_neg / b_t_neg / sum;
+        if (xgeom.kappa[NEG] >= 0.5)
+          { 
+            kappa_neg = 1.0;
+            kappa_pos = 0.0;
+          }
+        else
+          { 
+            kappa_neg = 0.0;
+            kappa_pos = 1.0;
+          }
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -561,34 +533,18 @@ namespace ngfem
     switch (kappa_choice){
     case NITSCHE_VARIANTS::HALFHALF:
       break;
-    case NITSCHE_VARIANTS::HANSBOBETA:
+    case NITSCHE_VARIANTS::HEAVISIDE:
       {
-        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
-        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
-        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::BETA:
-      {
-        double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_pos / sum;
-        kappa_pos = b_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHA:
-      {
-        throw Exception("ALPHA not implemented");
-        // double sum = a_t_neg + a_t_pos;
-        // kappa_neg = a_t_pos / sum;
-        // kappa_pos = a_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHABETA:
-      {
-        throw Exception("ALPHABETA not implemented");
-        // double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        // kappa_neg = a_t_pos / b_t_pos / sum;
-        // kappa_pos = a_t_neg / b_t_neg / sum;
+        if (xgeom.kappa[NEG] >= 0.5)
+          { 
+            kappa_neg = 1.0;
+            kappa_pos = 0.0;
+          }
+        else
+          { 
+            kappa_neg = 0.0;
+            kappa_pos = 1.0;
+          }
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -953,32 +909,18 @@ namespace ngfem
     switch (kappa_choice){
     case NITSCHE_VARIANTS::HALFHALF:
       break;
-    case NITSCHE_VARIANTS::HANSBOBETA:
+    case NITSCHE_VARIANTS::HEAVISIDE:
       {
-        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
-        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
-        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::BETA:
-      {
-        double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_pos / sum;
-        kappa_pos = b_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHA:
-      {
-        double sum = a_t_neg + a_t_pos;
-        kappa_neg = a_t_pos / sum;
-        kappa_pos = a_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHABETA:
-      {
-        double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        kappa_neg = a_t_pos / b_t_pos / sum;
-        kappa_pos = a_t_neg / b_t_neg / sum;
+        if (xgeom.kappa[NEG] >= 0.5)
+          { 
+            kappa_neg = 1.0;
+            kappa_pos = 0.0;
+          }
+        else
+          { 
+            kappa_neg = 0.0;
+            kappa_pos = 1.0;
+          }
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -1082,98 +1024,60 @@ namespace ngfem
 
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_1 ("xnitsche_halfhalf", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_2 ("xnitsche_hansbo", 2, 5);
+  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche2d_3 ("xnitsche_heaviside", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_2b ("xnitsche", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO,NITSCHE_VARIANTS::CONVECTIVE> > initxnitscheconv2d_2b ("xnitsche_conv", 2, 7);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche2d_3 ("xnitsche_hansbobeta", 2, 5);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitsche2d_4 ("xnitsche_beta", 2, 5);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitsche2d_5 ("xnitsche_alpha", 2, 5);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche2d_6 ("xnitsche_alphabeta", 2, 5);
 
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_1 ("xnitsche_halfhalf", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_2 ("xnitsche_hansbo", 3, 5);
+  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche3d_3 ("xnitsche_heaviside", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_2b ("xnitsche", 3, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO,NITSCHE_VARIANTS::CONVECTIVE> > initxnitscheconv3d_2b ("xnitsche_conv", 3, 7);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche3d_3 ("xnitsche_hansbobeta", 3, 5);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitsche3d_4 ("xnitsche_beta", 3, 5);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_5 ("xnitsche_alpha", 3, 5);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche3d_6 ("xnitsche_alphabeta", 3, 5);
 
   static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitscherhsjump2d_1 ("xnitscherhsjump_halfhalf", 2, 6);
   static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump2d_2 ("xnitscherhsjump_hansbo", 2, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitscherhsjump2d_3 ("xnitscherhsjump_heaviside", 2, 6);
   static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump2d_2b ("xnitscherhsjump", 2, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitscherhsjump2d_3 ("xnitscherhsjump_hansbobeta", 2, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitscherhsjump2d_4 ("xnitscherhsjump_beta", 2, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitscherhsjump2d_5 ("xnitscherhsjump_alpha", 2, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitscherhsjump2d_6 ("xnitscherhsjump_alphabeta", 2, 6);
 
   static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitscherhsfluxjump2d_1 ("xnitscherhsfluxjump_halfhalf", 2, 3);
   static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsfluxjump2d_2 ("xnitscherhsfluxjump_hansbo", 2, 3);
+  static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitscherhsfluxjump2d_3 ("xnitscherhsfluxjump_heaviside", 2, 3);
   static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsfluxjump2d_2b ("xnitscherhsfluxjump", 2, 3);
-  static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitscherhsfluxjump2d_3 ("xnitscherhsfluxjump_hansbobeta", 2, 3);
-  static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitscherhsfluxjump2d_4 ("xnitscherhsfluxjump_beta", 2, 3);
-  // static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitscherhsfluxjump2d_5 ("xnitscherhsfluxjump_alpha", 2, 6);
-  // static RegisterLinearFormIntegrator<XNitscheRhsFluxJumpIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitscherhsfluxjump2d_6 ("xnitscherhsfluxjump_alphabeta", 2, 6);
                                               
   static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitscherhsjump3d_1 ("xnitscherhsjump_halfhalf", 3, 6);
   static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump3d_2 ("xnitscherhsjump_hansbo", 3, 6);
+  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initxnitscherhsjump3d_3 ("xnitscherhsjump_heaviside", 3, 6);
   static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitscherhsjump3d_2b ("xnitscherhsjump", 3, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitscherhsjump3d_3 ("xnitscherhsjump_hansbobeta", 3, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitscherhsjump3d_4 ("xnitscherhsjump_beta", 3, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitscherhsjump3d_5 ("xnitscherhsjump_alpha", 3, 6);
-  static RegisterLinearFormIntegrator<XNitscheRhsJumpIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitscherhsjump3d_6 ("xnitscherhsjump_alphabeta", 3, 6);
 
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initx_min_stab_nitsche2d_1 ("xnitsche_minstab_halfhalf", 2, 4);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initx_min_stab_nitsche2d_2 ("xnitsche_minstab_hansbo", 2, 4);
+  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initx_min_stab_nitsche2d_3 ("xnitsche_minstab_heaviside", 2, 4);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initx_min_stab_nitsche2d_2b ("xnitsche_minstab", 2, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initx_min_stab_nitsche2d_3 ("xnitsche_minstab_hansbobeta", 2, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > initx_min_stab_nitsche2d_4 ("xnitsche_minstab_beta", 2, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initx_min_stab_nitsche2d_5 ("xnitsche_minstab_alpha", 2, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initx_min_stab_nitsche2d_6 ("xnitsche_minstab_alphabeta", 2, 4);
 
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initx_min_stab_nitsche3d_1 ("xnitsche_minstab_halfhalf", 3, 4);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initx_min_stab_nitsche3d_2 ("xnitsche_minstab_hansbo", 3, 4);
+  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initx_min_stab_nitsche3d_3 ("xnitsche_minstab_heaviside", 3, 4);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initx_min_stab_nitsche3d_2b ("xnitsche_minstab", 3, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initx_min_stab_nitsche3d_3 ("xnitsche_minstab_hansbobeta", 3, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initx_min_stab_nitsche3d_4 ("xnitsche_minstab_beta", 3, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initx_min_stab_nitsche3d_5 ("xnitsche_minstab_alpha", 3, 4);
-  static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initx_min_stab_nitsche3d_6 ("xnitsche_minstab_alphabeta", 3, 4);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_st_1 ("stx_nitsche_halfhalf", 2, 7);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2 ("stx_nitsche_hansbo", 2, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche2d_st_3 ("stx_nitsche_heaviside", 2, 7);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2b ("stx_nitsche", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche2d_st_3 ("stx_nitsche_hansbobeta", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > initxnitsche2d_st_4 ("stx_nitsche_beta", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > initxnitsche2d_st_5 ("stx_nitsche_alpha", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche2d_st_6 ("stx_nitsche_alphabeta", 2, 7);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_st_1 ("stx_nitsche_halfhalf", 3, 7);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2 ("stx_nitsche_hansbo", 3, 7);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche3d_st_3 ("stx_nitsche_heaviside", 3, 7);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2b ("stx_nitsche", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > initxnitsche3d_st_3 ("stx_nitsche_hansbobeta", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > initxnitsche3d_st_4 ("stx_nitsche_beta", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > initxnitsche3d_st_5 ("stx_nitsche_alpha", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > initxnitsche3d_st_6 ("stx_nitsche_alphabeta", 3, 7);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > init_min_stab_xnitsche2d_st_1 ("stx_nitsche_min_stab_halfhalf", 2, 6);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche2d_st_2 ("stx_nitsche_min_stab_hansbo", 2, 6);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > init_min_stab_xnitsche2d_st_3 ("stx_nitsche_min_stab_heaviside", 2, 6);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche2d_st_2b ("stx_nitsche_min_stab", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBOBETA> > init_min_stab_xnitsche2d_st_3 ("stx_nitsche_min_stab_hansbobeta", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::BETA> > init_min_stab_xnitsche2d_st_4 ("stx_nitsche_min_stab_beta", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHA> > init_min_stab_xnitsche2d_st_5 ("stx_nitsche_min_stab_alpha", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::ALPHABETA> > init_min_stab_xnitsche2d_st_6 ("stx_nitsche_min_stab_alphabeta", 2, 6);
 
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > init_min_stab_xnitsche3d_st_1 ("stx_nitsche_min_stab_halfhalf", 3, 6);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche3d_st_2 ("stx_nitsche_min_stab_hansbo", 3, 6);
+  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > init_min_stab_xnitsche3d_st_3 ("stx_nitsche_min_stab_heaviside", 3, 6);
   static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche3d_st_2b ("stx_nitsche_min_stab", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBOBETA> > init_min_stab_xnitsche3d_st_3 ("stx_nitsche_min_stab_hansbobeta", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::BETA> > init_min_stab_xnitsche3d_st_4 ("stx_nitsche_min_stab_beta", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHA> > init_min_stab_xnitsche3d_st_5 ("stx_nitsche_min_stab_alpha", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::ALPHABETA> > init_min_stab_xnitsche3d_st_6 ("stx_nitsche_min_stab_alphabeta", 3, 6);
-
-
-
-
-
 
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   void FictXNitscheIntegrator<D, kappa_choice> ::
@@ -1292,32 +1196,18 @@ namespace ngfem
     switch (kappa_choice){
     case NITSCHE_VARIANTS::HALFHALF:
       break;
-    case NITSCHE_VARIANTS::HANSBOBETA:
+    case NITSCHE_VARIANTS::HEAVISIDE:
       {
-        double sum = xgeom.kappa[NEG] * b_t_neg + xgeom.kappa[POS] * b_t_pos;
-        kappa_neg = xgeom.kappa[NEG] * b_t_neg / sum;
-        kappa_pos = xgeom.kappa[POS] * b_t_pos / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::BETA:
-      {
-        double sum = b_t_neg + b_t_pos;
-        kappa_neg = b_t_pos / sum;
-        kappa_pos = b_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHA:
-      {
-        double sum = a_t_neg + a_t_pos;
-        kappa_neg = a_t_pos / sum;
-        kappa_pos = a_t_neg / sum;
-        break;
-      }
-    case NITSCHE_VARIANTS::ALPHABETA:
-      {
-        double sum = a_t_neg / b_t_neg + a_t_pos / b_t_pos;
-        kappa_neg = a_t_pos / b_t_pos / sum;
-        kappa_pos = a_t_neg / b_t_neg / sum;
+        if (xgeom.kappa[NEG] >= 0.5)
+          { 
+            kappa_neg = 1.0;
+            kappa_pos = 0.0;
+          }
+        else
+          { 
+            kappa_neg = 0.0;
+            kappa_pos = 1.0;
+          }
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -1391,8 +1281,6 @@ namespace ngfem
   }
 
   static RegisterBilinearFormIntegrator<FictXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initfictxnitsche2d_2b ("fictxnitsche", 2, 5);
-
-
 
 
 }

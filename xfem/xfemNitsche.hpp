@@ -17,10 +17,7 @@ namespace ngfem
     enum KAPPA_CHOICE{
       HALFHALF,
       HANSBO,
-      BETA,
-      ALPHA,
-      ALPHABETA,
-      HANSBOBETA
+      HEAVISIDE
     };
     enum SCALING_CHOICE{
       DIFFUSIVE,
