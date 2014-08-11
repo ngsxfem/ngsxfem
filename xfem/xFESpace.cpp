@@ -890,9 +890,9 @@ namespace ngcomp
     int ned = ma.GetNEdges();      
     Array<int> dnums, dnums2, dnums3; //, verts, edges;
 
-    bool stdblock=true;   //put all std. dofs in one block + one block for each xfem dof
+    bool stdblock=false;   //put all std. dofs in one block + one block for each xfem dof
 
-    bool blocksystem=false;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
+    bool blocksystem=true;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
     bool vertexpatch=false;   //put all dofs of elements around a vertex together
     bool elementpatch=false;  //put all dofs of one element together
     bool edgepatch=false;     //put all dofs of neighbouring elements together
