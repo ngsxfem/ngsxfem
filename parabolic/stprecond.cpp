@@ -43,6 +43,8 @@ namespace ngcomp
   {
     freedofs = bfa->GetFESpace().GetFreeDofs (bfa->UsesEliminateInternal());
     Setup (bfa->GetMatrix());
+    if (test) Test();
+
   }
   
 

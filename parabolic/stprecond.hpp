@@ -39,6 +39,11 @@ public:
   virtual void Update();
   virtual void Mult (const BaseVector & f, BaseVector & u) const;
 
+  virtual const BaseMatrix & GetAMatrix() const
+  {
+    return bfa->GetMatrix(); 
+  }
+
   virtual const char * ClassName() const
   { return "SPACETIME Preconditioner"; }
 
