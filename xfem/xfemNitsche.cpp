@@ -7,7 +7,7 @@ namespace ngfem
   void XNitscheIntegrator<D, kappa_choice, scale_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
@@ -250,7 +250,7 @@ namespace ngfem
   void XNitscheRhsJumpIntegrator<D, kappa_choice> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
@@ -465,7 +465,7 @@ namespace ngfem
   void XNitscheRhsFluxJumpIntegrator<D, kappa_choice> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
@@ -791,7 +791,7 @@ namespace ngfem
   void SpaceTimeXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXNitscheIntegrator::CalcElementMatrix");
@@ -1083,7 +1083,7 @@ namespace ngfem
   void FictXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("FictXNitscheIntegrator::CalcElementMatrix");

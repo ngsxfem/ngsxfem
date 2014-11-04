@@ -7,7 +7,9 @@
 #include <ngstd.hpp> // for Array
 #include "../spacetime/spacetimefe.hpp"
 
-using namespace ngsolve;
+// #include <solve.hpp>
+// using namespace ngsolve;
+using namespace ngcomp;
 
 namespace ngfem
 {

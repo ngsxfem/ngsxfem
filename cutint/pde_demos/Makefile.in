@@ -78,7 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = xfem/pde_demos
+subdir = cutint/pde_demos
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(dist_pkgdata_DATA)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -282,9 +282,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign xfem/pde_demos/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign cutint/pde_demos/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign xfem/pde_demos/Makefile
+	  $(AUTOMAKE) --foreign cutint/pde_demos/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

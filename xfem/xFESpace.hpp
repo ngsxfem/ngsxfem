@@ -65,17 +65,17 @@ namespace ngcomp
       Arguments are the access to the mesh data structure,
       and the flags from the define command in the pde-file
     */
-    XFESpace (const MeshAccess & ama, const Flags & flags);
+    XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
     
     // destructor
     virtual ~XFESpace ();
 
     // function which can create fe-space (needed by pde-parser)
-    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
     {
       // Creator should be outside xFESpace (and translate flags to according template parameters)
       bool spacetime = flags.GetDefineFlag("spacetime");
-      int mD = ma.GetDimension();
+      int mD = ma->GetDimension();
       int mSD = spacetime ? mD+1 : mD;
       if (mD == 2)
         if (mSD == 2)
@@ -170,10 +170,10 @@ namespace ngcomp
     void SetLevelSet(const GridFunction* lset_){ gf_lset = lset_;};
     void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
     void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
-    void SetLevelSetCoefficient(const CoefficientFunction* _coef_lset){ coef_lset = _coef_lset;};
+    void SetLevelSetCoefficient(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
-    void XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const;
+    void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const;
 
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
   };
@@ -186,11 +186,11 @@ namespace ngcomp
     double told;
     double tnew;
   public:
-    LevelsetContainerFESpace (const MeshAccess & ama, const Flags & flags);
+    LevelsetContainerFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
     virtual ~LevelsetContainerFESpace () { ; }
-    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
     {
-      return new LevelsetContainerFESpace(ma,flags);
+      return make_shared<LevelsetContainerFESpace>(ma,flags);
     }
     virtual void Update(LocalHeap & lh) { ; }
     virtual void UpdateCouplingDofArray() { ; }
@@ -205,7 +205,7 @@ namespace ngcomp
     virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const 
     { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
 
-    void SetLevelSetCoefficient(const CoefficientFunction* _coef_lset)
+    void SetLevelSetCoefficient(shared_ptr<CoefficientFunction> _coef_lset)
     { coef_lset = _coef_lset;}
     void SetTime(double ta, double tb) { told=ta; tnew=tb; }
 
@@ -228,29 +228,29 @@ namespace ngcomp
   {
     bool spacetime = false;
   public:
-    XH1FESpace (const MeshAccess & ama, 
-                const Array<FESpace*> & aspaces,
+    XH1FESpace (shared_ptr<MeshAccess> ama, 
+                const Array<shared_ptr<FESpace> > & aspaces,
                 const Flags & flags);
     virtual ~XH1FESpace () { ; }
-    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
     {
       bool spacetime = flags.GetDefineFlag("spacetime");
-      Array<FESpace*> spaces(2);
+      Array<shared_ptr<FESpace> > spaces(2);
       if (spacetime)
-        spaces[0] = new SpaceTimeFESpace (ma, flags);    
+        spaces[0] = make_shared<SpaceTimeFESpace> (ma, flags);    
       else
-        spaces[0] = new H1HighOrderFESpace (ma, flags);    
-      if (ma.GetDimension() == 2)
+        spaces[0] = make_shared<H1HighOrderFESpace> (ma, flags);    
+      if (ma->GetDimension() == 2)
         if (spacetime)
-          spaces[1] = new XFESpace<2,3> (ma, flags);        
+          spaces[1] = make_shared<XFESpace<2,3> > (ma, flags);        
         else
-          spaces[1] = new XFESpace<2,2> (ma, flags);        
+          spaces[1] = make_shared<XFESpace<2,2> >(ma, flags);        
       else
         if (spacetime)
-          spaces[1] = new XFESpace<3,4> (ma, flags);        
+          spaces[1] = make_shared<XFESpace<3,4> >(ma, flags);        
         else
-          spaces[1] = new XFESpace<3,3> (ma, flags);        
-      XH1FESpace * fes = new XH1FESpace (ma, spaces, flags);
+          spaces[1] = make_shared<XFESpace<3,3> >(ma, flags);        
+      shared_ptr<XH1FESpace> fes = make_shared<XH1FESpace> (ma, spaces, flags);
       return fes;
     }
 

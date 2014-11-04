@@ -15,9 +15,9 @@ namespace ngcomp
 {
 
   template <int D, class SCAL>
-  void SetValuesX (const Array<CoefficientFunction *> & acoefs,
+  void SetValuesX (Array<shared_ptr<CoefficientFunction>> & acoefs,
                    const TimeInterval & ti,
-                   GridFunction & bu,
+                   shared_ptr<GridFunction> bu,
                    bool bound,
                    LocalHeap & clh);
 

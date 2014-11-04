@@ -29,19 +29,19 @@ namespace ngfem
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice, NITSCHE_VARIANTS::SCALING_CHOICE scale_choice = NITSCHE_VARIANTS::DIFFUSIVE>
   class XNitscheIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * alpha_neg;
-    CoefficientFunction * alpha_pos;
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * conv_neg;
-    CoefficientFunction * conv_pos;
-    CoefficientFunction * lambda;
-    CoefficientFunction * ab_neg;
-    CoefficientFunction * ab_pos;
-    XLaplaceIntegrator<D> * ablockintegrator;
+    shared_ptr<CoefficientFunction> alpha_neg;
+    shared_ptr<CoefficientFunction> alpha_pos;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> conv_neg;
+    shared_ptr<CoefficientFunction> conv_pos;
+    shared_ptr<CoefficientFunction> lambda;
+    shared_ptr<CoefficientFunction> ab_neg;
+    shared_ptr<CoefficientFunction> ab_pos;
+    shared_ptr<XLaplaceIntegrator<D> > ablockintegrator;
     bool minimal_stabilization;
   public:
-    XNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
+    XNitscheIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
         lambda(coeffs.Size() > 4 ? coeffs[4] : NULL),
@@ -52,12 +52,12 @@ namespace ngfem
 
       const double abn = alpha_neg->EvaluateConst() * beta_neg->EvaluateConst(); 
       const double abp = alpha_pos->EvaluateConst() * beta_pos->EvaluateConst(); 
-      ab_neg = new ConstantCoefficientFunction(abn);
-      ab_pos = new ConstantCoefficientFunction(abp);
-      Array<CoefficientFunction * > lapcoeffs(2);
+      ab_neg = make_shared<ConstantCoefficientFunction>(abn);
+      ab_pos = make_shared<ConstantCoefficientFunction>(abp);
+      Array<shared_ptr<CoefficientFunction> > lapcoeffs(2);
       lapcoeffs[0] = ab_neg;
       lapcoeffs[1] = ab_pos;
-      ablockintegrator = new XLaplaceIntegrator<D>(lapcoeffs);
+      ablockintegrator = make_shared<XLaplaceIntegrator<D>>(lapcoeffs);
     }
 
     virtual ~XNitscheIntegrator()
@@ -79,7 +79,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -88,11 +88,11 @@ namespace ngfem
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class XNitscheRhsFluxJumpIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * coef_rhs;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> coef_rhs;
   public:
-    XNitscheRhsFluxJumpIntegrator (const Array<CoefficientFunction*> & coeffs)
+    XNitscheRhsFluxJumpIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : beta_neg(coeffs[0]),beta_pos(coeffs[1]), 
         coef_rhs(coeffs[2])
     { 
@@ -114,7 +114,7 @@ namespace ngfem
     virtual void
     CalcElementVector (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatVector<double> & elvec,
+                       FlatVector<double> elvec,
                        LocalHeap & lh) const;
 
   };
@@ -122,18 +122,18 @@ namespace ngfem
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class XNitscheRhsJumpIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * alpha_neg;
-    CoefficientFunction * alpha_pos;
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * lambda;
-    CoefficientFunction * ab_neg;
-    CoefficientFunction * ab_pos;
-    CoefficientFunction * coef_rhs;
+    shared_ptr<CoefficientFunction> alpha_neg;
+    shared_ptr<CoefficientFunction> alpha_pos;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> lambda;
+    shared_ptr<CoefficientFunction> ab_neg;
+    shared_ptr<CoefficientFunction> ab_pos;
+    shared_ptr<CoefficientFunction> coef_rhs;
     XLaplaceIntegrator<D> * ablockintegrator;
     bool minimal_stabilization;
   public:
-    XNitscheRhsJumpIntegrator (const Array<CoefficientFunction*> & coeffs)
+    XNitscheRhsJumpIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
         coef_rhs(coeffs[4]),
@@ -143,12 +143,12 @@ namespace ngfem
 
       const double abn = alpha_neg->EvaluateConst() * beta_neg->EvaluateConst(); 
       const double abp = alpha_pos->EvaluateConst() * beta_pos->EvaluateConst(); 
-      ab_neg = new ConstantCoefficientFunction(abn);
-      ab_pos = new ConstantCoefficientFunction(abp);
-      Array<CoefficientFunction * > lapcoeffs(2);
+      ab_neg = make_shared<ConstantCoefficientFunction>(abn);
+      ab_pos = make_shared<ConstantCoefficientFunction>(abp);
+      Array<shared_ptr<CoefficientFunction> > lapcoeffs(2);
       lapcoeffs[0] = ab_neg;
       lapcoeffs[1] = ab_pos;
-      ablockintegrator = new XLaplaceIntegrator<D>(lapcoeffs);
+      ablockintegrator = make_shared<LaplaceIntegrator<D> >(lapcoeffs);
     }
 
     virtual ~XNitscheRhsJumpIntegrator()
@@ -170,7 +170,7 @@ namespace ngfem
     virtual void
     CalcElementVector (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatVector<double> & elvec,
+                       FlatVector<double> elvec,
                        LocalHeap & lh) const;
 
   };
@@ -179,26 +179,26 @@ namespace ngfem
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class SpaceTimeXNitscheIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * alpha_neg;
-    CoefficientFunction * alpha_pos;
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * lambda;
+    shared_ptr<CoefficientFunction> alpha_neg;
+    shared_ptr<CoefficientFunction> alpha_pos;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> lambda;
 
     double t1;
     double t0;
     double tau;
 
-    CoefficientFunction * ab_neg;
-    CoefficientFunction * ab_pos;
-    CoefficientFunction * t_old;
-    CoefficientFunction * t_new;
+    shared_ptr<CoefficientFunction> ab_neg;
+    shared_ptr<CoefficientFunction> ab_pos;
+    shared_ptr<CoefficientFunction> t_old;
+    shared_ptr<CoefficientFunction> t_new;
 
-    SpaceTimeXLaplaceIntegrator<D> * ablockintegrator;
+    shared_ptr<SpaceTimeXLaplaceIntegrator<D>> ablockintegrator;
     bool minimal_stabilization;
 
   public:
-    SpaceTimeXNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
+    SpaceTimeXNitscheIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
         lambda(coeffs.Size() > 6 ? coeffs[4] : NULL),
@@ -211,18 +211,18 @@ namespace ngfem
       const double abn = alpha_neg->EvaluateConst() * beta_neg->EvaluateConst(); 
       const double abp = alpha_pos->EvaluateConst() * beta_pos->EvaluateConst(); 
 
-      ab_neg = new ConstantCoefficientFunction(abn);
-      ab_pos = new ConstantCoefficientFunction(abp);
-      t_old = new ConstantCoefficientFunction(t0);
-      t_new = new ConstantCoefficientFunction(t1);
+      ab_neg = make_shared<ConstantCoefficientFunction>(abn);
+      ab_pos = make_shared<ConstantCoefficientFunction>(abp);
+      t_old = make_shared<ConstantCoefficientFunction>(t0);
+      t_new = make_shared<ConstantCoefficientFunction>(t1);
 
-      Array<CoefficientFunction * > lapcoeffs(4);
+      Array<shared_ptr<CoefficientFunction> > lapcoeffs(4);
 
       lapcoeffs[0] = ab_neg;
       lapcoeffs[1] = ab_pos;
       lapcoeffs[2] = t_old;
       lapcoeffs[3] = t_new;
-      ablockintegrator = new SpaceTimeXLaplaceIntegrator<D>(lapcoeffs);
+      ablockintegrator = make_shared<SpaceTimeXLaplaceIntegrator<D> >(lapcoeffs);
 
       t0 = coeffs[2]->EvaluateConst(); 
       t1 = coeffs[3]->EvaluateConst();
@@ -247,7 +247,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
     virtual void SetTimeInterval (const TimeInterval & ti)
@@ -258,17 +258,17 @@ namespace ngfem
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class FictXNitscheIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * alpha_neg;
-    CoefficientFunction * alpha_pos;
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * lambda;
-    CoefficientFunction * ab_neg;
-    CoefficientFunction * ab_pos;
+    shared_ptr<CoefficientFunction> alpha_neg;
+    shared_ptr<CoefficientFunction> alpha_pos;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> lambda;
+    shared_ptr<CoefficientFunction> ab_neg;
+    shared_ptr<CoefficientFunction> ab_pos;
     XLaplaceIntegrator<D> * ablockintegrator;
     bool minimal_stabilization;
   public:
-    FictXNitscheIntegrator (const Array<CoefficientFunction*> & coeffs)
+    FictXNitscheIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
         lambda(coeffs.Size() > 4 ? coeffs[4] : NULL)
@@ -277,12 +277,12 @@ namespace ngfem
 
       const double abn = alpha_neg->EvaluateConst() * beta_neg->EvaluateConst(); 
       const double abp = alpha_pos->EvaluateConst() * beta_pos->EvaluateConst(); 
-      ab_neg = new ConstantCoefficientFunction(abn);
-      ab_pos = new ConstantCoefficientFunction(abp);
-      Array<CoefficientFunction * > lapcoeffs(2);
+      ab_neg = make_shared<ConstantCoefficientFunction>(abn);
+      ab_pos = make_shared<ConstantCoefficientFunction>(abp);
+      Array<shared_ptr<CoefficientFunction> > lapcoeffs(2);
       lapcoeffs[0] = ab_neg;
       lapcoeffs[1] = ab_pos;
-      ablockintegrator = new XLaplaceIntegrator<D>(lapcoeffs);
+      ablockintegrator = make_shared<XLaplaceIntegrator<D>>(lapcoeffs);
     }
 
     virtual ~FictXNitscheIntegrator()
@@ -304,7 +304,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };

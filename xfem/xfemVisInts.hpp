@@ -35,9 +35,9 @@ namespace ngfem
   {
   public:
     ///
-    XVisIntegrator (CoefficientFunction * coeff);
+    XVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    XVisIntegrator (Array<CoefficientFunction*> & coeffs);
+    XVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~XVisIntegrator ();
     ///
@@ -68,9 +68,9 @@ namespace ngfem
   {
   public:
     ///
-    STXVisIntegrator (CoefficientFunction * coeff);
+    STXVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    STXVisIntegrator (Array<CoefficientFunction*> & coeffs);
+    STXVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~STXVisIntegrator ();
     ///
@@ -103,9 +103,9 @@ namespace ngfem
   {
   public:
     ///
-    STNegPosVisIntegrator (CoefficientFunction * coeff);
+    STNegPosVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    STNegPosVisIntegrator (Array<CoefficientFunction*> & coeffs);
+    STNegPosVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~STNegPosVisIntegrator ();
     ///
@@ -153,13 +153,13 @@ namespace ngfem
   /// one on second diag entry otherwise
   class XHeavisideDMat : public DMatOp<XHeavisideDMat,2>
   {
-    CoefficientFunction * lvlset;
+    shared_ptr<CoefficientFunction> lvlset;
   public:
     // typedef SCAL TSCAL;
     enum { DIM_DMAT = 2 };
-    XHeavisideDMat (CoefficientFunction * acoef) : lvlset(acoef) { ; }
+    XHeavisideDMat (shared_ptr<CoefficientFunction> acoef) : lvlset(acoef) { ; }
     
-    XHeavisideDMat (Array<CoefficientFunction*> & acoefs) : lvlset(acoefs[0]) { ; }
+    XHeavisideDMat (Array<shared_ptr<CoefficientFunction>> & acoefs) : lvlset(acoefs[0]) { ; }
     
     template <typename FEL, typename MIP, typename MAT>
     void GenerateMatrix (const FEL & fel, const MIP & mip,
@@ -173,9 +173,9 @@ namespace ngfem
   {
   public:
     ///
-    SignedXMassIntegrator (CoefficientFunction * coeff);
+    SignedXMassIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    SignedXMassIntegrator (Array<CoefficientFunction*> & coeffs);
+    SignedXMassIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~SignedXMassIntegrator ();
     ///
@@ -189,9 +189,9 @@ namespace ngfem
   {
   public:
     ///
-    SignedSpaceTimeXMassIntegrator (CoefficientFunction * coeff);
+    SignedSpaceTimeXMassIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    SignedSpaceTimeXMassIntegrator (Array<CoefficientFunction*> & coeffs);
+    SignedSpaceTimeXMassIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~SignedSpaceTimeXMassIntegrator ();
     ///
@@ -223,9 +223,9 @@ namespace ngfem
   {
   public:
     ///
-    FictVisIntegrator (CoefficientFunction * coeff);
+    FictVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    FictVisIntegrator (Array<CoefficientFunction*> & coeffs);
+    FictVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~FictVisIntegrator ();
     ///

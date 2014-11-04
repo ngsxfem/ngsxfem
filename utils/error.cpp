@@ -59,30 +59,48 @@ namespace ngfem
   template<int D>
   SolutionCoefficients<D>::SolutionCoefficients(PDE & pde, const Flags & flags)
   {
-    made_conv_n = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("convection_n",""), true),
-      conv_n);
-    made_conv_p = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("convection_p",""), true),
-      conv_p);
-    made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("solution_n","")),
-      coef_n);
-    made_coef_p = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("solution_p","")),
-      coef_p);
-    made_coef_d_n = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""),true),
-      coef_d_n);
-    made_coef_d_p = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""),true),
-      coef_d_p);
-    made_lset = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("levelset",""),true),
-      lset);
-    made_jumprhs = MakeHigherDimensionCoefficientFunction<D>(
-      pde.GetCoefficientFunction(flags.GetStringFlag("jumprhs",""),true),
-      coef_jumprhs);
+    conv_n = pde.GetCoefficientFunction(flags.GetStringFlag("convection_n",""), true);
+    conv_p = pde.GetCoefficientFunction(flags.GetStringFlag("convection_p",""), true);
+    coef_n = pde.GetCoefficientFunction(flags.GetStringFlag("solution_n",""), true);
+    coef_p = pde.GetCoefficientFunction(flags.GetStringFlag("solution_p",""), true);
+    coef_d_n = pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""), true);
+    coef_d_p = pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""), true);
+    lset = pde.GetCoefficientFunction(flags.GetStringFlag("levelset",""), true);
+    coef_jumprhs = pde.GetCoefficientFunction(flags.GetStringFlag("jumprhs",""), true);
+
+    made_conv_n = conv_n != NULL;
+    made_conv_p = conv_p != NULL;
+    made_coef_n = coef_n != NULL;
+    made_coef_p = coef_p != NULL;
+    made_coef_d_n = coef_d_n != NULL;
+    made_coef_d_p = coef_d_p != NULL;
+    made_lset = lset != NULL;
+    made_jumprhs = coef_jumprhs != NULL;
+
+    // made_conv_n = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("convection_n",""), true),
+    //   conv_n);
+    // made_conv_p = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("convection_p",""), true),
+    //   conv_p);
+    // made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("solution_n","")),
+    //   coef_n);
+    // made_coef_p = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("solution_p","")),
+    //   coef_p);
+    // made_coef_d_n = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("derivative_n",""),true),
+    //   coef_d_n);
+    // made_coef_d_p = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("derivative_p",""),true),
+    //   coef_d_p);
+    // made_lset = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("levelset",""),true),
+    //   lset);
+    // made_jumprhs = MakeHigherDimensionCoefficientFunction<D>(
+    //   pde.GetCoefficientFunction(flags.GetStringFlag("jumprhs",""),true),
+    //   coef_jumprhs);
   }
   
   template<int D>
@@ -111,8 +129,8 @@ namespace ngfem
   }
 
   template<int D>
-  void CalcXError (GridFunction * gfu, 
-                   GridFunction * gfu2, 
+  void CalcXError (shared_ptr<GridFunction> gfu, 
+                   shared_ptr<GridFunction> gfu2, 
                    SolutionCoefficients<D> & solcoef, 
                    int intorder, 
                    double a_neg, double a_pos, 
@@ -141,11 +159,11 @@ namespace ngfem
 
     double mass_n = 0;
     double mass_p = 0;
-    const MeshAccess & ma (gfu->GetFESpace().GetMeshAccess());
-    for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+    shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
+    for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
     {
       HeapReset hr(lh);
-      gfu -> GetFESpace().GetDofNrs (elnr, dnums);
+      gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
       const int size = dnums.Size();
 
       FlatVector<double> elvec (size, lh);
@@ -155,7 +173,7 @@ namespace ngfem
 
       if (gfu2)
       {
-        gfu2 -> GetFESpace().GetDofNrs (elnr, dnums2);
+        gfu2 -> GetFESpace()->GetDofNrs (elnr, dnums2);
         size2 = dnums2.Size();
       }
 
@@ -167,9 +185,9 @@ namespace ngfem
       }
 
 
-      ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
+      ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
 
-      const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(elnr,lh);
+      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(elnr,lh);
 
       const CompoundFiniteElement & cfel = 
         dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -199,7 +217,7 @@ namespace ngfem
 
       if (gfu2)
       {
-        const FiniteElement & base_fel2 = gfu2 -> GetFESpace().GetFE(elnr,lh);
+        const FiniteElement & base_fel2 = gfu2 -> GetFESpace()->GetFE(elnr,lh);
 
         const CompoundFiniteElement & cfel2 = 
           dynamic_cast<const CompoundFiniteElement&> (base_fel2);
@@ -781,9 +799,9 @@ namespace ngfem
     }
   }
 
-  template void CalcXError<2>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<2> & solcoef, int intorder, double a_neg, double a_pos,
+  template void CalcXError<2>(shared_ptr<GridFunction> gfu, shared_ptr<GridFunction> gfu2, SolutionCoefficients<2> & solcoef, int intorder, double a_neg, double a_pos,
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output, const Flags & flags);
-  template void CalcXError<3>(GridFunction * gfu, GridFunction * gfu2, SolutionCoefficients<3> & solcoef, int intorder, double a_neg, double a_pos,
+  template void CalcXError<3>(shared_ptr<GridFunction> gfu, shared_ptr<GridFunction> gfu2, SolutionCoefficients<3> & solcoef, int intorder, double a_neg, double a_pos,
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output, const Flags & flags);
 
 

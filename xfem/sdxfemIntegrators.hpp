@@ -23,7 +23,7 @@ namespace ngfem
     CoefficientFunction * mass_neg;
     CoefficientFunction * mass_pos;
   public:
-    SDXIntegrator (const Array<CoefficientFunction*> & coeffs)
+    SDXIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : beta_neg(coeffs[0]),
         beta_pos(coeffs[1]),
         alpha_neg(coeffs[2]),
@@ -62,7 +62,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -79,7 +79,7 @@ namespace ngfem
     CoefficientFunction * conv_pos;
     CoefficientFunction * lambda;
   public:
-    XNitscheConvScaledIntegrator (const Array<CoefficientFunction*> & coeffs)
+    XNitscheConvScaledIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : alpha_neg(coeffs[0]),alpha_pos(coeffs[1]), 
         beta_neg(coeffs[2]),beta_pos(coeffs[3]), 
         conv_neg(coeffs[4]),conv_pos(coeffs[5]), 
@@ -120,7 +120,7 @@ namespace ngfem
     CoefficientFunction * coef_neg;
     CoefficientFunction * coef_pos;
   public:
-    SDXSourceIntegrator (const Array<CoefficientFunction*> & coeffs)
+    SDXSourceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : beta_neg(coeffs[0]),
         beta_pos(coeffs[1]),
         alpha_neg(coeffs[2]),
@@ -157,7 +157,7 @@ namespace ngfem
     virtual void
     CalcElementVector (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatVector<double> & elvec,
+                       FlatVector<double> elvec,
                        LocalHeap & lh) const;
 
   };

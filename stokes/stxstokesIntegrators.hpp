@@ -15,13 +15,13 @@ namespace ngfem
   template <int D>
   class SpaceTimeXStokesIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
     double t1;
     double t0;
     double tau;
   public:
-    SpaceTimeXStokesIntegrator (const Array<CoefficientFunction*> & coeffs)
+    SpaceTimeXStokesIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) 
     {
       t0 = coeffs[2]->EvaluateConst(); 

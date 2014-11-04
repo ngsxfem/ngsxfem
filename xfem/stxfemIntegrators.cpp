@@ -6,8 +6,8 @@ namespace ngfem
   template<int D>
   void SpaceTimeXMassIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
-		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     const ElementTransformation eltrans, 
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXMassIntegrator::CalcElementMatrix");
@@ -100,7 +100,7 @@ namespace ngfem
   void SpaceTimeXLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXLaplaceIntegrator::CalcElementMatrix");
@@ -193,7 +193,7 @@ namespace ngfem
   void SpaceTimeXTimeDerivativeIntegrator<D, adjoint> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXTimeDerivativeIntegrator::CalcElementMatrix");
@@ -301,7 +301,7 @@ namespace ngfem
   void SpaceTimeXConvectionIntegrator<D, adjoint> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXConvectionIntegrator::CalcElementMatrix");
@@ -431,7 +431,7 @@ namespace ngfem
   void SpaceTimeXTransportIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXLaplaceIntegrator::CalcElementMatrix");
@@ -539,7 +539,7 @@ namespace ngfem
   void SpaceTimeXTraceMassIntegrator<D,t> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXTraceMassIntegrator::CalcElementMatrix");
@@ -833,7 +833,7 @@ namespace ngfem
   void SpaceTimeXRobinIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXRobinIntegrator::CalcElementMatrix");

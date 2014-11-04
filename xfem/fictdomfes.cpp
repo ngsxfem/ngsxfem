@@ -694,7 +694,7 @@ namespace ngcomp
   }
 
   template <int D, int SD>
-  void FictitiousDomainFESpace<D,SD>::XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const
+  void FictitiousDomainFESpace<D,SD>::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const
   {
     throw Exception(" HERE ");
     /*

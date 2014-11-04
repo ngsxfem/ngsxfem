@@ -30,9 +30,9 @@ class NumProcSolveInstat : public NumProc
 	// // bilinear-form for the mass-matrix
 	// BilinearForm * bfm;
 	// linear-form providing the right hand side
-	LinearForm * lff; //initial condition
+    shared_ptr<LinearForm> lff; //initial condition
 	// solution vector
-	GridFunction * gfu;
+    shared_ptr<GridFunction> gfu;
 	// time step
 	double dt;
 	// total time
@@ -107,42 +107,43 @@ class NumProcSolveInstat : public NumProc
         // Array<Simplex<3> *> ret4(0);
         // DecomposeIntoSimplices<3,3>(ET_TET,ET_POINT,ret4,pc4,lh);
 
-		BilinearForm * bftau;
+		shared_ptr<BilinearForm> bftau;
 		Flags massflags;
 		massflags.SetFlag ("fespace", fesstr.c_str());
 		bftau = pde.AddBilinearForm ("bftau", massflags);
 		bftau -> SetUnusedDiag (0);
 
-		BilinearFormIntegrator * bfidt = new ST_TimeDerivativeIntegrator<D> (new ConstantCoefficientFunction(1.0));
+        auto one = make_shared<ConstantCoefficientFunction> (1);
+		shared_ptr<BilinearFormIntegrator> bfidt = make_shared<ST_TimeDerivativeIntegrator<D> > (one);
 		bftau -> AddIntegrator (bfidt);
-		BilinearFormIntegrator * bfitr = new SpaceTimeTimeTraceIntegrator<D,PAST> (new ConstantCoefficientFunction(1));
+		shared_ptr<BilinearFormIntegrator> bfitr = make_shared<SpaceTimeTimeTraceIntegrator<D,PAST> >(one);
 		bftau -> AddIntegrator (bfitr);
-		Array<CoefficientFunction *> coef_ar(3);
-		coef_ar[0] = new ConstantCoefficientFunction(0);
-		coef_ar[1] = new ConstantCoefficientFunction(dt);
-		coef_ar[2] = new ConstantCoefficientFunction(1.0);
+		Array<shared_ptr<CoefficientFunction> > coef_ar(3);
+		coef_ar[0] = make_shared<ConstantCoefficientFunction> (0);
+		coef_ar[1] = make_shared<ConstantCoefficientFunction> (dt);
+		coef_ar[2] = make_shared<ConstantCoefficientFunction> (1.0);
 
-		BilinearFormIntegrator * bfilap = new ST_LaplaceIntegrator<D> (coef_ar);
+		shared_ptr<BilinearFormIntegrator> bfilap = make_shared<ST_LaplaceIntegrator<D> > (coef_ar);
 		bftau -> AddIntegrator (bfilap);
 
 		bftau -> Assemble(lh);
 
 		// DifferentialOperator * traceop = new SpaceTimeTimeTraceIntegrator<D,FUTURE>(new ConstantCoefficientFunction(1.0));
 
-		GridFunctionCoefficientFunction coef_u (*gfu); //, traceop);
+		shared_ptr<GridFunctionCoefficientFunction> coef_u = make_shared<GridFunctionCoefficientFunction>(gfu); //, traceop);
 
-		LinearForm * lfrhs;
+		shared_ptr<LinearForm> lfrhs;
 		Flags massflags2;
 		massflags2.SetFlag ("fespace", fesstr.c_str());
 		// lfrhs = pde.AddLinearForm ("lfrhs", massflags2);
 
-		const FESpace * fes = &(gfu->GetFESpace());
+		shared_ptr<FESpace> fes = gfu->GetFESpace();
 		lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
 
-		Array<CoefficientFunction *> coef_lr(2);
-		coef_lr[0] = new ConstantCoefficientFunction(0);
-		coef_lr[1] = &coef_u;
-		LinearFormIntegrator * lfi_tr = new ST_TimeTraceSourceIntegrator<D> (coef_lr);
+		Array<shared_ptr<CoefficientFunction> > coef_lr(2);
+		coef_lr[0] = make_shared<ConstantCoefficientFunction>(0);
+		coef_lr[1] = coef_u;
+		shared_ptr<LinearFormIntegrator> lfi_tr = make_shared<ST_TimeTraceSourceIntegrator<D> >(coef_lr);
 
 		lfrhs -> AddIntegrator (lfi_tr);
 
@@ -162,7 +163,7 @@ class NumProcSolveInstat : public NumProc
 		// set inversetype
 		dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 		// A sparse matrix can compute a sparse factorization. One has to cast to a sparse matrix:
-		BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
+		BaseMatrix & invmat = * dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace()->GetFreeDofs());
 		// implicite Euler method
 		double t;
 		for (t = 0; t < tend; t += dt)

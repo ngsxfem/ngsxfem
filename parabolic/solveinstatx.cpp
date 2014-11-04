@@ -46,15 +46,15 @@ protected:
   // LinearForm * lff; //initial condition
   // solution vector
   
-  FESpace * fes;
-  FESpace * fesvis;
+  shared_ptr<FESpace> fes;
+  shared_ptr<FESpace> fesvis;
 
-  GridFunction * gfu;
+  shared_ptr<GridFunction> gfu;
 
-  GridFunction * gfu_vis = NULL;
+  shared_ptr<GridFunction> gfu_vis = NULL;
 
-  BilinearForm * bftau;
-  LinearForm * lfrhs;
+  shared_ptr<BilinearForm> bftau;
+  shared_ptr<LinearForm> lfrhs;
 
   // time step
   double dt;
@@ -80,51 +80,51 @@ protected:
   double lambda = 10.0;
   double delta = 0.1;
 
-  CoefficientFunction* coef_bconvneg = NULL;
-  CoefficientFunction* coef_bconvpos = NULL;
+  shared_ptr<CoefficientFunction> coef_bconvneg = NULL;
+  shared_ptr<CoefficientFunction> coef_bconvpos = NULL;
 
-  CoefficientFunction* coef_bneg = NULL;
-  CoefficientFunction* coef_bpos = NULL;
-  CoefficientFunction* coef_aneg = NULL;
-  CoefficientFunction* coef_apos = NULL;
-  CoefficientFunction* coef_abneg = NULL;
-  CoefficientFunction* coef_abpos = NULL;
+  shared_ptr<CoefficientFunction> coef_bneg = NULL;
+  shared_ptr<CoefficientFunction> coef_bpos = NULL;
+  shared_ptr<CoefficientFunction> coef_aneg = NULL;
+  shared_ptr<CoefficientFunction> coef_apos = NULL;
+  shared_ptr<CoefficientFunction> coef_abneg = NULL;
+  shared_ptr<CoefficientFunction> coef_abpos = NULL;
 
-  CoefficientFunction* coef_lambda = NULL; // Nitsche
-  CoefficientFunction* coef_delta = NULL; // ghost penalty
+  shared_ptr<CoefficientFunction> coef_lambda = NULL; // Nitsche
+  shared_ptr<CoefficientFunction> coef_delta = NULL; // ghost penalty
 
-  CoefficientFunction* coef_zero = NULL;
-  CoefficientFunction* coef_one = NULL;
+  shared_ptr<CoefficientFunction> coef_zero = NULL;
+  shared_ptr<CoefficientFunction> coef_one = NULL;
 
-  CoefficientFunction* coef_told = NULL;
-  CoefficientFunction* coef_tnew = NULL;
+  shared_ptr<CoefficientFunction> coef_told = NULL;
+  shared_ptr<CoefficientFunction> coef_tnew = NULL;
 
-  CoefficientFunction* coef_upwneg = NULL;
-  CoefficientFunction* coef_upwpos = NULL;
+  shared_ptr<CoefficientFunction> coef_upwneg = NULL;
+  shared_ptr<CoefficientFunction> coef_upwpos = NULL;
 
-  CoefficientFunction* coef_brhsneg = NULL;
-  CoefficientFunction* coef_brhspos = NULL;
+  shared_ptr<CoefficientFunction> coef_brhsneg = NULL;
+  shared_ptr<CoefficientFunction> coef_brhspos = NULL;
 
-  CoefficientFunction* coef_binineg = NULL;
-  CoefficientFunction* coef_binipos = NULL;
+  shared_ptr<CoefficientFunction> coef_binineg = NULL;
+  shared_ptr<CoefficientFunction> coef_binipos = NULL;
 
-  CoefficientFunction* coef_bndneg = NULL;
-  CoefficientFunction* coef_bndpos = NULL;
+  shared_ptr<CoefficientFunction> coef_bndneg = NULL;
+  shared_ptr<CoefficientFunction> coef_bndpos = NULL;
 
   ErrorTable errtab;
   SolutionCoefficients<D> solcoef;
 
-  SpaceTimeXTimeDerivativeIntegrator<D> * bfidt;
-  SpaceTimeXLaplaceIntegrator<D> * bfilap; 
-  LowOrderGhostPenaltyIntegrator<D> * bfigho;
-  SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> * bfixnit;
-  SpaceTimeXConvectionIntegrator<D> * bfixconv;
-  SpaceTimeXTraceMassIntegrator<D,PAST> * bfitimetr;
+  shared_ptr<SpaceTimeXTimeDerivativeIntegrator<D> > bfidt;
+  shared_ptr<SpaceTimeXLaplaceIntegrator<D> > bfilap; 
+  shared_ptr<LowOrderGhostPenaltyIntegrator<D> > bfigho;
+  shared_ptr<SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> > bfixnit;
+  shared_ptr<SpaceTimeXConvectionIntegrator<D> > bfixconv;
+  shared_ptr<SpaceTimeXTraceMassIntegrator<D,PAST> > bfitimetr;
 
-  SpaceTimeXTraceSourceIntegrator<D,PAST> * lfi_tr;
-  SpaceTimeXSourceIntegrator<D> * lfi_rhs;
+  shared_ptr<SpaceTimeXTraceSourceIntegrator<D,PAST> > lfi_tr;
+  shared_ptr<SpaceTimeXSourceIntegrator<D> > lfi_rhs;
 
-  Preconditioner * localprec;
+  shared_ptr<Preconditioner> localprec;
 
 
 public:
@@ -182,21 +182,21 @@ public:
     coef_bndneg = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_neg", "bndneg"));
     coef_bndpos = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_pos", "bndpos"));
 
-    coef_aneg = new ConstantCoefficientFunction(aneg/bneg);
-    coef_apos = new ConstantCoefficientFunction(apos/bpos);
-    coef_bneg = new ConstantCoefficientFunction(1.0/bneg);
-    coef_bpos = new ConstantCoefficientFunction(1.0/bpos);
-    coef_abneg = new ConstantCoefficientFunction(aneg/bneg);
-    coef_abpos = new ConstantCoefficientFunction(apos/bpos);
+    coef_aneg = make_shared<ConstantCoefficientFunction>(aneg/bneg);
+    coef_apos = make_shared<ConstantCoefficientFunction>(apos/bpos);
+    coef_bneg = make_shared<ConstantCoefficientFunction>(1.0/bneg);
+    coef_bpos = make_shared<ConstantCoefficientFunction>(1.0/bpos);
+    coef_abneg = make_shared<ConstantCoefficientFunction>(aneg/bneg);
+    coef_abpos = make_shared<ConstantCoefficientFunction>(apos/bpos);
 
-    coef_lambda = new ConstantCoefficientFunction(lambda);
-    coef_delta = new ConstantCoefficientFunction(delta);
+    coef_lambda = make_shared<ConstantCoefficientFunction>(lambda);
+    coef_delta = make_shared<ConstantCoefficientFunction>(delta);
 
-    coef_zero = new ConstantCoefficientFunction(0.0);
-    coef_one = new ConstantCoefficientFunction(1.0);
+    coef_zero = make_shared<ConstantCoefficientFunction>(0.0);
+    coef_one = make_shared<ConstantCoefficientFunction>(1.0);
 
-    coef_told = new ConstantCoefficientFunction(0.0);
-    coef_tnew = new ConstantCoefficientFunction(0.0+dt);
+    coef_told = make_shared<ConstantCoefficientFunction>(0.0);
+    coef_tnew = make_shared<ConstantCoefficientFunction>(0.0+dt);
 
     Flags blflags;
     blflags.SetFlag ("fespace", fesstr.c_str());
@@ -204,7 +204,7 @@ public:
     // bftau = CreateBilinearForm (fes, "bftau", blflags);
     bftau -> SetUnusedDiag (0);
 
-    FESpace * fes = const_cast<FESpace*>(&(gfu->GetFESpace()));
+    shared_ptr<FESpace> fes = gfu->GetFESpace();
     Flags lflags;
     lfrhs = CreateLinearForm(fes,"lfrhs",lflags);
 
@@ -223,18 +223,18 @@ public:
 
   void DeleteBilinearFormIntegrators()
   {
-    if (bfidt) { delete bfidt; bfidt=NULL; }
-    if (bfilap) { delete bfilap;  bfilap=NULL; }
-    if (bfigho) { delete bfigho; bfigho=NULL; }
-    if (bfixnit) { delete bfixnit; bfixnit=NULL; }
-    if (bfixconv) { delete bfixconv; bfixconv=NULL; }
-    if (bfitimetr) { delete bfitimetr; bfitimetr=NULL; }
+    // if (bfidt) { delete bfidt; bfidt=NULL; }
+    // if (bfilap) { delete bfilap;  bfilap=NULL; }
+    // if (bfigho) { delete bfigho; bfigho=NULL; }
+    // if (bfixnit) { delete bfixnit; bfixnit=NULL; }
+    // if (bfixconv) { delete bfixconv; bfixconv=NULL; }
+    // if (bfitimetr) { delete bfitimetr; bfitimetr=NULL; }
   }
 
   void DeleteLinearFormIntegrators()
   {
-    if (lfi_tr) { delete lfi_tr; lfi_tr=NULL; }
-    if (lfi_rhs) { delete lfi_rhs; lfi_rhs=NULL; }
+    // if (lfi_tr) { delete lfi_tr; lfi_tr=NULL; }
+    // if (lfi_rhs) { delete lfi_rhs; lfi_rhs=NULL; }
   }
 
   virtual ~NumProcSolveInstatX() 
@@ -242,19 +242,19 @@ public:
     DeleteLinearFormIntegrators();
     DeleteBilinearFormIntegrators();
 
-    delete coef_delta;
-    delete coef_lambda;
-    delete coef_zero;
-    delete coef_one;
-    delete coef_told;
-    delete coef_tnew;
+  //   delete coef_delta;
+  //   delete coef_lambda;
+  //   delete coef_zero;
+  //   delete coef_one;
+  //   delete coef_told;
+  //   delete coef_tnew;
 
-    delete coef_aneg;
-    delete coef_bneg;
-    delete coef_abneg;
-    delete coef_apos;
-    delete coef_bpos;
-    delete coef_abpos;
+  //   delete coef_aneg;
+  //   delete coef_bneg;
+  //   delete coef_abneg;
+  //   delete coef_apos;
+  //   delete coef_bpos;
+  //   delete coef_abpos;
   }
 
 
@@ -269,34 +269,34 @@ public:
 
   void AddBilinearFormIntegrators()
   {
-    Array<CoefficientFunction*> coefs_timeder(2);
+    Array<shared_ptr<CoefficientFunction>> coefs_timeder(2);
     coefs_timeder[0] = coef_bneg;
     coefs_timeder[1] = coef_bpos;
 
-    bfidt = new SpaceTimeXTimeDerivativeIntegrator<D> (coefs_timeder);
+    bfidt = make_shared<SpaceTimeXTimeDerivativeIntegrator<D>> (coefs_timeder);
     bftau -> AddIntegrator (bfidt);
 
-    Array<CoefficientFunction*> coefs_xlaplace(4);
+    Array<shared_ptr<CoefficientFunction>> coefs_xlaplace(4);
     coefs_xlaplace[0] = coef_abneg;
     coefs_xlaplace[1] = coef_abpos;
     coefs_xlaplace[2] = coef_told;
     coefs_xlaplace[3] = coef_tnew;
 
-    bfilap = new SpaceTimeXLaplaceIntegrator<D> (coefs_xlaplace);
+    bfilap = make_shared<SpaceTimeXLaplaceIntegrator<D>> (coefs_xlaplace);
     bftau -> AddIntegrator (bfilap);
 
-    Array<CoefficientFunction*> coefs_ghostpen(5);
+    Array<shared_ptr<CoefficientFunction>> coefs_ghostpen(5);
     coefs_ghostpen[0] = coef_abneg;
     coefs_ghostpen[1] = coef_abpos;
     coefs_ghostpen[2] = coef_told;
     coefs_ghostpen[3] = coef_tnew;
     coefs_ghostpen[4] = coef_delta;
 
-    bfigho = new LowOrderGhostPenaltyIntegrator<D> (coefs_ghostpen);
+    bfigho = make_shared<LowOrderGhostPenaltyIntegrator<D>>(coefs_ghostpen);
     if (ghostpenalty)
       bftau -> AddIntegrator (bfigho);
 
-    Array<CoefficientFunction *> coefs_xnitsche(minimal_stabilization ? 6 : 7);
+    Array<shared_ptr<CoefficientFunction>> coefs_xnitsche(minimal_stabilization ? 6 : 7);
     coefs_xnitsche[0] = coef_aneg;
     coefs_xnitsche[1] = coef_apos;
     coefs_xnitsche[2] = coef_one;
@@ -313,41 +313,41 @@ public:
         coefs_xnitsche[6] = coef_tnew;
       }
 
-    bfixnit = new SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> (coefs_xnitsche);
+    bfixnit = make_shared<SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> > (coefs_xnitsche);
     bftau -> AddIntegrator (bfixnit);
 
-    Array<CoefficientFunction*> coefs_xconvection(4);
+    Array<shared_ptr<CoefficientFunction>> coefs_xconvection(4);
     coefs_xconvection[0] = coef_bconvneg;
     coefs_xconvection[1] = coef_bconvpos;
     coefs_xconvection[2] = coef_told;
     coefs_xconvection[3] = coef_tnew;
 
-    bfixconv = new SpaceTimeXConvectionIntegrator<D> (coefs_xconvection);
+    bfixconv = make_shared<SpaceTimeXConvectionIntegrator<D> > (coefs_xconvection);
     bftau -> AddIntegrator (bfixconv);
 
-    Array<CoefficientFunction*> coefs_timetr(2);
+    Array<shared_ptr<CoefficientFunction>> coefs_timetr(2);
     coefs_timetr[0] = coef_bneg;
     coefs_timetr[1] = coef_bpos;
 
-    bfitimetr = new SpaceTimeXTraceMassIntegrator<D,PAST> (coefs_timetr);
+    bfitimetr = make_shared<SpaceTimeXTraceMassIntegrator<D,PAST> > (coefs_timetr);
     bftau -> AddIntegrator (bfitimetr);
   }
 
   void AddLinearFormIntegrators()
   {
-    Array<CoefficientFunction *> coef_upw(2);
+    Array<shared_ptr<CoefficientFunction>> coef_upw(2);
     coef_upw[0] = coef_binineg;
     coef_upw[1] = coef_binipos;
-    lfi_tr = new SpaceTimeXTraceSourceIntegrator<D,PAST> (coef_upw);
+    lfi_tr = make_shared<SpaceTimeXTraceSourceIntegrator<D,PAST>> (coef_upw);
     lfrhs -> AddIntegrator (lfi_tr);
 
     // just for testing
-    Array<CoefficientFunction *> coef_rhs(4);
+    Array<shared_ptr<CoefficientFunction>> coef_rhs(4);
     coef_rhs[0] = coef_brhsneg;
     coef_rhs[1] = coef_brhspos;
     coef_rhs[2] = coef_told;
     coef_rhs[3] = coef_tnew;
-    lfi_rhs = new SpaceTimeXSourceIntegrator<D> (coef_rhs);
+    lfi_rhs = make_shared<SpaceTimeXSourceIntegrator<D>> (coef_rhs);
     lfrhs -> AddIntegrator (lfi_rhs);
   }
   
@@ -372,16 +372,16 @@ public:
     //   dt /= 2.0;
 
 
-    DifferentialOperator * uptrace = new T_DifferentialOperator<DiffOpTimeTrace<D,FUTURE> >();
-    GridFunctionCoefficientFunction coef_u_neg (*(gfu_vis->GetComponent(0)), uptrace); //, traceop);
-    GridFunctionCoefficientFunction coef_u_pos (*(gfu_vis->GetComponent(1)), uptrace); //, traceop);
+    shared_ptr<DifferentialOperator> uptrace = make_shared<T_DifferentialOperator<DiffOpTimeTrace<D,FUTURE> > >();
+    GridFunctionCoefficientFunction coef_u_neg (gfu_vis->GetComponent(0), uptrace); //, traceop);
+    GridFunctionCoefficientFunction coef_u_pos (gfu_vis->GetComponent(1), uptrace); //, traceop);
 
-    FESpace * fes = const_cast<FESpace*>(&(gfu->GetFESpace()));
-    CompoundFESpace & compfes = *dynamic_cast<CompoundFESpace * >(fes);
-    XFESpace<D,D+1> & xfes = *dynamic_cast<XFESpace<D,D+1> * >(compfes[1]);
+    shared_ptr<FESpace> fes = gfu->GetFESpace();
+    shared_ptr<CompoundFESpace> compfes = dynamic_pointer_cast<CompoundFESpace>(fes);
+    shared_ptr<XFESpace<D,D+1> > xfes = dynamic_pointer_cast<XFESpace<D,D+1> >((*compfes)[1]);
 	
-    CompoundFESpace & compfes2 = *dynamic_cast<CompoundFESpace * >(fesvis);
-    LevelsetContainerFESpace & lcfes = *dynamic_cast<LevelsetContainerFESpace * >(compfes2[2]);
+    shared_ptr<CompoundFESpace> compfes2 = dynamic_pointer_cast<CompoundFESpace>(fesvis);
+    shared_ptr<LevelsetContainerFESpace> lcfes = dynamic_pointer_cast<LevelsetContainerFESpace>((*compfes2)[2]);
 
     static ConstantCoefficientFunction copy1(1.0);
     static ConstantCoefficientFunction copy2(1.0);
@@ -396,7 +396,7 @@ public:
     std::cout << " coef_binineg = " << coef_binineg << std::endl;
     std::cout << " coef_binipos = " << coef_binipos << std::endl;
 
-    Array<CoefficientFunction* > bndcoefs(2);
+    Array<shared_ptr<CoefficientFunction> > bndcoefs(2);
     bndcoefs[0] = coef_bndneg;
     bndcoefs[1] = coef_bndpos;
 
@@ -407,12 +407,12 @@ public:
       {
         HeapReset hr(lh);
         TimeInterval ti(t,t+dt);
-        xfes.SetTimeInterval(ti);
-        lcfes.SetTime(ti.first,ti.second);
+        xfes->SetTimeInterval(ti);
+        lcfes->SetTime(ti.first,ti.second);
         fes->Update(lh);
         gfu->Update();
 
-        SetValuesX<D,double>( bndcoefs, ti, *gfu, true, lh);
+        SetValuesX<D,double>( bndcoefs, ti, gfu, true, lh);
 
         BaseVector & vecu = gfu->GetVector();
 
@@ -426,10 +426,10 @@ public:
 
         BaseMatrix & mata = bftau->GetMatrix();
         dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
-        BaseMatrix * directinvmat = NULL;
+        shared_ptr<BaseMatrix> directinvmat = NULL;
         GMRESSolver<double> * itinvmat = NULL;
         if (calccond || directsolve)
-          directinvmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace().GetFreeDofs());
+          directinvmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace()->GetFreeDofs());
 
         if (!directsolve)
 	  {
@@ -469,8 +469,8 @@ public:
             static Timer timer ("CalcCond");
             RegionTimer reg (timer);
             outf << t << "\t";
-            CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, false, &outf);
-            CalcCond(mata,*directinvmat,gfu->GetFESpace().GetFreeDofs(), false, true, &outf);
+            CalcCond(mata,*directinvmat,gfu->GetFESpace()->GetFreeDofs(), false, false, &outf);
+            CalcCond(mata,*directinvmat,gfu->GetFESpace()->GetFreeDofs(), false, true, &outf);
             if (!directsolve)
               outf << itinvmat->GetSteps() << "\t";
             outf << endl;
@@ -485,8 +485,8 @@ public:
         // update visualization
         // delete &d;
         delete &w;
-        if (calccond || directsolve)
-          delete directinvmat;
+        // if (calccond || directsolve)
+        //   delete directinvmat;
 
         if (!directsolve)
           delete itinvmat;
@@ -502,7 +502,7 @@ public:
               CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, false, emptyflags);
         }
 
-        xfes.XToNegPos(*gfu,*gfu_vis);
+        xfes.XToNegPos(gfu,gfu_vis);
 
         lfi_tr->ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, 1.0/bneg, 1.0/bpos);
         Ng_Redraw ();
@@ -522,7 +522,7 @@ public:
     // delete &d;
     // delete &w;
     bftau -> SetNonAssemble(true);
-    delete uptrace;
+    // delete uptrace;
   }
 
 

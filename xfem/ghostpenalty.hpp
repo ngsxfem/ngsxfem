@@ -25,7 +25,7 @@ namespace ngfem
     double tau = 1.0;
     double delta = 1.0;
   public:
-    LowOrderGhostPenaltyIntegrator (Array<CoefficientFunction*> & coeffs) 
+    LowOrderGhostPenaltyIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs) 
       : FacetBilinearFormIntegrator(coeffs)
     { 
       coef_lam_neg  = coeffs[0];
@@ -46,7 +46,7 @@ namespace ngfem
     virtual bool BoundaryForm () const 
     { return 0; }
     
-    static Integrator * Create (Array<CoefficientFunction*> & coeffs)
+    static Integrator * Create (Array<shared_ptr<CoefficientFunction>> & coeffs)
     {
       return new LowOrderGhostPenaltyIntegrator (coeffs);
     }

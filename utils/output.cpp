@@ -123,7 +123,7 @@ namespace ngfem
     // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
     int activeels = 0;
-    const MeshAccess & ma (gfu->GetFESpace().GetMeshAccess());
+    shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
 
     DOMAIN_TYPE plotdt = POS;
     for (plotdt=POS; plotdt<IF; plotdt=(DOMAIN_TYPE)((int)plotdt+1))
@@ -133,20 +133,20 @@ namespace ngfem
       Array<double > edges_val(0);
 
 
-      for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+      for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
       {
         HeapReset hr(lh);
-        gfu -> GetFESpace().GetDofNrs (elnr, dnums);
+        gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
         const int size = dnums.Size();
 
         FlatVector<double> elvec (size, lh);
         gfu -> GetVector().GetIndirect (dnums, elvec);   
 
-        ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
+        ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
 
         ELEMENT_TYPE eltype = eltrans.GetElementType();
       
-        const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(elnr,lh);
+        const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(elnr,lh);
         const CompoundFiniteElement & cfel = 
           dynamic_cast<const CompoundFiniteElement&> (base_fel);
 

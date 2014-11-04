@@ -524,7 +524,7 @@ namespace ngcomp
     static Timer timer ("XFESpace::GetFE");
     RegionTimer reg (timer);
 
-    Ngs_Element ngel = ma.GetElement(elnr);
+    Ngs_Element ngel = ma->GetElement(elnr);
     ELEMENT_TYPE eltype = ngel.GetType();
     if (!activeelem.Test(elnr))
     {
@@ -536,10 +536,10 @@ namespace ngcomp
       Array<DOMAIN_TYPE> domnrs;
       GetDomainNrs(elnr,domnrs);  
 
-      Ngs_Element ngel = ma.GetElement(elnr);
+      Ngs_Element ngel = ma->GetElement(elnr);
       ELEMENT_TYPE eltype = ngel.GetType();
 
-      ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
+      ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
         
       ScalarFieldEvaluator * lset_eval_p = NULL;
       if (spacetime)
@@ -629,7 +629,7 @@ namespace ngcomp
     static Timer timer ("XFESpace::GetSFE");
     RegionTimer reg (timer);
 
-    Ngs_Element ngsel = ma.GetSElement(selnr);
+    Ngs_Element ngsel = ma->GetSElement(selnr);
     ELEMENT_TYPE eltype = ngsel.GetType();
     if (!activeselem.Test(selnr))
     {
@@ -641,10 +641,10 @@ namespace ngcomp
       Array<DOMAIN_TYPE> domnrs;
       GetSurfaceDomainNrs(selnr,domnrs);  
 
-      Ngs_Element ngel = ma.GetSElement(selnr);
+      Ngs_Element ngel = ma->GetSElement(selnr);
       ELEMENT_TYPE eltype = ngel.GetType();
 
-      ElementTransformation & eltrans = ma.GetTrafo (selnr, BND, lh);
+      ElementTransformation & eltrans = ma->GetTrafo (selnr, BND, lh);
         
       ScalarFieldEvaluator * lset_eval_p = NULL;
       if (spacetime)
@@ -683,21 +683,21 @@ namespace ngcomp
   }
 
   template <int D, int SD>
-  void XFESpace<D,SD>::XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const
+  void XFESpace<D,SD>::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const
   {
-    GridFunction & gf_neg = *gf_neg_pos.GetComponent(0);
+    shared_ptr<GridFunction> gf_neg = gf_neg_pos->GetComponent(0);
     BaseVector & bv_neg = gf_neg.GetVector();
     FlatVector<> vneg = bv_neg.FVDouble();
 
-    GridFunction & gf_pos = *gf_neg_pos.GetComponent(1);
+    shared_ptr<GridFunction> gf_pos = gf_neg_pos->GetComponent(1);
     BaseVector & bv_pos = gf_pos.GetVector();
     FlatVector<> vpos = bv_pos.FVDouble();
 
-    GridFunction & gf_base = *gf.GetComponent(0);
+    shared_ptr<GridFunction> gf_base = gf->GetComponent(0);
     BaseVector & bv_base = gf_base.GetVector();
     FlatVector<> vbase = bv_base.FVDouble();
 
-    GridFunction & gf_x = *gf.GetComponent(1);
+    shared_ptr<GridFunction> gf_x = gf->GetComponent(1);
     BaseVector & bv_x = gf_x.GetVector();
     FlatVector<> vx = bv_x.FVDouble();
 
@@ -723,7 +723,7 @@ namespace ngcomp
   template class XFESpace<3,4>;
 
 
-  LevelsetContainerFESpace::LevelsetContainerFESpace(const MeshAccess & ama, const Flags & flags)
+  LevelsetContainerFESpace::LevelsetContainerFESpace(shared_ptr<MeshAccess> ama, const Flags & flags)
     : FESpace(ama,flags)
   {
     ;
@@ -734,14 +734,14 @@ namespace ngcomp
     : NumProc (apde)
   { 
     
-    FESpace* xh1fes = pde.GetFESpace(flags.GetStringFlag("xh1fespace","v"), true);
-    FESpace* xfes = NULL;
-    FESpace* basefes = NULL;
+    shared_ptr<FESpace> xh1fes = pde.GetFESpace(flags.GetStringFlag("xh1fespace","v"), true);
+    shared_ptr<FESpace> xfes = NULL;
+    shared_ptr<FESpace> basefes = NULL;
 
     if (xh1fes)
     {
-      basefes = (*(dynamic_cast<CompoundFESpace*>(xh1fes)))[0];
-      xfes = (*(dynamic_cast<CompoundFESpace*>(xh1fes)))[1];
+      basefes = (*dynamic_pointer_cast<CompoundFESpace>(xh1fes))[0];
+      xfes = (*dynamic_pointer_cast<CompoundFESpace>(xh1fes))[1];
     }
     else
     {
@@ -749,12 +749,12 @@ namespace ngcomp
       basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
     }
 
-    FESpace* fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
-    CoefficientFunction * coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
+    shared_ptr<FESpac> fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
+    shared_ptr<CoefficientFunction> coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
     int mD = pde.GetMeshAccess().GetDimension();
 
-    SpaceTimeFESpace * fes_st = dynamic_cast<SpaceTimeFESpace *>(basefes);
+    shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast<SpaceTimeFESpace>(basefes);
     int mSD = fes_st == NULL ? mD : mD + 1;
 
     if (mD == 2)
@@ -1084,7 +1084,7 @@ namespace ngcomp
               for (int k = 0; k < elnums.Size(); ++k)
               {
                 int elnr = elnums[k];
-                ma.GetElEdges(elnr,ednums);
+                ma->GetElEdges(elnr,ednums);
                 for (int l = 0; l < ednums.Size(); ++l)
                   if (ednums[l] != nf)
                   {
@@ -1092,7 +1092,7 @@ namespace ngcomp
                     creator.Add(offset, dnums);
                   }
 
-                ma.GetElVertices(elnr,vnums);
+                ma->GetElVertices(elnr,vnums);
                 for (int l = 0; l < vnums.Size(); ++l)
                   if (vnums[l] != v1 && vnums[l] != v2)
                   {
@@ -1118,7 +1118,7 @@ namespace ngcomp
               const XFESpace<2,3>* xfes23 = NULL;
               const XFESpace<3,3>* xfes33 = NULL;
               const XFESpace<3,4>* xfes34 = NULL;
-              const int sD = ma.GetDimension();
+              const int sD = ma->GetDimension();
               if (sD == 2)
                 if (spacetime)
                   xfes23 = dynamic_cast<const XFESpace<2,3> * >(spaces[1]);
@@ -1174,7 +1174,7 @@ namespace ngcomp
       cout << "creating bddc-coarse grid(vertices)" << endl;
       Array<int> & clusters = *new Array<int> (GetNDof());
       clusters = 0;
-      // int nv = ma.GetNV();
+      // int nv = ma->GetNV();
       // for (int i = 0; i < nv; i++)
       //   if (!IsDirichletVertex(i))
       //     clusters[i] = 1;		
@@ -1188,8 +1188,8 @@ namespace ngcomp
         clusters = 0;
 
         Array<int> dnums;
-        int nfa = ma.GetNFacets();
-        int nv = ma.GetNV();
+        int nfa = ma->GetNFacets();
+        int nv = ma->GetNV();
 
         for (int i = 0; i < nv; i++)
         {
@@ -1209,13 +1209,13 @@ namespace ngcomp
         BitArray mark(GetNDof());
         mark.Clear();
         int epcnt = 0;
-        for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+        for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
         {
           const XFESpace<2,2>* xfes22 = NULL;
           const XFESpace<2,3>* xfes23 = NULL;
           const XFESpace<3,3>* xfes33 = NULL;
           const XFESpace<3,4>* xfes34 = NULL;
-          const int sD = ma.GetDimension();
+          const int sD = ma->GetDimension();
           if (sD == 2)
             if (spacetime)
               xfes23 = dynamic_cast<const XFESpace<2,3> * >(spaces[1]);

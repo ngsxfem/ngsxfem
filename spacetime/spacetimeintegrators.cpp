@@ -17,7 +17,7 @@ namespace ngfem
   template <int D>
   void ST_MassIntegrator<D> :: CalcElementMatrix (const FiniteElement & fel,
                                                   const ElementTransformation & eltrans, 
-                                                  FlatMatrix<double> & elmat,
+                                                  FlatMatrix<double> elmat,
                                                   LocalHeap & lh) const
   {
 
@@ -71,7 +71,7 @@ namespace ngfem
   template <int D>
   void ST_TimeDerivativeIntegrator<D> :: CalcElementMatrix (const FiniteElement & fel,
                                                             const ElementTransformation & eltrans, 
-                                                            FlatMatrix<double> & elmat,
+                                                            FlatMatrix<double> elmat,
                                                             LocalHeap & lh) const
   {
 
@@ -117,7 +117,7 @@ namespace ngfem
   template <int D>
   void ST_LaplaceIntegrator<D> :: CalcElementMatrix (const FiniteElement & fel,
                                                      const ElementTransformation & eltrans, 
-                                                     FlatMatrix<double> & elmat,
+                                                     FlatMatrix<double> elmat,
                                                      LocalHeap & lh) const
   {
 
@@ -205,7 +205,7 @@ namespace ngfem
   template <int D>
   void ST_TimeTraceMassIntegrator<D> :: CalcElementMatrix (const FiniteElement & fel,
                                                            const ElementTransformation & eltrans, 
-                                                           FlatMatrix<double> & elmat,
+                                                           FlatMatrix<double> elmat,
                                                            LocalHeap & lh) const
   {
 
@@ -297,12 +297,12 @@ namespace ngfem
   static RegisterLinearFormIntegrator<ST_TimeTraceSourceIntegrator<3> > initsttrsrc31 ("STtracesource", 3, 2);
 
   template <int D, TIME t>  
-  SpaceTimeTimeTraceIntegrator<D,t> :: SpaceTimeTimeTraceIntegrator (Array<CoefficientFunction*> & coeffs)
+  SpaceTimeTimeTraceIntegrator<D,t> :: SpaceTimeTimeTraceIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs)
     : T_BDBIntegrator<DiffOpTimeTrace<D,t>, DiagDMat<1>, ScalarSpaceTimeFiniteElement<D> > (coeffs)
   { ; }
 
   template <int D, TIME t>  
-  SpaceTimeTimeTraceIntegrator<D,t> :: SpaceTimeTimeTraceIntegrator (CoefficientFunction* coeffs)
+  SpaceTimeTimeTraceIntegrator<D,t> :: SpaceTimeTimeTraceIntegrator (shared_ptr<CoefficientFunction> coeffs)
     : T_BDBIntegrator<DiffOpTimeTrace<D,t>, DiagDMat<1>, ScalarSpaceTimeFiniteElement<D> > (coeffs)
   { ; }
 

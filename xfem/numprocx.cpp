@@ -28,20 +28,21 @@ using namespace ngfem;
 namespace ngcomp
 { 
   template <int D, class SCAL>
-  void SetValuesX (const Array<CoefficientFunction *> & acoefs,
+  void SetValuesX (const Array<shared_ptr<CoefficientFunction>> & acoefs,
                    const TimeInterval & ti,
-                   GridFunction & bu,
+                   shared_ptr<GridFunction> bu,
                    bool bound,
                    LocalHeap & clh)
   {
     static Timer sv("timer setvaluesX"); RegionTimer r(sv);
 
-    S_GridFunction<SCAL> & u = dynamic_cast<S_GridFunction<SCAL> &> (bu);
+    // S_GridFunction<SCAL> & u = dynamic_cast<S_GridFunction<SCAL> &> (bu);
+    auto u = dynamic_pointer_cast<S_GridFunction<SCAL>> (bu);
 
-    const FESpace & fes = u.GetFESpace();
-    const MeshAccess & ma = fes.GetMeshAccess();
+    shared_ptr<FESpace> fes = u->GetFESpace();
+    shared_ptr<MeshAccess> ma = fes->GetMeshAccess();
     
-    ma.PushStatus ("setvalues");
+    ma->PushStatus ("setvalues");
 
     VorB vorb = VorB(bound);
 
@@ -65,25 +66,25 @@ namespace ngcomp
     BilinearFormIntegrator * bfi = NULL;
     LinearFormIntegrator * lfi = NULL;
 
-    const CompoundFESpace & cfes = dynamic_cast<const CompoundFESpace & >(fes);
-    const SpaceTimeFESpace * stfes = dynamic_cast<const SpaceTimeFESpace * >(cfes[0]);
+    shared_ptr<CompoundFESpace> cfes = dynamic_pointer_cast<CompoundFESpace>(fes);
+    shared_ptr<SpaceTimeFESpace> stfes = dynamic_pointer_cast<SpaceTimeFESpace>(cfes[0]);
     
-    Array<CoefficientFunction *> coefs(acoefs);
-    Array<CoefficientFunction *> coefs_one(2);
-    ConstantCoefficientFunction one(1.0);
-    coefs_one[0] = &one;
-    coefs_one[1] = &one;
+    Array<shared_ptr<CoefficientFunction>> coefs(acoefs);
+    Array<shared_ptr<CoefficientFunction>> coefs_one(2);
+    auto one = make_shared<ConstantCoefficientFunction>(1.0);
+    coefs_one[0] = one;
+    coefs_one[1] = one;
 
-    ConstantCoefficientFunction told(ti.first);
-    ConstantCoefficientFunction tnew(ti.second);
+    auto told = make_shared<ConstantCoefficientFunction>(ti.first);
+    auto tnew = make_shared<ConstantCoefficientFunction>(ti.second);
 
     if (stfes != NULL)
     {
-      coefs.Append(&told);
-      coefs.Append(&tnew);
+      coefs.Append(told);
+      coefs.Append(tnew);
       lfi = new (clh) SpaceTimeXNeumannIntegrator<D>(coefs);
-      coefs_one.Append(&told);
-      coefs_one.Append(&tnew);
+      coefs_one.Append(told);
+      coefs_one.Append(tnew);
       bfi = new (clh) SpaceTimeXRobinIntegrator<D>(coefs_one);
     }
     else

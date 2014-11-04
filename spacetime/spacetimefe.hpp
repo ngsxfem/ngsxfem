@@ -6,7 +6,9 @@
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <ngstd.hpp> // for Array
 
-using namespace ngsolve;
+// #include <solve.hpp>
+// using namespace ngsolve;
+using namespace ngcomp;
 
 namespace ngfem
 {
