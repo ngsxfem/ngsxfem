@@ -23,7 +23,7 @@ define constant x0 = 0.5
 define constant y0 = 0.5
 
 define constant bneg = 1.0
-define constant bpos = 1.2
+define constant bpos = 1.0
 
 define constant aneg = 0.2
 define constant apos = 0.5
@@ -31,7 +31,7 @@ define constant apos = 0.5
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
 
-define constant lambda = 2e4
+define constant lambda = 2
 
 define constant R = 0.33333333
 

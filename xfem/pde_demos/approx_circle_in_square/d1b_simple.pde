@@ -3,12 +3,12 @@
 geometry = d1a_simple.in2d
 
 # and mesh
-#mesh = d1a_simple.vol.gz
-mesh = d1a_simple2.vol
+mesh = d1a_simple6.vol.gz
 
 shared = libngsxfem_xfem
+shared = libngsxfem_parabolic
 
-define constant heapsize = 1e8
+define constant heapsize = 1e9
 
 define constant zero = 0.0
 define constant one = 1.0
@@ -48,7 +48,7 @@ define fespace fescomp
        -type=xh1fespace
        -order=2
        -dirichlet=[1,2,3,4]
-       -ref_space=3
+       -ref_space=8
 #       -empty
 #       -dgjumps
 
@@ -77,7 +77,7 @@ xsource rhsneg rhspos
 
 define constant small = 1e-6
 
-define constant lambda = 20
+define constant lambda = 2
 
 define bilinearform a -fespace=fescomp 
 #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
@@ -97,10 +97,10 @@ numproc drawflux npdf -solution=u -bilinearform=a_d -label=grad
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary # -print
 
 #define preconditioner c -type=local -bilinearform=a #-test #-block
-define preconditioner c -type=direct -bilinearform=a -inverse=sparsecholesky #-test
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
 #define preconditioner c -type=bddc -bilinearform=a -test -block
 
-##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
+#define preconditioner c -type=spacetime -bilinearform=a #-test #-smoother=block
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=100000 -prec=1e-6 # -print
 
@@ -113,8 +113,8 @@ numproc xdifference npxd
         -derivative_n=derneg
         -derivative_p=derpos
         -levelset=lset
-        -interorder=3
-        -henryweight_n=1
+        -interorder=5
+        -henryweight_n=2
         -henryweight_p=1
         -diffusion_n=1.0
         -diffusion_p=5.0

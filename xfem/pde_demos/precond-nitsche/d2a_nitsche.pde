@@ -3,8 +3,8 @@
 geometry = d1a_nitsche.in2d
 
 # and mesh
-mesh = d2a_nitsche_reg.vol.gz
-#mesh = d2a_nitsche_unstr.vol.gz
+mesh = d2a_nitsche_reg2.vol.gz
+#mesh = d2a_nitsche_unstr2.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -15,16 +15,16 @@ define constant one = 1.0
 define constant two = 2.0
 
 #sliver case
-define constant eps1 = (1.0/exp(log(2)*6))
+# define constant eps1 = (1.0/exp(log(2)*23))
 
-define constant x0 = (0.5+eps1)
-define constant y0 = (0.5+eps1)
+# define constant x0 = (0.5+eps1)
+# define constant y0 = (0.5+eps1)
 
 #shifting case
-#define constant shift = (var/100000)
+define constant shift = (0.0/100000)
 
-#define constant x0 = (0.46+shift)
-#define constant y0 = (0.5)
+define constant x0 = (0.5)
+define constant y0 = (0.5)
 
 define constant bneg = 2.0
 define constant bpos = 1.0
@@ -99,6 +99,7 @@ define fespace fescomp
        -type=xh1fespace
        -order=1
        -dirichlet=[1,2]
+       -ref_space=3
 #       -dgjumps
 
 numproc informxfem npix 
@@ -116,6 +117,7 @@ define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symm
 #xmass one one
 #xmass small small
 xlaplace abneg abpos
+#xnitsche_minstab aneg apos bneg bpos
 #xnitsche_minstab_alphabeta aneg apos bneg bpos
 #xnitsche_halfhalf aneg apos bneg bpos lambda
 xnitsche_hansbo aneg apos bneg bpos lambda
@@ -123,7 +125,7 @@ xnitsche_hansbo aneg apos bneg bpos lambda
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=zero -boundary -print
 
-define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=local -bilinearform=a -lapacktest #-block
 # define preconditioner c -type=direct -bilinearform=a -test
 #define preconditioner c -type=bddc -bilinearform=a -test -block
 
@@ -143,3 +145,7 @@ numproc xdifference npxd
         -interorder=2
         -henryweight_n=1
         -henryweight_p=1
+
+#numproc xoutput npxo -solution=u -solution_n=two -solution_p=one -subdivision=0
+
+numproc quit npq -option

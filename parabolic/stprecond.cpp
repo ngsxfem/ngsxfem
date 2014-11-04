@@ -86,7 +86,7 @@ namespace ngcomp
         ELEMENT_TYPE eltype = ma.GetElType(ei); 
       
         fesh1.GetDofNrs(i,dnums);
-        for (int j = 0; j < dnums.Size()/2; ++j)
+        for (int j = 0; j < dnums.Size(); ++j)
           creator.Add(i,dnums[j]);
       }
 
@@ -107,7 +107,7 @@ namespace ngcomp
             int elnr=nbelems[k];
             // if (!fesh1.DefinedOn (ma.GetElIndex(elnr))) continue;
             fesh1.GetDofNrs (elnr, dnums);
-            for (int j = 0; j < dnums.Size()/2; j++)
+            for (int j = 0; j < dnums.Size(); j++)
               if (dnums[j] != -1)
                 creator.Add (ma.GetNE()+i, dnums[j]);
           }
@@ -117,7 +117,7 @@ namespace ngcomp
 
     Table<int> & element2dof = *(creator.GetTable());
     delete AssBlock;
-    AssBlock = new SparseMatrix<double>(ndof_h1/2,
+    AssBlock = new SparseMatrix<double>(ndof_h1,
                                         element2dof,
                                         element2dof,
                                         false);
@@ -127,7 +127,7 @@ namespace ngcomp
     Array<int> aj(1);
     Matrix<double> aval(1,1);
     AssBlock->AsVector() = 0.0;
-    for( int i = 0; i < ndof_h1/2; i++)
+    for( int i = 0; i < ndof_h1; i++)
     {
       int row = i;
       if (row == -1) continue;
@@ -141,7 +141,6 @@ namespace ngcomp
       for( int j = 0; j < cols.Size(); j++)
         if (cols[j] != -1 && cols[j] < ndof_h1)
 	    {
-          if (i>=ndof_h1/2 || cols[j] >= ndof_h1/2) continue;
           ai[0]=i;
           aj[0]=cols[j];
           aval(0,0)=values[j];
@@ -175,7 +174,7 @@ namespace ngcomp
       {
         fesx.GetVertexDofNrs(i,dnums);
         if (dnums.Size()==0) continue;
-        for (int j = 0; j < dnums.Size()/2; ++j)
+        for (int j = 0; j < dnums.Size(); ++j)
             if(freedofs->Test(ndof_h1 + dnums[j]))
                 creator2.Add(cnt, ndof_h1 + dnums[j]);
         cnt++;
@@ -189,11 +188,7 @@ namespace ngcomp
 
     delete InvAssBlock;
     dynamic_cast<BaseSparseMatrix&> (*AssBlock) . SetInverseType (inversetype);
-    // InvAssBlock = AssBlock->InverseMatrix(fesh1.GetFreeDofs());
-    InvAssBlock = new GMRESSolver<double> (*AssBlock);
-    dynamic_cast<GMRESSolver<double> *>(InvAssBlock)->SetPrecision(1e-12);
-    dynamic_cast<GMRESSolver<double> *>(InvAssBlock)->SetMaxSteps(3);
-    // dynamic_cast<GMRESSolver<double> *>(InvAssBlock)->SetPrintRates();
+    InvAssBlock = AssBlock->InverseMatrix(fesh1.GetFreeDofs());
     // std::cout << " *fesh1.GetFreeDofs() = " << *fesh1.GetFreeDofs() << std::endl;
 
     delete & element2dof;
@@ -239,14 +234,7 @@ namespace ngcomp
     // getchar();
     // std::cout << " InvAssBlock->Height() = " << InvAssBlock->Height() << std::endl;
     // std::cout << " ndof_h1 = " << ndof_h1 << std::endl;
-
-    VFlatVector<double> fh1_1(ndof_h1/2,&fvf(0));
-    VFlatVector<double> uh1_1(ndof_h1/2,&fu(0));
-    VFlatVector<double> fh1_2(ndof_h1/2,&fvf(ndof_h1/2));
-    VFlatVector<double> uh1_2(ndof_h1/2,&fu(ndof_h1/2));
-
-    uh1_1 = *InvAssBlock * fh1_1;
-    uh1_2 = *InvAssBlock * fh1_2;
+    uh1 = *InvAssBlock * fh1;
     // // std::cout << " f = " << f << std::endl;
     // std::cout << " u = " << u << std::endl;
     // getchar();

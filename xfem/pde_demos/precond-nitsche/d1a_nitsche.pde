@@ -19,7 +19,7 @@ define constant y0 = 0.5
 define constant bneg = 1.0
 define constant bpos = 1.0
 
-define constant aneg = 100.0
+define constant aneg = 1.0
 define constant apos = 1.0
 
 define constant abneg = (aneg*bneg)
@@ -60,7 +60,7 @@ xnitsche_hansbo aneg apos bneg bpos lambda
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=zero -boundary -print
 
-define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=local -bilinearform=a -test -block
 # define preconditioner c -type=direct -bilinearform=a -test
 #define preconditioner c -type=bddc -bilinearform=a -test -block
 
