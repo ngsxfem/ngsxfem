@@ -47,13 +47,13 @@ namespace ngcomp
     Array<int> xdof2basedof;
 
     // Table<int> sel2dofs;
-    const FESpace * basefes = NULL;
+    shared_ptr<FESpace> basefes = NULL;
     BitArray activeelem;
     BitArray activeselem;
       
-    const GridFunction * gf_lset = NULL;
-    const CoefficientFunction * coef_lset = NULL;
-    EvalFunction * eval_lset = NULL;
+    shared_ptr<GridFunction> gf_lset = NULL;
+    shared_ptr<CoefficientFunction> coef_lset = NULL;
+    shared_ptr<EvalFunction> eval_lset = NULL;
 
     double vmax = 1e99;
 
@@ -166,9 +166,9 @@ namespace ngcomp
 
     // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
 
-    void SetBaseFESpace(const FESpace* basefes_){basefes = basefes_;};
-    void SetLevelSet(const GridFunction* lset_){ gf_lset = lset_;};
-    void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
+    void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
+    void SetLevelSet(shared_ptr<GridFunction> lset_){ gf_lset = lset_;};
+    // void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
     void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
     void SetLevelSetCoefficient(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
@@ -182,7 +182,7 @@ namespace ngcomp
 
   class LevelsetContainerFESpace : public FESpace
   {
-    const CoefficientFunction * coef_lset = NULL;
+    shared_ptr<CoefficientFunction> coef_lset = NULL;
     double told;
     double tnew;
   public:

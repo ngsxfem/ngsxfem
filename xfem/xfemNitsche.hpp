@@ -230,9 +230,9 @@ namespace ngfem
     }
     virtual ~SpaceTimeXNitscheIntegrator()
     { 
-      if (ab_neg) delete ab_neg;
-      if (ab_pos) delete ab_pos;
-      if (ablockintegrator) delete ablockintegrator; 
+      // if (ab_neg) delete ab_neg;
+      // if (ab_pos) delete ab_pos;
+      // if (ablockintegrator) delete ablockintegrator; 
     }
 
     virtual string Name () const { return "SpaceTimeXNitscheIntegrator"; }

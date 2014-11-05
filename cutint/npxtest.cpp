@@ -115,7 +115,7 @@ public:
           else
           {
             cout << " LEVELSET AS EVAL FUNCTION " << endl;
-            eval_lset = new EvalFunction(eval_lset_str);
+            eval_lset = make_shared<EvalFunction>(eval_lset_str);
           }
           if (order_space == -1)
           {
@@ -193,12 +193,12 @@ public:
         {
             LocalHeap lh(clh.Split());
 #pragma omp for schedule(static)
-            for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+            for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
             {
-                // Ngs_Element ngel = ma.GetElement(elnr);
+                // Ngs_Element ngel = ma->GetElement(elnr);
                 HeapReset hr(lh);
 
-                ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
+                ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
                 ELEMENT_TYPE et_space = eltrans.GetElementType();
                 ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             
@@ -467,13 +467,13 @@ public:
 
         if (bound)
         {
-            for (int selnr = 0; selnr < ma.GetNSE(); ++selnr)
+            for (int selnr = 0; selnr < ma->GetNSE(); ++selnr)
             {
                 LocalHeap lh(clh.Split());
-                // Ngs_Element ngel = ma.GetElement(selnr);
+                // Ngs_Element ngel = ma->GetElement(selnr);
                 HeapReset hr(lh);
 
-                ElementTransformation & seltrans = ma.GetTrafo (selnr, BND, lh);
+                ElementTransformation & seltrans = ma->GetTrafo (selnr, BND, lh);
                 ELEMENT_TYPE et_space = seltrans.GetElementType();
                 ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             

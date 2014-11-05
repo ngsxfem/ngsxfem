@@ -24,14 +24,14 @@ namespace ngfem
 {
 
   template<int D>
-  void DoSpecialOutput (GridFunction * gfu, 
+  void DoSpecialOutput (shared_ptr<GridFunction> gfu, 
                         SolutionCoefficients<D> & solcoef, 
                         int subdivision, 
                         Flags & flags,
                         LocalHeap & lh);
 
 
-  void OutputMeshOnly (const MeshAccess & ma, LocalHeap & lh);
+  void OutputMeshOnly (shared_ptr<MeshAccess> ma, LocalHeap & lh);
 
 }
 #endif

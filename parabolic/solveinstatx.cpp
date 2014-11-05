@@ -373,8 +373,8 @@ public:
 
 
     shared_ptr<DifferentialOperator> uptrace = make_shared<T_DifferentialOperator<DiffOpTimeTrace<D,FUTURE> > >();
-    GridFunctionCoefficientFunction coef_u_neg (gfu_vis->GetComponent(0), uptrace); //, traceop);
-    GridFunctionCoefficientFunction coef_u_pos (gfu_vis->GetComponent(1), uptrace); //, traceop);
+    shared_ptr<GridFunctionCoefficientFunction> coef_u_neg = make_shared<GridFunctionCoefficientFunction> (gfu_vis->GetComponent(0), uptrace); //, traceop);
+    shared_ptr<GridFunctionCoefficientFunction> coef_u_pos = make_shared<GridFunctionCoefficientFunction> (gfu_vis->GetComponent(1), uptrace); //, traceop);
 
     shared_ptr<FESpace> fes = gfu->GetFESpace();
     shared_ptr<CompoundFESpace> compfes = dynamic_pointer_cast<CompoundFESpace>(fes);
@@ -502,9 +502,9 @@ public:
               CalcXError<D>(gfu, NULL, solcoef, 4, aneg, apos, bneg, bpos, ti.second, errtab, lh, false, emptyflags);
         }
 
-        xfes.XToNegPos(gfu,gfu_vis);
+        xfes->XToNegPos(gfu,gfu_vis);
 
-        lfi_tr->ChangeNegPosCoefficient(&coef_u_neg, &coef_u_pos, 1.0/bneg, 1.0/bpos);
+        lfi_tr->ChangeNegPosCoefficient(coef_u_neg, coef_u_pos, 1.0/bneg, 1.0/bpos);
         Ng_Redraw ();
 	  
         if (userstepping)

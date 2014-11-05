@@ -15,7 +15,7 @@ namespace ngcomp
   
 class SpaceTimePreconditioner : public Preconditioner
 {
-  const S_BilinearForm<double> * bfa;
+  shared_ptr<S_BilinearForm<double>> bfa;
 
   // Array<int> global_nums;
   // int ilower, iupper;

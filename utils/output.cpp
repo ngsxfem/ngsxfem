@@ -72,7 +72,7 @@ namespace ngfem
   }
 
   template<int D>
-  void DoSpecialOutput (GridFunction * gfu, 
+  void DoSpecialOutput (shared_ptr<GridFunction> gfu, 
                         SolutionCoefficients<D> & solcoef, 
                         int subdivision, 
                         Flags & flags,
@@ -619,13 +619,13 @@ namespace ngfem
     // system("pdflatex special.output.tikz");
   }
 
-  template void DoSpecialOutput<2>(GridFunction * gfu, SolutionCoefficients<2> & solcoef, 
+  template void DoSpecialOutput<2>(shared_ptr<GridFunction> gfu, SolutionCoefficients<2> & solcoef, 
                                    int subdivision, Flags & flags, LocalHeap & lh);
-  template void DoSpecialOutput<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, 
+  template void DoSpecialOutput<3>(shared_ptr<GridFunction> gfu, SolutionCoefficients<3> & solcoef, 
                                    int subdivision, Flags & flags,LocalHeap & lh);
 
 
-  void OutputMeshOnly (const MeshAccess & ma, LocalHeap & lh)
+  void OutputMeshOnly (shared_ptr<MeshAccess> ma, LocalHeap & lh)
   {
     // ofstream outf_gnuplot("special.output.gnuplot");
     ofstream outf_tikz("mesh.output.tikz");
@@ -642,10 +642,10 @@ namespace ngfem
     outf_tikz.precision(12);
     outf_tikz << std::fixed;
 
-    for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+    for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
     {
       HeapReset hr(lh);
-      ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
+      ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
       ELEMENT_TYPE eltype = eltrans.GetElementType();
       
       IntegrationPoint ip1(0.0,0.0);
