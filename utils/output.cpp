@@ -122,7 +122,7 @@ namespace ngfem
     const double time = 0.0;
     // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
-    int activeels = 0;
+    // int activeels = 0;
     shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
 
     DOMAIN_TYPE plotdt = POS;
@@ -214,7 +214,7 @@ namespace ngfem
             {
 
               bool edgeonbound[3];
-              int inner_cnt = 3;
+              // int inner_cnt = 3;
               {
                 if (dt == NEG)
                   outf_tikz << "\\draw ["
@@ -581,7 +581,7 @@ namespace ngfem
 
       string & color = plotdt == NEG ? negcolor : poscolor;
       string & edgecolor = plotdt == NEG ? edgenegcolor : edgeposcolor;
-      double fillopacity = plotdt == NEG ? fillnegopacity : fillposopacity;
+      // double fillopacity = plotdt == NEG ? fillnegopacity : fillposopacity;
       double drawopacity = plotdt == NEG ? drawnegopacity : drawposopacity;
       string & edgestyle = plotdt == NEG ? edgenegstyle : edgeposstyle;
 
@@ -646,7 +646,7 @@ namespace ngfem
     {
       HeapReset hr(lh);
       ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
-      ELEMENT_TYPE eltype = eltrans.GetElementType();
+      // ELEMENT_TYPE eltype = eltrans.GetElementType();
       
       IntegrationPoint ip1(0.0,0.0);
       IntegrationPoint ip2(1.0,0.0);

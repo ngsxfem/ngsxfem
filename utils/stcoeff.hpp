@@ -9,7 +9,8 @@
 #include <coefficient.hpp>
 //#include "../spacetime/spacetimefe.hpp"
 
-using namespace ngsolve;
+//using namespace ngsolve;
+using namespace ngcomp;
 
 namespace ngfem
 {

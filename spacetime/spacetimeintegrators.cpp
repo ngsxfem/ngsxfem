@@ -161,7 +161,7 @@ namespace ngfem
   template <int D>
   void ST_SourceIntegrator<D> :: CalcElementVector (const FiniteElement & fel,
                                                     const ElementTransformation & eltrans, 
-                                                    FlatVector<double> & elvec,
+                                                    FlatVector<double> elvec,
                                                     LocalHeap & lh) const
   {
 
@@ -243,7 +243,7 @@ namespace ngfem
   template <int D>
   void ST_TimeTraceSourceIntegrator<D> :: CalcElementVector (const FiniteElement & fel,
                                                              const ElementTransformation & eltrans, 
-                                                             FlatVector<double> & elvec,
+                                                             FlatVector<double> elvec,
                                                              LocalHeap & lh) const
   {
 

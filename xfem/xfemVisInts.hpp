@@ -37,7 +37,7 @@ namespace ngfem
     ///
     XVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    XVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
+    XVisIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~XVisIntegrator ();
     ///
@@ -70,7 +70,7 @@ namespace ngfem
     ///
     STXVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    STXVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
+    STXVisIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~STXVisIntegrator ();
     ///
@@ -105,7 +105,7 @@ namespace ngfem
     ///
     STNegPosVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    STNegPosVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
+    STNegPosVisIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~STNegPosVisIntegrator ();
     ///
@@ -159,7 +159,7 @@ namespace ngfem
     enum { DIM_DMAT = 2 };
     XHeavisideDMat (shared_ptr<CoefficientFunction> acoef) : lvlset(acoef) { ; }
     
-    XHeavisideDMat (Array<shared_ptr<CoefficientFunction>> & acoefs) : lvlset(acoefs[0]) { ; }
+    XHeavisideDMat (const Array<shared_ptr<CoefficientFunction>> & acoefs) : lvlset(acoefs[0]) { ; }
     
     template <typename FEL, typename MIP, typename MAT>
     void GenerateMatrix (const FEL & fel, const MIP & mip,
@@ -175,7 +175,7 @@ namespace ngfem
     ///
     SignedXMassIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    SignedXMassIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
+    SignedXMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~SignedXMassIntegrator ();
     ///
@@ -191,7 +191,7 @@ namespace ngfem
     ///
     SignedSpaceTimeXMassIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    SignedSpaceTimeXMassIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
+    SignedSpaceTimeXMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~SignedSpaceTimeXMassIntegrator ();
     ///
@@ -225,7 +225,7 @@ namespace ngfem
     ///
     FictVisIntegrator (shared_ptr<CoefficientFunction> coeff);
     ///
-    FictVisIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs);
+    FictVisIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
     ///
     virtual ~FictVisIntegrator ();
     ///

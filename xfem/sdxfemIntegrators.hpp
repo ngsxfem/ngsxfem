@@ -14,14 +14,14 @@ namespace ngfem
   template <int D>
   class SDXIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * alpha_neg;
-    CoefficientFunction * alpha_pos;
-    CoefficientFunction * conv_neg;
-    CoefficientFunction * conv_pos;
-    CoefficientFunction * mass_neg;
-    CoefficientFunction * mass_pos;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> alpha_neg;
+    shared_ptr<CoefficientFunction> alpha_pos;
+    shared_ptr<CoefficientFunction> conv_neg;
+    shared_ptr<CoefficientFunction> conv_pos;
+    shared_ptr<CoefficientFunction> mass_neg;
+    shared_ptr<CoefficientFunction> mass_pos;
   public:
     SDXIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : beta_neg(coeffs[0]),
@@ -109,16 +109,16 @@ namespace ngfem
   template <int D>
   class SDXSourceIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * beta_neg;
-    CoefficientFunction * beta_pos;
-    CoefficientFunction * alpha_neg;
-    CoefficientFunction * alpha_pos;
-    CoefficientFunction * conv_neg;
-    CoefficientFunction * conv_pos;
-    CoefficientFunction * mass_neg;
-    CoefficientFunction * mass_pos;
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> beta_neg;
+    shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> alpha_neg;
+    shared_ptr<CoefficientFunction> alpha_pos;
+    shared_ptr<CoefficientFunction> conv_neg;
+    shared_ptr<CoefficientFunction> conv_pos;
+    shared_ptr<CoefficientFunction> mass_neg;
+    shared_ptr<CoefficientFunction> mass_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     SDXSourceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : beta_neg(coeffs[0]),

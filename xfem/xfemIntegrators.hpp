@@ -14,8 +14,8 @@ namespace ngfem
   template <int D>
   class XMassIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     XMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -33,7 +33,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -64,7 +64,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -72,8 +72,8 @@ namespace ngfem
   template <int D>
   class XConvectionIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * conv_neg;
-    CoefficientFunction * conv_pos;
+    shared_ptr<CoefficientFunction> conv_neg;
+    shared_ptr<CoefficientFunction> conv_pos;
   public:
     XConvectionIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : conv_neg(coeffs[0]),conv_pos(coeffs[1]) { ; }
@@ -92,7 +92,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -100,8 +100,8 @@ namespace ngfem
   template <int D>
   class XSourceIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     XSourceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -119,7 +119,7 @@ namespace ngfem
     virtual void
     CalcElementVector (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatVector<double> & elvec,
+                       FlatVector<double> elvec,
                        LocalHeap & lh) const;
 
   };
@@ -127,8 +127,8 @@ namespace ngfem
   template <int D>
   class XRobinIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     XRobinIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1])
@@ -147,7 +147,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -155,8 +155,8 @@ namespace ngfem
   template <int D>
   class XNeumannIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     XNeumannIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -174,7 +174,7 @@ namespace ngfem
     virtual void
     CalcElementVector (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatVector<double> & elvec,
+                       FlatVector<double> elvec,
                        LocalHeap & lh) const;
 
   };
@@ -185,7 +185,7 @@ namespace ngfem
   template <int D>
   class NoXLaplaceIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_lset;
+    shared_ptr<CoefficientFunction> coef_lset;
     double alpha_neg;
     double alpha_pos;
   public:
@@ -209,7 +209,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -221,8 +221,8 @@ namespace ngfem
   template <int D>
   class FictXSourceIntegrator : public LinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     FictXSourceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -240,7 +240,7 @@ namespace ngfem
     virtual void
     CalcElementVector (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatVector<double> & elvec,
+                       FlatVector<double> elvec,
                        LocalHeap & lh) const;
 
   };
@@ -249,8 +249,8 @@ namespace ngfem
   template <int D>
   class FictXMassIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     FictXMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -267,7 +267,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };
@@ -277,8 +277,8 @@ namespace ngfem
   template <int D>
   class FictXLaplaceIntegrator : public BilinearFormIntegrator
   {
-    CoefficientFunction * coef_neg;
-    CoefficientFunction * coef_pos;
+    shared_ptr<CoefficientFunction> coef_neg;
+    shared_ptr<CoefficientFunction> coef_pos;
   public:
     FictXLaplaceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_neg(coeffs[0]),coef_pos(coeffs[1]) { ; }
@@ -295,7 +295,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
   };

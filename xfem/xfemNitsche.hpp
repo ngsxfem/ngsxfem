@@ -33,11 +33,11 @@ namespace ngfem
     shared_ptr<CoefficientFunction> alpha_pos;
     shared_ptr<CoefficientFunction> beta_neg;
     shared_ptr<CoefficientFunction> beta_pos;
-    shared_ptr<CoefficientFunction> conv_neg;
-    shared_ptr<CoefficientFunction> conv_pos;
     shared_ptr<CoefficientFunction> lambda;
     shared_ptr<CoefficientFunction> ab_neg;
     shared_ptr<CoefficientFunction> ab_pos;
+    shared_ptr<CoefficientFunction> conv_neg;
+    shared_ptr<CoefficientFunction> conv_pos;
     shared_ptr<XLaplaceIntegrator<D> > ablockintegrator;
     bool minimal_stabilization;
   public:
@@ -62,9 +62,9 @@ namespace ngfem
 
     virtual ~XNitscheIntegrator()
     { 
-      if (ab_neg) delete ab_neg;
-      if (ab_pos) delete ab_pos;
-      if (ablockintegrator) delete ablockintegrator; 
+      // if (ab_neg) delete ab_neg;
+      // if (ab_pos) delete ab_pos;
+      // if (ablockintegrator) delete ablockintegrator; 
     }
 
     virtual string Name () const { return "XNitscheIntegrator"; }
@@ -126,11 +126,11 @@ namespace ngfem
     shared_ptr<CoefficientFunction> alpha_pos;
     shared_ptr<CoefficientFunction> beta_neg;
     shared_ptr<CoefficientFunction> beta_pos;
+    shared_ptr<CoefficientFunction> coef_rhs;
     shared_ptr<CoefficientFunction> lambda;
     shared_ptr<CoefficientFunction> ab_neg;
     shared_ptr<CoefficientFunction> ab_pos;
-    shared_ptr<CoefficientFunction> coef_rhs;
-    XLaplaceIntegrator<D> * ablockintegrator;
+    shared_ptr<XLaplaceIntegrator<D> > ablockintegrator;
     bool minimal_stabilization;
   public:
     XNitscheRhsJumpIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
@@ -148,14 +148,14 @@ namespace ngfem
       Array<shared_ptr<CoefficientFunction> > lapcoeffs(2);
       lapcoeffs[0] = ab_neg;
       lapcoeffs[1] = ab_pos;
-      ablockintegrator = make_shared<LaplaceIntegrator<D> >(lapcoeffs);
+      ablockintegrator = make_shared<XLaplaceIntegrator<D> >(lapcoeffs);
     }
 
     virtual ~XNitscheRhsJumpIntegrator()
     { 
-      if (ab_neg) delete ab_neg;
-      if (ab_pos) delete ab_pos;
-      if (ablockintegrator) delete ablockintegrator; 
+      // if (ab_neg) delete ab_neg;
+      // if (ab_pos) delete ab_pos;
+      // if (ablockintegrator) delete ablockintegrator; 
     }
 
     virtual string Name () const { return "XNitscheRhsJumpIntegrator"; }
@@ -185,8 +185,8 @@ namespace ngfem
     shared_ptr<CoefficientFunction> beta_pos;
     shared_ptr<CoefficientFunction> lambda;
 
-    double t1;
     double t0;
+    double t1;
     double tau;
 
     shared_ptr<CoefficientFunction> ab_neg;
@@ -265,7 +265,7 @@ namespace ngfem
     shared_ptr<CoefficientFunction> lambda;
     shared_ptr<CoefficientFunction> ab_neg;
     shared_ptr<CoefficientFunction> ab_pos;
-    XLaplaceIntegrator<D> * ablockintegrator;
+    shared_ptr<XLaplaceIntegrator<D> > ablockintegrator;
     bool minimal_stabilization;
   public:
     FictXNitscheIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
@@ -287,9 +287,9 @@ namespace ngfem
 
     virtual ~FictXNitscheIntegrator()
     { 
-      if (ab_neg) delete ab_neg;
-      if (ab_pos) delete ab_pos;
-      if (ablockintegrator) delete ablockintegrator; 
+      // if (ab_neg) delete ab_neg;
+      // if (ab_pos) delete ab_pos;
+      // if (ablockintegrator) delete ablockintegrator; 
     }
 
     virtual string Name () const { return "FictXNitscheIntegrator"; }

@@ -79,14 +79,14 @@ namespace ngcomp
       int mSD = spacetime ? mD+1 : mD;
       if (mD == 2)
         if (mSD == 2)
-          return new XFESpace<2,2>(ma,flags);
+          return make_shared<XFESpace<2,2> >(ma,flags);
         else
-          return new XFESpace<2,3>(ma,flags);
+          return make_shared<XFESpace<2,3> >(ma,flags);
       else
         if (mSD == 2)
-          return new XFESpace<3,2>(ma,flags);
+          return make_shared<XFESpace<3,2> >(ma,flags);
         else
-          return new XFESpace<3,3>(ma,flags);
+          return make_shared<XFESpace<3,3> >(ma,flags);
     }
 
     // a name for our new fe-space
@@ -169,7 +169,7 @@ namespace ngcomp
     void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
     void SetLevelSet(shared_ptr<GridFunction> lset_){ gf_lset = lset_;};
     // void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
-    void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
+    // void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
     void SetLevelSetCoefficient(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     

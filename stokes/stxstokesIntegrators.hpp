@@ -45,7 +45,7 @@ namespace ngfem
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                        const ElementTransformation & eltrans,
-                       FlatMatrix<double> & elmat,
+                       FlatMatrix<double> elmat,
                        LocalHeap & lh) const;
 
     virtual void SetTimeInterval (const TimeInterval & ti)

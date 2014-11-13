@@ -138,7 +138,7 @@ namespace ngfem
 
     virtual void CalcElementVector (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatVector<double> & elvec,
+                                    FlatVector<double> elvec,
                                     LocalHeap & lh) const;
   };
 
@@ -192,7 +192,7 @@ namespace ngfem
 
     virtual void CalcElementVector (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatVector<double> & elvec,
+                                    FlatVector<double> elvec,
                                     LocalHeap & lh) const;
   };
 

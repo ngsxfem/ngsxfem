@@ -18,14 +18,14 @@ namespace ngfem
   class LowOrderGhostPenaltyIntegrator : public FacetBilinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_lam_neg;
-    CoefficientFunction *coef_lam_pos;
+    shared_ptr<CoefficientFunction> coef_lam_neg;
+    shared_ptr<CoefficientFunction> coef_lam_pos;
     double told = 0.0;
     double tnew = 1.0;
     double tau = 1.0;
     double delta = 1.0;
   public:
-    LowOrderGhostPenaltyIntegrator (Array<shared_ptr<CoefficientFunction>> & coeffs) 
+    LowOrderGhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
       : FacetBilinearFormIntegrator(coeffs)
     { 
       coef_lam_neg  = coeffs[0];
@@ -46,7 +46,7 @@ namespace ngfem
     virtual bool BoundaryForm () const 
     { return 0; }
     
-    static Integrator * Create (Array<shared_ptr<CoefficientFunction>> & coeffs)
+    static Integrator * Create (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     {
       return new LowOrderGhostPenaltyIntegrator (coeffs);
     }
@@ -56,7 +56,7 @@ namespace ngfem
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatMatrix<double> & elmat,
+                                    FlatMatrix<double> elmat,
                                     LocalHeap & lh) const
     {
       throw Exception("LowOrderGhostPenaltyIntegrator::CalcElementMatrix - not implemented!");

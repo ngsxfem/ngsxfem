@@ -6,7 +6,7 @@ namespace ngfem
   template<int D>
   void SpaceTimeXMassIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
-		     const ElementTransformation eltrans, 
+		     const ElementTransformation & eltrans, 
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {

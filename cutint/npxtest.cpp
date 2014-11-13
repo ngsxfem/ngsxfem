@@ -137,15 +137,15 @@ public:
           {
             shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast< SpaceTimeFESpace > (gf_lset->GetFESpace());
             if (order_space == -1)
-              order_space = 2*fes_st.OrderSpace();
+              order_space = 2*fes_st->OrderSpace();
             if (order_time == -1)
-              order_time = 2*fes_st.OrderTime();
+              order_time = 2*fes_st->OrderTime();
           }
           else
           {
             order_time = 0;
             if (order_space == -1)
-              order_space = 2 * fes.GetOrder();
+              order_space = 2 * fes->GetOrder();
           }
         }
         cout << " \n\nNumProcTestXFEM - constructor end \n\n " << endl;
@@ -187,7 +187,7 @@ public:
         ofstream outneg_s("negpoints_s.out");
         ofstream outif_s("ifpoints_s.out");
 
-        int SD = isspacetime ? D+1 : D;
+        // int SD = isspacetime ? D+1 : D;
         
 #pragma omp parallel
         {
@@ -210,10 +210,10 @@ public:
 
                 if (gf_lset)
                 {
-                  const FESpace & fes = gf_lset->GetFESpace();
-                  const FiniteElement & fel = fes.GetFE(elnr, lh);
+                  shared_ptr<FESpace> fes = gf_lset->GetFESpace();
+                  const FiniteElement & fel = fes->GetFE(elnr, lh);
                   Array<int> dnums;
-                  fes.GetDofNrs(elnr,dnums);
+                  fes->GetDofNrs(elnr,dnums);
             
                   FlatVector<> linvec(dnums.Size(),lh);
                   gf_lset->GetVector().GetIndirect(dnums,linvec);
@@ -491,18 +491,18 @@ public:
 
                 if (gf_lset)
                 {
-                  const FESpace & fes = gf_lset->GetFESpace();
-                  const FiniteElement & fel = fes.GetSFE(selnr, lh);
+                  shared_ptr<FESpace> fes = gf_lset->GetFESpace();
+                  const FiniteElement & fel = fes->GetSFE(selnr, lh);
                   Array<int> dnums;
-                  fes.GetSDofNrs(selnr,dnums);
+                  fes->GetSDofNrs(selnr,dnums);
             
                   FlatVector<> linvec(dnums.Size(),lh);
                   gf_lset->GetVector().GetIndirect(dnums,linvec);
 
-                  const ScalarSpaceTimeFiniteElement<1> *  scal_st_fel_2d
-                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> * >(&fel);
-                  const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_3d
-                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
+                  // const ScalarSpaceTimeFiniteElement<1> *  scal_st_fel_2d
+                  //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> * >(&fel);
+                  // const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_3d
+                  //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
                   lset_eval_p = ScalarFieldEvaluator::Create(D-1,fel,linvec,lh);
 
                   if (!isspacetime)
