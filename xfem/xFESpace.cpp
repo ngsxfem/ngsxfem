@@ -750,7 +750,7 @@ namespace ngcomp
     }
 
     shared_ptr<FESpace> fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
-    shared_ptr<CoefficientFunction> coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
+    shared_ptr<CoefficientFunction> coef_lset = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
     int mD = pde.GetMeshAccess()->GetDimension();
 
@@ -759,19 +759,9 @@ namespace ngcomp
 
     if (mD == 2)
     {
-      shared_ptr<DomainVariableCoefficientFunction> coef_lset_in_2 = dynamic_pointer_cast<DomainVariableCoefficientFunction> (coef_lset_in);
-      int numreg = coef_lset_in_2->NumRegions();
-      if (numreg == INT_MAX) numreg = 1;
-      Array< shared_ptr<EvalFunction> > evals;
-      evals.SetSize(numreg);
-      for (int i = 0; i < numreg; ++i)
-      {
-        evals[i] = coef_lset_in_2->GetEvalFunction(i);
-      }
       if (mSD == 2)
       {
         dynamic_pointer_cast<XFESpace<2,2> >(xfes) -> SetBaseFESpace (basefes);
-        shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
         dynamic_pointer_cast<XFESpace<2,2> >(xfes) -> SetLevelSetCoefficient (coef_lset);
         if (fescl)
           dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -779,7 +769,6 @@ namespace ngcomp
       else
       {
         dynamic_pointer_cast<XFESpace<2,3> >(xfes) -> SetBaseFESpace (basefes);
-        shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
         dynamic_pointer_cast<XFESpace<2,3> >(xfes) -> SetLevelSetCoefficient (coef_lset);
         if (fescl)
           dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -787,19 +776,9 @@ namespace ngcomp
     }
     else
     {
-      shared_ptr<DomainVariableCoefficientFunction> coef_lset_in_3 = dynamic_pointer_cast<DomainVariableCoefficientFunction> (coef_lset_in);
-      int numreg = coef_lset_in_3->NumRegions();
-      if (numreg == INT_MAX) numreg = 1;
-      Array< shared_ptr<EvalFunction> > evals;
-      evals.SetSize(numreg);
-      for (int i = 0; i < numreg; ++i)
-      {
-        evals[i] = coef_lset_in_3->GetEvalFunction(i);
-      }
       if (mSD == 3)
       {
         dynamic_pointer_cast<XFESpace<3,3> >(xfes) -> SetBaseFESpace (basefes);
-        shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
         dynamic_pointer_cast<XFESpace<3,3> >(xfes) -> SetLevelSetCoefficient (coef_lset);
         if (fescl)
           dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -807,7 +786,6 @@ namespace ngcomp
       else
       {
         dynamic_pointer_cast<XFESpace<3,4> >(xfes) -> SetBaseFESpace (basefes);
-        shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
         dynamic_pointer_cast<XFESpace<3,4> >(xfes) -> SetLevelSetCoefficient (coef_lset);
         if (fescl)
           dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -835,7 +813,7 @@ namespace ngcomp
     //     throw Exception("FESpace is not compatible to x-fespaces!");
     // }
   }
-
+  
   NumProcInformXFESpace::~NumProcInformXFESpace(){ ; }
   string NumProcInformXFESpace::GetClassName () const {return "InformXFESpace";  }
   void NumProcInformXFESpace::Do (LocalHeap & lh)  { ; }

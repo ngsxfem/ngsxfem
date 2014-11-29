@@ -747,7 +747,7 @@ namespace ngcomp
     basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
 
     shared_ptr<FESpace> fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
-    shared_ptr<CoefficientFunction> coef_lset_in = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
+    shared_ptr<CoefficientFunction> coef_lset = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
     int mD = pde.GetMeshAccess()->GetDimension();
 
@@ -763,19 +763,9 @@ namespace ngcomp
 
       if (mD == 2)
       {
-        shared_ptr<DomainVariableCoefficientFunction> coef_lset_in_2 = dynamic_pointer_cast<DomainVariableCoefficientFunction > (coef_lset_in);
-        int numreg = coef_lset_in_2->NumRegions();
-        if (numreg == INT_MAX) numreg = 1;
-        Array< shared_ptr<EvalFunction> > evals;
-        evals.SetSize(numreg);
-        for (int i = 0; i < numreg; ++i)
-        {
-          evals[i] = coef_lset_in_2->GetEvalFunction(i);
-        }
         if (mSD == 2)
         {
           dynamic_pointer_cast<FictitiousDomainFESpace<2,2> >(fictdomfes) -> SetBaseFESpace (basefes);
-          shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
           dynamic_pointer_cast<FictitiousDomainFESpace<2,2> >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
           if (fescl)
             dynamic_pointer_cast<LevelsetContainerFESpace>(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -783,7 +773,6 @@ namespace ngcomp
         else
         {
           dynamic_pointer_cast<FictitiousDomainFESpace<2,3> >(fictdomfes) -> SetBaseFESpace (basefes);
-          shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
           dynamic_pointer_cast<FictitiousDomainFESpace<2,3> >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
           if (fescl)
             dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -791,19 +780,9 @@ namespace ngcomp
       }
       else
       {
-        shared_ptr<DomainVariableCoefficientFunction> coef_lset_in_3 = dynamic_pointer_cast<DomainVariableCoefficientFunction > (coef_lset_in);
-        int numreg = coef_lset_in_3->NumRegions();
-        if (numreg == INT_MAX) numreg = 1;
-        Array< shared_ptr<EvalFunction> > evals;
-        evals.SetSize(numreg);
-        for (int i = 0; i < numreg; ++i)
-        {
-          evals[i] = coef_lset_in_3->GetEvalFunction(i);
-        }
         if (mSD == 3)
         {
           dynamic_pointer_cast<FictitiousDomainFESpace<3,3> >(fictdomfes) -> SetBaseFESpace (basefes);
-          shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
           dynamic_pointer_cast<FictitiousDomainFESpace<3,3> >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
           if (fescl)
             dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
@@ -811,7 +790,6 @@ namespace ngcomp
         else
         {
           dynamic_pointer_cast<FictitiousDomainFESpace<3,4> >(fictdomfes) -> SetBaseFESpace (basefes);
-          shared_ptr<CoefficientFunction> coef_lset = make_shared<DomainVariableCoefficientFunction>(evals); 
           dynamic_pointer_cast<FictitiousDomainFESpace<3,4> >(fictdomfes) -> SetLevelSetCoefficient (coef_lset);
           if (fescl)
             dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSetCoefficient (coef_lset);
