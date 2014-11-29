@@ -16,7 +16,7 @@ namespace ngcomp
   SpaceTimePreconditioner :: SpaceTimePreconditioner (const PDE & pde, const Flags & flags, const string & name)  
     : Preconditioner (&pde, flags)
   {
-    bfa = dynamic_cast<const S_BilinearForm<double>*>
+    bfa = dynamic_pointer_cast<S_BilinearForm<double> >
       (pde.GetBilinearForm (flags.GetStringFlag ("bilinearform", NULL)));
   }
   
@@ -31,7 +31,7 @@ namespace ngcomp
   SpaceTimePreconditioner :: ~SpaceTimePreconditioner ()
   {
     delete AssBlock;
-    delete InvAssBlock;
+    // delete InvAssBlock;
     // delete blockjacobixtable;
     delete blockjacobix;
     ;
@@ -41,7 +41,7 @@ namespace ngcomp
   
   void SpaceTimePreconditioner :: Update()
   {
-    freedofs = bfa->GetFESpace().GetFreeDofs (bfa->UsesEliminateInternal());
+    freedofs = bfa->GetFESpace()->GetFreeDofs (bfa->UsesEliminateInternal());
     Setup (bfa->GetMatrix());
     if (test) Test();
 
@@ -59,33 +59,33 @@ namespace ngcomp
     if (dynamic_cast< const SparseMatrixSymmetric<double> *> (&mat))
       throw Exception ("Please use fully stored sparse matrix for SpaceTime (bf -nonsymmetric)");
 
-    const XH1FESpace & fesh1x = dynamic_cast<const XH1FESpace &>(bfa->GetFESpace());
-    bool spacetime = fesh1x.IsSpaceTime();
+    shared_ptr<XH1FESpace> fesh1x = dynamic_pointer_cast<XH1FESpace>(bfa->GetFESpace());
+    bool spacetime = fesh1x->IsSpaceTime();
     // LocalHeap lh(6000000,"test");
     // const_cast<FESpace &>(fesh1x).Update(lh); 
-    const FESpace & fesh1 = *((dynamic_cast<const CompoundFESpace &>(fesh1x))[0]);
-    const FESpace & fesx = *((dynamic_cast<const CompoundFESpace &>(fesh1x))[1]);
+    shared_ptr<FESpace> fesh1 = (*fesh1x)[0];
+    shared_ptr<FESpace> fesx = (*fesh1x)[1];
 
-    const MeshAccess & ma = fesh1.GetMeshAccess();
+    shared_ptr<MeshAccess> ma = fesh1->GetMeshAccess();
 
-    int ndof_h1 = fesh1.GetNDof();
-    int ndof_x = fesh1x.GetNDof() - fesh1.GetNDof();
-    int ndof = fesh1x.GetNDof();
+    int ndof_h1 = fesh1->GetNDof();
+    int ndof_x = fesh1x->GetNDof() - fesh1->GetNDof();
+    // int ndof = fesh1x->GetNDof();
 
     Array<int> dnums;
 
-    bool dgcoupl = fesh1x.UsesDGCoupling();
+    bool dgcoupl = fesh1x->UsesDGCoupling();
 
-    TableCreator<int> creator(dgcoupl ? ma.GetNE() + ma.GetNFacets() : ma.GetNE());
+    TableCreator<int> creator(dgcoupl ? ma->GetNE() + ma->GetNFacets() : ma->GetNE());
     for ( ; !creator.Done(); creator++)
     {    
-      for (ElementId ei : ma.Elements(VOL))
+      for (ElementId ei : ma->Elements(VOL))
       {	
         // if (!DefinedOn (ei)) continue;
         int i = ei.Nr();
-        ELEMENT_TYPE eltype = ma.GetElType(ei); 
+        // ELEMENT_TYPE eltype = ma->GetElType(ei); 
       
-        fesh1.GetDofNrs(i,dnums);
+        fesh1->GetDofNrs(i,dnums);
         for (int j = 0; j < dnums.Size(); ++j)
           creator.Add(i,dnums[j]);
       }
@@ -96,20 +96,20 @@ namespace ngcomp
         Array<int> nbelems;
         Array<int> elnums;
         //add dofs of neighbour elements as well
-        for (int i = 0; i < ma.GetNFacets(); i++)
+        for (int i = 0; i < ma->GetNFacets(); i++)
         {
           nbelems.SetSize(0);
-          ma.GetFacetElements(i,elnums);
+          ma->GetFacetElements(i,elnums);
           for (int k=0; k<elnums.Size(); k++)
             nbelems.Append(elnums[k]);
           
           for (int k=0;k<nbelems.Size();k++){
             int elnr=nbelems[k];
-            // if (!fesh1.DefinedOn (ma.GetElIndex(elnr))) continue;
-            fesh1.GetDofNrs (elnr, dnums);
+            // if (!fesh1.DefinedOn (ma->GetElIndex(elnr))) continue;
+            fesh1->GetDofNrs (elnr, dnums);
             for (int j = 0; j < dnums.Size(); j++)
               if (dnums[j] != -1)
-                creator.Add (ma.GetNE()+i, dnums[j]);
+                creator.Add (ma->GetNE()+i, dnums[j]);
           }
         }
       }
@@ -162,17 +162,17 @@ namespace ngcomp
     // cout << std::endl;
     // getchar();
 
-    const BitArray * freedofs = fesh1x.GetFreeDofs();
+    const BitArray * freedofs = fesh1x->GetFreeDofs();
 
     TableCreator<int> creator2( spacetime ? ndof_x/2 : ndof_x);
     for ( ; !creator2.Done(); creator2++)
     {    
       
-      int nv = ma.GetNV();
+      int nv = ma->GetNV();
       int cnt = 0;
       for (int i = 0; i < nv; i++)
       {
-        fesx.GetVertexDofNrs(i,dnums);
+        fesx->GetVertexDofNrs(i,dnums);
         if (dnums.Size()==0) continue;
         for (int j = 0; j < dnums.Size(); ++j)
             if(freedofs->Test(ndof_h1 + dnums[j]))
@@ -186,9 +186,9 @@ namespace ngcomp
     // std::cout << " *blockjacobixtable = " << *blockjacobixtable << std::endl;
     blockjacobix = new BlockJacobiPrecond<double> (mat, *blockjacobixtable);
 
-    delete InvAssBlock;
+    // delete InvAssBlock;
     dynamic_cast<BaseSparseMatrix&> (*AssBlock) . SetInverseType (inversetype);
-    InvAssBlock = AssBlock->InverseMatrix(fesh1.GetFreeDofs());
+    InvAssBlock = AssBlock->InverseMatrix(fesh1->GetFreeDofs());
     // std::cout << " *fesh1.GetFreeDofs() = " << *fesh1.GetFreeDofs() << std::endl;
 
     delete & element2dof;
@@ -201,12 +201,12 @@ namespace ngcomp
     static Timer t("SpaceTime mult");
     RegionTimer reg(t);
 
-    const FESpace & fesh1x = bfa->GetFESpace();
-    const FESpace & fesh1 = *((dynamic_cast<const CompoundFESpace &>(fesh1x))[0]);
+    shared_ptr<FESpace> fesh1x = bfa->GetFESpace();
+    shared_ptr<FESpace> fesh1 = (*(dynamic_pointer_cast<CompoundFESpace>(fesh1x)))[0];
 
-    const BitArray * freedofs = fesh1x.GetFreeDofs();
+    // const BitArray * freedofs = fesh1x->GetFreeDofs();
 
-    int ndof_h1 = fesh1.GetNDof();
+    int ndof_h1 = fesh1->GetNDof();
 
     const FlatVector<double> fvf =f.FVDouble();
     FlatVector<double> fu =u.FVDouble();

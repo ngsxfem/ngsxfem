@@ -22,7 +22,7 @@ namespace ngcomp
   {
   protected:  
     /// space fespace
-    FESpace * fes_space;
+    shared_ptr<FESpace> fes_space;
     /// space fespace
     DGFiniteElement<1> * fel_time;
     ///
@@ -47,7 +47,7 @@ namespace ngcomp
     Array<int> ndlevel;
   public:
     ///
-    SpaceTimeFESpace (const MeshAccess & ama, const Flags & flags, bool checkflags=false);
+    SpaceTimeFESpace (shared_ptr<MeshAccess> ama, const Flags & flags, bool checkflags=false);
     ///
     virtual ~SpaceTimeFESpace ();
     ///

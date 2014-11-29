@@ -9,7 +9,7 @@ namespace ngfem
     : // FiniteElement(),
     sign(a_sign), et(a_et) { ndof = 0; }
 
-  LevelsetContainerFE::LevelsetContainerFE(const CoefficientFunction * coeflset, double ta, double tb)
+  LevelsetContainerFE::LevelsetContainerFE(shared_ptr<CoefficientFunction> coeflset, double ta, double tb)
     : // FiniteElement(),
     coef_lset(coeflset), told(ta), tnew(tb) {ndof = 0; }
 

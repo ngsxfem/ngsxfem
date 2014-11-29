@@ -3,8 +3,8 @@
 geometry = d1a_nitsche.in2d
 
 # and mesh
-#mesh = d2a_nitsche_reg3.vol.gz
-mesh = d2a_nitsche_unstr2.vol.gz
+#mesh = d2a_nitsche_reg2.vol.gz
+mesh = d2a_nitsche_unstr3.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -34,6 +34,9 @@ define constant apos = 2.0 # (ANEG/1024)
 
 define constant abneg = (aneg*bneg)
 define constant abpos = (apos*bpos)
+
+define constant aobneg = (aneg/bneg)
+define constant aobpos = (apos/bpos)
 
 define constant lambda = setlam
 
@@ -99,6 +102,7 @@ define fespace fescomp
        -type=xh1fespace
        -order=1
        -dirichlet=[1,2]
+#       -empty
 #       -dgjumps
 
 numproc informxfem npix 
@@ -112,13 +116,18 @@ xsource bneg zero
 
 define constant small = 0.025
 
-define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
+define bilinearform a -fespace=fescomp #-symmetric #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
 #xmass one one
 #xmass small small
-xlaplace abneg abpos
+
+xlaplace aobneg aobpos
+xnitsche_halfhalf aobneg aobpos one one lambda
+
+# xlaplace abneg abpos
+# xnitsche_halfhalf aneg apos bneg bpos lambda
+
 #xnitsche_minstab_alphabeta aneg apos bneg bpos
-#xnitsche_halfhalf aneg apos bneg bpos lambda
-xnitsche_hansbo aneg apos bneg bpos lambda
+#xnitsche_hansbo aneg apos bneg bpos lambda
 #lo_ghostpenalty aneg apos small
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=zero -boundary -print
@@ -147,7 +156,7 @@ numproc bvp npbvp4 -gridfunction=u -bilinearform=a -linearform=f -solver=cg -pre
 define coefficient veczero
 (0,0),
 
-numproc calccond npcc -bilinearform=a -symmetric -inverse=pardiso
+#numproc calccond npcc -bilinearform=a -symmetric -inverse=pardiso
 
 # numproc xdifference npxd 
 #         -solution=u 

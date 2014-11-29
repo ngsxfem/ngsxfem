@@ -11,7 +11,8 @@
 
 
 
-using namespace ngsolve;
+//using namespace ngsolve;
+using namespace ngcomp;
 using namespace xintegration;
 
 namespace ngfem
@@ -36,13 +37,13 @@ namespace ngfem
   class LevelsetContainerFE : public FiniteElement
   {
   protected:
-    const CoefficientFunction * coef_lset = NULL;
+    shared_ptr<CoefficientFunction> coef_lset = NULL;
   public:
     double tnew;
     double told;
-    LevelsetContainerFE (const CoefficientFunction *, double ta = 0.0, double tb = 0.0);
+    LevelsetContainerFE (shared_ptr<CoefficientFunction>, double ta = 0.0, double tb = 0.0);
     virtual ELEMENT_TYPE ElementType() const { return ET_POINT; }
-    const CoefficientFunction * GetLevelsetCoefficient() const { return coef_lset; }
+    const shared_ptr<CoefficientFunction> GetLevelsetCoefficient() const { return coef_lset; }
   };
 
 

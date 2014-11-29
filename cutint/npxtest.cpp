@@ -71,9 +71,9 @@ protected:
     double vmax = 1.0;
     double dt = 1.0;
 
-    GridFunction * gf_lset;
-    CoefficientFunction * coef_lset;
-    EvalFunction * eval_lset;
+    shared_ptr<GridFunction> gf_lset;
+    shared_ptr<CoefficientFunction> coef_lset;
+    shared_ptr<EvalFunction> eval_lset;
 
     TimeInterval ti;
 public:
@@ -115,7 +115,7 @@ public:
           else
           {
             cout << " LEVELSET AS EVAL FUNCTION " << endl;
-            eval_lset = new EvalFunction(eval_lset_str);
+            eval_lset = make_shared<EvalFunction>(eval_lset_str);
           }
           if (order_space == -1)
           {
@@ -132,20 +132,20 @@ public:
         else
         {
           cout << " LEVELSET AS GRIDFUNCTION " << endl;
-          const FESpace & fes = gf_lset->GetFESpace();
+          shared_ptr<FESpace> fes = gf_lset->GetFESpace();
           if (isspacetime)
           {
-            const SpaceTimeFESpace & fes_st = dynamic_cast< const SpaceTimeFESpace & > (gf_lset->GetFESpace());
+            shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast< SpaceTimeFESpace > (gf_lset->GetFESpace());
             if (order_space == -1)
-              order_space = 2*fes_st.OrderSpace();
+              order_space = 2*fes_st->OrderSpace();
             if (order_time == -1)
-              order_time = 2*fes_st.OrderTime();
+              order_time = 2*fes_st->OrderTime();
           }
           else
           {
             order_time = 0;
             if (order_space == -1)
-              order_space = 2 * fes.GetOrder();
+              order_space = 2 * fes->GetOrder();
           }
         }
         cout << " \n\nNumProcTestXFEM - constructor end \n\n " << endl;
@@ -153,8 +153,8 @@ public:
   
     ~NumProcTestXFEM()
     {
-      if (eval_lset)
-        delete eval_lset;
+      // if (eval_lset)
+      //   delete eval_lset;
     }
 
     virtual string GetClassName () const
@@ -187,18 +187,18 @@ public:
         ofstream outneg_s("negpoints_s.out");
         ofstream outif_s("ifpoints_s.out");
 
-        int SD = isspacetime ? D+1 : D;
+        // int SD = isspacetime ? D+1 : D;
         
 #pragma omp parallel
         {
             LocalHeap lh(clh.Split());
 #pragma omp for schedule(static)
-            for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+            for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
             {
-                // Ngs_Element ngel = ma.GetElement(elnr);
+                // Ngs_Element ngel = ma->GetElement(elnr);
                 HeapReset hr(lh);
 
-                ElementTransformation & eltrans = ma.GetTrafo (ElementId(VOL,elnr), lh);
+                ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
                 ELEMENT_TYPE et_space = eltrans.GetElementType();
                 ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             
@@ -210,10 +210,10 @@ public:
 
                 if (gf_lset)
                 {
-                  const FESpace & fes = gf_lset->GetFESpace();
-                  const FiniteElement & fel = fes.GetFE(elnr, lh);
+                  shared_ptr<FESpace> fes = gf_lset->GetFESpace();
+                  const FiniteElement & fel = fes->GetFE(elnr, lh);
                   Array<int> dnums;
-                  fes.GetDofNrs(elnr,dnums);
+                  fes->GetDofNrs(elnr,dnums);
             
                   FlatVector<> linvec(dnums.Size(),lh);
                   gf_lset->GetVector().GetIndirect(dnums,linvec);
@@ -467,13 +467,13 @@ public:
 
         if (bound)
         {
-            for (int selnr = 0; selnr < ma.GetNSE(); ++selnr)
+            for (int selnr = 0; selnr < ma->GetNSE(); ++selnr)
             {
                 LocalHeap lh(clh.Split());
-                // Ngs_Element ngel = ma.GetElement(selnr);
+                // Ngs_Element ngel = ma->GetElement(selnr);
                 HeapReset hr(lh);
 
-                ElementTransformation & seltrans = ma.GetTrafo (selnr, BND, lh);
+                ElementTransformation & seltrans = ma->GetTrafo (selnr, BND, lh);
                 ELEMENT_TYPE et_space = seltrans.GetElementType();
                 ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             
@@ -491,18 +491,18 @@ public:
 
                 if (gf_lset)
                 {
-                  const FESpace & fes = gf_lset->GetFESpace();
-                  const FiniteElement & fel = fes.GetSFE(selnr, lh);
+                  shared_ptr<FESpace> fes = gf_lset->GetFESpace();
+                  const FiniteElement & fel = fes->GetSFE(selnr, lh);
                   Array<int> dnums;
-                  fes.GetSDofNrs(selnr,dnums);
+                  fes->GetSDofNrs(selnr,dnums);
             
                   FlatVector<> linvec(dnums.Size(),lh);
                   gf_lset->GetVector().GetIndirect(dnums,linvec);
 
-                  const ScalarSpaceTimeFiniteElement<1> *  scal_st_fel_2d
-                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> * >(&fel);
-                  const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_3d
-                    = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
+                  // const ScalarSpaceTimeFiniteElement<1> *  scal_st_fel_2d
+                  //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> * >(&fel);
+                  // const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_3d
+                  //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
                   lset_eval_p = ScalarFieldEvaluator::Create(D-1,fel,linvec,lh);
 
                   if (!isspacetime)

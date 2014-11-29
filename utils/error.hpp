@@ -31,14 +31,14 @@ namespace ngfem
   class SolutionCoefficients
   {
   protected:
-    const CoefficientFunction * conv_n = NULL;
-    const CoefficientFunction * conv_p = NULL;
-    const CoefficientFunction * coef_n = NULL;
-    const CoefficientFunction * coef_p = NULL;
-    const CoefficientFunction * coef_d_n = NULL;
-    const CoefficientFunction * coef_d_p = NULL;
-    const CoefficientFunction * coef_jumprhs = NULL;
-    const CoefficientFunction * lset = NULL;
+    shared_ptr<CoefficientFunction> conv_n = NULL;
+    shared_ptr<CoefficientFunction> conv_p = NULL;
+    shared_ptr<CoefficientFunction> coef_n = NULL;
+    shared_ptr<CoefficientFunction> coef_p = NULL;
+    shared_ptr<CoefficientFunction> coef_d_n = NULL;
+    shared_ptr<CoefficientFunction> coef_d_p = NULL;
+    shared_ptr<CoefficientFunction> coef_jumprhs = NULL;
+    shared_ptr<CoefficientFunction> lset = NULL;
     bool made_conv_n = false;
     bool made_conv_p = false;
     bool made_coef_n = false;
@@ -107,8 +107,8 @@ namespace ngfem
   };
 
   template<int D>
-  void CalcXError (GridFunction * gfu, 
-                   GridFunction * gfu2, 
+  void CalcXError (shared_ptr<GridFunction> gfu, 
+                   shared_ptr<GridFunction> gfu2, 
                    SolutionCoefficients<D> & solcoef, 
                    int intorder, 
                    double a_neg, 

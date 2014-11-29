@@ -1,4 +1,5 @@
 #include "xfemVisInts.hpp"
+#include <diffop_impl.hpp>
 
 namespace ngfem
 {
@@ -40,11 +41,11 @@ namespace ngfem
   }
 
 
-  template <int D, TIME t>  STXVisIntegrator<D,t> :: STXVisIntegrator  (CoefficientFunction * coeff)
+  template <int D, TIME t>  STXVisIntegrator<D,t> :: STXVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalSTX<D,t>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
   { ; }
 
-  template <int D, TIME t>  STXVisIntegrator<D,t> :: STXVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+  template <int D, TIME t>  STXVisIntegrator<D,t> :: STXVisIntegrator  (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     : T_BDBIntegrator<DiffOpEvalSTX<D,t>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
   { ; }
 
@@ -84,7 +85,7 @@ namespace ngfem
     IntRange range0 = cfel.GetRange(0);
     IntRange range1 = cfel.GetRange(1);
 
-    const CoefficientFunction * coef_lset = lsetcontfe.GetLevelsetCoefficient();
+    const shared_ptr<CoefficientFunction> coef_lset = lsetcontfe.GetLevelsetCoefficient();
 
     DimMappedIntegrationPoint<D+1> mipp(mip.IP(),mip.GetTransformation());
     mipp.Point().Range(0,D) = mip.GetPoint();
@@ -105,11 +106,11 @@ namespace ngfem
   }
 
 
-  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: STNegPosVisIntegrator  (CoefficientFunction * coeff)
+  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: STNegPosVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalSTNegPos<D,t>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
   { ; }
 
-  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: STNegPosVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+  template <int D, TIME t>  STNegPosVisIntegrator<D,t> :: STNegPosVisIntegrator  (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     : T_BDBIntegrator<DiffOpEvalSTNegPos<D,t>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
   { ; }
 
@@ -162,11 +163,11 @@ namespace ngfem
   }
 
 
-  template <int D>  XVisIntegrator<D> :: XVisIntegrator  (CoefficientFunction * coeff)
+  template <int D>  XVisIntegrator<D> :: XVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalX<D>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
   { ; }
 
-  template <int D>  XVisIntegrator<D> :: XVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+  template <int D>  XVisIntegrator<D> :: XVisIntegrator  (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     : T_BDBIntegrator<DiffOpEvalX<D>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
   { ; }
 
@@ -275,12 +276,12 @@ namespace ngfem
   }  
 
   template <int D>  SignedXMassIntegrator<D> :: 
-  SignedXMassIntegrator (CoefficientFunction * coeff)
+  SignedXMassIntegrator (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalSigned<D>, XHeavisideDMat, CompoundFiniteElement > (XHeavisideDMat (coeff))
   { ; }
 
   template <int D>  SignedXMassIntegrator<D> :: 
-  SignedXMassIntegrator (Array<CoefficientFunction*> & coeffs)
+  SignedXMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     : T_BDBIntegrator<DiffOpEvalSigned<D>, XHeavisideDMat, CompoundFiniteElement > (coeffs)
   { ; }
 
@@ -293,12 +294,12 @@ namespace ngfem
   template <int D>  SignedXMassIntegrator<D> :: ~SignedXMassIntegrator () { ; }
 
   template <int D, TIME t>  SignedSpaceTimeXMassIntegrator<D,t> :: 
-  SignedSpaceTimeXMassIntegrator (CoefficientFunction * coeff)
+  SignedSpaceTimeXMassIntegrator (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalSpaceTimeSigned<D,t>, XHeavisideDMat, CompoundFiniteElement > (XHeavisideDMat (coeff))
   { ; }
 
   template <int D, TIME t>  SignedSpaceTimeXMassIntegrator<D,t> :: 
-  SignedSpaceTimeXMassIntegrator (Array<CoefficientFunction*> & coeffs)
+  SignedSpaceTimeXMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     : T_BDBIntegrator<DiffOpEvalSpaceTimeSigned<D,t>, XHeavisideDMat, CompoundFiniteElement > (coeffs)
   { ; }
 
@@ -342,11 +343,11 @@ namespace ngfem
   }
 
 
-  template <int D>  FictVisIntegrator<D> :: FictVisIntegrator  (CoefficientFunction * coeff)
+  template <int D>  FictVisIntegrator<D> :: FictVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalFict<D>, DiagDMat<1>, FiniteElement > (DiagDMat<1> (coeff))
   { ; }
 
-  template <int D>  FictVisIntegrator<D> :: FictVisIntegrator  (Array<CoefficientFunction*> & coeffs)
+  template <int D>  FictVisIntegrator<D> :: FictVisIntegrator  (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     : T_BDBIntegrator<DiffOpEvalFict<D>, DiagDMat<1>, FiniteElement > (coeffs)
   { ; }
 

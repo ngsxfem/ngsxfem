@@ -99,7 +99,7 @@ namespace ngfem
   void SDXIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
                      const ElementTransformation & eltrans, 
-                     FlatMatrix<double> & elmat,
+                     FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
     static Timer timer ("SDXIntegrator::CalcElementMatrix");
@@ -232,7 +232,7 @@ namespace ngfem
   void XNitscheConvScaledIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     const CompoundFiniteElement & cfel = 
@@ -442,7 +442,7 @@ namespace ngfem
   void SDXSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
                      const ElementTransformation & eltrans, 
-                     FlatVector<double> & elvec,
+                     FlatVector<double> elvec,
                      LocalHeap & lh) const
   {
     static Timer timer ("SDXSourceIntegrator::CalcElementVector");

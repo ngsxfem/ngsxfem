@@ -7,7 +7,7 @@ namespace ngfem
   void XNitscheIntegrator<D, kappa_choice, scale_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
@@ -131,8 +131,8 @@ namespace ngfem
 
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 
-    const double b_t_neg = beta_neg->Evaluate(mipc);
-    const double b_t_pos = beta_pos->Evaluate(mipc);
+    // const double b_t_neg = beta_neg->Evaluate(mipc);
+    // const double b_t_pos = beta_pos->Evaluate(mipc);
     const double a_t_neg = alpha_neg->Evaluate(mipc);
     const double a_t_pos = alpha_pos->Evaluate(mipc);
 
@@ -250,7 +250,7 @@ namespace ngfem
   void XNitscheRhsJumpIntegrator<D, kappa_choice> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
@@ -349,10 +349,10 @@ namespace ngfem
 
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 
-    const double b_t_neg = beta_neg->Evaluate(mipc);
-    const double b_t_pos = beta_pos->Evaluate(mipc);
-    const double a_t_neg = alpha_neg->Evaluate(mipc);
-    const double a_t_pos = alpha_pos->Evaluate(mipc);
+    // const double b_t_neg = beta_neg->Evaluate(mipc);
+    // const double b_t_pos = beta_pos->Evaluate(mipc);
+    // const double a_t_neg = alpha_neg->Evaluate(mipc);
+    // const double a_t_pos = alpha_pos->Evaluate(mipc);
 
     double kappa_neg = 0.5;
     double kappa_pos = 0.5;
@@ -465,7 +465,7 @@ namespace ngfem
   void XNitscheRhsFluxJumpIntegrator<D, kappa_choice> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
@@ -513,7 +513,7 @@ namespace ngfem
     Ns = 0.0;
 
     const FlatArray<DOMAIN_TYPE>& xsign = xfe->GetSignsOfDof();
-    int p = scafe->Order();
+    // int p = scafe->Order();
 
     const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
     const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
@@ -524,8 +524,8 @@ namespace ngfem
 
     // const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 
-    const double b_t_neg = beta_neg->Evaluate(mipc);
-    const double b_t_pos = beta_pos->Evaluate(mipc);
+    // const double b_t_neg = beta_neg->Evaluate(mipc);
+    // const double b_t_pos = beta_pos->Evaluate(mipc);
 
     double kappa_neg = 0.5;
     double kappa_pos = 0.5;
@@ -791,7 +791,7 @@ namespace ngfem
   void SpaceTimeXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXNitscheIntegrator::CalcElementMatrix");
@@ -898,10 +898,10 @@ namespace ngfem
 
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 
-    const double b_t_neg = beta_neg->Evaluate(mipc);
-    const double b_t_pos = beta_pos->Evaluate(mipc);
-    const double a_t_neg = alpha_neg->Evaluate(mipc);
-    const double a_t_pos = alpha_pos->Evaluate(mipc);
+    // const double b_t_neg = beta_neg->Evaluate(mipc);
+    // const double b_t_pos = beta_pos->Evaluate(mipc);
+    // const double a_t_neg = alpha_neg->Evaluate(mipc);
+    // const double a_t_pos = alpha_pos->Evaluate(mipc);
 
     double kappa_neg = 0.5;
     double kappa_pos = 0.5;
@@ -1083,7 +1083,7 @@ namespace ngfem
   void FictXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("FictXNitscheIntegrator::CalcElementMatrix");
@@ -1185,10 +1185,10 @@ namespace ngfem
 
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 
-    const double b_t_neg = beta_neg->Evaluate(mipc);
-    const double b_t_pos = beta_pos->Evaluate(mipc);
-    const double a_t_neg = alpha_neg->Evaluate(mipc);
-    const double a_t_pos = alpha_pos->Evaluate(mipc);
+    // const double b_t_neg = beta_neg->Evaluate(mipc);
+    // const double b_t_pos = beta_pos->Evaluate(mipc);
+    // const double a_t_neg = alpha_neg->Evaluate(mipc);
+    // const double a_t_pos = alpha_pos->Evaluate(mipc);
 
     double kappa_neg = 0.5;
     double kappa_pos = 0.5;

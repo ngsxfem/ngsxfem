@@ -97,16 +97,16 @@ class NumProcSolveInstat : public NumProc
 		bftau = pde.AddBilinearForm ("bftau", massflags);
 		bftau -> SetUnusedDiag (0);
 
-		BilinearFormIntegrator * bfidt = new ST_TimeDerivativeIntegrator<D> (new ConstantCoefficientFunction(1.0));
+		shared_ptr<BilinearFormIntegrator> bfidt = make_shared<ST_TimeDerivativeIntegrator<D>>(make_shared<ConstantCoefficientFunction>(1.0));
 		bftau -> AddIntegrator (bfidt);
-		BilinearFormIntegrator * bfitr = new SpaceTimeTimeTraceIntegrator<D,PAST> (new ConstantCoefficientFunction(1));
+		shared_ptr<BilinearFormIntegrator> bfitr = make_shared<SpaceTimeTimeTraceIntegrator<D,PAST>>(make_shared<ConstantCoefficientFunction>(1));
 		bftau -> AddIntegrator (bfitr);
-		Array<CoefficientFunction *> coef_ar(3);
-		coef_ar[0] = new ConstantCoefficientFunction(0);
-		coef_ar[1] = new ConstantCoefficientFunction(dt);
-		coef_ar[2] = new ConstantCoefficientFunction(1.0);
+		Array<shared_ptr<CoefficientFunction>> coef_ar(3);
+		coef_ar[0] = make_shared<ConstantCoefficientFunction>(0);
+		coef_ar[1] = make_shared<ConstantCoefficientFunction>(dt);
+		coef_ar[2] = make_shared<ConstantCoefficientFunction>(1.0);
 
-		BilinearFormIntegrator * bfilap = new ST_LaplaceIntegrator<D> (coef_ar);
+		shared_ptr<BilinearFormIntegrator> bfilap = make_shared<ST_LaplaceIntegrator<D>> (coef_ar);
 		bftau -> AddIntegrator (bfilap);
 
 		bftau -> Assemble(lh);
@@ -123,7 +123,7 @@ class NumProcSolveInstat : public NumProc
 		const FESpace * fes = &(gfu->GetFESpace());
 		lfrhs = CreateLinearForm(fes,"lfrhs",massflags2);
 
-		Array<CoefficientFunction *> coef_lr(2);
+		Array<shared_ptr<CoefficientFunction>> coef_lr(2);
 		coef_lr[0] = new ConstantCoefficientFunction(0);
 		coef_lr[1] = &coef_u;
 		LinearFormIntegrator * lfi_tr = new ST_TimeTraceSourceIntegrator<D> (coef_lr);

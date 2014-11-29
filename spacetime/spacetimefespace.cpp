@@ -8,7 +8,7 @@
 namespace ngcomp
 {
 
-  SpaceTimeFESpace ::  SpaceTimeFESpace (const MeshAccess & ama, const Flags & flags, bool checkflags)
+  SpaceTimeFESpace ::  SpaceTimeFESpace (shared_ptr<MeshAccess> ama, const Flags & flags, bool checkflags)
     : FESpace(ama, flags)
   {
     name="SpaceTimeFESpace";
@@ -22,7 +22,7 @@ namespace ngcomp
     if(checkflags) CheckFlags(flags);
     
     // ndlevel.SetSize(0);
-    spacedim = ma.GetDimension();
+    spacedim = ma->GetDimension();
     
     order_time = flags.GetNumFlag("order_time",1);
     gaussradau = flags.GetDefineFlag("gaussradau");
@@ -32,27 +32,26 @@ namespace ngcomp
     else
         fel_time = new L2HighOrderFE<ET_SEGM> (order_time);
 
-    static ConstantCoefficientFunction one(1);
+    auto one = make_shared<ConstantCoefficientFunction>(1);
     if (spacedim == 2)
     {
-      integrator = new SpaceTimeTimeTraceIntegrator<2,FUTURE>(&one) ;
-      boundary_integrator = new RobinIntegrator<2> (&one);
+      integrator = make_shared<SpaceTimeTimeTraceIntegrator<2,FUTURE> >(one) ;
+      boundary_integrator = make_shared<RobinIntegrator<2> > (one);
     }
     else
     {
-      integrator = new SpaceTimeTimeTraceIntegrator<3,FUTURE>(&one) ;
-      // integrator = new MassIntegrator<3> (&one);
-      boundary_integrator = new RobinIntegrator<3> (&one);
+      integrator = make_shared<SpaceTimeTimeTraceIntegrator<3,FUTURE> >(one) ;
+      boundary_integrator = make_shared<RobinIntegrator<3> > (one);
     }
 
     if (dimension > 1)
     {
-      integrator = new BlockBilinearFormIntegrator (*integrator, dimension);
+      integrator = make_shared<BlockBilinearFormIntegrator> (integrator, dimension);
       boundary_integrator =
-        new BlockBilinearFormIntegrator (*boundary_integrator, dimension);
+        make_shared<BlockBilinearFormIntegrator>(boundary_integrator, dimension);
     }
     
-    const FESpaceClasses::FESpaceInfo * info;
+    shared_ptr<FESpaceClasses::FESpaceInfo> info;
 
     string fet_space = flags.GetStringFlag("type_space","l2ho");
 
@@ -84,8 +83,8 @@ namespace ngcomp
     if(print) 
       *testout << " SpaceTimeFESpace" << endl; // with order " << order << " rel_order " << rel_order << " var_order " << var_order << endl; 
 
-    nel = ma.GetNE();
-    nfa = ma.GetNFacets(); 
+    nel = ma->GetNE();
+    nfa = ma->GetNFacets(); 
     
     ndof_space = fes_space->GetNDof();
     ndof_time  =  fel_time->GetNDof();

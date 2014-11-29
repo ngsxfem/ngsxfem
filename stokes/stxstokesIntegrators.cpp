@@ -7,7 +7,7 @@ namespace ngfem
   void SpaceTimeXStokesIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXStokesIntegrator::CalcElementMatrix");

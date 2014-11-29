@@ -8,7 +8,7 @@ namespace ngfem
   void XMassIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XMassIntegrator::CalcElementMatrix");
@@ -105,7 +105,7 @@ namespace ngfem
   void XConvectionIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XConvectionIntegrator::CalcElementMatrix");
@@ -218,7 +218,7 @@ namespace ngfem
   void XLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XLaplaceIntegrator::CalcElementMatrix");
@@ -304,7 +304,7 @@ namespace ngfem
   void XSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XSourceIntegrator::CalcElementMatrix");
@@ -392,7 +392,7 @@ namespace ngfem
   void XRobinIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XRobinIntegrator::CalcElementMatrix");
@@ -477,7 +477,7 @@ namespace ngfem
   void XNeumannIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("XNeumannIntegrator::CalcElementMatrix");
@@ -601,7 +601,7 @@ namespace ngfem
   void NoXLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> & elmat,
+		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
     static Timer timer ("NoXLaplaceIntegrator::CalcElementMatrix");

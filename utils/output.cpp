@@ -72,7 +72,7 @@ namespace ngfem
   }
 
   template<int D>
-  void DoSpecialOutput (GridFunction * gfu, 
+  void DoSpecialOutput (shared_ptr<GridFunction> gfu, 
                         SolutionCoefficients<D> & solcoef, 
                         int subdivision, 
                         Flags & flags,
@@ -122,8 +122,8 @@ namespace ngfem
     const double time = 0.0;
     // cout << " CalcXError at time = " << time << endl;
     Array<int> dnums;
-    int activeels = 0;
-    const MeshAccess & ma (gfu->GetFESpace().GetMeshAccess());
+    // int activeels = 0;
+    shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
 
     DOMAIN_TYPE plotdt = POS;
     for (plotdt=POS; plotdt<IF; plotdt=(DOMAIN_TYPE)((int)plotdt+1))
@@ -133,20 +133,20 @@ namespace ngfem
       Array<double > edges_val(0);
 
 
-      for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+      for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
       {
         HeapReset hr(lh);
-        gfu -> GetFESpace().GetDofNrs (elnr, dnums);
+        gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
         const int size = dnums.Size();
 
         FlatVector<double> elvec (size, lh);
         gfu -> GetVector().GetIndirect (dnums, elvec);   
 
-        ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
+        ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
 
         ELEMENT_TYPE eltype = eltrans.GetElementType();
       
-        const FiniteElement & base_fel = gfu -> GetFESpace().GetFE(elnr,lh);
+        const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(elnr,lh);
         const CompoundFiniteElement & cfel = 
           dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
@@ -214,7 +214,7 @@ namespace ngfem
             {
 
               bool edgeonbound[3];
-              int inner_cnt = 3;
+              // int inner_cnt = 3;
               {
                 if (dt == NEG)
                   outf_tikz << "\\draw ["
@@ -581,7 +581,7 @@ namespace ngfem
 
       string & color = plotdt == NEG ? negcolor : poscolor;
       string & edgecolor = plotdt == NEG ? edgenegcolor : edgeposcolor;
-      double fillopacity = plotdt == NEG ? fillnegopacity : fillposopacity;
+      // double fillopacity = plotdt == NEG ? fillnegopacity : fillposopacity;
       double drawopacity = plotdt == NEG ? drawnegopacity : drawposopacity;
       string & edgestyle = plotdt == NEG ? edgenegstyle : edgeposstyle;
 
@@ -619,13 +619,13 @@ namespace ngfem
     // system("pdflatex special.output.tikz");
   }
 
-  template void DoSpecialOutput<2>(GridFunction * gfu, SolutionCoefficients<2> & solcoef, 
+  template void DoSpecialOutput<2>(shared_ptr<GridFunction> gfu, SolutionCoefficients<2> & solcoef, 
                                    int subdivision, Flags & flags, LocalHeap & lh);
-  template void DoSpecialOutput<3>(GridFunction * gfu, SolutionCoefficients<3> & solcoef, 
+  template void DoSpecialOutput<3>(shared_ptr<GridFunction> gfu, SolutionCoefficients<3> & solcoef, 
                                    int subdivision, Flags & flags,LocalHeap & lh);
 
 
-  void OutputMeshOnly (const MeshAccess & ma, LocalHeap & lh)
+  void OutputMeshOnly (shared_ptr<MeshAccess> ma, LocalHeap & lh)
   {
     // ofstream outf_gnuplot("special.output.gnuplot");
     ofstream outf_tikz("mesh.output.tikz");
@@ -642,11 +642,11 @@ namespace ngfem
     outf_tikz.precision(12);
     outf_tikz << std::fixed;
 
-    for (int elnr = 0; elnr < ma.GetNE(); ++elnr)
+    for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
     {
       HeapReset hr(lh);
-      ElementTransformation & eltrans = ma.GetTrafo(elnr,false,lh);
-      ELEMENT_TYPE eltype = eltrans.GetElementType();
+      ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
+      // ELEMENT_TYPE eltype = eltrans.GetElementType();
       
       IntegrationPoint ip1(0.0,0.0);
       IntegrationPoint ip2(1.0,0.0);

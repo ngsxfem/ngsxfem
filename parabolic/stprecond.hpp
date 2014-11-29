@@ -15,12 +15,12 @@ namespace ngcomp
   
 class SpaceTimePreconditioner : public Preconditioner
 {
-  const S_BilinearForm<double> * bfa;
+  shared_ptr<S_BilinearForm<double>> bfa;
 
   // Array<int> global_nums;
   // int ilower, iupper;
   SparseMatrix<double> * AssBlock = NULL;
-  BaseMatrix * InvAssBlock = NULL;
+  shared_ptr<BaseMatrix> InvAssBlock = NULL;
   string inversetype = "pardiso";
   Table<int> * blockjacobixtable = NULL;
   BaseBlockJacobiPrecond * blockjacobix = NULL;

@@ -105,7 +105,7 @@ xnitsche_minstab_hansbo aneg apos bneg bpos
 #xnitsche_hansbo aneg apos bneg bpos lambda
 #lo_ghostpenalty aneg apos one
 
-numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary -print
+numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
 
 define preconditioner c -type=local -bilinearform=a -test -block
 #define preconditioner c -type=direct -bilinearform=a -test

@@ -6,9 +6,9 @@ namespace ngfem
   template<int D>
   void FictXSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
-		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
-		     LocalHeap & lh) const
+                     const ElementTransformation & eltrans, 
+                     FlatVector<double> elvec,
+                     LocalHeap & lh) const
   {
     static Timer timer ("FictXSourceIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
@@ -33,7 +33,7 @@ namespace ngfem
     
     elvec = 0.0;
 
-    if (!xfe && !dummfe) 
+    if (!xfe[0] && !xfe[1] && !dummfe[0] && !dummfe[1]) 
       throw Exception(" not containing X-elements?");
 
     // if(xfe[0])
@@ -118,7 +118,7 @@ namespace ngfem
   void FictXMassIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
                      const ElementTransformation & eltrans, 
-                     FlatMatrix<double> & elmat,
+                     FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
     static Timer timer ("FictXMassIntegrator::CalcElementMatrix");
@@ -235,7 +235,7 @@ namespace ngfem
   void FictXLaplaceIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
                      const ElementTransformation & eltrans, 
-                     FlatMatrix<double> & elmat,
+                     FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
     static Timer timer ("FictXLaplaceIntegrator::CalcElementMatrix");

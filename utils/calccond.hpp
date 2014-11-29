@@ -105,7 +105,7 @@ inline double PowerIteration(BaseMatrix & A, const BitArray * freedofs, FlatVect
   BaseVector & c = *A.CreateVector();
 
   FlatVector<double> fva = a.FVDouble();
-  FlatVector<double> fvb = b.FVDouble();
+  // FlatVector<double> fvb = b.FVDouble();
  
 
   a.SetRandom();
@@ -176,7 +176,7 @@ inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const Bit
   BaseVector & b = *A.CreateVector();
 
   FlatVector<double> fva = a.FVDouble();
-  FlatVector<double> fvb = b.FVDouble();
+  // FlatVector<double> fvb = b.FVDouble();
 
   double an;
   double bn; //lambda
@@ -238,7 +238,7 @@ inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const Bit
 
 
 
-inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, GridFunction* gfu = NULL)
+inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, shared_ptr<GridFunction> gfu = NULL)
 {
   Array<BaseVector*> evs(0);
   Array<BaseVector*> invevs(0);

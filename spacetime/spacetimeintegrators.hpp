@@ -21,12 +21,12 @@ namespace ngfem
   class ST_MassIntegrator : public BilinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_mass;
+    shared_ptr<CoefficientFunction> coef_mass;
     double told;
     double tnew;
     double dt;
   public:
-    ST_MassIntegrator (Array<CoefficientFunction*> & coeffs) 
+    ST_MassIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs) 
       : BilinearFormIntegrator()
     { 
       told = coeffs[0] -> EvaluateConst();
@@ -42,7 +42,7 @@ namespace ngfem
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatMatrix<double> & elmat,
+                                    FlatMatrix<double> elmat,
                                     LocalHeap & lh) const;
   };
 
@@ -51,12 +51,12 @@ namespace ngfem
   class ST_TimeDerivativeIntegrator : public BilinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_;
+    shared_ptr<CoefficientFunction> coef_;
     // double told;
     // double tnew;
     // double dt;
   public:
-    ST_TimeDerivativeIntegrator (Array<CoefficientFunction*> & coeffs) 
+    ST_TimeDerivativeIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs) 
       : BilinearFormIntegrator()
     { 
       // told = coeffs[0] -> EvaluateConst();
@@ -65,7 +65,7 @@ namespace ngfem
       // dt = tnew - told;
     }
 
-    ST_TimeDerivativeIntegrator (CoefficientFunction* coeffs) 
+    ST_TimeDerivativeIntegrator (shared_ptr<CoefficientFunction> coeffs) 
       : BilinearFormIntegrator()
     { 
       coef_ = coeffs;
@@ -78,7 +78,7 @@ namespace ngfem
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatMatrix<double> & elmat,
+                                    FlatMatrix<double> elmat,
                                     LocalHeap & lh) const;
 
   };
@@ -87,12 +87,12 @@ namespace ngfem
   class ST_LaplaceIntegrator : public BilinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_;
+    shared_ptr<CoefficientFunction> coef_;
     double told;
     double tnew;
     double dt;
   public:
-    ST_LaplaceIntegrator (Array<CoefficientFunction*> & coeffs) 
+    ST_LaplaceIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs) 
       : BilinearFormIntegrator()
     { 
       told = coeffs[0] -> EvaluateConst();
@@ -108,7 +108,7 @@ namespace ngfem
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatMatrix<double> & elmat,
+                                    FlatMatrix<double> elmat,
                                     LocalHeap & lh) const;
   };
 
@@ -117,12 +117,12 @@ namespace ngfem
   class ST_SourceIntegrator : public LinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_source;
+    shared_ptr<CoefficientFunction> coef_source;
     double told;
     double tnew;
     double dt;
   public:
-    ST_SourceIntegrator (Array<CoefficientFunction*> & coeffs) 
+    ST_SourceIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs) 
       : LinearFormIntegrator()
     { 
       told = coeffs[0] -> EvaluateConst();
@@ -138,7 +138,7 @@ namespace ngfem
 
     virtual void CalcElementVector (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatVector<double> & elvec,
+                                    FlatVector<double> elvec,
                                     LocalHeap & lh) const;
   };
 
@@ -148,10 +148,10 @@ namespace ngfem
   class ST_TimeTraceMassIntegrator : public BilinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_mass;
+    shared_ptr<CoefficientFunction> coef_mass;
     double time;
   public:
-    ST_TimeTraceMassIntegrator (Array<CoefficientFunction*> & coeffs) 
+    ST_TimeTraceMassIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs) 
       : BilinearFormIntegrator()
     { 
       coef_mass  = coeffs[1];
@@ -165,7 +165,7 @@ namespace ngfem
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatMatrix<double> & elmat,
+                                    FlatMatrix<double> elmat,
                                     LocalHeap & lh) const;
   };
 
@@ -175,10 +175,10 @@ namespace ngfem
   class ST_TimeTraceSourceIntegrator : public LinearFormIntegrator
   {
   protected:
-    CoefficientFunction *coef_source;
+    shared_ptr<CoefficientFunction> coef_source;
     double time;
   public:
-    ST_TimeTraceSourceIntegrator (Array<CoefficientFunction*> & coeffs) 
+    ST_TimeTraceSourceIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs) 
       : LinearFormIntegrator()
     { 
       coef_source = coeffs[1];
@@ -192,7 +192,7 @@ namespace ngfem
 
     virtual void CalcElementVector (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
-                                    FlatVector<double> & elvec,
+                                    FlatVector<double> elvec,
                                     LocalHeap & lh) const;
   };
 
@@ -309,9 +309,9 @@ namespace ngfem
   {
   public:
     ///
-    SpaceTimeTimeTraceIntegrator (Array<CoefficientFunction*> & coeffs);
+    SpaceTimeTimeTraceIntegrator (const Array<shared_ptr<CoefficientFunction> > & coeffs);
     ///
-    SpaceTimeTimeTraceIntegrator (CoefficientFunction* coeffs);
+    SpaceTimeTimeTraceIntegrator (shared_ptr<CoefficientFunction> coeffs);
     ///
     virtual ~SpaceTimeTimeTraceIntegrator (){};
     ///

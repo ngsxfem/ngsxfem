@@ -48,13 +48,13 @@ namespace ngcomp
     Array<int> xdof2basedof;
 
     // Table<int> sel2dofs;
-    const FESpace * basefes = NULL;
+    shared_ptr<FESpace> basefes = NULL;
     BitArray activeelem;
     BitArray activeselem;
       
-    const GridFunction * gf_lset = NULL;
-    const CoefficientFunction * coef_lset = NULL;
-    EvalFunction * eval_lset = NULL;
+    shared_ptr<GridFunction> gf_lset = NULL;
+    shared_ptr<CoefficientFunction> coef_lset = NULL;
+    shared_ptr<EvalFunction> eval_lset = NULL;
 
     double vmax = 1e99;
 
@@ -68,28 +68,31 @@ namespace ngcomp
       Arguments are the access to the mesh data structure,
       and the flags from the define command in the pde-file
     */
-    FictitiousDomainFESpace (const MeshAccess & ama, const Flags & flags);
+    FictitiousDomainFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
     
     // destructor
     virtual ~FictitiousDomainFESpace ();
 
     // function which can create fe-space (needed by pde-parser)
-    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
     {
       // Creator should be outside xFESpace (and translate flags to according template parameters)
       bool spacetime = flags.GetDefineFlag("spacetime");
-      int mD = ma.GetDimension();
+      int mD = ma->GetDimension();
       int mSD = spacetime ? mD+1 : mD;
+      shared_ptr<FESpace> ret=NULL;
       if (mD == 2)
         if (mSD == 2)
-          return new FictitiousDomainFESpace<2,2>(ma,flags);
+          ret = make_shared<FictitiousDomainFESpace<2,2>>(ma,flags);
         else
-          return new FictitiousDomainFESpace<2,3>(ma,flags);
+          ret = make_shared<FictitiousDomainFESpace<2,3>>(ma,flags);
       else
         if (mSD == 2)
-          return new FictitiousDomainFESpace<3,2>(ma,flags);
+          ret = make_shared<FictitiousDomainFESpace<3,2>>(ma,flags);
         else
-          return new FictitiousDomainFESpace<3,3>(ma,flags);
+          ret = make_shared<FictitiousDomainFESpace<3,3>>(ma,flags);
+      
+      return ret;
     }
 
     // a name for our new fe-space
@@ -169,14 +172,14 @@ namespace ngcomp
 
     // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
 
-    void SetBaseFESpace(const FESpace* basefes_){basefes = basefes_;};
-    void SetLevelSet(const GridFunction* lset_){ gf_lset = lset_;};
-    void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
-    void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
-    void SetLevelSetCoefficient(const CoefficientFunction* _coef_lset){ coef_lset = _coef_lset;};
+    void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
+    void SetLevelSet(shared_ptr<GridFunction> lset_){ gf_lset = lset_;};
+    // void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
+    // void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
+    void SetLevelSetCoefficient(const shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
-    void XToNegPos(const GridFunction & gf, GridFunction & gf_neg_pos) const;
+    void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const;
 
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
   };
@@ -184,7 +187,7 @@ namespace ngcomp
 
   class NumProcInformFictitiousDomainFESpace : public NumProc
   {
-    const CoefficientFunction * coef = NULL;
+    shared_ptr<CoefficientFunction> coef = NULL;
   public:
     NumProcInformFictitiousDomainFESpace (PDE & apde, const Flags & flags);
     ~NumProcInformFictitiousDomainFESpace();
@@ -196,11 +199,11 @@ namespace ngcomp
   {
     bool spacetime = false;
   public:
-    CompFictDomFESpace (const MeshAccess & ama, 
-                const Array<FESpace*> & aspaces,
-                const Flags & flags);
+    CompFictDomFESpace (shared_ptr<MeshAccess> ama, 
+                        const Array<shared_ptr<FESpace>> & aspaces,
+                        const Flags & flags);
     virtual ~CompFictDomFESpace () { ; }
-    static FESpace * Create (const MeshAccess & ma, const Flags & flags)
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
     {
       Flags negflags(flags);
       Flags posflags(flags);
@@ -209,30 +212,30 @@ namespace ngcomp
       posflags.SetFlag("positive");
 
       bool spacetime = flags.GetDefineFlag("spacetime");
-      Array<FESpace*> spaces(2);
-      if (ma.GetDimension() == 2)
+      Array<shared_ptr<FESpace>> spaces(2);
+      if (ma->GetDimension() == 2)
         if (spacetime)
         {
-          spaces[0] = new FictitiousDomainFESpace<2,3> (ma, negflags);        
-          spaces[1] = new FictitiousDomainFESpace<2,3> (ma, posflags);        
+          spaces[0] = make_shared<FictitiousDomainFESpace<2,3>> (ma, negflags);        
+          spaces[1] = make_shared<FictitiousDomainFESpace<2,3>> (ma, posflags);        
         }
         else
         {
-          spaces[0] = new FictitiousDomainFESpace<2,2> (ma, negflags);        
-          spaces[1] = new FictitiousDomainFESpace<2,2> (ma, posflags);        
+          spaces[0] = make_shared<FictitiousDomainFESpace<2,2>> (ma, negflags);        
+          spaces[1] = make_shared<FictitiousDomainFESpace<2,2>> (ma, posflags);        
         }
       else
         if (spacetime)
         {
-          spaces[0] = new FictitiousDomainFESpace<3,4> (ma, negflags);        
-          spaces[1] = new FictitiousDomainFESpace<3,4> (ma, posflags);        
+          spaces[0] = make_shared<FictitiousDomainFESpace<3,4>> (ma, negflags);        
+          spaces[1] = make_shared<FictitiousDomainFESpace<3,4>> (ma, posflags);        
         }
         else
         {
-          spaces[0] = new FictitiousDomainFESpace<3,3> (ma, negflags);        
-          spaces[1] = new FictitiousDomainFESpace<3,3> (ma, posflags);        
+          spaces[0] = make_shared<FictitiousDomainFESpace<3,3>> (ma, negflags);        
+          spaces[1] = make_shared<FictitiousDomainFESpace<3,3>> (ma, posflags);        
         }
-      CompFictDomFESpace * fes = new CompFictDomFESpace (ma, spaces, flags);
+      shared_ptr<CompFictDomFESpace> fes = make_shared<CompFictDomFESpace> (ma, spaces, flags);
       return fes;
     }
 
