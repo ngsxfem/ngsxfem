@@ -166,7 +166,9 @@ template <bool symm>
 inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, FlatVector<double> fvdiaga, 
                              Array<BaseVector*> & invevs, bool printmuch = false)
 {
-  BaseMatrix & invAT = * dynamic_cast<BaseSparseMatrix&> (A) . InverseMatrix(freedofs,true);
+  throw Exception("only available in a hacked version of ngsolve");
+  return 0.0;
+  /* BaseMatrix & invAT = * dynamic_cast<BaseSparseMatrix&> (A) . InverseMatrix(freedofs,true);
 
   const int max_its = 100000;
   const double rel_acc = 1e-6;
@@ -228,6 +230,7 @@ inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const Bit
     return 1.0/bn;
   else
     return 1.0/sqrt(bn);
+  */
 }
 
 
