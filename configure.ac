@@ -1,4 +1,4 @@
-AC_INIT([ngsxfem],[0.0.0.1-alpha],[])
+AC_INIT([ngsxfem],[0.6.0-alpha],[])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 AC_CONFIG_MACRO_DIR([m4])
