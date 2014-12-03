@@ -1,4 +1,4 @@
-SUBDIRS = pde_demos
+#SUBDIRS = pde_demos
 
 ACLOCAL_AMFLAGS = -I m4
 
