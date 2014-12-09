@@ -87,10 +87,10 @@ define coefficient zero
 0,
 
 define coefficient bw_pos
-(b_p,0),
+b_p,0,
 
 define coefficient bw_neg
-(b_n,0),
+b_n,0,
 
 define coefficient w_pos
 (1,0),
@@ -167,11 +167,11 @@ define linearform f2 -fespace=vh1x
 xsource rhsneg rhspos
 
 #define preconditioner c -type=bddc -bilinearform=a #-block #-test
-define preconditioner c -type=local -bilinearform=a #-block #-test
-#define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
+#define preconditioner c -type=local -bilinearform=a #-block #-test
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso
 #define preconditioner c -type=direct -bilinearform=a -inverse=sparsecholesky
 
-numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=gmres -preconditioner=c -prec=1e-10 -maxsteps=5000 -print
+numproc bvp npx -bilinearform=a -linearform=f -gridfunction=uh1x -solver=direct -preconditioner=c -prec=1e-10 -maxsteps=5000 -print
 
 #numproc bvp npx -bilinearform=m -linearform=f2 -gridfunction=uh1x -preconditioner=c
 

@@ -1,7 +1,23 @@
-##############################################################################
-#           A simple example of an unfitted interface problem                #
-# TODO: Add description of pde - link to org-file                            #
-##############################################################################
+# Example:
+# Nitsche-XFEM ...
+# ... artificial interface
+#
+# The interface is prescribed with the coef "lset",
+# ...
+#
+# Solves the problem:
+#
+# ...TODO...
+#
+# Details:
+#
+# → ....
+# → ....
+#
+# Things to try here:
+#   1. ...
+#   2. ... switch weightings ...
+#
 
 # load geometry
 geometry = d1_xnitsche.in2d

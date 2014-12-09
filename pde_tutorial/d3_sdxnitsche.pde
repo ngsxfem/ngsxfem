@@ -1,8 +1,29 @@
-geometry = square_conv.in2d
-mesh = square_conv.vol
+# Example:
+# Streamline Diffusion combined with Nitsche-XFEM
+# ... artificial interface
+#
+# The interface is prescribed with the coef "lset",
+# ...
+#
+# Solves the problem:
+#
+# ...TODO...
+#
+# Details:
+#
+# → ....
+# → ....
+#
+# Things to try here:
+#   1. ...
+#   2. ... switch scalings ...
+#
+
+geometry = d3_sdxnitsche.in2d
+mesh = d3_sdxnitsche.vol
 
 shared = libngsxfem_xfem
-
+pymodule = d1_approx
 define constant heapsize = 1e9
 
 # general constants
