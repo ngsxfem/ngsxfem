@@ -33,6 +33,7 @@ public:
     
   SpaceTimePreconditioner (const PDE & pde, const Flags & flags, const string & name);
   SpaceTimePreconditioner (const BaseMatrix & matrix, const BitArray * afreedofs); 
+  SpaceTimePreconditioner (shared_ptr<BilinearForm> bfa_in, const Flags & flags, const string & name);  
 
   ~SpaceTimePreconditioner ();
 	

@@ -19,6 +19,12 @@ namespace ngcomp
     bfa = dynamic_pointer_cast<S_BilinearForm<double> >
       (pde.GetBilinearForm (flags.GetStringFlag ("bilinearform", NULL)));
   }
+
+  SpaceTimePreconditioner :: SpaceTimePreconditioner (shared_ptr<BilinearForm> bfa_in, const Flags & flags, const string & name)  
+    : Preconditioner (bfa_in, flags)
+  {
+    bfa = dynamic_pointer_cast<S_BilinearForm<double> >(bfa_in);
+  }
   
 
   SpaceTimePreconditioner :: SpaceTimePreconditioner (const BaseMatrix & matrix, const BitArray * afreedofs)
