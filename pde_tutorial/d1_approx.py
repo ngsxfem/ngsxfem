@@ -23,12 +23,12 @@ def PrintDofs(pde,mesh,fes):
 
 def ShapeTest(pde,u):
     print ("Shape test:\n")
-    u[:][:] = 0
-    for i in range(u.size):
+    u[:][:] = 0                                                   
+    for i in range(u.size):                                       
         print ("i = ", i ,".")
         u[:][i-1] = 0.0
-        u[:][i] = 1.0
-        Redraw(blocking=True)
+        u[:][i] = 1.0                                            
+        Redraw(blocking=True)                                      
         sleep(1)
 
 def Test(pde):
