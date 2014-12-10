@@ -41,66 +41,17 @@ AC_ARG_WITH([netgen],
 
 CXX=$netgendir/bin/ngscxx
 
-AC_ARG_WITH([lapack],
-        [  --with-lapack=lapacklib   linker flags for linking dense linear algebra library LAPACK],          
-        [AC_SUBST([LAPACK_INCLUDES], ["-DLAPACK"])]
-        [AC_SUBST([LAPACK_LIBS], [$withval])]
-        )
+pyon=false
+AC_ARG_ENABLE([python],
+	[AC_HELP_STRING([--enable-python],[enable python stuff])],
+ 	[CXXFLAGS+=" -DNGSX_PYTHON"]
+    [pyon=true]
+	)
 
-# AC_ARG_ENABLE([navierstokes], 
-#         [  --enable-navierstokes   install Navier Stokes package],
-#         [nsemakefile="navierstokes/Makefile"]
-# 	[AC_SUBST([NSEDIR], ["navierstokes"])]
-#         [nse="yes"],
-#         [nse="no"]
-#         )
-
-## [GM] commented this out since it isn't in use anymore
-#AC_ARG_ENABLE([dev], 
-#        [  --enable-dev   install Development packages (experimental stuff)],
-#        [nsedevmakefile="navierstokes/dev/Makefile"]
-#	[AC_SUBST([NSEDEVDIR], ["navierstokes/dev"])]
-#        [nse="yes"]
-#        )
-
-#AC_ARG_ENABLE([pardiso],
-#        [  --enable-pardiso           enable sparse direct solver pardiso],          
-#        [AC_SUBST([PARDISO_INCLUDES], ["-DUSE_PARDISO"])]
-#        )
-
-AC_ARG_ENABLE([mumps],
-        [  --enable-mumps           enable sparse direct solver mumps],          
-        [AC_SUBST([SOLVER_FLAGS], ["-DUSE_MUMPS"])]
-        [AC_SUBST([SOLVER], ["mumps"])]
-        )
-
-AC_ARG_WITH([superlu],
-        [  --with-superlu=superlulib   linker flags for linking SUPERLU],          
-        [AC_SUBST([SOLVER_FLAGS], ["-DUSE_SUPERLU $withval"])]
-        [AC_SUBST([SOLVER_LIBS], ["-lsuperlu $withval"])]
-        [AC_SUBST([SOLVER], ["superlu"])]
-        )
-
-AC_ARG_ENABLE([parallel],
-        [  --enable-parallel           enable mpi parallelisation],          
-        [AC_SUBST([PARALLEL_FLAGS], ["-DPARALLEL"])]
-        [parallel="yes"],
-        [parallel="no"]
-        )
-
-
-#AM_CONDITIONAL([COND_NSE], [test "$nse" = "yes"])
-#AM_CONDITIONAL([COND_HDF], [test "$hdf" = "yes"])
-
-AC_SUBST([NETGEN_INCLUDES], [" "])
+AC_SUBST([NETGEN_INCLUDES], ["-I$netgendir/include"])
 AC_SUBST([NETGEN_LIBS], ["-L$netgendir/lib -lngsolve"])
 
-AC_CONFIG_HEADERS(config.h) AC_CONFIG_FILES(Makefile utils/Makefile spacetime/Makefile cutint/Makefile parabolic/Makefile xfem/Makefile stokes/Makefile pde_tutorial/Makefile pde_experimental/Makefile)
-
-#programming_demos/Makefile
-#navierstokes/dev/Makefile 
-
-#$nsemakefile $hdfmakefile)
+AC_CONFIG_HEADERS(config.h) AC_CONFIG_FILES(Makefile utils/Makefile spacetime/Makefile cutint/Makefile parabolic/Makefile xfem/Makefile stokes/Makefile pde_tutorial/Makefile pde_experimental/Makefile python/Makefile)
 
 AC_OUTPUT
 
@@ -110,7 +61,8 @@ AC_MSG_RESULT([
 
   Enabled functionality:
 
-  Netgen/NGSolve: ...... $netgendir
+  Netgen/NGSolve: ........ $netgendir
+  Python functionality: .. $pyon
 
   Building:
 

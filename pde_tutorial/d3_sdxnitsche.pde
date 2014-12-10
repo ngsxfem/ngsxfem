@@ -23,7 +23,7 @@ geometry = d3_sdxnitsche.in2d
 mesh = d3_sdxnitsche.vol
 
 shared = libngsxfem_xfem
-pymodule = d1_approx
+
 define constant heapsize = 1e9
 
 # general constants

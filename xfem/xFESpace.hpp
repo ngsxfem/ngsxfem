@@ -17,7 +17,8 @@ using namespace ngsolve;
 namespace ngcomp
 {
 
-  template <int D, int SD>
+  // Base class for extended finite elements with data for 
+  // mappings between degrees of freedoms and level set information
   class XFESpace : public FESpace
   {
   protected:  
@@ -51,54 +52,25 @@ namespace ngcomp
     BitArray activeelem;
     BitArray activeselem;
       
-    shared_ptr<GridFunction> gf_lset = NULL;
     shared_ptr<CoefficientFunction> coef_lset = NULL;
-    shared_ptr<EvalFunction> eval_lset = NULL;
 
     double vmax = 1e99;
 
     bool empty = false;
-
   public:
-    /*
-      constructor. 
-      Arguments are the access to the mesh data structure,
-      and the flags from the define command in the pde-file
-    */
-    XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
+    XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags): FESpace(ama, flags){;}
+    virtual ~XFESpace() = 0;
     
-    // destructor
-    virtual ~XFESpace ();
-
-    // function which can create fe-space (needed by pde-parser)
-    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
-    {
-      // Creator should be outside xFESpace (and translate flags to according template parameters)
-      bool spacetime = flags.GetDefineFlag("spacetime");
-      int mD = ma->GetDimension();
-      int mSD = spacetime ? mD+1 : mD;
-      if (mD == 2)
-        if (mSD == 2)
-          return make_shared<XFESpace<2,2> >(ma,flags);
-        else
-          return make_shared<XFESpace<2,3> >(ma,flags);
-      else
-        if (mSD == 2)
-          return make_shared<XFESpace<3,2> >(ma,flags);
-        else
-          return make_shared<XFESpace<3,3> >(ma,flags);
-    }
+    void CleanUp();
 
     // a name for our new fe-space
     virtual string GetClassName () const
     {
       return "XFESpace";
     }
-    
-    void CleanUp();
 
-    virtual void Update(LocalHeap & lh);
-    virtual void UpdateCouplingDofArray();
+    // function which can create fe-space (needed by pde-parser)
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags);
 
     virtual int GetNDof () const { return ndof; }
 
@@ -160,22 +132,42 @@ namespace ngcomp
       }
     }
 
+    virtual void UpdateCouplingDofArray();
+
+    void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
+    void SetLevelSet(shared_ptr<GridFunction> lset_){ 
+      coef_lset = make_shared<GridFunctionCoefficientFunction>(lset_);
+    };
+    void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
+    void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
+    
+    bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
+    // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
+
+    void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const;
+  };
+
+
+  // XFESpace with implementations for current (space-time) dimensions D, SD
+  template <int D, int SD>
+  class T_XFESpace : public XFESpace
+  {
+  public:
+    /*
+      constructor. 
+      Arguments are the access to the mesh data structure,
+      and the flags from the define command in the pde-file
+    */
+    T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
+    
+    // destructor
+    virtual ~T_XFESpace ();
+
+    virtual void Update(LocalHeap & lh);
 
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
     virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
 
-    // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
-
-    void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
-    void SetLevelSet(shared_ptr<GridFunction> lset_){ gf_lset = lset_;};
-    // void SetBaseFESpace(const FESpace& basefes_){basefes = &basefes_;};
-    // void SetLevelSet(const GridFunction& lset_){ gf_lset = &lset_;};
-    void SetLevelSetCoefficient(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
-    void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
-    
-    void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const;
-
-    bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
   };
 
 
@@ -205,7 +197,7 @@ namespace ngcomp
     virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const 
     { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
 
-    void SetLevelSetCoefficient(shared_ptr<CoefficientFunction> _coef_lset)
+    void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset)
     { coef_lset = _coef_lset;}
     void SetTime(double ta, double tb) { told=ta; tnew=tb; }
 
@@ -242,14 +234,14 @@ namespace ngcomp
         spaces[0] = make_shared<H1HighOrderFESpace> (ma, flags);    
       if (ma->GetDimension() == 2)
         if (spacetime)
-          spaces[1] = make_shared<XFESpace<2,3> > (ma, flags);        
+          spaces[1] = make_shared<T_XFESpace<2,3> > (ma, flags);        
         else
-          spaces[1] = make_shared<XFESpace<2,2> >(ma, flags);        
+          spaces[1] = make_shared<T_XFESpace<2,2> >(ma, flags);        
       else
         if (spacetime)
-          spaces[1] = make_shared<XFESpace<3,4> >(ma, flags);        
+          spaces[1] = make_shared<T_XFESpace<3,4> >(ma, flags);        
         else
-          spaces[1] = make_shared<XFESpace<3,3> >(ma, flags);        
+          spaces[1] = make_shared<T_XFESpace<3,3> >(ma, flags);        
       shared_ptr<XH1FESpace> fes = make_shared<XH1FESpace> (ma, spaces, flags);
       return fes;
     }

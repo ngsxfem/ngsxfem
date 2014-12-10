@@ -378,7 +378,7 @@ public:
 
     shared_ptr<FESpace> fes = gfu->GetFESpace();
     shared_ptr<CompoundFESpace> compfes = dynamic_pointer_cast<CompoundFESpace>(fes);
-    shared_ptr<XFESpace<D,D+1> > xfes = dynamic_pointer_cast<XFESpace<D,D+1> >((*compfes)[1]);
+    shared_ptr<T_XFESpace<D,D+1> > xfes = dynamic_pointer_cast<T_XFESpace<D,D+1> >((*compfes)[1]);
 	
     shared_ptr<CompoundFESpace> compfes2 = dynamic_pointer_cast<CompoundFESpace>(fesvis);
     shared_ptr<LevelsetContainerFESpace> lcfes = dynamic_pointer_cast<LevelsetContainerFESpace>((*compfes2)[2]);
