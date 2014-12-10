@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Example python script for xfem stuff</title>
+<!-- 2014-12-10 Mi 16:13 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Christoph Lehrenfeld" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Example python script for xfem stuff</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Small inspection gimmicks:</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Next, we want to do some simple inspection of the finite element space.</a></li>
+<li><a href="#sec-1-2">1.2. To visualize the test functions (especially the XFEM ones) we use the following function:</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. The overall run calling the other things&#x2026;</a></li>
+</ul>
+</div>
+</div>
+<hr  />
+
+<p>
+At the beginning we briefly announce ourselves with a friendly "hello":
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="start"><span class="linenr">1: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">interactive modifications to d1_approx.py</span>
+<span class="linenr">2: </span><span style="color: #8ac6f2; font-weight: bold;">print</span> (<span style="color: #95e454;">"hello from d1_approx.py ;-)"</span>)
+</pre>
+</div>
+
+<p>
+which simply results in:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-org">hello from d1_approx.py ;-)
+</pre>
+</div>
+
+<p>
+Then we import a lot of functionality from ngsolve and ngsxfem.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="imports"><span class="linenr"> 3: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> ngsolve.solve <span style="color: #8ac6f2; font-weight: bold;">import</span> *
+<span class="linenr"> 4: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> ngsolve.comp <span style="color: #8ac6f2; font-weight: bold;">import</span> *
+<span class="linenr"> 5: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> ngsolve.fem <span style="color: #8ac6f2; font-weight: bold;">import</span> *
+<span class="linenr"> 6: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> ngsolve.la <span style="color: #8ac6f2; font-weight: bold;">import</span> *
+<span class="linenr"> 7: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> ngsolve.bla <span style="color: #8ac6f2; font-weight: bold;">import</span> *
+<span class="linenr"> 8: </span><span style="color: #8ac6f2; font-weight: bold;">import</span> ngsolve.ngstd <span style="color: #8ac6f2; font-weight: bold;">as</span> ngstd
+<span class="linenr"> 9: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> ngsolve.solve <span style="color: #8ac6f2; font-weight: bold;">import</span> Redraw
+<span class="linenr">10: </span>
+<span class="linenr">11: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">from libngsxfem_py.xfem import *</span>
+<span id="coderef-libxfem" class="coderef-off"><span class="linenr">12: </span><span style="color: #8ac6f2; font-weight: bold;">import</span> libngsxfem_py.xfem <span style="color: #8ac6f2; font-weight: bold;">as</span> xfem</span>
+<span class="linenr">13: </span>
+<span id="coderef-sin" class="coderef-off"><span class="linenr">14: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> math <span style="color: #8ac6f2; font-weight: bold;">import</span> sin</span>
+<span id="coderef-sleep" class="coderef-off"><span class="linenr">15: </span><span style="color: #8ac6f2; font-weight: bold;">from</span> time <span style="color: #8ac6f2; font-weight: bold;">import</span> sleep</span>
+</pre>
+</div>
+
+<p>
+We included the command <a href="#coderef-sin"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-sin');" onmouseout="CodeHighlightOff(this, 'coderef-sin');">sin</a> for no reason.
+We included the command <a href="#coderef-sleep"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-sleep');" onmouseout="CodeHighlightOff(this, 'coderef-sleep');">sleep</a> to pause between the individual shape functions.
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Small inspection gimmicks:</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Next, we want to do some simple inspection of the finite element space.</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+To this end, we print the degrees of freedoms corresponding to each element. This functionality is
+provided by PrintDofs:    
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="printdofs"><span class="linenr">16: </span><span style="color: #8ac6f2; font-weight: bold;">def</span> <span style="color: #cae682;">PrintDofs</span>(pde,mesh,fes):
+<span class="linenr">17: </span>    <span style="color: #8ac6f2; font-weight: bold;">print</span> (<span style="color: #95e454;">"Printing dofs per element:\n\n"</span>)
+<span class="linenr">18: </span>    <span style="color: #8ac6f2; font-weight: bold;">for</span> i <span style="color: #8ac6f2; font-weight: bold;">in</span> mesh.Elements():
+<span class="linenr">19: </span>        <span style="color: #8ac6f2; font-weight: bold;">print</span>(<span style="color: #95e454;">"dofnrs of element"</span>, i, <span style="color: #95e454;">":\n"</span>, fes.GetDofNrs(i))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> To visualize the test functions (especially the XFEM ones) we use the following function:</h3>
+<div class="outline-text-3" id="text-1-2">
+<div class="org-src-container">
+
+<pre class="src src-python" id="shapetest"><span class="linenr">20: </span><span style="color: #8ac6f2; font-weight: bold;">def</span> <span style="color: #cae682;">ShapeTest</span>(pde,u):
+<span class="linenr">21: </span>    <span style="color: #8ac6f2; font-weight: bold;">print</span> (<span style="color: #95e454;">"Shape test:\n"</span>)
+<span class="linenr">22: </span>    u[:][:] = 0
+<span class="linenr">23: </span>    <span style="color: #8ac6f2; font-weight: bold;">for</span> i <span style="color: #8ac6f2; font-weight: bold;">in</span> <span style="color: #e5786d;">range</span>(u.size):
+<span class="linenr">24: </span>        <span style="color: #8ac6f2; font-weight: bold;">print</span> (<span style="color: #95e454;">"i = "</span>, i ,<span style="color: #95e454;">"."</span>)
+<span class="linenr">25: </span>        u[:][i-1] = 0.0
+<span class="linenr">26: </span>        u[:][i] = 1.0
+<span class="linenr">27: </span>        Redraw(blocking=<span style="color: #e5786d;">True</span>)
+<span class="linenr">28: </span>        sleep(1)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> The overall run calling the other things&#x2026;</h2>
+<div class="outline-text-2" id="text-2">
+<div class="org-src-container">
+
+<pre class="src src-python" id="test"><span class="linenr">29: </span><span style="color: #8ac6f2; font-weight: bold;">def</span> <span style="color: #cae682;">Test</span>(pde):
+<span class="linenr">30: </span>    PrintDofs(pde,pde.Mesh(),pde.spaces[<span style="color: #95e454;">"fescomp"</span>])
+<span class="linenr">31: </span>    PrintDofs(pde,pde.Mesh(),pde.spaces[<span style="color: #95e454;">"fescomp"</span>].XFESpace)
+<span class="linenr">32: </span>    ShapeTest(pde,pde.gridfunctions[<span style="color: #95e454;">"u"</span>].vec)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Christoph Lehrenfeld</p>
+<p class="date">Created: 2014-12-10 Mi 16:13</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
