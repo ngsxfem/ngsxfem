@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Example python script for xfem stuff</title>
-<!-- 2014-12-10 Mi 19:54 -->
+<!-- 2014-12-11 Do 23:04 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Christoph Lehrenfeld" />
@@ -88,6 +88,7 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   /*]]>*/-->
 </style>
+<link rel="stylesheet" type="text/css" href="media/style.css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -184,23 +185,218 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. simple python start-off</a></li>
-<li><a href="#sec-2">2. import ngsolve and xfem functionality to python</a></li>
-<li><a href="#sec-3">3. small functions for inspections:</a>
+<li><a href="#sec-1">1. example description</a></li>
+<li><a href="#sec-2">2. the pde-file</a>
 <ul>
-<li><a href="#sec-3-1">3.1. print dofs per elements:</a></li>
-<li><a href="#sec-3-2">3.2. show shape functions</a></li>
+<li><a href="#sec-2-1">2.1. Things to try here:</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. put everything together</a></li>
-<li><a href="#sec-5">5. resulting file: d1_approx.py</a></li>
+<li><a href="#sec-3">3. simple python start-off</a></li>
+<li><a href="#sec-4">4. import ngsolve and xfem functionality to python</a></li>
+<li><a href="#sec-5">5. small functions for inspections:</a>
+<ul>
+<li><a href="#sec-5-1">5.1. print dofs per elements:</a></li>
+<li><a href="#sec-5-2">5.2. show shape functions</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">6. put everything together</a></li>
+<li><a href="#sec-7">7. resulting files</a></li>
 </ul>
 </div>
 </div>
 <hr  />
 <div id="outline-container-sec-1" class="outline-2">
-<h2 id="sec-1"><span class="section-number-2">1</span> simple python start-off</h2>
+<h2 id="sec-1"><span class="section-number-2">1</span> example description</h2>
 <div class="outline-text-2" id="text-1">
+<p>
+We consider an L2-approximation problem of a domain-wise smooth function which is 
+discontinuous across an implicitly prescribed interface.
+</p>
+
+<p>
+We consider a domain \(\Omega\) which is divided into two subdomains \(\Omega_1\) 
+and \(\Omega_2\) by the interface \(\Gamma\) which is only <b>implicitely</b> described.
+One this domain we aim on solving the following \(L^2(\Omega)\) - problem for \(u_h \in V_h^\Gamma\):
+</p>
+\begin{equation}
+   \sum_{i=1,2} \int_{\Omega_i} u_h · v_h dx
+ = \sum_{i=1,2} \int_{\Omega_i} u   · v_h dx, \quad \forall v_h \in V_h^\Gamma
+\end{equation}
+<p>
+with the (special) finite element space \(V_h^\Gamma\). Next, we will explain how this is achieved 
+in NGSolve/ngsxfem through the pde-file and how simple modifications can be achieved and 
+additional information can be gathered by changes in the pde-file and additional functionality 
+through python.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> the pde-file</h2>
+<div class="outline-text-2" id="text-2">
+<div class="org-src-container">
+
+<pre class="src src-pde" id="mesh"><span class="linenr">1: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">load geometry</span>
+<span class="linenr">2: </span><span style="color: #ccaa8f; font-weight: bold;">geometry = d1_approx.in2d</span>
+<span class="linenr">3: </span>
+<span class="linenr">4: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">and mesh</span>
+<span class="linenr">5: </span><span style="color: #ccaa8f; font-weight: bold;">mesh = d1_approx.vol.gz</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="libs"><span class="linenr"> 6: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">load xfem-library</span>
+<span class="linenr"> 7: </span><span style="color: #ccaa8f; font-weight: bold;">shared = libngsxfem_xfem</span>
+<span class="linenr"> 8: </span><span style="color: #ccaa8f; font-weight: bold;">shared = libngsxfem_py</span>
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>pymodule = d1_approx
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="const"><span class="linenr">11: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> heapsize = 1e9
+<span class="linenr">12: </span>
+<span class="linenr">13: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> R = 0.4
+<span class="linenr">14: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> one = 1.0
+</pre>
+</div>
+
+<p>
+The interface is prescribed with the coef "lset",
+which prescribes a simple circle with radius R (=0.4)
+</p>
+<div class="org-src-container">
+
+<pre class="src src-pde" id="lset"><span class="linenr">15: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">interface description as zero-level</span>
+<span class="linenr">16: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> lset
+<span class="linenr">17: </span>( sqrt(x*x+y*y) - R),       
+<span class="linenr">18: </span>
+<span class="linenr">19: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">solution u- in 'inner' domain (Omega_1)</span>
+<span class="linenr">20: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> solneg
+<span class="linenr">21: </span>0.5,
+<span class="linenr">22: </span>
+<span class="linenr">23: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">solution u+ in 'outer' domain (Omega_2)</span>
+<span class="linenr">24: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> solpos
+<span class="linenr">25: </span>(sin((x*x+y*y-R*R))),
+</pre>
+</div>
+
+<p>
+Make text out of this: 
+FE Space: XStdFESpace, i.e. 
+standard h1fespace + XFE enrichment
+use standard h1fespace-flags to adjust space
+an additional flag "empty" can be used to 
+avoid the enrichment while still keeping the 
+composite integration rules. 
+</p>
+
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="xfespace"><span class="linenr">26: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">use an "extended" continuous finite element space</span>
+<span class="linenr">27: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">you may change the order here</span>
+<span class="linenr">28: </span><span style="color: #e5786d;">define</span><span style="color: #e5786d;"> fespace</span> fescomp
+<span class="linenr">29: </span>       -<span style="color: #cae682;">type</span>=xstd<span style="color: #e5786d;">fespace</span>
+<span class="linenr">30: </span>       -<span style="color: #cae682;">type</span>_std=h1ho
+<span class="linenr">31: </span>       -<span style="color: #cae682;">order</span>=1
+<span class="linenr">32: </span><span style="color: #99968b;">#       </span><span style="color: #99968b;">-ref_space=5</span>
+<span class="linenr">33: </span><span style="color: #99968b;">#       </span><span style="color: #99968b;">-empty</span>
+<span class="linenr">34: </span>
+<span class="linenr">35: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">update "extended" part of XFE space:</span>
+<span class="linenr">36: </span><span style="color: #e5786d;">numproc</span> informxfem npix 
+<span class="linenr">37: </span>        -xstd<span style="color: #e5786d;">fespace</span>=fescomp
+<span class="linenr">38: </span>        -coef_levelset=lset
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="comp"><span class="linenr">39: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">gridfunction</span> u -<span style="color: #e5786d;">fespace</span>=fescomp
+<span class="linenr">40: </span>
+<span class="linenr">41: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">integration on sub domains</span>
+<span class="linenr">42: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">linearform</span> f -<span style="color: #e5786d;">fespace</span>=fescomp
+<span class="linenr">43: </span>xsource solneg solpos
+<span class="linenr">44: </span>
+<span class="linenr">45: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">integration on sub domains</span>
+<span class="linenr">46: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">bilinearform</span> a -<span style="color: #e5786d;">fespace</span>=fescomp -symmetric -<span style="color: #e5786d;">linearform</span>=f
+<span class="linenr">47: </span>xmass 1.0 1.0
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="bvp"><span class="linenr">48: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=local -bilinearform=a -test #-block</span>
+<span class="linenr">49: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">preconditioner</span> c -<span style="color: #cae682;">type</span>=direct -<span style="color: #e5786d;">bilinearform</span>=a -<span style="color: #cae682;">inverse</span>=pardiso <span style="color: #99968b;">#</span><span style="color: #99968b;">-test</span>
+<span class="linenr">50: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=bddc -bilinearform=a -test -block</span>
+<span class="linenr">51: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block</span>
+<span class="linenr">52: </span>
+<span class="linenr">53: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">numproc shapetester npst -gridfunction=u #-comp=0</span>
+<span class="linenr">54: </span>
+<span class="linenr">55: </span><span style="color: #e5786d;">numproc</span> bvp npbvp -<span style="color: #e5786d;">gridfunction</span>=u -<span style="color: #e5786d;">bilinearform</span>=a -<span style="color: #e5786d;">linearform</span>=f -<span style="color: #cae682;">solver</span>=cg -<span style="color: #e5786d;">preconditioner</span>=c -maxsteps=1000 -prec=1e-6
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="xvis"><span class="linenr">56: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">for the evaluation of gradients</span>
+<span class="linenr">57: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">bilinearform</span> a_d -<span style="color: #e5786d;">fespace</span>=fescomp -<span style="color: #cae682;">nonassemble</span>
+<span class="linenr">58: </span>laplace one -comp=1
+<span class="linenr">59: </span>
+<span class="linenr">60: </span><span style="color: #e5786d;">numproc</span> <span style="color: #cae682;">drawflux</span> npdf -<span style="color: #cae682;">solution</span>=u -<span style="color: #e5786d;">bilinearform</span>=a_d -<span style="color: #cae682;">label</span>=grad
+<span class="linenr">61: </span>
+<span class="linenr">62: </span><span style="color: #e5786d;">numproc</span> visualization npviz -scalarfunction=u <span style="color: #99968b;">#</span><span style="color: #99968b;">-comp=0</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-pde" id="xdiff"><span class="linenr">63: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">evaluate l2-error (difference between prescribed solution and numerical solution)</span>
+<span class="linenr">64: </span><span style="color: #e5786d;">numproc</span> xdifference npxd 
+<span class="linenr">65: </span>        -<span style="color: #cae682;">solution</span>=u 
+<span class="linenr">66: </span>        -<span style="color: #cae682;">solution</span>_n=solneg
+<span class="linenr">67: </span>        -<span style="color: #cae682;">solution</span>_p=solpos
+<span class="linenr">68: </span>        -levelset=lset
+<span class="linenr">69: </span>        -int<span style="color: #cae682;">order</span>=3
+</pre>
+</div>
+</div>
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Things to try here:</h3>
+<div class="outline-text-3" id="text-2-1">
+<ol class="org-ol">
+<li>comment in the shapetester line and observe the shape 
+functions. To see all shape functions increase 
+subdivisions to at least 3. Also disable automatic 
+scaling. Instead use minval=0 and maxval=1.
+Afterwards comment out the shapetester line.
+</li>
+<li>refine the mesh and observe the convergence order (L2)
+</li>
+<li>set flag "empty" (this removes the enrichted functions)
+for xstdfespace, refine the mesh and observe the 
+convergence order (L2). Afterwards remove "empty" again.
+</li>
+<li>set "order" to 2 and try 2. and 3. again, make sure to 
+increase "ref_space" in xstdfespace and "intorder" in 
+xdifference
+</li>
+<li>set "order" back to 1, set the preconditioner to "local" 
+and add the "-test"-flags, refine the mesh several times
+and observe the performance
+</li>
+<li>set "order" to 2 and try 5. again
+</li>
+</ol>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> simple python start-off</h2>
+<div class="outline-text-2" id="text-3">
 <p>
 At the beginning we briefly announce ourselves with a friendly "hello":
 </p>
@@ -222,9 +418,9 @@ which simply results in:
 </div>
 </div>
 
-<div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2"><span class="section-number-2">2</span> import ngsolve and xfem functionality to python</h2>
-<div class="outline-text-2" id="text-2">
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> import ngsolve and xfem functionality to python</h2>
+<div class="outline-text-2" id="text-4">
 <p>
 Then we import a lot of functionality from ngsolve and ngsxfem.
 </p>
@@ -252,16 +448,16 @@ We included the command <a href="#coderef-sleep"class="coderef" onmouseover="Cod
 </div>
 </div>
 
-<div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3"><span class="section-number-2">3</span> small functions for inspections:</h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> small functions for inspections:</h2>
+<div class="outline-text-2" id="text-5">
 <p>
 &#x2026; minor explanation &#x2026; 
 </p>
 </div>
-<div id="outline-container-sec-3-1" class="outline-3">
-<h3 id="sec-3-1"><span class="section-number-3">3.1</span> print dofs per elements:</h3>
-<div class="outline-text-3" id="text-3-1">
+<div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> print dofs per elements:</h3>
+<div class="outline-text-3" id="text-5-1">
 <div class="org-src-container">
 
 <pre class="src src-python" id="printdofs"><span class="linenr">16: </span><span style="color: #8ac6f2; font-weight: bold;">def</span> <span style="color: #cae682;">PrintDofs</span>(pde,mesh,fes):
@@ -273,9 +469,9 @@ We included the command <a href="#coderef-sleep"class="coderef" onmouseover="Cod
 </div>
 </div>
 
-<div id="outline-container-sec-3-2" class="outline-3">
-<h3 id="sec-3-2"><span class="section-number-3">3.2</span> show shape functions</h3>
-<div class="outline-text-3" id="text-3-2">
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> show shape functions</h3>
+<div class="outline-text-3" id="text-5-2">
 <p>
 Every (extended) finite element function can be represented as
 </p>
@@ -304,9 +500,9 @@ and call a <a href="#coderef-redraw"class="coderef" onmouseover="CodeHighlightOn
 </div>
 </div>
 
-<div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4"><span class="section-number-2">4</span> put everything together</h2>
-<div class="outline-text-2" id="text-4">
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> put everything together</h2>
+<div class="outline-text-2" id="text-6">
 <div class="org-src-container">
 
 <pre class="src src-python" id="test"><span class="linenr">29: </span><span style="color: #8ac6f2; font-weight: bold;">def</span> <span style="color: #cae682;">Test</span>(pde):
@@ -318,15 +514,21 @@ and call a <a href="#coderef-redraw"class="coderef" onmouseover="CodeHighlightOn
 </div>
 </div>
 
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5"><span class="section-number-2">5</span> resulting file: <a href="d1_approx.py">d1_approx.py</a></h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> resulting files</h2>
+<div class="outline-text-2" id="text-7">
+<ul class="org-ul">
+<li><a href="d1_approx.pde">d1_approx.pde</a>
+</li>
+<li><a href="d1_approx.py">d1_approx.py</a> 
+</li>
+</ul>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Christoph Lehrenfeld</p>
-<p class="date">Created: 2014-12-10 Mi 19:54</p>
+<p class="date">Created: 2014-12-11 Do 23:04</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

@@ -1,10 +1,164 @@
 #+TITLE: Example python script for xfem stuff
 #+AUTHOR: Christoph Lehrenfeld
 #+PROPERTY: header-args *python* :tangle yes :results output type: scalar format: org
-#+email: christoph.lehrenfeld@rwth-aachen.de
+#+email: christoph.lehrenfeld AT rwth-aachen DOT de
+# COMMENT +INFOJS_OPT: toc:nil view:slide
 #+OPTIONS: ^:nil
 #+OPTIONS: tex:t  
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="media/style.css" />
 -----
+* example description
+ We consider an L2-approximation problem of a domain-wise smooth function which is 
+ discontinuous across an implicitly prescribed interface.
+ 
+ We consider a domain $\Omega$ which is divided into two subdomains $\Omega_1$ 
+ and $\Omega_2$ by the interface $\Gamma$ which is only *implicitely* described.
+ One this domain we aim on solving the following $L^2(\Omega)$ - problem for $u_h \in V_h^\Gamma$:
+\begin{equation}
+   \sum_{i=1,2} \int_{\Omega_i} u_h · v_h dx
+ = \sum_{i=1,2} \int_{\Omega_i} u   · v_h dx, \quad \forall v_h \in V_h^\Gamma
+\end{equation}
+with the (special) finite element space $V_h^\Gamma$. Next, we will explain how this is achieved 
+in NGSolve/ngsxfem through the pde-file and how simple modifications can be achieved and 
+additional information can be gathered by changes in the pde-file and additional functionality 
+through python.
+
+* the pde-file
+#+NAME: mesh
+#+BEGIN_SRC pde +n -r
+# load geometry
+geometry = d1_approx.in2d
+
+# and mesh
+mesh = d1_approx.vol.gz
+
+#+END_SRC 
+
+#+NAME: libs
+#+BEGIN_SRC pde +n -r
+#load xfem-library
+shared = libngsxfem_xfem
+shared = libngsxfem_py
+
+pymodule = d1_approx
+
+#+END_SRC 
+
+#+NAME: const
+#+BEGIN_SRC pde +n -r
+define constant heapsize = 1e9
+
+define constant R = 0.4
+define constant one = 1.0
+#+END_SRC 
+
+  The interface is prescribed with the coef "lset",
+  which prescribes a simple circle with radius R (=0.4)
+#+NAME: lset
+#+BEGIN_SRC pde +n -r
+# interface description as zero-level
+define coefficient lset
+( sqrt(x*x+y*y) - R),       
+
+# solution u- in 'inner' domain (Omega_1)
+define coefficient solneg
+0.5,
+
+# solution u+ in 'outer' domain (Omega_2)
+define coefficient solpos
+(sin((x*x+y*y-R*R))),
+#+END_SRC 
+
+Make text out of this: 
+FE Space: XStdFESpace, i.e. 
+standard h1fespace + XFE enrichment
+use standard h1fespace-flags to adjust space
+an additional flag "empty" can be used to 
+avoid the enrichment while still keeping the 
+composite integration rules. 
+
+
+#+NAME: xfespace
+#+BEGIN_SRC pde +n -r
+# use an "extended" continuous finite element space
+# you may change the order here
+define fespace fescomp
+       -type=xstdfespace
+       -type_std=h1ho
+       -order=1
+#       -ref_space=5
+#       -empty
+
+#update "extended" part of XFE space:
+numproc informxfem npix 
+        -xstdfespace=fescomp
+        -coef_levelset=lset
+#+END_SRC 
+
+#+NAME: comp
+#+BEGIN_SRC pde +n -r
+define gridfunction u -fespace=fescomp
+
+# integration on sub domains
+define linearform f -fespace=fescomp
+xsource solneg solpos
+
+# integration on sub domains
+define bilinearform a -fespace=fescomp -symmetric -linearform=f
+xmass 1.0 1.0
+#+END_SRC 
+
+#+NAME: bvp
+#+BEGIN_SRC pde +n -r
+#define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
+#define preconditioner c -type=bddc -bilinearform=a -test -block
+#define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
+
+#numproc shapetester npst -gridfunction=u #-comp=0
+
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 
+#+END_SRC 
+
+#+NAME: xvis
+#+BEGIN_SRC pde +n -r
+# for the evaluation of gradients
+define bilinearform a_d -fespace=fescomp -nonassemble
+laplace one -comp=1
+
+numproc drawflux npdf -solution=u -bilinearform=a_d -label=grad
+
+numproc visualization npviz -scalarfunction=u #-comp=0
+#+END_SRC 
+
+#+NAME: xdiff
+#+BEGIN_SRC pde +n -r
+# evaluate l2-error (difference between prescribed solution and numerical solution)
+numproc xdifference npxd 
+        -solution=u 
+        -solution_n=solneg
+        -solution_p=solpos
+        -levelset=lset
+        -intorder=3
+#+END_SRC
+** Things to try here:
+ 1) comment in the shapetester line and observe the shape 
+    functions. To see all shape functions increase 
+    subdivisions to at least 3. Also disable automatic 
+    scaling. Instead use minval=0 and maxval=1.
+    Afterwards comment out the shapetester line.
+ 2) refine the mesh and observe the convergence order (L2)
+ 3) set flag "empty" (this removes the enrichted functions)
+    for xstdfespace, refine the mesh and observe the 
+    convergence order (L2). Afterwards remove "empty" again.
+ 4) set "order" to 2 and try 2. and 3. again, make sure to 
+    increase "ref_space" in xstdfespace and "intorder" in 
+    xdifference
+ 5) set "order" back to 1, set the preconditioner to "local" 
+    and add the "-test"-flags, refine the mesh several times
+    and observe the performance
+ 6) set "order" to 2 and try 5. again
+
 * simple python start-off
   At the beginning we briefly announce ourselves with a friendly "hello":
 #+NAME: start
@@ -78,7 +232,9 @@ and call a [[(redraw)][Redraw]] and a [[(slp)][short delay]] between the functio
       ShapeTest(pde,pde.gridfunctions["u"].vec)
 #+END_SRC
 
-* resulting file: [[file:d1_approx.py][d1_approx.py]]
+* resulting files
+  * [[file:d1_approx.pde][d1_approx.pde]]
+  * [[file:d1_approx.py][d1_approx.py]] 
 
 #+RESULTS:
 

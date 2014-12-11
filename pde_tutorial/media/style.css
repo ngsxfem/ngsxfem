@@ -1,0 +1,48 @@
+/* basic elements */
+html {
+    /* margin: 0; */
+    /* padding: 0; */
+}
+body { 
+    font: 120% arial, sans-serif;
+    line-height: 1.9;
+    /* background-color: #102040; */
+    /* color: #eeccaa; */
+    /* margin: 0;  */
+    /* padding: 0; */
+}
+p { 
+    /* margin-top: 0;  */
+    /* text-align: justify; */
+}
+h2 { 
+    font: 140% arial, sans-serif;
+    font-weight: normal;
+    text-decoration: none;
+}
+h1 { 
+    font: 140% arial, sans-serif;
+    font-weight: normal;
+    text-decoration: none;
+}
+h3 { 
+    font: 140% arial, sans-serif;
+    /* font: italic normal 1.4em georgia, sans-serif; */
+    font-weight: normal;
+    text-decoration: none;
+    /* letter-spacing: 1px;  */
+    /* margin-bottom: 0;  */
+    /* color: #7D775C; */
+}
+a:link { 
+    text-decoration: none;
+    color: #306090;
+}
+a:visited { 
+    text-decoration: none;
+    color: #306090;
+}
+a:hover, a:focus, a:active { 
+    /* text-decoration: underline;  */
+}
+
