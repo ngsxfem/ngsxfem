@@ -20,10 +20,10 @@
 #
 
 # load geometry
-geometry = d1_xnitsche.in2d
+geometry = d2_xnitsche.in2d
 
 # and mesh
-mesh = d1_xnitsche.vol.gz
+mesh = d2_xnitsche.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -63,13 +63,14 @@ define coefficient bndneg
 define constant lambda = 2.0
 
 define fespace fescomp
-       -type=xh1fespace
+       -type=xstdfespace
+       -type_std=h1ho
        -order=1
        -dirichlet=[1,2]
 #       -dgjumps
 
 numproc informxfem npix
-        -xh1fespace=fescomp
+        -xstdfespace=fescomp
         -coef_levelset=lset
 
 define gridfunction u -fespace=fescomp

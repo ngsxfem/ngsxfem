@@ -65,7 +65,7 @@ namespace ngcomp
     if (dynamic_cast< const SparseMatrixSymmetric<double> *> (&mat))
       throw Exception ("Please use fully stored sparse matrix for SpaceTime (bf -nonsymmetric)");
 
-    shared_ptr<XH1FESpace> fesh1x = dynamic_pointer_cast<XH1FESpace>(bfa->GetFESpace());
+    shared_ptr<XStdFESpace> fesh1x = dynamic_pointer_cast<XStdFESpace>(bfa->GetFESpace());
     bool spacetime = fesh1x->IsSpaceTime();
     // LocalHeap lh(6000000,"test");
     // const_cast<FESpace &>(fesh1x).Update(lh); 

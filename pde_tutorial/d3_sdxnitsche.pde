@@ -41,14 +41,15 @@ define coefficient lset
 numproc draw npd -coefficient=lset -label=levelset 
 
 define fespace vh1x
-       -type=xh1fespace
+       -type=xstdfespace
+       -type_std=h1ho
        -order=1
 #       -dirichlet=[4]
        -ref_space=0
 #       -dgjumps
 
 numproc informxfem npix 
-        -xh1fespace=vh1x
+        -xstdfespace=vh1x
         -coef_levelset=lset
 
 

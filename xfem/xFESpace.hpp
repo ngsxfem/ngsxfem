@@ -216,40 +216,45 @@ namespace ngcomp
   };
 
 
-  class XH1FESpace : public CompoundFESpace
+  class XStdFESpace : public CompoundFESpace
   {
     bool spacetime = false;
   public:
-    XH1FESpace (shared_ptr<MeshAccess> ama, 
+    XStdFESpace (shared_ptr<MeshAccess> ama, 
                 const Array<shared_ptr<FESpace> > & aspaces,
                 const Flags & flags);
-    virtual ~XH1FESpace () { ; }
+    virtual ~XStdFESpace () { ; }
     static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
     {
       bool spacetime = flags.GetDefineFlag("spacetime");
       Array<shared_ptr<FESpace> > spaces(2);
       if (spacetime)
-        spaces[0] = make_shared<SpaceTimeFESpace> (ma, flags);    
+      {
+        shared_ptr<FESpaceClasses::FESpaceInfo> info;
+        string fet_space = flags.GetStringFlag("type_std","h1ho");
+        Flags fespaceflags(flags);
+        fespaceflags.SetFlag("type_space",fet_space);
+        spaces[0] = make_shared<SpaceTimeFESpace> (ma, fespaceflags);    
+      }
       else
-        spaces[0] = make_shared<H1HighOrderFESpace> (ma, flags);    
-      if (ma->GetDimension() == 2)
-        if (spacetime)
-          spaces[1] = make_shared<T_XFESpace<2,3> > (ma, flags);        
-        else
-          spaces[1] = make_shared<T_XFESpace<2,2> >(ma, flags);        
-      else
-        if (spacetime)
-          spaces[1] = make_shared<T_XFESpace<3,4> >(ma, flags);        
-        else
-          spaces[1] = make_shared<T_XFESpace<3,3> >(ma, flags);        
-      shared_ptr<XH1FESpace> fes = make_shared<XH1FESpace> (ma, spaces, flags);
+      {
+        shared_ptr<FESpaceClasses::FESpaceInfo> info;
+        string fet_space = flags.GetStringFlag("type_std","h1ho");
+        info = GetFESpaceClasses().GetFESpace(fet_space);
+        if (!info) throw Exception("XStdFESpace ::  XStdFESpace : fespace not given ");
+        Flags fespaceflags(flags);
+        spaces[0] = info->creator(ma, fespaceflags);
+      }
+
+      spaces[1] = XFESpace::Create(ma,flags);
+      shared_ptr<XStdFESpace> fes = make_shared<XStdFESpace> (ma, spaces, flags);
       return fes;
     }
 
     Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
     Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
     bool IsSpaceTime() const { return spacetime;}
-    virtual string GetClassName () const { return "XH1FESpace"; }
+    virtual string GetClassName () const { return "XStdFESpace"; }
     
   };
   

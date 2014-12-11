@@ -750,14 +750,14 @@ namespace ngcomp
     : NumProc (apde)
   { 
     
-    shared_ptr<FESpace> xh1fes = pde.GetFESpace(flags.GetStringFlag("xh1fespace","v"), true);
+    shared_ptr<FESpace> xstdfes = pde.GetFESpace(flags.GetStringFlag("xstdfespace","v"), true);
     shared_ptr<FESpace> xfes = NULL;
     shared_ptr<FESpace> basefes = NULL;
 
-    if (xh1fes)
+    if (xstdfes)
     {
-      basefes = (*dynamic_pointer_cast<CompoundFESpace>(xh1fes))[0];
-      xfes = (*dynamic_pointer_cast<CompoundFESpace>(xh1fes))[1];
+      basefes = (*dynamic_pointer_cast<CompoundFESpace>(xstdfes))[0];
+      xfes = (*dynamic_pointer_cast<CompoundFESpace>(xstdfes))[1];
     }
     else
     {
@@ -838,12 +838,12 @@ namespace ngcomp
 
 
 
-  XH1FESpace::XH1FESpace (shared_ptr<MeshAccess> ama, 		   
+  XStdFESpace::XStdFESpace (shared_ptr<MeshAccess> ama, 		   
                           const Array<shared_ptr<FESpace>> & aspaces,
                           const Flags & flags)
     : CompoundFESpace(ama, aspaces, flags)
   {
-    name="XH1FESpace";
+    name="XStdFESpace";
 
     const int sD = ma->GetDimension();
     if (sD == 2)
@@ -874,7 +874,7 @@ namespace ngcomp
 
 
   ///SmoothingBlocks for good preconditioned iterative solvers
-  Table<int> * XH1FESpace::CreateSmoothingBlocks (const Flags & precflags) const
+  Table<int> * XStdFESpace::CreateSmoothingBlocks (const Flags & precflags) const
   {
     Table<int> * it;
 
@@ -1159,7 +1159,7 @@ namespace ngcomp
   }
 
 
-  Array<int> * XH1FESpace :: CreateDirectSolverClusters (const Flags & flags) const
+  Array<int> * XStdFESpace :: CreateDirectSolverClusters (const Flags & flags) const
   {
     bool bddc = true;
 
@@ -1194,7 +1194,7 @@ namespace ngcomp
         const BitArray & freedofs = *GetFreeDofs();
         for (int i = 0; i < freedofs.Size(); i++)
           if (!freedofs.Test(i)) clusters[i] = 0;
-        *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
+        *testout << "XStdFESpace, dsc = " << endl << clusters << endl;
         return &clusters;
       }
       else // put all degrees of freedoms at the interface on the coarse grid
@@ -1251,7 +1251,7 @@ namespace ngcomp
         const BitArray & freedofs = *GetFreeDofs();
         for (int i = 0; i < freedofs.Size(); i++)
           if (!freedofs.Test(i)) clusters[i] = 0;
-        *testout << "XH1FESpace, dsc = " << endl << clusters << endl;
+        *testout << "XStdFESpace, dsc = " << endl << clusters << endl;
         return &clusters;
       }
     }
@@ -1270,7 +1270,8 @@ namespace ngcomp
     {
       GetFESpaceClasses().AddFESpace ("xfespace", XFESpace::Create);
       GetFESpaceClasses().AddFESpace ("lsetcontfespace", LevelsetContainerFESpace::Create);
-      GetFESpaceClasses().AddFESpace ("xh1fespace", XH1FESpace::Create);
+      GetFESpaceClasses().AddFESpace ("xstdfespace", XStdFESpace::Create);
+      GetFESpaceClasses().AddFESpace ("xh1fespace", XStdFESpace::Create); //backward compatibility
     }
   
     Init init;

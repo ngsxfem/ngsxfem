@@ -72,7 +72,7 @@ define coefficient coef_lset
 ((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
 
 define fespace fescomp
-       -type=xh1fespace
+       -type=xstdfespace
        -spacetime 
        -type_space=h1ho
        -order_space=1
@@ -87,7 +87,7 @@ define fespace fescomp
        # -dgjumps
 
 numproc informxfem npix 
-        -xh1fespace=fescomp
+        -xstdfespace=fescomp
         -coef_levelset=coef_lset
 
 define fespace fesx

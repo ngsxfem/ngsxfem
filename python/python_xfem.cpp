@@ -29,13 +29,18 @@ void ExportNgsx()
          "Update information on level set function")
     ;
 
-  bp::class_<XH1FESpace, shared_ptr<XH1FESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
-    ("XH1FESpace", bp::no_init)
-    .add_property("XFESpace", FunctionPointer ([](XH1FESpace & self) 
+  bp::class_<XStdFESpace, shared_ptr<XStdFESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
+    ("XStdFESpace", bp::no_init)
+    .add_property("XFESpace", FunctionPointer ([](XStdFESpace & self) 
                                                { return self[1]; }
                     ),
          // bp::return_value_policy<bp::reference_existing_object>(),
-         "return XFESpace part of XH1FESpace")
+         "return XFESpace part of XStdFESpace")
+    .add_property("StdFESpace", FunctionPointer ([](XStdFESpace & self) 
+                                               { return self[0]; }
+                    ),
+         // bp::return_value_policy<bp::reference_existing_object>(),
+         "return 'standard' FESpace part of XStdFESpace")
     ;
 
  

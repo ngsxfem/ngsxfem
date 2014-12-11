@@ -72,14 +72,15 @@ define coefficient solpos
 # use an "extended" continuous finite element space
 # you may change the order here
 define fespace fescomp
-       -type=xh1fespace
+       -type=xstdfespace
+       -type_std=h1ho
        -order=1
-#       -ref_space=0
+#       -ref_space=5
 #       -empty
 
 #update "extended" part of XFE space:
 numproc informxfem npix 
-        -xh1fespace=fescomp
+        -xstdfespace=fescomp
         -coef_levelset=lset
 
 
