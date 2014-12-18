@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Approximation example with XFEM (incl. pde/python)</title>
-<!-- 2014-12-18 Do 20:34 -->
+<!-- 2014-12-18 Do 20:59 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Christoph Lehrenfeld" />
@@ -195,8 +195,7 @@ for the JavaScript code in this tag.
 <li><a href="#sec-2-5">2.5. Gridfunction, linear and bilinear forms</a></li>
 <li><a href="#sec-2-6">2.6. Solver</a></li>
 <li><a href="#sec-2-7">2.7. Visualization</a></li>
-<li><a href="#sec-2-8">2.8. Error calculatoin</a></li>
-<li><a href="#sec-2-9">2.9. Things to try with the pde-file here:</a></li>
+<li><a href="#sec-2-8">2.8. Things to try with the pde-file here:</a></li>
 </ul>
 </li>
 <li><a href="#sec-3">3. Additional investigations with python</a>
@@ -218,30 +217,13 @@ for the JavaScript code in this tag.
 </div>
 <hr  />
 <p>
-We explain a simple approximation example.
+We explain a simple interface example.
 </p>
 <div id="outline-container-sec-1" class="outline-2">
 <h2 id="sec-1"><span class="section-number-2">1</span> Description of the considered example</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-We consider an L2-approximation problem of a domain-wise smooth function which is 
-discontinuous across an implicitly prescribed interface.
-</p>
-
-<p>
-We consider a domain \(\Omega\) which is divided into two subdomains \(\Omega_1\) 
-and \(\Omega_2\) by the interface \(\Gamma\) which is only <b>implicitely</b> described.
-One this domain we aim on solving the following \(L^2(\Omega)\) - problem for \(u_h \in V_h^\Gamma\):
-</p>
-\begin{equation}
-\sum_{i=1,2} \int_{\Omega_i} u_h · v_h dx
-= \sum_{i=1,2} \int_{\Omega_i} u   · v_h dx, \quad \forall v_h \in V_h^\Gamma
-\end{equation}
-<p>
-with the (special) finite element space \(V_h^\Gamma\). Next, we will explain how this is achieved 
-in NGSolve/ngsxfem through the pde-file and how simple modifications can be achieved and 
-additional information can be gathered by changes in the pde-file and additional functionality 
-through python.
+We consider the solution of an interface problem.
 </p>
 </div>
 </div>
@@ -259,9 +241,10 @@ First, a <a href="#coderef-geometry"class="coderef" onmouseover="CodeHighlightOn
 <div class="org-src-container">
 
 <pre class="src src-pde" id="mesh"><span class="linenr">1: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">load geometry</span>
-<span id="coderef-geometry" class="coderef-off"><span class="linenr">2: </span><span style="color: #ccaa8f; font-weight: bold;">geometry = d1_approx.in2d</span></span>
-<span class="linenr">3: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">and mesh</span>
-<span id="coderef-mesh" class="coderef-off"><span class="linenr">4: </span><span style="color: #ccaa8f; font-weight: bold;">mesh = d1_approx.vol.gz</span></span>
+<span class="linenr">2: </span><span style="color: #ccaa8f; font-weight: bold;">geometry = d2_xnitsche.in2d</span>
+<span class="linenr">3: </span>
+<span class="linenr">4: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">and mesh</span>
+<span class="linenr">5: </span><span style="color: #ccaa8f; font-weight: bold;">mesh = d2_xnitsche.vol.gz</span>
 </pre>
 </div>
 </div>
@@ -276,15 +259,15 @@ to NGSolve and <a href="#coderef-libngsxfempy"class="coderef" onmouseover="CodeH
 
 <p>
 The line "<a href="#coderef-pymodd1"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-pymodd1');" onmouseout="CodeHighlightOff(this, 'coderef-pymodd1');">pymodule = d1_approx</a>" enforces loading of a small python module which adds a tiny 
-bit of additional functionality only for this test case written in python. The content of This 
+bit of additional functionality only for this test case written in python. The content of this 
 specific python module is discussed <a href="#pymodule">later</a>.
 </p>
 <div class="org-src-container">
 
-<pre class="src src-pde" id="libs"><span class="linenr">5: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">load xfem-library and python-bindings</span>
-<span id="coderef-libngsxfem" class="coderef-off"><span class="linenr">6: </span><span style="color: #ccaa8f; font-weight: bold;">shared = libngsxfem_xfem</span></span>
-<span id="coderef-libngsxfempy" class="coderef-off"><span class="linenr">7: </span><span style="color: #ccaa8f; font-weight: bold;">shared = libngsxfem_py</span></span>
-<span id="coderef-pymodd1" class="coderef-off"><span class="linenr">8: </span><span style="color: #ccaa8f; font-weight: bold;">pymodule = d1_approx</span></span>
+<pre class="src src-pde" id="libs"><span class="linenr">6: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">load xfem-library</span>
+<span id="coderef-libngsxfem" class="coderef-off"><span class="linenr">7: </span><span style="color: #ccaa8f; font-weight: bold;">shared = libngsxfem_xfem</span></span>
+<span id="coderef-libngsxfempy" class="coderef-off"><span class="linenr">8: </span><span style="color: #ccaa8f; font-weight: bold;">shared = libngsxfem_py</span></span>
+<span id="coderef-pymodd1" class="coderef-off"><span class="linenr">9: </span><span style="color: #ccaa8f; font-weight: bold;">pymodule = d1_approx</span></span>
 </pre>
 </div>
 </div>
@@ -297,10 +280,11 @@ Some simple constants are defined:
 </p>
 <div class="org-src-container">
 
-<pre class="src src-pde" id="const"><span class="linenr"> 9: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> heapsize = 1e9
-<span class="linenr">10: </span>
-<span class="linenr">11: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> R = 0.4
-<span class="linenr">12: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> one = 1.0
+<pre class="src src-pde" id="const"><span class="linenr">10: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> heapsize = 1e8
+<span class="linenr">11: </span>
+<span class="linenr">12: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">center of circle (domain 1)</span>
+<span class="linenr">13: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> x0 = 0.1
+<span class="linenr">14: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> y0 = 0
 </pre>
 </div>
 
@@ -313,9 +297,13 @@ Here, the interface is a simple circle with radius R (=0.4), i.e.
 \end{equation}
 <div class="org-src-container">
 
-<pre class="src src-pde" id="lset"><span class="linenr">13: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">interface description as zero-level</span>
-<span class="linenr">14: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> lset
-<span class="linenr">15: </span>( sqrt(x*x+y*y) - R),
+<pre class="src src-pde" id="lset"><span class="linenr">15: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">radius of circle (domain 1)</span>
+<span class="linenr">16: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> R = 0.5
+<span class="linenr">17: </span>
+<span class="linenr">18: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> lset
+<span class="linenr">19: </span>( sqrt((x-x0)*(x-x0)+(y-y0)*(y-y0)) - R),
+<span class="linenr">20: </span>
+<span class="linenr">21: </span><span style="color: #e5786d;">numproc</span> draw npd -<span style="color: #e5786d;">coefficient</span>=lset -<span style="color: #cae682;">label</span>=levelset
 </pre>
 </div>
 
@@ -328,13 +316,28 @@ u(x) = \left\{\begin{array}{clc} 0.5&, & \text{in } \Omega_1 \\  sin(x^2+y^2-R^2
 \end{equation}
 <div class="org-src-container">
 
-<pre class="src src-pde" id="sol"><span class="linenr">16: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">solution u- in 'inner' domain (Omega_1)</span>
-<span class="linenr">17: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> solneg
-<span class="linenr">18: </span>0.5,
-<span class="linenr">19: </span>
-<span class="linenr">20: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">solution u+ in 'outer' domain (Omega_2)</span>
-<span class="linenr">21: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> solpos
-<span class="linenr">22: </span>(sin((x*x+y*y-R*R))),
+<pre class="src src-pde" id="sol"><span class="linenr">22: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">henry weights</span>
+<span class="linenr">23: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> bneg = 3.0
+<span class="linenr">24: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> bpos = 4.0
+<span class="linenr">25: </span>
+<span class="linenr">26: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> aneg = 0.3
+<span class="linenr">27: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> apos = 0.4
+<span class="linenr">28: </span>
+<span class="linenr">29: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> rhspos
+<span class="linenr">30: </span>1,
+<span class="linenr">31: </span>
+<span class="linenr">32: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> rhsneg
+<span class="linenr">33: </span>1,
+<span class="linenr">34: </span>
+<span class="linenr">35: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> bndpos
+<span class="linenr">36: </span>0,
+<span class="linenr">37: </span>
+<span class="linenr">38: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">coefficient</span> bndneg
+<span class="linenr">39: </span>0,
+<span class="linenr">40: </span>
+<span class="linenr">41: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> lambda = 2.0
+<span class="linenr">42: </span>
+<span class="linenr">43: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">constant</span> one = 1.0
 </pre>
 </div>
 </div>
@@ -371,28 +374,14 @@ for the geometry handling (essentially the composite numerical integration).
 </ul>
 <div class="org-src-container">
 
-<pre class="src src-pde" id="xfespace"><span class="linenr">23: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">use an "extended" continuous finite element space</span>
-<span class="linenr">24: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">you may change the order here</span>
-<span id="coderef-fescomp" class="coderef-off"><span class="linenr">25: </span><span style="color: #e5786d;">define</span><span style="color: #e5786d;"> fespace</span> fescomp</span>
-<span id="coderef-fescomptype" class="coderef-off"><span class="linenr">26: </span>       -<span style="color: #cae682;">type</span>=xstd<span style="color: #e5786d;">fespace</span></span>
-<span id="coderef-fesstdtype" class="coderef-off"><span class="linenr">27: </span>       -<span style="color: #cae682;">type</span>_std=h1ho</span>
-<span id="coderef-fesorder" class="coderef-off"><span class="linenr">28: </span>       -<span style="color: #cae682;">order</span>=1</span>
-<span id="coderef-geometryref" class="coderef-off"><span class="linenr">29: </span>       -ref_space=1</span>
-<span id="coderef-empty" class="coderef-off"><span class="linenr">30: </span><span style="color: #99968b;">#       </span><span style="color: #99968b;">-empty</span></span>
-</pre>
-</div>
-<p>
-Alternatively one could use a discontinuous finite element space as the underlying 
-'standard' finite element space. To this end, replace the last code block with something
-like
-</p>
-<div class="org-src-container">
-
-<pre class="src src-pde" id="xfespacealt"><span style="color: #e5786d;">define</span><span style="color: #e5786d;"> fespace</span> fescomp  
-       -<span style="color: #cae682;">type</span>=xstd<span style="color: #e5786d;">fespace</span>
-       -<span style="color: #cae682;">type</span>_std=l2ho   
-       -<span style="color: #cae682;">order</span>=0         
-       -ref_space=1
+<pre class="src src-pde" id="xfespace"><span id="coderef-fescomp" class="coderef-off"><span class="linenr">44: </span><span style="color: #e5786d;">define</span><span style="color: #e5786d;"> fespace</span> fescomp</span>
+<span id="coderef-fescomptype" class="coderef-off"><span class="linenr">45: </span>       -<span style="color: #cae682;">type</span>=xstd<span style="color: #e5786d;">fespace</span></span>
+<span id="coderef-fesstdtype" class="coderef-off"><span class="linenr">46: </span>       -<span style="color: #cae682;">type</span>_std=h1ho</span>
+<span id="coderef-fesorder" class="coderef-off"><span class="linenr">47: </span>       -<span style="color: #cae682;">order</span>=1</span>
+<span id="coderef-dirichlet" class="coderef-off"><span class="linenr">48: </span>       -dirichlet=[1,2]</span>
+<span id="coderef-geometryref" class="coderef-off"><span class="linenr">49: </span>       -ref_space=1</span>
+<span id="coderef-empty" class="coderef-off"><span class="linenr">50: </span><span style="color: #99968b;">#       </span><span style="color: #99968b;">-empty</span></span>
+<span class="linenr">51: </span><span style="color: #99968b;">#       </span><span style="color: #99968b;">-dgjumps</span>
 </pre>
 </div>
 
@@ -404,10 +393,9 @@ the <a href="#coderef-passfes"class="coderef" onmouseover="CodeHighlightOn(this,
 </p>
 <div class="org-src-container">
 
-<pre class="src src-pde" id="numprocinform"><span class="linenr">31: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">update "extended" part of XFE space:</span>
-<span id="coderef-numprocinform" class="coderef-off"><span class="linenr">32: </span><span style="color: #e5786d;">numproc</span> informxfem npix</span>
-<span id="coderef-passfes" class="coderef-off"><span class="linenr">33: </span>        -xstd<span style="color: #e5786d;">fespace</span>=fescomp</span>
-<span id="coderef-passlset" class="coderef-off"><span class="linenr">34: </span>        -coef_levelset=lset</span>
+<pre class="src src-pde" id="numprocinform"><span class="linenr">52: </span><span style="color: #e5786d;">numproc</span> informxfem npix
+<span class="linenr">53: </span>        -xstd<span style="color: #e5786d;">fespace</span>=fescomp
+<span class="linenr">54: </span>        -coef_levelset=lset
 </pre>
 </div>
 </div>
@@ -418,15 +406,18 @@ the <a href="#coderef-passfes"class="coderef" onmouseover="CodeHighlightOn(this,
 <div class="outline-text-3" id="text-2-5">
 <div class="org-src-container">
 
-<pre class="src src-pde" id="comp"><span class="linenr">35: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">gridfunction</span> u -<span style="color: #e5786d;">fespace</span>=fescomp
-<span class="linenr">36: </span>
-<span class="linenr">37: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">integration on sub domains</span>
-<span class="linenr">38: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">linearform</span> f -<span style="color: #e5786d;">fespace</span>=fescomp
-<span class="linenr">39: </span>xsource solneg solpos
-<span class="linenr">40: </span>
-<span class="linenr">41: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">integration on sub domains</span>
-<span class="linenr">42: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">bilinearform</span> a -<span style="color: #e5786d;">fespace</span>=fescomp -symmetric -<span style="color: #e5786d;">linearform</span>=f
-<span class="linenr">43: </span>xmass 1.0 1.0
+<pre class="src src-pde" id="comp"><span class="linenr">55: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">gridfunction</span> u -<span style="color: #e5786d;">fespace</span>=fescomp
+<span class="linenr">56: </span>
+<span class="linenr">57: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">linearform</span> f -<span style="color: #e5786d;">fespace</span>=fescomp
+<span class="linenr">58: </span>xsource rhsneg rhspos
+<span class="linenr">59: </span>
+<span class="linenr">60: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">bilinearform</span> a -<span style="color: #e5786d;">fespace</span>=fescomp -symmetric -<span style="color: #e5786d;">linearform</span>=f
+<span class="linenr">61: </span>xlaplace aneg*bneg apos*bpos
+<span class="linenr">62: </span>xnitsche_hansbo aneg apos bneg bpos lambda
+<span class="linenr">63: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">xnitsche_minstab_hansbo aneg apos bneg bpos</span>
+<span class="linenr">64: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">lo_ghostpenalty aneg apos one</span>
+<span class="linenr">65: </span>
+<span class="linenr">66: </span><span style="color: #e5786d;">numproc</span> setvaluesx npsvx -<span style="color: #e5786d;">gridfunction</span>=u -<span style="color: #e5786d;">coefficient</span>_neg=bndneg -<span style="color: #e5786d;">coefficient</span>_pos=bndpos -boundary <span style="color: #99968b;">#</span><span style="color: #99968b;">-print</span>
 </pre>
 </div>
 </div>
@@ -437,12 +428,12 @@ the <a href="#coderef-passfes"class="coderef" onmouseover="CodeHighlightOn(this,
 <div class="outline-text-3" id="text-2-6">
 <div class="org-src-container">
 
-<pre class="src src-pde" id="bvp"><span class="linenr">44: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=local -bilinearform=a -test #-block</span>
-<span class="linenr">45: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">preconditioner</span> c -<span style="color: #cae682;">type</span>=direct -<span style="color: #e5786d;">bilinearform</span>=a -<span style="color: #cae682;">inverse</span>=pardiso <span style="color: #99968b;">#</span><span style="color: #99968b;">-test</span>
-<span class="linenr">46: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=bddc -bilinearform=a -test -block</span>
-<span class="linenr">47: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block</span>
-<span class="linenr">48: </span>
-<span class="linenr">49: </span><span style="color: #e5786d;">numproc</span> bvp npbvp -<span style="color: #e5786d;">gridfunction</span>=u -<span style="color: #e5786d;">bilinearform</span>=a -<span style="color: #e5786d;">linearform</span>=f -<span style="color: #cae682;">solver</span>=cg -<span style="color: #e5786d;">preconditioner</span>=c -maxsteps=1000 -prec=1e-6
+<pre class="src src-pde" id="bvp"><span class="linenr">67: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=local -bilinearform=a -test #-block</span>
+<span class="linenr">68: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">preconditioner</span> c -<span style="color: #cae682;">type</span>=direct -<span style="color: #e5786d;">bilinearform</span>=a -<span style="color: #cae682;">inverse</span>=pardiso <span style="color: #99968b;">#</span><span style="color: #99968b;">-test</span>
+<span class="linenr">69: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=bddc -bilinearform=a -test -block</span>
+<span class="linenr">70: </span><span style="color: #99968b;">#</span><span style="color: #99968b;">define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block</span>
+<span class="linenr">71: </span>
+<span class="linenr">72: </span><span style="color: #e5786d;">numproc</span> bvp npbvp -<span style="color: #e5786d;">gridfunction</span>=u -<span style="color: #e5786d;">bilinearform</span>=a -<span style="color: #e5786d;">linearform</span>=f -<span style="color: #cae682;">solver</span>=cg -<span style="color: #e5786d;">preconditioner</span>=c -maxsteps=1000 -prec=1e-6
 </pre>
 </div>
 </div>
@@ -453,69 +444,21 @@ the <a href="#coderef-passfes"class="coderef" onmouseover="CodeHighlightOn(this,
 <div class="outline-text-3" id="text-2-7">
 <div class="org-src-container">
 
-<pre class="src src-pde" id="xvis"><span class="linenr">50: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">for the evaluation of gradients</span>
-<span class="linenr">51: </span><span style="color: #e5786d;">define</span> <span style="color: #e5786d;">bilinearform</span> a_d -<span style="color: #e5786d;">fespace</span>=fescomp -<span style="color: #cae682;">nonassemble</span>
-<span class="linenr">52: </span>laplace one -comp=1
-<span class="linenr">53: </span>
-<span class="linenr">54: </span><span style="color: #e5786d;">numproc</span> <span style="color: #cae682;">drawflux</span> npdf -<span style="color: #cae682;">solution</span>=u -<span style="color: #e5786d;">bilinearform</span>=a_d -<span style="color: #cae682;">label</span>=grad
-<span class="linenr">55: </span>
-<span class="linenr">56: </span><span style="color: #e5786d;">numproc</span> visualization npviz -scalarfunction=u 
-<span class="linenr">57: </span>    -minval=0 -maxval=1 
-<span class="linenr">58: </span>    -nolineartexture -deformationscale=1 -subdivision=4
+<pre class="src src-pde" id="xvis"><span class="linenr">73: </span><span style="color: #e5786d;">numproc</span> visualization npviz -scalarfunction=u 
+<span class="linenr">74: </span>    -minval=0 -maxval=0.3
+<span class="linenr">75: </span>    -nolineartexture -deformationscale=1 -subdivision=4
 </pre>
 </div>
 </div>
 </div>
 
 <div id="outline-container-sec-2-8" class="outline-3">
-<h3 id="sec-2-8"><span class="section-number-3">2.8</span> Error calculatoin</h3>
+<h3 id="sec-2-8"><span class="section-number-3">2.8</span> Things to try with the pde-file here:</h3>
 <div class="outline-text-3" id="text-2-8">
-<div class="org-src-container">
-
-<pre class="src src-pde" id="xdiff"><span class="linenr">59: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">evaluate l2-error (difference between prescribed solution and numerical solution)</span>
-<span class="linenr">60: </span><span style="color: #e5786d;">numproc</span> xdifference npxd 
-<span class="linenr">61: </span>        -<span style="color: #cae682;">solution</span>=u 
-<span class="linenr">62: </span>        -<span style="color: #cae682;">solution</span>_n=solneg
-<span class="linenr">63: </span>        -<span style="color: #cae682;">solution</span>_p=solpos
-<span class="linenr">64: </span>        -levelset=lset
-<span class="linenr">65: </span>        -int<span style="color: #cae682;">order</span>=3
-</pre>
-</div>
-</div>
-</div>
-<div id="outline-container-sec-2-9" class="outline-3">
-<h3 id="sec-2-9"><span class="section-number-3">2.9</span> Things to try with the pde-file here:</h3>
-<div class="outline-text-3" id="text-2-9">
 <ol class="org-ol">
-<li>Add the following line, reload the pde-file, invoke solve and navigate through
-the shape functions with the GUI:
-<div class="org-src-container">
-
-<pre class="src src-pde"><span style="color: #e5786d;">numproc</span> shapetester npst -<span style="color: #e5786d;">gridfunction</span>=u
-</pre>
-</div>
-<p>
-To see all shape functions make sure that subdivisions are at least 3 and disable automatic 
-scaling. Instead use minval=0 and maxval=1. Afterwards remove the line again
-</p>
+<li>&#x2026;
 </li>
-<li>Refine the mesh and observe the convergence order. Note that different error calculations 
-are printed. Not all of them are meaningful (e.g. the interface measures). We are primarily 
-interested in the \(L^2\)-error.
-</li>
-<li>Set flag "empty" (this removes the enrichted functions)
-for xstdfespace, refine the mesh and observe the 
-convergence order (L2). Afterwards remove "empty" again.
-</li>
-<li>Set "order" to 2 and try 1) - 3) again, make sure to 
-increase "ref_space" in xstdfespace and "intorder" in 
-xdifference
-</li>
-<li>set "order" back to 1, set the preconditioner to "local" 
-and add the "-test"-flags, refine the mesh several times
-and observe the performance
-</li>
-<li>set "order" to 2 and try 5) again
+<li>&#x2026;
 </li>
 </ol>
 </div>
@@ -533,8 +476,8 @@ At the beginning we briefly announce ourselves with a friendly "hello":
 </p>
 <div class="org-src-container">
 
-<pre class="src src-python" id="start"><span class="linenr">1: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">interactive modifications to d1_approx.py</span>
-<span class="linenr">2: </span><span style="color: #8ac6f2; font-weight: bold;">print</span> (<span style="color: #95e454;">"hello from d1_approx.py ;-)"</span>)
+<pre class="src src-python" id="start"><span class="linenr">1: </span><span style="color: #99968b;"># </span><span style="color: #99968b;">interactive modifications to d2_xnitsche.py</span>
+<span class="linenr">2: </span><span style="color: #8ac6f2; font-weight: bold;">print</span> (<span style="color: #95e454;">"hello from d2_xnitsche.py ;-)"</span>)
 </pre>
 </div>
 
@@ -543,7 +486,7 @@ which simply results in:
 </p>
 <div class="org-src-container">
 
-<pre class="src src-org">hello from d1_approx.py ;-)
+<pre class="src src-org">hello from d2_xnitsche.py ;-)
 </pre>
 </div>
 </div>
@@ -650,9 +593,9 @@ and call a <a href="#coderef-redraw"class="coderef" onmouseover="CodeHighlightOn
 <h2 id="sec-4"><span class="section-number-2">4</span> Resulting files</h2>
 <div class="outline-text-2" id="text-4">
 <ul class="org-ul">
-<li><a href="d1_approx.pde">d1_approx.pde</a>
+<li><a href="d2_xnitsche.pde">d2_xnitsche.pde</a>
 </li>
-<li><a href="d1_approx.py">d1_approx.py</a> 
+<li><a href="d2_xnitsche.py">d2_xnitsche.py</a> 
 </li>
 </ul>
 </div>
@@ -660,7 +603,7 @@ and call a <a href="#coderef-redraw"class="coderef" onmouseover="CodeHighlightOn
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Christoph Lehrenfeld</p>
-<p class="date">Created: 2014-12-18 Do 20:34</p>
+<p class="date">Created: 2014-12-18 Do 20:59</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.3.1 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

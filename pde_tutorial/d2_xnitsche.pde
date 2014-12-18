@@ -1,23 +1,3 @@
-# Example:
-# Nitsche-XFEM ...
-# ... artificial interface
-#
-# The interface is prescribed with the coef "lset",
-# ...
-#
-# Solves the problem:
-#
-# ...TODO...
-#
-# Details:
-#
-# → ....
-# → ....
-#
-# Things to try here:
-#   1. ...
-#   2. ... switch weightings ...
-#
 
 # load geometry
 geometry = d2_xnitsche.in2d
@@ -25,7 +5,10 @@ geometry = d2_xnitsche.in2d
 # and mesh
 mesh = d2_xnitsche.vol.gz
 
-shared = libngsxfem_xfem
+#load xfem-library
+shared = libngsxfem_xfem                                       
+shared = libngsxfem_py                                       
+pymodule = d1_approx
 
 define constant heapsize = 1e8
 
@@ -62,11 +45,15 @@ define coefficient bndneg
 
 define constant lambda = 2.0
 
-define fespace fescomp
-       -type=xstdfespace
-       -type_std=h1ho
-       -order=1
-       -dirichlet=[1,2]
+define constant one = 1.0
+
+define fespace fescomp                                            
+       -type=xstdfespace                                      
+       -type_std=h1ho                                          
+       -order=1                                                  
+       -dirichlet=[1,2]                                         
+       -ref_space=1                                           
+#       -empty                                                      
 #       -dgjumps
 
 numproc informxfem npix
@@ -86,14 +73,13 @@ xnitsche_hansbo aneg apos bneg bpos lambda
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=bndneg -coefficient_pos=bndpos -boundary #-print
 
-define preconditioner c -type=local -bilinearform=a -test -block
-#define preconditioner c -type=direct -bilinearform=a -test
+#define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
 #define preconditioner c -type=bddc -bilinearform=a -test -block
 #define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 
-define coefficient veczero
-(0,0),
-
-numproc visualization npviz -scalarfunction=u #-comp=0
+numproc visualization npviz -scalarfunction=u 
+    -minval=0 -maxval=0.3
+    -nolineartexture -deformationscale=1 -subdivision=4

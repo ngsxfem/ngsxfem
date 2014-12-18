@@ -1,6 +1,6 @@
 
-# interactive modifications to d1_approx.py
-print ("hello from d1_approx.py ;-)")
+# interactive modifications to d2_xnitsche.py
+print ("hello from d2_xnitsche.py ;-)")
 
 from ngsolve.solve import *
 from ngsolve.comp import *
