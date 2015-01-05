@@ -44,24 +44,16 @@ define gridfunction u -fespace=fescomp
 
 # integration on sub domains
 define linearform f -fespace=fescomp
-xsource solneg solpos
+xsource solneg solpos                             
 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f
 xmass 1.0 1.0
 
-#define preconditioner c -type=local -bilinearform=a -test #-block
-define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
-#define preconditioner c -type=bddc -bilinearform=a -test -block
-#define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
+#define preconditioner c -type=local -bilinearform=a -test #-block           
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
-
-# for the evaluation of gradients
-define bilinearform a_d -fespace=fescomp -nonassemble
-laplace one -comp=1
-
-numproc drawflux npdf -solution=u -bilinearform=a_d -label=grad
 
 numproc visualization npviz -scalarfunction=u 
     -minval=0 -maxval=1 
@@ -72,5 +64,4 @@ numproc xdifference npxd
         -solution=u 
         -solution_n=solneg
         -solution_p=solpos
-        -levelset=lset
         -intorder=3

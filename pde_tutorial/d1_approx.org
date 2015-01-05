@@ -24,7 +24,7 @@ We explain a simple approximation example.
   additional information can be gathered by changes in the pde-file and additional functionality 
   through python.
   
-* Description and Explaination of the pde-file
+* Description and Explanation of the pde-file
 ** Geometry and mesh
    In the NGSolve pde-file the components for setting up the problem is defined. 
    First, a [[(geometry)][geometry]] and a [[(mesh)][mesh]] is loaded:
@@ -71,8 +71,9 @@ define coefficient lset
 ( sqrt(x*x+y*y) - R),       
    #+END_SRC 
    
-   The reference solution is defined in order to prescribe suitable Dirichlet boundary conditions 
-   and to evaluate errors later.
+   The right hand side term $u$ (which is at the same time the reference solution) is defined.
+   $u$ is needed for the setup of the r.h.s.,  in order to prescribe suitable Dirichlet boundary conditions 
+   and to evaluate errors later. Here, we choose
    \begin{equation}
    u(x) = \left\{\begin{array}{clc} 0.5&, & \text{in } \Omega_1 \\  sin(x^2+y^2-R^2)&, & \text{in } \Omega_2 \end{array} \right.
    \end{equation}
@@ -95,7 +96,7 @@ define coefficient solpos
    parameters (e.g. [[(fesorder)][the order]]) of the FESpace are passed to that standard FESpace.
    The extended FESpace which is the second component of the compound space handles the enrichtment
    of the standard space and deals with the following information
-  * a reference fespace (here: the underlying standard FESpace)
+  * a reference fespace (here: the underlying continuous FESpace)
   * geometry information which consists of two parts:
     * a level set coefficient function
     * parameters for the approximation of the zero level of the level set function. This is done with 
@@ -139,45 +140,46 @@ define coefficient solpos
   #+END_SRC 
 
 ** Gridfunction, linear and bilinear forms  
+Now we create a gridfunction for the solution vector 
+and define the bi- and linear forms for the matrix and the r.h.s. vector for the 
+discrete problem. Special integrators suitable for the extended finite element space
+are used, [[(xsource)][xsource]] and [[(xmass)][xmass]]. Both take two coefficient functions
+as arguments. One cofficient function for each domain. Note that the problem is symmetric.
   #+NAME: comp
   #+BEGIN_SRC pde +n -r
 define gridfunction u -fespace=fescomp
 
 # integration on sub domains
 define linearform f -fespace=fescomp
-xsource solneg solpos
+xsource solneg solpos                             (ref:xsource)
 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f
-xmass 1.0 1.0
+xmass 1.0 1.0                                       (ref:xmass)
   #+END_SRC 
 
-** Solver   
+** Solver  
+To solve the arising linear system we use [[(direct)][direct solver]] as a preconditioner. Alternatively, one could also use the
+[[(jacobi)][Jacobi-preconditioner]]. Then, the problem is solved and the solution is stored in the gridfunction u.
   #+NAME: bvp
   #+BEGIN_SRC pde +n -r
-#define preconditioner c -type=local -bilinearform=a -test #-block
-define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
-#define preconditioner c -type=bddc -bilinearform=a -test -block
-#define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
+#define preconditioner c -type=local -bilinearform=a -test #-block           (ref:jacobi)
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test (ref:direct)
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 
   #+END_SRC 
   
 ** Visualization
+The solution is visualized. 
   #+NAME: xvis
   #+BEGIN_SRC pde +n -r
-# for the evaluation of gradients
-define bilinearform a_d -fespace=fescomp -nonassemble
-laplace one -comp=1
-
-numproc drawflux npdf -solution=u -bilinearform=a_d -label=grad
-
 numproc visualization npviz -scalarfunction=u 
     -minval=0 -maxval=1 
     -nolineartexture -deformationscale=1 -subdivision=4
   #+END_SRC 
   
 ** Error calculatoin
+Finally, the error $u_h$ (discrete solution) to $u$ is calculated via numerical integration. 
   #+NAME: xdiff
   #+BEGIN_SRC pde +n -r
 # evaluate l2-error (difference between prescribed solution and numerical solution)
@@ -185,9 +187,11 @@ numproc xdifference npxd
         -solution=u 
         -solution_n=solneg
         -solution_p=solpos
-        -levelset=lset
         -intorder=3
   #+END_SRC
+After reading the explanation, start netgen and inspect the result of the simulation. 
+In the next section a few small tasks are suggested to investigate some important properties
+of the XFEM discretization.
 ** Things to try with the pde-file here:
  1) Add the following line, reload the pde-file, invoke solve and navigate through
     the shape functions with the GUI:
@@ -210,7 +214,9 @@ numproc shapetester npst -gridfunction=u
     and observe the performance
  6) set "order" to 2 and try 5) again
 
-* Additional investigations with python    
+* Additional investigations with python  
+Some interesting information can be read from python through the corresponding interface. 
+A very small introduction is given here. These things result in the python script [[file:d1_approx.py][d1_approx.py]].
 ** Simple python start-off
    At the beginning we briefly announce ourselves with a friendly "hello":
    #+NAME: start
@@ -244,8 +250,9 @@ numproc shapetester npst -gridfunction=u
    We included the command [[(sleep)][sleep]] to pause between the individual shape functions.
    
 ** Small functions for inspections:
-   ... minor explanation ... 
+   We use some really basic things, e.g. reading the d.o.f. of a triangle or fixing the solution vector. 
 *** Print dofs per elements:
+    We simply display the degrees of freedom for each element when "PrintDofs" is called.
     #+NAME: printdofs
     #+BEGIN_SRC python +n -r
    def PrintDofs(pde,mesh,fes):
@@ -276,6 +283,7 @@ numproc shapetester npst -gridfunction=u
     #+END_SRC
     
 ** Put everything together
+   Call the previously explained mini-functions:
    #+NAME: test
    #+BEGIN_SRC python +n -r
    def Test(pde):
