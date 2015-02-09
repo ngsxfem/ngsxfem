@@ -78,16 +78,16 @@ protected:
     TimeInterval ti;
 public:
     
-    NumProcTestXFEM (PDE & apde, const Flags & flags)
+    NumProcTestXFEM (shared_ptr<PDE> apde, const Flags & flags)
         : NumProc (apde)
     {
         cout << " \n\nNumProcTestXFEM - constructor start \n\n " << endl;
 
         string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
-		gf_lset = pde.GetGridFunction (eval_lset_str,true);
+		gf_lset = apde->GetGridFunction (eval_lset_str,true);
 
         if (gf_lset == NULL)
-          coef_lset = pde.GetCoefficientFunction (eval_lset_str,true);
+          coef_lset = apde->GetCoefficientFunction (eval_lset_str,true);
         else
           coef_lset = NULL;
 

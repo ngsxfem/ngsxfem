@@ -209,7 +209,7 @@ namespace ngcomp
   {
     const CoefficientFunction * coef = NULL;
   public:
-    NumProcInformXFESpace (PDE & apde, const Flags & flags);
+    NumProcInformXFESpace (shared_ptr<PDE> apde, const Flags & flags);
     ~NumProcInformXFESpace();
     virtual string GetClassName () const;
     virtual void Do (LocalHeap & lh);

@@ -42,21 +42,22 @@ class NumProcSolveInstat : public NumProc
 	string fesstr;
 	
 	bool userstepping;
-
+    shared_ptr<PDE> sp_pde;
+  
 	public:
 	/*
 	In the constructor, the solver class gets the flags from the pde - input file.
 	the PDE class apde constains all bilinear-forms, etc...
 	*/
-	NumProcSolveInstat (PDE & apde, const Flags & flags) : NumProc (apde)
+    NumProcSolveInstat (shared_ptr<PDE> apde, const Flags & flags) : NumProc (apde), sp_pde(apde)
 	{
 		// in the input-file, you specify the bilinear-forms for the stiffness and for the mass-term
 		// like  "-bilinearforma=k". Default arguments are 'a' and 'm'
 
-		// bfa = pde.GetBilinearForm (flags.GetStringFlag ("bilinearforma", "a"));
-		// bfm = pde.GetBilinearForm (flags.GetStringFlag ("bilinearformm", "m"));
-		lff = pde.GetLinearForm (flags.GetStringFlag ("linearform", "f"));
-		gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction", "u"));
+		// bfa = apde->GetBilinearForm (flags.GetStringFlag ("bilinearforma", "a"));
+		// bfm = apde->GetBilinearForm (flags.GetStringFlag ("bilinearformm", "m"));
+		lff = apde->GetLinearForm (flags.GetStringFlag ("linearform", "f"));
+		gfu = apde->GetGridFunction (flags.GetStringFlag ("gridfunction", "u"));
 
 		inversetype = flags.GetStringFlag ("solver", "pardiso");
 		fesstr = flags.GetStringFlag ("fespace", "fes_st");
@@ -110,7 +111,7 @@ class NumProcSolveInstat : public NumProc
 		shared_ptr<BilinearForm> bftau;
 		Flags massflags;
 		massflags.SetFlag ("fespace", fesstr.c_str());
-		bftau = pde.AddBilinearForm ("bftau", massflags);
+		bftau = sp_pde->AddBilinearForm ("bftau", massflags);
 		bftau -> SetUnusedDiag (0);
 
         auto one = make_shared<ConstantCoefficientFunction> (1);

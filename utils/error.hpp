@@ -54,7 +54,7 @@ namespace ngfem
     //                      const CoefficientFunction * a_coef_d_n,
     //                      const CoefficientFunction * a_coef_d_p,
     //                      const CoefficientFunction * a_lset);
-    SolutionCoefficients(PDE & pde, const Flags & flags);
+    SolutionCoefficients(shared_ptr<PDE> pde, const Flags & flags);
     ~SolutionCoefficients();
 
     bool HasConvectionNeg() { return ! (conv_n == NULL); }

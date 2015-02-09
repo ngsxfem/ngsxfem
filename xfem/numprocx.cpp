@@ -269,12 +269,12 @@ namespace ngcomp
     double tnew;
   public:
     ///
-    NumProcSetValuesX (PDE & apde, const Flags & flags)
+    NumProcSetValuesX (shared_ptr<PDE> apde, const Flags & flags)
       : NumProc (apde)
     {
-      gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction", ""));
-      coef_neg = pde.GetCoefficientFunction (flags.GetStringFlag ("coefficient_neg", ""));
-      coef_pos = pde.GetCoefficientFunction (flags.GetStringFlag ("coefficient_pos", ""));
+      gfu = apde->GetGridFunction (flags.GetStringFlag ("gridfunction", ""));
+      coef_neg = apde->GetCoefficientFunction (flags.GetStringFlag ("coefficient_neg", ""));
+      coef_pos = apde->GetCoefficientFunction (flags.GetStringFlag ("coefficient_pos", ""));
       told = flags.GetNumFlag ("told",0.0);
       tnew = flags.GetNumFlag ("new",1.0);
       boundary = flags.GetDefineFlag ("boundary");
@@ -374,11 +374,11 @@ namespace ngcomp
   public:
 
 
-    NumProcXDifference (PDE & apde, const Flags & flags)
+    NumProcXDifference (shared_ptr<PDE> apde, const Flags & flags)
         : NumProc (apde), solcoef(apde,flags), errtab(), myflags(flags)
     { 
-      gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
-      gfu2 = pde.GetGridFunction (flags.GetStringFlag ("solution2", flags.GetStringFlag("reference","")),true);
+      gfu  = apde->GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")));
+      gfu2 = apde->GetGridFunction (flags.GetStringFlag ("solution2", flags.GetStringFlag("reference","")),true);
       threshold = flags.GetNumFlag ( "threshold", -0.1);
       intorder = (int) flags.GetNumFlag ( "intorder", 2);
       a_pos = flags.GetNumFlag ( "diffusion_p", 1.0);
@@ -425,10 +425,10 @@ namespace ngcomp
   public:
 
 
-    NumProcSpecialOutput (PDE & apde, const Flags & flags)
+    NumProcSpecialOutput (shared_ptr<PDE> apde, const Flags & flags)
         : NumProc (apde), solcoef(NULL), myflags(flags)
     { 
-      gfu  = pde.GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")),true);
+      gfu  = apde->GetGridFunction (flags.GetStringFlag ("solution1", flags.GetStringFlag("solution","")),true);
       subdivision = (int) flags.GetNumFlag ( "subdivision", 2);
       onlygrid = flags.GetDefineFlag ("onlymesh");
       if (!onlygrid)
@@ -483,15 +483,15 @@ namespace ngcomp
   public:
 
 
-    NumProcCalcCondition (PDE & apde, const Flags & flags)
+    NumProcCalcCondition (shared_ptr<PDE> apde, const Flags & flags)
       : NumProc (apde)
     { 
-      bfa = pde.GetBilinearForm (flags.GetStringFlag ("bilinearform","bfa"));
+      bfa = apde->GetBilinearForm (flags.GetStringFlag ("bilinearform","bfa"));
       inversetype = flags.GetStringFlag ("inverse", "pardiso");
       symmetric = flags.GetDefineFlag ("symmetric");
       printmatrix = flags.GetDefineFlag ("printmatrix");
-      gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction","gfu"),true);
-      pre = pde.GetPreconditioner (flags.GetStringFlag ("preconditioner","c"),true);
+      gfu = apde->GetGridFunction (flags.GetStringFlag ("gridfunction","gfu"),true);
+      pre = apde->GetPreconditioner (flags.GetStringFlag ("preconditioner","c"),true);
     }
 
     virtual ~NumProcCalcCondition()

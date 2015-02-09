@@ -746,11 +746,11 @@ namespace ngcomp
   }
 
 
-  NumProcInformXFESpace::NumProcInformXFESpace (PDE & apde, const Flags & flags)
+  NumProcInformXFESpace::NumProcInformXFESpace (shared_ptr<PDE> apde, const Flags & flags)
     : NumProc (apde)
   { 
     
-    shared_ptr<FESpace> xstdfes = pde.GetFESpace(flags.GetStringFlag("xstdfespace","v"), true);
+    shared_ptr<FESpace> xstdfes = apde->GetFESpace(flags.GetStringFlag("xstdfespace","v"), true);
     shared_ptr<FESpace> xfes = NULL;
     shared_ptr<FESpace> basefes = NULL;
 
@@ -761,14 +761,14 @@ namespace ngcomp
     }
     else
     {
-      xfes = pde.GetFESpace(flags.GetStringFlag("xfespace","vx"));
-      basefes = pde.GetFESpace(flags.GetStringFlag("fespace","v"));
+      xfes = apde->GetFESpace(flags.GetStringFlag("xfespace","vx"));
+      basefes = apde->GetFESpace(flags.GetStringFlag("fespace","v"));
     }
 
-    shared_ptr<FESpace> fescl = pde.GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
-    shared_ptr<CoefficientFunction> coef_lset = pde.GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
+    shared_ptr<FESpace> fescl = apde->GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
+    shared_ptr<CoefficientFunction> coef_lset = apde->GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
-    int mD = pde.GetMeshAccess()->GetDimension();
+    int mD = apde->GetMeshAccess()->GetDimension();
 
     shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast<SpaceTimeFESpace>(basefes);
     int mSD = fes_st == NULL ? mD : mD + 1;

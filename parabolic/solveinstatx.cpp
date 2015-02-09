@@ -132,7 +132,7 @@ public:
     In the constructor, the solver class gets the flags from the pde - input file.
     the PDE class apde constains all bilinear-forms, etc...
   */
-  NumProcSolveInstatX (PDE & apde, const Flags & flags) : NumProc (apde), errtab(), solcoef(apde, flags)
+  NumProcSolveInstatX (shared_ptr<PDE> apde, const Flags & flags) : NumProc (apde), errtab(), solcoef(apde, flags)
   {
     // in the input-file, you specify the bilinear-forms for the stiffness and for the mass-term
     // like  "-bilinearforma=k". Default arguments are 'a' and 'm'
@@ -141,15 +141,15 @@ public:
     // bfm = pde.GetBilinearForm (flags.GetStringFlag ("bilinearformm", "m"));
     // lff = pde.GetLinearForm (flags.GetStringFlag ("linearform", "f"));
 
-    gfu = pde.GetGridFunction (flags.GetStringFlag ("gridfunction", "u"));
-    gfu_vis = pde.GetGridFunction (flags.GetStringFlag ("gf_vis", "u_vis"),true);
+    gfu = apde->GetGridFunction (flags.GetStringFlag ("gridfunction", "u"));
+    gfu_vis = apde->GetGridFunction (flags.GetStringFlag ("gf_vis", "u_vis"),true);
 
     inversetype = flags.GetStringFlag ("solver", "pardiso");
     fesstr = flags.GetStringFlag ("fespace", "fes_st");
-    fes = pde.GetFESpace (fesstr.c_str());
+    fes = apde->GetFESpace (fesstr.c_str());
 
     string fesvisstr = flags.GetStringFlag ("fespacevis", "fes_negpos");
-    fesvis = pde.GetFESpace (fesvisstr.c_str());
+    fesvis = apde->GetFESpace (fesvisstr.c_str());
 
     userstepping = flags.GetDefineFlag ("userstepping");
     calccond = flags.GetDefineFlag ("calccond");
@@ -170,17 +170,17 @@ public:
 	
     sleep_time = flags.GetNumFlag ("pause_after_step", 0.0);
 
-    coef_bconvneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_neg", "bconvneg"));
-    coef_bconvpos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_conv_pos", "bconvpos"));
+    coef_bconvneg = apde->GetCoefficientFunction (flags.GetStringFlag ("beta_conv_neg", "bconvneg"));
+    coef_bconvpos = apde->GetCoefficientFunction (flags.GetStringFlag ("beta_conv_pos", "bconvpos"));
 
-    coef_brhsneg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_neg", "brhsneg"));
-    coef_brhspos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_pos", "brhspos"));
+    coef_brhsneg = apde->GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_neg", "brhsneg"));
+    coef_brhspos = apde->GetCoefficientFunction (flags.GetStringFlag ("beta_rhs_pos", "brhspos"));
 
-    coef_binineg = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_ini_neg", "binineg"));
-    coef_binipos = pde.GetCoefficientFunction (flags.GetStringFlag ("beta_ini_pos", "binipos"));
+    coef_binineg = apde->GetCoefficientFunction (flags.GetStringFlag ("beta_ini_neg", "binineg"));
+    coef_binipos = apde->GetCoefficientFunction (flags.GetStringFlag ("beta_ini_pos", "binipos"));
 
-    coef_bndneg = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_neg", "bndneg"));
-    coef_bndpos = pde.GetCoefficientFunction (flags.GetStringFlag ("boundary_pos", "bndpos"));
+    coef_bndneg = apde->GetCoefficientFunction (flags.GetStringFlag ("boundary_neg", "bndneg"));
+    coef_bndpos = apde->GetCoefficientFunction (flags.GetStringFlag ("boundary_pos", "bndpos"));
 
     coef_aneg = make_shared<ConstantCoefficientFunction>(aneg/bneg);
     coef_apos = make_shared<ConstantCoefficientFunction>(apos/bpos);
@@ -200,7 +200,7 @@ public:
 
     Flags blflags;
     blflags.SetFlag ("fespace", fesstr.c_str());
-    bftau = pde.AddBilinearForm("bftau", blflags);
+    bftau = apde->AddBilinearForm("bftau", blflags);
     // bftau = CreateBilinearForm (fes, "bftau", blflags);
     bftau -> SetUnusedDiag (0);
 
@@ -218,7 +218,7 @@ public:
     empty.SetFlag ("laterupdate");
     // localprec = new LocalPreconditioner (&pde, empty, "l");
     // localprec = new BDDC (&pde, empty, "l");
-    localprec = pde.AddPreconditioner("l",empty);
+    localprec = apde->AddPreconditioner("l",empty);
   }
 
   void DeleteBilinearFormIntegrators()
