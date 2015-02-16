@@ -1,4 +1,4 @@
-#+TITLE: Approximation example with XFEM (incl. pde/python)
+#+TITLE: Interface problem with XFEM (incl. pde/python)
 #+AUTHOR: Christoph Lehrenfeld
 #+PROPERTY: header-args *python* :tangle yes :results output type: scalar format: org
 #+email: christoph.lehrenfeld AT rwth-aachen DOT de
@@ -7,6 +7,9 @@
 #+OPTIONS: tex:t  
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="media/style.css" />
 -----
+
+This document is under construction ...
+
 We explain a simple interface example.
 * Description of the considered example
   We consider the solution of an interface problem.
@@ -24,9 +27,11 @@ We explain a simple interface example.
   # through python.
   
 * Description and Explaination of the pde-file
-** Geometry and mesh
+Many things are very similar to the example [[file:d1_approx.pde][d2_approx.pde]]. We thus only discuss new aspects. 
+
+** Geometry, mesh and libraries
    In the NGSolve pde-file the components for setting up the problem is defined. 
-   First, a [[(geometry)][geometry]] and a [[(mesh)][mesh]] is loaded:
+   First, a geometry and a mesh is loaded. Afterwards additional libraries are loaded.
    #+NAME: mesh
    #+BEGIN_SRC pde +n -r
 # load geometry
@@ -34,20 +39,11 @@ geometry = d2_xnitsche.in2d
 
 # and mesh
 mesh = d2_xnitsche.vol.gz
-   #+END_SRC 
-** Additional libraries
-   Next, additional librarys are loaded. These are the [[(libngsxfem)][ngsxfem-library which adds XFEM-functionality]] 
-   to NGSolve and [[(libngsxfempy)][a python module which transfers some of this functionality to python]]. 
-   
-   The line "[[(pymodd1)][pymodule = d1_approx]]" enforces loading of a small python module which adds a tiny 
-   bit of additional functionality only for this test case written in python. The content of this 
-   specific python module is discussed [[pymodule][later]].
-   #+NAME: libs
-   #+BEGIN_SRC pde +n -r
+
 #load xfem-library
-shared = libngsxfem_xfem                                       (ref:libngsxfem)
-shared = libngsxfem_py                                       (ref:libngsxfempy)
-pymodule = d1_approx                                              (ref:pymodd1)
+shared = libngsxfem_xfem                                    
+shared = libngsxfem_py                                      
+pymodule = d1_approx                                        
    #+END_SRC 
 ** Constants, solutions and level set function
    Some simple constants are defined:
@@ -107,23 +103,11 @@ define constant lambda = 2.0
 
 define constant one = 1.0
    #+END_SRC 
-** (Extended) Finite element space   
-   We now want to define the finite element space to achieve the best approximation with.
-   We create an instance of an [[(fescomptype)][extended 'standard' finite element space]] which is a compound
-   space of a standard finite element space and the space of enrichment functions relative 
-   to this space. 
-   The underlying standard finite element space is defined with the [[(fesstdtype)][type_std]]-flag while other 
-   parameters (e.g. [[(fesorder)][the order]]) of the FESpace are passed to that standard FESpace.
-   The extended FESpace which is the second component of the compound space handles the enrichtment
-   of the standard space and deals with the following information
-  * a reference fespace (here: the underlying standard FESpace)
-  * geometry information which consists of two parts:
-    * a level set coefficient function
-    * parameters for the approximation of the zero level of the level set function. This is done with 
-      the flag [[(geometryref)][ref_space]] which prescribes how many levels of adaptive refinement
-      on a local element are applied to resolve the zero level.
-  * The [[(empty)][empty-flag]] can be used to *switch* the enrichment *off* while keeping the data structures
-    for the geometry handling (essentially the composite numerical integration).
+** (Extended) Finite element space and Gridfunction   
+   For the extended finite element space we now also discuss two flags which exist for every finite element space in NGSolve:
+  * The [[(dirichlet)][dirichlet-flags]] mark degrees of freedom at selected boundaries as 'known' and implements values as essential conditions
+  * The [[(dgjumps)][dgjumps-flag]] adds additional couplings into the matrix pattern for the discretization. This might become necessary for methods which 
+    involve integrals at element interfaces. In the context of extended finite elements this can be stabilization terms, e.g. the ghost penalty integrals. 
   #+NAME: xfespace
   #+BEGIN_SRC pde +n -r
 define fespace fescomp                                            (ref:fescomp)
@@ -133,22 +117,16 @@ define fespace fescomp                                            (ref:fescomp)
        -dirichlet=[1,2]                                         (ref:dirichlet)
        -ref_space=1                                           (ref:geometryref)
 #       -empty                                                      (ref:empty)
-#       -dgjumps
-  #+END_SRC 
- 
-  At this point the XStdFESpace and especially the XFESpace has no information about the geometry as no 
-  level set information is passed, yet. This is done externally with a [[(numprocinform)][numproc]] 
-  which passes the information of the [[(passlset)][corresponding level set function]] to 
-  the [[(passfes)][XStdFESpace]].
-  #+NAME: numprocinform
-  #+BEGIN_SRC pde +n -r
+#       -dgjumps                                                  (ref:dgjumps)
+
 numproc informxfem npix
         -xstdfespace=fescomp
         -coef_levelset=lset
   #+END_SRC 
 
 ** Gridfunction, linear and bilinear forms  
-  #+NAME: comp
+   The treatment of gridfunctions and linear forms is the same as before.
+  #+NAME: comp1
   #+BEGIN_SRC pde +n -r
 
 define gridfunction u -fespace=fescomp
@@ -156,29 +134,40 @@ define gridfunction u -fespace=fescomp
 define linearform f -fespace=fescomp
 xsource rhsneg rhspos
 
+  #+END_SRC 
+   For the bilinearform, we consider new integrators, such as
+   * The [[(laplace)][xlaplace-integrator]] which is a broken laplace-integrator w.r.t. the two domains
+   * The [[(xnitsche)][xnitsche-integrator]] which implements the interface condition in a weak sense
+   * ( [[(xnitscheminstab)][a variant of the default nitsche-formulation]] )
+   * ( An [[(loghostpenalty)][additional stabilization]] bilinear form )
+  #+NAME: comp2
+  #+BEGIN_SRC pde +n -r
 define bilinearform a -fespace=fescomp -symmetric -linearform=f
-xlaplace aneg*bneg apos*bpos
-xnitsche_hansbo aneg apos bneg bpos lambda
-# xnitsche_minstab_hansbo aneg apos bneg bpos
-#lo_ghostpenalty aneg apos one
+xlaplace aneg*bneg apos*bpos                                    (ref:laplace)
+xnitsche_hansbo aneg apos bneg bpos lambda                     (ref:xnitsche)
+# xnitsche_minstab_hansbo aneg apos bneg bpos           (ref:xnitscheminstab)
+#lo_ghostpenalty aneg apos one                           (ref:loghostpenalty)
 
-numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=bndneg -coefficient_pos=bndpos -boundary #-print
+  #+END_SRC 
+Setting boundary conditions in extended finite elements is slightly different from the methods used for 
+standard finite element spaces. The corresponding function [[(setvaluesx)][setvaluesx]] needs two 
+functions defined at the boundary corresponding to the restriction of the boundary to domain one (neg) 
+and domain two (pos). 
+  #+NAME: comp3
+  #+BEGIN_SRC pde +n -r
+numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=bndneg -coefficient_pos=bndpos -boundary (ref:setvaluesx)
+
   #+END_SRC 
 
-** Solver   
+** Solver and Visualization
+   As before:
   #+NAME: bvp
   #+BEGIN_SRC pde +n -r
 #define preconditioner c -type=local -bilinearform=a -test #-block
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
-#define preconditioner c -type=bddc -bilinearform=a -test -block
-#define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 
-  #+END_SRC 
 
-** Visualization
-  #+NAME: xvis
-  #+BEGIN_SRC pde +n -r
 numproc visualization npviz -scalarfunction=u 
     -minval=0 -maxval=0.3
     -nolineartexture -deformationscale=1 -subdivision=4
@@ -188,83 +177,8 @@ numproc visualization npviz -scalarfunction=u
  1) ...
  2) ...
 
-* Additional investigations with python    
-** Simple python start-off
-   At the beginning we briefly announce ourselves with a friendly "hello":
-   #+NAME: start
-   #+BEGIN_SRC python -n -r :exports both
-   # interactive modifications to d2_xnitsche.py
-   print ("hello from d2_xnitsche.py ;-)")
-   #+END_SRC
-   
-   which simply results in:
-   #+RESULTS: start
-   
-** Import ngsolve and xfem functionality to python <<pymodule>>
-   Then we import a lot of functionality from ngsolve and ngsxfem.
-   #+NAME: imports
-   #+BEGIN_SRC python +n -r
-   from ngsolve.solve import *
-   from ngsolve.comp import *
-   from ngsolve.fem import *
-   from ngsolve.la import *
-   from ngsolve.bla import *
-   import ngsolve.ngstd as ngstd
-   from ngsolve.solve import Redraw
-
-   #from libngsxfem_py.xfem import *
-   import libngsxfem_py.xfem as xfem                                 (ref:libxfem)
-
-   from math import sin                                                  (ref:sin)
-   from time import sleep                                              (ref:sleep)
-   #+END_SRC
-   We included the command [[(sin)][sin]] for no reason.
-   We included the command [[(sleep)][sleep]] to pause between the individual shape functions.
-   
-** Small functions for inspections:
-   ... minor explanation ... 
-*** Print dofs per elements:
-    #+NAME: printdofs
-    #+BEGIN_SRC python +n -r
-   def PrintDofs(pde,mesh,fes):
-       print ("Printing dofs per element:\n\n")
-       for i in mesh.Elements():
-           print("dofnrs of element", i, ":\n", fes.GetDofNrs(i))
-    #+END_SRC
-    
-*** Show shape functions
-    Every (extended) finite element function can be represented as
-    \begin{equation}
-    u = \sum_{i=1}^{N} u_i \phi(x) + \sum_{i=1}^{N_x} u_i^x \phi^x(x).
-    \end{equation}
-    By setting the coefficients $u_i$, $u_i^x$ [[(setzero)][to zero]] and only [[(shapefct)][one coefficient to 1]], we can construct
-    $u = \phi(x)$ or $u = \phi^x(x)$. We do this for [[(eachshp)][every shape function]] 
-    and call a [[(redraw)][Redraw]] and a [[(slp)][short delay]] between the functions.
-    #+NAME: shapetest
-    #+BEGIN_SRC python +n -r
-   def ShapeTest(pde,u):
-       print ("Shape test:\n")
-       u[:][:] = 0                                                   (ref:setzero)
-       for i in range(u.size):                                       (ref:eachshp)
-           print ("i = ", i ,".")
-           u[:][i-1] = 0.0
-           u[:][i] = 1.0                                            (ref:shapefct)
-           Redraw(blocking=True)                                      (ref:redraw)
-           sleep(1)                                                      (ref:slp)
-    #+END_SRC
-    
-** Put everything together
-   #+NAME: test
-   #+BEGIN_SRC python +n -r
-   def Test(pde):
-       PrintDofs(pde,pde.Mesh(),pde.spaces["fescomp"].StdFESpace)
-       PrintDofs(pde,pde.Mesh(),pde.spaces["fescomp"].XFESpace)
-       ShapeTest(pde,pde.gridfunctions["u"].vec)
-   #+END_SRC
-   
 * Resulting files
   * [[file:d2_xnitsche.pde][d2_xnitsche.pde]]
-  * [[file:d2_xnitsche.py][d2_xnitsche.py]] 
     
   #+RESULTS:
   

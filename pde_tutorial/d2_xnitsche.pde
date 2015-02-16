@@ -6,8 +6,8 @@ geometry = d2_xnitsche.in2d
 mesh = d2_xnitsche.vol.gz
 
 #load xfem-library
-shared = libngsxfem_xfem                                       
-shared = libngsxfem_py                                       
+shared = libngsxfem_xfem                                    
+shared = libngsxfem_py                                      
 pymodule = d1_approx
 
 define constant heapsize = 1e8
@@ -54,7 +54,7 @@ define fespace fescomp
        -dirichlet=[1,2]                                         
        -ref_space=1                                           
 #       -empty                                                      
-#       -dgjumps
+#       -dgjumps                                                  
 
 numproc informxfem npix
         -xstdfespace=fescomp
@@ -66,19 +66,17 @@ define linearform f -fespace=fescomp
 xsource rhsneg rhspos
 
 define bilinearform a -fespace=fescomp -symmetric -linearform=f
-xlaplace aneg*bneg apos*bpos
-xnitsche_hansbo aneg apos bneg bpos lambda
-# xnitsche_minstab_hansbo aneg apos bneg bpos
+xlaplace aneg*bneg apos*bpos                                    
+xnitsche_hansbo aneg apos bneg bpos lambda                     
+# xnitsche_minstab_hansbo aneg apos bneg bpos           
 #lo_ghostpenalty aneg apos one
 
-numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=bndneg -coefficient_pos=bndpos -boundary #-print
+numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=bndneg -coefficient_pos=bndpos -boundary
 
 #define preconditioner c -type=local -bilinearform=a -test #-block
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
-#define preconditioner c -type=bddc -bilinearform=a -test -block
-#define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 
 
 numproc visualization npviz -scalarfunction=u 
     -minval=0 -maxval=0.3
