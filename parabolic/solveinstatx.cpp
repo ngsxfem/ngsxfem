@@ -116,7 +116,7 @@ protected:
 
   shared_ptr<SpaceTimeXTimeDerivativeIntegrator<D> > bfidt;
   shared_ptr<SpaceTimeXLaplaceIntegrator<D> > bfilap; 
-  shared_ptr<LowOrderGhostPenaltyIntegrator<D> > bfigho;
+  shared_ptr<GhostPenaltyIntegrator<D,1> > bfigho;
   shared_ptr<SpaceTimeXNitscheIntegrator<D,NITSCHE_VARIANTS::HANSBO> > bfixnit;
   shared_ptr<SpaceTimeXConvectionIntegrator<D> > bfixconv;
   shared_ptr<SpaceTimeXTraceMassIntegrator<D,PAST> > bfitimetr;
@@ -292,7 +292,7 @@ public:
     coefs_ghostpen[3] = coef_tnew;
     coefs_ghostpen[4] = coef_delta;
 
-    bfigho = make_shared<LowOrderGhostPenaltyIntegrator<D>>(coefs_ghostpen);
+    bfigho = make_shared<GhostPenaltyIntegrator<D,1>>(coefs_ghostpen);
     if (ghostpenalty)
       bftau -> AddIntegrator (bfigho);
 

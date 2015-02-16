@@ -14,8 +14,8 @@ namespace ngfem
 {
 
 
-  template <int D>
-  class LowOrderGhostPenaltyIntegrator : public FacetBilinearFormIntegrator
+  template <int D, int difforder>
+  class GhostPenaltyIntegrator : public FacetBilinearFormIntegrator
   {
   protected:
     shared_ptr<CoefficientFunction> coef_lam_neg;
@@ -25,7 +25,7 @@ namespace ngfem
     double tau = 1.0;
     double delta = 1.0;
   public:
-    LowOrderGhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
+    GhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
       : FacetBilinearFormIntegrator(coeffs)
     { 
       coef_lam_neg  = coeffs[0];
@@ -41,14 +41,14 @@ namespace ngfem
         delta = coeffs[2]->EvaluateConst();
     }
 
-    virtual ~LowOrderGhostPenaltyIntegrator () { ; }
+    virtual ~GhostPenaltyIntegrator () { ; }
     
     virtual bool BoundaryForm () const 
     { return 0; }
     
     static Integrator * Create (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     {
-      return new LowOrderGhostPenaltyIntegrator (coeffs);
+      return new GhostPenaltyIntegrator (coeffs);
     }
 
     virtual void SetTimeInterval (const TimeInterval & ti)
@@ -59,7 +59,7 @@ namespace ngfem
                                     FlatMatrix<double> elmat,
                                     LocalHeap & lh) const
     {
-      throw Exception("LowOrderGhostPenaltyIntegrator::CalcElementMatrix - not implemented!");
+      throw Exception("GhostPenaltyIntegrator::CalcElementMatrix - not implemented!");
     }
     
     virtual void CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
