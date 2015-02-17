@@ -27,7 +27,7 @@
 // #include "../utils/stcoeff.hpp"
 
 using namespace ngsolve;
-#include "../utils/calccond.hpp"
+// #include "../utils/calccond.hpp"
 
 
 /*
@@ -66,7 +66,7 @@ protected:
   string fesstr;
 	
   bool userstepping;
-  bool calccond;
+  // bool calccond;
   bool ghostpenalty;
   bool directsolve;
   bool minimal_stabilization;
@@ -152,7 +152,7 @@ public:
     fesvis = apde->GetFESpace (fesvisstr.c_str());
 
     userstepping = flags.GetDefineFlag ("userstepping");
-    calccond = flags.GetDefineFlag ("calccond");
+    // calccond = flags.GetDefineFlag ("calccond");
     ghostpenalty = flags.GetDefineFlag ("ghostpenalty");
     directsolve = flags.GetDefineFlag ("direct");
     minimal_stabilization = flags.GetDefineFlag ("minimal_stabilization");
@@ -428,20 +428,20 @@ public:
         dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
         shared_ptr<BaseMatrix> directinvmat = NULL;
         GMRESSolver<double> * itinvmat = NULL;
-        if (calccond || directsolve)
+        if (directsolve) // || calccond)
           directinvmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace()->GetFreeDofs());
 
         if (!directsolve)
-	  {
+        {
             static Timer timer ("localprec->Update()");
             RegionTimer reg (timer);
-		
+
             localprec->Update();
             itinvmat = new GMRESSolver<double> (mata, *localprec);
             itinvmat->SetPrintRates(true);
             itinvmat->SetMaxSteps(10000);
             itinvmat->SetPrecision(1e-6);
-	  }
+        }
 
         BaseMatrix & invmat = directsolve ? *directinvmat : *itinvmat;
 
@@ -450,10 +450,10 @@ public:
         lfrhs -> Assemble(lh);
 
         const BaseVector * vecf = &(lfrhs->GetVector());
-	  
+
         BaseVector & d = *vecu.CreateVector();
         BaseVector & w = *vecu.CreateVector();
-	  
+
         d = *vecf - mata * vecu;
         w = invmat * d;
         vecu += w;
@@ -463,18 +463,18 @@ public:
         if (!directsolve)
           cout << " - number of its.: " << std::setw(4) << itinvmat->GetSteps();
         cout << flush;
-	  
-        if (calccond)
-	  {
-            static Timer timer ("CalcCond");
-            RegionTimer reg (timer);
-            outf << t << "\t";
-            CalcCond(mata,*directinvmat,gfu->GetFESpace()->GetFreeDofs(), false, false, &outf);
-            CalcCond(mata,*directinvmat,gfu->GetFESpace()->GetFreeDofs(), false, true, &outf);
-            if (!directsolve)
-              outf << itinvmat->GetSteps() << "\t";
-            outf << endl;
-	  }
+
+        // if (calccond)
+        // {
+        //   static Timer timer ("CalcCond");
+        //   RegionTimer reg (timer);
+        //   outf << t << "\t";
+        //   CalcCond(mata,*directinvmat,gfu->GetFESpace()->GetFreeDofs(), false, false, &outf);
+        //   CalcCond(mata,*directinvmat,gfu->GetFESpace()->GetFreeDofs(), false, true, &outf);
+        //   if (!directsolve)
+        //     outf << itinvmat->GetSteps() << "\t";
+        //   outf << endl;
+        // }
         // if (!directsolve)
         // {
         // 	cout << " ... " << endl;
