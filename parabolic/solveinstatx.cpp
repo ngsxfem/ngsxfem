@@ -27,6 +27,7 @@
 // #include "../utils/stcoeff.hpp"
 
 using namespace ngsolve;
+using namespace ngcomp;
 // #include "../utils/calccond.hpp"
 
 
@@ -413,7 +414,7 @@ public:
         gfu->Update();
 
         SetValuesX<D,double>( bndcoefs, ti, gfu, true, lh);
-
+        
         BaseVector & vecu = gfu->GetVector();
 
         bfilap->SetTimeInterval(ti);
@@ -428,6 +429,7 @@ public:
         dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
         shared_ptr<BaseMatrix> directinvmat = NULL;
         GMRESSolver<double> * itinvmat = NULL;
+
         if (directsolve) // || calccond)
           directinvmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(gfu->GetFESpace()->GetFreeDofs());
 
@@ -444,15 +446,15 @@ public:
         }
 
         BaseMatrix & invmat = directsolve ? *directinvmat : *itinvmat;
-
+        
         lfi_tr->SetTime(ti.first);  //absolute time
         lfi_rhs->SetTimeInterval(ti);
         lfrhs -> Assemble(lh);
 
         const BaseVector * vecf = &(lfrhs->GetVector());
 
-        BaseVector & d = *vecu.CreateVector();
-        BaseVector & w = *vecu.CreateVector();
+        AutoVector d = vecu.CreateVector();
+        AutoVector w = vecu.CreateVector();
 
         d = *vecf - mata * vecu;
         w = invmat * d;
@@ -484,7 +486,7 @@ public:
 
         // update visualization
         // delete &d;
-        delete &w;
+        // delete &w;
         // if (calccond || directsolve)
         //   delete directinvmat;
 
