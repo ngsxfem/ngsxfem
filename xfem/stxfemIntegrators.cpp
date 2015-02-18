@@ -632,7 +632,7 @@ namespace ngfem
   void SpaceTimeXSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXSourceIntegrator::CalcElementVector");
@@ -733,7 +733,7 @@ namespace ngfem
   void SpaceTimeXTraceSourceIntegrator<D,t> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXTraceSourceIntegrator::CalcElementVector");
@@ -927,7 +927,7 @@ namespace ngfem
   void SpaceTimeXNeumannIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,
 		     const ElementTransformation & eltrans, 
-		     FlatVector<double> & elvec,
+		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
     static Timer timer ("SpaceTimeXNeumannIntegrator::CalcElementVector");
