@@ -6,7 +6,7 @@ AM_CPPFLAGS = -I$(netgendir)/include $(NETGEN_INCLUDES) $(LAPACK_INCLUDES) $(TCL
 
 lib_LTLIBRARIES = libngsxfem_xstokes.la
 
-libngsxfem_xstokes_la_SOURCES =  stxstokesIntegrators.hpp stxstokesIntegrators.cpp
+libngsxfem_xstokes_la_SOURCES =  xstokesIntegrators.hpp xstokesIntegrators.cpp
 libngsxfem_xstokes_la_LIBADD = ../spacetime/libngsxfem_spacetime.la ../utils/libngsxfem_utils.la  ../cutint/libngsxfem_cutint.la ../xfem/libngsxfem_xfem.la
 libngsxfem_xstokes_la_LDFLAGS = -avoid-version -rdynamic $(SOLVER_LIBS) $(NETGEN_LIBS)
 
