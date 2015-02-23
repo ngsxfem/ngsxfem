@@ -15,8 +15,11 @@ define constant R = 0.4
 define constant one = 1.0
 
 # interface description as zero-level
+# define coefficient lset
+# ( sqrt(x*x+y*y) - R),
+
 define coefficient lset
-( sqrt(x*x+y*y) - R),
+( sqrt(x*x+2*y*y) - R),
 
 # define coefficient lset
 # ( x-0.127378 ),
@@ -28,7 +31,7 @@ define fespace fescomp_u
        -dirichlet=[1,2,3,4]
        -empty
        # -dgjumps
-       -ref_space=6
+       # -ref_space=5
 
 numproc informxfem npi_uvx 
         -xstdfespace=fescomp_u
@@ -65,7 +68,8 @@ define coefficient s
 # integration on sub domains
 define linearform f -fespace=fescomp
 #xsource one zero -comp=2
-xLBmeancurv one 
+# xLBmeancurv one # naiv Laplace-Beltrami discretization 
+xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
 xstokes one one 
@@ -82,6 +86,17 @@ define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
 
 numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 
-numproc visualization npviz -scalarfunction=u 
-    -minval=0 -maxval=1 
-    -nolineartexture -deformationscale=1 -subdivision=4
+
+define coefficient velocity ( (uvp.1, uvp.2) )
+numproc draw npd1 -coefficient=velocity -label=velocity
+
+define coefficient pressure ( (uvp.3) )
+numproc draw npd2 -coefficient=pressure -label=pressure
+
+numproc draw npd3 -coefficient=lset -label=levelset
+
+numproc visualization npviz 
+        -scalarfunction=levelset
+        # -vectorfunction=velocity
+        -minval=0 -maxval=0 
+        -nolineartexture -deformationscale=1 -subdivision=3

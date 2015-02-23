@@ -106,7 +106,6 @@ namespace ngfem
     
     int orderuv = feuv.Order();
     int orderp = fep.Order();
-
     int ps = max(orderuv-1,orderp);
 
     Mat<D*D+1> mat = 0;
@@ -123,7 +122,7 @@ namespace ngfem
 
       // (du1/dx+du2/dy, p)
       for (int d = 0; d < D; ++d)
-        mat(D*D,(D+1)*d) = mat((D+1)*d,D*D) = 1;
+        mat(D*D,(D+1)*d) = mat((D+1)*d,D*D) = -1;
 
 
       HeapReset hr(lh);

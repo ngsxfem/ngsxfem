@@ -12,16 +12,16 @@
 
 namespace ngfem
 {
-  template <int D>
+  template <int D, bool improved>
   class XLBMeanCurvIntegrator : public LinearFormIntegrator
   {
     shared_ptr<CoefficientFunction> coef;
+    shared_ptr<CoefficientFunction> coef_lset;
   public:
     XLBMeanCurvIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef(coeffs[0])
     {
-      // if (D==3)
-      //   throw Exception("Implementation only 2D for now");
+      if (improved) coef_lset=coeffs[1]; else coef_lset = NULL;
     }
     virtual ~XLBMeanCurvIntegrator(){ ; };
 
