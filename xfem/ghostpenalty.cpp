@@ -275,9 +275,9 @@ namespace ngfem
             IntegrationPoint ipr(ip2);
 
             for (int d = 0; d < D; ++d)
-              ipl(d) += eps * invjac_normal2(d);
+              ipl(d) -= eps * invjac_normal2(d);
             for (int d = 0; d < D; ++d)
-              ipr(d) -= eps * invjac_normal2(d);
+              ipr(d) += eps * invjac_normal2(d);
 
             double len = L2Norm(invjac_normal2);
 

@@ -59,9 +59,9 @@ namespace ngcomp
     bool empty = false;
   public:
     XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags): FESpace(ama, flags){;}
-    virtual ~XFESpace() = 0;
     
     void CleanUp();
+    virtual ~XFESpace(){CleanUp();};
 
     // a name for our new fe-space
     virtual string GetClassName () const
@@ -255,6 +255,9 @@ namespace ngcomp
     Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
     bool IsSpaceTime() const { return spacetime;}
     virtual string GetClassName () const { return "XStdFESpace"; }
+    void SetLevelSet(shared_ptr<GridFunction> lset_){ 
+      dynamic_pointer_cast<XFESpace>(spaces[1])->SetLevelSet(lset_);
+    };
     
   };
   
