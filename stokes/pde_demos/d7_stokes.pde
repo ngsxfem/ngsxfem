@@ -21,79 +21,59 @@ define coefficient lset
 # define coefficient lset
 # ( x-0.127378 ),
 
-
-
-define fespace fesuv
-       -type=h1ho
-       -order=2
+define fespace fescomp_u                                            
+       -type=xstdfespace                                      
+       -type_std=h1ho                                          
+       -order=2                 
        -dirichlet=[1,2,3,4]
-
-define fespace fesuvx
-       -type=xfespace
-       -ref_space=0
        -empty
-
-define fespace fesp
-       -type=h1ho
-       -order=1
-       # -dirichlet=[1,2,3,4]
-
-define fespace fespx
-       -type=xfespace
-       -ref_space=0
-       # -empty
-
-define fespace fescl 
-       -type=lsetcontfespace
+       # -dgjumps
+       -ref_space=6
 
 numproc informxfem npi_uvx 
-        -fespace=fesuv
-        -xfespace=fesuvx
-        -lsetcontfespace=fescl
+        -xstdfespace=fescomp_u
         -coef_levelset=lset
+
+
+define fespace fescomp_p                                          
+       -type=xstdfespace                                      
+       -type_std=h1ho                                          
+       -order=1                 
+       # -empty
+       # -ref_space=1                                           
 
 numproc informxfem npi_px 
-        -fespace=fesp
-        -xfespace=fespx
-        -lsetcontfespace=fescl
+        -xstdfespace=fescomp_p
         -coef_levelset=lset
-
-define fespace fescomp_u
-       -type=compound
-       -spaces=[fesuv,fesuvx]
-
-define fespace fescomp_v
-       -type=compound
-       -spaces=[fesuv,fesuvx]
-
-define fespace fescomp_p
-       -type=compound
-       -spaces=[fesp,fespx]
 
 define fespace fescomp
        -type=compound
-       -spaces=[fescomp_u,fescomp_v,fescomp_p]
+       -spaces=[fescomp_u,fescomp_u,fescomp_p]
 
 define gridfunction uvp -fespace=fescomp
 
+define constant zero = 0.0
 define constant one = 1.0
-define constant lambda = 10.0
+define constant lambda = 1000.0
+define constant delta = 1.0
 
 define coefficient s
 0,1,0,0,
 
-numproc setvaluesx npsvx -gridfunction=uvp.2 -coefficient_neg=s -coefficient_pos=s -boundary
+#numproc setvaluesx npsvx -gridfunction=uvp.2 -coefficient_neg=s -coefficient_pos=s -boundary
 
 # integration on sub domains
 define linearform f -fespace=fescomp
-# xsource s s -comp=2
-
+#xsource one zero -comp=2
+xLBmeancurv one 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
 xstokes one one 
 # xlaplace one one -comp=1
-xnitsche one one one one lambda -comp=1
-xnitsche one one one one lambda -comp=2
+# xnitsche one one one one lambda -comp=1
+# xnitsche one one one one lambda -comp=2
+# lo_ghostpenalty one one delta -comp=1
+# lo_ghostpenalty one one delta -comp=2
 # xmass one one -comp=1
 # xmass 1.0 1.0 -comp=2
 

@@ -39,25 +39,6 @@ namespace ngfem
     const XDummyFE * dummy_fepx =
       dynamic_cast<const XDummyFE *> (&fep_comp[1]);
 
-    // const CompoundFiniteElement & cfel = 
-    //   dynamic_cast<const CompoundFiniteElement&> (base_fel);
-
-    // const ScalarFiniteElement<D> & feuv =
-    //   dynamic_cast<const ScalarFiniteElement<D>&> (cfel[0]);
-
-    // const XFiniteElement * feuvx =
-    //   dynamic_cast<const XFiniteElement *> (&cfel[1]);
-    // const XDummyFE * dummy_feuvx =
-    //   dynamic_cast<const XDummyFE *> (&cfel[1]);
-
-    // const ScalarFiniteElement<D> & fep = 
-    //   dynamic_cast<const ScalarFiniteElement<D>&> (cfel[2*D]);
-
-    // const XFiniteElement * fepx =
-    //   dynamic_cast<const XFiniteElement *> (&cfel[2*D+1]);
-    // const XDummyFE * dummy_fepx =
-    //   dynamic_cast<const XDummyFE *> (&cfel[D]);
-
     /*
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
