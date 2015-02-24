@@ -11,7 +11,7 @@ shared = libngsxfem_xstokes
 
 define constant heapsize = 1e9
 
-define constant R = 0.4
+define constant R = 0.3333
 define constant one = 1.0
 
 # interface description as zero-level
@@ -19,39 +19,19 @@ define constant one = 1.0
 # ( sqrt(x*x+y*y) - R),
 
 define coefficient lset
-( sqrt(x*x+2*y*y) - R),
-
-# define coefficient lset
-# ( x-0.127378 ),
-
-define fespace fescomp_u                                            
-       -type=xstdfespace                                      
-       -type_std=h1ho                                          
-       -order=2                 
-       -dirichlet=[1,2,3,4]
-       -empty
-       # -dgjumps
-       # -ref_space=5
-
-numproc informxfem npi_uvx 
-        -xstdfespace=fescomp_u
-        -coef_levelset=lset
-
-
-define fespace fescomp_p                                          
-       -type=xstdfespace                                      
-       -type_std=h1ho                                          
-       -order=1                 
-       # -empty
-       # -ref_space=1                                           
-
-numproc informxfem npi_px 
-        -xstdfespace=fescomp_p
-        -coef_levelset=lset
+( sqrt(x*x+y*y) - R),
 
 define fespace fescomp
-       -type=compound
-       -spaces=[fescomp_u,fescomp_u,fescomp_p]
+       -type=xstokes
+       -order=1                 
+       -dirichlet_vel=[1,2,3,4]
+       -empty_vel
+       # -dgjumps
+       -ref_space=1
+
+numproc informxstokes npi_px 
+        -xstokesfespace=fescomp
+        -coef_levelset=lset
 
 define gridfunction uvp -fespace=fescomp
 
@@ -67,9 +47,9 @@ define coefficient s
 
 # integration on sub domains
 define linearform f -fespace=fescomp
-#xsource one zero -comp=2
+xsource one zero -comp=2
 # xLBmeancurv one # naiv Laplace-Beltrami discretization 
-xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
+# xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
 xstokes one one 

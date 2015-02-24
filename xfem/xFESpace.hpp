@@ -258,6 +258,10 @@ namespace ngcomp
     void SetLevelSet(shared_ptr<GridFunction> lset_){ 
       dynamic_pointer_cast<XFESpace>(spaces[1])->SetLevelSet(lset_);
     };
+    void SetLevelSet(shared_ptr<CoefficientFunction> lset_){ 
+      dynamic_pointer_cast<XFESpace>(spaces[1])->SetLevelSet(lset_);
+    };
+
     
   };
   

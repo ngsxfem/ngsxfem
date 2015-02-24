@@ -1,5 +1,5 @@
-#ifndef FILE_SPACETIMESTOKESINTEGRATORS_HPP
-#define FILE_SPACETIMESTOKESINTEGRATORS_HPP
+#ifndef FILE_XSTOKESINTEGRATORS_HPP
+#define FILE_XSTOKESINTEGRATORS_HPP
 
 /// from ngsolve
 #include <fem.hpp>   // for ScalarFiniteElement

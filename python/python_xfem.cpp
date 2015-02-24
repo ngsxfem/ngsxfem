@@ -27,12 +27,21 @@ void ExportNgsx()
     .def("SetLevelSet", FunctionPointer ([](XFESpace & self, shared_ptr<GridFunction> gf) 
                                          { self.SetLevelSet(gf); }),
          "Update information on level set function")
+    .def("SetBaseFESpace", FunctionPointer ([](XFESpace & self, shared_ptr<FESpace> fes) 
+                                         { self.SetBaseFESpace(fes); }),
+         "Update information on base FESpace")
     ;
+
+  bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
+  bp::def("CastToXFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XFESpace>(fes); } ) );
+
+  // bp::def("CastToFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<FESpace>(fes); } ) );
+
 
   bp::class_<XStdFESpace, shared_ptr<XStdFESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
     ("XStdFESpace", bp::no_init)
     .add_property("XFESpace", FunctionPointer ([](XStdFESpace & self) 
-                                               { return self[1]; }
+                                               { return dynamic_pointer_cast<XFESpace> (self[1]); }
                     ),
          // bp::return_value_policy<bp::reference_existing_object>(),
          "return XFESpace part of XStdFESpace")

@@ -857,6 +857,7 @@ namespace ngcomp
       else
         spacetime = false;
 
+    dynamic_pointer_cast<XFESpace>(spaces[1])->SetBaseFESpace(spaces[0]);
 
     shared_ptr<ConstantCoefficientFunction> one = make_shared<ConstantCoefficientFunction>(1);
     if (ma->GetDimension() == 2)
