@@ -2,6 +2,7 @@
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
+#include "../stokes/xstokesspace.hpp"
 
 //using namespace ngcomp;
 
@@ -18,6 +19,26 @@ void ExportNgsx()
   parent.attr("xfem") = module ;
 
   bp::scope local_scope(module);
+
+
+  bp::def("CastToXStokesFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStokesFESpace>(fes); } ) );
+
+  bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
+
+  // bp::implicitly_convertible 
+  //   <shared_ptr<GridFunctionCoefficientFunction>, 
+  //   shared_ptr<CoefficientFunction> >(); 
+
+  bp::class_<XStokesFESpace, shared_ptr<XStokesFESpace>, bp::bases<FESpace>, boost::noncopyable>
+    ("XStokesFESpace", bp::no_init)
+    .def("SetLevelSet", FunctionPointer ([](XStokesFESpace & self, shared_ptr<CoefficientFunction> cf) 
+                                         { self.SetLevelSet(cf); }),
+         "Update information on level set function")
+    .def("SetLevelSet", FunctionPointer ([](XStokesFESpace & self, shared_ptr<GridFunction> gf) 
+                                         { self.SetLevelSet(gf); }),
+         "Update information on level set function")
+    ;
+
 
   bp::class_<XFESpace, shared_ptr<XFESpace>, bp::bases<FESpace>, boost::noncopyable>
     ("XFESpace", bp::no_init)
