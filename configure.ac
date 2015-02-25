@@ -51,7 +51,7 @@ AC_ARG_ENABLE([python],
 AC_SUBST([NETGEN_INCLUDES], ["-I$netgendir/include"])
 AC_SUBST([NETGEN_LIBS], ["-L$netgendir/lib -lngsolve"])
 
-AC_CONFIG_HEADERS(config.h) AC_CONFIG_FILES(Makefile utils/Makefile spacetime/Makefile cutint/Makefile parabolic/Makefile xfem/Makefile stokes/Makefile pde_tutorial/Makefile pde_experimental/Makefile python/Makefile)
+AC_CONFIG_HEADERS(config.h) AC_CONFIG_FILES(Makefile utils/Makefile spacetime/Makefile cutint/Makefile parabolic/Makefile xfem/Makefile meancurvflow/Makefile stokes/Makefile pde_tutorial/Makefile pde_experimental/Makefile python/Makefile)
 
 AC_OUTPUT
 
