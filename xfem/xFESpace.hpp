@@ -2,8 +2,8 @@
 #define FILE_XFESPACE_HPP
 
 /// from ngsolve
-#include <solve.hpp>    // provides FESpace, ...
-#include <comp.hpp>    // provides FESpace, ...
+#include <solve.hpp>
+#include <comp.hpp>
 #include <fem.hpp>
 
 /// from ngxfem

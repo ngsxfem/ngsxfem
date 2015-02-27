@@ -138,11 +138,11 @@ namespace ngcomp
   T_XFESpace<D,SD> :: T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags)
     : XFESpace (ama, flags)
   {
-    cout << "Constructor of XFESpace begin" << endl;
+    // cout << "Constructor of XFESpace begin" << endl;
     spacetime = flags.GetDefineFlag("spacetime");
     empty = flags.GetDefineFlag("empty");
-    if (empty)
-        cout << " EMPTY XFESPACE active..." << endl;
+    // if (empty)
+    //     cout << " EMPTY XFESPACE active..." << endl;
     ti.first = flags.GetNumFlag("t0",0.0);
     ti.second = flags.GetNumFlag("t1",1.0);
 
@@ -151,8 +151,8 @@ namespace ngcomp
     ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
     ref_lvl_time = (int) flags.GetNumFlag("ref_time",0);
 
-    std::cout << " ref_lvl_space = " << ref_lvl_space << std::endl;
-    std::cout << " ref_lvl_time = " << ref_lvl_time << std::endl;
+    // std::cout << " ref_lvl_space = " << ref_lvl_space << std::endl;
+    // std::cout << " ref_lvl_time = " << ref_lvl_time << std::endl;
 
     // string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
     // eval_lset = make_shared<EvalFunction>(eval_lset_str);
@@ -166,7 +166,7 @@ namespace ngcomp
     // boundary_integrator = new RobinIntegrator<2> (&one);
     */
 
-    cout << "Constructor of XFESpace end" << endl;
+    // cout << "Constructor of XFESpace end" << endl;
     // static ConstantCoefficientFunction one(1);
     // integrator = new MassIntegrator<D> (&one);
   }
