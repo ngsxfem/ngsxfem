@@ -900,6 +900,28 @@ namespace xintegration
     void CutSimplex<3,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <3> & s, 
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
     { 
+
+      // {
+      //   std::cout << "\n\n\n repeat inner <D=3> " << std::endl;
+
+      //   for (int j = 0; j < 3+1; ++j)
+      //   {
+      //     Vec<3> test = *(s.p[j]);
+      //     // test[2] = 0.0;
+      //     std::cout << " (*numint.lset)(*(s.p[" << j << "])) = " << (*numint.lset)(test) << std::endl;
+      //   }
+      //   std::cout << " repeat again inner <D=3> \n \n " << std::endl;
+
+      //   for (int j = 0; j < 3+1; ++j)
+      //   {
+      //     Vec<3> test = *(s.p[j]);
+      //     // test[2] = 0.0;
+      //     std::cout << " (*numint.lset)(*(s.p[" << j << "])) = " << (*numint.lset)(test) << std::endl;
+      //   }
+      //   std::cout << " \n\n\n " << std::endl;
+
+      // }
+
       static Timer timer ("CutSimplex<3>::MakeQuad");
       RegionTimer reg (timer);
 
@@ -937,6 +959,11 @@ namespace xintegration
               
       double vvals[4];
       bool zero[4];
+
+
+      // cout << "\n\n\n vvals = \n";
+      // for (int l = 0; l < 4; ++l)
+      //   cout << l << ":" << (*numint.lset)(*(s.p[l])) << endl;
               
       timer1.Start();
       for (int j = 0; j < 4; ++j)
@@ -986,7 +1013,8 @@ namespace xintegration
           const double cutpos = valleft / (valleft - valright);
           // std::cout << " cutpos = " << cutpos << std::endl;
           Vec<SD> p = (1-cutpos) * *(s.p[lv]) + cutpos * *(s.p[rv]) ;
-          cutpoints[ncutpoints++] = numint.pc(p);
+          cutpoints[ncutpoints] = numint.pc(p);
+          ncutpoints++;
           // collect connectivity of cut and vertices
           if (v2cut_1[lv] == -1)
             v2cut_1[lv] = cntcuts;
@@ -1420,6 +1448,18 @@ namespace xintegration
   {
     static Timer timer ("MakeQuadRuleOnCutSimplex");
     RegionTimer reg (timer);
+    // std::cout << " from here MakeQuadRuleOnCutSimplex "<< D << " " << ET_SPACE << " " << ET_TIME  << std::endl;
+    // std::cout << " simplex s = " << s << std::endl;
+    // if (D==3)
+    // {
+
+    //   for (int j = 0; j < D+1; ++j)
+    //     std::cout << " (*numint.lset)(*(s.p[" << j << "])) = " << (*numint.lset)(*(s.p[j])) << std::endl;
+    //   std::cout << " repeat ... " << std::endl;
+
+    //   for (int j = 0; j < D+1; ++j)
+    //     std::cout << " (*numint.lset)(*(s.p[" << j << "])) = " << (*numint.lset)(*(s.p[j])) << std::endl;
+    // }
     DecompositionRules::CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(s,numint);
   }
 

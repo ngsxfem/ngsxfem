@@ -13,9 +13,9 @@ echo "# ---"  > out.stdmesh.err
 #PDE_TEMPLATE="stdmesh_test.pde.template"
 PDE_TEMPLATE="roundedsquare.pde.template"
 
-LAM=2
+LAM=10
 ANEG=1024
-STEPPOS=2
+STEPPOS=1
 #***A***
 POS=0
 #***B***
@@ -24,8 +24,8 @@ POS=0
 # POS=370500
 
 #***A***
-LOW=3814
-UP=8000
+LOW=10
+UP=100
 POS=$LOW
 #***B***
 # LOW=1

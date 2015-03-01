@@ -325,10 +325,14 @@ namespace ngfem
       MappedIntegrationPoint<2,D> mip(ip, eltrans);
       DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
       mipp.Point().Range(0,D) = mip.GetPoint();
+      // mipp.Point()[D] = (1.0-point(2)) * ti.first + point(2) * ti.second;
       mipp.Point()[D] = (1.0-point(2)) * ti.first + point(2) * ti.second;
       // std::cout << " mipp.Point() = " << mipp.Point() << std::endl;
       // std::cout << " eval.Evaluate(mipp) = " << eval.Evaluate(mipp) << std::endl;
-      return eval.Evaluate(mipp);
+      double res = eval.Evaluate(mipp);
+      std::cout << " res = " << res << std::endl;
+
+      return res;
     }
 
     virtual double operator()(const Vec<4>& point) const

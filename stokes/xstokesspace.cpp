@@ -1,7 +1,64 @@
 #include "xstokesspace.hpp"
+#include "xfemVisInts.hpp"
 
 namespace ngcomp
 {
+
+
+/*
+  Evaluate (u_x, u_y) 
+*/
+  class DiffOpIdU : public DiffOp<DiffOpIdU>
+  {
+    // 2 components:
+    // u1 u2
+
+  public:
+    enum { DIM = 1 };
+    enum { DIM_SPACE = 2 };
+    enum { DIM_ELEMENT = 2 };
+    enum { DIM_DMAT = 2 };
+    enum { DIFFORDER = 0 };
+  
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                MAT & mat, LocalHeap & lh)
+    {
+      const CompoundFiniteElement & cfela = 
+        dynamic_cast<const CompoundFiniteElement&> (bfel);
+      const CompoundFiniteElement & cfel = 
+        dynamic_cast<const CompoundFiniteElement&> (cfela[0]);
+      const ScalarFiniteElement<2> & fel_u = 
+        dynamic_cast<const ScalarFiniteElement<2>&> (cfel[0]);
+    
+      int nd_u = fel_u.GetNDof();
+
+      FlatVector<> vecu(nd_u, lh);
+      fel_u.CalcShape (mip.IP(), vecu);
+
+      mat = 0;
+      mat.Row(0).Range(cfela.GetRange(0)) = vecu;
+      mat.Row(1).Range(cfela.GetRange(1)) = vecu;
+    }
+  };
+
+
+  class StokesUIntegrator 
+    : public T_BDBIntegrator<DiffOpIdU, DiagDMat<2>, FiniteElement>
+  {
+  public:
+    ///
+    StokesUIntegrator (const Array<shared_ptr<CoefficientFunction>> & /* coeffs */)
+      :  T_BDBIntegrator<DiffOpIdU, DiagDMat<2>, FiniteElement>
+         (DiagDMat<2> (make_shared<ConstantCoefficientFunction>(1)))
+    { ; }
+
+    ///
+    virtual string Name () const { return "Stokes IdU"; }
+  };
+
+
+
 
   XStokesFESpace::XStokesFESpace   (shared_ptr<MeshAccess> ama, 		   
                                     const Flags & flags)
@@ -112,18 +169,22 @@ namespace ngcomp
 
     AddSpace (XStdFESpace::Create(ma, pflags));
 
-    // shared_ptr<ConstantCoefficientFunction> one = make_shared<ConstantCoefficientFunction>(1);
-    // if (ma->GetDimension() == 2)
-    // {
-    //   integrator = make_shared<MassVecHDGIntegrator<2>> (one);
-    //   // boundary_integrator = new RobinIntegrator<2> (&one);
-    // }
-    // else
-    // {
-    //   integrator = make_shared<MassVecHDGIntegrator<3>> (one);
-    //   evaluator = make_shared<T_DifferentialOperator<DiffOpVecIdHDG<3>>>();
-    //   boundary_integrator = make_shared<RobinVecHDGIntegrator<3>>(one);
-    // }
+    shared_ptr<CoefficientFunction> one = make_shared<ConstantCoefficientFunction>(1);
+    Array<shared_ptr<CoefficientFunction>> arr(1); arr[0] = one;
+    if (ma->GetDimension() == 2)
+    {
+      integrator = make_shared< StokesUIntegrator> (arr);
+      //   integrator = make_shared<MassVecHDGIntegrator<2>> (one);
+      //   // boundary_integrator = new RobinIntegrator<2> (&one);
+    }
+    else
+    {
+      shared_ptr<BilinearFormIntegrator> integrator_inner 
+        = make_shared<XVisIntegrator<3>>(one) ;
+      integrator = make_shared< CompoundBilinearFormIntegrator> (integrator_inner, 2);      //   integrator = make_shared<MassVecHDGIntegrator<3>> (one);
+      //   evaluator = make_shared<T_DifferentialOperator<DiffOpVecIdHDG<3>>>();
+      //   boundary_integrator = make_shared<RobinVecHDGIntegrator<3>>(one);
+    }
   }
 
   static RegisterFESpace<XStokesFESpace> initxstokes ("xstokes");

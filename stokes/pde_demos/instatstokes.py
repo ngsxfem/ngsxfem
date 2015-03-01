@@ -30,7 +30,7 @@ solver_params_water_butanol_default ={ "lsetorder" : 2,
                                        "dt" : 0.0001, 
                                        "timesteps" : 200,
                                        "relvelx" : 0,
-                                       "relvely" : -0.1,
+                                       "relvely" : -0.65,
                                        "initial_cond" : "zero"
                                      }
 
@@ -41,14 +41,15 @@ class Levelset:
         self.fes = FESpace ("HDG", mesh, order=order,
                             flags = {"dirichlet" : [1,2,3,4]} )
         self.fes.Update()
-        self.gf = GridFunction(self.fes)
+        self.gf = GridFunction(self.fes,"levelset(disc.)")
         self.gf.Update()
         self.gf.components[0].Set(init_lset)
+        self.gf.components[1].Set(init_lset, boundary=True)
         self.coef = GFCoeff(self.gf)
 
         self.cont_fes = FESpace ("h1ho", mesh, order=order)
         self.cont_fes.Update()
-        self.cont_gf = GridFunction(self.cont_fes)
+        self.cont_gf = GridFunction(self.cont_fes,"levelset(cont.)")
         self.cont_gf.Update()
         self.cont_gf.Set(init_lset)
         self.cont_coef = GFCoeff(self.cont_gf)
@@ -57,7 +58,6 @@ class VelocityPressure:
     def __init__(self, mesh, lset,
                  init_vals=[ConstantCF(0), ConstantCF(0)], 
                  dirichlet_vel = [1,2,3,4],
-                 dirichlet_vel_vals = [ConstantCF(0),ConstantCF(0)],
                  ref_space = 1,
                  order=1):
         self.fes = FESpace ("xstokes", mesh=mesh, order=order, 
@@ -67,19 +67,22 @@ class VelocityPressure:
         CastToXStokesFESpace(self.fes).SetLevelSet(lset.cont_coef)
         self.fes.Update()
 
-        self.gf = GridFunction(self.fes)
+        self.gf = GridFunction(self.fes,"velocity-pressure")
         self.gf.Update()
+        # self.gf.components[0].Visualize("velocity(x)")
+        # self.gf.components[1].Visualize("velocity(y)")
+        self.gf.components[2].Visualize("pressure")
 
         self.gf.components[0].components[0].Set(coefficient = init_vals[0], boundary = False)
         self.gf.components[1].components[0].Set(coefficient = init_vals[1], boundary = False)
 
-        self.gf.components[0].components[0].Set(coefficient = dirichlet_vel_vals[0], boundary = True)
-        self.gf.components[1].components[0].Set(coefficient = dirichlet_vel_vals[1], boundary = True)
+        # self.gf.components[0].components[0].Set(coefficient = dirichlet_vel_vals[0], boundary = True)
+        # self.gf.components[1].components[0].Set(coefficient = dirichlet_vel_vals[1], boundary = True)
 
         self.coef = [GFCoeff(self.gf.components[0]), GFCoeff(self.gf.components[1])]
     
 class LevelsetSolver:
-    def __init__(self, lset, velpre, dt):
+    def __init__(self, lset, velpre, dt, relvelx = 0.0, relvely = 0.0):
         self.dt = dt
         self.lset = lset 
 
@@ -94,6 +97,12 @@ class LevelsetSolver:
         self.a.Add (bfi_block)
 
         self.a.Add (BFI (name = "HDG_convection", dim = 2, coef = velpre.coef))
+        if (relvelx != 0 or relvely != 0):
+            self.relvel = True
+            self.a.Add (BFI (name = "HDG_convection", dim = 2, 
+                             coef = [ConstantCF(relvelx), ConstantCF(relvely)]))
+        else:
+            self.relvel = False
         
         self.c = Preconditioner (self.a, "direct", { "inverse" : "pardiso" })
 
@@ -118,7 +127,18 @@ class LevelsetSolver:
     def Solve(self, printrates = False, printrates_proj = False):
         self.c.Update()
         solver = CGSolver (self.a.mat, self.c.mat, printrates=printrates)
-        self.lset.gf.vec.data = 1.0/self.dt * solver * self.f.vec
+
+        if (self.relvel):
+            tmp = self.lset.gf.vec.CreateVector()
+            tmp2 = self.lset.gf.vec.CreateVector()
+            tmp.data = 1.0/self.dt * self.f.vec.data
+            tmp.data = tmp.data - self.a.mat *  self.lset.gf.vec.data
+            tmp2.data = 0.0 * tmp2.data
+            tmp2.data = solver * tmp.data
+            self.lset.gf.vec.data = self.lset.gf.vec.data + tmp2.data
+        else:
+            self.lset.gf.vec.data = 1.0/self.dt * solver * self.f.vec
+
         self.proj_f.Assemble()
         solver_proj = CGSolver (self.proj_a.mat, self.proj_c.mat, printrates=printrates_proj)
         self.lset.cont_gf.vec.data = solver_proj * self.proj_f.vec
@@ -194,54 +214,53 @@ class StokesSolver:
         else:
             self.velpre.gf.vec.data = solver * self.f.vec.data
         
+       
+def DoInstatStokes():
+    print ("solve instationary stokes problem")
+    
+    matparams = material_params_water_butanol
+    solverparams = solver_params_water_butanol_default
+
+    mesh = Mesh("d9_stokes.vol.gz")
+    coef_initial_lset = VariableCF("( sqrt((x-0.0)*(x-0.0)+(y-0.0)*(y-0.0)) - 0.0036)")
+
+    lset = Levelset(mesh = mesh, init_lset = coef_initial_lset, 
+                    order = solverparams["lsetorder"])
+    velpre = VelocityPressure(mesh, lset, dirichlet_vel=[1,2,3,4], 
+                              ref_space=solverparams["ref_space"], 
+                              order=solverparams["velorder"]-1)
+
+    lset_solver = LevelsetSolver(lset,velpre,dt=solverparams["dt"],
+                                 relvelx=solverparams["relvelx"],
+                                 relvely=solverparams["relvely"])
+
+    if (solverparams["initial_cond"] == "stokes"):
+        init_stokes_solver = StokesSolver(velpre,lset,dt=solverparams["dt"], initial = True)
+
+        init_stokes_solver.Update()
+        init_stokes_solver.Solve()
+
+        print("after initial stokes solve")
+
+    stokes_solver = StokesSolver(velpre,lset,params=matparams,dt=solverparams["dt"])
+
+    print("before time loop - waiting for input(press enter) to start..")
+    input()
+
+    for i in range(1,solverparams["timesteps"]+1):
+        lset_solver.Update()
+        lset_solver.Solve()
+        stokes_solver.Update()
+        stokes_solver.Solve()
+
+        Redraw(blocking=True)
+    
+        print ('\rtime step ' + repr(i) + ' / ' + repr(solverparams["timesteps"]) + ' done. (ndof: ' + repr(velpre.fes.ndof) +')', end='');
+    print("simulation finished")
+    input()
+
 class npInstatStokes(PyNumProc):
-
     def Do(self, heap):
+        DoInstatStokes()
         
-        print ("solve instationary stokes problem")
-        
-        matparams = material_params_water_butanol
-        solverparams = solver_params_water_butanol_default
-
-        pde = self.pde
-        mesh = pde.Mesh()
-        coef_initial_lset = pde.coefficients["initial_lset"]
-
-        lset = Levelset(mesh = mesh, init_lset = coef_initial_lset, 
-                        order = solverparams["lsetorder"])
-        velpre = VelocityPressure(mesh, lset, dirichlet_vel=[1,2,3,4], 
-                                  dirichlet_vel_vals = [ConstantCF(solverparams["relvelx"]),
-                                                        ConstantCF(solverparams["relvely"])],
-                                  ref_space=solverparams["ref_space"], 
-                                  order=solverparams["velorder"]-1)
-
-        lset_solver = LevelsetSolver(lset,velpre,dt=solverparams["dt"])
-
-        if (solverparams["initial_cond"] == "stokes"):
-            init_stokes_solver = StokesSolver(velpre,lset,dt=solverparams["dt"], initial = True)
-
-            init_stokes_solver.Update()
-            init_stokes_solver.Solve()
-
-            print("after initial stokes solve")
-
-        stokes_solver = StokesSolver(velpre,lset,params=matparams,dt=solverparams["dt"])
-
-        print("before time loop - waiting for input(press enter) to start..")
-        input()
-
-        for i in range(1,solverparams["timesteps"]+1):
-            lset_solver.Update()
-            lset_solver.Solve()
-            stokes_solver.Update()
-            stokes_solver.Solve()
-
-            Redraw(blocking=True)
-        
-            print ('\rtime step ' + repr(i) + ' / ' + repr(solverparams["timesteps"]) + ' done. (ndof: ' + repr(velpre.fes.ndof) +')', end='');
-
-        print("simulation finished")
-        input()
-
-
         

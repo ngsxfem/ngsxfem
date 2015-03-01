@@ -59,6 +59,9 @@ define coefficient bndpos
 0,
 #(bpos*0.1*sin(10*pi*z)*exp(-50*(x-z)*(x-z))),
 
+define coefficient coef_lset
+((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
+
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
@@ -68,33 +71,30 @@ define fespace fesh1
 #       -gaussradau
        # -dgjumps
 
-define coefficient coef_lset
-((x-z*(wx)-x0)*(x-z*(wx)-x0)+(y-z*(wy)-y0)*(y-z*(wy)-y0)-R*R),
-
-define fespace fescomp
-       -type=xstdfespace
-       -spacetime 
-       -type_space=h1ho
-       -order_space=1
-       -order_time=1
-       -t0=0.0
-       -t1=0.01
-       -dirichlet=[1,2]
-       -vmax=1.0
-       -ref_space=0
-       -ref_time=0
+# define fespace fescomp
+#        -type=xstdfespace
+#        -spacetime 
+#        -type_space=h1ho
+#        -order_space=1
+#        -order_time=1
+#        -t0=0.0
+#        -t1=0.01
+#        -dirichlet=[1,2]
+#        -vmax=1.0
+#        -ref_space=0
+#        -ref_time=0
 #       -gaussradau
        # -dgjumps
 
-numproc informxfem npix 
-        -xstdfespace=fescomp
-        -coef_levelset=coef_lset
+# numproc informxfem npix 
+#         -xstdfespace=fescomp
+#         -coef_levelset=coef_lset
 
 define fespace fesx
        -type=xfespace
        -spacetime
-       -t0=0.0
-       -t1=0.01
+       # -t0=0.0
+       # -t1=0.01
        #-levelset=(x-y+z-0.375)
        #-levelset=((x-0.1*z-0.4)*(x-0.1*z-0.4)+(y-0.1*z-0.4)*(y-0.1*z-0.4)-0.04)
        -vmax=0.1
@@ -115,6 +115,11 @@ numproc informxfem npix
         -xfespace=fesx
         -lsetcontfespace=fescl
         -coef_levelset=coef_lset
+
+define fespace fescomp
+       -type=compound
+       -spaces=[fesh1,fesx]
+#       -dgjumps
 
 # define fespace fescomp2
 #        -type=compound
@@ -144,8 +149,9 @@ numproc stx_solveinstat npsi
         -fespace=fescomp
         -fespacevis=fesnegpos
         -dt=0.001
+        -tstart=0.0
         -tend=2.0
-        -userstepping
+        # -userstepping
         -aneg=0.2
         -apos=0.1
         -bneg=1.0
@@ -154,7 +160,8 @@ numproc stx_solveinstat npsi
         # -pause_after_step=1
         -solution_n=zero
         -solution_p=zero
-        #-direct
+        -levelset=coef_lset
+        -direct
         # -ghostpenalty
 #        -delta=0.005
 #      -minimal_stabilization

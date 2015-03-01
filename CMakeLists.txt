@@ -51,6 +51,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config.h DESTINATION include)
 
 add_subdirectory(cutint)
 add_subdirectory(meancurvflow)
+add_subdirectory(reparam)
 add_subdirectory(parabolic)
 add_subdirectory(python)
 add_subdirectory(spacetime)

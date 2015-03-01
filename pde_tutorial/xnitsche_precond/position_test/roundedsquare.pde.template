@@ -3,8 +3,8 @@
 geometry = d1a_nitsche.in2d
 
 # and mesh
-#mesh = d2a_nitsche_reg2.vol.gz
-mesh = d2a_nitsche_unstr3.vol.gz
+mesh = d2a_nitsche_reg3.vol.gz
+#mesh = d2a_nitsche_unstr3.vol.gz
 
 shared = libngsxfem_xfem
 
@@ -15,16 +15,16 @@ define constant one = 1.0
 define constant two = 2.0
 
 #sliver case
-# define constant eps1 = (1.0/exp(0.5*log(2)*var))
+define constant eps1 = (1.0/exp(0.5*log(2)*var))
 
-# define constant x0 = (0.5+eps1)
-# define constant y0 = (0.5+eps1)
+define constant x0 = (0.5+eps1)
+define constant y0 = (0.5+eps1)
 
 #shifting case
-define constant shift = (var/100000)
+# define constant shift = (var/100000)
 
-define constant x0 = (0.46+shift)
-define constant y0 = (0.5)
+# define constant x0 = (0.46+shift)
+# define constant y0 = (0.5)
 
 define constant bneg = 2.0
 define constant bpos = 1.0
@@ -99,14 +99,15 @@ define gridfunction ulset -fespace=fesl2
 numproc setvalues npslset -gridfunction=ulset -coefficient=lset #-boundary
 
 define fespace fescomp
-       -type=xh1fespace
-       -order=1
+       -type=xstdfespace
+       -type_std=h1ho
+       -order=2
        -dirichlet=[1,2]
 #       -empty
-#       -dgjumps
+       -dgjumps
 
 numproc informxfem npix 
-        -xh1fespace=fescomp
+        -xstdfespace=fescomp
         -coef_levelset=lset
 
 define gridfunction u -fespace=fescomp
@@ -114,7 +115,8 @@ define gridfunction u -fespace=fescomp
 define linearform f -fespace=fescomp # -print
 xsource bneg zero
 
-define constant small = 0.025
+define constant small1 = 0.01
+define constant small2 = 0.1
 
 define bilinearform a -fespace=fescomp #-symmetric #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
 #xmass one one
@@ -123,19 +125,20 @@ define bilinearform a -fespace=fescomp #-symmetric #-eliminate_internal -keep_in
 xlaplace aobneg aobpos
 xnitsche_halfhalf aobneg aobpos one one lambda
 
-# xlaplace abneg abpos
+#xlaplace abneg abpos
 # xnitsche_halfhalf aneg apos bneg bpos lambda
 
 #xnitsche_minstab_alphabeta aneg apos bneg bpos
 #xnitsche_hansbo aneg apos bneg bpos lambda
-#lo_ghostpenalty aneg apos small
+lo_ghostpenalty aobneg aobpos small1
+#sec_ghostpenalty aobneg aobpos small2
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=two -coefficient_pos=zero -boundary -print
 
 # define preconditioner c1 -type=bddc -bilinearform=a -lapacktest -skip_largest=0 
 # define preconditioner c2 -type=bddc -bilinearform=a -block -lapacktest -skip_largest=0
 # define preconditioner c3 -type=local -bilinearform=a -block -lapacktest -skip_smallest=0
-define preconditioner c4 -type=local -bilinearform=a -lapacktest -skip_smallest=0 
+define preconditioner c4 -type=local -bilinearform=a -test #-lapacktest -skip_smallest=0 
 
 #define preconditioner c -type=direct -bilinearform=a -test
 

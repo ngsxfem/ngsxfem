@@ -88,15 +88,17 @@ define coefficient brhspos
       )
 ),
 
+
+define coefficient coef_lset
+(abs(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))-R),
+
+
 define fespace fesh1
        -type=spacetimefes 
        -type_space=h1ho
        -order_space=1
        -order_time=1
        -dirichlet=[2,4]
-
-define coefficient coef_lset
-(abs(x-(0.25/pi*sin(2*pi*z))-(7.0/8.0+0.25*y*y*(2-y)*(2-y)))-R),
 
 define fespace fesx
        -type=xfespace
