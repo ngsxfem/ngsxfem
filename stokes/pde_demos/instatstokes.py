@@ -4,7 +4,6 @@ from ngsolve.solve import *
 from ngsolve.ngstd import *
 from ngsolve.la import *
 
-
 #import numpy as np
 
 from math import sqrt
@@ -13,6 +12,10 @@ from time import sleep
 
 #import libngsxfem_py.xfem as xfem                                 
 from libngsxfem_py.xfem import *
+
+#from libngsxfem_xfem import *
+#from libngsxfem_xstokes import *
+#from libngsxfem_levelset import *
 
 material_params_artificial ={"eta" : [1,1], 
                              "rho" : [0.1,0], 
@@ -24,14 +27,15 @@ material_params_water_butanol = {"eta" : [0.001388,0.003281],
                                  "g" : 9.81, 
                                  "sigma" : 0.00163}
 
-solver_params_water_butanol_default ={ "lsetorder" : 2,
+solver_params_water_butanol_default ={ "lsetorder" : 1,
                                        "velorder" : 2, 
                                        "ref_space" : 1, 
                                        "dt" : 0.0001, 
                                        "timesteps" : 200,
                                        "relvelx" : 0,
                                        "relvely" : -0.65,
-                                       "initial_cond" : "zero"
+                                       "gradrepair" : False,
+                                       "initial_cond" : "stokes"
                                      }
 
 
@@ -82,14 +86,18 @@ class VelocityPressure:
         self.coef = [GFCoeff(self.gf.components[0]), GFCoeff(self.gf.components[1])]
     
 class LevelsetSolver:
-    def __init__(self, lset, velpre, dt, relvelx = 0.0, relvely = 0.0):
+    def __init__(self, lset, velpre, dt, relvelx = 0.0, relvely = 0.0, gradrepair = False):
         self.dt = dt
         self.lset = lset 
-
+        self.gradrepair = gradrepair
         self.f = LinearForm (lset.fes)
         lfi_inner = LFI (name = "source", dim = 2,  coef = [GFCoeff(lset.gf)])
         lfi_block = CompoundLFI ( lfi = lfi_inner, comp = 0 )
         self.f.Add (lfi_block)
+
+        if (self.gradrepair):
+            self.g = LinearForm (lset.fes)
+            self.g.Add (LFI (name = "lsetcorr", dim = 2, coef = [GFCoeff(lset.gf),velpre.coef[0],velpre.coef[1]]))
         
         self.a = BilinearForm (lset.fes, flags = { "symmetric" : False })
         bfi_inner = BFI (name = "mass", dim = 2,  coef = [ConstantCF(1.0/self.dt)])
@@ -103,14 +111,15 @@ class LevelsetSolver:
                              coef = [ConstantCF(relvelx), ConstantCF(relvely)]))
         else:
             self.relvel = False
-        
+
+      
         self.c = Preconditioner (self.a, "direct", { "inverse" : "pardiso" })
 
         # lset project: definition of (bi-) and linear forms
 
         self.proj_f = LinearForm (lset.cont_fes)
         self.proj_f.Add (LFI (name = "source", dim = 2,  coef = [GFCoeff(lset.gf)]))
-        
+
         self.proj_a = BilinearForm (lset.cont_fes, flags = { "symmetric" : True })
         self.proj_a.Add (BFI (name = "mass", dim = 2,  coef = [ConstantCF(1)]))
 
@@ -119,9 +128,10 @@ class LevelsetSolver:
         self.proj_a.Assemble()
         self.proj_c.Update()
 
-    def Update(self, keep_old = False):
-        if (keep_old == False):
-            self.f.Assemble()
+    def Update(self):
+        self.f.Assemble()
+        if (self.gradrepair):
+            self.g.Assemble()
         self.a.Assemble()
 
     def Solve(self, printrates = False, printrates_proj = False):
@@ -132,12 +142,19 @@ class LevelsetSolver:
             tmp = self.lset.gf.vec.CreateVector()
             tmp2 = self.lset.gf.vec.CreateVector()
             tmp.data = 1.0/self.dt * self.f.vec.data
+            if (self.gradrepair):
+                tmp.data += self.g.vec.data
             tmp.data = tmp.data - self.a.mat *  self.lset.gf.vec.data
             tmp2.data = 0.0 * tmp2.data
             tmp2.data = solver * tmp.data
             self.lset.gf.vec.data = self.lset.gf.vec.data + tmp2.data
         else:
-            self.lset.gf.vec.data = 1.0/self.dt * solver * self.f.vec
+            if (self.gradrepair):
+                rhs = self.lset.gf.vec.CreateVector()
+                rhs.data = ((1.0/self.dt * self.f.vec.data) + self.g.vec.data)
+                self.lset.gf.vec.data = solver * rhs.data
+            else:
+                self.lset.gf.vec.data = 1.0/self.dt * solver * self.f.vec
 
         self.proj_f.Assemble()
         solver_proj = CGSolver (self.proj_a.mat, self.proj_c.mat, printrates=printrates_proj)
@@ -161,7 +178,7 @@ class StokesSolver:
 
         self.a = BilinearForm (self.velpre.fes, flags = { "symmetric" : True })
         self.a.Add (BFI (name = "xstokes", dim = 2, coef = [ConstantCF(params["eta"][0]), 
-                                                       ConstantCF(params["eta"][1])]))
+                                                            ConstantCF(params["eta"][1])]))
         self.c = Preconditioner (self.a, "direct", { "inverse" : "pardiso" })
 
 
@@ -189,7 +206,7 @@ class StokesSolver:
             bfi_block_y = CompoundBFI (bfi = bfi_inner_y, comp = 1 )
             self.a.Add (bfi_block_y)
 
-    def Update(self, keep_old = False):
+    def Update(self):
         self.velpre.fes.Update()
         # the order of the following operations is important as ....gf.Update() empties the vector if dimension has changed...
         if (self.initial == False): 
@@ -204,7 +221,7 @@ class StokesSolver:
 
         if (self.initial == False):
             self.f.vec.data = self.f.vec.data + 1.0/self.dt * self.f_old.vec.data
-        if (False):
+        if (False): # non-homogenuous boundary conditions for the velocity...
             self.velpre.gf.components[1].components[0].Set(coefficient = ConstantCF(-0.1), boundary = True)
             self.f.vec.data = self.f.vec.data - self.a.mat *  self.velpre.gf.vec.data
             tmp = self.velpre.gf.vec.CreateVector()
@@ -232,10 +249,11 @@ def DoInstatStokes():
 
     lset_solver = LevelsetSolver(lset,velpre,dt=solverparams["dt"],
                                  relvelx=solverparams["relvelx"],
-                                 relvely=solverparams["relvely"])
+                                 relvely=solverparams["relvely"],
+                                 gradrepair=solverparams["gradrepair"])
 
     if (solverparams["initial_cond"] == "stokes"):
-        init_stokes_solver = StokesSolver(velpre,lset,dt=solverparams["dt"], initial = True)
+        init_stokes_solver = StokesSolver(velpre,lset,params=matparams,dt=solverparams["dt"], initial = True)
 
         init_stokes_solver.Update()
         init_stokes_solver.Solve()
@@ -262,5 +280,4 @@ def DoInstatStokes():
 class npInstatStokes(PyNumProc):
     def Do(self, heap):
         DoInstatStokes()
-        
         
