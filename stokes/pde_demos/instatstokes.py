@@ -12,9 +12,8 @@ from time import sleep
 
 #import libngsxfem_py.xfem as xfem                                 
 from libngsxfem_py.xfem import *
-
-#from libngsxfem_xfem import *
-#from libngsxfem_xstokes import *
+from libngsxfem_xfem import *
+from libngsxfem_xstokes import *
 #from libngsxfem_levelset import *
 
 material_params_artificial ={"eta" : [1,1], 
@@ -75,7 +74,7 @@ class VelocityPressure:
         self.gf.Update()
         # self.gf.components[0].Visualize("velocity(x)")
         # self.gf.components[1].Visualize("velocity(y)")
-        self.gf.components[2].Visualize("pressure")
+        # self.gf.components[2].Visualize("pressure")
 
         self.gf.components[0].components[0].Set(coefficient = init_vals[0], boundary = False)
         self.gf.components[1].components[0].Set(coefficient = init_vals[1], boundary = False)
@@ -262,8 +261,8 @@ def DoInstatStokes():
 
     stokes_solver = StokesSolver(velpre,lset,params=matparams,dt=solverparams["dt"])
 
-    print("before time loop - waiting for input(press enter) to start..")
-    input()
+    # print("before time loop - waiting for input(press enter) to start..")
+    # input()
 
     for i in range(1,solverparams["timesteps"]+1):
         lset_solver.Update()
@@ -277,7 +276,4 @@ def DoInstatStokes():
     print("simulation finished")
     input()
 
-class npInstatStokes(PyNumProc):
-    def Do(self, heap):
-        DoInstatStokes()
-        
+#DoInstatStokes()

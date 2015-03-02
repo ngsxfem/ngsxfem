@@ -12,7 +12,7 @@ set(INSTALL_DIR ${netgen_basedir})
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
 set(NGS_LIB_TYPE SHARED)
-set(NETGEN_LIBS "-L$netgendir/lib -lngsolve")
+set(NETGEN_LIBS "-L$netgendir/lib -lngsolve -lngcomp -lngfem")
 
 if (ADDITIONAL_PATHS)
     list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)

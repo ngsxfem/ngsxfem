@@ -2,6 +2,7 @@ add_library(ngsxfem_xstokes ${NGS_LIB_TYPE}
   xstokesIntegrators.cpp
   xmeancurv.cpp
   xstokesspace.cpp
+  python_stokes.cpp
   )
 
 set_target_properties(ngsxfem_xstokes PROPERTIES SUFFIX ".so")
