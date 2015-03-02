@@ -1,5 +1,5 @@
 #include "xstokesspace.hpp"
-#include "xfemVisInts.hpp"
+#include "../xfem/xfemVisInts.hpp"
 
 namespace ngcomp
 {
