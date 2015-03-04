@@ -1,5 +1,6 @@
 add_library(ngsxfem_levelset ${NGS_LIB_TYPE}
   corrsource.cpp
+  python_levelset.cpp
   )
 
 set_target_properties(ngsxfem_levelset PROPERTIES SUFFIX ".so")
