@@ -37,6 +37,7 @@ solver_params_water_butanol_default ={ "lsetorder" : 1,
                                        "initial_cond" : "stokes"
                                      }
 
+bubble_shape_radius_0_06 = "( sqrt((x-0.0)*(x-0.0)+(y-0.0)*(y-0.0)) - 0.0136)"
 
 # from libxfem import *
 class Levelset:
@@ -238,10 +239,11 @@ def DoInstatStokes():
     solverparams = solver_params_water_butanol_default
 
     mesh = Mesh("d9_stokes.vol.gz")
-    coef_initial_lset = VariableCF("( sqrt((x-0.0)*(x-0.0)+(y-0.0)*(y-0.0)) - 0.0036)")
+    coef_initial_lset = VariableCF(bubble_shape_radius_0_06)
 
     lset = Levelset(mesh = mesh, init_lset = coef_initial_lset, 
                     order = solverparams["lsetorder"])
+    global velpre
     velpre = VelocityPressure(mesh, lset, dirichlet_vel=[1,2,3,4], 
                               ref_space=solverparams["ref_space"], 
                               order=solverparams["velorder"]-1)
@@ -261,8 +263,8 @@ def DoInstatStokes():
 
     stokes_solver = StokesSolver(velpre,lset,params=matparams,dt=solverparams["dt"])
 
-    # print("before time loop - waiting for input(press enter) to start..")
-    # input()
+    print("before time loop - waiting for input(press enter) to start..")
+    input()
 
     for i in range(1,solverparams["timesteps"]+1):
         lset_solver.Update()
@@ -274,6 +276,6 @@ def DoInstatStokes():
     
         print ('\rtime step ' + repr(i) + ' / ' + repr(solverparams["timesteps"]) + ' done. (ndof: ' + repr(velpre.fes.ndof) +')', end='');
     print("simulation finished")
-    input()
+    
 
-#DoInstatStokes()
+DoInstatStokes()
