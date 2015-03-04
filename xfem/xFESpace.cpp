@@ -376,6 +376,15 @@ namespace ngcomp
     }
    
     *testout << " x ndof : " << ndof << endl;
+
+
+    if (empty)
+    {
+      ndof = 0;
+      basedof2xdof = -1;
+      *testout << " flag empty set and thus x ndof : " << ndof << endl;
+    }
+
     // domain of dof
     domofdof.SetSize(ndof);
     domofdof = IF;
@@ -406,13 +415,16 @@ namespace ngcomp
         else
           domofface[facnr] = POS;
 
-        Array<int> dnums;
-        basefes->GetFaceDofNrs(facnr, dnums);
-        for (int l = 0; l < dnums.Size(); ++l)
+        if (!empty)
         {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-            domofdof[xdof] = domofface[facnr];
+          Array<int> dnums;
+          basefes->GetFaceDofNrs(facnr, dnums);
+          for (int l = 0; l < dnums.Size(); ++l)
+          {
+            int xdof = basedof2xdof[dnums[l]];
+            if ( xdof != -1)
+              domofdof[xdof] = domofface[facnr];
+          }
         }
       }
     }
@@ -441,13 +453,17 @@ namespace ngcomp
       else
         domofedge[edgnr] = POS;
 
-      Array<int> dnums;
-      basefes->GetEdgeDofNrs(edgnr, dnums);
-      for (int l = 0; l < dnums.Size(); ++l)
+      if (!empty)
       {
-        int xdof = basedof2xdof[dnums[l]];
-        if ( xdof != -1)
-          domofdof[xdof] = domofedge[edgnr];
+        Array<int> dnums;
+        basefes->GetEdgeDofNrs(edgnr, dnums);
+
+        for (int l = 0; l < dnums.Size(); ++l)
+        {
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+            domofdof[xdof] = domofedge[edgnr];
+        }
       }
     }
 
@@ -475,13 +491,17 @@ namespace ngcomp
       else
         domofvertex[vnr] = POS;
 
-      Array<int> dnums;
-      basefes->GetVertexDofNrs(vnr, dnums);
-      for (int l = 0; l < dnums.Size(); ++l)
+      if (!empty)
       {
-        int xdof = basedof2xdof[dnums[l]];
-        if ( xdof != -1)
-          domofdof[xdof] = domofvertex[vnr];
+        Array<int> dnums;
+        basefes->GetVertexDofNrs(vnr, dnums);
+
+        for (int l = 0; l < dnums.Size(); ++l)
+        {
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+            domofdof[xdof] = domofvertex[vnr];
+         }
       }
     }
 
@@ -490,17 +510,21 @@ namespace ngcomp
     {
       DOMAIN_TYPE dt_here = element_most_pos.Test(elnr) ? POS : NEG;
       domofinner[elnr] = dt_here;
-      Array<int> dnums;
-      basefes->GetInnerDofNrs(elnr, dnums);
-      for (int l = 0; l < dnums.Size(); ++l)
+      if (!empty)
       {
-        int xdof = basedof2xdof[dnums[l]];
-        if ( xdof != -1)
-          domofdof[xdof] = dt_here;
-      }
+        Array<int> dnums;
+        basefes->GetInnerDofNrs(elnr, dnums);
+        for (int l = 0; l < dnums.Size(); ++l)
+          {
+            int xdof = basedof2xdof[dnums[l]];
+            if ( xdof != -1)
+              domofdof[xdof] = dt_here;
+          }
+        }
     }
 
     // domof dof on boundary
+    if (!empty)
     for (int selnr = 0; selnr < nse; ++selnr)
     {
         DOMAIN_TYPE dt = domofsel[selnr];
@@ -521,6 +545,7 @@ namespace ngcomp
     BitArray dofs_with_cut_on_boundary(GetNDof());
     dofs_with_cut_on_boundary.Clear();
 
+    if (!empty)
     for (int selnr = 0; selnr < nse; ++selnr)
     {
         DOMAIN_TYPE dt = domofsel[selnr];
@@ -535,9 +560,6 @@ namespace ngcomp
             dofs_with_cut_on_boundary.Set(xdof);
         }
     }
-
-    if (empty)
-        ndof = 0;
 
     UpdateCouplingDofArray();
     FinalizeUpdate (lh);
