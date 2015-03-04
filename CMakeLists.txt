@@ -1,18 +1,36 @@
 cmake_minimum_required(VERSION 2.8)
-project(NGS-xfem)
-set(PACKAGE_VERSION "0.6.0-dev")
+
+#######################################################################
+# find netgen
+if(NOT INSTALL_DIR)
+    set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
+else(NOT INSTALL_DIR)
+    set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
+endif(NOT INSTALL_DIR)
+get_filename_component(NETGEN_BASEDIR ${NETGENDIR} PATH)
+if(NOT INSTALL_DIR)
+  set(INSTALL_DIR ${NETGEN_BASEDIR} CACHE PATH "Path to install dir")
+endif(NOT INSTALL_DIR)
+
+set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+
+SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
+
+project(ngsxfem)
+set(NGSXFEM_VERSION_MAJOR 0)
+set(NGSXFEM_VERSION_MINOR 6.0)
+set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
+set(PACKAGE_VERSION ${NGSXFEM_VERSION})
+
 
 add_definitions(-DNGSX_PYTHON)
 
-if(NOT netgendir)
-    set(netgendir $ENV{NETGENDIR})
-endif(NOT netgendir)
-get_filename_component(netgen_basedir ${netgendir} PATH)
-set(INSTALL_DIR ${netgen_basedir})
-set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+# SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
+# SET(CXX "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
+
 
 set(NGS_LIB_TYPE SHARED)
-set(NETGEN_LIBS "-L$netgendir/lib -lngsolve -lngcomp -lngfem")
+set(NETGEN_LIBS "-L${NETGENDIR}/lib -lngsolve -lngcomp -lngfem")
 
 if (ADDITIONAL_PATHS)
     list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
@@ -67,12 +85,12 @@ install (PROGRAMS DESTINATION bin)
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION 0.6.0-dev)
 
-set(CPACK_PACKAGE_NAME ngs-xfem)
+set(CPACK_PACKAGE_NAME ngsxfem)
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --print-architecture
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER Christoph Lehrenfeld <christoph.lehrenfeld@gmail.com>)
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of ngs-xfem)
-set(CPACK_PACKAGE_DESCRIPTION Long description of ngs-xfem)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of ngsxfem)
+set(CPACK_PACKAGE_DESCRIPTION Long description of ngsxfem)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.0)")
 # TODO (use dpkg -s <packagename> to retrieve version)
 
@@ -105,8 +123,7 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 
-SET(CMAKE_CXX_COMPILER "${netgendir}/ngscxx" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS "" CACHE STRING "" FORCE) 
+# SET(CMAKE_CXX_FLAGS "" CACHE STRING "" FORCE) 
 # SET(CMAKE_CXX_FLAGS "")
 
 function(message)
@@ -124,14 +141,11 @@ message("
     Type 'make install' to install ${PROJECT_NAME}.
 
   Install directory:
-    ${CMAKE_INSTALL_PREFIX}")
-if(USE_PYTHON)
-message("
-  Please set the following environment variables:
+    ${CMAKE_INSTALL_PREFIX}
 
-    MKL_THREADING_LAYER=GNU")
-endif(USE_PYTHON)
-message("
+  Compiler:
+    CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}
+
 ------------------------------------------------------------------------
 ")
 #TODO:   Example programs will be built but not installed.
