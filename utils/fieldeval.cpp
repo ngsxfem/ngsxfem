@@ -166,7 +166,7 @@ namespace ngfem
   }
 
 
-  template class ScalarFEEvaluator<1>;
+  // template class ScalarFEEvaluator<1>;
   template class ScalarFEEvaluator<2>;
   template class ScalarFEEvaluator<3>;
 
