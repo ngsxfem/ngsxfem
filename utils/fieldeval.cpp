@@ -9,7 +9,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans);
     case 2:
       return new (a_lh) EvalFunctionEvaluator<2>(evalf, eltrans);
     case 3:
@@ -25,7 +26,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans, t);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans, t);
     case 2:
       return new (a_lh) EvalFunctionEvaluator<2>(evalf, eltrans, t);
     case 3:
@@ -43,7 +45,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) SpaceTimeEvalFunctionEvaluator<1>(evalf, eltrans, ti);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) SpaceTimeEvalFunctionEvaluator<1>(evalf, eltrans, ti);
     case 2:
       return new (a_lh) SpaceTimeEvalFunctionEvaluator<2>(evalf, eltrans, ti);
     case 3:
@@ -59,7 +62,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) CoefficientFunctionEvaluator<1>(evalf, eltrans);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) CoefficientFunctionEvaluator<1>(evalf, eltrans);
     case 2:
       return new (a_lh) CoefficientFunctionEvaluator<2>(evalf, eltrans);
     case 3:
@@ -75,7 +79,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) SpaceTimeCoefficientFunctionEvaluator<1>(evalf, eltrans, ti);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) SpaceTimeCoefficientFunctionEvaluator<1>(evalf, eltrans, ti);
     case 2:
       return new (a_lh) SpaceTimeCoefficientFunctionEvaluator<2>(evalf, eltrans, ti);
     case 3:
@@ -93,7 +98,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) CoefficientFunctionEvaluator<1>(evalf, eltrans, t);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) CoefficientFunctionEvaluator<1>(evalf, eltrans, t);
     case 2:
       return new (a_lh) CoefficientFunctionEvaluator<2>(evalf, eltrans, t);
     case 3:
@@ -111,7 +117,8 @@ namespace ngfem
     switch (dim)
     {
     case 1:
-      return new (a_lh) ScalarFEEvaluator<1>(a_fe,a_linvec,a_lh);
+      throw Exception(" dimension 1 does not make sense ... ");
+      // return new (a_lh) ScalarFEEvaluator<1>(a_fe,a_linvec,a_lh);
     case 2:
       return new (a_lh) ScalarFEEvaluator<2>(a_fe,a_linvec,a_lh);
     case 3:
