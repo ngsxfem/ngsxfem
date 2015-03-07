@@ -37,7 +37,8 @@ solver_params_water_butanol_default ={ "lsetorder" : 1,
                                        "initial_cond" : "stokes"
                                      }
 
-bubble_shape_radius_0_06 = "( sqrt((x-0.0)*(x-0.0)+(y-0.0)*(y-0.0)) - 0.0136)"
+bubble_shape_2D_radius_0_06 = "( sqrt((x-0.0)*(x-0.0)+(y-0.0)*(y-0.0)) - 0.0036)"
+bubble_shape_3D_radius_0_06 = "( sqrt((x-0.0)*(x-0.0)+(y-0.0)*(y-0.0)+(z-0.0)*(z-0.0)) - 0.0036)"
 
 # from libxfem import *
 class Levelset:
@@ -239,7 +240,7 @@ def DoInstatStokes():
     solverparams = solver_params_water_butanol_default
 
     mesh = Mesh("d9_stokes.vol.gz")
-    coef_initial_lset = VariableCF(bubble_shape_radius_0_06)
+    coef_initial_lset = VariableCF(bubble_shape_2D_radius_0_06)
 
     lset = Levelset(mesh = mesh, init_lset = coef_initial_lset, 
                     order = solverparams["lsetorder"])
