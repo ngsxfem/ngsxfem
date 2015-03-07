@@ -31,8 +31,7 @@ solver_params_water_butanol_default ={ "lsetorder" : 1,
                                        "ref_space" : 1, 
                                        "dt" : 0.0001, 
                                        "timesteps" : 200,
-                                       "relvelx" : 0,
-                                       "relvely" : -0.65,
+                                       "relvelvec" : [0.0, -0.65, 0.0],
                                        "gradrepair" : False,
                                        "initial_cond" : "stokes"
                                      }
@@ -84,32 +83,36 @@ class VelocityPressure:
         # self.gf.components[0].components[0].Set(coefficient = dirichlet_vel_vals[0], boundary = True)
         # self.gf.components[1].components[0].Set(coefficient = dirichlet_vel_vals[1], boundary = True)
 
-        self.coef = [GFCoeff(self.gf.components[0]), GFCoeff(self.gf.components[1])]
+        self.coef = [GFCoeff(self.gf.components[i]) for i in range(0,spacedim)]
     
 class LevelsetSolver:
-    def __init__(self, lset, velpre, dt, relvelx = 0.0, relvely = 0.0, gradrepair = False):
+    def __init__(self, lset, velpre, dt, relvelvec = [0.0,0.0,0.0], gradrepair = False):
         self.dt = dt
         self.lset = lset 
         self.gradrepair = gradrepair
         self.f = LinearForm (lset.fes)
-        lfi_inner = LFI (name = "source", dim = 2,  coef = [GFCoeff(lset.gf)])
+        lfi_inner = LFI (name = "source", dim = spacedim,  coef = [GFCoeff(lset.gf)])
         lfi_block = CompoundLFI ( lfi = lfi_inner, comp = 0 )
         self.f.Add (lfi_block)
 
         if (self.gradrepair):
             self.g = LinearForm (lset.fes)
-            self.g.Add (LFI (name = "lsetcorr", dim = 2, coef = [GFCoeff(lset.gf),velpre.coef[0],velpre.coef[1]]))
+            if (spacedim == 2):
+                self.g.Add (LFI (name = "lsetcorr", dim = spacedim, coef = [GFCoeff(lset.gf),velpre.coef[0],velpre.coef[1]]))
+            else:
+                self.g.Add (LFI (name = "lsetcorr", dim = spacedim, coef = [GFCoeff(lset.gf),velpre.coef[0],velpre.coef[1],velpre.coef[2]]))
+
         
         self.a = BilinearForm (lset.fes, flags = { "symmetric" : False })
-        bfi_inner = BFI (name = "mass", dim = 2,  coef = [ConstantCF(1.0/self.dt)])
+        bfi_inner = BFI (name = "mass", dim = spacedim,  coef = [ConstantCF(1.0/self.dt)])
         bfi_block = CompoundBFI (bfi = bfi_inner, comp = 0 )
         self.a.Add (bfi_block)
 
-        self.a.Add (BFI (name = "HDG_convection", dim = 2, coef = velpre.coef))
-        if (relvelx != 0 or relvely != 0):
+        self.a.Add (BFI (name = "HDG_convection", dim = spacedim, coef = velpre.coef))
+        if (relvelvec[0] != 0 or relvelvec[1] != 0 or relvelvec[2] != 0):
             self.relvel = True
-            self.a.Add (BFI (name = "HDG_convection", dim = 2, 
-                             coef = [ConstantCF(relvelx), ConstantCF(relvely)]))
+            self.a.Add (BFI (name = "HDG_convection", dim = spacedim, 
+                             coef = [ConstantCF(relvelvec[i]) for i in range(0,spacedim)]))
         else:
             self.relvel = False
 
@@ -119,21 +122,21 @@ class LevelsetSolver:
         # lset project: definition of (bi-) and linear forms
 
         self.proj_f = LinearForm (lset.cont_fes)
-        self.proj_f.Add (LFI (name = "source", dim = 2,  coef = [GFCoeff(lset.gf)]))
+        self.proj_f.Add (LFI (name = "source", dim = spacedim,  coef = [GFCoeff(lset.gf)]))
 
         self.proj_a = BilinearForm (lset.cont_fes, flags = { "symmetric" : True })
-        self.proj_a.Add (BFI (name = "mass", dim = 2,  coef = [ConstantCF(1)]))
+        self.proj_a.Add (BFI (name = "mass", dim = spacedim,  coef = [ConstantCF(1)]))
 
         self.proj_c = Preconditioner (self.proj_a, "direct", { "inverse" : "pardiso" })
 
-        self.proj_a.Assemble()
+        self.proj_a.Assemble(heapsize=10000000)
         self.proj_c.Update()
 
     def Update(self):
-        self.f.Assemble()
+        self.f.Assemble(heapsize=10000000)
         if (self.gradrepair):
-            self.g.Assemble()
-        self.a.Assemble()
+            self.g.Assemble(heapsize=10000000)
+        self.a.Assemble(heapsize=10000000)
 
     def Solve(self, printrates = False, printrates_proj = False):
         self.c.Update()
@@ -157,7 +160,7 @@ class LevelsetSolver:
             else:
                 self.lset.gf.vec.data = 1.0/self.dt * solver * self.f.vec
 
-        self.proj_f.Assemble()
+        self.proj_f.Assemble(heapsize=10000000)
         solver_proj = CGSolver (self.proj_a.mat, self.proj_c.mat, printrates=printrates_proj)
         self.lset.cont_gf.vec.data = solver_proj * self.proj_f.vec
         
@@ -170,51 +173,39 @@ class StokesSolver:
         self.dt = dt
         self.velpre = velpre
         self.f = LinearForm (self.velpre.fes)
-        lfi_grav_inner = LFI (name = "xsource", dim = 2, 
-                              coef = [ConstantCF(params["rho"][0]*params["g"]), 
-                                      ConstantCF(params["rho"][1]*params["g"])])
-        self.f.Add (CompoundLFI ( lfi = lfi_grav_inner, comp=1))
-        self.f.Add (LFI (name = "xmodLBmeancurv", dim = 2, 
+        lfi_grav_inner = LFI (name = "xsource", dim = spacedim, coef = 
+                              [ConstantCF(params["rho"][i]*params["g"]) for i in range(0,2)])
+        self.f.Add (CompoundLFI ( lfi = lfi_grav_inner, comp=spacedim-1))
+        self.f.Add (LFI (name = "xmodLBmeancurv", dim = spacedim, 
                          coef = [ConstantCF(params["sigma"]), lset.coef]))
 
         self.a = BilinearForm (self.velpre.fes, flags = { "symmetric" : True })
-        self.a.Add (BFI (name = "xstokes", dim = 2, coef = [ConstantCF(params["eta"][0]), 
-                                                            ConstantCF(params["eta"][1])]))
+        self.a.Add (BFI (name = "xstokes", dim = spacedim, coef = [ConstantCF(params["eta"][0]), 
+                                                                   ConstantCF(params["eta"][1])]))
         self.c = Preconditioner (self.a, "direct", { "inverse" : "pardiso" })
 
 
         if (self.initial == False):
             self.f_old = LinearForm (self.velpre.fes)
-
-            #todo add mass and source term to stokes
-            lfi_inner_x = LFI (name = "xsource", dim = 2,  
-                               coef = [self.velpre.coef[0],self.velpre.coef[0]])
-            lfi_block_x = CompoundLFI (lfi = lfi_inner_x, comp = 0 )
-            self.f_old.Add (lfi_block_x)
-            
-            lfi_inner_y = LFI (name = "xsource", dim = 2,  
-                               coef = [self.velpre.coef[1],self.velpre.coef[1]])
-            lfi_block_y = CompoundLFI (lfi = lfi_inner_y, comp = 1 )
-            self.f_old.Add (lfi_block_y)
-            
-            bfi_inner_x = BFI (name = "xmass", dim = 2,  
-                            coef = [ConstantCF(1.0/self.dt),ConstantCF(1.0/self.dt)])
-            bfi_block_x = CompoundBFI (bfi = bfi_inner_x, comp = 0 )
-            self.a.Add (bfi_block_x)
-            
-            bfi_inner_y = BFI (name = "xmass", dim = 2,  
-                           coef = [ConstantCF(1.0/self.dt),ConstantCF(1.0/self.dt)])
-            bfi_block_y = CompoundBFI (bfi = bfi_inner_y, comp = 1 )
-            self.a.Add (bfi_block_y)
+            for i in range(0,spacedim):
+                lfi_inner_xi = LFI (name = "xsource", dim = spacedim,  
+                                    coef = [self.velpre.coef[i],self.velpre.coef[i]])
+                lfi_block_xi = CompoundLFI (lfi = lfi_inner_xi, comp = i )
+                self.f_old.Add (lfi_block_xi)
+                
+                bfi_inner_xi = BFI (name = "xmass", dim = spacedim,  
+                                    coef = [ConstantCF(1.0/self.dt),ConstantCF(1.0/self.dt)])
+                bfi_block_xi = CompoundBFI (bfi = bfi_inner_xi, comp = i )
+                self.a.Add (bfi_block_xi)
 
     def Update(self):
         self.velpre.fes.Update()
         # the order of the following operations is important as ....gf.Update() empties the vector if dimension has changed...
         if (self.initial == False): 
-            self.f_old.Assemble()
+            self.f_old.Assemble(heapsize=10000000)
         self.velpre.gf.Update()
-        self.f.Assemble()
-        self.a.Assemble(reallocate=True)
+        self.f.Assemble(heapsize=10000000)
+        self.a.Assemble(heapsize=10000000,reallocate=True)
 
     def Solve(self,printrates = False):
         self.c.Update()
@@ -222,6 +213,7 @@ class StokesSolver:
 
         if (self.initial == False):
             self.f.vec.data = self.f.vec.data + 1.0/self.dt * self.f_old.vec.data
+
         if (False): # non-homogenuous boundary conditions for the velocity...
             self.velpre.gf.components[1].components[0].Set(coefficient = ConstantCF(-0.1), boundary = True)
             self.f.vec.data = self.f.vec.data - self.a.mat *  self.velpre.gf.vec.data
@@ -239,8 +231,15 @@ def DoInstatStokes():
     matparams = material_params_water_butanol
     solverparams = solver_params_water_butanol_default
 
-    mesh = Mesh("d9_stokes.vol.gz")
-    coef_initial_lset = VariableCF(bubble_shape_2D_radius_0_06)
+    global spacedim 
+    spacedim = 2 # get that from mesh
+
+    if (spacedim == 2):
+        mesh = Mesh("d9_stokes.vol.gz")
+        coef_initial_lset = VariableCF(bubble_shape_2D_radius_0_06)
+    else:
+        mesh = Mesh("d9_stokes_3D.vol.gz")
+        coef_initial_lset = VariableCF(bubble_shape_3D_radius_0_06)
 
     lset = Levelset(mesh = mesh, init_lset = coef_initial_lset, 
                     order = solverparams["lsetorder"])
@@ -250,8 +249,7 @@ def DoInstatStokes():
                               order=solverparams["velorder"]-1)
 
     lset_solver = LevelsetSolver(lset,velpre,dt=solverparams["dt"],
-                                 relvelx=solverparams["relvelx"],
-                                 relvely=solverparams["relvely"],
+                                 relvelvec=solverparams["relvelvec"],
                                  gradrepair=solverparams["gradrepair"])
 
     if (solverparams["initial_cond"] == "stokes"):
