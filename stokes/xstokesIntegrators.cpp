@@ -39,30 +39,6 @@ namespace ngfem
     const XDummyFE * dummy_fepx =
       dynamic_cast<const XDummyFE *> (&fep_comp[1]);
 
-    /*
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
-
-    const ScalarFiniteElement<D> & feuv =
-      dynamic_cast<const ScalarFiniteElement<D>&> (cfel[0]);
-
-    const XFiniteElement * feuvx =
-      dynamic_cast<const XFiniteElement *> (&cfel[D]);
-    const XDummyFE * dummy_feuvx =
-      dynamic_cast<const XDummyFE *> (&cfel[D]);
-
-    const ScalarFiniteElement<D> & fep = 
-      dynamic_cast<const ScalarFiniteElement<D>&> (cfel[2*D]);
-
-    const XFiniteElement * fepx =
-      dynamic_cast<const XFiniteElement *> (&cfel[2*D+1]);
-    const XDummyFE * dummy_fepx =
-      dynamic_cast<const XDummyFE *> (&cfel[D]);
-
-    */
-
-    // cout << " here a " << endl; getchar();
-
     elmat = 0.0;
 
     if (!feuvx && !dummy_feuvx) 
@@ -145,9 +121,16 @@ namespace ngfem
 
           bmat = 0;
 
+          // \nabla u
           // the first nd_u shape functions belong to u_x, the next nd_u belong to u_y:
           for (int d = 0; d < D; ++d)
             bmat.Rows(D*d,D*(d+1)).Cols(*dofrangeuv[d]) = Trans (gradu);
+
+          // \nabla u^T
+          // the first nd_u shape functions belong to u_x, the next nd_u belong to u_y:
+          for (int d = 0; d < D; ++d)
+            for (int k = 0; k < D; ++k)
+              bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d);
 
           // ... and finally nd_p shape functions for the pressure:
           bmat.Row(D*D).Range(dofrangep) = vecp;
@@ -198,8 +181,20 @@ namespace ngfem
           // the first nd_u shape functions belong to u_x, the next nd_u belong to u_y:
           for (int d = 0; d < D; ++d)
             bmat.Rows(D*d,D*(d+1)).Cols(*dofrangeuv[d]) = Trans (gradu);
+
+          // \nabla u^T
+          for (int d = 0; d < D; ++d)
+            for (int k = 0; k < D; ++k)
+              bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d); // du_k / dx_d
+
+
           for (int d = 0; d < D; ++d)
             bmat.Rows(D*d,D*(d+1)).Cols(*dofrangeuv_x[d]) = Trans (gradux);
+
+          // \nabla u_x^T
+          for (int d = 0; d < D; ++d)
+            for (int k = 0; k < D; ++k)
+              bmat.Row(d*D+k).Range(*dofrangeuv_x[k]) = gradux.Col(d);
 
           // ... and finally nd_p shape functions for the pressure:
           bmat.Row(D*D).Range(dofrangep) = vecp;
