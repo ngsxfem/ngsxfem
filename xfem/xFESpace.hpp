@@ -142,6 +142,22 @@ namespace ngcomp
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
+    bool IsNeighborElementCut(int elnr) const 
+    { 
+      Array<int> faces(0);
+      ma->GetElFacets(elnr, faces);
+      for (int fa : faces)
+      {
+        Array<int> els(0);
+        ma->GetFacetElements(fa,els);
+        for (int el : els)
+          if (el == elnr)
+            continue;
+          else
+            if (IsElementCut(el)) return true;
+      }
+      return false;
+    }
     // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
 
     void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const;

@@ -909,18 +909,19 @@ namespace ngcomp
 
     bool stdblock=false;   //put all std. dofs in one block + one block for each xfem dof
 
-    bool blocksystem=true;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
-    bool vertexpatch=false;   //put all dofs of elements around a vertex together
-    bool elementpatch=false;  //put all dofs of one element together
-    bool edgepatch=false;     //put all dofs of neighbouring elements together
-    bool vertexdofs=false;    //put all dofs of a vertex together
-    bool interfacepatch= false;//put all dofs located at (all) cut elements together (one large block)
-    bool jacobi= false;        //each degree of freedom is one block
+    bool blocksystem=false;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
+    bool vertexpatch=precflags.GetDefineFlag("vertexpatches");   //put all dofs of elements around a vertex together
+    bool elementpatch=precflags.GetDefineFlag("elementpatches");  //put all dofs of one element together
+    bool edgepatch=precflags.GetDefineFlag("edgepatches");     //put all dofs of neighbouring elements together
+    bool vertexdofs=precflags.GetDefineFlag("vertexdofs");    //put all dofs of a vertex together
+    bool interfacepatch= precflags.GetDefineFlag("interfacepatch");//put all dofs located at (all) cut elements together (one large block)
+    bool jacobi= precflags.GetDefineFlag("jacobi");        //each degree of freedom is one block
+
+    bool dgjumps= precflags.GetDefineFlag("dgjumps");        //each degree of freedom is one block
 
     bool eliminate_internal = precflags.GetDefineFlag("eliminate_internal");
     bool subassembled = precflags.GetDefineFlag("subassembled");
     COUPLING_TYPE dof_mode = eliminate_internal? (subassembled? WIREBASKET_DOF : EXTERNAL_DOF) : ANY_DOF;
-
     BitArray filter;
     GetFilteredDofs(dof_mode, filter, true);
     FilteredTableCreator creator(&filter);
@@ -933,35 +934,6 @@ namespace ngcomp
 
     if ( ma->GetDimension() == 2)
     {
-      if (blocksystem || stdblock)
-      {
-        for ( ; !creator.Done(); creator++)
-        {
-          int basendof = spaces[0]->GetNDof();
-          int xndof = spaces[1]->GetNDof();
-          for (int i = 0; i < basendof ; ++i)
-          {
-            creator.Add(0,i);
-          }
-
-          if (blocksystem)
-          {
-            for (int i = 0; i < xndof ; ++i)
-            {
-              creator.Add(1,i+basendof);
-            }
-          }
-          else
-          {
-            for (int i = 0; i < xndof ; ++i)
-            {
-              creator.Add(i+1,i+basendof);
-            }
-          }
-        }
-        it = creator.GetTable();
-      }
-      else
       {
         for ( ; !creator.Done(); creator++)
         {      
@@ -978,7 +950,7 @@ namespace ngcomp
             offset += basendof+xndof;
           }
 
-          if (vertexpatch || vertexdofs)
+          if (vertexdofs)
           {
             for (int i = 0; i < nv; i++)
             {
@@ -986,8 +958,9 @@ namespace ngcomp
               for (int j = 0; j < dnums.Size(); ++j)
                 if (filter.Test(dnums[j]))
                   if (dnums[j] < basendof)
-                    creator.Add(dnums[j], dnums);
+                    creator.Add(offset+dnums[j], dnums);
             }
+            offset += nv;
           }
 
           if (vertexpatch)
@@ -1005,27 +978,25 @@ namespace ngcomp
                 {
                   if (filter.Test(dnums[j]))
                     if (dnums[j] < basendof)
-                      creator.Add(dnums[j],dnums2[k]);
+                      creator.Add(offset+dnums[j],dnums2[k]);
                   if (filter.Test(dnums2[k]))
                     if (dnums2[k] < basendof)
-                      creator.Add(dnums2[k],dnums[j]);
+                      creator.Add(offset+dnums2[k],dnums[j]);
                 }
 
             
               for (int j = 0; j < dnums.Size(); ++j)
                 if (filter.Test(dnums[j]))
                   if (dnums[j] < basendof)
-                    creator.Add(dnums[j],dnums3);
+                    creator.Add(offset+dnums[j],dnums3);
 
               for (int j = 0; j < dnums2.Size(); ++j)
                 if (filter.Test(dnums2[j]))
                   if (dnums2[j] < basendof)
-                    creator.Add(dnums2[j],dnums3);
+                    creator.Add(offset+dnums2[j],dnums3);
             }
-          }
-
-          if (vertexdofs || vertexpatch)
             offset += nv;
+          }
 
           if (elementpatch)
           {
@@ -1067,6 +1038,7 @@ namespace ngcomp
             for (int i = 0; i < nf; i++)
             {
               ma->GetFacetElements(i,elnums);
+              /*
               bool cutedge = false;
               for (int k = 0; k < elnums.Size(); ++k)
               {
@@ -1084,7 +1056,7 @@ namespace ngcomp
 
               if (!cutedge)
                 continue;
-
+              */
               Ng_Node<1> edge = ma->GetNode<1> (i);
               int v1 = edge.vertices[0];
               int v2 = edge.vertices[1];
@@ -1151,9 +1123,14 @@ namespace ngcomp
                  : xfes22->IsElementCut(elnr) )
                 :(spacetime ? xfes34->IsElementCut(elnr) 
                   : xfes33->IsElementCut(elnr) );
+              bool isnbelcut = sD ? 
+                (spacetime ? xfes23->IsNeighborElementCut(elnr) 
+                 : xfes22->IsNeighborElementCut(elnr) )
+                :(spacetime ? xfes34->IsNeighborElementCut(elnr) 
+                  : xfes33->IsNeighborElementCut(elnr) );
             
               GetDofNrs(elnr,dnums);
-              if (elcut)
+              if (elcut || (dgjumps && isnbelcut))
                 for (int i = 0; i < dnums.Size(); ++i)
                 {
                   if (!mark.Test(dnums[i]))
