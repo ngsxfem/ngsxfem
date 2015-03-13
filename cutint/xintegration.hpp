@@ -8,7 +8,6 @@
 #include <vector>
 
 using namespace ngfem;
-
 namespace xintegration
 {
   /// struct which defines the relation a < b for Point4DCL 

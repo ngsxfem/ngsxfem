@@ -16,7 +16,7 @@ namespace ngfem
     // outf_tikz << "\\usepackage{tikz-3dplot}" << endl;
     outf_tikz << "\\begin{document}" << endl;
     outf_tikz << "\\tdplotsetmaincoords{60}{120}" << endl;
-    outf_tikz << "\\begin{tikzpicture}[scale=100,tdplot_main_coords,spy using outlines={white, circle, magnification=4, size=25 * 3 *\myscale, connect spies, transform shape}]" << endl;
+    outf_tikz << "\\begin{tikzpicture}[scale=100,tdplot_main_coords,spy using outlines={white, circle, magnification=4, size=25 * 3 *\\myscale, connect spies, transform shape}]" << endl;
     outf_tikz << "\\def\\mycolorstring{black}" << endl;
     outf_tikz << "\\def\\mydrawopacity{0.5}" << endl;
     outf_tikz << "\\def\\myfillopacity{1.0}" << endl;

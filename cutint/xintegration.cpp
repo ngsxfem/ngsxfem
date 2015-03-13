@@ -356,10 +356,10 @@ namespace xintegration
   NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
   :: NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a, int reduce_ref_space, int reduce_ref_time)
     : XLocalGeometryInformation(a.lset), pc(a.pc), 
-      ref_level_space(a.ref_level_space-reduce_ref_space), ref_level_time(a.ref_level_time-reduce_ref_time),
-      int_order_space(a.int_order_space), int_order_time(a.int_order_time),
       simplex_array_neg(a.simplex_array_neg),
       simplex_array_pos(a.simplex_array_pos),
+      ref_level_space(a.ref_level_space-reduce_ref_space), ref_level_time(a.ref_level_time-reduce_ref_time),
+      int_order_space(a.int_order_space), int_order_time(a.int_order_time),
       lh(a.lh), compquadrule(a.compquadrule)
   {
   }
