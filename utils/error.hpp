@@ -39,14 +39,6 @@ namespace ngfem
     shared_ptr<CoefficientFunction> coef_d_p = NULL;
     shared_ptr<CoefficientFunction> coef_jumprhs = NULL;
     shared_ptr<CoefficientFunction> lset = NULL;
-    bool made_conv_n = false;
-    bool made_conv_p = false;
-    bool made_coef_n = false;
-    bool made_coef_p = false;
-    bool made_coef_d_n = false;
-    bool made_coef_d_p = false;
-    bool made_lset = false;
-    bool made_jumprhs = false;
 
   public:
     // SolutionCoefficients(const CoefficientFunction * a_coef_n,

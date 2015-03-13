@@ -67,51 +67,11 @@ namespace ngfem
     coef_d_p = pde->GetCoefficientFunction(flags.GetStringFlag("derivative_p",""), true);
     lset = pde->GetCoefficientFunction(flags.GetStringFlag("levelset",""), true);
     coef_jumprhs = pde->GetCoefficientFunction(flags.GetStringFlag("jumprhs",""), true);
-
-    made_conv_n = conv_n != NULL;
-    made_conv_p = conv_p != NULL;
-    made_coef_n = coef_n != NULL;
-    made_coef_p = coef_p != NULL;
-    made_coef_d_n = coef_d_n != NULL;
-    made_coef_d_p = coef_d_p != NULL;
-    made_lset = lset != NULL;
-    made_jumprhs = coef_jumprhs != NULL;
-
-    // made_conv_n = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("convection_n",""), true),
-    //   conv_n);
-    // made_conv_p = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("convection_p",""), true),
-    //   conv_p);
-    // made_coef_n = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("solution_n","")),
-    //   coef_n);
-    // made_coef_p = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("solution_p","")),
-    //   coef_p);
-    // made_coef_d_n = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("derivative_n",""),true),
-    //   coef_d_n);
-    // made_coef_d_p = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("derivative_p",""),true),
-    //   coef_d_p);
-    // made_lset = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("levelset",""),true),
-    //   lset);
-    // made_jumprhs = MakeHigherDimensionCoefficientFunction<D>(
-    //   pde->GetCoefficientFunction(flags.GetStringFlag("jumprhs",""),true),
-    //   coef_jumprhs);
   }
   
   template<int D>
   SolutionCoefficients<D>::~SolutionCoefficients()
   {
-    if (made_coef_n) delete &(GetSolutionNeg());
-    if (made_coef_p) delete &(GetSolutionPos());
-    if (made_coef_d_n) delete &(GetSolutionDNeg());
-    if (made_coef_d_p) delete &(GetSolutionDPos());
-    if (made_lset) delete &(GetLevelSet());
-    if (made_jumprhs) delete &(GetJumpRhs());
   }
 
   template class SolutionCoefficients<2>;
