@@ -29,9 +29,7 @@ namespace ngcomp
   
   void XFESpace :: CleanUp ()
   {
-
-    if (el2dofs) delete el2dofs; 
-    if (sel2dofs) delete sel2dofs; 
+    //empty
   }
 
   
@@ -285,7 +283,7 @@ namespace ngcomp
         }
       }
     }
-    el2dofs = creator.GetTable();
+    el2dofs = make_shared<Table<int>>(creator.MoveTable());
 
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
@@ -331,7 +329,7 @@ namespace ngcomp
         }
       }
     }
-    sel2dofs = creator2.GetTable();
+    sel2dofs = make_shared<Table<int>>(creator2.MoveTable());
 
 
     int nbdofs = basefes->GetNDof();

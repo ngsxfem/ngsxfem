@@ -33,8 +33,8 @@ namespace ngcomp
     bool spacetime = false;
     TimeInterval ti;
       
-    Table<int> * el2dofs = NULL;
-    Table<int> * sel2dofs = NULL;
+    shared_ptr<Table<int>> el2dofs = NULL;
+    shared_ptr<Table<int>> sel2dofs = NULL;
 
     Array<DOMAIN_TYPE> domofdof;
     Array<DOMAIN_TYPE> domofel;
