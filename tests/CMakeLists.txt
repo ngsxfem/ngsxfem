@@ -18,3 +18,6 @@ add_test("pde_d2_xnitsche" "ngs_solved"
 
 add_test("pde_d7_stokes" "ngs_solved" 
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d7_stokes.pde")
+
+add_test("pde_d8_stokes3D" "ngs_solved" 
+  "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
