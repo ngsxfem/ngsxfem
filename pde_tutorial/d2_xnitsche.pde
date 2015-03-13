@@ -8,7 +8,6 @@ mesh = d2_xnitsche.vol.gz
 #load xfem-library
 shared = libngsxfem_xfem                                    
 shared = libngsxfem_py                                      
-pymodule = d1_approx
 
 define constant heapsize = 1e8
 

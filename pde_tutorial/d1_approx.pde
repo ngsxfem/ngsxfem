@@ -7,7 +7,6 @@ mesh = d1_approx.vol.gz
 #load xfem-library and python-bindings
 shared = libngsxfem_xfem                                       
 shared = libngsxfem_py                                       
-pymodule = d1_approx
 
 define constant heapsize = 1e9
 
