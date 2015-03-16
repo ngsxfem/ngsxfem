@@ -24,9 +24,9 @@ add_test("pde_d8_stokes3D" "ngs_solved"
 
 # cmake_minimum_required(VERSION 2.8)
 
-find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
+find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 add_executable(test_xlocalgeom test_xlocalgeom.cpp)
-target_link_libraries(test_xlocalgeom ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${NETGEN_LIBS} ngsxfem_xfem)
+target_link_libraries(test_xlocalgeom ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${NETGEN_LIBS} ngsxfem_xfem)
 
 add_test("xlocalgeom" "test_xlocalgeom")
 
