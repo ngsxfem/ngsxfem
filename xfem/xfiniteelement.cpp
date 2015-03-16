@@ -11,7 +11,7 @@ namespace ngfem
 
   LevelsetContainerFE::LevelsetContainerFE(shared_ptr<CoefficientFunction> coeflset, double ta, double tb)
     : // FiniteElement(),
-    coef_lset(coeflset), told(ta), tnew(tb) {ndof = 0; }
+    coef_lset(coeflset), tnew(tb), told(ta) {ndof = 0; }
 
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 

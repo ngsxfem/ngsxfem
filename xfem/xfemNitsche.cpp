@@ -1093,14 +1093,14 @@ namespace ngfem
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
 
     const XFiniteElement * xfe[2]; xfe[0] = NULL; xfe[1] = NULL;
-    const XDummyFE * dummfe[2]; dummfe[0] = NULL; dummfe[1] = NULL;
+    // const XDummyFE * dummfe[2]; dummfe[0] = NULL; dummfe[1] = NULL;
 
     const ScalarFiniteElement<D> * scafe = NULL;
 
     xfe[0] = dynamic_cast<const XFiniteElement* >(&cfel[0]);
     xfe[1] = dynamic_cast<const XFiniteElement* >(&cfel[1]);
-    dummfe[0] = dynamic_cast<const XDummyFE* >(&cfel[0]);
-    dummfe[1] = dynamic_cast<const XDummyFE* >(&cfel[1]);
+    // dummfe[0] = dynamic_cast<const XDummyFE* >(&cfel[0]);
+    // dummfe[1] = dynamic_cast<const XDummyFE* >(&cfel[1]);
 
     elmat = 0.0;
     if (!xfe[0] || !xfe[1])

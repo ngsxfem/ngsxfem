@@ -232,8 +232,8 @@ namespace ngfem
                             << "] ";
               }
 
-              Vec<D> lastp;
-              Vec<D> mlastp;
+              Vec<D> lastp (0.0);
+              Vec<D> mlastp (0.0);
               double lastval = 0.0;
 
               Vec<D> center = 0.0;

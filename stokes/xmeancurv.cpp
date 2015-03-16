@@ -64,7 +64,7 @@ namespace ngfem
     FlatVector<> shapeuv(ndofuv,&shapeuv_total(0));
     FlatVector<> shapeuvx(ndofuv,&shapeuv_total(ndofuv));
     
-    int orderuv = scafe.Order();
+    // int orderuv = scafe.Order();
 
     // int ps = orderuv+1;
 
