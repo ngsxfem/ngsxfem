@@ -26,7 +26,7 @@ add_test("pde_d8_stokes3D" "ngs_solved"
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 add_executable(test_xlocalgeom test_xlocalgeom.cpp)
-target_link_libraries(test_xlocalgeom ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${NETGEN_LIBS} ngsxfem_xfem)
+target_link_libraries(test_xlocalgeom ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${NETGEN_LIBS} ngsxfem_spacetime ngsxfem_utils ngsxfem_cutint ngsxfem_xfem)
 
 add_test("xlocalgeom" "test_xlocalgeom")
 
