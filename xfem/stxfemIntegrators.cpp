@@ -574,7 +574,7 @@ namespace ngfem
     FlatVector<> shapex(ndof,&shape_total(ndof));
 
     int ps = scafe->OrderSpace();
-    int pt = scafe->OrderTime();
+    // int pt = scafe->OrderTime();
     
     const double tracetime = t == PAST ? 0.0 : 1.0;
 
@@ -768,7 +768,7 @@ namespace ngfem
     FlatVector<> shapex(ndof,&shape_total(ndof));
 
     int ps = scafe->OrderSpace();
-    int pt = scafe->OrderTime();
+    // int pt = scafe->OrderTime();
     
     const double tracetime = t == PAST ? 0.0 : 1.0;
 

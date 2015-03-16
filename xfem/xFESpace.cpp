@@ -626,11 +626,12 @@ namespace ngcomp
                                                                             *cquad, lh, 
                                                                             2*order_space, 2*order_time, 
                                                                             ref_lvl_space, ref_lvl_time);
-      DOMAIN_TYPE dt;
+      // DOMAIN_TYPE dt;
       {
         static Timer timer ("XFESpace::GetFE::MakeQuadRule");
         RegionTimer regq (timer);
-        dt = xgeom->MakeQuadRule();
+        // dt = 
+        xgeom->MakeQuadRule();
       }
       XFiniteElement * retfel = NULL;
 
@@ -905,9 +906,9 @@ namespace ngcomp
     int ned = ma->GetNEdges();      
     Array<int> dnums, dnums2, dnums3; //, verts, edges;
 
-    bool stdblock=false;   //put all std. dofs in one block + one block for each xfem dof
+    // bool stdblock=false;   //put all std. dofs in one block + one block for each xfem dof
 
-    bool blocksystem=false;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
+    // bool blocksystem=false;   //put all std. dofs in one block and all xfem dofs in another block (two large blocks)
     bool vertexpatch=precflags.GetDefineFlag("vertexpatches");   //put all dofs of elements around a vertex together
     bool elementpatch=precflags.GetDefineFlag("elementpatches");  //put all dofs of one element together
     bool edgepatch=precflags.GetDefineFlag("edgepatches");     //put all dofs of neighbouring elements together

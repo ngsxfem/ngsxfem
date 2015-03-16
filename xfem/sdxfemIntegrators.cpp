@@ -23,7 +23,7 @@ namespace ngfem
                         const XFiniteElement * xfe) const
   {
     const int p = order;
-    const int ndof = ndof_h1 + ndof_x;
+    // const int ndof = ndof_h1 + ndof_x;
 
     FlatVector<> shape_h1(ndof_h1,&shape(0)); //flat overlay
     FlatVector<> shape_x(ndof_x,&shape(ndof_h1)); //flat overlay
@@ -389,7 +389,7 @@ namespace ngfem
                         const XFiniteElement * xfe) const
   {
     const int p = order;
-    const int ndof = ndof_h1 + ndof_x;
+    // const int ndof = ndof_h1 + ndof_x;
 
     FlatMatrixFixWidth<D> dshape_h1(ndof_h1,&dshape(0,0)); //flat overlay
 
@@ -399,7 +399,7 @@ namespace ngfem
     const double beta = dt == POS ? beta_pos->Evaluate(mip) : beta_neg->Evaluate(mip);
     const double alpha = dt == POS ? alpha_pos->Evaluate(mip) : alpha_neg->Evaluate(mip);
     const double alpha_av = xfe ? 0.5 * (alpha_pos->Evaluate(mip) + alpha_neg->Evaluate(mip)) : alpha;
-    const double mass = dt == POS ? mass_pos->Evaluate(mip) : mass_neg->Evaluate(mip);
+    // const double mass = dt == POS ? mass_pos->Evaluate(mip) : mass_neg->Evaluate(mip);
 
     const double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
         

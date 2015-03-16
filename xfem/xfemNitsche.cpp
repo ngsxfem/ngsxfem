@@ -683,7 +683,7 @@ namespace ngfem
     for (int i = 0; i < fquad.Size(); ++i)
     {
       IntegrationPoint ip(&fquad.points(i,0),0.0);
-      const double time = fquad.points(i,D);
+      // const double time = fquad.points(i,D);
       MappedIntegrationPoint<D,D> mip(ip, eltrans);
       
       Mat<D,D> Finv = mip.GetJacobianInverse();
