@@ -219,7 +219,7 @@ namespace ngfem
             for (int d = 0; d < D; ++d)
               ipr(d) -= eps * invjac_normal1(d);
 
-            double len = L2Norm(invjac_normal1);
+            // double len = L2Norm(invjac_normal1);
 
             FlatVector<> shapeleft = scafe1->GetShape (ipl, lh);
             FlatVector<> shapecenter = scafe1->GetShape (ipc, lh);
@@ -279,7 +279,7 @@ namespace ngfem
             for (int d = 0; d < D; ++d)
               ipr(d) += eps * invjac_normal2(d);
 
-            double len = L2Norm(invjac_normal2);
+            // double len = L2Norm(invjac_normal2);
 
             FlatVector<> shapeleft = scafe2->GetShape (ipl, lh);
             FlatVector<> shapecenter = scafe2->GetShape (ipc, lh);

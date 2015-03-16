@@ -66,9 +66,9 @@ namespace ngfem
     
     int orderuv = scafe.Order();
 
-    int ps = orderuv+1;
+    // int ps = orderuv+1;
 
-    int p = scafe.Order();
+    // int p = scafe.Order();
 
     const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
     const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());

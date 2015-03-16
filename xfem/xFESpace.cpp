@@ -393,7 +393,7 @@ namespace ngcomp
       for (int facnr = 0; facnr < nf; ++facnr)
       {
         bool haspos = false;
-        bool hasneg = false;
+        // bool hasneg = false;
 
         Array<int> elnums;
         ma->GetFaceElements (facnr, elnums);
@@ -401,8 +401,8 @@ namespace ngcomp
         for (int k = 0; k < elnums.Size(); ++k)
         {
           DOMAIN_TYPE dt_cur = domofel[elnums[k]];
-          if (dt_cur == NEG)
-            hasneg = true;
+          // if (dt_cur == NEG)
+          //   hasneg = true;
 
           if (dt_cur == POS)
             haspos = true;
@@ -431,7 +431,7 @@ namespace ngcomp
     for (int edgnr = 0; edgnr < nedges; ++edgnr)
     {
       bool haspos = false;
-      bool hasneg = false;
+      // bool hasneg = false;
 
       Array<int> elnums;
       ma->GetEdgeElements (edgnr, elnums);
@@ -439,8 +439,8 @@ namespace ngcomp
       for (int k = 0; k < elnums.Size(); ++k)
       {
         DOMAIN_TYPE dt_cur = domofel[elnums[k]];
-        if (dt_cur == NEG)
-          hasneg = true;
+        // if (dt_cur == NEG)
+        //   hasneg = true;
 
         if (dt_cur == POS)
           haspos = true;
@@ -469,7 +469,7 @@ namespace ngcomp
     for (int vnr = 0; vnr < nv; ++vnr)
     {
       bool haspos = false;
-      bool hasneg = false;
+      // bool hasneg = false;
 
       Array<int> elnums;
       ma->GetVertexElements (vnr, elnums);
@@ -477,8 +477,8 @@ namespace ngcomp
       for (int k = 0; k < elnums.Size(); ++k)
       {
         DOMAIN_TYPE dt_cur = domofel[elnums[k]];
-        if (dt_cur == NEG)
-          hasneg = true;
+        // if (dt_cur == NEG)
+        //   hasneg = true;
 
         if (dt_cur == POS)
           haspos = true;
