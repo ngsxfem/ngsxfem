@@ -11,16 +11,16 @@ include(CTest)
 
 # install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ngs_solved DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_test("pde_d1_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/ngs" 
+add_test("pde_d1_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/pde_tutorial/d1_approx.pde")
 
-add_test("pde_d2_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/ngs" 
+add_test("pde_d2_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/pde_tutorial/d2_xnitsche.pde")
 
-add_test("pde_d7_stokes" "${CMAKE_INSTALL_PREFIX}/bin/ngs" 
+add_test("pde_d7_stokes" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d7_stokes.pde")
 
-add_test("pde_d8_stokes3D" "${CMAKE_INSTALL_PREFIX}/bin/ngs" 
+add_test("pde_d8_stokes3D" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
 
 # cmake_minimum_required(VERSION 2.8)
