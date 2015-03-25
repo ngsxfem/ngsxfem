@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to in
 
 SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
 
-project(ngsxfem)
+project(xfem)
 set(NGSXFEM_VERSION_MAJOR 0)
 set(NGSXFEM_VERSION_MINOR 6.0)
 set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
@@ -50,9 +50,12 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 set(ADDITIONAL_PATHS "" CACHE PATH "List of paths to additional libraries in non-standard locations, seperated by ';'")
 
-include(CTest)
-set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+#######################################################################
+# CTest
 enable_testing()
+include(CTest)
+
+set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 
 include_directories ("${PROJECT_SOURCE_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}")
@@ -86,12 +89,12 @@ install (PROGRAMS DESTINATION bin)
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION 0.6.0-dev)
 
-set(CPACK_PACKAGE_NAME ngsxfem)
+set(CPACK_PACKAGE_NAME xfem)
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --print-architecture
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER Christoph Lehrenfeld <christoph.lehrenfeld@gmail.com>)
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of ngsxfem)
-set(CPACK_PACKAGE_DESCRIPTION Long description of ngsxfem)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of xfem)
+set(CPACK_PACKAGE_DESCRIPTION Long description of xfem)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.0)")
 # TODO (use dpkg -s <packagename> to retrieve version)
 
