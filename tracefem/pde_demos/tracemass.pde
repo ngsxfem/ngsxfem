@@ -6,15 +6,16 @@ mesh = square.vol.gz
 
 #load xfem-library and python-bindings
 shared = libngsxfem_xfem
-shared = libngsxfem_py
+shared = libngsxfem_tracefem
 
 define constant heapsize = 1e9
 
-define constant R = 0.4
+define constant R = 0.333333333333333333
 define constant one = 1.0
 
 # interface description as zero-level
 define coefficient lset
+#( x - R ),
 ( sqrt(x*x+y*y) - R),
 
 define fespace fesh1
@@ -22,10 +23,12 @@ define fespace fesh1
        -order=1
 
 # use an "extended" continuous finite element space
+# you may change the order here
 define fespace tracefes
        -type=xfespace
        -type_std=h1ho
        -ref_space=1
+#       -empty
 
 #update "extended" part of XFE space:
 numproc informxfem npix
@@ -35,16 +38,27 @@ numproc informxfem npix
 
 gridfunction u -fespace=tracefes
 
+bilinearform a -fespace=tracefes -symmetric
+tracemass 1.0
+
+linearform f -fespace=tracefes
+tracesource sin(pi*2*x*y)
+
+define preconditioner c -type=local -bilinearform=a -test #-block
+#define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
+
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
+
 bilinearform evalu -fespace=tracefes -nonassemble
 exttrace 1.0
 
 numproc drawflux npdf -solution=u -bilinearform=evalu -applyd -label=u
 
-numproc shapetester npst -gridfunction=u
+numproc draw npdf2 -coefficient=lset -label=levelset
 
 numproc visualization npviz -scalarfunction=u
-    -minval=0 -maxval=1
-    -nolineartexture -deformationscale=0.25 -subdivision=4
+    -minval=-0.5 -maxval=0.5
+    -nolineartexture -deformationscale=0.25 -subdivision=0
 
 #TODO visualize:
 # * use xfem visualizer (done in the extension sense...)
