@@ -11,6 +11,8 @@ include(CTest)
 
 # install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ngs_solved DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
+
 add_test("pde_d1_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/pde_tutorial/d1_approx.pde")
 
