@@ -134,6 +134,14 @@ namespace ngcomp
 
     virtual void UpdateCouplingDofArray();
 
+    virtual bool DefinedOn (ElementId id) const
+    {
+      if (id.IsBoundary())
+        return activeselem.Test(int(id));
+      else
+        return activeelem.Test(int(id));
+    }
+
     void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
     void SetLevelSet(shared_ptr<GridFunction> lset_){ 
       coef_lset = make_shared<GridFunctionCoefficientFunction>(lset_);
