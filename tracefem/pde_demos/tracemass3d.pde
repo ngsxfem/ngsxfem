@@ -10,13 +10,26 @@ shared = libngsxfem_tracefem
 
 define constant heapsize = 1e9
 
-define constant R = 0.6666666666666
+define constant R = 0.666666666666666
+define constant tR = 0.5
+define constant tr = 0.2
+define constant dtr = 0.169
+define constant q = 1.21
 define constant one = 1.0
 
 # interface description as zero-level
-define coefficient lset
-#( x - R ),
+
+define coefficient lset_plane
+( x - R ),
+
+define coefficient lset_sphere
 ( sqrt(x*x+y*y+z*z) - R),
+
+define coefficient lset_torus
+(sqrt(x*x+y*y+z*z-2*tR*sqrt(x*x+y*y)+tR*tR)-tr),
+
+define coefficient lset_double_torus
+((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)*((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)+z*z-dtr*dtr,
 
 define fespace fesh1
        -type=h1ho
@@ -34,7 +47,10 @@ define fespace tracefes
 numproc informxfem npix
         -xfespace=tracefes
         -fespace=fesh1
-        -coef_levelset=lset
+        # -coef_levelset=lset_plane
+        # -coef_levelset=lset_sphere
+        # -coef_levelset=lset_torus
+        -coef_levelset=lset_double_torus
 
 gridfunction u -fespace=tracefes
 
@@ -54,7 +70,10 @@ exttrace 1.0
 
 numproc drawflux npdf -solution=u -bilinearform=evalu -applyd -label=u
 
-numproc draw npdf2 -coefficient=lset -label=levelset
+numproc draw npdf2 -coefficient=lset_plane -label=levelset_plane
+numproc draw npdf3 -coefficient=lset_sphere -label=levelset_sphere
+numproc draw npdf4 -coefficient=lset_torus -label=levelset_torus
+numproc draw npdf5 -coefficient=lset_double_torus -label=levelset_double_torus
 
 numproc visualization npviz 
     -clipvec=[-1,-1,-1]
