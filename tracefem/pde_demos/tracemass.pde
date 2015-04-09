@@ -60,6 +60,9 @@ numproc visualization npviz -scalarfunction=u
     -minval=-0.5 -maxval=0.5
     -nolineartexture -deformationscale=0.25 -subdivision=0
 
+numproc markinterface npmi -fespace=tracefes
+
+
 #TODO visualize:
 # * use xfem visualizer (done in the extension sense...)
 # or

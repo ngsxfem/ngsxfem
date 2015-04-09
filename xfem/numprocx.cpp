@@ -17,6 +17,7 @@
 #include "../utils/error.hpp"
 #include "../utils/output.hpp"
 #include "../utils/calccond.hpp"
+#include "../xfem/xFESpace.hpp"
 
 using namespace ngsolve;
 // using namespace xintegration;
@@ -540,6 +541,49 @@ namespace ngcomp
 
   };
 
+
+
+  /* ---------------------------------------- 
+                  numproc markinterface
+   ---------------------------------------- */
+  class NumProcMarkElementsOnInterface : public NumProc
+  {
+  protected:
+    shared_ptr<FESpace> fes;
+  public:
+    
+    NumProcMarkElementsOnInterface (shared_ptr<PDE> apde, const Flags & flags)
+      : NumProc (apde)
+    { 
+      fes = apde->GetFESpace(flags.GetStringFlag("fespace","xfes"));
+    }
+  
+    virtual string GetClassName () const
+    {
+      return "NPMarkElementsonInterface";
+    }
+
+
+    virtual void Do (LocalHeap & lh)
+    {
+      for (int i = 0; i < fes->GetMeshAccess()->GetNE(); ++i)
+      {
+        if (dynamic_pointer_cast<XFESpace>(fes)->IsElementCut(i))
+          Ng_SetRefinementFlag (i+1, 1);
+        else
+          Ng_SetRefinementFlag (i+1, 0);
+      }
+
+      if (fes->GetMeshAccess()->GetDimension() == 3)
+      {
+        int nse = ma->GetNSE();
+        for (int i = 0; i < nse; i++)
+          Ng_SetSurfaceRefinementFlag (i+1, 0);
+      }
+
+    }
+  };
+
 }
 
 static RegisterNumProc<NumProcSetValuesX> npinittestxfem2d("setvaluesx");
@@ -547,3 +591,4 @@ static RegisterNumProc<NumProcXDifference<2> > npxdiff("xdifference");
 static RegisterNumProc<NumProcXDifference<3> > npxdiff3d("xdifference3d");
 static RegisterNumProc<NumProcSpecialOutput<2> > npxoutp("xoutput");
 static RegisterNumProc<NumProcCalcCondition> npinitcalccond("calccond");
+static RegisterNumProc<NumProcMarkElementsOnInterface> npinitmark("markinterface");
