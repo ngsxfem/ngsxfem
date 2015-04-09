@@ -49,8 +49,8 @@ numproc informxfem npix
         -fespace=fesh1
         # -coef_levelset=lset_plane
         # -coef_levelset=lset_sphere
-        # -coef_levelset=lset_torus
-        -coef_levelset=lset_double_torus
+        -coef_levelset=lset_torus
+        # -coef_levelset=lset_double_torus
 
 gridfunction u -fespace=tracefes
 
@@ -73,7 +73,7 @@ numproc drawflux npdf -solution=u -bilinearform=evalu -applyd -label=u
 numproc draw npdf2 -coefficient=lset_plane -label=levelset_plane
 numproc draw npdf3 -coefficient=lset_sphere -label=levelset_sphere
 numproc draw npdf4 -coefficient=lset_torus -label=levelset_torus
-numproc draw npdf5 -coefficient=lset_double_torus -label=levelset_double_torus
+numproc draw npdf5 -coefficient=lset_double_torus -label=levelset_doubllge_torus
 
 numproc visualization npviz 
     -clipvec=[-1,-1,-1]
@@ -84,6 +84,8 @@ numproc visualization npviz
     -nolineartexture -deformationscale=0.25 -subdivision=0
 
 numproc markinterface npmi -fespace=tracefes
+
+numproc traceoutput npto -gridfunction=u -levelset=lset_torus -subdivision=0
 
 #TODO visualize:
 # * use xfem visualizer (done in the extension sense...)
