@@ -556,6 +556,15 @@ namespace ngcomp
       : NumProc (apde)
     { 
       fes = apde->GetFESpace(flags.GetStringFlag("fespace","xfes"));
+      if (dynamic_pointer_cast<XFESpace>(fes) == nullptr)
+      {
+        auto compfes = dynamic_pointer_cast<CompoundFESpace>(fes);
+        for (int i = 0; i < compfes->GetNSpaces(); ++i)
+        {
+          fes = dynamic_pointer_cast<XFESpace>((*compfes)[i]);
+          if (fes != nullptr) break;
+        }
+      }
     }
   
     virtual string GetClassName () const
