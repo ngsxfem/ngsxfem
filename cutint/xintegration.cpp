@@ -699,9 +699,8 @@ namespace xintegration
           }
           
         }
-        else
-          if ( ET_SPACE == ET_SEGM)
-          {
+        else if ( ET_SPACE == ET_SEGM)
+        {
             // barycentric coordinates for new points
             const double baryc[3][2] = { { 0.0, 1.0},
                                          { 0.5, 0.5},
@@ -726,8 +725,51 @@ namespace xintegration
               numint_i.SetDistanceThreshold(0.5*distance_threshold);
               numint_i.MakeQuadRule(); // recursive call!
             }
+        }
+        else if ( ET_SPACE == ET_TET)
+        {
+          const double baryc[10][4] = { { 0.0, 0.0, 0.0, 1.0},
+                                        { 0.5, 0.0, 0.0, 0.5},
+                                        { 1.0, 0.0, 0.0, 0.0},
+                                        { 0.0, 0.5, 0.0, 0.5},
+                                        { 0.5, 0.5, 0.0, 0.0},
+                                        { 0.0, 1.0, 0.0, 0.0},
+                                        { 0.0, 0.0, 0.5, 0.5},
+                                        { 0.5, 0.0, 0.5, 0.0},
+                                        { 0.0, 0.5, 0.5, 0.0},
+                                        { 0.0, 0.0, 1.0, 0.0}};
+
+          // new triangles as connectivity information of the vertices baryc above
+          const int tets[8][4] = { { 1, 2, 4, 7},  //corner x
+                                   { 3, 4, 5, 8},  //corner y
+                                   { 6, 7, 8, 9},  //corner z
+                                   { 3, 4, 8, 6},  //prism part 1
+                                   { 3, 4, 1, 6},  //prism part 2
+                                   { 0, 1, 3, 6},  //prism part 3
+                                   { 8, 6, 1, 7},  //pyramid part 1
+                                   { 8, 4, 1, 7}}; //pyramid part 1
+
+          for (int i = 0; i < 8; ++i) // tets
+          {
+            NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
+            numint_i.SetVerticesTime(verts_time);
+            Array< Vec<D> > newverts(4);
+            for (int j = 0; j < 4; ++j) //vertices
+            {
+              newverts[j] = Vec<D>(0.0);
+              for (int d = 0; d < 4; ++d) 
+                newverts[j] += baryc[tets[i][j]][d] * verts_space[d];
+            }
+            numint_i.SetVerticesSpace(newverts);
+            if (ET_TIME == ET_POINT)
+              numint_i.SetDistanceThreshold(0.5*distance_threshold);
+            else
+              numint_i.SetDistanceThreshold(distance_threshold);
+            numint_i.MakeQuadRule(); // recursive call!
           }
-          else
+
+        }
+        else
             throw Exception(" refine_space in 3D in NumInt::MakeQuad not yet implemented");
       }
 
