@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 
 #######################################################################
 # find netgen
-if(NOT INSTALL_DIR)
+if(NOT NETGENDIR)
     set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
-else(NOT INSTALL_DIR)
+else(NOT NETGENDIR)
     set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
-endif(NOT INSTALL_DIR)
+endif(NOT NETGENDIR)
 get_filename_component(NETGEN_BASEDIR ${NETGENDIR} PATH)
 if(NOT INSTALL_DIR)
   set(INSTALL_DIR ${NETGEN_BASEDIR} CACHE PATH "Path to install dir")
@@ -14,7 +14,7 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_COMPILER "${NETGENDIR}/ngscxx" CACHE STRING "" FORCE)
 
 project(xfem)
 set(NGSXFEM_VERSION_MAJOR 0)
@@ -88,7 +88,7 @@ add_subdirectory(tests)
 install (PROGRAMS DESTINATION bin)
 
 set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION 0.6.0-dev)
+set(CPACK_PACKAGE_VERSION 0.6.1-dev)
 
 set(CPACK_PACKAGE_NAME xfem)
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --print-architecture
