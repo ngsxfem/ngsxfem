@@ -11,9 +11,9 @@
 #include <solve.hpp>
 // #include "xintegration.hpp"
 #include "../spacetime/spacetimefespace.hpp"
-#include "xfemIntegrators.hpp"
-#include "stxfemIntegrators.hpp"
-#include "setvaluesx.hpp"
+#include "../xfem/xfemIntegrators.hpp"
+#include "../xfem/stxfemIntegrators.hpp"
+#include "../xfem/setvaluesx.hpp"
 #include "../utils/error.hpp"
 #include "../utils/output.hpp"
 #include "../utils/calccond.hpp"
