@@ -1275,7 +1275,7 @@ namespace ngfem
       // elmat += 1.5 * Trans(L) * A * L;
     }
     else
-      elmat = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
+      elmat = Nc + Trans(Nc) + lam*(p+1)*p/h * Ns; 
       // elmat = lam*(p+1)/p/h * Ns; 
 
   }
