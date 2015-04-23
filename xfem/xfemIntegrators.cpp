@@ -3,50 +3,60 @@
 namespace ngfem
 {
 
-
+  template<int D>
+  void CastXScalarFiniteElements (const FiniteElement & base_fel,
+                                  const ScalarFiniteElement<D> * & scafe,
+                                  const XFiniteElement * & xfe,
+                                  const XDummyFE * & dummfe)               
+  {
+    auto cfel = dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    xfe = nullptr;
+    dummfe = nullptr;
+    scafe = nullptr;
+    for (int i = 0; i < cfel.GetNComponents(); ++i)
+    {
+      if (xfe==nullptr)
+        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
+      if (dummfe==nullptr)
+        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
+      if (scafe==nullptr)
+        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
+    }
+    if (!scafe) 
+      throw Exception(" no scalar fe found!");
+    if (!xfe && !dummfe) 
+      throw Exception(" not containing X-elements?");
+  }
+  
+  
   template<int D>
   void XMassIntegrator<D> ::
   CalcElementMatrix (const FiniteElement & base_fel,
-		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> elmat,
-		     LocalHeap & lh) const
+                     const ElementTransformation & eltrans, 
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
   {
     static Timer timer ("XMassIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    const ScalarFiniteElement<D> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
-    }
-    
     elmat = 0.0;
-
-    if (!xfe && !dummfe) 
-      throw Exception(" not containing X-elements?");
-
+    
     int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
     int ndof = scafe->GetNDof();
     int ndof_total = ndof+ndof_x;
+    
     FlatVector<> shape_total(ndof_total,lh);
     FlatVector<> shape(ndof,&shape_total(0));
     FlatVector<> shapex(ndof_x,&shape_total(ndof));
 
     int p = scafe->Order();
     
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    for (auto dt : {POS,NEG})
     {
       if(!xfe)
       { 
@@ -58,8 +68,7 @@ namespace ngfem
           MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
           double coef = dt == POS ? coef_pos->Evaluate(mip) : coef_neg->Evaluate(mip);
           shape.Range(0,ndof) = scafe->GetShape(mip.IP(), lh);
-          double fac = mip.GetWeight();
-          elmat += (fac*coef) * shape * Trans(shape);
+          elmat += mip.GetWeight() * coef * shape * Trans(shape);
         }
       }
       else
@@ -77,27 +86,12 @@ namespace ngfem
           shapex = shape;
 
           for (int l = 0; l < ndof_x; ++l)
-          {
-            // std::cout << " xfe->GetSignsOfDof()[l] = " << xfe->GetSignsOfDof()[l] << std::endl;
             if (xfe->GetSignsOfDof()[l] != dt)
               shapex(l) = 0.0;
-          }
-
-          // std::cout << " shape = " << shape << std::endl;
-          // std::cout << " shapex = " << shapex << std::endl;
-          // getchar();
-
-
-          double fac = mip.GetWeight();
-          elmat += (fac*coef) * shape_total * Trans(shape_total);
-        } // quad rule
-      } // if xfe
-    } // loop over domain types
-    // if (xfe)
-    // {
-    //   std::cout << " elmat = " << elmat << std::endl;
-    //   getchar();
-    // }
+          elmat += mip.GetWeight() * coef * shape_total * Trans(shape_total);
+        }
+      }
+    }
   }
 
 
@@ -111,27 +105,12 @@ namespace ngfem
     static Timer timer ("XConvectionIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    const ScalarFiniteElement<D> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
-    }
-    
     elmat = 0.0;
-
-    if (!xfe && !dummfe) 
-      throw Exception(" not containing X-elements?");
 
     int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
     int ndof = scafe->GetNDof();
@@ -148,8 +127,7 @@ namespace ngfem
 
     int p = scafe->Order();
     
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    for (auto dt : {POS,NEG})
     {
       if(!xfe)
       { 
@@ -224,23 +202,11 @@ namespace ngfem
     static Timer timer ("XLaplaceIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    const ScalarFiniteElement<D> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
-    }
-    
     elmat = 0.0;
 
     if (!xfe && !dummfe) 
@@ -255,8 +221,7 @@ namespace ngfem
 
     int p = scafe->Order();
     
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    for (auto dt : {POS,NEG})
     {
       if(!xfe)
       { 
@@ -309,29 +274,13 @@ namespace ngfem
   {
     static Timer timer ("XSourceIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
-    HeapReset hr(lh);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    const ScalarFiniteElement<D> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
-    }
-    
     elvec = 0.0;
-
-    if (!xfe && !dummfe) 
-      throw Exception(" not containing X-elements?");
 
     int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
     int ndof = scafe->GetNDof();
@@ -342,8 +291,7 @@ namespace ngfem
 
     int p = scafe->Order();
     
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    for (auto dt : {POS,NEG})
     {
       if(!xfe)
       { 
@@ -398,27 +346,12 @@ namespace ngfem
     static Timer timer ("XRobinIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    const ScalarFiniteElement<D-1> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D-1> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D-1>* >(&cfel[i]);
-    }
-    
     elmat = 0.0;
-
-    if (!xfe && !dummfe) 
-      throw Exception(" not containing X-elements?");
 
     int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
     int ndof = scafe->GetNDof();
@@ -429,8 +362,7 @@ namespace ngfem
 
     int p = scafe->Order();
     
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    for (auto dt : {POS,NEG})
     {
       if(!xfe)
       { 
@@ -483,27 +415,12 @@ namespace ngfem
     static Timer timer ("XNeumannIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
+    const ScalarFiniteElement<D-1> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
 
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D-1> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D-1>* >(&cfel[i]);
-    }
-    
     elvec = 0.0;
-
-    if (!xfe && !dummfe) 
-      throw Exception(" not containing X-elements?");
 
     int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
     int ndof = scafe->GetNDof();
@@ -514,8 +431,7 @@ namespace ngfem
 
     int p = scafe->Order();
     
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+    for (auto dt : {POS,NEG})
     {
       if(!xfe)
       { 
@@ -592,88 +508,8 @@ namespace ngfem
   static RegisterLinearFormIntegrator<XNeumannIntegrator<2> > initxh1neumann2d ("xneumann", 2, 2);
   static RegisterLinearFormIntegrator<XNeumannIntegrator<3> > initxh1neumann3d ("xneumann", 3, 2);
 
-
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<2> > initxconv2d ("xconvection", 2, 2);
   static RegisterBilinearFormIntegrator<XConvectionIntegrator<3> > initxconv3d ("xconvection", 3, 2);
-
-  /*
-  template<int D>
-  void NoXLaplaceIntegrator<D> ::
-  CalcElementMatrix (const FiniteElement & base_fel,
-		     const ElementTransformation & eltrans, 
-		     FlatMatrix<double> elmat,
-		     LocalHeap & lh) const
-  {
-    static Timer timer ("NoXLaplaceIntegrator::CalcElementMatrix");
-    RegionTimer reg (timer);
-
-    const ScalarFiniteElement<D> & scafe = 
-      dynamic_cast<const ScalarFiniteElement<D>&> (base_fel);
-    
-    int order=scafe.Order();
-    elmat = 0.0;
-    
-    ELEMENT_TYPE eltype = eltrans.GetElementType();
-
-    ScalarFieldEvaluator & lset_eval = * ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
-
-    CompositeQuadratureRule<D> * cquad = new CompositeQuadratureRule<D>() ;
-    XLocalGeometryInformation * xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, lset_eval, 
-                                                                          *cquad, lh, 
-                                                                          2*order, 2, 
-                                                                          0,0);
-    DOMAIN_TYPE dt_el = xgeom->MakeQuadRule();
-    FlatXLocalGeometryInformation fxgeom(*xgeom,lh);
-      
-    int ndof = scafe.GetNDof();
-    FlatMatrixFixWidth<D> dshape(ndof,lh);
-    DOMAIN_TYPE dt = POS;
-    for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
-    {
-      if(dt_el == NEG || dt_el == POS)
-      { 
-        if (dt_el != dt)
-          continue;
-        IntegrationRule pir = SelectIntegrationRule (eltrans.GetElementType(), 2*order);
-        for (int i = 0 ; i < pir.GetNIP(); i++)
-        {
-          MappedIntegrationPoint<D,D> mip(pir[i], eltrans);
-          double coef = dt == POS ? alpha_pos : alpha_neg;
-          scafe.CalcMappedDShape(mip, dshape);
-          double fac = mip.GetWeight();
-          elmat += (fac*coef) * dshape * Trans(dshape);
-        }
-      }
-      else
-      {
-        QuadratureRule<D> dtquad(cquad->GetRule(dt));
-        for (int i = 0; i < dtquad.Size(); ++i)
-        {
-          IntegrationPoint ip(&dtquad.points[i](0),dtquad.weights[i]);
-          MappedIntegrationPoint<D,D> mip(ip, eltrans);
-          double coef = dt == POS ? alpha_pos : alpha_neg;
-          scafe.CalcMappedDShape(mip, dshape);
-          double fac = mip.GetWeight();
-          elmat += (fac*coef) * dshape * Trans(dshape);
-        } // quad rule
-      } // if xfe
-    } // loop over domain types
-    delete xgeom;
-
-  }
-
-
-  template class NoXLaplaceIntegrator<2>;
-  template class NoXLaplaceIntegrator<3>;
-
-  static RegisterBilinearFormIntegrator<NoXLaplaceIntegrator<2> > initxh1cut2dnolap ("noxlaplace", 2, 3);
-  static RegisterBilinearFormIntegrator<NoXLaplaceIntegrator<3> > initxh1cut3dnolap ("noxlaplace", 3, 3);
-
-  */
-
-
-
-
 
 }
 

@@ -228,13 +228,13 @@ namespace xintegration
   }
 
 
-  XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
-                                                                ELEMENT_TYPE ET_TIME,
-                                                                const ScalarFieldEvaluator & a_lset, 
-                                                                CompositeQuadratureRule<1> & a_compquadrule1,
-                                                                LocalHeap & a_lh,
-                                                                int a_int_order_space, int a_int_order_time, 
-                                                                int a_ref_level_space, int a_ref_level_time)
+  shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
+                                                                          ELEMENT_TYPE ET_TIME,
+                                                                          const ScalarFieldEvaluator & a_lset, 
+                                                                          CompositeQuadratureRule<1> & a_compquadrule1,
+                                                                          LocalHeap & a_lh,
+                                                                          int a_int_order_space, int a_int_order_time, 
+                                                                          int a_ref_level_space, int a_ref_level_time)
   {
     return  XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
                                               &a_compquadrule1, NULL, NULL, NULL,
@@ -242,13 +242,13 @@ namespace xintegration
                                               a_ref_level_space, a_ref_level_time);
   }
 
-  XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
-                                                                ELEMENT_TYPE ET_TIME,
-                                                                const ScalarFieldEvaluator & a_lset, 
-                                                                CompositeQuadratureRule<2> & a_compquadrule2,
-                                                                LocalHeap & a_lh,
-                                                                int a_int_order_space, int a_int_order_time, 
-                                                                int a_ref_level_space, int a_ref_level_time)
+  shared_ptr<XLocalGeometryInformation>XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
+                                                                         ELEMENT_TYPE ET_TIME,
+                                                                         const ScalarFieldEvaluator & a_lset, 
+                                                                         CompositeQuadratureRule<2> & a_compquadrule2,
+                                                                         LocalHeap & a_lh,
+                                                                         int a_int_order_space, int a_int_order_time, 
+                                                                         int a_ref_level_space, int a_ref_level_time)
   {
     return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
                                              NULL, &a_compquadrule2, NULL, NULL,
@@ -256,13 +256,13 @@ namespace xintegration
                                              a_ref_level_space, a_ref_level_time);
   }
 
-  XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
-                                                                ELEMENT_TYPE ET_TIME,
-                                                                const ScalarFieldEvaluator & a_lset, 
-                                                                CompositeQuadratureRule<3> & a_compquadrule3,
-                                                                LocalHeap & a_lh,
-                                                                int a_int_order_space, int a_int_order_time, 
-                                                                int a_ref_level_space, int a_ref_level_time)
+  shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
+                                                                          ELEMENT_TYPE ET_TIME,
+                                                                          const ScalarFieldEvaluator & a_lset, 
+                                                                          CompositeQuadratureRule<3> & a_compquadrule3,
+                                                                          LocalHeap & a_lh,
+                                                                          int a_int_order_space, int a_int_order_time, 
+                                                                          int a_ref_level_space, int a_ref_level_time)
   {
     return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
                                              NULL, NULL, &a_compquadrule3, NULL,
@@ -270,13 +270,13 @@ namespace xintegration
                                              a_ref_level_space, a_ref_level_time);
   }
 
-  XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
-                                                                ELEMENT_TYPE ET_TIME,
-                                                                const ScalarFieldEvaluator & a_lset, 
-                                                                CompositeQuadratureRule<4> & a_compquadrule4,
-                                                                LocalHeap & a_lh,
-                                                                int a_int_order_space, int a_int_order_time, 
-                                                                int a_ref_level_space, int a_ref_level_time)
+  shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
+                                                                          ELEMENT_TYPE ET_TIME,
+                                                                          const ScalarFieldEvaluator & a_lset, 
+                                                                          CompositeQuadratureRule<4> & a_compquadrule4,
+                                                                          LocalHeap & a_lh,
+                                                                          int a_int_order_space, int a_int_order_time, 
+                                                                          int a_ref_level_space, int a_ref_level_time)
   {
     return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
                                              NULL, NULL, NULL, &a_compquadrule4,
@@ -284,7 +284,7 @@ namespace xintegration
                                              a_ref_level_space, a_ref_level_time);
   }
 
-  XLocalGeometryInformation * XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
+  shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                 ELEMENT_TYPE ET_TIME,
                                                                 const ScalarFieldEvaluator & a_lset, 
                                                                 CompositeQuadratureRule<1> * a_compquadrule1,
@@ -301,19 +301,19 @@ namespace xintegration
       {
       case ET_SEGM:
         return 
-          new NumericalIntegrationStrategy<ET_SEGM,ET_POINT>
+          make_shared<NumericalIntegrationStrategy<ET_SEGM,ET_POINT>>
           (a_lset, *a_compquadrule1, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TRIG:
         return 
-          new NumericalIntegrationStrategy<ET_TRIG,ET_POINT>
+          make_shared<NumericalIntegrationStrategy<ET_TRIG,ET_POINT>>
           (a_lset, *a_compquadrule2, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TET:
         return 
-          new NumericalIntegrationStrategy<ET_TET,ET_POINT>
+          make_shared<NumericalIntegrationStrategy<ET_TET,ET_POINT>>
           (a_lset, *a_compquadrule3, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
@@ -327,20 +327,20 @@ namespace xintegration
       switch (ET_SPACE)
       {
       case ET_SEGM:
-        return 
-          new NumericalIntegrationStrategy<ET_SEGM,ET_SEGM>
+        return
+          make_shared<NumericalIntegrationStrategy<ET_SEGM,ET_SEGM>>
           (a_lset, *a_compquadrule2, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TRIG:
         return 
-          new NumericalIntegrationStrategy<ET_TRIG,ET_SEGM>
+          make_shared<NumericalIntegrationStrategy<ET_TRIG,ET_SEGM>>
           (a_lset, *a_compquadrule3, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
       case ET_TET:
         return 
-          new NumericalIntegrationStrategy<ET_TET,ET_SEGM>
+          make_shared<NumericalIntegrationStrategy<ET_TET,ET_SEGM>>
           (a_lset, *a_compquadrule4, a_lh, 
            a_int_order_space, a_int_order_time, 
            a_ref_level_space, a_ref_level_time);
