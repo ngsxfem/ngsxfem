@@ -62,18 +62,18 @@ namespace ngfem
   public:
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
-                   const XLocalGeometryInformation* a_localgeom,
-                   const XLocalGeometryInformation* a_localgeom_downtrace,
-                   const XLocalGeometryInformation* a_localgeom_uptrace,
+                   shared_ptr<XLocalGeometryInformation> a_localgeom,
+                   shared_ptr<XLocalGeometryInformation> a_localgeom_downtrace,
+                   shared_ptr<XLocalGeometryInformation> a_localgeom_uptrace,
                    LocalHeap & lh);
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
-                   const XLocalGeometryInformation* a_localgeom,
-                   const XLocalGeometryInformation* a_localgeom_downtrace,
+                   shared_ptr<XLocalGeometryInformation> a_localgeom,
+                   shared_ptr<XLocalGeometryInformation> a_localgeom_downtrace,
                    LocalHeap & lh);
     XFiniteElement(const FiniteElement & a_base,
                    const Array<DOMAIN_TYPE>& a_localsigns, 
-                   const XLocalGeometryInformation* a_localgeom,
+                   shared_ptr<XLocalGeometryInformation> a_localgeom,
                    LocalHeap & lh);
     virtual ~XFiniteElement();
     /// the name

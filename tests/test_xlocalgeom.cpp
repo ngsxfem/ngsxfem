@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( xlocalgeom ) {
   ScalarFieldEvaluator* lset_eval_p = ScalarFieldEvaluator::Create(2, fe, fv, lh); //allocated on lh
   
 
-  xintegration::XLocalGeometryInformation * xgeom
+  auto xgeom
     = xintegration::XLocalGeometryInformation::Create
       (eltype, et_time, *lset_eval_p,
        cquad, lh,
@@ -83,6 +83,4 @@ BOOST_AUTO_TEST_CASE( xlocalgeom ) {
       int_if += quad_if.weights[i];
 
   BOOST_CHECK_CLOSE(int_if, 0.5, 1e-12);
-
-  delete xgeom;
 }

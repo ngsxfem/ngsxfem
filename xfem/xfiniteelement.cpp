@@ -15,9 +15,9 @@ namespace ngfem
 
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                 const XLocalGeometryInformation* a_localgeom,
-                                 const XLocalGeometryInformation* a_localgeom_downtrace,
-                                 const XLocalGeometryInformation* a_localgeom_uptrace,
+                                 shared_ptr<XLocalGeometryInformation> a_localgeom,
+                                 shared_ptr<XLocalGeometryInformation> a_localgeom_downtrace,
+                                 shared_ptr<XLocalGeometryInformation> a_localgeom_uptrace,
                                  LocalHeap & lh)
     : base(a_base), 
       localsigns(a_localsigns.Size(),lh), 
@@ -31,8 +31,8 @@ namespace ngfem
   };
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                 const XLocalGeometryInformation* a_localgeom,
-                                 const XLocalGeometryInformation* a_localgeom_downtrace,
+                                 shared_ptr<XLocalGeometryInformation> a_localgeom,
+                                 shared_ptr<XLocalGeometryInformation> a_localgeom_downtrace,
                                  LocalHeap & lh)
     : base(a_base), 
       localsigns(a_localsigns.Size(),lh), 
@@ -45,7 +45,7 @@ namespace ngfem
   };
 
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                 const XLocalGeometryInformation* a_localgeom,
+                                 shared_ptr<XLocalGeometryInformation> a_localgeom,
                                  LocalHeap & lh)
     : base(a_base), 
       localsigns(a_localsigns.Size(),lh), 
