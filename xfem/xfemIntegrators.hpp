@@ -11,6 +11,12 @@
 namespace ngfem
 {
 
+  template<int D>
+  void CastXScalarFiniteElements (const FiniteElement & base_fel,
+                                  const ScalarFiniteElement<D> * & scafe,
+                                  const XFiniteElement * & xfe,
+                                  const XDummyFE * & dummfe);               
+  
   template <int D>
   class XMassIntegrator : public BilinearFormIntegrator
   {
