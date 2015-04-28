@@ -13,39 +13,17 @@ namespace ngfem
     static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
     RegionTimer reg (timer);
 
-    const CompoundFiniteElement & cfel = 
-      dynamic_cast<const CompoundFiniteElement&> (base_fel);
-
-    const XFiniteElement * xfe = NULL;
-    const XDummyFE * dummfe = NULL;
-    const ScalarFiniteElement<D> * scafe = NULL;
-
-    for (int i = 0; i < cfel.GetNComponents(); ++i)
-    {
-      if (xfe==NULL)
-        xfe = dynamic_cast<const XFiniteElement* >(&cfel[i]);
-      if (dummfe==NULL)
-        dummfe = dynamic_cast<const XDummyFE* >(&cfel[i]);
-      if (scafe==NULL)
-        scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[i]);
-    }
-
-    elmat = 0.0;
+    const ScalarFiniteElement<D> * scafe;
+    const XFiniteElement * xfe;
+    const XDummyFE * dummfe;
+    CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
     
-    // if (D==3)
-    //   throw Exception(" D==3: len is not scaling correctly (h^2 instead of h)");
-
-    if (!xfe) 
-    {
-      if(dummfe)
-        return;
-      else
-        throw Exception(" not containing X-elements?");
-    }
+    elmat = 0.0;
 
     int ndof_x = xfe->GetNDof();
     int ndof_h1 = scafe->GetNDof();
     int ndof = ndof_h1+ndof_x;
+    
     FlatVector<> jump(ndof,lh);
     FlatVector<> shape_total(ndof,lh);
     FlatVector<> shape(ndof_h1,&shape_total(0));
@@ -61,9 +39,7 @@ namespace ngfem
     FlatMatrix<> Lsys(ndof+2,ndof+2,lh);
     FlatMatrix<> L(ndof,ndof,lh); // lifting matrix
 
-    ablockintegrator-> CalcElementMatrix (base_fel,
-                                          eltrans, 
-                                          A, lh);
+    ablockintegrator-> CalcElementMatrix (base_fel,eltrans,A, lh);
     Ns = 0.0;
     Nc = 0.0;
 
@@ -77,14 +53,10 @@ namespace ngfem
     const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
     const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
 
-
-
-
     double convmax=0.0;
     if (scale_choice == NITSCHE_VARIANTS::CONVECTIVE)
     { // START estimate convmax;
-      DOMAIN_TYPE dt = POS;
-      for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+      for (auto dt : {POS,NEG})
       {
         const FlatQuadratureRule<D> & fquaddt(fcompr.GetRule(dt));
         for (int i = 0; i < fquaddt.Size(); ++i)
@@ -103,8 +75,7 @@ namespace ngfem
 
 
     { // calc constrb
-      DOMAIN_TYPE dt = POS;
-      for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
+      for (auto dt : {POS,NEG})
       {
         const FlatQuadratureRule<D> & fdomquad(fcompr.GetRule(dt));
         for (int i = 0; i < fdomquad.Size(); ++i)
@@ -131,8 +102,6 @@ namespace ngfem
 
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 
-    // const double b_t_neg = beta_neg->Evaluate(mipc);
-    // const double b_t_pos = beta_pos->Evaluate(mipc);
     const double a_t_neg = alpha_neg->Evaluate(mipc);
     const double a_t_pos = alpha_pos->Evaluate(mipc);
 
@@ -145,15 +114,10 @@ namespace ngfem
     case NITSCHE_VARIANTS::HEAVISIDE:
       {
         if (xgeom.kappa[NEG] >= 0.5)
-          { 
             kappa_neg = 1.0;
-            kappa_pos = 0.0;
-          }
         else
-          { 
             kappa_neg = 0.0;
-            kappa_pos = 1.0;
-          }
+        kappa_pos = 1.0 - kappa_neg;
         break;
       }
     case NITSCHE_VARIANTS::HANSBO:
@@ -241,8 +205,6 @@ namespace ngfem
     }
     else
       elmat = Nc + Trans(Nc) + lam*(p+1)*p * avah * Ns; 
-      // elmat = lam*(p+1)/p/h * Ns; 
-
   }
 
 
