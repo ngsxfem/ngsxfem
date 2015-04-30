@@ -17,8 +17,9 @@ namespace ngfem
     const XFiniteElement * xfe;
     const XDummyFE * dummfe;
     CastXScalarFiniteElements(base_fel, scafe, xfe, dummfe);
-    
+
     elmat = 0.0;
+    if (!xfe) return;
 
     int ndof_x = xfe->GetNDof();
     int ndof_h1 = scafe->GetNDof();
