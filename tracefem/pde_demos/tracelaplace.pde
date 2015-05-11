@@ -39,7 +39,7 @@ numproc informxfem npix
 gridfunction u -fespace=tracefes
 
 bilinearform a -fespace=tracefes -symmetric
-tracemass 1.0
+tracelaplace 1.0
 
 linearform f -fespace=tracefes
 tracesource sin(pi*2*x*y)

@@ -44,6 +44,7 @@ namespace ngfem
       const double weight = fquad.weights(i) * len;
 
       const double coef_val = coef->Evaluate(mip);
+	    
       scafe.CalcShape (mip.IP(),shape);
       elmat += (coef_val * weight) * shape * Trans(shape);
     }
@@ -143,6 +144,60 @@ namespace ngfem
 
 // ---------------------
 
+  template<int D>
+  void TraceLaplaceIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+                     const ElementTransformation & eltrans,
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+  {
+    static Timer timer ("TraceLaplaceIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const XFiniteElement * xfe =
+      dynamic_cast<const XFiniteElement *> (&base_fel);
+
+    elmat = 0.0;
+    if (!xfe) return;
+
+    const ScalarFiniteElement<D> & scafe =
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+
+    int ndof = scafe.GetNDof();
+    //FlatVector<> shape(ndof,lh);
+    FlatMatrixFixWidth<D> dshape(ndof,lh);
+    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+    for (int i = 0; i < fquad.Size(); ++i)
+    {
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+
+      Mat<D,D> Finv = mip.GetJacobianInverse();
+      const double absdet = mip.GetMeasure();
+
+      Vec<D> nref = fquad.normals.Row(i);
+      Vec<D> normal = absdet * Trans(Finv) * nref ;
+      double len = L2Norm(normal);
+      normal /= len;
+      const double weight = fquad.weights(i) * len;
+
+      const double coef_val = coef->Evaluate(mip);
+
+      scafe.CalcMappedDShape(mip, dshape);
+
+      //scafe.CalcShape (mip.IP(),shape);
+      elmat += (coef_val * weight) * dshape * Trans(dshape);
+    }
+  }
+
+  template class TraceLaplaceIntegrator<2>;
+  template class TraceLaplaceIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<TraceLaplaceIntegrator<2> > inittracelaplace2d ("tracelaplace", 2, 1);
+  static RegisterBilinearFormIntegrator<TraceLaplaceIntegrator<3> > inittracelaplace3d ("tracelaplace", 3, 1);
 
 
 
