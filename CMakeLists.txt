@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 
 #######################################################################
 # find netgen
-if(NOT NETGENDIR)
+if(NOT INSTALL_DIR)
     set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
-else(NOT NETGENDIR)
+else(NOT INSTALL_DIR)
     set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
-endif(NOT NETGENDIR)
+endif(NOT INSTALL_DIR)
 get_filename_component(NETGEN_BASEDIR ${NETGENDIR} PATH)
 if(NOT INSTALL_DIR)
   set(INSTALL_DIR ${NETGEN_BASEDIR} CACHE PATH "Path to install dir")
