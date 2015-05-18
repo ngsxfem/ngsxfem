@@ -55,7 +55,7 @@ define linearform f -fespace=fescomp
 xsource one zero -comp=2
 xGammaForce gammaf
 #xLBmeancurv one # naiv Laplace-Beltrami discretization 
-# xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
+#xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
 xstokes one one 

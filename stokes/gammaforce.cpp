@@ -76,7 +76,7 @@ namespace ngfem
 
     FlatMatrixFixWidth<D*D> bmat(ndof_total,lh);
     FlatMatrixFixWidth<D*D> bmat_P(ndof_total,lh);
-    FlatMatrixFixWidth<D> vshape(ndofuv_total,lh);
+    FlatVector<>  vshape(D*ndofuv_total,lh);
     
     for (int i = 0; i < fquad.Size(); ++i)
     {
@@ -96,12 +96,10 @@ namespace ngfem
       const double coef_val = coef->Evaluate(mip);
 
       scafe.CalcShape (ip,shapeuv_total);
+      vshape = 0.0;
       for (int i = 0; i < D; ++i)
-	{
-	  vshape.Col(i) = shapeuv_total;
-	}      
-
-      elvec += (coef_val * weight) * vshape * normal;
+        vshape.Range(ndofuv_total*i,ndofuv_total*(i+1)) = normal(i) *  shapeuv_total ;
+      elvec.Range(0,D*ndofuv_total) += (coef_val * weight) * vshape;
 
     }
   }
