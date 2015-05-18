@@ -2,6 +2,7 @@ add_library(ngsxfem_xstokes ${NGS_LIB_TYPE}
   xstokesIntegrators.cpp
   xmeancurv.cpp
   xstokesspace.cpp
+  gammaforce.cpp
   python_stokes.cpp
   )
 
@@ -16,6 +17,7 @@ install( FILES
   xstokesIntegrators.hpp
   xmeancurv.hpp
   xstokesspace.hpp
+  gammaforce.hpp
   DESTINATION include
   )
 
