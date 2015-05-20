@@ -248,8 +248,7 @@ namespace ngfem
       const double coef_val = coef->Evaluate(mip);
 
       scafe.CalcMappedDShape(mip, dshape);
-      proj = (Id<D>() - normal * Trans(normal)) * Trans(dshape);
-      //scafe.CalcShape (mip.IP(),shape);
+      proj = dshape * (Id<D>() - normal * Trans(normal)) ;
       elmat += (coef_val * weight) * proj * Trans(proj);
     }
   }
