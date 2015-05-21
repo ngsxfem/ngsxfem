@@ -70,6 +70,25 @@ namespace ngfem
   };
 
   template <int D>
+  class TraceConvectionIntegrator : public BilinearFormIntegrator
+  {
+    shared_ptr<CoefficientFunction> conv;
+  public:
+    TraceConvectionIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+      : conv(coeffs[0]){;}
+    virtual ~TraceConvectionIntegrator(){ ; };
+    virtual string Name () const { return "TraceConvectionIntegrator"; }
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    virtual bool BoundaryForm () const { return false; }
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                         const ElementTransformation & eltrans,
+                         FlatMatrix<double> elmat,
+                         LocalHeap & lh) const;
+  };
+
+  template <int D>
   class TraceSourceIntegrator : public LinearFormIntegrator
   {
     shared_ptr<CoefficientFunction> coef;

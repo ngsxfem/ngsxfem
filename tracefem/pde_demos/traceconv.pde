@@ -18,9 +18,13 @@ define coefficient lset
 #( x - R ),
 ( sqrt(x*x+y*y) - R),
 
+define coefficient conv
+(1,2)
+
 define fespace fesh1
        -type=h1ho
        -order=1
+       -dirichlet=[1,2,3,4]
 
 # use an "extended" continuous finite element space
 # you may change the order here
@@ -28,6 +32,7 @@ define fespace tracefes
        -type=xfespace
        -type_std=h1ho
        -ref_space=1
+        -dirichlet=[1,2,3,4]
 #       -empty
 
 #update "extended" part of XFE space:
@@ -38,17 +43,19 @@ numproc informxfem npix
 
 gridfunction u -fespace=tracefes
 
-bilinearform a -fespace=tracefes -symmetric
-tracelaplacebeltrami 1.0
-tracemass 0.0001
+bilinearform a -fespace=tracefes
+#tracelaplacebeltrami 0.01
+traceconvection conv
+tracemass 1
+
 linearform f -fespace=tracefes
-#tracesource sin(pi*2*x*y)
-tracesource (x*y*x*x)
+#tracesource sin(pi*y/1.5)
+tracesource (x)
 
 
 
-define preconditioner c -type=local -bilinearform=a -test #-block
-#define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
+#define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 
