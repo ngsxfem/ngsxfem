@@ -4,6 +4,7 @@ add_library(ngsxfem_xstokes ${NGS_LIB_TYPE}
   xstokesspace.cpp
   gammaforce.cpp
   python_stokes.cpp
+  my_ghostpenalty.cpp
   )
 
 set_target_properties(ngsxfem_xstokes PROPERTIES SUFFIX ".so")
@@ -18,6 +19,7 @@ install( FILES
   xmeancurv.hpp
   xstokesspace.hpp
   gammaforce.hpp
+  my_ghostpenalty.hpp
   DESTINATION include
   )
 
