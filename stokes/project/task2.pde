@@ -11,22 +11,75 @@ shared = libngsxfem_xstokes
 
 define constant heapsize = 1e9
 
-define constant R = 0.3333
 define constant one = 1.0
+define constant eps2 = -1e-8
 
 # interface description as zero-level
 # define coefficient lset
 # ( sqrt(x*x+y*y) - R),
 
+define constant R = 0.05
+
+define constant eps1 = 1e-1
+
+define constant d = (0.2 + eps1)
+
+define constant x0 = 0.0
+define constant y0 = 0.0
+
 define coefficient lset
-( sqrt((x)*(x)+y*y) - R),
+(
+ (        
+  ((x-x0+d) < 0) 
+   *
+   (        
+    ((y-y0+d) < 0) 
+     * (sqrt((x-x0+d)*(x-x0+d)+(y-y0+d)*(y-y0+d))-R)
+    +
+    ((y-y0+d) > 0) * ((y-y0-d) < 0) 
+     * (x0-x-d-R) 
+    +
+    ((y-y0-d) > 0) 
+     * (sqrt((x-x0+d)*(x-x0+d)+(y-y0-d)*(y-y0-d))-R)
+   )
+  +
+  ((x-x0+d) > 0) * ((x-x0-d) < 0) 
+   *
+   (        
+    ((y-y0+d) < 0) 
+     * (y0-y-d-R) 
+    +
+    ((y-y0+d) > 0) * ((y-y0-d) < 0) 
+     * (-R) 
+    +
+    ((y-y0-d) > 0) 
+     * (y-y0-d-R) 
+   )
+  +
+  ((x-x0-d) > 0) 
+   *
+   (        
+    ((y-y0+d) < 0) 
+     * (sqrt((x-x0-d)*(x-x0-d)+(y-y0+d)*(y-y0+d))-R)
+    +
+    ((y-y0+d) > 0) * ((y-y0-d) < 0) 
+     * (x-x0-d-R) 
+    +
+    ((y-y0-d) > 0) 
+     * (sqrt((x-x0-d)*(x-x0-d)+(y-y0-d)*(y-y0-d))-R)
+   )
+ )
+)
+
+# define coefficient lset
+# ( sqrt((x)*(x)+y*y) - R),
 
 define fespace fescomp
        -type=xstokes
        -order=1                 
        -dirichlet_vel=[1,2,3,4]
        -empty_vel
-       # -dgjumps
+       -dgjumps
        -ref_space=1
 
 numproc informxstokes npi_px 
@@ -63,19 +116,20 @@ xGammaForce gammaf
 
 define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
 xstokes one one 
-myghostpenalty ghost -comp=3
+# myghostpenalty ghost -comp=3
 # xlaplace one one -comp=1
 # xnitsche one one one one lambda -comp=1
 # xnitsche one one one one lambda -comp=2
-# lo_ghostpenalty one one delta -comp=1
+# lo_ghostpenalty one one ghost -comp=3
 # lo_ghostpenalty one one delta -comp=2
 # xmass one one -comp=1
 # xmass 1.0 1.0 -comp=2
+xmass eps2 eps2 -comp=3
 
-#define preconditioner c -type=local -bilinearform=a -test #-block           
-define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
+define preconditioner c -type=local -bilinearform=a -test #-block           
+#define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
 
-numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
+numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=minres -preconditioner=c -maxsteps=1000 -prec=1e-6
 
 
 define coefficient velocity ( (uvp.1, uvp.2) )
