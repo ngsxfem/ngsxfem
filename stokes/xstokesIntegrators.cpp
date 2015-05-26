@@ -128,9 +128,9 @@ namespace ngfem
 
           // \nabla u^T
           // the first nd_u shape functions belong to u_x, the next nd_u belong to u_y:
-          for (int d = 0; d < D; ++d)
-            for (int k = 0; k < D; ++k)
-              bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d);
+	     // for (int d = 0; d < D; ++d)
+	     //   for (int k = 0; k < D; ++k)
+	     // 	 bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d);
 
           // ... and finally nd_p shape functions for the pressure:
           bmat.Row(D*D).Range(dofrangep) = vecp;
@@ -183,9 +183,9 @@ namespace ngfem
             bmat.Rows(D*d,D*(d+1)).Cols(*dofrangeuv[d]) = Trans (gradu);
 
           // \nabla u^T
-          for (int d = 0; d < D; ++d)
-            for (int k = 0; k < D; ++k)
-              bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d); // du_k / dx_d
+          // for (int d = 0; d < D; ++d)
+          //   for (int k = 0; k < D; ++k)
+          //     bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d); // du_k / dx_d
 
 
           if (ndofuv_x > 0)

@@ -7,7 +7,7 @@ namespace ngfem
 
   XDummyFE::XDummyFE (DOMAIN_TYPE a_sign, ELEMENT_TYPE a_et)
     : // FiniteElement(),
-    sign(a_sign), et(a_et) { ndof = 0; }
+    sign(a_sign), et(a_et) { ndof = 0; order = 0; }
 
   LevelsetContainerFE::LevelsetContainerFE(shared_ptr<CoefficientFunction> coeflset, double ta, double tb)
     : // FiniteElement(),
@@ -26,6 +26,7 @@ namespace ngfem
       fxgeom_uptrace(*a_localgeom_uptrace,lh)
   { 
     ndof = base.GetNDof(); 
+    order = base.Order(); 
     for (int l = 0; l < localsigns.Size(); ++l)
       localsigns[l] = a_localsigns[l];
   };
@@ -40,6 +41,7 @@ namespace ngfem
       fxgeom_downtrace(*a_localgeom_downtrace,lh)
   { 
     ndof = base.GetNDof(); 
+    order = base.Order(); 
     for (int l = 0; l < localsigns.Size(); ++l)
       localsigns[l] = a_localsigns[l];
   };
@@ -52,6 +54,7 @@ namespace ngfem
       fxgeom(*a_localgeom,lh)
   { 
     ndof = base.GetNDof(); 
+    order = base.Order(); 
     for (int l = 0; l < localsigns.Size(); ++l)
       localsigns[l] = a_localsigns[l];
   };

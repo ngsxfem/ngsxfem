@@ -5,6 +5,7 @@ add_library(ngsxfem_xstokes ${NGS_LIB_TYPE}
   gammaforce.cpp
   python_stokes.cpp
   my_ghostpenalty.cpp
+  xmasscompone.cpp
   )
 
 set_target_properties(ngsxfem_xstokes PROPERTIES SUFFIX ".so")
@@ -20,6 +21,7 @@ install( FILES
   xstokesspace.hpp
   gammaforce.hpp
   my_ghostpenalty.hpp
+  xmasscompone.hpp
   DESTINATION include
   )
 
