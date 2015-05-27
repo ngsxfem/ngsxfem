@@ -372,6 +372,7 @@ namespace ngcomp
     double time;
     ErrorTable errtab;
     const Flags myflags;
+    bool nooutput = false;
   public:
 
 
@@ -387,6 +388,7 @@ namespace ngcomp
       b_pos = flags.GetNumFlag ( "henryweight_p", 1.0);
       b_neg = flags.GetNumFlag ( "henryweight_n", 1.0);
       time = flags.GetNumFlag ( "time", 1.0);
+      nooutput = flags.GetDefineFlag ("nooutput");
     }
 
     virtual ~NumProcXDifference()
@@ -405,7 +407,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      CalcXError<D>(gfu, gfu2, solcoef, intorder, a_neg, a_pos, b_neg, b_pos, time, errtab, lh, true, myflags);
+      CalcXError<D>(gfu, gfu2, solcoef, intorder, a_neg, a_pos, b_neg, b_pos, time, errtab, lh, !nooutput, myflags);
     }    
     
 
