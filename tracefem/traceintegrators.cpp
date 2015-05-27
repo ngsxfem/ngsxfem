@@ -317,4 +317,61 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<TraceConvectionIntegrator<2> > inittraceconvection2d ("traceconvection", 2, 1);
   static RegisterBilinearFormIntegrator<TraceConvectionIntegrator<3> > inittraceconvection3d ("traceconvection", 3, 1);
 
-}
+// ---------------------
+
+  template<int D>
+  void TraceDivIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+                     const ElementTransformation & eltrans,
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+  {
+    static Timer timer ("TraceDivIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const XFiniteElement * xfe =
+      dynamic_cast<const XFiniteElement *> (&base_fel);
+
+    elmat = 0.0;
+    if (!xfe) return;
+
+    const ScalarFiniteElement<D> & scafe =
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+
+    int ndof = scafe.GetNDof();
+    FlatVector<> shape(ndof,lh);
+    FlatMatrixFixWidth<D> dshape(ndof,lh);
+    FlatMatrixFixWidth<D> proj(ndof,lh);
+    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+    const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+    for (int i = 0; i < fquad.Size(); ++i)
+    {
+      IntegrationPoint ip(&fquad.points(i,0),0.0);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      Vec<D> convvec;
+      conv->Evaluate(mip,convvec);
+
+      Mat<D,D> Finv = mip.GetJacobianInverse();
+      const double absdet = mip.GetMeasure();
+
+      Vec<D> nref = fquad.normals.Row(i);
+      Vec<D> normal = absdet * Trans(Finv) * nref ;
+      double len = L2Norm(normal);
+      normal /= len;
+      const double weight = fquad.weights(i) * len;
+
+      scafe.CalcShape (mip.IP(),shape);
+      scafe.CalcMappedDShape(mip, dshape);
+      proj = dshape * (Id<D>() - normal * Trans(normal)) ;
+      elmat -= weight * proj * convvec * Trans(shape);
+    }
+  }
+
+  template class TraceDivIntegrator<2>;
+  template class TraceDivIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<TraceDivIntegrator<2> > inittracediv2d ("tracediv", 2, 1);
+  static RegisterBilinearFormIntegrator<TraceDivIntegrator<3> > inittracediv3d ("tracediv", 3, 1);
+};
