@@ -2,7 +2,7 @@
 # load geometry
 geometry = d7_stokes.in2d                                        
 # and mesh
-mesh = d7_stokes_fine.vol
+mesh = d7_stokes.vol.gz
 
 #load xfem-library and python-bindings
 shared = libngsxfem_xfem                                       
@@ -11,13 +11,13 @@ shared = libngsxfem_xstokes
 
 define constant heapsize = 1e9
 
-define constant R = 0.666666
+define constant R = 0.75001
 define constant one = 1.0
 
-# interface description as zero-level
-# define coefficient lset
-# ( sqrt(x*x+y*y) - R),
+define constant eps1 = 1e-1
+define constant R = 0.5+eps1
 
+# interface description as zero-level
 define coefficient lset
 ( sqrt((x)*(x)+y*y) - R),
 
@@ -26,9 +26,8 @@ define fespace fescomp
        -order=1                 
        -dirichlet_vel=[1,2,3,4]
        -empty_vel
-       # -dgjumps
-       -ref_space=1
        -dgjumps
+       -ref_space=1
 
 numproc informxstokes npi_px 
         -xstokesfespace=fescomp
@@ -61,7 +60,7 @@ define constant lambda = 1000.0
 define constant delta = 1.0
 
 define coefficient gammaf
-1.0,
+(1.0/R),
 
 define coefficient exactpneg
 (x*x*x + (gammaf) - (pi*R*R/4.0*gammaf)),
@@ -87,9 +86,9 @@ define coefficient eps
 define linearform f -fespace=fescomp
 xsource fone fone -comp=1
 xsource ftwo ftwo -comp=2
-xGammaForce gammaf
 
 #xsource zero zero -comp=2
+xGammaForce gammaf
 #xLBmeancurv one # naiv Laplace-Beltrami discretization 
 #xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
@@ -100,7 +99,7 @@ myghostpenalty ghost -comp=3
 # xlaplace one one -comp=1
 # xnitsche one one one one lambda -comp=1
 # xnitsche one one one one lambda -comp=2
-# lo_ghostpenalty one one delta -comp=1
+#lo_ghostpenalty one one ghost -comp=3
 # lo_ghostpenalty one one delta -comp=2
 # xmass one one -comp=1
 # xmass 1.0 1.0 -comp=2
@@ -142,6 +141,8 @@ numproc difference checkdiff -bilinearform1=b1 -solution1=uvp -bilinearform2=b1 
 
 
 
-numproc xdifference diffp -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos
+# numproc xdifference diffp -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos
+numproc xdifference diffp2 -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos -nooutput
+numproc xdifference diffp3 -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos
 
 #-reference=exu.3
