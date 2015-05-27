@@ -11,7 +11,7 @@ shared = libngsxfem_xstokes
 
 define constant heapsize = 1e9
 
-define constant R = 0.6666666
+define constant R = 0.666666
 define constant one = 1.0
 
 # interface description as zero-level
@@ -28,6 +28,7 @@ define fespace fescomp
        -empty_vel
        # -dgjumps
        -ref_space=1
+       -dgjumps
 
 numproc informxstokes npi_px 
         -xstokesfespace=fescomp
@@ -42,8 +43,13 @@ define coefficient exactuxpos
 define coefficient exactuypos
 (exp(-1.0 *( x * x + y * y)) * x),
 
+define coefficient exactp
+(x*x*x),
+
+
 numproc setvalues npsvex1 -gridfunction=exu.1.1 -coefficient=exactuxpos
 numproc setvalues npsvex2 -gridfunction=exu.2.1 -coefficient=exactuypos
+numproc setvalues npsvex2 -gridfunction=exu.3.1 -coefficient=exactp
 
 numproc setvalues npsvex3 -gridfunction=uvp.1.1 -coefficient=exactuxpos -boundary
 numproc setvalues npsvex4 -gridfunction=uvp.2.1 -coefficient=exactuypos -boundary
@@ -54,11 +60,14 @@ define constant one = 1.0
 define constant lambda = 1000.0
 define constant delta = 1.0
 
-define coefficient s
-0,1,0,0,
-
 define coefficient gammaf
-2.0,
+1.0,
+
+define coefficient exactpneg
+(x*x*x + (gammaf) - (pi*R*R/4.0*gammaf)),
+
+define coefficient exactppos
+(x*x*x - (pi*R*R/4.0*gammaf)),
 
 define coefficient fone
 (exp(-1* (x * x + y * y)) * ((-8 * y) + (4 * x * x * y) + (4 * y * y * y))+ 3 * x * x),
@@ -66,6 +75,11 @@ define coefficient fone
 define coefficient ftwo
 (exp(-1* (x * x + y * y)) * ((-4 * x * x * x) + (8 * x) - (4 * x * y * y))),
 
+define coefficient ghost
+-0.01,
+
+define coefficient eps
+(1e-6),
 
 #numproc setvaluesx npsvx -gridfunction=uvp.2 -coefficient_neg=s -coefficient_pos=s -boundary
 
@@ -81,6 +95,8 @@ xGammaForce gammaf
 # integration on sub domains
 define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
 xstokes one one 
+myghostpenalty ghost -comp=3
+#xmass eps eps -comp=3
 # xlaplace one one -comp=1
 # xnitsche one one one one lambda -comp=1
 # xnitsche one one one one lambda -comp=2
@@ -120,8 +136,12 @@ define gridfunction erroru -fespace=feerror
 
 #numproc drawflux test -bilinearform=b1 -solution=uvp -label=qqqq
 
-#numproc difference checkdiff -bilinearform1=b1 -solution1=uvp -bilinearform2=b1 -solution2=exu -diff=erroru
-numproc difference checkdiff -bilinearform=b1 -solution=uvp -function=fone -diff=erroru
+numproc difference checkdiff -bilinearform1=b1 -solution1=uvp -bilinearform2=b1 -solution2=exu -diff=erroru
+
+#numproc difference checkdiff -bilinearform=b1 -solution=uvp -function=fone -diff=erroru
 
 
 
+numproc xdifference diffp -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos
+
+#-reference=exu.3
