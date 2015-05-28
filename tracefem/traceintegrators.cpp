@@ -56,6 +56,8 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<TraceMassIntegrator<2> > inittracemass2d ("tracemass", 2, 1);
   static RegisterBilinearFormIntegrator<TraceMassIntegrator<3> > inittracemass3d ("tracemass", 3, 1);
 
+// ---------------------
+
   template<int D>
   void TraceSourceIntegrator<D> ::
   CalcElementVector (const FiniteElement & base_fel,

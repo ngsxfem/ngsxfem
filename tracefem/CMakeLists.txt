@@ -1,5 +1,5 @@
 add_library(ngsxfem_tracefem ${NGS_LIB_TYPE}
-  traceintegrators.cpp traceoutput.cpp
+  traceintegrators.cpp traceoutput.cpp traceinstat.cpp
   )
 
 set_target_properties(ngsxfem_tracefem PROPERTIES SUFFIX ".so")
