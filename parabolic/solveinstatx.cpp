@@ -449,7 +449,7 @@ public:
         
         lfi_tr->SetTime(ti.first);  //absolute time
         lfi_rhs->SetTimeInterval(ti);
-        lfrhs -> Assemble(lh);
+        lfrhs -> Assemble(lh.Borrow());
 
         const BaseVector * vecf = &(lfrhs->GetVector());
 

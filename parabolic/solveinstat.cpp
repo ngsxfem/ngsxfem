@@ -180,7 +180,7 @@ class NumProcSolveInstat : public NumProc
 			Ng_Redraw ();
 			if (userstepping)
 				getchar();
-			lfrhs -> Assemble(lh);
+			lfrhs -> Assemble(lh.Borrow());
 			vecf = &(lfrhs -> GetVector());
 		}
 		cout << "\r               \rt = " << tend;
