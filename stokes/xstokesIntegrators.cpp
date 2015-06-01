@@ -174,7 +174,7 @@ namespace ngfem
           for (int l = 0; l < ndofuv_x; ++l)
           {
             if (feuvx->GetSignsOfDof()[l] != dt)
-              gradux(l) = 0.0;
+              gradux.Row(l) = 0.0;
           }
 
           bmat = 0.0;
@@ -194,9 +194,9 @@ namespace ngfem
               bmat.Rows(D*d,D*(d+1)).Cols(*dofrangeuv_x[d]) = Trans (gradux);
 
             // \nabla u_x^T
-            for (int d = 0; d < D; ++d)
-              for (int k = 0; k < D; ++k)
-                bmat.Row(d*D+k).Range(*dofrangeuv_x[k]) = gradux.Col(d);
+            // for (int d = 0; d < D; ++d)
+            //   for (int k = 0; k < D; ++k)
+            //     bmat.Row(d*D+k).Range(*dofrangeuv_x[k]) = gradux.Col(d);
           }
           // ... and finally nd_p shape functions for the pressure:
           bmat.Row(D*D).Range(dofrangep) = vecp;
