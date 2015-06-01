@@ -126,7 +126,7 @@ namespace ngfem
       kappa_neg = 0.0;
     kappa_pos = 1.0 - kappa_neg;
 
-    kappa_neg=kappa_pos=0.5;
+    // kappa_neg=kappa_pos=0.5;
        
     const double lam = lambda->EvaluateConst();
 
@@ -149,17 +149,20 @@ namespace ngfem
       
       const double a_neg = alpha_neg->Evaluate(mip);
       const double a_pos = alpha_pos->Evaluate(mip);
-        
+
+      const double ava = a_pos*kappa_pos+a_neg*kappa_neg;
+      
       shapep = fep.GetShape(mip.IP(), lh);
       shapep*=-1.0;
       
       FlatMatrixFixWidth<D> gradu(ndofuv, lh);
       feuv.CalcMappedDShape (mip, gradu);
-      
+      FlatVector<> dudn(ndofuv,lh);
+      dudn = gradu * normal;
       for (int d = 0; d<D; ++d)
 	{
-	  bmat.Rows(*dofrangeuv[d]).Col(d)=(a_pos*kappa_pos+a_neg*kappa_neg)*gradu*normal;
-	  bmat.Rows(*dofrangeuv_x[d]).Col(d)=gradu*normal;
+	  bmat.Rows(*dofrangeuv[d]).Col(d)=(ava)*dudn;
+	  bmat.Rows(*dofrangeuv_x[d]).Col(d)=dudn;
 	  bmat.Rows(dofrangep).Col(d)=normal[d]*shapep;
 	  bmat.Rows(dofrangep_x).Col(d)=normal[d]*shapep;
 	}    
@@ -211,7 +214,7 @@ namespace ngfem
       Nc = -weight * bmatjump * Trans(bmat);
       Ns = weight * bmatjump * Trans(bmatjump);
 
-      elmat+= Nc + Trans(Nc) + lam*(ps+1)*ps/h * Ns; 
+      elmat+= Nc + Trans(Nc) + ava*lam*(ps+1)*ps/h * Ns; 
       //elmat+= Nc - Trans(Nc) + lam*(ps+1)*ps/h * Ns; 
       //elmat+= lam*(ps+1)*ps/h * Ns; 
       // FlatMatrix<> lapmat(ndof_total,ndof_total,lh);
