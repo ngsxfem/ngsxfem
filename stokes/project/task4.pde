@@ -188,3 +188,32 @@ numproc xdifference diffpuv2 -solution=uvp.2 -solution_n=exactuyneg -solution_p=
 numproc evaluate eval1 -bilinearform=b1 -gridfunction=uvp -point=[-1,0,0] -point2=[0,0,0] -filename=evalplot
 numproc evaluate eval2 -bilinearform=b1 -gridfunction=exu -point=[-1,0,0] -point2=[0,0,0] -filename=evalplot2
 #-reference=exu.3
+
+
+define fespace fesvelstd
+        -type=h1ho
+        -order=2
+define fespace fespstd
+        -type=h1ho
+        -order=1
+
+define fespace fesvelnegpos
+        -type=compound
+        -spaces=[fesvelstd,fesvelstd]
+
+define fespace fespnegpos
+        -type=compound
+        -spaces=[fespstd,fespstd]
+
+define gridfunction gf_u_negpos -fespace=fesvelnegpos -novisual
+define gridfunction gf_v_negpos -fespace=fesvelnegpos -novisual
+define gridfunction gf_p_negpos -fespace=fespnegpos -novisual
+
+numproc xtonegpos npxtonegposu -xstd_gridfunction=uvp.1 -negpos_gridfunction=gf_u_negpos
+numproc xtonegpos npxtonegposv -xstd_gridfunction=uvp.2 -negpos_gridfunction=gf_v_negpos
+numproc xtonegpos npxtonegposp -xstd_gridfunction=uvp.3 -negpos_gridfunction=gf_p_negpos
+
+numproc vtkoutput npout -filename=task4
+        -coefficients=[lset]
+        -gridfunctions=[gf_u_negpos.1,gf_u_negpos.2,gf_v_negpos.1,gf_v_negpos.2,gf_p_negpos.1,gf_p_negpos.2]
+        -fieldnames=[levelset,uneg,upos,vneg,vpos,pneg,ppos]        
