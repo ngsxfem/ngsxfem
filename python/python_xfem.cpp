@@ -3,6 +3,7 @@
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
 #include "../stokes/xstokesspace.hpp"
+#include "../utils/vtkoutput.hpp"
 
 //using namespace ngcomp;
 
@@ -20,6 +21,12 @@ void ExportNgsx()
 
   bp::scope local_scope(module);
 
+  bp::enum_<DOMAIN_TYPE>("DOMAIN_TYPE")
+    .value("POS", POS)
+    .value("NEG", NEG)
+    .value("IF", IF)
+    .export_values()
+    ;
 
   bp::def("CastToXStokesFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStokesFESpace>(fes); } ) );
 
@@ -55,7 +62,8 @@ void ExportNgsx()
 
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
   bp::def("CastToXFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XFESpace>(fes); } ) );
-
+  bp::def("XToNegPos", FunctionPointer( [] (shared_ptr<GridFunction> gfx, shared_ptr<GridFunction> gfnegpos) { XFESpace::XToNegPos(gfx,gfnegpos); } ) );
+  
   // bp::def("CastToFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<FESpace>(fes); } ) );
 
 
@@ -73,7 +81,38 @@ void ExportNgsx()
          "return 'standard' FESpace part of XStdFESpace")
     ;
 
- 
+
+  bp::class_<VTKOutput<2>, shared_ptr<VTKOutput<2>>,  boost::noncopyable>("VTKOutput2D", bp::no_init)
+    .def("__init__", bp::make_constructor 
+         (FunctionPointer ([](bp::list coefs_list, bp::list gf_list,
+                              Flags flags )
+                           { 
+                             Array<shared_ptr<CoefficientFunction> > coefs
+                               = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
+                             Array<shared_ptr<GridFunction> > gfs
+                               = makeCArray<shared_ptr<GridFunction>> (gf_list);
+                             return make_shared<VTKOutput<2>> (coefs, gfs, flags, nullptr); 
+                           }),
+
+          bp::default_call_policies(),     // need it to use named arguments
+          (bp::arg("coefs")= bp::list(),
+           bp::arg("gfs")= bp::list(),
+           bp::arg("flags") = bp::dict()
+            )
+           )
+        )
+
+    .def("Do", FunctionPointer([](VTKOutput<2> & self, int heapsize)
+                                   { 
+                                     LocalHeap lh (heapsize, "VTKOutput-heap");
+                                     self.Do(lh);
+                                   }),
+         (bp::arg("self"),bp::arg("heapsize")=1000000))
+
+    ;
+
+    
+  
   // bp::docstring_options local_docstring_options(true, true, false);
   
   // std::string nested_name = "comp";
