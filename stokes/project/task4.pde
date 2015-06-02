@@ -11,11 +11,11 @@ shared = libngsxfem_xstokes
 
 define constant heapsize = 1e9
 
-define constant R = 0.75001
+define constant R = 0.6666666
+#define constant R = 0.5
 define constant one = 1.0
 
 define constant eps1 = 1e-1
-define constant R = 0.5+eps1
 
 # interface description as zero-level
 define coefficient lset
@@ -25,7 +25,7 @@ define fespace fescomp
        -type=xstokes
        -order=1                 
        -dirichlet_vel=[1,2,3,4]
-       -empty_vel
+       #-empty_vel
        -dgjumps
        -ref_space=1
 
@@ -35,34 +35,56 @@ numproc informxstokes npi_px
 
 define gridfunction uvp -fespace=fescomp
 define gridfunction exu -fespace=fescomp
+define gridfunction exuneg -fespace=fescomp
+
+define constant mu1 = 1
+define constant mu2 = 10
+
+define coefficient alphapos
+(1/mu2 + (1/mu1 - 1/mu2) * exp((x*x+y*y) - R*R)),
+
+define coefficient alphaneg
+(1/mu1),
 
 define coefficient exactuxpos
-(exp(-1.0 * (x * x + y * y)) * -1.0 * y ),
+(alphapos*exp(-1.0 * (x * x + y * y)) * -1.0 * y),
 
 define coefficient exactuypos
-(exp(-1.0 *( x * x + y * y)) * x ),
+(alphapos*exp(-1.0 *( x * x + y * y)) * x),
+
+define coefficient exactuxneg
+(alphaneg*exp(-1.0 * (x * x + y * y)) * -1.0 * y),
+
+define coefficient exactuyneg
+(alphaneg*exp(-1.0 *( x * x + y * y)) * x),
 
 define coefficient exactp
 (x*x*x),
 
+define coefficient exactux
+( (lset > 0) * exactuxpos + (lset < 0) * exactuxneg),
 
-numproc setvalues npsvex1 -gridfunction=exu.1.1 -coefficient=exactuxpos
-numproc setvalues npsvex2 -gridfunction=exu.2.1 -coefficient=exactuypos
+define coefficient exactuy
+( (lset > 0) * exactuypos + (lset < 0) * exactuyneg),
+
+
+numproc setvalues npsvex1 -gridfunction=exu.1.1 -coefficient=exactux
+numproc setvalues npsvex2 -gridfunction=exu.2.1 -coefficient=exactuy
+#numproc setvalues npsvex6 -gridfunction=exuneg.1.1 -coefficient=exactuxneg
+#numproc setvalues npsvex7 -gridfunction=exuneg.2.1 -coefficient=exactuyneg
 numproc setvalues npsvex5 -gridfunction=exu.3.1 -coefficient=exactp
 
-numproc setvalues npsvex3 -gridfunction=uvp.1.1 -coefficient=exactuxpos -boundary
-numproc setvalues npsvex4 -gridfunction=uvp.2.1 -coefficient=exactuypos -boundary
+numproc setvalues npsvex3 -gridfunction=uvp.1.1 -coefficient=exactux -boundary
+numproc setvalues npsvex4 -gridfunction=uvp.2.1 -coefficient=exactuy -boundary
 
 define constant zero = 0.0
 define constant one = 1.0
 #define constant none = -1.0
-define constant lambda = 1000.0
+define constant lambda = 20
 define constant delta = 1.0
-define constant mu1 = 1
-define constant mu2 = 1
 
 define coefficient gammaf
-(0.0),
+0.0,
 #(1.0/R),
 
 define coefficient exactpneg
@@ -71,10 +93,16 @@ define coefficient exactpneg
 define coefficient exactppos
 (x*x*x - (pi*R*R/4.0*gammaf)),
 
-define coefficient fone
-(exp(-1* (x * x + y * y))  * ((-8 * y) + (4 * x * x * y) + (4 * y * y * y))+ 3 * x * x),
+define coefficient foneneg
+(exp(-1* (x * x + y * y)) *((-8 * y) + (4 * x * x * y) + (4 * y * y * y))+ 3 * x * x),
 
-define coefficient ftwo
+define coefficient ftwoneg
+(exp(-1* (x * x + y * y)) *((-4 * x * x * x) + (8 * x) - (4 * x * y * y))),
+
+define coefficient fonepos
+(exp(-1* (x * x + y * y)) * ((-8 * y) + (4 * x * x * y) + (4 * y * y * y))+ 3 * x * x),
+
+define coefficient ftwopos
 (exp(-1* (x * x + y * y)) * ((-4 * x * x * x) + (8 * x) - (4 * x * y * y))),
 
 define coefficient ghost
@@ -87,25 +115,31 @@ define coefficient eps
 
 # integration on sub domains
 define linearform f -fespace=fescomp
-xsource fone fone -comp=1
-xsource ftwo ftwo -comp=2
+xsource foneneg fonepos -comp=1
+xsource ftwoneg ftwopos -comp=2
 
 #xsource zero zero -comp=2
 xGammaForce gammaf
 #xLBmeancurv one # naiv Laplace-Beltrami discretization 
 #xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
-define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
-xstokes mu1 mu2 
+define bilinearform a -fespace=fescomp -linearform=f -printelmat
+xstokes mu1 mu2
 myghostpenalty ghost -comp=3
+xstokesnitsche mu1 mu2 lambda
+
+#xmass one one -comp=1
+#xmass one one -comp=2
+
+#myghostpenalty ghost -comp=2
+#myghostpenalty ghost -comp=1
 #xmass eps eps -comp=3
 # xlaplace one one -comp=1
 # xnitsche one one one one lambda -comp=1
 # xnitsche one one one one lambda -comp=2
 #lo_ghostpenalty one one ghost -comp=3
 # lo_ghostpenalty one one delta -comp=2
-# xmass one one -comp=1
-# xmass 1.0 1.0 -comp=2
+
 
 #define preconditioner c -type=local -bilinearform=a -test #-block           
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
@@ -128,7 +162,7 @@ numproc visualization npviz
         -nolineartexture -deformationscale=1 -subdivision=3
 
 define bilinearform b1 -fespace=fescomp -symmetric -nonassemble
-xvis one -comp=1
+xvis one -comp=2
 #xmass one one -comp=2
 #xmass one one -comp=3
 
@@ -148,4 +182,6 @@ numproc difference checkdiff -bilinearform1=b1 -solution1=uvp -bilinearform2=b1 
 numproc xdifference diffp2 -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos -nooutput
 numproc xdifference diffp3 -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos
 
+numproc evaluate eval1 -bilinearform=b1 -gridfunction=uvp -point=[-1,0,0] -point2=[0,0,0] -filename=evalplot
+numproc evaluate eval2 -bilinearform=b1 -gridfunction=exu -point=[-1,0,0] -point2=[0,0,0] -filename=evalplot2
 #-reference=exu.3

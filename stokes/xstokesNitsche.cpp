@@ -113,10 +113,7 @@ namespace ngfem
     MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
 
     const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
-
-    const double a_t_neg = alpha_neg->Evaluate(mipc);
-    const double a_t_pos = alpha_pos->Evaluate(mipc);
-
+    
     double kappa_neg;
     double kappa_pos;
 
@@ -126,11 +123,7 @@ namespace ngfem
       kappa_neg = 0.0;
     kappa_pos = 1.0 - kappa_neg;
 
-    // kappa_neg=kappa_pos=0.5;
-       
     const double lam = lambda->EvaluateConst();
-
-    //double ava = a_t_pos*0.5+a_t_neg*0.5;
 
     for (int i = 0; i < fquad.Size(); ++i)
     {

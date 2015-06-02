@@ -93,8 +93,8 @@ define gridfunction uvp -fespace=fescomp
 
 define constant zero = 0.0
 define constant one = 1.0
-define constant mu1 = 1.0
-define constant mu2 = 20.0
+define constant mu1 = 10.0
+define constant mu2 = 10.0
 #define constant none = -1.0
 define constant lambda = 40.0
 define constant delta = 1.0
