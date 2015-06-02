@@ -97,7 +97,7 @@ namespace ngcomp
   }
 
 
-  void XFESpace::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const
+  void XFESpace::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos)
   {
     shared_ptr<GridFunction> gf_neg = gf_neg_pos->GetComponent(0);
     BaseVector & bv_neg = gf_neg->GetVector();
@@ -116,14 +116,16 @@ namespace ngcomp
     FlatVector<> vx = bv_x.FVDouble();
 
     const int basendof = vneg.Size();
+    shared_ptr<XFESpace> xfes = dynamic_pointer_cast<XFESpace>(gf_x->GetFESpace());
+    
     for (int i = 0; i < basendof; ++i)
     {
       vneg(i) = vbase(i);
       vpos(i) = vbase(i);
-      const int xdof = basedof2xdof[i];
+      const int xdof = xfes->GetBaseDofOfXDof(i);
       if (xdof != -1)
       {
-        if (domofdof[xdof] == POS)
+        if (xfes->GetDomOfDof(xdof) == POS)
           vpos(i) += vx(xdof);
         else
           vneg(i) += vx(xdof);
@@ -846,7 +848,19 @@ namespace ngcomp
   
   static RegisterNumProc<NumProcInformXFESpace> npinfoxfe("informxfem");
 
+  NumProcXToNegPos::NumProcXToNegPos (shared_ptr<PDE> apde, const Flags & flags)
+  {
+    gfxstd = apde->GetGridFunction (flags.GetStringFlag ("xstd_gridfunction"));
+    gfnegpos = apde->GetGridFunction (flags.GetStringFlag ("negpos_gridfunction"));
+  }
+  void NumProcXToNegPos::Do (LocalHeap & lh)  {
+    XFESpace::XToNegPos(gfxstd, gfnegpos);
+  }
 
+  static RegisterNumProc<NumProcXToNegPos> npxtonegpos("xtonegpos");
+
+
+  
 
   XStdFESpace::XStdFESpace (shared_ptr<MeshAccess> ama, 		   
                           const Array<shared_ptr<FESpace>> & aspaces,

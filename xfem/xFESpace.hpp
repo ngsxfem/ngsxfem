@@ -168,7 +168,11 @@ namespace ngcomp
     }
     // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
 
-    void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const;
+    DOMAIN_TYPE GetDomOfDof(int n) const { return domofdof[n];}
+    int GetBaseDofOfXDof(int n) const { return basedof2xdof[n];}
+    int GetXDofOfBaseDof(int n) const { return xdof2basedof[n];}
+    
+    static void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos);
   };
 
 
@@ -224,7 +228,6 @@ namespace ngcomp
     void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset)
     { coef_lset = _coef_lset;}
     void SetTime(double ta, double tb) { told=ta; tnew=tb; }
-
     virtual string GetClassName () const { return "LevelsetContainerFESpace"; }
   };  
 
@@ -236,6 +239,17 @@ namespace ngcomp
     NumProcInformXFESpace (shared_ptr<PDE> apde, const Flags & flags);
     ~NumProcInformXFESpace();
     virtual string GetClassName () const;
+    virtual void Do (LocalHeap & lh);
+  };
+
+  class NumProcXToNegPos : public NumProc
+  {
+    shared_ptr<GridFunction> gfxstd = nullptr;
+    shared_ptr<GridFunction> gfnegpos = nullptr;
+  public:
+    NumProcXToNegPos (shared_ptr<PDE> apde, const Flags & flags);
+    ~NumProcXToNegPos(){;};
+    virtual string GetClassName () const{ return "NumProcXToNegPos";};
     virtual void Do (LocalHeap & lh);
   };
 
