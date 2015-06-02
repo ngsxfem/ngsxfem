@@ -153,12 +153,17 @@ namespace ngfem
       FlatVector<> dudn(ndofuv,lh);
       dudn = gradu * normal;
       for (int d = 0; d<D; ++d)
-	{
-	  bmat.Rows(*dofrangeuv[d]).Col(d)=(ava)*dudn;
-	  bmat.Rows(*dofrangeuv_x[d]).Col(d)=dudn;
-	  bmat.Rows(dofrangep).Col(d)=normal[d]*shapep;
-	  bmat.Rows(dofrangep_x).Col(d)=normal[d]*shapep;
-	}    
+      {
+        bmat.Rows(*dofrangeuv[d]).Col(d)=(ava)*dudn;
+        bmat.Rows(*dofrangeuv_x[d]).Col(d)=dudn;
+        bmat.Rows(dofrangep).Col(d)=normal[d]*shapep;
+        bmat.Rows(dofrangep_x).Col(d)=normal[d]*shapep;
+        for (int k = 0; k < D; ++k)
+        {
+          bmat.Rows(*dofrangeuv[k]).Col(d) += (ava) * normal(k) * gradu.Col(d);
+          bmat.Rows(*dofrangeuv_x[k]).Col(d) += normal(k) * gradu.Col(d);
+        }
+      }    
       
       shapeuv = feuv.GetShape(mip.IP(),lh);
       
@@ -177,11 +182,11 @@ namespace ngfem
 	    {
 	      if (xusign[l] == NEG){
 		bmatjump.Row(dofrangeuv[d]->Next()+l)[d] *= -1.0;
-		bmat.Row(dofrangeuv[d]->Next()+l)[d] *= kappa_neg * a_neg; 
+		bmat.Row(dofrangeuv[d]->Next()+l) *= kappa_neg * a_neg; 
 	      }
 	      else{
 		bmatjump.Row(dofrangeuv[d]->Next()+l)[d] *= 1.0;
-		bmat.Row(dofrangeuv[d]->Next()+l)[d] *= kappa_pos * a_pos; 
+		bmat.Row(dofrangeuv[d]->Next()+l) *= kappa_pos * a_pos; 
 	      }
 	    }
 	}

@@ -27,7 +27,7 @@ define fespace fescomp
        -dirichlet_vel=[1,2,3,4]
        #-empty_vel
        -dgjumps
-       -ref_space=1
+       -ref_space=3
 
 numproc informxstokes npi_px 
         -xstokesfespace=fescomp
@@ -38,7 +38,7 @@ define gridfunction exu -fespace=fescomp
 define gridfunction exuneg -fespace=fescomp
 
 define constant mu1 = 1
-define constant mu2 = 10
+define constant mu2 = 2
 
 define coefficient alphapos
 (1/mu2 + (1/mu1 - 1/mu2) * exp((x*x+y*y) - R*R)),
@@ -59,7 +59,7 @@ define coefficient exactuyneg
 (alphaneg*exp(-1.0 *( x * x + y * y)) * x),
 
 define coefficient exactp
-(x*x*x),
+(0.5*x*x*x),
 
 define coefficient exactux
 ( (lset > 0) * exactuxpos + (lset < 0) * exactuxneg),
@@ -80,7 +80,7 @@ numproc setvalues npsvex4 -gridfunction=uvp.2.1 -coefficient=exactuy -boundary
 define constant zero = 0.0
 define constant one = 1.0
 #define constant none = -1.0
-define constant lambda = 20
+define constant lambda = 20000
 define constant delta = 1.0
 
 define coefficient gammaf
@@ -88,10 +88,10 @@ define coefficient gammaf
 #(1.0/R),
 
 define coefficient exactpneg
-(x*x*x + (gammaf) - (pi*R*R/4.0*gammaf)),
+(0.5*x*x*x + (gammaf) - (pi*R*R/4.0*gammaf)),
 
 define coefficient exactppos
-(x*x*x - (pi*R*R/4.0*gammaf)),
+(0.5*x*x*x - (pi*R*R/4.0*gammaf)),
 
 define coefficient foneneg
 (exp(-1* (x * x + y * y)) *((-8 * y) + (4 * x * x * y) + (4 * y * y * y))+ 3 * x * x),
@@ -106,7 +106,7 @@ define coefficient ftwopos
 (exp(-1* (x * x + y * y)) * ((-4 * x * x * x) + (8 * x) - (4 * x * y * y))),
 
 define coefficient ghost
--0.01,
+-0.1,
 
 define coefficient eps
 (1e-6),
@@ -119,7 +119,7 @@ xsource foneneg fonepos -comp=1
 xsource ftwoneg ftwopos -comp=2
 
 #xsource zero zero -comp=2
-xGammaForce gammaf
+#xGammaForce gammaf
 #xLBmeancurv one # naiv Laplace-Beltrami discretization 
 #xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
@@ -182,6 +182,9 @@ numproc difference checkdiff -bilinearform1=b1 -solution1=uvp -bilinearform2=b1 
 numproc xdifference diffp2 -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos -nooutput
 numproc xdifference diffp3 -solution=uvp.3 -solution_n=exactpneg -solution_p=exactppos
 
+numproc xdifference diffpuv1 -solution=uvp.1 -solution_n=exactuxneg -solution_p=exactuxpos
+numproc xdifference diffpuv2 -solution=uvp.2 -solution_n=exactuyneg -solution_p=exactuypos
+        
 numproc evaluate eval1 -bilinearform=b1 -gridfunction=uvp -point=[-1,0,0] -point2=[0,0,0] -filename=evalplot
 numproc evaluate eval2 -bilinearform=b1 -gridfunction=exu -point=[-1,0,0] -point2=[0,0,0] -filename=evalplot2
 #-reference=exu.3
