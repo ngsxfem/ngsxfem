@@ -45,6 +45,9 @@ namespace ngcomp
     Array<double> values_lset;
     Array<double> values_tracesol;
     
+    bool breset;
+    bool btime;
+
     string filename;
   public:
 
@@ -57,6 +60,9 @@ namespace ngcomp
       subdivision = (int) flags.GetNumFlag ( "subdivision", 0);
       onlygrid = flags.GetDefineFlag ("onlymesh");
       filename = flags.GetStringFlag ("filename","tracefem");
+      btime = flags.GetDefineFlag ("instat");
+      breset = flags.GetDefineFlag ("reset");
+			
     }
 
     void ResetArrays()
@@ -66,7 +72,12 @@ namespace ngcomp
       values_lset.SetSize(0);
       values_tracesol.SetSize(0);
     }
-    
+
+
+
+
+
+
     virtual ~NumProcTraceOutput()
     {
     }
@@ -197,73 +208,96 @@ namespace ngcomp
     virtual void Do (LocalHeap & lh)
     {
       static int refinements = 0;
-      ostringstream filenamefinal;
-      filenamefinal << filename << refinements << ".vtk";
-      fileout = make_shared<ofstream>(filenamefinal.str());
-      cout << " This is the Do-call on refinement level " << refinements << std::endl;
-      refinements++;
-
-      ResetArrays();
-
-      Array<IntegrationPoint> ref_vertices(0);
-      Array<INT<4>> ref_tets(0);
-
-      FillReferenceData(ref_vertices,ref_tets);
-      
-      // header:
-      *fileout << "# vtk DataFile Version 3.0" << endl;
-      *fileout << "vtk output" << endl;
-      *fileout << "ASCII" << endl;
-      *fileout << "DATASET UNSTRUCTURED_GRID" << endl;
-
-      XFESpace & xfes = * dynamic_pointer_cast<XFESpace>(gfu->GetFESpace());
-      int ne = gfu->GetMeshAccess()->GetNE();
-      for ( int i : Range(ne))
+      static int time = 0;
+      if (breset)
       {
-        if (!xfes.IsElementCut(i)) continue;
-        HeapReset hr(lh);
+        refinements++;
+        time = 0;
+        cout <<refinements;
+      }  
+      else
+      {
 
-        ElementTransformation & eltrans = gfu->GetMeshAccess()->GetTrafo (i, 0, lh);
-        const FiniteElement & fel = xfes.GetFE (i, lh);
-        const XFiniteElement & xfe =
-          dynamic_cast<const XFiniteElement &> (fel);
-        const ScalarFiniteElement<3> & scafe =
-          dynamic_cast<const ScalarFiniteElement<3> & > (xfe.GetBaseFE());
-
-        int ndof = scafe.GetNDof();
-        FlatVector<> shape(ndof,lh);
-
-        Array<int> dnums (ndof, lh);
-        xfes.GetDofNrs (i, dnums);
-        FlatVector<> elvec(ndof,lh);
-        gfu->GetVector().GetIndirect (dnums, elvec);
-
-        int offset = points.Size();
-        for ( auto ip : ref_vertices)
+        ostringstream filenamefinal;
+        if (!btime)
         {
-          MappedIntegrationPoint<3,3> mip(ip, eltrans);
-          points.Append(mip.GetPoint());
-          values_lset.Append(coef_lset->Evaluate(mip));
-
-          scafe.CalcShape (mip.IP(),shape);
-          values_tracesol.Append(InnerProduct(shape,elvec));
+          filenamefinal << filename << refinements << ".vtk";
+          cout << " This is the Do-call on refinement level " << refinements << std::endl;
+          refinements++;
+        }
+        else
+        {
+          filenamefinal << filename << refinements << ".vtk." << time;
+          time++;
         }
 
-        for ( auto tet : ref_tets)
+
+        fileout = make_shared<ofstream>(filenamefinal.str());
+
+
+
+        ResetArrays();
+
+        Array<IntegrationPoint> ref_vertices(0);
+        Array<INT<4>> ref_tets(0);
+
+        FillReferenceData(ref_vertices,ref_tets);
+        
+        // header:
+        *fileout << "# vtk DataFile Version 3.0" << endl;
+        *fileout << "vtk output" << endl;
+        *fileout << "ASCII" << endl;
+        *fileout << "DATASET UNSTRUCTURED_GRID" << endl;
+
+
+        XFESpace & xfes = * dynamic_pointer_cast<XFESpace>(gfu->GetFESpace());
+        int ne = gfu->GetMeshAccess()->GetNE();
+        for ( int i : Range(ne))
         {
-          INT<4> new_tet = tet;
-          for (int i = 0; i < 4; ++i)
-            new_tet[i] += offset;
-          cells.Append(new_tet);
+          if (!xfes.IsElementCut(i)) continue;
+          HeapReset hr(lh);
+
+          ElementTransformation & eltrans = gfu->GetMeshAccess()->GetTrafo (i, 0, lh);
+          const FiniteElement & fel = xfes.GetFE (i, lh);
+          const XFiniteElement & xfe =
+            dynamic_cast<const XFiniteElement &> (fel);
+          const ScalarFiniteElement<3> & scafe =
+            dynamic_cast<const ScalarFiniteElement<3> & > (xfe.GetBaseFE());
+
+          int ndof = scafe.GetNDof();
+          FlatVector<> shape(ndof,lh);
+
+          Array<int> dnums (ndof, lh);
+          xfes.GetDofNrs (i, dnums);
+          FlatVector<> elvec(ndof,lh);
+          gfu->GetVector().GetIndirect (dnums, elvec);
+
+          int offset = points.Size();
+          for ( auto ip : ref_vertices)
+          {
+            MappedIntegrationPoint<3,3> mip(ip, eltrans);
+            points.Append(mip.GetPoint());
+            values_lset.Append(coef_lset->Evaluate(mip));
+
+            scafe.CalcShape (mip.IP(),shape);
+            values_tracesol.Append(InnerProduct(shape,elvec));
+          }
+
+          for ( auto tet : ref_tets)
+          {
+            INT<4> new_tet = tet;
+            for (int i = 0; i < 4; ++i)
+              new_tet[i] += offset;
+            cells.Append(new_tet);
+          }
+
         }
+        PrintPoints();
+        PrintCells();
+        PrintCellTypes();
+        PrintFieldData();
 
       }
-
-      PrintPoints();
-      PrintCells();
-      PrintCellTypes();
-      PrintFieldData();
-      
     }    
     
 

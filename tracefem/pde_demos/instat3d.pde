@@ -1,25 +1,37 @@
 
-# load geometry
-geometry = square2.in2d
-# and mesh
-mesh = square2.vol.gz
+geometry = cube.geo
+mesh = cube.vol.gz
+
 
 #load xfem-library and python-bindings
 shared = libngsxfem_xfem
 shared = libngsxfem_tracefem
 
+
 define constant heapsize = 1e9
 
-define constant R = 1#0.333333333333333333
+define constant R = 0.666666666666666
+define constant tR = 0.5
+define constant tr = 0.2
+define constant dtr = 0.169
+define constant q = 1.21
 define constant one = 1.0
 
-# interface description as zero-level
-define coefficient lset
-#( x - R ),
-( sqrt(2*x*x+y*y) - R),
+####levelsets
+define coefficient lset_plane
+( x - R ),
+
+define coefficient lset_sphere
+( sqrt(x*x+y*y+z*z) - R),
+
+define coefficient lset_torus
+(sqrt(x*x+y*y+z*z-2*tR*sqrt(x*x+y*y)+tR*tR)-tr),
+
+define coefficient lset_double_torus
+((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)*((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)+z*z-dtr*dtr,
 
 define coefficient conv
-((-y),(2*x))
+((-y),(x),0)
 
 define fespace fesh1
        -type=h1ho
@@ -39,7 +51,7 @@ define fespace tracefes
 numproc informxfem npix
         -xfespace=tracefes
         -fespace=fesh1
-        -coef_levelset=lset
+        -coef_levelset=lset_sphere
 
 gridfunction u -fespace=tracefes
 
@@ -69,15 +81,17 @@ define preconditioner c -type=local -bilinearform=a -test #-block
 numproc bvp npbvp -gridfunction=u -bilinearform=m -linearform=u_zero -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
+numproc traceoutput npto -gridfunction=u -levelset=lset_sphere -subdivision=0 -reset -instat
+numproc traceoutput npto -gridfunction=u -levelset=lset_sphere -subdivision=0 -instat
+numproc parabolic3d np1 -bilinearforma=a -bilinearformm=m -linearform=f -visnumproc=npto -gridfunction=u -dt=0.1 -tend=1
 
-numproc parabolic np1 -bilinearforma=a -bilinearformm=m -gridfunction=u -linearform=f  -dt=0.0001 -tend=5
 
 bilinearform evalu -fespace=tracefes -nonassemble
 exttrace 1.0
 
 numproc drawflux npdf -solution=u -bilinearform=evalu -applyd -label=u
 
-#numproc draw npdf2 -coefficient=lset -label=levelset
+#numproc draw npdf2 -coefficient=lset_torus -label=levelset
 
 numproc visualization npviz -scalarfunction=u
     -minval=-1.5 -maxval=1.5
