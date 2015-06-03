@@ -68,13 +68,55 @@ namespace ngcomp
     }
     else
     {
-      throw Exception("not yet implemented");
+      const int r = 1<<subdivision;
+      const int s = r + 1;
+
+      // std::cout << " r = " << r << std::endl;
+      // std::cout << " s = " << s << std::endl;
+
+//       Array<INT<D>> pidx_to_ij ( (r+1)*(r+2) / 2);
+
+      
+      const double h = 1.0/r;
+
+      int pidx = 0;
+      for (int i = 0; i <= r; ++i)
+        for (int j = 0; i+j <= r; ++j)
+          {
+            ref_coords.Append(IntegrationPoint(j*h,i*h));
+//             pidx_to_ij[pidx++] = INT<2>(i,j);
+          }
+
+//       cout << ref_coords << endl;
+      pidx = 0;
+      for (int i = 0; i <= r; ++i)
+        for (int j = 0; i+j <= r; ++j, pidx++)
+          {
+            int pidx_curr = pidx;
+            if (i+j == r) continue;
+            int pidx_incr_i = pidx+1;
+            int pidx_incr_j = pidx+s-i;
+
+            ref_trigs.Append(INT<3>(pidx,pidx_incr_i,pidx_incr_j));
+
+            int pidx_incr_ij = pidx_incr_j + 1;
+//             std::cout << " i = " << i << std::endl;
+//             std::cout << " j = " << j << std::endl;
+//             std::cout << " pidx = " << pidx << std::endl;
+//             std::cout << " pidx_incr_j = " << pidx_incr_j << std::endl;
+//             std::cout << " pidx_incr_i = " << pidx_incr_i << std::endl;
+//             std::cout << " pidx_incr_ij = " << pidx_incr_ij << std::endl;
+//             getchar();
+
+            if(i+j+1<r) 
+              ref_trigs.Append(INT<3>(pidx_incr_i,pidx_incr_ij,pidx_incr_j));
+          }              
     }
   }
-    
+
   template <int D> 
-  void VTKOutput<D>::FillReferenceData3D(Array<IntegrationPoint> & ref_coords, Array<INT<D+1>> & ref_tets)
-  {
+    void VTKOutput<D>::FillReferenceData3D(Array<IntegrationPoint> & ref_coords, Array<INT<D+1>> & ref_tets)
+      {
     if (subdivision == 0)
     {
       ref_coords.Append(IntegrationPoint(0.0,0.0,0.0));
@@ -85,72 +127,72 @@ namespace ngcomp
     }
     else
     {
-      throw Exception("not yet implemented");
+//       throw Exception("not yet implemented");
         
-      // const int r = pow(2,subdivision);
-      // const int s = r + 1;
+      const int r = 1<<subdivision;
+      const int s = r + 1;
 
-      // // std::cout << " r = " << r << std::endl;
-      // // std::cout << " s = " << s << std::endl;
+      // std::cout << " r = " << r << std::endl;
+      // std::cout << " s = " << s << std::endl;
 
       // Array<INT<D+1>> pidx_to_ijk ( (r+1)*(r+2)*(r+3) / 6);
 
-        
-      // const double h = 1.0/r;
+      
+      const double h = 1.0/r;
 
-      // int pidx = 0;
-      // for (int i = 0; i <= r; ++i)
-      //   for (int j = 0; i+j <= r; ++j)
-      //     for (int k = 0; i+j+k <= r; ++k)
-      //     {
-      //       ref_coords.Append(IntegrationPoint(i*h,j*h,k*h));
-      //       pidx_to_ijk[pidx++] = INT<3>(i,j,k);
-      //     }
+      int pidx = 0;
+      for (int i = 0; i <= r; ++i)
+        for (int j = 0; i+j <= r; ++j)
+          for (int k = 0; i+j+k <= r; ++k)
+          {
+            ref_coords.Append(IntegrationPoint(i*h,j*h,k*h));
+            // pidx_to_ijk[pidx++] = INT<3>(i,j,k);
+          }
 
-      // pidx = 0;
-      // for (int i = 0; i <= r; ++i)
-      //   for (int j = 0; i+j <= r; ++j)
-      //     for (int k = 0; i+j+k <= r; ++k, pidx++)
-      //     {
-      //       if (i+j+k == r) continue;
-      //       int pidx_curr = pidx;
-      //       int pidx_incr_k = pidx+1;
-      //       int pidx_incr_j = pidx+s-i-j;
-      //       int pidx_incr_i = pidx+(s-i)*(s+1-i)/2-j;
+      pidx = 0;
+      for (int i = 0; i <= r; ++i)
+        for (int j = 0; i+j <= r; ++j)
+          for (int k = 0; i+j+k <= r; ++k, pidx++)
+          {
+            if (i+j+k == r) continue;
+            int pidx_curr = pidx;
+            int pidx_incr_k = pidx+1;
+            int pidx_incr_j = pidx+s-i-j;
+            int pidx_incr_i = pidx+(s-i)*(s+1-i)/2-j;
 
-      //       int pidx_incr_kj = pidx_incr_j + 1;
+            int pidx_incr_kj = pidx_incr_j + 1;
 
-      //       int pidx_incr_ij = pidx+(s-i)*(s+1-i)/2-j + s-(i+1)-j;
-      //       int pidx_incr_ki = pidx+(s-i)*(s+1-i)/2-j + 1;
-      //       int pidx_incr_kij = pidx+(s-i)*(s+1-i)/2-j + s-(i+1)-j + 1;
+            int pidx_incr_ij = pidx+(s-i)*(s+1-i)/2-j + s-(i+1)-j;
+            int pidx_incr_ki = pidx+(s-i)*(s+1-i)/2-j + 1;
+            int pidx_incr_kij = pidx+(s-i)*(s+1-i)/2-j + s-(i+1)-j + 1;
 
-      //       ref_tets.Append(INT<4>(pidx,pidx_incr_k,pidx_incr_j,pidx_incr_i));
-      //       if (i+j+k+1 == r)
-      //         continue;
+            ref_tets.Append(INT<4>(pidx,pidx_incr_k,pidx_incr_j,pidx_incr_i));
+            if (i+j+k+1 == r)
+              continue;
 
-      //       // std::cout << " i = " << i << std::endl;
-      //       // std::cout << " j = " << j << std::endl;
-      //       // std::cout << " k = " << k << std::endl;
-      //       // std::cout << " pidx = " << pidx << std::endl;
-      //       // std::cout << " pidx_incr_k = " << pidx_incr_k << std::endl;
-      //       // std::cout << " pidx_incr_j = " << pidx_incr_j << std::endl;
-      //       // std::cout << " pidx_incr_i = " << pidx_incr_i << std::endl;
-      //       // std::cout << " pidx_incr_ki = " << pidx_incr_ki << std::endl;
-      //       // std::cout << " pidx_incr_kj = " << pidx_incr_kj << std::endl;
-      //       // std::cout << " pidx_incr_ij = " << pidx_incr_ij << std::endl;
-      //       // std::cout << " pidx_incr_kij = " << pidx_incr_kij << std::endl;
+            // std::cout << " i = " << i << std::endl;
+            // std::cout << " j = " << j << std::endl;
+            // std::cout << " k = " << k << std::endl;
+            // std::cout << " pidx = " << pidx << std::endl;
+            // std::cout << " pidx_incr_k = " << pidx_incr_k << std::endl;
+            // std::cout << " pidx_incr_j = " << pidx_incr_j << std::endl;
+            // std::cout << " pidx_incr_i = " << pidx_incr_i << std::endl;
+            // std::cout << " pidx_incr_ki = " << pidx_incr_ki << std::endl;
+            // std::cout << " pidx_incr_kj = " << pidx_incr_kj << std::endl;
+            // std::cout << " pidx_incr_ij = " << pidx_incr_ij << std::endl;
+            // std::cout << " pidx_incr_kij = " << pidx_incr_kij << std::endl;
 
-      //       ref_tets.Append(INT<4>(pidx_incr_k,pidx_incr_kj,pidx_incr_j,pidx_incr_i));
-      //       ref_tets.Append(INT<4>(pidx_incr_k,pidx_incr_kj,pidx_incr_ki,pidx_incr_i));
+            ref_tets.Append(INT<4>(pidx_incr_k,pidx_incr_kj,pidx_incr_j,pidx_incr_i));
+            ref_tets.Append(INT<4>(pidx_incr_k,pidx_incr_kj,pidx_incr_ki,pidx_incr_i));
 
-      //       // ref_tets.Append(INT<4>(pidx_incr_kj,pidx_incr_ki,pidx_incr_kij,pidx_incr_i));
+            // ref_tets.Append(INT<4>(pidx_incr_kj,pidx_incr_ki,pidx_incr_kij,pidx_incr_i));
 
-      //       ref_tets.Append(INT<4>(pidx_incr_j,pidx_incr_i,pidx_incr_kj,pidx_incr_ij));
-      //       ref_tets.Append(INT<4>(pidx_incr_i,pidx_incr_kj,pidx_incr_ij,pidx_incr_ki));
-              
-      //       if (i+j+k+2 != r)
-      //         ref_tets.Append(INT<4>(pidx_incr_kj,pidx_incr_ij,pidx_incr_ki,pidx_incr_kij));
-      //     }              
+            ref_tets.Append(INT<4>(pidx_incr_j,pidx_incr_i,pidx_incr_kj,pidx_incr_ij));
+            ref_tets.Append(INT<4>(pidx_incr_i,pidx_incr_kj,pidx_incr_ij,pidx_incr_ki));
+           
+            if (i+j+k+2 != r)
+              ref_tets.Append(INT<4>(pidx_incr_kj,pidx_incr_ij,pidx_incr_ki,pidx_incr_kij));
+          }              
     }
   }
 
