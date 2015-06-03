@@ -84,3 +84,4 @@ numproc vtkoutput npout -filename=d5_output
         -coefficients=[lset]
         -gridfunctions=[gf_negpos.1,gf_negpos.2]
         -fieldnames=[levelset,uneg,upos]
+        -subdivision=1
