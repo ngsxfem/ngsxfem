@@ -98,7 +98,7 @@ namespace ngfem
 
       // (du1/dx+du2/dy, p)
       for (int d = 0; d < D; ++d)
-        mat(D*D,(D+1)*d) = mat((D+1)*d,D*D) = -1;
+        mat(D*D,(D+1)*d) = mat((D+1)*d,D*D) = -0.5;
 
 
       HeapReset hr(lh);

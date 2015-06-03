@@ -152,6 +152,8 @@ namespace ngfem
       feuv.CalcMappedDShape (mip, gradu);
       FlatVector<> dudn(ndofuv,lh);
       dudn = gradu * normal;
+
+      bmat = 0.0;
       for (int d = 0; d<D; ++d)
       {
         bmat.Rows(*dofrangeuv[d]).Col(d)=(ava)*dudn;

@@ -23,11 +23,11 @@ define coefficient lset
 
 define fespace fescomp
        -type=xstokes
-       -order=1                 
+       -order=1               
        -dirichlet_vel=[1,2,3,4]
        #-empty_vel
        -dgjumps
-       -ref_space=3
+       -ref_space=1
 
 numproc informxstokes npi_px 
         -xstokesfespace=fescomp
@@ -59,7 +59,7 @@ define coefficient exactuyneg
 (alphaneg*exp(-1.0 *( x * x + y * y)) * x),
 
 define coefficient exactp
-(0.5*x*x*x),
+(x*x*x),
 
 define coefficient exactux
 ( (lset > 0) * exactuxpos + (lset < 0) * exactuxneg),
@@ -80,7 +80,7 @@ numproc setvalues npsvex4 -gridfunction=uvp.2.1 -coefficient=exactuy -boundary
 define constant zero = 0.0
 define constant one = 1.0
 #define constant none = -1.0
-define constant lambda = 20000
+define constant lambda = 20
 define constant delta = 1.0
 
 define coefficient gammaf
@@ -88,10 +88,10 @@ define coefficient gammaf
 #(1.0/R),
 
 define coefficient exactpneg
-(0.5*x*x*x + (gammaf) - (pi*R*R/4.0*gammaf)),
+(x*x*x + (gammaf) - (pi*R*R/4.0*gammaf)),
 
 define coefficient exactppos
-(0.5*x*x*x - (pi*R*R/4.0*gammaf)),
+(x*x*x - (pi*R*R/4.0*gammaf)),
 
 define coefficient foneneg
 (exp(-1* (x * x + y * y)) *((-8 * y) + (4 * x * x * y) + (4 * y * y * y))+ 3 * x * x),
