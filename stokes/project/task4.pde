@@ -216,4 +216,7 @@ numproc xtonegpos npxtonegposp -xstd_gridfunction=uvp.3 -negpos_gridfunction=gf_
 numproc vtkoutput npout -filename=task4
         -coefficients=[lset]
         -gridfunctions=[gf_u_negpos.1,gf_u_negpos.2,gf_v_negpos.1,gf_v_negpos.2,gf_p_negpos.1,gf_p_negpos.2]
-        -fieldnames=[levelset,uneg,upos,vneg,vpos,pneg,ppos]        
+        -fieldnames=[levelset,uneg,upos,vneg,vpos,pneg,ppos]
+        -subdivision=1
+
+          
