@@ -197,11 +197,11 @@ namespace ngfem
       {
         if (xpsign[l] == NEG){
           //bmatjump.Row(dofrangep.Next()+l) *= -1.0;
-          bmat.Row(dofrangep.Next()+l) *= kappa_neg * a_neg; 
+          bmat.Row(dofrangep.Next()+l) *= kappa_neg; 
         }
         else{
           //bmatjump.Row(dofrangep.Next()+l) *= 1.0;
-          bmat.Row(dofrangep.Next()+l) *= kappa_pos * a_pos; 
+          bmat.Row(dofrangep.Next()+l) *= kappa_pos; 
         }
       }
       
