@@ -16,10 +16,11 @@ define constant one = 1.0
 # interface description as zero-level
 define coefficient lset
 #( x - R ),
-( sqrt(2*x*x+y*y) - R),
+( sqrt(x*x+y*y) - R),
 
 define coefficient conv
-((-y),(2*x))
+#(-100*y*y*x/(x*x+y*y),-100*y*y*y/(x*x+y*y))
+(2*y*y*y/((x*x+y*y)*(x*x+y*y)*sqrt(1+(y*y)/(x*x))),-2*y*y*x/((x*x+y*y)*(x*x+y*y)*sqrt(1+(y*y)/(x*x))))
 
 define fespace fesh1
        -type=h1ho
@@ -46,14 +47,14 @@ gridfunction u -fespace=tracefes
 
 bilinearform a -fespace=tracefes
 #tracelaplacebeltrami 0.1
-tracelaplace 0.1
+tracelaplace 0.01
 tracediv conv
 
 bilinearform m -fespace=tracefes 
 tracemass 1.0
 
 linearform u_zero -fespace=tracefes
-tracesource (x+1)
+tracesource (-y+1)
 
 
 linearform f -fespace=tracefes
