@@ -16,6 +16,10 @@ define constant tr = 0.2
 define constant dtr = 0.169
 define constant q = 1.21
 define constant one = 1.0
+define constant ax1=0.1
+define constant ax2=0.6
+define constant ax3=0.8
+
 
 # interface description as zero-level
 
@@ -30,6 +34,10 @@ define coefficient lset_torus
 
 define coefficient lset_double_torus
 ((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)*((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)+z*z-dtr*dtr,
+
+define coefficient lset_awesome_torus
+((x*x+y*y-ax1)*(x*x+y*y-ax1)+(y*y-ax2)*(y*y-ax2)+(y*y+z*z-ax1)*(y*y+z*z-ax1)+(x*x-ax2)*(x*x-ax2)+(z*z+x*x-ax1)*(z*z+x*x-ax1)+(z*z-ax2)*(z*z-ax2)-ax3)
+
 
 define fespace fesh1
        -type=h1ho
@@ -49,13 +57,15 @@ numproc informxfem npix
         -fespace=fesh1
         # -coef_levelset=lset_plane
         # -coef_levelset=lset_sphere
-        -coef_levelset=lset_torus
+        #-coef_levelset=lset_torus
         # -coef_levelset=lset_double_torus
+	-coef_levelset=lset_awesome_torus
 
 gridfunction u -fespace=tracefes
 
 bilinearform a -fespace=tracefes -symmetric
-tracelaplace 1.0
+tracelaplacebeltrami 1.0
+tracemass 0.01
 
 linearform f -fespace=tracefes
 tracesource (1+sin(pi*2*x*y*z))
@@ -85,7 +95,7 @@ numproc visualization npviz
 
 numproc markinterface npmi -fespace=tracefes
 
-numproc traceoutput npto -gridfunction=u -levelset=lset_torus -subdivision=0
+numproc traceoutput npto -gridfunction=u -levelset=lset_awesome_torus -subdivision=1
 
 #TODO visualize:
 # * use xfem visualizer (done in the extension sense...)

@@ -42,6 +42,8 @@ protected:
   // total time
   double tend;
 
+	bool periodicrhs;
+
 public:
     
   /*
@@ -62,6 +64,8 @@ public:
 		
     dt = flags.GetNumFlag ("dt", 0.001);
     tend = flags.GetNumFlag ("tend", 1);
+
+		periodicrhs = flags.GetDefineFlag("periodic_rhs");
   }
 
 
@@ -85,6 +89,8 @@ public:
     auto d = vecu.CreateVector();
     auto w = vecu.CreateVector();
 
+		double per=1;
+
     // matrices matm and mata have the same memory layout. The arrays of values 
     // can be accessed and manipulated as vectors:
 
@@ -101,8 +107,11 @@ public:
     // implicite Euler method
     for (double t = 0; t <= tend; t += dt)
       {
+				if (periodicrhs)
+					per=cos(t);
+		
 				cout << "t = " << t << endl;
-				d = vecf - mata * vecu;
+				d = per * vecf - mata * vecu;
 				w = *invmat * d;
 				vecu += w;
 				// update visualization
@@ -181,6 +190,8 @@ protected:
   // total time
   double tend;
 
+	bool periodicrhs;
+
 public:
     
   /*
@@ -202,6 +213,7 @@ public:
 		
     dt = flags.GetNumFlag ("dt", 0.001);
     tend = flags.GetNumFlag ("tend", 1);
+		periodicrhs = flags.GetDefineFlag ("periodic_rhs");
   }
 
 
@@ -224,7 +236,8 @@ public:
     // create additional vectors:
     auto d = vecu.CreateVector();
     auto w = vecu.CreateVector();
-
+		
+		double per=1;
     // matrices matm and mata have the same memory layout. The arrays of values 
     // can be accessed and manipulated as vectors:
 
@@ -241,8 +254,11 @@ public:
     // implicite Euler method
     for (double t = 0; t <= tend; t += dt)
       {
+				if (periodicrhs)
+					per=cos(t);
+
 				cout << "t = " << t << endl;
-				d = vecf - mata * vecu;
+				d = per * vecf - mata * vecu;
 				w = *invmat * d;
 				vecu += w;
 				npto->Do(lh);
