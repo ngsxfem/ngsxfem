@@ -1,134 +1,85 @@
 
 # load geometry
-geometry = stokescirc.in2d                                        
+geometry = d7_stokes.in2d                                        
 # and mesh
-mesh = stokescirc.vol.gz
+mesh = d7_stokes.vol.gz
 
 #load xfem-library and python-bindings
 shared = libngsxfem_xfem                                       
 shared = libngsxfem_xstokes                                       
 # pymodule = d7_stokes
-
+flags tracer = -max_size=0
 define constant heapsize = 1e9
 
+define constant R = 0.666666666666666
+#define constant R = 0.5
 define constant one = 1.0
-define constant eps2 = -1e-8
 
-define constant R = 0.5
-define constant eps1 = 0.001 #1e-1
+define constant eps1 = 1e-1
 
 # interface description as zero-level
 define coefficient lset
- ( sqrt((x-eps1)*(x-eps1)+y*y) - R),
-
-#define constant d = (0.2 + eps1)
-#
-#define constant x0 = 0.0
-#define constant y0 = 0.0
-#
-#define coefficient lset
-#(
-# (        
-#  ((x-x0+d) < 0) 
-#   *
-#   (        
-#    ((y-y0+d) < 0) 
-#     * (sqrt((x-x0+d)*(x-x0+d)+(y-y0+d)*(y-y0+d))-R)
-#    +
-#    ((y-y0+d) > 0) * ((y-y0-d) < 0) 
-#     * (x0-x-d-R) 
-#    +
-#    ((y-y0-d) > 0) 
-#     * (sqrt((x-x0+d)*(x-x0+d)+(y-y0-d)*(y-y0-d))-R)
-#   )
-#  +
-#  ((x-x0+d) > 0) * ((x-x0-d) < 0) 
-#   *
-#   (        
-#    ((y-y0+d) < 0) 
-#     * (y0-y-d-R) 
-#    +
-#    ((y-y0+d) > 0) * ((y-y0-d) < 0) 
-#     * (-R) 
-#    +
-#    ((y-y0-d) > 0) 
-#     * (y-y0-d-R) 
-#   )
-#  +
-#  ((x-x0-d) > 0) 
-#   *
-#   (        
-#    ((y-y0+d) < 0) 
-#     * (sqrt((x-x0-d)*(x-x0-d)+(y-y0+d)*(y-y0+d))-R)
-#    +
-#    ((y-y0+d) > 0) * ((y-y0-d) < 0) 
-#     * (x-x0-d-R) 
-#    +
-#    ((y-y0-d) > 0) 
-#     * (sqrt((x-x0-d)*(x-x0-d)+(y-y0-d)*(y-y0-d))-R)
-#   )
-# )
-#)
-
-# define coefficient lset
-# ( sqrt((x)*(x)+y*y) - R),
+( sqrt((x)*(x)+y*y) - R),
 
 define fespace fescomp
        -type=xstokes
-       -order=1                 
+       -order=2
        -dirichlet_vel=[1,2,3,4]
-       -empty_vel
+       #-empty_vel
        -dgjumps
-       -ref_space=1
+       -ref_space=3
 
 numproc informxstokes npi_px 
         -xstokesfespace=fescomp
         -coef_levelset=lset
 
 define gridfunction uvp -fespace=fescomp
+define gridfunction exu -fespace=fescomp
+define gridfunction exuneg -fespace=fescomp
+
+define constant mu1 = 1
+define constant mu2 = 100
+
 
 define constant zero = 0.0
 define constant one = 1.0
 #define constant none = -1.0
-define constant lambda = 1000.0
+define constant lambda = 20
 define constant delta = 1.0
 
-define coefficient s
-0,1,0,0,
-
 define coefficient gammaf
-1.0,
+0.0,
+#(1.0/R),
+
+define coefficient foneneg
+-1.0,
+
+define coefficient ftwoneg
+0.0,
 
 define coefficient ghost
 -0.01,
+
+define coefficient eps
+(1e-6),
 
 #numproc setvaluesx npsvx -gridfunction=uvp.2 -coefficient_neg=s -coefficient_pos=s -boundary
 
 # integration on sub domains
 define linearform f -fespace=fescomp
-xsource one zero -comp=2
-xGammaForce gammaf
-#xLBmeancurv one # naiv Laplace-Beltrami discretization 
-#xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
-# integration on sub domains
+xsource ftwoneg foneneg -comp=2
 
 
-define bilinearform a -fespace=fescomp -symmetric -linearform=f -printelmat
-xstokes one one 
-myghostpenalty ghost -comp=3
-# xlaplace one one -comp=1
-# xnitsche one one one one lambda -comp=1
-# xnitsche one one one one lambda -comp=2
-# lo_ghostpenalty one one ghost -comp=3
-# lo_ghostpenalty one one delta -comp=2
-# xmass one one -comp=1
-# xmass 1.0 1.0 -comp=2
-xmass eps2 eps2 -comp=3
+define bilinearform a -fespace=fescomp -linearform=f -printelmat
+xstokes mu1 mu2
+xstokesnitsche mu1 mu2 lambda
+lo_ghostpenalty one one ghost -comp=3
+
 
 #define preconditioner c -type=local -bilinearform=a -test #-block           
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
 
-numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=minres -preconditioner=c -maxsteps=1000 -prec=1e-6
+numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 
 
 define coefficient velocity ( (uvp.1, uvp.2) )
@@ -171,8 +122,10 @@ numproc xtonegpos npxtonegposu -xstd_gridfunction=uvp.1 -negpos_gridfunction=gf_
 numproc xtonegpos npxtonegposv -xstd_gridfunction=uvp.2 -negpos_gridfunction=gf_v_negpos
 numproc xtonegpos npxtonegposp -xstd_gridfunction=uvp.3 -negpos_gridfunction=gf_p_negpos
 
-numproc vtkoutput npout -filename=mesh_
+numproc vtkoutput npout -filename=bubble2_
         -coefficients=[lset]
         -gridfunctions=[gf_u_negpos.1,gf_u_negpos.2,gf_v_negpos.1,gf_v_negpos.2,gf_p_negpos.1,gf_p_negpos.2]
         -fieldnames=[levelset,uneg,upos,vneg,vpos,pneg,ppos]
-        -subdivision=0
+        -subdivision=1
+
+          

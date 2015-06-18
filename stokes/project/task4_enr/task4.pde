@@ -25,7 +25,7 @@ define fespace fescomp
        -type=xstokes
        -order=1               
        -dirichlet_vel=[1,2,3,4]
-       -empty_vel
+       #-empty_vel
        -dgjumps
        -ref_space=1
 
@@ -117,17 +117,17 @@ define coefficient eps
 define linearform f -fespace=fescomp
 xsource foneneg fonepos -comp=1
 xsource ftwoneg ftwopos -comp=2
-#xstokesnitscherhs gammaf
+xstokesnitscherhs gammaf
 
 #xsource zero zero -comp=2
-xGammaForce gammaf
+#xGammaForce gammaf
 #xLBmeancurv one # naiv Laplace-Beltrami discretization 
 #xmodLBmeancurv one lset # improved Laplace-Beltrami discretization 
 # integration on sub domains
 define bilinearform a -fespace=fescomp -linearform=f -printelmat
 xstokes mu1 mu2
 myghostpenalty ghost -comp=3
-#xstokesnitsche mu1 mu2 lambda
+xstokesnitsche mu1 mu2 lambda
 
 #xmass one one -comp=1
 #xmass one one -comp=2
@@ -214,7 +214,7 @@ numproc xtonegpos npxtonegposu -xstd_gridfunction=uvp.1 -negpos_gridfunction=gf_
 numproc xtonegpos npxtonegposv -xstd_gridfunction=uvp.2 -negpos_gridfunction=gf_v_negpos
 numproc xtonegpos npxtonegposp -xstd_gridfunction=uvp.3 -negpos_gridfunction=gf_p_negpos
 
-numproc vtkoutput npout -filename=task4_emptyv
+numproc vtkoutput npout -filename=task4_venr
         -coefficients=[lset]
         -gridfunctions=[gf_u_negpos.1,gf_u_negpos.2,gf_v_negpos.1,gf_v_negpos.2,gf_p_negpos.1,gf_p_negpos.2]
         -fieldnames=[levelset,uneg,upos,vneg,vpos,pneg,ppos]
