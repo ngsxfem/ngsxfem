@@ -19,7 +19,7 @@ inline void ApplyA(BaseMatrix & A, const BaseVector & v, BaseVector & w,
 inline void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, 
               const BitArray * freedofs, FlatVector<double> fvdiaga)
 {
-  BaseVector & c = *A.CreateVector();
+  AutoVector c = A.CreateVector();
   FlatVector<double> fvc = c.FVDouble();
   FlatVector<double> fvw = w.FVDouble();
   c = 0.0;
@@ -55,13 +55,13 @@ inline void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, Base
   //     fvw(i) = 0.0;
 
   // delete &d;
-  delete &c;
+  // delete &c;
 }
 
 inline void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, 
               const BitArray * freedofs, FlatVector<double> fvdiaga)
 {
-  BaseVector & c = *A.CreateVector();
+  AutoVector c = A.CreateVector();
   FlatVector<double> fvc = c.FVDouble();
   FlatVector<double> fvw = w.FVDouble();
   c = 0.0;
@@ -91,7 +91,7 @@ inline void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, Base
       fvw(i) = 0.0;
     else
       fvw(i) = fvw(i) * sqrt(fvdiaga(i));
-  delete &c;
+  // delete &c;
 }
 
 template <bool symm>
@@ -100,9 +100,9 @@ inline double PowerIteration(BaseMatrix & A, const BitArray * freedofs, FlatVect
   const int max_its = 100000;
   const double rel_acc = 1e-6;
 
-  BaseVector & a = *A.CreateVector();
-  BaseVector & b = *A.CreateVector();
-  BaseVector & c = *A.CreateVector();
+  AutoVector a = A.CreateVector();
+  AutoVector b = A.CreateVector();
+  AutoVector c = A.CreateVector();
 
   FlatVector<double> fva = a.FVDouble();
   // FlatVector<double> fvb = b.FVDouble();
@@ -152,8 +152,8 @@ inline double PowerIteration(BaseMatrix & A, const BitArray * freedofs, FlatVect
     if (abs(bn-bn_last) < rel_acc * abs(bn_last)) break;
   }
   evs.Append(&a);
-  delete &b;
-  delete &c;
+  //delete &b;
+  //delete &c;
   // getchar();
   if (symm)
     return bn;
@@ -238,12 +238,12 @@ inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const Bit
 
 
 
-inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, shared_ptr<GridFunction> gfu = NULL)
+inline void CalcCond(BaseMatrix & A, BaseMatrix & Id, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, shared_ptr<GridFunction> gfu = NULL)
 {
   Array<BaseVector*> evs(0);
   Array<BaseVector*> invevs(0);
 
-  BaseVector & diaga = *A.CreateVector();
+  AutoVector diaga = A.CreateVector();
   FlatVector<double> fvdiaga = diaga.FVDouble();
   fvdiaga = 1.0;
   if (jacobiprec)
@@ -260,7 +260,7 @@ inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedof
     else
       throw Exception("no diag access....");
   }
-
+  
   const double cup = symmetric ? 
     PowerIteration<true>(A, freedofs, fvdiaga, evs, false)
     : PowerIteration<false>(A, freedofs, fvdiaga, evs, false);
@@ -268,11 +268,38 @@ inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedof
   // std::cout << "\n lambda max_0 : " << cup << std::endl;
   // for (int i = 1; i < 100; ++i)
   //   std::cout << "\n lambda max_" << i << " : " << PowerIteration( A, freedofs, fvdiaga, evs, true) << std::endl;
+  cout << "cup = " << cup << endl;
+  //cout << "sizeA = " << A.AsVector().Size() << ", sizeA FV = " << A.AsVector().FVDouble().Size() << ", freedods = " << freedofs->Size() << endl;
+  //shared_ptr<BaseMatrix> M = A.CreateMatrix();
+  //*M = 0.0;
+  //M->SetZero();
+  //cout << "height = " << M->Height() << ", width = " << M->Width() << endl;
+  //cout << "size = " << M->AsVector().Size() << ", size FV = " << M->AsVector().FVDouble().Size() << endl;
+  //for(int i = 0;i < M->Height(); i++)
+  //  {
+  //    cout << i*M->Height()+i << endl;
+  //    //M->AsVector().FVDouble()[i*M->Height()+i] = 1.0;
+  //  }
+  //*testout <<  "mat = " << Id.AsVector().FVDouble() << endl;
+  //*testout <<  "mat = " << Id.AsVector().FVDouble().Size() << endl;
+  Arnoldi<double> arnoldi (A, Id, freedofs);
 
+  int num = 500;
+  double shift = 0.0;
+  arnoldi.SetShift (shift);
+            
+  Array<shared_ptr<BaseVector>> evec(1);
+  //cout << __LINE__ << endl;
+  Array<Complex> lam(1);
+  arnoldi.Calc (num, lam, 0, evec, 0);
+  //cout << __LINE__ << endl;
+  cout << "lam = " << endl << lam[0] << endl;
+  const double clow = lam[0].real();
+  /*	    
   const double clow = symmetric ? 
     InversePowerIteration<true>( A, invA, freedofs, fvdiaga, invevs, false)
     : InversePowerIteration<false>( A, invA, freedofs, fvdiaga, invevs, false);
-
+  */
   // std::cout << "\n lambda min_0 : " << cup << std::endl;
   // for (int i = 1; i < 100; ++i)
   //   std::cout << "\n lambda min_" << i << " : " << InversePowerIteration( A, invA, freedofs, fvdiaga, invevs, true) << std::endl;
@@ -294,13 +321,13 @@ inline void CalcCond(BaseMatrix & A, BaseMatrix & invA, const BitArray * freedof
 
   // if (gfu)
   //   gfu->GetVector() = * evs[0];
-  
-  for (int i = 0; i < evs.Size(); ++i)
-    delete evs[i];
+  //cout << __LINE__ << endl;
+  //for (int i = 0; i < evs.Size(); ++i)
+  //  delete evs[i];
+  //cout << __LINE__ << endl;
+  //for (int i = 0; i < invevs.Size(); ++i)
+  //  delete invevs[i];
 
-  for (int i = 0; i < invevs.Size(); ++i)
-    delete invevs[i];
-
-  delete &diaga;
+  // delete &diaga;
 }
 

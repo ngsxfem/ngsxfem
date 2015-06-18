@@ -478,6 +478,7 @@ namespace ngcomp
   {
   protected:
     shared_ptr<BilinearForm> bfa;
+    shared_ptr<BilinearForm> bfid;
     string inversetype;
     bool symmetric;
     bool printmatrix;
@@ -490,6 +491,7 @@ namespace ngcomp
       : NumProc (apde)
     { 
       bfa = apde->GetBilinearForm (flags.GetStringFlag ("bilinearform","bfa"));
+      bfid = apde->GetBilinearForm (flags.GetStringFlag ("bilinearform_id","id"));
       inversetype = flags.GetStringFlag ("inverse", "pardiso");
       symmetric = flags.GetDefineFlag ("symmetric");
       printmatrix = flags.GetDefineFlag ("printmatrix");
@@ -515,6 +517,7 @@ namespace ngcomp
       refinements++;
 
       BaseMatrix & mata = bfa->GetMatrix();
+      BaseMatrix & matid = bfid->GetMatrix();
 
 	  dynamic_cast<BaseSparseMatrix&> (mata) . SetInverseType (inversetype);
 
@@ -526,14 +529,14 @@ namespace ngcomp
           ofstream outf2("precond.out");
           pre->GetMatrix().Print(outf2);
       }
-	  shared_ptr<BaseMatrix> invmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(bfa->GetFESpace()->GetFreeDofs());
+      // shared_ptr<BaseMatrix> invmat = dynamic_cast<BaseSparseMatrix&> (mata) . InverseMatrix(bfa->GetFESpace()->GetFreeDofs());
 
       std::ofstream outf("condition_npcc.out");
       std::ofstream outjf("condition_jac_npcc.out");
       outf << refinements-1 << "\t";
       outjf << refinements-1 << "\t";
-      CalcCond(mata, *invmat, bfa->GetFESpace()->GetFreeDofs(), true, false, &outf , symmetric);
-      CalcCond(mata, *invmat, bfa->GetFESpace()->GetFreeDofs(), true, true, &outjf, symmetric, gfu);
+      CalcCond(mata, matid, bfa->GetFESpace()->GetFreeDofs(), true, false, &outf , symmetric);
+      CalcCond(mata, matid, bfa->GetFESpace()->GetFreeDofs(), true, true, &outjf, symmetric, gfu);
       outjf << endl;
 
       // delete &invmat;
