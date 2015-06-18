@@ -20,7 +20,7 @@ define coefficient lset
 
 define coefficient conv
 #(-100*y*y*x/(x*x+y*y),-100*y*y*y/(x*x+y*y))
-(2*y*y*y/((x*x+y*y)*(x*x+y*y)*sqrt(1+(y*y)/(x*x))),-2*y*y*x/((x*x+y*y)*(x*x+y*y)*sqrt(1+(y*y)/(x*x))))
+(2*y*y*y*x/((x*x+y*y)*(x*x+y*y)*sqrt(x*x+y*y)),-2*y*y*x*x/((x*x+y*y)*(x*x+y*y)*sqrt(x*x+y*y))
 
 define fespace fesh1
        -type=h1ho
@@ -47,14 +47,14 @@ gridfunction u -fespace=tracefes
 
 bilinearform a -fespace=tracefes
 #tracelaplacebeltrami 0.1
-tracelaplace 0.01
+tracelaplace 0.1
 tracediv conv
 
 bilinearform m -fespace=tracefes 
 tracemass 1.0
 
 linearform u_zero -fespace=tracefes
-tracesource (-y+1)
+tracesource ((y+1)*(x+1))
 
 
 linearform f -fespace=tracefes
@@ -71,7 +71,7 @@ numproc bvp npbvp -gridfunction=u -bilinearform=m -linearform=u_zero -solver=cg 
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
 
-numproc parabolic np1 -bilinearforma=a -bilinearformm=m -gridfunction=u -linearform=f  -dt=0.0001 -tend=5
+numproc parabolic np1 -bilinearforma=a -bilinearformm=m -gridfunction=u -linearform=f  -dt=0.0001 -tend=10
 
 bilinearform evalu -fespace=tracefes -nonassemble
 exttrace 1.0

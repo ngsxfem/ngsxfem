@@ -1,6 +1,7 @@
 
 geometry = cube.geo
-mesh = cube.vol.gz
+#mesh = cube.vol.gz
+mesh = cuberef2.vol.gz
 
 
 #load xfem-library and python-bindings
@@ -31,7 +32,9 @@ define coefficient lset_double_torus
 ((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)*((q*x*x+q*y*y)*(q*x*x+q*y*y)-q*x*x+q*y*y)+z*z-dtr*dtr,
 
 define coefficient conv
-((-y),(x),0)
+#((-z),0,(x)) #dreht sich schoen
+(sqrt(1-(z/sqrt(x*x+y*y+z*z)))*y/sqrt(x*x+y*y+z*z),sqrt(1-(z/sqrt(x*x+y*y+z*z)))*y*z/((x*x+y*y+z*z)*sqrt(x*x+y*y)),sqrt(1-z/sqrt(x*x+y*y+z*z))*x/(x*x+y*y))
+
 
 define fespace fesh1
        -type=h1ho
@@ -65,14 +68,12 @@ bilinearform m -fespace=tracefes
 tracemass 1.0
 
 linearform u_zero -fespace=tracefes
-tracesource (x+1)
+tracesource ((1-0.8*x)*z)
 
 
 linearform f -fespace=tracefes
 #tracesource sin(pi*y/1.5)
 tracesource 0
-
-
 
 
 define preconditioner c -type=local -bilinearform=a -test #-block
@@ -83,7 +84,7 @@ define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
 numproc traceoutput npto -gridfunction=u -levelset=lset_sphere -subdivision=0 -reset -instat
 numproc traceoutput npto -gridfunction=u -levelset=lset_sphere -subdivision=0 -instat
-numproc parabolic3d np1 -bilinearforma=a -bilinearformm=m -linearform=f -visnumproc=npto -gridfunction=u -dt=0.1 -tend=1
+numproc parabolic3d np1 -bilinearforma=a -bilinearformm=m -linearform=f -visnumproc=npto -gridfunction=u -dt=0.05 -tend=3
 
 
 bilinearform evalu -fespace=tracefes -nonassemble
