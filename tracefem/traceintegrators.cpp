@@ -17,17 +17,17 @@ namespace ngfem
       dynamic_cast<const XFiniteElement *> (&base_fel);
 
     elmat = 0.0;
-    if (!xfe) return;
+    if (!xfe) return;					////if base_fel is no extended element return
 
     const ScalarFiniteElement<D> & scafe =
-      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());		//get base functions
 
     int ndof = scafe.GetNDof();
     FlatVector<> shape(ndof,lh);
 
-    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+    const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());		
     const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
-    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+    const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());		//get quadrature rule on interface
 
     for (int i = 0; i < fquad.Size(); ++i)
     {

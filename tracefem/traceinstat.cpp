@@ -42,7 +42,7 @@ protected:
   // total time
   double tend;
 
-	bool periodicrhs;
+  double periodicrhs;
 
 public:
     
@@ -65,7 +65,7 @@ public:
     dt = flags.GetNumFlag ("dt", 0.001);
     tend = flags.GetNumFlag ("tend", 1);
 
-		periodicrhs = flags.GetDefineFlag("periodic_rhs");
+		periodicrhs = flags.GetNumFlag("periodic_rhs",0);
   }
 
 
@@ -107,8 +107,8 @@ public:
     // implicite Euler method
     for (double t = 0; t <= tend; t += dt)
       {
-				if (periodicrhs)
-					per=cos(t);
+				if (periodicrhs!=0)
+					per=(cos(periodicrhs*t)+1)/2;
 		
 				cout << "t = " << t << endl;
 				d = per * vecf - mata * vecu;
@@ -190,7 +190,7 @@ protected:
   // total time
   double tend;
 
-	bool periodicrhs;
+  double periodicrhs;
 
 public:
     
@@ -213,7 +213,7 @@ public:
 		
     dt = flags.GetNumFlag ("dt", 0.001);
     tend = flags.GetNumFlag ("tend", 1);
-		periodicrhs = flags.GetDefineFlag ("periodic_rhs");
+		periodicrhs = flags.GetNumFlag("periodic_rhs",0);
   }
 
 
@@ -254,8 +254,8 @@ public:
     // implicite Euler method
     for (double t = 0; t <= tend; t += dt)
       {
-				if (periodicrhs)
-					per=cos(t);
+				if (periodicrhs!=0)
+					per=(cos(periodicrhs*t)+1)/2;
 
 				cout << "t = " << t << endl;
 				d = per * vecf - mata * vecu;
