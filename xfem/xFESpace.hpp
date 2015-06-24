@@ -83,6 +83,7 @@ namespace ngcomp
     virtual void GetVertexDofNrs (int vnr, Array<int> & dnums) const
     {
       dnums.SetSize(0);
+      if (activeelem.Size() == 0) return;
       Array<int> ldnums;
       basefes->GetVertexDofNrs(vnr,ldnums);
       for (int i = 0; i < ldnums.Size(); ++i)
@@ -96,6 +97,7 @@ namespace ngcomp
     virtual void GetEdgeDofNrs (int vnr, Array<int> & dnums) const
     {
       dnums.SetSize(0);
+      if (activeelem.Size() == 0) return;
       Array<int> ldnums;
       basefes->GetEdgeDofNrs(vnr,ldnums);
       for (int i = 0; i < ldnums.Size(); ++i)
@@ -109,6 +111,7 @@ namespace ngcomp
     virtual void GetFaceDofNrs (int vnr, Array<int> & dnums) const
     {
       dnums.SetSize(0);
+      if (activeelem.Size() == 0) return;
       Array<int> ldnums;
       basefes->GetFaceDofNrs(vnr,ldnums);
       for (int i = 0; i < ldnums.Size(); ++i)
@@ -122,6 +125,7 @@ namespace ngcomp
     virtual void GetInnerDofNrs (int vnr, Array<int> & dnums) const
     {
       dnums.SetSize(0);
+      if (activeelem.Size() == 0) return;
       Array<int> ldnums;
       basefes->GetInnerDofNrs(vnr,ldnums);
       for (int i = 0; i < ldnums.Size(); ++i)
@@ -136,6 +140,8 @@ namespace ngcomp
 
     virtual bool DefinedOn (ElementId id) const
     {
+      if (activeelem.Size() == 0) return false;
+
       if (id.IsBoundary())
         return activeselem.Test(int(id));
       else
