@@ -76,7 +76,7 @@
 	\begin{defn}
 		\begin{align*}
 			\nabla_\boundary f&:=P\nabla f:=\left(I-\vec n_\boundary \vec n_\boundary^T\right)\!\nabla f\\
-			\textrm{div}_\boundary \vec g&:=\nabla_\boundary\cdot \vec g:=\sum_{i=1}^d\vec e_i\sum_{j=1}^dp_{ij}\frac{\partial g_i}{\partial x_j}
+			\textrm{div}_\boundary \vec g&:=\nabla_\boundary\cdot \vec g:=\sum_{i=1}^d\sum_{j=1}^dp_{ij}\frac{\partial g_i}{\partial x_j}
 		\end{align*}
 	\end{defn}}
 \end{frame}
@@ -88,7 +88,7 @@
     \frametitle{Reynolds transport theorem on an interface}
 
 	\begin{thm}[Reynold's transport theorem on an interface]
-	The rate of change for a smooth function $f(x,t)$ on $W\of{t}\subseteq \boundary$ with a given velocity field $\vec v$ can be described by
+	The rate of change for a smooth function $f(x,t)$ on $W\of{t}\subseteq \boundary$ with a given flux $\vec v$ can be described by
 		\begin{equation}
 			\frac{d}{dt}\int_{W\of{t}}f\of{x,t}ds=\int_{W\of{t}}\dot f\of{x,t}+f\of{x,t}\mathrm{div}_\boundary\of{\vec v}ds
 		\end{equation}
@@ -128,7 +128,7 @@
 \begin{frame}{Model equation in strong form}
 	\only<1-5>{since $W\of{t}$ was arbitrary and we assume $\boundary$ to be stationary:}
 	\only<6>{
-	for a given (tangential) velocity field $\vec v$, a source function $f$ and initial data $c_0$ find $c$ such that
+	For a given (tangential) flux $\vec v$, a source function $f$ and initial data $c_0$ find $c$ such that
 	}
 	\only<2-4>{
 	\begin{equation}
@@ -148,5 +148,73 @@
 	}
 \end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discretization}
+\begin{frame}{Weak formulation}
+	\begin{itemize}[<+->]
+		\item{Integration by parts holds on $\boundary$ i.e.
+			\begin{equation}
+				\int_\boundary g\mathrm{div}_\boundary\vec f\,ds=-\int_\boundary\nabla_\boundary g\cdot \vec f\,ds
+			\end{equation}	
+		}
+		\item{
+		multiplication with a test function $w\in H^1\of{\boundary}$, integration by parts yields
+		\begin{equation}
+			\int_\boundary\frac{\partial c}{\partial t}w\,ds-\int_\boundary c\vec v\cdot\nabla_\boundary w\, ds+\alpha\int_\boundary\nabla_\boundary c \cdot \nabla_\boundary w \,ds=\int_\boundary f w\,ds
+		\end{equation}
+		}
+	\end{itemize}
+	
+\end{frame}
+\begin{frame}{Discrete formulation}
+	\begin{prob}
+		Find \only<1>{$c_h\in\,??$} \only<2->{\alert<2>{$c_h\in V_{trace}$}} such that for all \only<1>{$w_h\in\,??$}\only<2->{\alert<2>{$w_h\in V_{trace}$}}
+		\begin{equation}
+			\int_{\boundary_h}\frac{\partial c_h}{\partial t}w_h\,ds-\int_{\boundary_h} c_h\vec v\cdot\nabla_{\boundary_h} w_h\, ds+\alpha\int_{\boundary_h}\nabla_{\boundary_h} c_h \cdot \nabla_{\boundary_h} w_h \,ds=\int_{\boundary_h} f w_h\,ds
+		\end{equation}
+		with $\boundary_h$ such that it is linear on all elements, \only<2->{$V_{trace}:=V_h\vert_{\boundary_h}$ for some FE-space $V_h$} 
+	\end{prob}
+\end{frame}
 
+\begin{frame}{Time discretization}
+	for time discretization we use an implicit Euler method i.e. we have to solve in each time-step:
+	\begin{equation}
+		\int...
+	\end{equation}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implementation}
+\begin{frame}{Implementation in Netgen/NGsolve}
+	We need...
+	\begin{itemize}[<+->]
+		\item{FEspace}
+		\item{Integrators}
+		\item{numproc for instationary part}
+		\item{Output}	
+	\end{itemize}
+\end{frame}
+\subsection{Implementation in Netgen/NGsolve}
+\begin{frame}{FEspace}
+
+\end{frame}
+
+\begin{frame}{Integrators}
+
+\end{frame}
+
+\begin{frame}{instationary part}
+
+\end{frame}
+
+\begin{frame}{Output}
+
+\end{frame}
+
+
+\section{Examples}
+\begin{frame}
+
+\end{frame}
 \end{document}
