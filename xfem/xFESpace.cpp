@@ -36,7 +36,7 @@ namespace ngcomp
 
   void XFESpace :: GetDofNrs (int elnr, Array<int> & dnums) const
   {
-    if (activeelem.Test(elnr) && !empty)
+    if (activeelem.Size() > 0 && activeelem.Test(elnr) && !empty)
       dnums = (*el2dofs)[elnr];
     else
       dnums.SetSize(0);
@@ -90,7 +90,7 @@ namespace ngcomp
 
   void XFESpace :: GetSDofNrs (int selnr, Array<int> & dnums) const
   {
-    if (activeselem.Test(selnr) && !empty)
+    if (activeselem.Size() > 0 && activeselem.Test(selnr) && !empty)
       dnums = (*sel2dofs)[selnr];
     else
       dnums.SetSize(0);
@@ -184,6 +184,11 @@ namespace ngcomp
       cout << " no basefes, Update postponed " << endl;
       return;
     }
+    if ( coef_lset == NULL )
+    {
+      cout << " no lset, Update postponed " << endl;
+      return;
+    }
     CleanUp();
 
     static Timer timer ("XFESpace::Update");
@@ -249,7 +254,7 @@ namespace ngcomp
             lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
           CompositeQuadratureRule<SD> cquad;
           auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                                cquad, llh, 2*order_space, 2*order_time, ref_lvl_space, ref_lvl_time);
+                                                         cquad, llh, 2*order_space, 2*order_time, ref_lvl_space, ref_lvl_time);
           xgeom->SetDistanceThreshold(2.0*(h+(ti.second-ti.first)*vmax));
           DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
@@ -282,7 +287,7 @@ namespace ngcomp
       }
     }
     el2dofs = make_shared<Table<int>>(creator.MoveTable());
-
+          
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
     {
