@@ -13,7 +13,7 @@ define constant heapsize = 1e9
 define constant R = 1#0.333333333333333333
 define constant one = 1.0
 
-define constant v0=10
+define constant v0=20
 define constant mu_in=10
 define constant mu_out=1
 
@@ -62,16 +62,16 @@ bilinearform m -fespace=tracefes
 tracemass 1.0
 
 linearform u_zero -fespace=tracefes
-#tracesource 5*exp(-10*(x-1)*(x-1))
+#tracesource exp(-10*(x-1)*(x-1))
 #tracesource (2*sin(10*atan(y/x))+2)*(y+1)
-tracesource 1
+#tracesource 1
 
 linearform f -fespace=tracefes
 #tracesource sin(pi*y/1.5)
 #tracesource 5*exp(-10000*(x+1)*(x+1)*(x+1)*(x+1))
 #tracesource 0
-#tracesource 20*exp(-10000*((y-1)*(y-1)))#+(x-sqrt(R*R-0.8*0.8))*(x-sqrt(R*R-0.8*0.8))))
-tracesource cos(pi/2*x)*y/abs(y)#(y+abs(y))/y
+tracesource 10*exp(-100*((y-1)*(y-1)))#+(x-sqrt(R*R-0.8*0.8))*(x-sqrt(R*R-0.8*0.8))))
+#tracesource cos(pi/2*x)*y/abs(y)#(y+abs(y))/y
 
 
 define preconditioner c -type=local -bilinearform=a -test #-block
@@ -81,7 +81,7 @@ numproc bvp npbvp -gridfunction=u -bilinearform=m -linearform=u_zero -solver=cg 
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
 
-numproc parabolic np1 -bilinearforma=a -bilinearformm=m -gridfunction=u -linearform=f  -dt=0.0001 -tend=10 #-periodic_rhs
+numproc parabolic np1 -bilinearforma=a -bilinearformm=m -gridfunction=u -linearform=f  -dt=0.0001 -tend=10 -periodic_rhs=3
 
 bilinearform evalu -fespace=tracefes -nonassemble
 exttrace 1.0

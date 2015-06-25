@@ -108,7 +108,7 @@ public:
     for (double t = 0; t <= tend; t += dt)
       {
 				if (periodicrhs!=0)
-					per=(cos(periodicrhs*t)+1)/2;
+					per=cos(periodicrhs*t);
 		
 				cout << "t = " << t << endl;
 				d = per * vecf - mata * vecu;
