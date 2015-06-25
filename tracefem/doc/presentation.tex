@@ -68,22 +68,25 @@
 			\end{figure}
 		\end{column}
 		\begin{column}{0.5\textwidth}
-			\begin{itemize}[<+->]
+			\begin{itemize}
+				\pause
 				\item{two fluids $\domain_1,\domain_2$ contained in an open domain, seperated by $\boundary$}
-				\item{given velocity field $\flow$}
+				\pause
+				\item{given flux $\flow$}
+				\pause
 				\item{concentration $c$ of surfactant agent on $\boundary$}
 			\end{itemize}
 		\end{column}
 	\end{columns}
 	\pause
 	\begin{prob}
-		For given initial data $c_0$, model the evolution of $c$.
+		For given initial data $c_0$, find a model for the evolution of $c$.
 	\end{prob}
 \end{frame}
 \begin{frame}
 	\frametitle{Surface gradient and divergence}
 		\begin{itemize}[<+->]
-			\item{$C^2$-hypersurface $\boundary\subseteq\mathbb{R}^d$, outward normal $\vec n_\boundary$}
+			\item{Smooth hypersurface $\boundary\subseteq\mathbb{R}^d$, outward normal $\vec n_\boundary$}
 			\item{$C^1$-functions $f:\boundary\to\mathbb{R}$, $\vec g:\boundary\to\mathbb{R}^d$}
 		\end{itemize}
 	\only<3->{	
@@ -117,7 +120,7 @@
 	\frametitle{Conservation of mass}
 	\begin{itemize}
 		\item<1->{source function $f$}
-		\item<2->{velocity $\vec q$\only<4->{$:=-\alpha\nabla_\boundary c$}}
+		\item<2->{flux $\vec q$\only<4->{\alert<4>{$:=-\alpha\nabla_\boundary c$}}}
 	\end{itemize}
 	\begin{align*}
 		\uncover<3->{
@@ -210,10 +213,10 @@
 \begin{frame}{Implementation}
 	We need...
 	\begin{itemize}[<+->]
-		\item{FEspace}
-		\item{Integrators}
+		\item{fespace}
+		\item{integrators}
 		\item{numproc for instationary part}
-		\item{Output}	
+		\item{output}	
 	\end{itemize}
 \end{frame}
 
