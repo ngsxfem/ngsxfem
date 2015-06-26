@@ -102,8 +102,7 @@ class LevelsetSolver:
             else:
                 self.g.Add (LFI (name = "lsetcorr", dim = spacedim, coef = [GFCoeff(lset.gf),velpre.coef[0],velpre.coef[1],velpre.coef[2]]))
 
-        
-        self.a = BilinearForm (lset.fes, flags = { "symmetric" : False })
+        self.a = BilinearForm (lset.fes, flags = { }, symmetric = False)
         bfi_inner = BFI (name = "mass", dim = spacedim,  coef = [ConstantCF(1.0/self.dt)])
         bfi_block = CompoundBFI (bfi = bfi_inner, comp = 0 )
         self.a.Add (bfi_block)
