@@ -24,6 +24,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return true; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                          const ElementTransformation & eltrans,
@@ -43,6 +44,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return true; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                          const ElementTransformation & eltrans,
@@ -62,6 +64,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return true; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                          const ElementTransformation & eltrans,
@@ -81,6 +84,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return false; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                          const ElementTransformation & eltrans,
@@ -100,6 +104,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return false; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,
                          const ElementTransformation & eltrans,
