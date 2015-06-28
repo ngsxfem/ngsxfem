@@ -37,8 +37,8 @@ namespace ngfem
 
     virtual ~ST_MassIntegrator () { ; }
 
-    virtual bool BoundaryForm () const 
-    { return 0; }
+    virtual bool BoundaryForm () const { return 0; }
+    virtual bool IsSymmetric () const { return true; }
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
@@ -73,8 +73,8 @@ namespace ngfem
 
     virtual ~ST_TimeDerivativeIntegrator () { ; }
 
-    virtual bool BoundaryForm () const 
-    { return 0; }
+    virtual bool BoundaryForm () const { return 0; }
+    virtual bool IsSymmetric () const { return false; }
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
@@ -103,8 +103,8 @@ namespace ngfem
 
     virtual ~ST_LaplaceIntegrator () { ; }
 
-    virtual bool BoundaryForm () const 
-    { return 0; }
+    virtual bool BoundaryForm () const { return 0; }
+    virtual bool IsSymmetric () const { return true; }
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
@@ -162,6 +162,7 @@ namespace ngfem
 
     virtual bool BoundaryForm () const 
     { return 0; }
+    virtual bool IsSymmetric () const { return true; }
 
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans, 
