@@ -47,6 +47,9 @@ namespace ngfem
     
     virtual bool BoundaryForm () const 
     { return 0; }
+
+    virtual bool IsSymmetric () const 
+    { return true; }
     
     static Integrator * Create (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     {
@@ -208,6 +211,9 @@ namespace ngfem
     
     virtual bool BoundaryForm () const 
     { return 1; }
+
+    virtual bool IsSymmetric () const 
+    { return true; }
     
     static Integrator * Create (const Array<shared_ptr<CoefficientFunction>> & coeffs)
     {
