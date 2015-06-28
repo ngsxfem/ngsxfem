@@ -82,6 +82,38 @@ namespace ngfem
  
   };
 
+  template <int D>
+  class XStokesNitscheModLBIntegrator : public LinearFormIntegrator
+  {
+    shared_ptr<CoefficientFunction> coef_lset;   
+    shared_ptr<CoefficientFunction> coef_sigma;   
+  public:
+    XStokesNitscheModLBIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+      : coef_lset(coeffs[0]),coef_sigma(coeffs[1])
+    { 
+    }
+    
+    virtual ~XStokesNitscheModLBIntegrator()
+    { 
+      ;
+    }
+
+    virtual string Name () const { return "XStokesNitscheModLBIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementVector (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatVector<double> elvec,
+                       LocalHeap & lh) const;
+ 
+  };
+
 }
 #endif
 
