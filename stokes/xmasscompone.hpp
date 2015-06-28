@@ -34,7 +34,8 @@ namespace ngfem
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
     virtual bool BoundaryForm () const { return false; }
-
+    virtual bool IsSymmetric () const 
+    { return true; }
 
     // Calculates the element matrix
     virtual void
