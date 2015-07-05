@@ -518,7 +518,7 @@ namespace ngfem
 
       Vec<D> improved_normal = normal;
       // coef_lset num. diff
-      if (improved) //improved)
+      if (false) //improved) //improved)
       {
         Vec<D> dlset_ref = 0.0;
         double eps = 1e-7;
