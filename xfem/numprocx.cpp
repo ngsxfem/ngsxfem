@@ -606,3 +606,6 @@ static RegisterNumProc<NumProcXDifference<3> > npxdiff3d("xdifference3d");
 static RegisterNumProc<NumProcSpecialOutput<2> > npxoutp("xoutput");
 static RegisterNumProc<NumProcCalcCondition> npinitcalccond("calccond");
 static RegisterNumProc<NumProcMarkElementsOnInterface> npinitmark("markinterface");
+
+
+#include "geometrytests.cpp"
