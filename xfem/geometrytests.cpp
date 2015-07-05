@@ -91,9 +91,9 @@ namespace ngcomp
 
       shared_ptr<FESpace> fes_deform = deform->GetFESpace();
       
+      ma->SetDeformation(deform);
 
 // #pragma omp parallel
-      for (int it = 0; it < 10; ++it)
       {
         LocalHeap lh(clh.Split());
 // #pragma omp for schedule(static)
@@ -155,60 +155,68 @@ namespace ngcomp
               if (verts[i] == facetverts[1])
                 v2 = i;
 
-            cout << " v1 = " << v1 << endl;
-            cout << " v2 = " << v2 << endl;
+            // cout << " v1 = " << v1 << endl;
+            // cout << " v2 = " << v2 << endl;
             
             IntegrationPoint curr_ip(0.0,0.0);
             curr_ip(0) = 0.5 * ips[v1](0) + 0.5 * ips[v2](0);
             curr_ip(1) = 0.5 * ips[v1](1) + 0.5 * ips[v2](1);
+
+
+            for (int it = 0; it < 100; ++it)
+            {
+              ElementTransformation & new_eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+
             
-            MappedIntegrationPoint<D,D> curr_mip(curr_ip,eltrans);
-            cout << " curr_mip = " << curr_mip << endl;
+              MappedIntegrationPoint<D,D> curr_mip(curr_ip,new_eltrans);
+              // cout << " curr_mip = " << curr_mip << endl;
 
-            double lset_prec = lset->Evaluate(curr_mip); // LATER: consider deform
-            double lset_lin = eval_linear(curr_ip);
+              double lset_prec = lset->Evaluate(curr_mip); // LATER: consider deform
+              double lset_lin = eval_linear(curr_ip);
 
-            cout << " curr_mip.GetPoint() = " << curr_mip.GetPoint() << endl;
+              // cout << " curr_mip.GetPoint() = " << curr_mip.GetPoint() << endl;
             
-            cout << " lset_prec = " << lset_prec << endl;
-            cout << " lset_lin = " << lset_lin << endl;
+              // cout << " lset_prec = " << lset_prec << endl;
+              // cout << " lset_lin = " << lset_lin << endl;
 
-            double f0 = lset_prec - lset_lin;
+              double f0 = lset_prec - lset_lin;
 
-            // cout << " f0 = " << f0 << endl;
+              cout << " f0 = " << f0 << endl;
+
+              if (abs(f0) < 1e-6)
+                break;
             
-            Vec<D> grad;
-            CalcGradientOfCoeff<D>(lset, curr_mip, grad, lh);
+              Vec<D> grad;
+              CalcGradientOfCoeff<D>(lset, curr_mip, grad, lh);
 
-            double len = L2Norm(grad);
-            Vec<D> normal = grad;
-            normal /= len;
+              double len = L2Norm(grad);
+              Vec<D> normal = grad;
+              normal /= len;
 
-            // cout << " normal = " << normal << endl;
+              // cout << " normal = " << normal << endl;
             
-            Vec<D> update;
-            FlatVector<> values(D,&update(0));
-            // cout << " values = " << values << endl;
-            fes_deform->GetEdgeDofNrs(facet, dnums);
-            // cout << " dnums = " << dnums << endl;
-            deform->GetVector().GetIndirect(dnums,values);
-            // cout << " values = " << values << endl;
+              Vec<D> update;
+              FlatVector<> values(D,&update(0));
+              // cout << " values = " << values << endl;
+              fes_deform->GetEdgeDofNrs(facet, dnums);
+              // cout << " dnums = " << dnums << endl;
+              deform->GetVector().GetIndirect(dnums,values);
+              // cout << " values = " << values << endl;
             
-            // cout << " update = " << update << endl;
+              // cout << " update = " << update << endl;
 
-            update += 10.0 * f0 / len * normal;
+              update += f0 / len * normal;
             
-            // cout << " update = " << update << endl;
+              // cout << " update = " << update << endl;
 
 
-            deform->GetVector().SetIndirect(dnums,values);
-
+              deform->GetVector().SetIndirect(dnums,values);
+            }
             // getchar();
             // break;
           }
           // break;
         }
-        ma->SetDeformation(deform);
 
       }
       
