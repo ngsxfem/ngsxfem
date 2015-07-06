@@ -140,6 +140,8 @@ namespace ngcomp
           ma->GetElEdges(elnr,facets);
           ma->GetElVertices(elnr,verts);
 
+          const double h = pow(mip1.GetJacobiDet(),1.0/D);
+          
           Array<int> dnums;
           for (int f = 1; f < 3; ++f)
           {
@@ -178,7 +180,9 @@ namespace ngcomp
             
               // cout << " lset_prec = " << lset_prec << endl;
               // cout << " lset_lin = " << lset_lin << endl;
-
+              if (abs(lset_prec) > 0.75*h)
+                break;
+              
               double f0 = lset_prec - lset_lin;
 
               cout << " f0 = " << f0 << endl;
