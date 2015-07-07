@@ -1,6 +1,6 @@
 
-geometry = d99_trig.in2d                                        
-mesh = d99_trig.vol.gz
+geometry = d1_approx.in2d                                        
+mesh = d1_approx.vol.gz
 
 # # load geometry
 # geometry = d1_approx.in2d                                        
@@ -18,7 +18,7 @@ constant R = 0.5
 #interface description as zero-level
 
 # define coefficient lset
-# # ( x*x+y*y - R*R),
+# # # ( x*x+y*y - R*R),
 # ( sqrt(x*x+y*y) - R),
 
 # general constants
@@ -100,8 +100,6 @@ gridfunction lset_p1 -fespace=fes_p1
 fespace fes_p2 -type=h1ho -order=2
 gridfunction lset_p2 -fespace=fes_p2
                 
-# evaluate l2-error (difference between prescribed solution and numerical solution)
-
 fespace fes_deform -type=h1ho -order=2 -dim=2
 gridfunction deform -fespace=fes_deform
                 
@@ -116,4 +114,7 @@ numproc draw npdr -coefficient=lset -label=levelset
 
 
 numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=5 -minval=0 -maxval=0
+
+
+
         
