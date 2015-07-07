@@ -8,7 +8,7 @@ mesh = d2_xnitsche.vol.gz
 
 shared = libngsxfem_xfem
 
-#define constant averaging = "halfhalf"
+# define constant averaging = "halfhalf"
 define constant averaging = "hansbo"
 #define constant averaging = "heaviside"
 
@@ -139,3 +139,14 @@ numproc xdifference npxd
 numproc visualization npviz -scalarfunction=u -minval=-1.5 -maxval=1.5 #-comp=0
 
 #numproc markinterface npmi -fespace=fescomp
+
+
+coefficient err
+(
+  (sqrt(x*x+y*y)-(r0+0.2*sin(omega*atan2(x,y))) > 0) * (abs((u)-solpos)) 
+ +(sqrt(x*x+y*y)-(r0+0.2*sin(omega*atan2(x,y))) < 0) * (abs((u)-solneg)) 
+)
+
+numproc draw npdraw -coefficient=err -label=error
+
+
