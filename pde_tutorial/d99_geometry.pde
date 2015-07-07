@@ -1,21 +1,25 @@
 
-# load geometry
-geometry = d1_approx.in2d                                        
-# and mesh
-#mesh = d1_approx.vol.gz
-mesh = d1_approx2.vol.gz
+geometry = d99_trig.in2d                                        
+mesh = d99_trig.vol.gz
+
+# # load geometry
+# geometry = d1_approx.in2d                                        
+# # and mesh
+# mesh = d1_approx.vol.gz
+# #mesh = d1_approx2.vol.gz
 
 #load xfem-library and python-bindings
 shared = libngsxfem_xfem                                       
 shared = libngsxfem_py                                       
 
 define constant heapsize = 1e9
-constant R = 0
+constant R = 0.5
         
 #interface description as zero-level
 
 # define coefficient lset
-# ( sqrt(x*x+4*y*y) - R),
+# # ( x*x+y*y - R*R),
+# ( sqrt(x*x+y*y) - R),
 
 # general constants
 define constant zero = 0.0
@@ -92,19 +96,24 @@ define coefficient lset
 
 fespace fes_p1 -type=h1ho -order=1
 gridfunction lset_p1 -fespace=fes_p1
-numproc setvalues npsv -gridfunction=lset_p1 -coefficient=lset
-        
+
+fespace fes_p2 -type=h1ho -order=2
+gridfunction lset_p2 -fespace=fes_p2
+                
 # evaluate l2-error (difference between prescribed solution and numerical solution)
 
 fespace fes_deform -type=h1ho -order=2 -dim=2
 gridfunction deform -fespace=fes_deform
                 
 numproc xgeomtest npxd 
+        -gf_levelset_p1=lset_p1
+        -gf_levelset_p2=lset_p2
         -levelset=lset
+        -gf_levelset=lset_p2
         -deformation=deform
 
 numproc draw npdr -coefficient=lset -label=levelset
 
 
-
+numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=5 -minval=0 -maxval=0
         
