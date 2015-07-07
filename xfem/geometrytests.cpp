@@ -439,150 +439,46 @@ namespace ngcomp
         cout << " accepted_points = " << accepted_points << endl;
         cout << " corrected_points = " << corrected_points << endl;
       }
-      else
-      {
-        ma->SetDeformation(deform);
-        LocalHeap lh(clh.Split());
-        for (int elnr = 0; elnr < ne; ++elnr)
-        {
-          HeapReset hr(lh);
-          Ngs_Element ngel = ma->GetElement(elnr);
-          ELEMENT_TYPE eltype = ngel.GetType();
-          if (eltype!= ET_TRIG)
-            throw Exception("only trigs for now..");
-          
-          ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
-        
-          Array<IntegrationPoint> ips(0);
-          IntegrationPoint ip1(0.0,0.0);
-          MappedIntegrationPoint<D,D> mip1(ip1,eltrans);
-          double lset1 = lset->Evaluate(mip1);
-          
-          IntegrationPoint ip2(1.0,0.0);
-          MappedIntegrationPoint<D,D> mip2(ip2,eltrans);
-          double lset2 = lset->Evaluate(mip2);
 
-          IntegrationPoint ip3(0.0,1.0);
-          MappedIntegrationPoint<D,D> mip3(ip3,eltrans);
-          double lset3 = lset->Evaluate(mip3);
-
-          ips.Append(ip2);
-          ips.Append(ip3);
-          ips.Append(ip1);
-
-          // IntegrationPoint ip4(0.5,0.0);
-          // ips.Append(ip4);
-          // MappedIntegrationPoint<D,D> mip4(ip4,eltrans);
-          // double lset4 = lset->Evaluate(mip4);
-          
-          auto eval_linear = [lset1,lset2,lset3] (const IntegrationPoint & ip)
-            { return (1-ip(0)-ip(1))*lset1+ip(0)*lset2+ip(1)*lset3; };
-
-          // IntegrationPoints
-          
-          Array<int> facets;
-          Array<int> verts;
-          Array<int> facetverts;
-          ma->GetElEdges(elnr,facets);
-          ma->GetElVertices(elnr,verts);
-
-          const double h = pow(mip1.GetJacobiDet(),1.0/D);
-          
-          Array<int> dnums;
-          for (int f = 0; f < 3; ++f)
-          {
-            int facet = facets[f];
-            ma->GetFacetPNums(facet,facetverts);
-            
-            int v1 = -1;
-            for (int i = 0; i < verts.Size(); i++)
-              if (verts[i] == facetverts[0])
-                v1 = i;
-            int v2 = -1;
-            for (int i = 0; i < verts.Size(); i++)
-              if (verts[i] == facetverts[1])
-                v2 = i;
-
-            // cout << " v1 = " << v1 << endl;
-            // cout << " v2 = " << v2 << endl;
-            
-            IntegrationPoint curr_ip(0.0,0.0);
-            curr_ip(0) = 0.5 * ips[v1](0) + 0.5 * ips[v2](0);
-            curr_ip(1) = 0.5 * ips[v1](1) + 0.5 * ips[v2](1);
-
-            // MappedIntegrationPoint<D,D> first_point(ips[v1],eltrans);
-            // MappedIntegrationPoint<D,D> second_point(ips[v2],eltrans);
-            // Vec<D> tang = second_point.GetPoint() - first_point.GetPoint();
-            // Vec<D> normal; normal(0) = -tang(1); normal(1) = tang(0);
-            // normal /= L2Norm(normal);
-
-            for (int it = 0; it < 100; ++it)
-            {
-              ElementTransformation & new_eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
-
-            
-              MappedIntegrationPoint<D,D> curr_mip(curr_ip,new_eltrans);
-              // cout << " curr_mip = " << curr_mip << endl;
-
-              double lset_prec = lset->Evaluate(curr_mip); // LATER: consider deform
-              double lset_lin = eval_linear(curr_ip);
-
-              // cout << " curr_mip.GetPoint() = " << curr_mip.GetPoint() << endl;
-            
-              // cout << " lset_prec = " << lset_prec << endl;
-              // cout << " lset_lin = " << lset_lin << endl;
-              if (abs(lset_prec) > 0.75*h)
-                break;
-              
-              double f0 = lset_prec - lset_lin;
-
-              cout << " f0 = " << f0 << endl;
-
-              if (abs(f0) < 1e-6)
-                break;
-            
-              Vec<D> grad;
-              CalcGradientOfCoeff<D>(lset, curr_mip, grad, lh);
-
-              double len = L2Norm(grad);
-              Vec<D> normal = grad;
-
-              normal /= len;
-
-              const double dphidn = InnerProduct(grad,normal);
-              // cout << " normal = " << normal << endl;
-            
-              Vec<D> update;
-              FlatVector<> values(D,&update(0));
-              // cout << " values = " << values << endl;
-              fes_deform->GetEdgeDofNrs(facet, dnums);
-              // cout << " dnums = " << dnums << endl;
-              deform->GetVector().GetIndirect(dnums,values);
-              // cout << " values = " << values << endl;
-            
-              // cout << " update = " << update << endl;
-
-              update += f0 / dphidn * normal;
-            
-              // cout << " update = " << update << endl;
-
-
-              deform->GetVector().SetIndirect(dnums,values);
-            }
-            std::cout << " -- " << std::endl;
-
-            // getchar();
-            // break;
-          }
-          // break;
-        }
-
-      }
-
-      ma->SetDeformation(nullptr);
+      ma->SetDeformation(deform);
     }    
     
 
   };
+
+
+
+
+  class NumProcUnsetDeformation : public NumProc
+  {
+  public:
+    shared_ptr<MeshAccess> ma;
+    NumProcUnsetDeformation (shared_ptr<PDE> apde, const Flags & flags)
+      : NumProc (apde)
+    {
+      ma = apde->GetMeshAccess();
+    }
+
+    virtual ~NumProcUnsetDeformation()
+    {
+      ;
+    }
+
+    virtual string GetClassName () const
+    {
+      return "NumProcUnsetDeformation";
+    }
+
+
+    virtual void Do (LocalHeap & clh)
+    {
+      static int refinements = 0;
+      cout << " This is the Do-call on refinement level " << refinements << std::endl;
+      ma->SetDeformation(nullptr);
+      
+    }
+  };
+    
 }
-static RegisterNumProc<NumProcGeometryTest<2> > npxgeomtest("xgeomtest");
+static RegisterNumProc<NumProcUnsetDeformation > npxgeomtest("unsetdeformation");
+static RegisterNumProc<NumProcGeometryTest<2> > npxgeomtestasdf("xgeomtest");
