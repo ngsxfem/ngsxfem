@@ -60,6 +60,7 @@ namespace ngcomp
     shared_ptr<GridFunction> gf_lset_p1;
     shared_ptr<GridFunction> gf_lset_p2;
     shared_ptr<GridFunction> deform;
+    bool no_cut_off;
   public:
 
 
@@ -70,6 +71,7 @@ namespace ngcomp
       gf_lset_p1  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p1", ""), true);
       gf_lset_p2  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), true);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
+      no_cut_off = flags.GetDefineFlag("nocutoff");
     }
 
     virtual ~NumProcGeometryTest()
@@ -82,7 +84,97 @@ namespace ngcomp
       return "NumProcGeometryTest";
     }
 
+    void Test (LocalHeap & lh)
+    {
+      double volume = 0.0;
 
+      int ne=ma->GetNE();
+      int nedges=ma->GetNEdges();
+      int nf=ma->GetNFaces();
+      int nv=ma->GetNV();
+      int nse=ma->GetNSE();
+
+      for (int elnr = 0; elnr < ne; ++elnr)
+      {
+        HeapReset hr(lh);
+        Ngs_Element ngel = ma->GetElement(elnr);
+        ELEMENT_TYPE eltype = ngel.GetType();
+        Array<int> dofs;
+        gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
+        FlatVector<> vals(dofs.Size(),lh);
+        gf_lset_p1->GetVector().GetIndirect(dofs,vals);
+
+        bool cut_els = false;
+
+        if (vals[0] == 0.0) cut_els = true;
+        
+        DOMAIN_TYPE first_dt = vals[0] > 0 ? POS : NEG;
+        for (int i = 1; i < 3; ++i)
+          if (first_dt == POS)
+          {
+            if (vals[i] <= 0.0)
+              cut_els = true;
+          }
+          else
+          {
+            if (vals[i] >= 0.0)
+              cut_els = true;
+          }
+
+        if (!cut_els)
+        {
+          if (first_dt==NEG)
+          {
+            ma->SetDeformation(deform);
+            ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+            
+            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 4);
+            for (int i = 0 ; i < pir.GetNIP(); i++)
+            {
+              MappedIntegrationPoint<D,D> mip(pir[i], eltrans_curved);
+              volume += mip.GetWeight();
+            }
+
+          }
+          continue;
+        }
+        ma->SetDeformation(nullptr);
+        ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+
+        ScalarFieldEvaluator * lset_eval_p
+          = ScalarFieldEvaluator::Create(D,*gf_lset_p2,eltrans,lh);
+
+        auto cquad = new CompositeQuadratureRule<D>() ;
+
+        ELEMENT_TYPE et_time = ET_POINT;
+
+        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                       *cquad, lh, 
+                                                       4, 0, 
+                                                       0, 0);
+
+        xgeom->MakeQuadRule();
+        FlatXLocalGeometryInformation fxgeom(*xgeom,lh);
+        const FlatCompositeQuadratureRule<D> & fcompr(fxgeom.GetCompositeRule<D>());
+        const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
+
+        ma->SetDeformation(deform);
+        ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+        
+        for (int i = 0; i < fquad.Size(); ++i)
+        {
+          IntegrationPoint ip(&fquad.points(i,0),fquad.weights(i));
+          MappedIntegrationPoint<D,D> mip(ip, eltrans_curved);
+          volume += mip.GetWeight();
+        }
+        
+        ma->SetDeformation(nullptr);
+
+      }
+      cout << " volume = " << volume << endl;
+    }
+
+    
     virtual void Do (LocalHeap & clh)
     {
       static int refinements = 0;
@@ -246,7 +338,8 @@ namespace ngcomp
           const double h = pow(mip1.GetJacobiDet(),1.0/D);
 
           if ( (abs(lset1/h) > 1.0) && (abs(lset2/h) > 1.0) && (abs(lset3/h) > 1.0))
-            continue;
+            if (!no_cut_off)
+              continue;
           
           
           ips.Append(ip2);
@@ -320,7 +413,7 @@ namespace ngcomp
             
             double lset_lin = eval_linear(curr_ip);
 
-            if (abs(lset_lin) > h ) break;
+            if (abs(lset_lin) > h && !no_cut_off ) break;
             // cout << " curr_ip = " << curr_ip << endl;
 
             deformpoints++;
@@ -441,6 +534,8 @@ namespace ngcomp
       }
 
       ma->SetDeformation(deform);
+
+      Test(clh);
     }    
     
 
