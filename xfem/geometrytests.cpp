@@ -61,6 +61,7 @@ namespace ngcomp
     shared_ptr<GridFunction> gf_lset_p2;
     shared_ptr<GridFunction> deform;
     bool no_cut_off;
+    double threshold=0.1;
   public:
 
 
@@ -72,6 +73,7 @@ namespace ngcomp
       gf_lset_p2  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), true);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
       no_cut_off = flags.GetDefineFlag("nocutoff");
+      threshold = flags.GetNumFlag("threshold",0.1);
     }
 
     virtual ~NumProcGeometryTest()
@@ -172,6 +174,7 @@ namespace ngcomp
 
       }
       cout << " volume = " << volume << endl;
+      ma->SetDeformation(deform);
     }
 
     
@@ -494,9 +497,9 @@ namespace ngcomp
             }
 
             double distnorm = L2Norm(dist);
-            if (distnorm > 0.1)
+            if (distnorm > threshold)
             {
-              dist *= 0.1 / distnorm; 
+              dist *= threshold / distnorm; 
               curr_ip(0) = old_ref_point(0) + dist(0);
               curr_ip(1) = old_ref_point(1) + dist(1);
               corrected_points++;
