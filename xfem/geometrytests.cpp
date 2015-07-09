@@ -261,12 +261,31 @@ namespace ngcomp
     //only setting P1 interpolant for now..
     void SetInterpolants(LocalHeap & clh)
     {
-      int ne=ma->GetNE();
+      int nv=ma->GetNV();
       gf_lset_p1->GetVector() = 0.0;
-      // gf_lset_ho->GetVector() = 0.0;
-
-      if (gf_lset_p1 != nullptr)
+      
+      LocalHeap lh(clh.Split());
+      for (int vnr = 0; vnr < nv; ++vnr)
       {
+        Vec<D> point;
+        ma->GetPoint<D>(vnr,point);
+        Mat<1,D> pointmat;
+        pointmat.Row(0) = point;
+        IntegrationPoint ip(0.0);
+        FE_ElementTransformation<0,D> eltrans(ET_POINT,pointmat);
+        MappedIntegrationPoint<0,D> mip(ip,eltrans);
+        double val_lset = lset->Evaluate(mip);
+        Array<int> dof;
+        gf_lset_p1->GetFESpace()->GetVertexDofNrs(vnr,dof);
+        FlatVector<> val(1,&val_lset);
+        gf_lset_p1->GetVector().SetIndirect(dof,val);
+      }
+      
+      if (false)
+      {
+        gf_lset_p1->GetVector() = 0.0;
+        // gf_lset_ho->GetVector() = 0.0;
+        int ne=ma->GetNE();
         LocalHeap lh(clh.Split());
         for (int elnr = 0; elnr < ne; ++elnr)
         {
@@ -303,7 +322,7 @@ namespace ngcomp
           Array<int> vnums;
           Array<int> dof;
           ma->GetElPNums(elnr, vnums);
-          for (int i = 0; i < 3; ++i)
+          for (int i = 0; i < D+1; ++i)
           {
             gf_lset_p1->GetFESpace()->GetVertexDofNrs(vnums[i],dof);
             FlatVector<> val(1,&lsetvals[i]);
@@ -322,7 +341,7 @@ namespace ngcomp
           ma->GetElVertices(elnr,verts);
           
           Array<int> dnums;
-          for (int f = 0; f < 3; ++f)
+          for (int f = 0; f < D+1; ++f)
           {
             int facet = facets[f];
             ma->GetFacetPNums(facet,facetverts);
@@ -386,8 +405,8 @@ namespace ngcomp
           HeapReset hr(lh);
           Ngs_Element ngel = ma->GetElement(elnr);
           ELEMENT_TYPE eltype = ngel.GetType();
-          if (eltype!= ET_TRIG)
-            throw Exception("only trigs for now..");
+          if (eltype!= ET_TRIG && eltype!=ET_TET)
+            throw Exception("only simplices for now..");
 
           const FiniteElement & fe_ho = gf_fes_ho->GetFE(elnr,lh);
           const ScalarFiniteElement<D>& sca_fe_ho = dynamic_cast<const ScalarFiniteElement<D>&>(fe_ho);
@@ -403,146 +422,119 @@ namespace ngcomp
           gf_fes_p1->GetDofNrs(elnr,dnums_lset_p1);
           gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
           
-          FlatVector<> shape(dnums_lset_ho.Size(),lh);
-          FlatMatrixFixWidth<D> dshape(dnums_lset_ho.Size(),lh);
+          FlatVector<> shape_p1(dnums_lset_p1.Size(),lh);
+          FlatMatrixFixWidth<D> dshape_p1(dnums_lset_p1.Size(),lh);
           
           ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
         
-          Array<IntegrationPoint> ips(0);
-          IntegrationPoint ip1(0.0,0.0);
-          MappedIntegrationPoint<D,D> mip1(ip1,eltrans);
-          double lset1 = lset->Evaluate(mip1);
+          IntegrationPoint ip_center(1.0/(D+1),1.0/(D+1),1.0/(D+1));
+          MappedIntegrationPoint<D,D> mip_center(ip_center,eltrans);
           
-          IntegrationPoint ip2(1.0,0.0);
-          MappedIntegrationPoint<D,D> mip2(ip2,eltrans);
-          double lset2 = lset->Evaluate(mip2);
-
-          IntegrationPoint ip3(0.0,1.0);
-          MappedIntegrationPoint<D,D> mip3(ip3,eltrans);
-          double lset3 = lset->Evaluate(mip3);
-
-          IntegrationPoint ip4(0.0,0.0,1.0);
-          MappedIntegrationPoint<D,D> mip4(ip4,eltrans);
-          double lset4 = lset->Evaluate(mip4);
-
+          sca_fe_p1.CalcShape(ip_center,shape_p1);
+          const double lset_center_p1 = InnerProduct(shape_p1,lset_vals_p1);
+          const double h = pow(mip_center.GetJacobiDet(),1.0/D);
           
-          Vec<D> grad;
-          grad(0) = lset2 - lset1;
-          grad(1) = lset3 - lset1;
-          if (D==3)
-            grad(2) = lset4 - lset1;
-          
+          if (abs(lset_center_p1/h) > 1.0)
+            if (!no_cut_off)
+              continue;
+
+          sca_fe_p1.CalcDShape(ip_center,dshape_p1);
+          Vec<D> grad = Trans(dshape_p1) * lset_vals_p1;
           Vec<D> normal = grad;
           double len = L2Norm(normal);
           normal /= len;
-
-          const double h = pow(mip1.GetJacobiDet(),1.0/D);
-
-          if ( (abs(lset1/h) > 1.0) && (abs(lset2/h) > 1.0) && (abs(lset3/h) > 1.0))
-            if (!no_cut_off)
-              continue;
           
-          
-          ips.Append(ip2);
-          ips.Append(ip3);
-          if (D==3)
-            ips.Append(ip4);
-          ips.Append(ip1);
-
-          
-          auto eval_linear = [lset1,lset2,lset3] (const IntegrationPoint & ip)
-            { return (1-ip(0)-ip(1))*lset1+ip(0)*lset2+ip(1)*lset3; };
-
-          // IntegrationPoints
-          
-          Array<int> facets;
+          Array<int> edges;
           Array<int> verts;
-          Array<int> facetverts;
-          ma->GetElEdges(elnr,facets);
+          ma->GetElEdges(elnr,edges);
           ma->GetElVertices(elnr,verts);
 
-          Array<int> dnums;
-          for (int f = 0; f < 3; ++f)
+          for (int ref_edge_nr = 0; ref_edge_nr < D+1; ++ref_edge_nr)
           {
-            int facet = facets[f];
-            ma->GetFacetPNums(facet,facetverts);
-            
-            int v1 = -1;
-            for (int i = 0; i < verts.Size(); i++)
-              if (verts[i] == facetverts[0])
-                v1 = i;
-            int v2 = -1;
-            for (int i = 0; i < verts.Size(); i++)
-              if (verts[i] == facetverts[1])
-                v2 = i;
-            
-            IntegrationPoint curr_ip(0.0,0.0);
-            curr_ip(0) = 0.5 * ips[v1](0) + 0.5 * ips[v2](0);
-            curr_ip(1) = 0.5 * ips[v1](1) + 0.5 * ips[v2](1);
+            const int global_edge_nr = edges[ref_edge_nr];
 
-            IntegrationPoint old_ip(0.0,0.0);
-            old_ip(0) = 0.5 * ips[v1](0) + 0.5 * ips[v2](0);
-            old_ip(1) = 0.5 * ips[v1](1) + 0.5 * ips[v2](1);
-            Vec<D> old_ref_point;
-            old_ref_point(0) = old_ip(0);
-            old_ref_point(1) = old_ip(1);
-
-            MappedIntegrationPoint<D,D> mip_old (curr_ip, eltrans);
+            // TODO:
+            // *(new (lh) H1HighOrderFEFO<ET_TRIG,1> ()) -> SetVertexNumbers(ngel.vertices)
             
+            const int v1 = ElementTopology::GetEdges(eltype)[ref_edge_nr][0];
+            const int v2 = ElementTopology::GetEdges(eltype)[ref_edge_nr][1];
 
-            // cout << " len = " << len << endl;
-            
-            double lset_lin = eval_linear(curr_ip);
+            IntegrationPoint curr_ip;
 
-            if (abs(lset_lin) > h && !no_cut_off ) break;
-            // cout << " curr_ip = " << curr_ip << endl;
-
-            *n_deformed_points+=1.0;
-            
-            Vec<D> old_coord = mip_old.GetPoint();
-
-            Vec<D> orig_point;
-            for (int d = 0; d < D; ++d) orig_point(d) = curr_ip(d);
-            Vec<D> final_point;
-            
-            SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                     lset_lin, normal, final_point, lh);
-            for (int d = 0; d < D; ++d) curr_ip(d) = final_point(d);
-            
-            Vec<D> dist = final_point - orig_point;
-
-            double distnorm = L2Norm(dist);
-            if (distnorm > threshold)
+            Vec<D> deform_contribution;
+              
+            // make this an integration rule at some point...
             {
-              dist *= threshold / distnorm; 
-              curr_ip(0) = old_ref_point(0) + dist(0);
-              curr_ip(1) = old_ref_point(1) + dist(1);
-              *n_corrected_points+=1.0;
-            }
-            else
-            {
-              *n_accepted_points+=1.0;
+              const IntegrationPoint curr_ip_edge(0.5); //one integration point case...
+              
+              for (int d = 0; d < D; ++d)
+                curr_ip(d) = curr_ip_edge(0) * ElementTopology::GetVertices(eltype)[v1][d]
+                  + (1.0-curr_ip_edge(0)) * ElementTopology::GetVertices(eltype)[v2][d];
+
+              
+              IntegrationPoint old_ip(curr_ip);
+              Vec<D> old_ref_point = old_ip.Point();
+
+              sca_fe_p1.CalcShape(curr_ip,shape_p1);
+              double lset_lin = InnerProduct(shape_p1,lset_vals_p1);
+
+              if (abs(lset_lin) > h && !no_cut_off ) break;
+
+              //statistics:
+              *n_deformed_points+=1.0;
+            
+              Vec<D> orig_point;
+              for (int d = 0; d < D; ++d) orig_point(d) = curr_ip(d);
+              Vec<D> final_point;
+            
+              SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
+                                       lset_lin, normal, final_point, lh);
+              for (int d = 0; d < D; ++d) curr_ip(d) = final_point(d);
+            
+              Vec<D> dist = final_point - orig_point;
+
+              double distnorm = L2Norm(dist);
+              if (distnorm > threshold)
+              {
+                dist *= threshold / distnorm; 
+                //statistics:
+                *n_corrected_points+=1.0;
+              }
+              else
+              {
+                //statistics:
+                *n_accepted_points+=1.0;
+              }
+              // update if more d.o.f. ...
+              deform_contribution = -8.0 * mip_center.GetJacobian() * dist;
+              
             }
 
-            
-            MappedIntegrationPoint<D,D> mip_new (curr_ip, eltrans);
-            Vec<D> new_coord = mip_new.GetPoint();
-            Vec<D> deform_vec;
-            FlatVector<> values(D,&deform_vec(0));
-            fes_deform->GetEdgeDofNrs(facet, dnums);
-            deform->GetVector().GetIndirect(dnums,values);
-            deform_vec += -8.0 * (new_coord - old_coord);
-            // deform_vec *= -8.0;
-            
-            deform->GetVector().SetIndirect(dnums,values);
 
-            factor->GetIndirect(dnums,values);
-            values(0) += 1.0;
-            factor->SetIndirect(dnums,values);
+
+            
+            Array<int> dnums_deform;
+            fes_deform->GetEdgeDofNrs(global_edge_nr, dnums_deform);
+
+            FlatMatrixFixWidth<D> deform_vec(dnums_deform.Size(),lh);
+            FlatVector<> deform_vec_as_vec(D*dnums_deform.Size(),&deform_vec(0,0));
+            deform->GetVector().GetIndirect(dnums_deform,deform_vec_as_vec);
+
+            deform_vec += deform_contribution;
+            deform->GetVector().SetIndirect(dnums_deform,deform_vec_as_vec);
+
+            // count the number of times that a deformation value
+            // has been added for the d.o.f.
+            FlatVector<> values(D*dnums_deform.Size(),lh);
+            factor->GetIndirect(dnums_deform,values);
+            for (int k = 0; k < values.Size(); ++k)
+              values(k) += 1.0;
+            factor->SetIndirect(dnums_deform,values);
             
           }
         }
 
+        // average the deformation
         Array<int> dnums(1);
         for (int i = 0; i < factor->Size(); ++i)
         {
@@ -555,7 +547,8 @@ namespace ngcomp
             values *= 1.0/val_fac(0);
           deform->GetVector().SetIndirect(dnums,values);
         }
-        
+
+        //statistics:
         cout << " deformpoints = " << *n_deformed_points << endl;
         cout << " totalits = " << *n_totalits << endl;
         cout << " totalits/deformpoints = " << *n_totalits/ *n_deformed_points << endl;
