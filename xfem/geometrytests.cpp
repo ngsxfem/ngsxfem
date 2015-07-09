@@ -559,7 +559,8 @@ namespace ngcomp
 
       ma->SetDeformation(deform);
 
-      Test(clh);
+      if (D==2)
+        Test(clh);
     }    
     
 
@@ -601,3 +602,4 @@ namespace ngcomp
 }
 static RegisterNumProc<NumProcUnsetDeformation > npxgeomtest("unsetdeformation");
 static RegisterNumProc<NumProcGeometryTest<2> > npxgeomtestasdf("xgeomtest");
+static RegisterNumProc<NumProcGeometryTest<3> > npxgeomtestasdf3d("xgeomtest3d");
