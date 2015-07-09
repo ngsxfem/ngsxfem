@@ -1,6 +1,6 @@
 
-geometry = d1_approx.in2d                                        
-mesh = d1_approx.vol.gz
+geometry = d99_testgeom.in2d
+mesh = d99_testgeom_unstr.vol.gz
 
 # # load geometry
 # geometry = d1_approx.in2d                                        
@@ -9,16 +9,17 @@ mesh = d1_approx.vol.gz
 # #mesh = d1_approx2.vol.gz
 
 #load xfem-library and python-bindings
-shared = libngsxfem_xfem                                       
-shared = libngsxfem_py                                       
+shared = libngsxfem_xfem
+shared = libngsxfem_py
 
 define constant heapsize = 1e9
-constant R = 0.5
+# constant R = 0.5
         
 #interface description as zero-level
 
-# define coefficient lset
-# # # ( x*x+y*y - R*R),
+define coefficient lset
+        (x*x-y*y+0.05),
+# # # # # ( x*x+y*y - R*R),
 # ( sqrt(x*x+y*y) - R),
 
 # general constants
@@ -34,20 +35,20 @@ define constant r0 = 0.5+1e-12
 define constant omega = 5
 define constant omega2 = (1.2*pi) 
 
-define coefficient lset
-(
- sqrt(x*x+y*y)-(r0+0.2*sin(omega*atan2(x,y)))
-)
+# define coefficient lset
+# (
+#  sqrt(x*x+y*y)-(r0+0.2*sin(omega*atan2(x,y)))
+# )
 
 # define coefficient lset
 # ( sqrt(x*x+4*y*y) - R),
                 
-# define constant R = 0.05
+# define constant R = 0.1
 
-# define constant d = 0.2
+# define constant d = 1.0/3.0-R
 
-# define constant x0 = 0.5
-# define constant y0 = 0.5
+# define constant x0 = 0
+# define constant y0 = 0
         
 # define coefficient lset
 # (
@@ -99,21 +100,28 @@ gridfunction lset_p1 -fespace=fes_p1
 
 fespace fes_p2 -type=h1ho -order=2
 gridfunction lset_p2 -fespace=fes_p2
+
+numproc setvalues npsv -gridfunction=lset_p2 -coefficient=lset
                 
 fespace fes_deform -type=h1ho -order=2 -dim=2
 gridfunction deform -fespace=fes_deform
                 
 numproc xgeomtest npxd 
         -gf_levelset_p1=lset_p1
-        -gf_levelset_p2=lset_p2
+        -gf_levelset_ho=lset_p2
         -levelset=lset
         -gf_levelset=lset_p2
         -deformation=deform
+        # -nocutoff
+        -threshold=0.2
+        # -volume=0.78539816
+        # -volume=0.43586037
+        -volume=2.0
 
 numproc draw npdr -coefficient=lset -label=levelset
 
 
-numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=5 -minval=0 -maxval=0
+numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=2 -minval=0 -maxval=0
 
 
 

@@ -51,6 +51,8 @@ gridfunction lset_p1 -fespace=fes_p1
 fespace fes_p2 -type=h1ho -order=2
 gridfunction lset_p2 -fespace=fes_p2
                 
+numproc setvalues npsv -gridfunction=lset_p2 -coefficient=lset
+
 fespace fes_deform -type=h1ho -order=2 -dim=2
 gridfunction deform -fespace=fes_deform
                 
