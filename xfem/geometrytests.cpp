@@ -58,26 +58,51 @@ namespace ngcomp
   protected:
     shared_ptr<CoefficientFunction> lset;
     shared_ptr<GridFunction> gf_lset_p1;
-    shared_ptr<GridFunction> gf_lset_p2;
+    shared_ptr<GridFunction> gf_lset_ho;
     shared_ptr<GridFunction> deform;
     bool no_cut_off;
     double threshold=0.1;
     double volume_ctrl=-1;
-    bool local_normal=false;
+
+    bool dynamic_search_dir=false; //take normal of accurate level set 
+
+    // statistics
+    double * n_maxits;
+    double * n_totalits;
+    double * n_deformed_points;
+    double * n_accepted_points;
+    double * n_corrected_points;
   public:
 
 
     NumProcGeometryTest (shared_ptr<PDE> apde, const Flags & flags)
       : NumProc (apde)
     { 
-      lset  = apde->GetCoefficientFunction (flags.GetStringFlag ("levelset", ""), true);
-      gf_lset_p1  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p1", ""), true);
-      gf_lset_p2  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), true);
+      lset  = apde->GetCoefficientFunction (flags.GetStringFlag ("levelset", ""), false);
+      gf_lset_p1  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p1", ""), false);
+      gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_ho", ""), true);
+      if (!gf_lset_ho)
+        gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), false);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
       no_cut_off = flags.GetDefineFlag("nocutoff");
-      local_normal = flags.GetDefineFlag("localnorm");
+      
+      dynamic_search_dir = flags.GetDefineFlag("dynamic_search_dir");
+      
       threshold = flags.GetNumFlag("threshold",0.1);
+      
       volume_ctrl = flags.GetNumFlag("volume",-1);
+
+      //statistic variables:
+      apde->AddVariable ("npgeomtest.maxits", 0.0, 6);
+      n_maxits = & apde->GetVariable ("npgeomtest.maxits");
+      apde->AddVariable ("npgeomtest.totalits", 0.0, 6);
+      n_totalits = & apde->GetVariable ("npgeomtest.totalits");
+      apde->AddVariable ("npgeomtest.deformed_points", 0.0, 6);
+      n_deformed_points = & apde->GetVariable ("npgeomtest.deformed_points");
+      apde->AddVariable ("npgeomtest.accepted_points", 0.0, 6);
+      n_accepted_points = & apde->GetVariable ("npgeomtest.accepted_points");
+      apde->AddVariable ("npgeomtest.corrected_points", 0.0, 6);
+      n_corrected_points = & apde->GetVariable ("npgeomtest.corrected_points");
     }
 
     virtual ~NumProcGeometryTest()
@@ -90,10 +115,55 @@ namespace ngcomp
       return "NumProcGeometryTest";
     }
 
-    void SearchPoint ()
+    void SearchCorrespondingPoint (
+      const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,
+      const Vec<D> & init_point, double goal_val, const Vec<D> & init_search_dir,
+      Vec<D> & final_point, LocalHeap & lh)
     {
-      Vec<D> dist; // distance to original point
+      HeapReset hr(lh);
+      
+      IntegrationPoint curr_ip;
+      for (int d = 0; d < D; ++d) curr_ip(d) = init_point(d);
 
+      Vec<D> search_dir = init_search_dir;
+
+      FlatVector<> shape(sca_fe.GetNDof(),lh);
+      FlatMatrixFixWidth<D> dshape(sca_fe.GetNDof(),lh);
+
+      int it = 0;
+      for (it = 0; it < 100; ++it)
+      {
+        sca_fe.CalcShape(curr_ip, shape);
+        sca_fe.CalcDShape(curr_ip, dshape);
+
+        const double curr_val = InnerProduct(shape, sca_values);
+        const Vec<D> curr_grad = Trans(dshape) * sca_values;
+
+        const double curr_defect = goal_val - curr_val;
+        if (abs(curr_defect) < 1e-12)
+          break;
+
+        if (dynamic_search_dir)
+        {
+          search_dir = curr_grad;
+          search_dir /= L2Norm(search_dir);
+        }
+        
+        const double dphidn = InnerProduct(curr_grad,search_dir);
+
+        for (int d = 0; d < D; ++d)
+          curr_ip(d) += curr_defect / dphidn * search_dir(d);
+      }
+
+#pragma omp critical (totalits)
+      *n_totalits += it;
+#pragma omp critical (maxits)
+      *n_maxits = max((double)it,*n_maxits);
+
+      if (it == 100)
+        final_point = init_point;
+      else
+        for (int d = 0; d < D; ++d) final_point(d) = curr_ip(d);
     }
 
 
@@ -104,10 +174,6 @@ namespace ngcomp
       double volume = 0.0;
       
       int ne=ma->GetNE();
-      int nedges=ma->GetNEdges();
-      int nf=ma->GetNFaces();
-      int nv=ma->GetNV();
-      int nse=ma->GetNSE();
 
       for (int elnr = 0; elnr < ne; ++elnr)
       {
@@ -157,7 +223,7 @@ namespace ngcomp
         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
 
         ScalarFieldEvaluator * lset_eval_p
-          = ScalarFieldEvaluator::Create(D,*gf_lset_p2,eltrans,lh);
+          = ScalarFieldEvaluator::Create(D,*gf_lset_ho,eltrans,lh);
 
         auto cquad = new CompositeQuadratureRule<D>() ;
 
@@ -191,28 +257,14 @@ namespace ngcomp
         cout << " volume error = " << abs(volume-volume_ctrl) << endl;
       ma->SetDeformation(deform);
     }
-
     
-    virtual void Do (LocalHeap & clh)
+    //only setting P1 interpolant for now..
+    void SetInterpolants(LocalHeap & clh)
     {
-      static int refinements = 0;
-      cout << " This is the Do-call on refinement level " << refinements << std::endl;
-
-      
-      shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
-      *factor = 0.0;
-      deform->GetVector() = 0.0;
-      
       int ne=ma->GetNE();
-      int nedges=ma->GetNEdges();
-      int nf=ma->GetNFaces();
-      int nv=ma->GetNV();
-      int nse=ma->GetNSE();
+      gf_lset_p1->GetVector() = 0.0;
+      // gf_lset_ho->GetVector() = 0.0;
 
-      shared_ptr<FESpace> fes_deform = deform->GetFESpace();
-
-      gf_lset_p2->GetVector() = 0.0;
-      
       if (gf_lset_p1 != nullptr)
       {
         LocalHeap lh(clh.Split());
@@ -257,8 +309,8 @@ namespace ngcomp
             FlatVector<> val(1,&lsetvals[i]);
             gf_lset_p1->GetVector().SetIndirect(dof,val);
               // deform->GetVector().SetIndirect(dnums,values);
-            gf_lset_p2->GetFESpace()->GetVertexDofNrs(vnums[i],dof);
-            gf_lset_p2->GetVector().SetIndirect(dof,val);
+            gf_lset_ho->GetFESpace()->GetVertexDofNrs(vnums[i],dof);
+            // gf_lset_ho->GetVector().SetIndirect(dof,val);
             
           }
 
@@ -297,31 +349,38 @@ namespace ngcomp
             double edge_value = lset_edge - 0.5 * lsetvals[v1] - 0.5 * lsetvals[v2];
             edge_value *= -8.0;
             
-            gf_lset_p2->GetFESpace()->GetEdgeDofNrs(facet,dof);
+            gf_lset_ho->GetFESpace()->GetEdgeDofNrs(facet,dof);
             FlatVector<> val(1,&edge_value);
-            gf_lset_p2->GetVector().SetIndirect(dof,val);
+            // gf_lset_ho->GetVector().SetIndirect(dof,val);
               // deform->GetVector().SetIndirect(dnums,values);
             
           }
           
         }
       }
-      
-      // cout << " typeid(lset) = " << typeid(lset).name() << endl;
-      
-      // auto gf_lset = dynamic_pointer_cast<GridFunction>(lset);
 
-      // cout << " gf_lset = " << gf_lset << endl;
+    }
+    
+    
+    virtual void Do (LocalHeap & clh)
+    {
+      static int refinements = 0;
+      cout << " This is the Do-call on refinement level " << refinements << std::endl;
+
+      shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
+      *factor = 0.0;
+      deform->GetVector() = 0.0;
       
-      if (gf_lset_p2 != nullptr)
+      int ne=ma->GetNE();
+
+      shared_ptr<FESpace> fes_deform = deform->GetFESpace();
+
+      SetInterpolants(clh);
+      
       {
-        auto gf_fes_p2 = gf_lset_p2->GetFESpace();
+        auto gf_fes_ho = gf_lset_ho->GetFESpace();
+        auto gf_fes_p1 = gf_lset_p1->GetFESpace();
         LocalHeap lh(clh.Split());
-        int totalits = 0;
-        int deformpoints = 0;
-        int corrected_points = 0;
-        int accepted_points = 0;
-        int maxits = 0;
         for (int elnr = 0; elnr < ne; ++elnr)
         {
           HeapReset hr(lh);
@@ -330,15 +389,22 @@ namespace ngcomp
           if (eltype!= ET_TRIG)
             throw Exception("only trigs for now..");
 
-          const FiniteElement & fe = gf_fes_p2->GetFE(elnr,lh);
-          const ScalarFiniteElement<D>& sca_fe = dynamic_cast<const ScalarFiniteElement<D>&>(fe);
-          Array<int> sca_dnums;
-          gf_fes_p2->GetDofNrs(elnr,sca_dnums);
-          FlatVector<> sca_values(sca_dnums.Size(),lh);
-          FlatVector<> shape(sca_dnums.Size(),lh);
-          FlatMatrixFixWidth<D> dshape(sca_dnums.Size(),lh);
-          gf_lset_p2->GetVector().GetIndirect(sca_dnums,sca_values);
+          const FiniteElement & fe_ho = gf_fes_ho->GetFE(elnr,lh);
+          const ScalarFiniteElement<D>& sca_fe_ho = dynamic_cast<const ScalarFiniteElement<D>&>(fe_ho);
+          Array<int> dnums_lset_ho;
+          gf_fes_ho->GetDofNrs(elnr,dnums_lset_ho);
+          FlatVector<> lset_vals_ho(dnums_lset_ho.Size(),lh);
+          gf_lset_ho->GetVector().GetIndirect(dnums_lset_ho,lset_vals_ho);
           
+          const FiniteElement & fe_p1 = gf_fes_p1->GetFE(elnr,lh);
+          const ScalarFiniteElement<D>& sca_fe_p1 = dynamic_cast<const ScalarFiniteElement<D>&>(fe_p1);
+          Array<int> dnums_lset_p1;
+          FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
+          gf_fes_p1->GetDofNrs(elnr,dnums_lset_p1);
+          gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
+          
+          FlatVector<> shape(dnums_lset_ho.Size(),lh);
+          FlatMatrixFixWidth<D> dshape(dnums_lset_ho.Size(),lh);
           
           ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
         
@@ -355,9 +421,20 @@ namespace ngcomp
           MappedIntegrationPoint<D,D> mip3(ip3,eltrans);
           double lset3 = lset->Evaluate(mip3);
 
-          // cout << " lset1 = " << lset1 << endl;
-          // cout << " lset2 = " << lset2 << endl;
-          // cout << " lset3 = " << lset3 << endl;
+          IntegrationPoint ip4(0.0,0.0,1.0);
+          MappedIntegrationPoint<D,D> mip4(ip4,eltrans);
+          double lset4 = lset->Evaluate(mip4);
+
+          
+          Vec<D> grad;
+          grad(0) = lset2 - lset1;
+          grad(1) = lset3 - lset1;
+          if (D==3)
+            grad(2) = lset4 - lset1;
+          
+          Vec<D> normal = grad;
+          double len = L2Norm(normal);
+          normal /= len;
 
           const double h = pow(mip1.GetJacobiDet(),1.0/D);
 
@@ -368,12 +445,10 @@ namespace ngcomp
           
           ips.Append(ip2);
           ips.Append(ip3);
+          if (D==3)
+            ips.Append(ip4);
           ips.Append(ip1);
 
-          // IntegrationPoint ip4(0.5,0.0);
-          // ips.Append(ip4);
-          // MappedIntegrationPoint<D,D> mip4(ip4,eltrans);
-          // double lset4 = lset->Evaluate(mip4);
           
           auto eval_linear = [lset1,lset2,lset3] (const IntegrationPoint & ip)
             { return (1-ip(0)-ip(1))*lset1+ip(0)*lset2+ip(1)*lset3; };
@@ -400,9 +475,6 @@ namespace ngcomp
             for (int i = 0; i < verts.Size(); i++)
               if (verts[i] == facetverts[1])
                 v2 = i;
-
-            // cout << " v1 = " << v1 << endl;
-            // cout << " v2 = " << v2 << endl;
             
             IntegrationPoint curr_ip(0.0,0.0);
             curr_ip(0) = 0.5 * ips[v1](0) + 0.5 * ips[v2](0);
@@ -414,24 +486,9 @@ namespace ngcomp
             Vec<D> old_ref_point;
             old_ref_point(0) = old_ip(0);
             old_ref_point(1) = old_ip(1);
-            // MappedIntegrationPoint<D,D> first_point(ips[v1],eltrans);
-            // MappedIntegrationPoint<D,D> second_point(ips[v2],eltrans);
-            // Vec<D> tang = second_point.GetPoint() - first_point.GetPoint();
-            // Vec<D> normal; normal(0) = -tang(1); normal(1) = tang(0);
-            // normal /= L2Norm(normal);
-            
-            Vec<D> grad;
-            grad(0) = lset2 - lset1;
-            grad(1) = lset3 - lset1;
-
-            // cout << " grad = " << grad << endl;
 
             MappedIntegrationPoint<D,D> mip_old (curr_ip, eltrans);
             
-            Vec<D> normal = grad;
-            double len = L2Norm(normal);
-
-            normal /= len;
 
             // cout << " len = " << len << endl;
             
@@ -440,84 +497,19 @@ namespace ngcomp
             if (abs(lset_lin) > h && !no_cut_off ) break;
             // cout << " curr_ip = " << curr_ip << endl;
 
-            deformpoints++;
+            *n_deformed_points+=1.0;
             
             Vec<D> old_coord = mip_old.GetPoint();
 
-            Vec<D> dist;
-            dist = 0.0;
-
-            for (int it = 0; it < 100; ++it)
-            {
-              // ElementTransformation & new_eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
-              sca_fe.CalcShape(curr_ip, shape);
-              double lset_prec = InnerProduct(shape, sca_values); // LATER: consider deform
+            Vec<D> orig_point;
+            for (int d = 0; d < D; ++d) orig_point(d) = curr_ip(d);
+            Vec<D> final_point;
             
-              // MappedIntegrationPoint<D,D> curr_mip(curr_ip,new_eltrans);
-              // cout << " curr_mip = " << curr_mip << endl;
-
-
-              // cout << " curr_mip.GetPoint() = " << curr_mip.GetPoint() << endl;
+            SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
+                                     lset_lin, normal, final_point, lh);
+            for (int d = 0; d < D; ++d) curr_ip(d) = final_point(d);
             
-              // cout << " lset_prec = " << lset_prec << endl;
-              // cout << " lset_lin = " << lset_lin << endl;
-              // if (abs(lset_prec) > 0.75*h)
-              //   break;
-              
-              double f0 = lset_lin - lset_prec;
-
-              // cout << " f0 = " << f0 << endl;
-
-              if (abs(f0) < 1e-12)
-                break;
-
-              totalits++;
-              maxits = max(it,maxits);
-            
-              sca_fe.CalcDShape(curr_ip, dshape);
-
-              // cout << " sca_values = " << sca_values << endl;
-              
-              Vec<D> grad = Trans(dshape) * sca_values; 
-
-              if (local_normal)
-              {
-                Vec<D> normal = grad;
-                double len = L2Norm(normal);
-
-                normal /= len;
-              }
-              // cout << " grad = " << grad << endl;
-              
-              const double dphidn = InnerProduct(grad,normal);
-
-              // cout << " dphidn = " << dphidn << endl;
-              // cout << " normal = " << normal << endl;
-            
-              Vec<D> update;
-              // FlatVector<> values(D,&update(0));
-              // // cout << " values = " << values << endl;
-              // fes_deform->GetEdgeDofNrs(facet, dnums);
-              // // cout << " dnums = " << dnums << endl;
-              // deform->GetVector().GetIndirect(dnums,values);
-              // cout << " values = " << values << endl;
-            
-              // cout << " update = " << update << endl;
-
-              update = f0 / dphidn * normal;
-
-              
-              // cout << " update = " << update << endl;
-
-              curr_ip(0) += update(0);
-              curr_ip(1) += update(1);
-
-              dist += update;
-              // cout << " curr_ip = " << curr_ip << endl;
-              
-              // deform->GetVector().SetIndirect(dnums,values);
-              // getchar();
-            }
+            Vec<D> dist = final_point - orig_point;
 
             double distnorm = L2Norm(dist);
             if (distnorm > threshold)
@@ -525,12 +517,13 @@ namespace ngcomp
               dist *= threshold / distnorm; 
               curr_ip(0) = old_ref_point(0) + dist(0);
               curr_ip(1) = old_ref_point(1) + dist(1);
-              corrected_points++;
+              *n_corrected_points+=1.0;
             }
             else
             {
-              accepted_points++;
+              *n_accepted_points+=1.0;
             }
+
             
             MappedIntegrationPoint<D,D> mip_new (curr_ip, eltrans);
             Vec<D> new_coord = mip_new.GetPoint();
@@ -540,21 +533,14 @@ namespace ngcomp
             deform->GetVector().GetIndirect(dnums,values);
             deform_vec += -8.0 * (new_coord - old_coord);
             // deform_vec *= -8.0;
-
-            // cout << " old_coord = " << old_coord << endl;
-            // cout << " new_coord = " << new_coord << endl;
             
             deform->GetVector().SetIndirect(dnums,values);
 
             factor->GetIndirect(dnums,values);
             values(0) += 1.0;
             factor->SetIndirect(dnums,values);
-            // std::cout << " -- " << std::endl;
-
-            // getchar();
-            // break;
+            
           }
-          // break;
         }
 
         Array<int> dnums(1);
@@ -570,12 +556,12 @@ namespace ngcomp
           deform->GetVector().SetIndirect(dnums,values);
         }
         
-        cout << " deformpoints = " << deformpoints << endl;
-        cout << " totalits = " << totalits << endl;
-        cout << " totalits/deformpoints = " << totalits/deformpoints << endl;
-        cout << " accepted_points = " << accepted_points << endl;
-        cout << " corrected_points = " << corrected_points << endl;
-        cout << " maxits = " << maxits << endl;
+        cout << " deformpoints = " << *n_deformed_points << endl;
+        cout << " totalits = " << *n_totalits << endl;
+        cout << " totalits/deformpoints = " << *n_totalits/ *n_deformed_points << endl;
+        cout << " accepted_points = " << *n_accepted_points << endl;
+        cout << " corrected_points = " << *n_corrected_points << endl;
+        cout << " maxits = " << *n_maxits << endl;
       }
 
       ma->SetDeformation(deform);
