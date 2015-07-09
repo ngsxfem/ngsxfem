@@ -62,6 +62,8 @@ namespace ngcomp
     shared_ptr<GridFunction> deform;
     bool no_cut_off;
     double threshold=0.1;
+    double volume_ctrl=-1;
+    bool local_normal=false;
   public:
 
 
@@ -73,7 +75,9 @@ namespace ngcomp
       gf_lset_p2  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), true);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
       no_cut_off = flags.GetDefineFlag("nocutoff");
+      local_normal = flags.GetDefineFlag("localnorm");
       threshold = flags.GetNumFlag("threshold",0.1);
+      volume_ctrl = flags.GetNumFlag("volume",-1);
     }
 
     virtual ~NumProcGeometryTest()
@@ -174,6 +178,8 @@ namespace ngcomp
 
       }
       cout << " volume = " << volume << endl;
+      if (volume_ctrl>0)
+        cout << " volume error = " << abs(volume-volume_ctrl) << endl;
       ma->SetDeformation(deform);
     }
 
@@ -301,6 +307,7 @@ namespace ngcomp
         int deformpoints = 0;
         int corrected_points = 0;
         int accepted_points = 0;
+        int maxits = 0;
         for (int elnr = 0; elnr < ne; ++elnr)
         {
           HeapReset hr(lh);
@@ -407,10 +414,10 @@ namespace ngcomp
 
             MappedIntegrationPoint<D,D> mip_old (curr_ip, eltrans);
             
-            // Vec<D> normal = grad;
-            // double len = L2Norm(normal);
+            Vec<D> normal = grad;
+            double len = L2Norm(normal);
 
-            // normal /= len;
+            normal /= len;
 
             // cout << " len = " << len << endl;
             
@@ -449,8 +456,9 @@ namespace ngcomp
 
               if (abs(f0) < 1e-12)
                 break;
-              
+
               totalits++;
+              maxits = max(it,maxits);
             
               sca_fe.CalcDShape(curr_ip, dshape);
 
@@ -458,12 +466,13 @@ namespace ngcomp
               
               Vec<D> grad = Trans(dshape) * sca_values; 
 
+              if (local_normal)
+              {
+                Vec<D> normal = grad;
+                double len = L2Norm(normal);
 
-              Vec<D> normal = grad;
-              double len = L2Norm(normal);
-
-              normal /= len;
-              
+                normal /= len;
+              }
               // cout << " grad = " << grad << endl;
               
               const double dphidn = InnerProduct(grad,normal);
@@ -534,6 +543,7 @@ namespace ngcomp
         cout << " totalits/deformpoints = " << totalits/deformpoints << endl;
         cout << " accepted_points = " << accepted_points << endl;
         cout << " corrected_points = " << corrected_points << endl;
+        cout << " maxits = " << maxits << endl;
       }
 
       ma->SetDeformation(deform);
