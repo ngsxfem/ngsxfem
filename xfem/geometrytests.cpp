@@ -90,10 +90,19 @@ namespace ngcomp
       return "NumProcGeometryTest";
     }
 
+    void SearchPoint ()
+    {
+      Vec<D> dist; // distance to original point
+
+    }
+
+
+    
+
     void Test (LocalHeap & lh)
     {
       double volume = 0.0;
-
+      
       int ne=ma->GetNE();
       int nedges=ma->GetNEdges();
       int nf=ma->GetNFaces();
@@ -189,6 +198,11 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
 
+      
+      shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
+      *factor = 0.0;
+      deform->GetVector() = 0.0;
+      
       int ne=ma->GetNE();
       int nedges=ma->GetNEdges();
       int nf=ma->GetNFaces();
@@ -520,17 +534,21 @@ namespace ngcomp
             
             MappedIntegrationPoint<D,D> mip_new (curr_ip, eltrans);
             Vec<D> new_coord = mip_new.GetPoint();
-            // Vec<D> deform_vec = new_coord - old_coord;
-            Vec<D> deform_vec = new_coord - old_coord;
-            deform_vec *= -8.0;
+            Vec<D> deform_vec;
+            FlatVector<> values(D,&deform_vec(0));
+            fes_deform->GetEdgeDofNrs(facet, dnums);
+            deform->GetVector().GetIndirect(dnums,values);
+            deform_vec += -8.0 * (new_coord - old_coord);
+            // deform_vec *= -8.0;
 
             // cout << " old_coord = " << old_coord << endl;
             // cout << " new_coord = " << new_coord << endl;
             
-            FlatVector<> values(D,&deform_vec(0));
-            fes_deform->GetEdgeDofNrs(facet, dnums);
             deform->GetVector().SetIndirect(dnums,values);
-            
+
+            factor->GetIndirect(dnums,values);
+            values(0) += 1.0;
+            factor->SetIndirect(dnums,values);
             // std::cout << " -- " << std::endl;
 
             // getchar();
@@ -538,6 +556,20 @@ namespace ngcomp
           }
           // break;
         }
+
+        Array<int> dnums(1);
+        for (int i = 0; i < factor->Size(); ++i)
+        {
+          FlatVector<> val_fac(D,lh);
+          FlatVector<> values(D,lh);
+          dnums[0] = i;
+          deform->GetVector().GetIndirect(dnums,values);
+          factor->GetIndirect(dnums,val_fac);
+          if (val_fac(0) > 0)
+            values *= 1.0/val_fac(0);
+          deform->GetVector().SetIndirect(dnums,values);
+        }
+        
         cout << " deformpoints = " << deformpoints << endl;
         cout << " totalits = " << totalits << endl;
         cout << " totalits/deformpoints = " << totalits/deformpoints << endl;
