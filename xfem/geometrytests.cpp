@@ -61,7 +61,8 @@ namespace ngcomp
     shared_ptr<GridFunction> gf_lset_ho;
     shared_ptr<GridFunction> deform;
     bool no_cut_off;
-    double threshold=0.1;
+    double accept_threshold=0.1;
+    double reject_threshold=0.4;
     double volume_ctrl=-1;
 
     bool dynamic_search_dir=false; //take normal of accurate level set 
@@ -71,6 +72,7 @@ namespace ngcomp
     double * n_totalits;
     double * n_deformed_points;
     double * n_accepted_points;
+    double * n_rejected_points;
     double * n_corrected_points;
   public:
 
@@ -88,7 +90,8 @@ namespace ngcomp
       
       dynamic_search_dir = flags.GetDefineFlag("dynamic_search_dir");
       
-      threshold = flags.GetNumFlag("threshold",0.1);
+      accept_threshold = flags.GetNumFlag("accept_threshold",flags.GetNumFlag("threshold",0.1));
+      reject_threshold = flags.GetNumFlag("reject_threshold",accept_threshold * 4.0);
       
       volume_ctrl = flags.GetNumFlag("volume",-1);
 
@@ -103,6 +106,8 @@ namespace ngcomp
       n_accepted_points = & apde->GetVariable ("npgeomtest.accepted_points");
       apde->AddVariable ("npgeomtest.corrected_points", 0.0, 6);
       n_corrected_points = & apde->GetVariable ("npgeomtest.corrected_points");
+      apde->AddVariable ("npgeomtest.rejected_points", 0.0, 6);
+      n_rejected_points = & apde->GetVariable ("npgeomtest.rejected_points");
     }
 
     virtual ~NumProcGeometryTest()
@@ -446,72 +451,97 @@ namespace ngcomp
           
           Array<int> edges;
           Array<int> verts;
+          Array<int> edge_verts;
           ma->GetElEdges(elnr,edges);
           ma->GetElVertices(elnr,verts);
 
           for (int ref_edge_nr = 0; ref_edge_nr < D+1; ++ref_edge_nr)
           {
+            HeapReset hr(lh);
             const int global_edge_nr = edges[ref_edge_nr];
 
-            // TODO:
-            // *(new (lh) H1HighOrderFEFO<ET_TRIG,1> ()) -> SetVertexNumbers(ngel.vertices)
-            
             const int v1 = ElementTopology::GetEdges(eltype)[ref_edge_nr][0];
             const int v2 = ElementTopology::GetEdges(eltype)[ref_edge_nr][1];
 
-            IntegrationPoint curr_ip;
+            ma->GetEdgePNums(global_edge_nr, edge_verts);
 
-            Vec<D> deform_contribution;
-              
-            // make this an integration rule at some point...
+            const int edge_order = deform->GetFESpace()->GetOrder();
+            H1HighOrderFE<ET_SEGM> & edge_fe = *(new (lh) H1HighOrderFE<ET_SEGM>(edge_order));
+            edge_fe.SetVertexNumbers(edge_verts);
+
+            FlatVector<> shape_edge_ho(edge_fe.GetNDof(),lh);
+            int inner_edge_dofs = edge_fe.GetNDof() - 2;
+            FlatVector<> shape_only_edge_ho(inner_edge_dofs,&shape_edge_ho(2));
+            FlatMatrix<> edge_mass_mat(inner_edge_dofs,inner_edge_dofs,lh);
+            FlatMatrixFixWidth<D> edge_rhs_mat(inner_edge_dofs,lh);
+            edge_mass_mat = 0.0;
+            edge_rhs_mat = 0.0;
+            
+            //TODO: ORDER
+            const IntegrationRule & ir_edge = SelectIntegrationRule (ET_SEGM, 2*edge_order);
+
+            IntegrationPoint curr_vol_ip;
+            FlatMatrixFixWidth<D> deform_contribution(inner_edge_dofs,lh);
+            
+            for (int l = 0; l < ir_edge.GetNIP(); l++)
             {
-              const IntegrationPoint curr_ip_edge(0.5); //one integration point case...
+              const IntegrationPoint & curr_ip_edge(ir_edge[l]); //one integration point case...
               
               for (int d = 0; d < D; ++d)
-                curr_ip(d) = curr_ip_edge(0) * ElementTopology::GetVertices(eltype)[v1][d]
+                curr_vol_ip(d) = curr_ip_edge(0) * ElementTopology::GetVertices(eltype)[v1][d]
                   + (1.0-curr_ip_edge(0)) * ElementTopology::GetVertices(eltype)[v2][d];
 
-              
-              IntegrationPoint old_ip(curr_ip);
+              IntegrationPoint old_ip(curr_vol_ip);
               Vec<D> old_ref_point = old_ip.Point();
 
-              sca_fe_p1.CalcShape(curr_ip,shape_p1);
+              sca_fe_p1.CalcShape(curr_vol_ip,shape_p1);
               double lset_lin = InnerProduct(shape_p1,lset_vals_p1);
-
-              if (abs(lset_lin) > h && !no_cut_off ) break;
-
-              //statistics:
-              *n_deformed_points+=1.0;
             
               Vec<D> orig_point;
-              for (int d = 0; d < D; ++d) orig_point(d) = curr_ip(d);
+              for (int d = 0; d < D; ++d) orig_point(d) = curr_vol_ip(d);
               Vec<D> final_point;
             
+              //statistics:
+              *n_deformed_points+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
                                        lset_lin, normal, final_point, lh);
-              for (int d = 0; d < D; ++d) curr_ip(d) = final_point(d);
+              for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
 
               double distnorm = L2Norm(dist);
-              if (distnorm > threshold)
+              if (distnorm > accept_threshold)
               {
-                dist *= threshold / distnorm; 
-                //statistics:
-                *n_corrected_points+=1.0;
+                if (distnorm < reject_threshold)
+                {
+                  dist *= accept_threshold / distnorm;
+                  //statistics:
+                  *n_corrected_points+=1.0;
+                }
+                else
+                {
+                  dist = 0.0;
+                  //statistics:
+                  *n_rejected_points+=1.0;
+                }
               }
               else
               {
                 //statistics:
                 *n_accepted_points+=1.0;
               }
-              // update if more d.o.f. ...
-              deform_contribution = -8.0 * mip_center.GetJacobian() * dist;
+
+
+              edge_fe.CalcShape(curr_ip_edge,shape_edge_ho);
+              edge_mass_mat += curr_ip_edge.Weight() * shape_only_edge_ho * Trans(shape_only_edge_ho);
+
+              Vec<D> transf_dist = mip_center.GetJacobian() * dist;
+              edge_rhs_mat += curr_ip_edge.Weight() * shape_only_edge_ho * Trans(transf_dist);
               
             }
-
-
-
+            
+            CalcInverse(edge_mass_mat);
+            deform_contribution = edge_mass_mat * edge_rhs_mat;
             
             Array<int> dnums_deform;
             fes_deform->GetEdgeDofNrs(global_edge_nr, dnums_deform);
@@ -554,13 +584,14 @@ namespace ngcomp
         cout << " totalits/deformpoints = " << *n_totalits/ *n_deformed_points << endl;
         cout << " accepted_points = " << *n_accepted_points << endl;
         cout << " corrected_points = " << *n_corrected_points << endl;
+        cout << " rejected_points = " << *n_rejected_points << endl;
         cout << " maxits = " << *n_maxits << endl;
       }
 
       ma->SetDeformation(deform);
 
-      if (D==2)
-        Test(clh);
+      // if (D==2)
+      Test(clh);
     }    
     
 
