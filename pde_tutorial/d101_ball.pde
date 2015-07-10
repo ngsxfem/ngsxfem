@@ -10,7 +10,7 @@ define constant heapsize = 1e9
 constant R = 0.5-1e-12
 
 define coefficient lset
-( sqrt(x*x+y*y+z*z) - R),
+( sqrt((x)*(x)+y*y+z*z) - R),
 
 
 define constant aneg = 2.0
@@ -18,10 +18,10 @@ define constant apos = 1.0
 
 
 define coefficient rhsneg
-(8),
+(12),
 
 define coefficient rhspos
-(2/(sqrt(x*x+y*y+z*z))),
+(4/(sqrt(x*x+y*y+z*z))),
 
 define coefficient solpos
 (1.0-2.0*sqrt(x*x+y*y+z*z)),
@@ -30,21 +30,21 @@ define coefficient solneg
 (1.0/4.0-(x*x+y*y+z*z)),
 
 
-define fespace fescomp
-       -type=xstdfespace
-       -type_std=h1ho 
-       -order=2
-       -dirichlet=[1,2]
-       -ref_space=0
-#       -dgjumps
+# define fespace fescomp
+#        -type=xstdfespace
+#        -type_std=h1ho 
+#        -order=2
+#        -dirichlet=[1,2,3,4,5,6]
+#        -ref_space=0
+# #       -dgjumps
 
-numproc informxfem npix 
-        -xstdfespace=fescomp
-        -coef_levelset=lset
+# numproc informxfem npix 
+#         -xstdfespace=fescomp
+#         -coef_levelset=lset
 
-define gridfunction u -fespace=fescomp
+# define gridfunction u -fespace=fescomp
 
-numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
+# numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
         
 ######### CURV IT #########
         
@@ -65,21 +65,25 @@ numproc xgeomtest3d npxd
         -levelset=lset
         -gf_levelset=lset_p2
         -deformation=deform
+        -dynamic_search_dir
         # -nocutoff
-        -threshold=0.8
-
+        -threshold=1.0
+        -volume=0.52359878
+        # -volume=0.26179939
 ######### CURV IT #########
 
-define linearform f -fespace=fescomp # -print
-xsource rhsneg rhspos
+# define linearform f -fespace=fescomp # -print
+# xsource rhsneg rhspos
+# # xsource solneg solpos
 
-define bilinearform a -fespace=fescomp -printelmat #-eliminate_internal -keep_internal -symmetric -linea
-xlaplace aneg apos
-xnitsche_heaviside aneg apos 1.0 1.0 10.0
+# define bilinearform a -fespace=fescomp -printelmat #-eliminate_internal -keep_internal -symmetric -linea
+# # xmass 1.0 1.0
+# xlaplace aneg apos
+# xnitsche_heaviside aneg apos 1.0 1.0 10.0
         
-define preconditioner c -type=direct -bilinearform=a
+# define preconditioner c -type=direct -bilinearform=a
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
+# numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
 
                 
 numproc draw npdr -coefficient=lset -label=levelset
@@ -87,8 +91,8 @@ numproc draw npdr -coefficient=lset -label=levelset
 
 numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=0 -minval=0 -maxval=0
 
-# coefficient zero
-# 0,
+coefficient zero
+0,
 
 # numproc xdifference npxd 
 #         -solution=u 
@@ -112,4 +116,19 @@ numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -defo
         
 numproc unsetdeformation npunset
 
+coefficient deformx
+((deform)*(1,0,0)),
+
+coefficient deformy
+((deform)*(0,1,0)),
+
+coefficient deformz
+((deform)*(0,0,1)),
+                        
+numproc vtkoutput npout -filename=nosub_d101
+        -coefficients=[lset,deformx,deformy,deformz]
+        -gridfunctions=[lset_p1,lset_p2]
+        -fieldnames=[levelset,deform_x,deform_y,deform_z,levelset_p1,levelset_p2]
+        -subdivision=0
+        
         

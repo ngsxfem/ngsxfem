@@ -48,22 +48,23 @@ numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_po
 fespace fes_p1 -type=h1ho -order=1
 gridfunction lset_p1 -fespace=fes_p1
 
-fespace fes_p2 -type=h1ho -order=2
-gridfunction lset_p2 -fespace=fes_p2
+fespace fes_ho -type=h1ho -order=2
+gridfunction lset_ho -fespace=fes_ho
                 
-numproc setvalues npsv -gridfunction=lset_p2 -coefficient=lset
+numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
 
 fespace fes_deform -type=h1ho -order=2 -dim=2
 gridfunction deform -fespace=fes_deform
                 
 numproc xgeomtest npxd 
         -gf_levelset_p1=lset_p1
-        -gf_levelset_p2=lset_p2
+        -gf_levelset_ho=lset_ho
         -levelset=lset
-        -gf_levelset=lset_p2
+        -gf_levelset=lset_ho
         -deformation=deform
+        # -dynamic_search_dir
         # -nocutoff
-        -threshold=0.8
+        -threshold=0.15
 
 ######### CURV IT #########
 
@@ -109,4 +110,17 @@ numproc draw npdraw -coefficient=err -label=error
         
 numproc unsetdeformation npunset
 
+
+coefficient deformx
+((deform)*(1,0)),
+
+coefficient deformy
+((deform)*(0,1)),
+
+                        
+numproc vtkoutput npout -filename=vtk_sub3_d100
+        -coefficients=[lset,deformx,deformy]
+        -gridfunctions=[lset_p1,lset_ho]
+        -fieldnames=[levelset,deform_x,deform_y,levelset_p1,levelset_ho]
+        -subdivision=3
         
