@@ -547,6 +547,8 @@ namespace ngcomp
             if (edge_order <= 1) continue;
             
             const int global_edge_nr = edges[ref_edge_nr];
+            if (deform->GetFESpace()->IsDirichletEdge(global_edge_nr))
+              continue;
 
             const int v1 = ElementTopology::GetEdges(eltype)[ref_edge_nr][0];
             const int v2 = ElementTopology::GetEdges(eltype)[ref_edge_nr][1];
@@ -674,6 +676,8 @@ namespace ngcomp
             const int v3 = ElementTopology::GetFaces(eltype)[ref_face_nr][2];
 
             ma->GetFacePNums(global_face_nr, face_verts);
+            if (deform->GetFESpace()->IsDirichletFace(global_face_nr))
+              continue;
 
             H1HighOrderFE<ET_TRIG> & face_fe = *(new (lh) H1HighOrderFE<ET_TRIG>(face_order));
 
