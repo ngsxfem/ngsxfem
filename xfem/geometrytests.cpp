@@ -436,6 +436,8 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements++ << std::endl;
 
+      * n_maxits = 0.0;
+      * n_totalits = 0.0;
 
       * n_deformed_points_edge = 0.0;
       * n_accepted_points_edge = 0.0;
