@@ -1,5 +1,5 @@
 geometry = d99_testgeom.in2d
-mesh = d99_testgeom_unstr.vol.gz
+mesh = d99_testgeom_2.vol.gz
 # mesh = d99_testgeom_unstr.vol.gz
 shared = libngsxfem_xfem
 
@@ -9,7 +9,36 @@ constant R = 0.5-1e-12
 define coefficient lset
 ( sqrt(x*x+y*y) - R),
 
+        
+######### CURV IT #########
+        
+fespace fes_p1 -type=h1ho -order=1
+gridfunction lset_p1 -fespace=fes_p1
 
+fespace fes_ho -type=h1ho -order=3
+gridfunction lset_ho -fespace=fes_ho
+                
+numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
+
+fespace fes_deform -type=h1ho -order=2 -vec -dirichlet=[1,2,3,4,5,6]
+gridfunction deform -fespace=fes_deform
+                
+numproc xgeomtest npxd 
+        -gf_levelset_p1=lset_p1
+        -gf_levelset_ho=lset_ho
+        # -levelset=lset
+        -gf_levelset=lset_ho
+        -deformation=deform
+        # -dynamic_search_dir
+        # -nocutoff
+        -threshold=0.1
+        -reject_threshold=1
+        -volume=0.78539816339
+        -lower_lset_bound=0.0
+        -upper_lset_bound=0.0
+######### CURV IT #########
+
+        
 define constant aneg = 2.0
 define constant apos = 1.0
 
@@ -42,39 +71,16 @@ numproc informxfem npix
 define gridfunction u -fespace=fescomp
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
-        
-######### CURV IT #########
-        
-fespace fes_p1 -type=h1ho -order=1
-gridfunction lset_p1 -fespace=fes_p1
-
-fespace fes_ho -type=h1ho -order=2
-gridfunction lset_ho -fespace=fes_ho
-                
-numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
-
-fespace fes_deform -type=h1ho -order=2 -dim=2
-gridfunction deform -fespace=fes_deform
-                
-numproc xgeomtest npxd 
-        -gf_levelset_p1=lset_p1
-        -gf_levelset_ho=lset_ho
-        -levelset=lset
-        -gf_levelset=lset_ho
-        -deformation=deform
-        # -dynamic_search_dir
-        # -nocutoff
-        -threshold=0.15
-
-######### CURV IT #########
 
 define linearform f -fespace=fescomp # -print
 xsource rhsneg rhspos
+# xsource solneg solpos
 
 define bilinearform a -fespace=fescomp -printelmat #-eliminate_internal -keep_internal -symmetric -linea
 xlaplace aneg apos
-xnitsche_heaviside aneg apos 1.0 1.0 10.0
-        
+xnitsche_heaviside aneg apos 1.0 1.0 50.0
+# xmass 1.0 1.0 
+                
 define preconditioner c -type=direct -bilinearform=a
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 # -print
@@ -118,9 +124,9 @@ coefficient deformy
 ((deform)*(0,1)),
 
                         
-numproc vtkoutput npout -filename=vtk_sub3_d100
-        -coefficients=[lset,deformx,deformy]
-        -gridfunctions=[lset_p1,lset_ho]
-        -fieldnames=[levelset,deform_x,deform_y,levelset_p1,levelset_ho]
-        -subdivision=3
+# numproc vtkoutput npout -filename=vtk_sub3_d100
+#         -coefficients=[lset,deformx,deformy]
+#         -gridfunctions=[lset_p1,lset_ho]
+#         -fieldnames=[levelset,deform_x,deform_y,levelset_p1,levelset_ho]
+#         -subdivision=3
         

@@ -13,6 +13,35 @@ define coefficient lset
 ( sqrt((x)*(x)+y*y+z*z) - R),
 
 
+######### CURV IT #########
+        
+fespace fes_p1 -type=h1ho -order=1
+gridfunction lset_p1 -fespace=fes_p1
+
+fespace fes_ho -type=h1ho -order=2
+gridfunction lset_ho -fespace=fes_ho
+                
+numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
+
+fespace fes_deform -type=h1ho -order=2 -vec -dirichlet=[1,2,3,4,5,6]
+gridfunction deform -fespace=fes_deform
+                
+numproc xgeomtest3d npxd 
+        -gf_levelset_p1=lset_p1
+        -gf_levelset_ho=lset_ho
+        # -levelset=lset
+        -gf_levelset=lset_ho
+        -deformation=deform
+        # -dynamic_search_dir
+        # -nocutoff
+        -threshold=0.05
+        -reject_threshold=1
+        -volume=0.52359878
+        -lower_lset_bound=0.0
+        -upper_lset_bound=0.0
+######### CURV IT #########
+        
+
 define constant aneg = 2.0
 define constant apos = 1.0
 
@@ -46,31 +75,6 @@ define coefficient solneg
 
 # numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
         
-######### CURV IT #########
-        
-fespace fes_p1 -type=h1ho -order=1
-gridfunction lset_p1 -fespace=fes_p1
-
-fespace fes_p2 -type=h1ho -order=2
-gridfunction lset_p2 -fespace=fes_p2
-                
-numproc setvalues npsv -gridfunction=lset_p2 -coefficient=lset
-
-fespace fes_deform -type=h1ho -order=2 -dim=3
-gridfunction deform -fespace=fes_deform
-                
-numproc xgeomtest3d npxd 
-        -gf_levelset_p1=lset_p1
-        -gf_levelset_p2=lset_p2
-        -levelset=lset
-        -gf_levelset=lset_p2
-        -deformation=deform
-        -dynamic_search_dir
-        # -nocutoff
-        -threshold=1.0
-        -volume=0.52359878
-        # -volume=0.26179939
-######### CURV IT #########
 
 # define linearform f -fespace=fescomp # -print
 # xsource rhsneg rhspos
@@ -125,10 +129,10 @@ coefficient deformy
 coefficient deformz
 ((deform)*(0,0,1)),
                         
-numproc vtkoutput npout -filename=nosub_d101
-        -coefficients=[lset,deformx,deformy,deformz]
-        -gridfunctions=[lset_p1,lset_p2]
-        -fieldnames=[levelset,deform_x,deform_y,deform_z,levelset_p1,levelset_p2]
-        -subdivision=0
+# numproc vtkoutput npout -filename=nosub_d101
+#         -coefficients=[lset,deformx,deformy,deformz]
+#         -gridfunctions=[lset_p1,lset_ho]
+#         -fieldnames=[levelset,deform_x,deform_y,deform_z,levelset_p1,levelset_ho]
+#         -subdivision=0
         
         
