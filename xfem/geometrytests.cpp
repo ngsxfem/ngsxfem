@@ -489,10 +489,13 @@ namespace ngcomp
 
           Array<int> edge_verts;
           Array<int> face_verts;
-          
+
           for (int ref_edge_nr = 0; ref_edge_nr < D+1; ++ref_edge_nr)
           {
             HeapReset hr(lh);
+            const int edge_order = deform->GetFESpace()->GetOrder();
+            if (edge_order <= 1) continue;
+            
             const int global_edge_nr = edges[ref_edge_nr];
 
             const int v1 = ElementTopology::GetEdges(eltype)[ref_edge_nr][0];
@@ -500,7 +503,6 @@ namespace ngcomp
 
             ma->GetEdgePNums(global_edge_nr, edge_verts);
 
-            const int edge_order = deform->GetFESpace()->GetOrder();
             H1HighOrderFE<ET_SEGM> & edge_fe = *(new (lh) H1HighOrderFE<ET_SEGM>(edge_order));
             edge_fe.SetVertexNumbers(edge_verts);
 
@@ -607,6 +609,10 @@ namespace ngcomp
           for (int ref_face_nr = 0; ref_face_nr < nfaces; ++ref_face_nr)
           {
             HeapReset hr(lh);
+
+            const int face_order = deform->GetFESpace()->GetOrder();
+            if (face_order <= 2) continue;
+
             ELEMENT_TYPE etface = ElementTopology::GetFaceType (eltype, ref_face_nr);
 
             if (etface != ET_TRIG)
@@ -620,7 +626,6 @@ namespace ngcomp
 
             ma->GetFacePNums(global_face_nr, face_verts);
 
-            const int face_order = deform->GetFESpace()->GetOrder();
             H1HighOrderFE<ET_TRIG> & face_fe = *(new (lh) H1HighOrderFE<ET_TRIG>(face_order));
 
             face_fe.SetVertexNumbers(face_verts);
