@@ -152,8 +152,8 @@ namespace ngcomp
 
     void SearchCorrespondingPoint (
       const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,
-      const Vec<D> & init_point, double goal_val, const Vec<D> & init_search_dir,
-      Vec<D> & final_point, LocalHeap & lh)
+      const Vec<D> & init_point, double goal_val, const Vec<D> & trafo_normal_ref,
+      const Vec<D> & init_search_dir, Vec<D> & final_point, LocalHeap & lh)
     {
       HeapReset hr(lh);
       
@@ -180,7 +180,7 @@ namespace ngcomp
 
         if (dynamic_search_dir)
         {
-          search_dir = curr_grad;
+          search_dir = trafo_normal_ref * curr_grad;
           search_dir /= L2Norm(search_dir);
         }
         
@@ -486,7 +486,11 @@ namespace ngcomp
 
           sca_fe_p1.CalcDShape(ip_center,dshape_p1);
           Vec<D> grad = Trans(dshape_p1) * lset_vals_p1;
-          Vec<D> normal = grad;
+
+          // grad on physical domain defines the direct,
+          // but has to be represented on the reference domain:
+          Mat<D> trafo_normal_ref = mip_center.GetJacobianInverse() * Trans(mip_center.GetJacobianInverse());
+          Vec<D> normal = trafo_normal_ref * grad;
           double len = L2Norm(normal);
           normal /= len;
           
@@ -554,7 +558,7 @@ namespace ngcomp
               //statistics:
               *n_deformed_points_edge+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, normal, final_point, lh);
+                                       lset_lin, trafo_normal_ref, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
@@ -667,8 +671,6 @@ namespace ngcomp
                 curr_vol_ip(d) += (1-curr_ip_face(0)-curr_ip_face(1)) * ElementTopology::GetVertices(eltype)[v3][d];
               }
 
-              // }
-
               IntegrationPoint old_ip(curr_vol_ip);
               Vec<D> old_ref_point = old_ip.Point();
 
@@ -682,7 +684,7 @@ namespace ngcomp
               //statistics:
               *n_deformed_points_face+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, normal, final_point, lh);
+                                       lset_lin, trafo_normal_ref, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
