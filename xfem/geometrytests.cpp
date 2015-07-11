@@ -70,10 +70,21 @@ namespace ngcomp
     // statistics
     double * n_maxits;
     double * n_totalits;
-    double * n_deformed_points;
-    double * n_accepted_points;
-    double * n_rejected_points;
-    double * n_corrected_points;
+
+    double * n_deformed_points_edge;
+    double * n_accepted_points_edge;
+    double * n_rejected_points_edge;
+    double * n_corrected_points_edge;
+
+    double * n_deformed_points_face;
+    double * n_accepted_points_face;
+    double * n_rejected_points_face;
+    double * n_corrected_points_face;
+
+    double * n_deformed_points_cell;
+    double * n_accepted_points_cell;
+    double * n_rejected_points_cell;
+    double * n_corrected_points_cell;
   public:
 
 
@@ -100,14 +111,33 @@ namespace ngcomp
       n_maxits = & apde->GetVariable ("npgeomtest.maxits");
       apde->AddVariable ("npgeomtest.totalits", 0.0, 6);
       n_totalits = & apde->GetVariable ("npgeomtest.totalits");
-      apde->AddVariable ("npgeomtest.deformed_points", 0.0, 6);
-      n_deformed_points = & apde->GetVariable ("npgeomtest.deformed_points");
-      apde->AddVariable ("npgeomtest.accepted_points", 0.0, 6);
-      n_accepted_points = & apde->GetVariable ("npgeomtest.accepted_points");
-      apde->AddVariable ("npgeomtest.corrected_points", 0.0, 6);
-      n_corrected_points = & apde->GetVariable ("npgeomtest.corrected_points");
-      apde->AddVariable ("npgeomtest.rejected_points", 0.0, 6);
-      n_rejected_points = & apde->GetVariable ("npgeomtest.rejected_points");
+
+      apde->AddVariable ("npgeomtest.deformed_points_edge", 0.0, 6);
+      n_deformed_points_edge = & apde->GetVariable ("npgeomtest.deformed_points_edge");
+      apde->AddVariable ("npgeomtest.accepted_points_edge", 0.0, 6);
+      n_accepted_points_edge = & apde->GetVariable ("npgeomtest.accepted_points_edge");
+      apde->AddVariable ("npgeomtest.corrected_points_edge", 0.0, 6);
+      n_corrected_points_edge = & apde->GetVariable ("npgeomtest.corrected_points_edge");
+      apde->AddVariable ("npgeomtest.rejected_points_edge", 0.0, 6);
+      n_rejected_points_edge = & apde->GetVariable ("npgeomtest.rejected_points_edge");
+
+      apde->AddVariable ("npgeomtest.deformed_points_face", 0.0, 6);
+      n_deformed_points_face = & apde->GetVariable ("npgeomtest.deformed_points_face");
+      apde->AddVariable ("npgeomtest.accepted_points_face", 0.0, 6);
+      n_accepted_points_face = & apde->GetVariable ("npgeomtest.accepted_points_face");
+      apde->AddVariable ("npgeomtest.corrected_points_face", 0.0, 6);
+      n_corrected_points_face = & apde->GetVariable ("npgeomtest.corrected_points_face");
+      apde->AddVariable ("npgeomtest.rejected_points_face", 0.0, 6);
+      n_rejected_points_face = & apde->GetVariable ("npgeomtest.rejected_points_face");
+
+      apde->AddVariable ("npgeomtest.deformed_points_cell", 0.0, 6);
+      n_deformed_points_cell = & apde->GetVariable ("npgeomtest.deformed_points_cell");
+      apde->AddVariable ("npgeomtest.accepted_points_cell", 0.0, 6);
+      n_accepted_points_cell = & apde->GetVariable ("npgeomtest.accepted_points_cell");
+      apde->AddVariable ("npgeomtest.corrected_points_cell", 0.0, 6);
+      n_corrected_points_cell = & apde->GetVariable ("npgeomtest.corrected_points_cell");
+      apde->AddVariable ("npgeomtest.rejected_points_cell", 0.0, 6);
+      n_rejected_points_cell = & apde->GetVariable ("npgeomtest.rejected_points_cell");
     }
 
     virtual ~NumProcGeometryTest()
@@ -450,11 +480,16 @@ namespace ngcomp
           normal /= len;
           
           Array<int> edges;
+          Array<int> faces;
           Array<int> verts;
-          Array<int> edge_verts;
-          ma->GetElEdges(elnr,edges);
-          ma->GetElVertices(elnr,verts);
 
+          ma->GetElVertices(elnr,verts);
+          ma->GetElEdges(elnr,edges);
+          ma->GetElFaces(elnr,faces);
+
+          Array<int> edge_verts;
+          Array<int> face_verts;
+          
           for (int ref_edge_nr = 0; ref_edge_nr < D+1; ++ref_edge_nr)
           {
             HeapReset hr(lh);
@@ -470,8 +505,10 @@ namespace ngcomp
             edge_fe.SetVertexNumbers(edge_verts);
 
             FlatVector<> shape_edge_ho(edge_fe.GetNDof(),lh);
-            int inner_edge_dofs = edge_fe.GetNDof() - 2;
-            FlatVector<> shape_only_edge_ho(inner_edge_dofs,&shape_edge_ho(2));
+            
+            const int edge_dofs_offset = 2;
+            int inner_edge_dofs = edge_fe.GetNDof() - edge_dofs_offset;
+            FlatVector<> shape_only_edge_ho(inner_edge_dofs,&shape_edge_ho(edge_dofs_offset));
             FlatMatrix<> edge_mass_mat(inner_edge_dofs,inner_edge_dofs,lh);
             FlatMatrixFixWidth<D> edge_rhs_mat(inner_edge_dofs,lh);
             edge_mass_mat = 0.0;
@@ -502,7 +539,7 @@ namespace ngcomp
               Vec<D> final_point;
             
               //statistics:
-              *n_deformed_points+=1.0;
+              *n_deformed_points_edge+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
                                        lset_lin, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
@@ -516,19 +553,19 @@ namespace ngcomp
                 {
                   dist *= accept_threshold / distnorm;
                   //statistics:
-                  *n_corrected_points+=1.0;
+                  *n_corrected_points_edge+=1.0;
                 }
                 else
                 {
                   dist = 0.0;
                   //statistics:
-                  *n_rejected_points+=1.0;
+                  *n_rejected_points_edge+=1.0;
                 }
               }
               else
               {
                 //statistics:
-                *n_accepted_points+=1.0;
+                *n_accepted_points_edge+=1.0;
               }
 
 
@@ -562,9 +599,139 @@ namespace ngcomp
             factor->SetIndirect(dnums_deform,values);
             
           }
+
+
+
+          int nfaces = ElementTopology::GetNFaces(eltype);
+
+          for (int ref_face_nr = 0; ref_face_nr < nfaces; ++ref_face_nr)
+          {
+            HeapReset hr(lh);
+            ELEMENT_TYPE etface = ElementTopology::GetFaceType (eltype, ref_face_nr);
+
+            if (etface != ET_TRIG)
+              throw Exception ("only trig for now - fe creation is hard coded");
+            
+            const int global_face_nr = faces[ref_face_nr];
+
+            const int v1 = ElementTopology::GetFaces(eltype)[ref_face_nr][0];
+            const int v2 = ElementTopology::GetFaces(eltype)[ref_face_nr][1];
+            const int v3 = ElementTopology::GetFaces(eltype)[ref_face_nr][2];
+
+            ma->GetFacePNums(global_face_nr, face_verts);
+
+            const int face_order = deform->GetFESpace()->GetOrder();
+            H1HighOrderFE<ET_TRIG> & face_fe = *(new (lh) H1HighOrderFE<ET_TRIG>(face_order));
+
+            face_fe.SetVertexNumbers(face_verts);
+
+            FlatVector<> shape_face_ho(face_fe.GetNDof(),lh);
+            const int face_dofs_offset = 3 * face_order;
+            int inner_face_dofs = face_fe.GetNDof() - face_dofs_offset;
+            FlatVector<> shape_only_face_ho(inner_face_dofs,&shape_face_ho(face_dofs_offset));
+            FlatMatrix<> face_mass_mat(inner_face_dofs,inner_face_dofs,lh);
+            FlatMatrixFixWidth<D> face_rhs_mat(inner_face_dofs,lh);
+            face_mass_mat = 0.0;
+            face_rhs_mat = 0.0;
+            
+            const IntegrationRule & ir_face = SelectIntegrationRule (etface, 2*face_order);
+
+            IntegrationPoint curr_vol_ip;
+            FlatMatrixFixWidth<D> deform_contribution(inner_face_dofs,lh);
+            
+            for (int l = 0; l < ir_face.GetNIP(); l++)
+            {
+              const IntegrationPoint & curr_ip_face(ir_face[l]); //one integration point case...
+              
+              for (int d = 0; d < D; ++d)
+              {
+                curr_vol_ip(d) = 0.0;
+                curr_vol_ip(d) += curr_ip_face(0) * ElementTopology::GetVertices(eltype)[v1][d];
+                curr_vol_ip(d) += curr_ip_face(1) * ElementTopology::GetVertices(eltype)[v2][d];
+                curr_vol_ip(d) += (1-curr_ip_face(0)-curr_ip_face(1)) * ElementTopology::GetVertices(eltype)[v3][d];
+              }
+
+              // }
+
+              IntegrationPoint old_ip(curr_vol_ip);
+              Vec<D> old_ref_point = old_ip.Point();
+
+              sca_fe_p1.CalcShape(curr_vol_ip,shape_p1);
+              double lset_lin = InnerProduct(shape_p1,lset_vals_p1);
+            
+              Vec<D> orig_point;
+              for (int d = 0; d < D; ++d) orig_point(d) = curr_vol_ip(d);
+              Vec<D> final_point;
+            
+              //statistics:
+              *n_deformed_points_face+=1.0;
+              SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
+                                       lset_lin, normal, final_point, lh);
+              for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
+            
+              Vec<D> dist = final_point - orig_point;
+
+              double distnorm = L2Norm(dist);
+              if (distnorm > accept_threshold)
+              {
+                if (distnorm < reject_threshold)
+                {
+                  dist *= accept_threshold / distnorm;
+                  //statistics:
+                  *n_corrected_points_face+=1.0;
+                }
+                else
+                {
+                  dist = 0.0;
+                  //statistics:
+                  *n_rejected_points_face+=1.0;
+                }
+              }
+              else
+              {
+                //statistics:
+                *n_accepted_points_face+=1.0;
+              }
+
+
+              face_fe.CalcShape(curr_ip_face,shape_face_ho);
+              face_mass_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(shape_only_face_ho);
+
+              Vec<D> transf_dist = mip_center.GetJacobian() * dist;
+              face_rhs_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(transf_dist);
+              
+            }
+
+            CalcInverse(face_mass_mat);
+            deform_contribution = face_mass_mat * face_rhs_mat;
+            
+            Array<int> dnums_deform;
+            fes_deform->GetFaceDofNrs(global_face_nr, dnums_deform);
+
+            FlatMatrixFixWidth<D> deform_vec(dnums_deform.Size(),lh);
+            FlatVector<> deform_vec_as_vec(D*dnums_deform.Size(),&deform_vec(0,0));
+            deform->GetVector().GetIndirect(dnums_deform,deform_vec_as_vec);
+
+            deform_vec += deform_contribution;
+            deform->GetVector().SetIndirect(dnums_deform,deform_vec_as_vec);
+
+            // count the number of times that a deformation value
+            // has been added for the d.o.f.
+            FlatVector<> values(D*dnums_deform.Size(),lh);
+            factor->GetIndirect(dnums_deform,values);
+            for (int k = 0; k < values.Size(); ++k)
+              values(k) += 1.0;
+            factor->SetIndirect(dnums_deform,values);
+            
+          }
+
+
+
+
+          
         }
 
-        // average the deformation
+        // averaging of the (summed) deformation
         Array<int> dnums(1);
         for (int i = 0; i < factor->Size(); ++i)
         {
@@ -579,12 +746,37 @@ namespace ngcomp
         }
 
         //statistics:
-        cout << " deformpoints = " << *n_deformed_points << endl;
+        cout << " deformpoints(edge) = " << *n_deformed_points_edge << endl;
+        cout << " accepted_points(edge) = " << *n_accepted_points_edge << endl;
+        cout << " corrected_points(edge) = " << *n_corrected_points_edge << endl;
+        cout << " rejected_points(edge) = " << *n_rejected_points_edge << endl;
+
+        cout << " deformpoints(face) = " << *n_deformed_points_face << endl;
+        cout << " accepted_points(face) = " << *n_accepted_points_face << endl;
+        cout << " corrected_points(face) = " << *n_corrected_points_face << endl;
+        cout << " rejected_points(face) = " << *n_rejected_points_face << endl;
+
+        cout << " deformpoints(cell) = " << *n_deformed_points_cell << endl;
+        cout << " accepted_points(cell) = " << *n_accepted_points_cell << endl;
+        cout << " corrected_points(cell) = " << *n_corrected_points_cell << endl;
+        cout << " rejected_points(cell) = " << *n_rejected_points_cell << endl;
+
+        const double n_deformed_points_total
+          = *n_deformed_points_edge+*n_deformed_points_face+*n_deformed_points_cell;
+        const double n_accepted_points_total
+          = *n_accepted_points_edge+*n_accepted_points_face+*n_accepted_points_cell;
+        const double n_corrected_points_total
+          = *n_corrected_points_edge+*n_corrected_points_face+*n_corrected_points_cell;
+        const double n_rejected_points_total
+          = *n_rejected_points_edge+*n_rejected_points_face+*n_rejected_points_cell;
+
+        cout << " deformpoints(total) = " << n_deformed_points_total << endl;
+        cout << " accepted_points(total) = " << n_accepted_points_total << endl;
+        cout << " corrected_points(total) = " << n_corrected_points_total << endl;
+        cout << " rejected_points(total) = " << n_rejected_points_total << endl;
+
         cout << " totalits = " << *n_totalits << endl;
-        cout << " totalits/deformpoints = " << *n_totalits/ *n_deformed_points << endl;
-        cout << " accepted_points = " << *n_accepted_points << endl;
-        cout << " corrected_points = " << *n_corrected_points << endl;
-        cout << " rejected_points = " << *n_rejected_points << endl;
+        cout << " totalits/deformpoints = " << *n_totalits/ n_deformed_points_total << endl;
         cout << " maxits = " << *n_maxits << endl;
       }
 
