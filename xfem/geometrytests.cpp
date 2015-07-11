@@ -68,6 +68,10 @@ namespace ngcomp
 
     double lower_lset_bound=0.0; //domain of interest for deformation: lower bound
     double upper_lset_bound=0.0; //domain of interest for deformation: lower bound
+
+    bool no_edges = false;
+    bool no_faces = false;
+    bool no_cells = false;
     
     // statistics
     double * n_maxits;
@@ -100,6 +104,10 @@ namespace ngcomp
         gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), false);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
 
+      no_edges = flags.GetDefineFlag("no_edges");
+      no_faces = flags.GetDefineFlag("no_faces");
+      no_cells = flags.GetDefineFlag("no_cells");
+      
       lower_lset_bound = flags.GetNumFlag("lower_lset_bound",0.0);
       upper_lset_bound = flags.GetNumFlag("upper_lset_bound",0.0);
       
@@ -540,6 +548,7 @@ namespace ngcomp
           Array<int> edge_verts;
           Array<int> face_verts;
 
+          if (!no_edges)
           for (int ref_edge_nr = 0; ref_edge_nr < D+1; ++ref_edge_nr)
           {
             HeapReset hr(lh);
@@ -657,6 +666,7 @@ namespace ngcomp
 
           int nfaces = ElementTopology::GetNFaces(eltype);
 
+          if (!no_faces)
           for (int ref_face_nr = 0; ref_face_nr < nfaces; ++ref_face_nr)
           {
             HeapReset hr(lh);
@@ -785,6 +795,7 @@ namespace ngcomp
             
           }
 
+          if (!no_cells)
           if (D==3) // cell inner 
           {
             // ... 
