@@ -724,7 +724,11 @@ namespace ngcomp
             deform_contribution = face_mass_mat * face_rhs_mat;
             
             Array<int> dnums_deform;
-            fes_deform->GetFaceDofNrs(global_face_nr, dnums_deform);
+            if (D==2)
+              fes_deform->GetInnerDofNrs(global_face_nr, dnums_deform);
+            else
+              fes_deform->GetFaceDofNrs(global_face_nr, dnums_deform);
+
 
             FlatMatrixFixWidth<D> deform_vec(dnums_deform.Size(),lh);
             FlatVector<> deform_vec_as_vec(D*dnums_deform.Size(),&deform_vec(0,0));
@@ -743,7 +747,11 @@ namespace ngcomp
             
           }
 
+          if (D==3) // cell inner 
+          {
+            // ... 
 
+          }
 
 
           
