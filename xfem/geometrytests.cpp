@@ -464,8 +464,8 @@ namespace ngcomp
           const FiniteElement & fe_p1 = gf_fes_p1->GetFE(elnr,lh);
           const ScalarFiniteElement<D>& sca_fe_p1 = dynamic_cast<const ScalarFiniteElement<D>&>(fe_p1);
           Array<int> dnums_lset_p1;
-          FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
           gf_fes_p1->GetDofNrs(elnr,dnums_lset_p1);
+          FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
           gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
           
           FlatVector<> shape_p1(dnums_lset_p1.Size(),lh);
