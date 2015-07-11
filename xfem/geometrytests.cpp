@@ -91,7 +91,7 @@ namespace ngcomp
     NumProcGeometryTest (shared_ptr<PDE> apde, const Flags & flags)
       : NumProc (apde)
     { 
-      lset  = apde->GetCoefficientFunction (flags.GetStringFlag ("levelset", ""), false);
+      lset  = apde->GetCoefficientFunction (flags.GetStringFlag ("levelset", ""), true);
       gf_lset_p1  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p1", ""), false);
       gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_ho", ""), true);
       if (!gf_lset_ho)
@@ -309,7 +309,18 @@ namespace ngcomp
         IntegrationPoint ip(0.0);
         FE_ElementTransformation<0,D> eltrans(ET_POINT,pointmat);
         MappedIntegrationPoint<0,D> mip(ip,eltrans);
-        double val_lset = lset->Evaluate(mip);
+
+        double val_lset;
+        if (lset)
+          val_lset = lset->Evaluate(mip);
+        else
+        {
+          Array<int> dof;
+          gf_lset_ho->GetFESpace()->GetVertexDofNrs(vnr, dof);
+          FlatVector<> fval(1,&val_lset);
+          gf_lset_ho->GetVector().GetIndirect(dof,fval);
+        }
+        
         Array<int> dof;
         gf_lset_p1->GetFESpace()->GetVertexDofNrs(vnr,dof);
         FlatVector<> val(1,&val_lset);
