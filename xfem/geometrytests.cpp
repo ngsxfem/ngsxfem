@@ -60,13 +60,15 @@ namespace ngcomp
     shared_ptr<GridFunction> gf_lset_p1;
     shared_ptr<GridFunction> gf_lset_ho;
     shared_ptr<GridFunction> deform;
-    bool no_cut_off;
     double accept_threshold=0.1;
     double reject_threshold=0.4;
     double volume_ctrl=-1;
 
     bool dynamic_search_dir=false; //take normal of accurate level set 
 
+    double lower_lset_bound=0.0; //domain of interest for deformation: lower bound
+    double upper_lset_bound=0.0; //domain of interest for deformation: lower bound
+    
     // statistics
     double * n_maxits;
     double * n_totalits;
@@ -97,7 +99,9 @@ namespace ngcomp
       if (!gf_lset_ho)
         gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), false);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
-      no_cut_off = flags.GetDefineFlag("nocutoff");
+
+      lower_lset_bound = flags.GetNumFlag("lower_lset_bound",0.0);
+      upper_lset_bound = flags.GetNumFlag("upper_lset_bound",0.0);
       
       dynamic_search_dir = flags.GetDefineFlag("dynamic_search_dir");
       
@@ -430,8 +434,24 @@ namespace ngcomp
     virtual void Do (LocalHeap & clh)
     {
       static int refinements = 0;
-      cout << " This is the Do-call on refinement level " << refinements << std::endl;
+      cout << " This is the Do-call on refinement level " << refinements++ << std::endl;
 
+
+      * n_deformed_points_edge = 0.0;
+      * n_accepted_points_edge = 0.0;
+      * n_rejected_points_edge = 0.0;
+      * n_corrected_points_edge = 0.0;
+
+      * n_deformed_points_face = 0.0;
+      * n_accepted_points_face = 0.0;
+      * n_rejected_points_face = 0.0;
+      * n_corrected_points_face = 0.0;
+
+      * n_deformed_points_cell = 0.0;
+      * n_accepted_points_cell = 0.0;
+      * n_rejected_points_cell = 0.0;
+      * n_corrected_points_cell = 0.0;
+      
       shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
       *factor = 0.0;
       deform->GetVector() = 0.0;
@@ -467,6 +487,21 @@ namespace ngcomp
           gf_fes_p1->GetDofNrs(elnr,dnums_lset_p1);
           FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
           gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
+
+          // element only predicts its own deformation if (linear) intersected
+          {
+            bool has_pos = (lset_vals_p1[D] > lower_lset_bound);
+            bool has_neg = (lset_vals_p1[D] < upper_lset_bound);
+            for (int d = 0; d < D; ++d)
+            {
+              if (lset_vals_p1[d] > lower_lset_bound)
+                has_pos = true;
+              if (lset_vals_p1[d] < upper_lset_bound)
+                has_neg = true;
+            }
+            if (! (has_pos && has_neg) ) 
+              continue;
+          } 
           
           FlatVector<> shape_p1(dnums_lset_p1.Size(),lh);
           FlatMatrixFixWidth<D> dshape_p1(dnums_lset_p1.Size(),lh);
@@ -480,9 +515,6 @@ namespace ngcomp
           const double lset_center_p1 = InnerProduct(shape_p1,lset_vals_p1);
           const double h = pow(mip_center.GetJacobiDet(),1.0/D);
           
-          if (abs(lset_center_p1/h) > 1.0)
-            if (!no_cut_off)
-              continue;
 
           sca_fe_p1.CalcDShape(ip_center,dshape_p1);
           Vec<D> grad = Trans(dshape_p1) * lset_vals_p1;
@@ -491,6 +523,7 @@ namespace ngcomp
           // but has to be represented on the reference domain:
           Mat<D> trafo_normal_ref = mip_center.GetJacobianInverse() * Trans(mip_center.GetJacobianInverse());
           Vec<D> normal = trafo_normal_ref * grad;
+          
           double len = L2Norm(normal);
           normal /= len;
           
@@ -531,7 +564,6 @@ namespace ngcomp
             edge_mass_mat = 0.0;
             edge_rhs_mat = 0.0;
             
-            //TODO: ORDER
             const IntegrationRule & ir_edge = SelectIntegrationRule (ET_SEGM, 2*edge_order);
 
             IntegrationPoint curr_vol_ip;
