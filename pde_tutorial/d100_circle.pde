@@ -20,7 +20,7 @@ gridfunction lset_ho -fespace=fes_ho
                 
 numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
 
-fespace fes_deform -type=h1ho -order=2 -vec -dirichlet=[1,2,3,4,5,6]
+fespace fes_deform -type=h1ho -order=3 -vec -dirichlet=[1,2,3,4,5,6]
 gridfunction deform -fespace=fes_deform
                 
 numproc xgeomtest npxd 
@@ -36,6 +36,7 @@ numproc xgeomtest npxd
         -volume=0.78539816339
         -lower_lset_bound=0.0
         -upper_lset_bound=0.0
+#        -no_edges
 ######### CURV IT #########
 
         

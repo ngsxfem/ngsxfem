@@ -164,7 +164,7 @@ namespace ngcomp
 
     void SearchCorrespondingPoint (
       const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,
-      const Vec<D> & init_point, double goal_val, const Vec<D> & trafo_normal_ref,
+      const Vec<D> & init_point, double goal_val,
       const Vec<D> & init_search_dir, Vec<D> & final_point, LocalHeap & lh)
     {
       HeapReset hr(lh);
@@ -192,7 +192,7 @@ namespace ngcomp
 
         if (dynamic_search_dir)
         {
-          search_dir = trafo_normal_ref * curr_grad;
+          search_dir = curr_grad;
           search_dir /= L2Norm(search_dir);
         }
         
@@ -529,11 +529,7 @@ namespace ngcomp
           sca_fe_p1.CalcDShape(ip_center,dshape_p1);
           Vec<D> grad = Trans(dshape_p1) * lset_vals_p1;
 
-          // grad on physical domain defines the direct,
-          // but has to be represented on the reference domain:
-          Mat<D> trafo_normal_ref = mip_center.GetJacobianInverse() * Trans(mip_center.GetJacobianInverse());
-          Vec<D> normal = trafo_normal_ref * grad;
-          
+          Vec<D> normal =  grad;
           double len = L2Norm(normal);
           normal /= len;
           
@@ -558,7 +554,6 @@ namespace ngcomp
             const int global_edge_nr = edges[ref_edge_nr];
             if (deform->GetFESpace()->IsDirichletEdge(global_edge_nr))
               continue;
-
             const int v1 = ElementTopology::GetEdges(eltype)[ref_edge_nr][0];
             const int v2 = ElementTopology::GetEdges(eltype)[ref_edge_nr][1];
 
@@ -603,7 +598,7 @@ namespace ngcomp
               //statistics:
               *n_deformed_points_edge+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, trafo_normal_ref, normal, final_point, lh);
+                                       lset_lin, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
@@ -616,6 +611,9 @@ namespace ngcomp
                   dist *= accept_threshold / distnorm;
                   //statistics:
                   *n_corrected_points_edge+=1.0;
+                  MappedIntegrationPoint<D,D> mip(old_ip,eltrans);
+                  cout << " old_ip = " << old_ip << endl;
+                  cout << " corrected mip.GetPoint() = " << mip.GetPoint() << endl;
                 }
                 else
                 {
@@ -732,7 +730,7 @@ namespace ngcomp
               //statistics:
               *n_deformed_points_face+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, trafo_normal_ref, normal, final_point, lh);
+                                       lset_lin, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
@@ -761,19 +759,24 @@ namespace ngcomp
 
 
               face_fe.CalcShape(curr_ip_face,shape_face_ho);
+              
               face_mass_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(shape_only_face_ho);
 
               Vec<D> transf_dist = mip_center.GetJacobian() * dist;
+              // cout << " mip_center.GetJacobian() = " << mip_center.GetJacobian() << endl;
+              // cout << " normal = " << normal << endl;
+              // cout << " dist = " << dist << endl;
+              // cout << " transf_dist = " << transf_dist << endl;
               face_rhs_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(transf_dist);
               
             }
 
             CalcInverse(face_mass_mat);
             deform_contribution = face_mass_mat * face_rhs_mat;
-            
+             
             Array<int> dnums_deform;
             if (D==2)
-              fes_deform->GetInnerDofNrs(global_face_nr, dnums_deform);
+              fes_deform->GetInnerDofNrs(elnr, dnums_deform);
             else
               fes_deform->GetFaceDofNrs(global_face_nr, dnums_deform);
 
@@ -792,6 +795,11 @@ namespace ngcomp
             for (int k = 0; k < values.Size(); ++k)
               values(k) += 1.0;
             factor->SetIndirect(dnums_deform,values);
+            
+            // cout << " mip_center.GetPoint() = " << mip_center.GetPoint() << endl;
+            // cout << " deform_contribution = " << deform_contribution << endl;
+            // cout << " dnums_deform = " << dnums_deform << endl;
+            // getchar();
             
           }
 
