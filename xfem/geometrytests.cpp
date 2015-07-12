@@ -49,6 +49,29 @@ namespace ngcomp
     der = Trans(mip.GetJacobianInverse()) * der_ref;
   }
 
+
+  void PrintConvergenceTable(const Array<double> & tab, string label="")
+  {
+    cout << endl;
+    cout << label << ":" << endl;
+    for (int k = 0; k < tab.Size(); ++k)
+    {
+      cout << setw(16) << tab[k];
+      if(k>0)
+        cout << "\t" << -log(tab[k]/tab[k-1])/log(2);
+      else if (tab.Size()>1)
+        cout << "\teoc:";
+      cout << endl;
+    }
+    if (tab.Size()>1)
+    {
+      cout << setw(16) << "av. eoc:";
+      cout << "\t" << -log(tab[tab.Size()-1]/tab[0])/(log(2)*(tab.Size()-1));
+    }
+    cout << endl;
+  }
+
+  
 /* ---------------------------------------- 
    numproc
    ---------------------------------------- */
