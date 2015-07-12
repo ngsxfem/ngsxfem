@@ -541,9 +541,68 @@ namespace ngcomp
           ma->GetElEdges(elnr,edges);
           ma->GetElFaces(elnr,faces);
 
+          const int order = deform->GetFESpace()->GetOrder();
+          Array<int> el_dnums_deform;
+          deform->GetFESpace()->GetDofNrs(elnr,el_dnums_deform);
+
+          FlatMatrixFixWidth<D> element_coefs(el_dnums_deform.Size(),lh);
+          FlatMatrixFixWidth<D> element_count(el_dnums_deform.Size(),lh);
+          element_coefs = 0.0;
+          element_count = 0.0;
+
+          // classify degrees of freedoms into verts/edge/face/cell dofs:
+          Array<IntRange> dof_range_of_vert;
+          Array<IntRange> dof_range_of_edge;
+          Array<IntRange> dof_range_of_face;
+          IntRange dof_range_of_cell;
+          {
+            int offset = 0;
+            for (int d = 0; d < D+1; ++d)
+            {
+              dof_range_of_vert.Append(IntRange(offset,offset+1));
+              offset++;
+            }
+
+            for (int e = 0; e < ElementTopology::GetNEdges(eltype); ++e)
+            {
+              dof_range_of_edge.Append(IntRange(offset,offset+order-1));
+              offset+=order-1;
+            }
+
+            for (int f = 0; f < ElementTopology::GetNFaces(eltype); ++f)
+            {
+              dof_range_of_face.Append(IntRange(offset,offset+(order-2)*(order-1)/2));
+              offset+=(order-2)*(order-1)/2;
+            }
+
+            if (D==2)
+              dof_range_of_cell = IntRange(offset,offset);
+            else
+            {
+              dof_range_of_cell = IntRange(offset,offset+(order-3)*(order-2)*(order-1)/6);
+              offset+=(order-3)*(order-2)*(order-1)/6;
+            }
+            
+            if (offset != el_dnums_deform.Size())
+            {
+              std::cout << " miscounted 1 " << std::endl;
+              throw Exception(" I did not count right ");
+            }
+
+            // for (int k = 0; k < dof_range_of_vert.Size(); ++k)
+            //   cout << " dof_range_of_vert[k] = " << dof_range_of_vert[k] << endl;
+            // for (int k = 0; k < dof_range_of_edge.Size(); ++k)
+            //   cout << " dof_range_of_edge[k] = " << dof_range_of_edge[k] << endl;
+            // for (int k = 0; k < dof_range_of_face.Size(); ++k)
+            //   cout << " dof_range_of_face[k] = " << dof_range_of_face[k] << endl;
+            // cout << " dof_range_of_cell = " << dof_range_of_cell << endl;
+
+          }
+              
+
           Array<int> edge_verts;
           Array<int> face_verts;
-
+          
           if (!no_edges)
           for (int ref_edge_nr = 0; ref_edge_nr < D+1; ++ref_edge_nr)
           {
@@ -572,11 +631,12 @@ namespace ngcomp
             edge_mass_mat = 0.0;
             edge_rhs_mat = 0.0;
             
-            const IntegrationRule & ir_edge = SelectIntegrationRule (ET_SEGM, 2*edge_order);
+            FlatMatrixFixWidth<D> edge_coefs(inner_edge_dofs,
+                                             &element_coefs(dof_range_of_edge[ref_edge_nr].First(),0));
 
+            const IntegrationRule & ir_edge = SelectIntegrationRule (ET_SEGM, 2*edge_order);
             IntegrationPoint curr_vol_ip;
-            FlatMatrixFixWidth<D> deform_contribution(inner_edge_dofs,lh);
-            
+
             for (int l = 0; l < ir_edge.GetNIP(); l++)
             {
               const IntegrationPoint & curr_ip_edge(ir_edge[l]); //one integration point case...
@@ -586,7 +646,6 @@ namespace ngcomp
                   + (1.0-curr_ip_edge(0)) * ElementTopology::GetVertices(eltype)[v2][d];
 
               IntegrationPoint old_ip(curr_vol_ip);
-              Vec<D> old_ref_point = old_ip.Point();
 
               sca_fe_p1.CalcShape(curr_vol_ip,shape_p1);
               double lset_lin = InnerProduct(shape_p1,lset_vals_p1);
@@ -638,26 +697,10 @@ namespace ngcomp
             }
             
             CalcInverse(edge_mass_mat);
-            deform_contribution = edge_mass_mat * edge_rhs_mat;
-            
-            Array<int> dnums_deform;
-            fes_deform->GetEdgeDofNrs(global_edge_nr, dnums_deform);
+            edge_coefs = edge_mass_mat * edge_rhs_mat;
 
-            FlatMatrixFixWidth<D> deform_vec(dnums_deform.Size(),lh);
-            FlatVector<> deform_vec_as_vec(D*dnums_deform.Size(),&deform_vec(0,0));
-            deform->GetVector().GetIndirect(dnums_deform,deform_vec_as_vec);
-
-            deform_vec += deform_contribution;
-            deform->GetVector().SetIndirect(dnums_deform,deform_vec_as_vec);
-
-            // count the number of times that a deformation value
-            // has been added for the d.o.f.
-            FlatVector<> values(D*dnums_deform.Size(),lh);
-            factor->GetIndirect(dnums_deform,values);
-            for (int k = 0; k < values.Size(); ++k)
-              values(k) += 1.0;
-            factor->SetIndirect(dnums_deform,values);
-            
+            for (int l : dof_range_of_edge[ref_edge_nr])
+              element_count(l,0) += 1.0;
           }
 
 
@@ -679,22 +722,61 @@ namespace ngcomp
             
             const int global_face_nr = faces[ref_face_nr];
 
-            const int v1 = ElementTopology::GetFaces(eltype)[ref_face_nr][0];
-            const int v2 = ElementTopology::GetFaces(eltype)[ref_face_nr][1];
-            const int v3 = ElementTopology::GetFaces(eltype)[ref_face_nr][2];
-
-            ma->GetFacePNums(global_face_nr, face_verts);
             if (deform->GetFESpace()->IsDirichletFace(global_face_nr))
               continue;
+            
+            // vertex numbers (w.r.t. to ref. element) of current face:  
+            const int * local_vert = ElementTopology::GetFaces(eltype)[ref_face_nr];
 
+            Array<IntRange> dof_range_of_vert_of_face;
+            Array<IntRange> dof_range_of_edge_of_face;
+            int ndof_all_edges_of_face = 0;
+
+            { // fill local numbering (of verts and edges)
+              for (int v = 0; v < ElementTopology::GetNVertices(etface); ++v)
+              {
+                dof_range_of_vert_of_face.Append(dof_range_of_vert[local_vert[v]]);;
+                ndof_all_edges_of_face ++;
+              }
+            
+              for (int e = 0; e < ElementTopology::GetNEdges(etface); ++e)
+              {
+                int edge_vertex1 = ElementTopology::GetEdges(etface)[e][0];
+                int edge_vertex2 = ElementTopology::GetEdges(etface)[e][1];
+                int edge_of_cell = ElementTopology::GetEdgeNr(eltype,local_vert[edge_vertex1],
+                                                              local_vert[edge_vertex2]);
+                dof_range_of_edge_of_face.Append(dof_range_of_edge[edge_of_cell]);
+                ndof_all_edges_of_face += dof_range_of_edge[edge_of_cell].Size();
+              }
+            }
+
+            FlatMatrixFixWidth<D> coefs_edges (ndof_all_edges_of_face,lh);
+            int offset = 0;
+            { // fill local coefs corresponding to verts and edges
+              for (int v = 0; v < ElementTopology::GetNVertices(etface); ++v)
+              {
+                coefs_edges.Rows(offset,offset+1)
+                  = element_coefs.Rows(dof_range_of_vert_of_face[v]);
+                offset ++;
+              }
+              for (int e = 0; e < ElementTopology::GetNEdges(etface); ++e)
+              {
+                coefs_edges.Rows(offset,offset + dof_range_of_edge_of_face[e].Size())
+                  = element_coefs.Rows(dof_range_of_edge_of_face[e]);
+                offset += dof_range_of_edge_of_face[e].Size();
+              }            
+            }
+
+            ma->GetFacePNums(global_face_nr, face_verts);
             H1HighOrderFE<ET_TRIG> & face_fe = *(new (lh) H1HighOrderFE<ET_TRIG>(face_order));
-
             face_fe.SetVertexNumbers(face_verts);
 
             FlatVector<> shape_face_ho(face_fe.GetNDof(),lh);
-            const int face_dofs_offset = 3 * face_order;
-            int inner_face_dofs = face_fe.GetNDof() - face_dofs_offset;
-            FlatVector<> shape_only_face_ho(inner_face_dofs,&shape_face_ho(face_dofs_offset));
+            int inner_face_dofs = face_fe.GetNDof() - offset;
+
+            FlatVector<> shape_only_edges_ho(offset,&shape_face_ho(0));
+            FlatVector<> shape_only_face_ho(inner_face_dofs,&shape_face_ho(offset));
+            
             FlatMatrix<> face_mass_mat(inner_face_dofs,inner_face_dofs,lh);
             FlatMatrixFixWidth<D> face_rhs_mat(inner_face_dofs,lh);
             face_mass_mat = 0.0;
@@ -703,7 +785,7 @@ namespace ngcomp
             const IntegrationRule & ir_face = SelectIntegrationRule (etface, 2*face_order);
 
             IntegrationPoint curr_vol_ip;
-            FlatMatrixFixWidth<D> deform_contribution(inner_face_dofs,lh);
+            FlatMatrixFixWidth<D> face_coefs(inner_face_dofs, &element_coefs(dof_range_of_face[ref_face_nr].First(),0));
             
             for (int l = 0; l < ir_face.GetNIP(); l++)
             {
@@ -712,9 +794,9 @@ namespace ngcomp
               for (int d = 0; d < D; ++d)
               {
                 curr_vol_ip(d) = 0.0;
-                curr_vol_ip(d) += curr_ip_face(0) * ElementTopology::GetVertices(eltype)[v1][d];
-                curr_vol_ip(d) += curr_ip_face(1) * ElementTopology::GetVertices(eltype)[v2][d];
-                curr_vol_ip(d) += (1-curr_ip_face(0)-curr_ip_face(1)) * ElementTopology::GetVertices(eltype)[v3][d];
+                curr_vol_ip(d) += curr_ip_face(0) * ElementTopology::GetVertices(eltype)[local_vert[0]][d];
+                curr_vol_ip(d) += curr_ip_face(1) * ElementTopology::GetVertices(eltype)[local_vert[1]][d];
+                curr_vol_ip(d) += (1-curr_ip_face(0)-curr_ip_face(1)) * ElementTopology::GetVertices(eltype)[local_vert[2]][d];
               }
 
               IntegrationPoint old_ip(curr_vol_ip);
@@ -763,6 +845,9 @@ namespace ngcomp
               face_mass_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(shape_only_face_ho);
 
               Vec<D> transf_dist = mip_center.GetJacobian() * dist;
+              // correction with deformation of edges..
+              transf_dist -= Trans(coefs_edges) * shape_only_edges_ho;
+
               // cout << " mip_center.GetJacobian() = " << mip_center.GetJacobian() << endl;
               // cout << " normal = " << normal << endl;
               // cout << " dist = " << dist << endl;
@@ -770,36 +855,12 @@ namespace ngcomp
               face_rhs_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(transf_dist);
               
             }
-
             CalcInverse(face_mass_mat);
-            deform_contribution = face_mass_mat * face_rhs_mat;
-             
-            Array<int> dnums_deform;
-            if (D==2)
-              fes_deform->GetInnerDofNrs(elnr, dnums_deform);
-            else
-              fes_deform->GetFaceDofNrs(global_face_nr, dnums_deform);
+            face_coefs = face_mass_mat * face_rhs_mat;
 
-
-            FlatMatrixFixWidth<D> deform_vec(dnums_deform.Size(),lh);
-            FlatVector<> deform_vec_as_vec(D*dnums_deform.Size(),&deform_vec(0,0));
-            deform->GetVector().GetIndirect(dnums_deform,deform_vec_as_vec);
-
-            deform_vec += deform_contribution;
-            deform->GetVector().SetIndirect(dnums_deform,deform_vec_as_vec);
-
-            // count the number of times that a deformation value
-            // has been added for the d.o.f.
-            FlatVector<> values(D*dnums_deform.Size(),lh);
-            factor->GetIndirect(dnums_deform,values);
-            for (int k = 0; k < values.Size(); ++k)
-              values(k) += 1.0;
-            factor->SetIndirect(dnums_deform,values);
-            
-            // cout << " mip_center.GetPoint() = " << mip_center.GetPoint() << endl;
-            // cout << " deform_contribution = " << deform_contribution << endl;
-            // cout << " dnums_deform = " << dnums_deform << endl;
-            // getchar();
+            // cout << " face_coefs = " << face_coefs << endl;
+            for (int l : dof_range_of_face[ref_face_nr])
+              element_count(l,0) += 1.0;
             
           }
 
@@ -811,6 +872,32 @@ namespace ngcomp
           }
 
 
+          // Write element_coefs into global vector:
+          {
+
+            FlatMatrixFixWidth<D> deform_vec(el_dnums_deform.Size(),lh);
+            FlatVector<> deform_vec_as_vec(D*el_dnums_deform.Size(),&deform_vec(0,0));
+            deform->GetVector().GetIndirect(el_dnums_deform,deform_vec_as_vec);
+            deform_vec_as_vec += element_coefs;
+            deform->GetVector().SetIndirect(el_dnums_deform,deform_vec_as_vec);
+
+            // count the number of times that a deformation value
+            // has been added for the d.o.f.
+            FlatVector<> factors(D*el_dnums_deform.Size(),lh);
+            factor->GetIndirect(el_dnums_deform,factors);
+            for (int k = 0; k < factors.Size(); k+=D)
+              factors(k) += element_count(k) ;
+            factor->SetIndirect(el_dnums_deform,factors);
+
+            // cout << " deform_vec = " << deform_vec << endl;
+            // cout << " deform_vec_as_vec = " << deform_vec_as_vec << endl;
+            // cout << " factors = " << factors << endl;
+            // Ng_Redraw();
+            // getchar();
+          }
+
+
+          
           
         }
 
