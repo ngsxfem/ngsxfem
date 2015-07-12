@@ -4,7 +4,7 @@ mesh = d99_testgeom_2.vol.gz
 shared = libngsxfem_xfem
 
 define constant heapsize = 1e9
-constant R = 0.5-1e-12
+constant R = 2.0/3.0
 
 define coefficient lset
 ( sqrt(x*x+y*y) - R),
@@ -20,7 +20,7 @@ gridfunction lset_ho -fespace=fes_ho
                 
 numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
 
-fespace fes_deform -type=h1ho -order=3 -vec -dirichlet=[1,2,3,4,5,6]
+fespace fes_deform -type=h1ho -order=2 -vec -dirichlet=[1,2,3,4,5,6]
 gridfunction deform -fespace=fes_deform
                 
 numproc xgeomtest npxd 
@@ -33,28 +33,29 @@ numproc xgeomtest npxd
         # -nocutoff
         -threshold=0.1
         -reject_threshold=1
-        -volume=0.78539816339
-        -lower_lset_bound=0.0
+        -volume=1.3962634016
+        -surface=4.18879020479
+        -lower_lset_bound=-0.0
         -upper_lset_bound=0.0
 #        -no_edges
 ######### CURV IT #########
 
         
-define constant aneg = 2.0
+define constant aneg = 1.5
 define constant apos = 1.0
 
 
 define coefficient rhsneg
-(8),
+(4*aneg),
 
 define coefficient rhspos
 (2/(sqrt(x*x+y*y))),
 
 define coefficient solpos
-(1.0-2.0*sqrt(x*x+y*y)),
+(4.0/3.0-2.0*sqrt(x*x+y*y)),
 
 define coefficient solneg
-(1.0/4.0-(x*x+y*y)),
+(4.0/9.0-(x*x+y*y)),
 
 
 define fespace fescomp
@@ -63,7 +64,7 @@ define fespace fescomp
        -order=2
        -dirichlet=[1,2]
        -ref_space=0
-#       -dgjumps
+       -dgjumps
 
 numproc informxfem npix 
         -xstdfespace=fescomp
@@ -80,7 +81,9 @@ xsource rhsneg rhspos
 define bilinearform a -fespace=fescomp -printelmat #-eliminate_internal -keep_internal -symmetric -linea
 xlaplace aneg apos
 xnitsche_heaviside aneg apos 1.0 1.0 50.0
-# xmass 1.0 1.0 
+# xmass 1.0 1.0
+#lo_ghostpenalty aneg apos 1.0
+#sec_ghostpenalty aneg apos 0.0001
                 
 define preconditioner c -type=direct -bilinearform=a
 
@@ -90,7 +93,8 @@ numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -prec
 numproc draw npdr -coefficient=lset -label=levelset
 
 
-numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=0 -minval=0 -maxval=0
+#numproc visualization npvis -scalarfunction=lset_ho -vectorfunction=deform -deformationscale=-1 -subdivision=3  -minval=-0.4 -maxval=0.8 -nolinear
+numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=3  -minval=-0.4 -maxval=0.8 -nolineartexture
 
 coefficient zero
 0,
@@ -101,7 +105,7 @@ numproc xdifference npxd
         -solution_p=solpos
         -jumprhs=zero
         -levelset=lset
-        -interorder=5
+        -interorder=4
         -henryweight_n=1
         -henryweight_p=1
         -diffusion_n=2
