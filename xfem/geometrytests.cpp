@@ -83,10 +83,19 @@ namespace ngcomp
     shared_ptr<GridFunction> gf_lset_p1;
     shared_ptr<GridFunction> gf_lset_ho;
     shared_ptr<GridFunction> deform;
+    
     double accept_threshold=0.1;
     double reject_threshold=0.4;
-    double volume_ctrl=-1;
 
+    double volume_ctrl=-1;
+    double surface_ctrl=-1;
+    Array<double> volume_errors;
+    Array<double> surface_errors;
+    Array<double> max_lset_errors;
+    Array<double> lset_l1_errors;
+    Array<double> diff_phi_l2_errors;
+    Array<double> diff_phi_max_errors;
+    
     bool dynamic_search_dir=false; //take normal of accurate level set 
 
     double lower_lset_bound=0.0; //domain of interest for deformation: lower bound
@@ -95,6 +104,8 @@ namespace ngcomp
     bool no_edges = false;
     bool no_faces = false;
     bool no_cells = false;
+
+    int order = -1;
     
     // statistics
     double * n_maxits;
@@ -127,6 +138,8 @@ namespace ngcomp
         gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), false);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
 
+      order = deform->GetFESpace()->GetOrder();
+      
       no_edges = flags.GetDefineFlag("no_edges");
       no_faces = flags.GetDefineFlag("no_faces");
       no_cells = flags.GetDefineFlag("no_cells");
@@ -140,6 +153,7 @@ namespace ngcomp
       reject_threshold = flags.GetNumFlag("reject_threshold",accept_threshold * 4.0);
       
       volume_ctrl = flags.GetNumFlag("volume",-1);
+      surface_ctrl = flags.GetNumFlag("surface",-1);
 
       //statistic variables:
       apde->AddVariable ("npgeomtest.maxits", 0.0, 6);
@@ -242,7 +256,12 @@ namespace ngcomp
     void Test (LocalHeap & lh)
     {
       double volume = 0.0;
-      
+      double surface = 0.0;
+      double max_lset = 0.0;
+      double lset_l1 = 0.0;
+      double diff_phi_l2 = 0.0;
+      double diff_phi_max = 0.0;
+      double diff_phi_vol = 0.0;
       int ne=ma->GetNE();
 
       for (int elnr = 0; elnr < ne; ++elnr)
@@ -255,6 +274,55 @@ namespace ngcomp
         FlatVector<> vals(dofs.Size(),lh);
         gf_lset_p1->GetVector().GetIndirect(dofs,vals);
 
+        ma->SetDeformation(deform);
+        ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+        ma->SetDeformation(nullptr);
+        ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+
+        IntegrationPoint ipzero(0.0,0.0,0.0);
+        MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
+        
+        {
+
+          // element only measure error if "at the interface"
+          Array<int> dnums_lset_p1;
+          gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dnums_lset_p1);
+          FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
+          gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
+            
+          bool has_pos = (lset_vals_p1[D] > lower_lset_bound);
+          bool has_neg = (lset_vals_p1[D] < upper_lset_bound);
+          for (int d = 0; d < D; ++d)
+          {
+            if (lset_vals_p1[d] > lower_lset_bound)
+              has_pos = true;
+            if (lset_vals_p1[d] < upper_lset_bound)
+              has_neg = true;
+          }
+          if (has_pos && has_neg)
+          {
+            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order);
+            for (int i = 0 ; i < pir.GetNIP(); i++)
+            {
+              MappedIntegrationPoint<D,D> mip(pir[i], eltrans_curved);
+              Vec<D> y = mx0.GetJacobianInverse() * (mip.GetPoint() - mx0.GetPoint()); //point such that level set is approximately that of x_hathat
+              IntegrationPoint ipy(y);
+              MappedIntegrationPoint<D,D> mipy(ipy,eltrans);
+
+              const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
+              const double lset_val = gf_lset_ho->Evaluate(mipy);
+
+              diff_phi_l2 += mip.GetWeight() * sqr(lset_val_transf_p1-lset_val);
+              diff_phi_max = max(diff_phi_max,abs(lset_val_transf_p1-lset_val));
+              diff_phi_vol += mip.GetWeight();
+            }
+          }
+        }
+
+
+
+
+        
         bool cut_els = false;
 
         if (vals[0] == 0.0) cut_els = true;
@@ -276,10 +344,8 @@ namespace ngcomp
         {
           if (first_dt==NEG)
           {
-            ma->SetDeformation(deform);
-            ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
             
-            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 4);
+            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order);
             for (int i = 0 ; i < pir.GetNIP(); i++)
             {
               MappedIntegrationPoint<D,D> mip(pir[i], eltrans_curved);
@@ -289,8 +355,6 @@ namespace ngcomp
           }
           continue;
         }
-        ma->SetDeformation(nullptr);
-        ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
 
         ScalarFieldEvaluator * lset_eval_p
           = ScalarFieldEvaluator::Create(D,*gf_lset_ho,eltrans,lh);
@@ -301,7 +365,7 @@ namespace ngcomp
 
         auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                        *cquad, lh, 
-                                                       4, 0, 
+                                                       2*order, 0, 
                                                        0, 0);
 
         xgeom->MakeQuadRule();
@@ -309,22 +373,72 @@ namespace ngcomp
         const FlatCompositeQuadratureRule<D> & fcompr(fxgeom.GetCompositeRule<D>());
         const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
 
-        ma->SetDeformation(deform);
-        ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
-        
         for (int i = 0; i < fquad.Size(); ++i)
         {
           IntegrationPoint ip(&fquad.points(i,0),fquad.weights(i));
           MappedIntegrationPoint<D,D> mip(ip, eltrans_curved);
           volume += mip.GetWeight();
         }
-        
-        ma->SetDeformation(nullptr);
 
+        const FlatQuadratureRuleCoDim1<D> & fquad_if(fcompr.GetInterfaceRule());
+        for (int i = 0; i < fquad_if.Size(); ++i)
+        {
+          IntegrationPoint ip(&fquad_if.points(i,0),0.0); // x_hathat
+          MappedIntegrationPoint<D,D> mip(ip, eltrans_curved); // x
+
+          Vec<D> y = mx0.GetJacobianInverse() * (mip.GetPoint() - mx0.GetPoint()); //point such that level set is approximately that of x_hathat
+          IntegrationPoint ipy(y);
+          MappedIntegrationPoint<D,D> mipy(ipy,eltrans);
+          // now mip.GetPoint() == mipy.GetPoint()
+
+          const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
+          
+          const double lset_val = gf_lset_ho->Evaluate(mipy);
+
+          max_lset = max(abs(lset_val),max_lset);
+          
+          
+          Mat<D,D> Finv = mip.GetJacobianInverse();
+          const double absdet = mip.GetMeasure();
+
+          Vec<D> nref = fquad_if.normals.Row(i);
+          Vec<D> normal = absdet * Trans(Finv) * nref ;
+          double len = L2Norm(normal);
+          normal /= len;
+
+          const double weight = fquad_if.weights(i) * len;
+
+          lset_l1 += weight * abs(lset_val);
+          surface += weight;
+        }        
+        
       }
-      cout << " volume = " << volume << endl;
+      
+      diff_phi_l2 =sqrt(diff_phi_l2/diff_phi_vol);
+
+      if (surface_ctrl>0)
+      {
+        surface_errors.Append(abs(surface-surface_ctrl));
+        PrintConvergenceTable(surface_errors,"surface error");
+      }
       if (volume_ctrl>0)
-        cout << " volume error = " << abs(volume-volume_ctrl) << endl;
+      {
+        volume_errors.Append(abs(volume-volume_ctrl));
+        PrintConvergenceTable(volume_errors,"volume error");
+      }
+
+      lset_l1_errors.Append(lset_l1);
+      PrintConvergenceTable(lset_l1_errors,"lset l1 error");
+      
+      max_lset_errors.Append(max_lset);
+      PrintConvergenceTable(max_lset_errors,"lset max error");
+
+      diff_phi_l2_errors.Append(diff_phi_l2);
+      PrintConvergenceTable(diff_phi_l2_errors,"phi l2 error");
+      
+      diff_phi_max_errors.Append(diff_phi_max);
+      PrintConvergenceTable(diff_phi_max_errors,"phi max error");
+      
       ma->SetDeformation(deform);
     }
     
@@ -484,6 +598,8 @@ namespace ngcomp
       * n_accepted_points_cell = 0.0;
       * n_rejected_points_cell = 0.0;
       * n_corrected_points_cell = 0.0;
+
+      double max_dist = 0.0;
       
       shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
       *factor = 0.0;
@@ -686,6 +802,7 @@ namespace ngcomp
               Vec<D> dist = final_point - orig_point;
 
               double distnorm = L2Norm(dist);
+              max_dist = max(max_dist,distnorm);
               if (distnorm > accept_threshold)
               {
                 if (distnorm < reject_threshold)
@@ -841,6 +958,7 @@ namespace ngcomp
               Vec<D> dist = final_point - orig_point;
 
               double distnorm = L2Norm(dist);
+              max_dist = max(max_dist,distnorm);
               if (distnorm > accept_threshold)
               {
                 if (distnorm < reject_threshold)
@@ -918,9 +1036,6 @@ namespace ngcomp
             // Ng_Redraw();
             // getchar();
           }
-
-
-          
           
         }
 
@@ -971,6 +1086,9 @@ namespace ngcomp
         cout << " totalits = " << *n_totalits << endl;
         cout << " totalits/deformpoints = " << *n_totalits/ n_deformed_points_total << endl;
         cout << " maxits = " << *n_maxits << endl;
+
+        cout << " max_dist = " << max_dist << endl;
+          
       }
 
       ma->SetDeformation(deform);
