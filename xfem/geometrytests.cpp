@@ -444,25 +444,25 @@ namespace ngcomp
       if (surface_ctrl>0)
       {
         surface_errors.Append(abs(surface-surface_ctrl));
-        PrintConvergenceTable(surface_errors,"surface error");
+        PrintConvergenceTable(surface_errors,"surface_error");
       }
       if (volume_ctrl>0)
       {
         volume_errors.Append(abs(volume-volume_ctrl));
-        PrintConvergenceTable(volume_errors,"volume error");
+        PrintConvergenceTable(volume_errors,"volume_error");
       }
 
       lset_l1_errors.Append(lset_l1);
-      PrintConvergenceTable(lset_l1_errors,"lset l1 error");
+      PrintConvergenceTable(lset_l1_errors,"lset_l1_error");
       
       max_lset_errors.Append(max_lset);
-      PrintConvergenceTable(max_lset_errors,"lset max error");
+      PrintConvergenceTable(max_lset_errors,"lset_max_error");
 
       diff_phi_l2_errors.Append(diff_phi_l2);
-      PrintConvergenceTable(diff_phi_l2_errors,"phi l2 error");
+      PrintConvergenceTable(diff_phi_l2_errors,"phi_l2_error");
       
       diff_phi_max_errors.Append(diff_phi_max);
-      PrintConvergenceTable(diff_phi_max_errors,"phi max error");
+      PrintConvergenceTable(diff_phi_max_errors,"phi_max_error");
       
       ma->SetDeformation(deform);
     }
