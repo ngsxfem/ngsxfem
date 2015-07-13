@@ -209,6 +209,7 @@ namespace ngcomp
     void SearchCorrespondingPoint (
       const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,
       const Vec<D> & init_point, double goal_val,
+      const Mat<D> & trafo_of_normals,
       const Vec<D> & init_search_dir, Vec<D> & final_point, LocalHeap & lh)
     {
       HeapReset hr(lh);
@@ -236,7 +237,7 @@ namespace ngcomp
 
         if (dynamic_search_dir)
         {
-          search_dir = curr_grad;
+          search_dir = trafo_of_normals * curr_grad;
           search_dir /= L2Norm(search_dir);
         }
         
@@ -692,7 +693,8 @@ namespace ngcomp
           sca_fe_p1.CalcDShape(ip_center,dshape_p1);
           Vec<D> grad = Trans(dshape_p1) * lset_vals_p1;
 
-          Vec<D> normal =  grad;
+          Mat<D> trafo_of_normals = mip_center.GetJacobianInverse() * Trans(mip_center.GetJacobianInverse());
+          Vec<D> normal = trafo_of_normals *  grad;
           double len = L2Norm(normal);
           normal /= len;
           
@@ -820,7 +822,7 @@ namespace ngcomp
               //statistics:
               *n_deformed_points_edge+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, normal, final_point, lh);
+                                       lset_lin, trafo_of_normals, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
@@ -976,7 +978,7 @@ namespace ngcomp
               //statistics:
               *n_deformed_points_face+=1.0;
               SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, normal, final_point, lh);
+                                       lset_lin, trafo_of_normals, normal, final_point, lh);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
