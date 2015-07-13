@@ -52,6 +52,9 @@ namespace ngcomp
 
   void PrintConvergenceTable(const Array<double> & tab, string label="")
   {
+
+    ofstream fout("conv_"+label+".out");
+    fout << tab;
     cout << endl;
     cout << label << ":" << endl;
     for (int k = 0; k < tab.Size(); ++k)
