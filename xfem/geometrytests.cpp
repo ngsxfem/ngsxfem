@@ -108,6 +108,8 @@ namespace ngcomp
     bool no_faces = false;
     bool no_cells = false;
 
+    bool adaptive = false;
+    
     int order = -1;
     
     // statistics
@@ -146,7 +148,9 @@ namespace ngcomp
       no_edges = flags.GetDefineFlag("no_edges");
       no_faces = flags.GetDefineFlag("no_faces");
       no_cells = flags.GetDefineFlag("no_cells");
-      
+
+      adaptive = flags.GetDefineFlag("adaptive");
+        
       lower_lset_bound = flags.GetNumFlag("lower_lset_bound",0.0);
       upper_lset_bound = flags.GetNumFlag("upper_lset_bound",0.0);
       
@@ -267,6 +271,14 @@ namespace ngcomp
       double diff_phi_vol = 0.0;
       int ne=ma->GetNE();
 
+      if (adaptive && (D == 3))
+      {
+	int nse = ma->GetNSE();
+	for (int i = 0; i < nse; i++)
+	  Ng_SetSurfaceRefinementFlag (i+1, 0);
+      }
+
+      
       for (int elnr = 0; elnr < ne; ++elnr)
       {
         HeapReset hr(lh);
@@ -319,7 +331,16 @@ namespace ngcomp
               diff_phi_max = max(diff_phi_max,abs(lset_val_transf_p1-lset_val));
               diff_phi_vol += mip.GetWeight();
             }
+            if (adaptive)
+            {
+              Ng_SetRefinementFlag (elnr+1, 1);
+            }
           }
+          else
+            if (adaptive)
+            {
+              Ng_SetRefinementFlag (elnr+1, 0);
+            }
         }
 
 
