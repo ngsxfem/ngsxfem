@@ -1093,45 +1093,44 @@ namespace ngcomp
             values *= 1.0/val_fac(0);
           deform->GetVector().SetIndirect(dnums,values);
         }
-
-        //statistics:
-        cout << " deformpoints(edge) = " << *n_deformed_points_edge << endl;
-        cout << " accepted_points(edge) = " << *n_accepted_points_edge << endl;
-        cout << " corrected_points(edge) = " << *n_corrected_points_edge << endl;
-        cout << " rejected_points(edge) = " << *n_rejected_points_edge << endl;
-
-        cout << " deformpoints(face) = " << *n_deformed_points_face << endl;
-        cout << " accepted_points(face) = " << *n_accepted_points_face << endl;
-        cout << " corrected_points(face) = " << *n_corrected_points_face << endl;
-        cout << " rejected_points(face) = " << *n_rejected_points_face << endl;
-
-        cout << " deformpoints(cell) = " << *n_deformed_points_cell << endl;
-        cout << " accepted_points(cell) = " << *n_accepted_points_cell << endl;
-        cout << " corrected_points(cell) = " << *n_corrected_points_cell << endl;
-        cout << " rejected_points(cell) = " << *n_rejected_points_cell << endl;
-
-        const double n_deformed_points_total
-          = *n_deformed_points_edge+*n_deformed_points_face+*n_deformed_points_cell;
-        const double n_accepted_points_total
-          = *n_accepted_points_edge+*n_accepted_points_face+*n_accepted_points_cell;
-        const double n_corrected_points_total
-          = *n_corrected_points_edge+*n_corrected_points_face+*n_corrected_points_cell;
-        const double n_rejected_points_total
-          = *n_rejected_points_edge+*n_rejected_points_face+*n_rejected_points_cell;
-
-        cout << " deformpoints(total) = " << n_deformed_points_total << endl;
-        cout << " accepted_points(total) = " << n_accepted_points_total << endl;
-        cout << " corrected_points(total) = " << n_corrected_points_total << endl;
-        cout << " rejected_points(total) = " << n_rejected_points_total << endl;
-
-        cout << " totalits = " << *n_totalits << endl;
-        cout << " totalits/deformpoints = " << *n_totalits/ n_deformed_points_total << endl;
-        cout << " maxits = " << *n_maxits << endl;
-
-        cout << " max_dist = " << max_dist << endl;
-          
       }
 
+      //statistics:
+      cout << " deformpoints(edge) = " << *n_deformed_points_edge << endl;
+      cout << " accepted_points(edge) = " << *n_accepted_points_edge << endl;
+      cout << " corrected_points(edge) = " << *n_corrected_points_edge << endl;
+      cout << " rejected_points(edge) = " << *n_rejected_points_edge << endl;
+
+      cout << " deformpoints(face) = " << *n_deformed_points_face << endl;
+      cout << " accepted_points(face) = " << *n_accepted_points_face << endl;
+      cout << " corrected_points(face) = " << *n_corrected_points_face << endl;
+      cout << " rejected_points(face) = " << *n_rejected_points_face << endl;
+
+      cout << " deformpoints(cell) = " << *n_deformed_points_cell << endl;
+      cout << " accepted_points(cell) = " << *n_accepted_points_cell << endl;
+      cout << " corrected_points(cell) = " << *n_corrected_points_cell << endl;
+      cout << " rejected_points(cell) = " << *n_rejected_points_cell << endl;
+
+      const double n_deformed_points_total
+        = *n_deformed_points_edge+*n_deformed_points_face+*n_deformed_points_cell;
+      const double n_accepted_points_total
+        = *n_accepted_points_edge+*n_accepted_points_face+*n_accepted_points_cell;
+      const double n_corrected_points_total
+        = *n_corrected_points_edge+*n_corrected_points_face+*n_corrected_points_cell;
+      const double n_rejected_points_total
+        = *n_rejected_points_edge+*n_rejected_points_face+*n_rejected_points_cell;
+
+      cout << " deformpoints(total) = " << n_deformed_points_total << endl;
+      cout << " accepted_points(total) = " << n_accepted_points_total << endl;
+      cout << " corrected_points(total) = " << n_corrected_points_total << endl;
+      cout << " rejected_points(total) = " << n_rejected_points_total << endl;
+
+      cout << " totalits = " << *n_totalits << endl;
+      cout << " totalits/deformpoints = " << *n_totalits/ n_deformed_points_total << endl;
+      cout << " maxits = " << *n_maxits << endl;
+
+      cout << " max_dist = " << max_dist << endl;
+          
       ma->SetDeformation(deform);
 
       // if (D==2)
