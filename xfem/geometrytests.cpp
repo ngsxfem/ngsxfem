@@ -226,6 +226,18 @@ namespace ngcomp
       volume_ctrl = flags.GetNumFlag("volume",-1);
       surface_ctrl = flags.GetNumFlag("surface",-1);
 
+      double radius = flags.GetNumFlag("radius",-1);
+      if (radius >0)
+        if (D==2)
+        {
+          volume_ctrl = M_PI * radius * radius;
+          surface_ctrl = 2.0 * M_PI * radius;
+        }
+        else
+        {
+          volume_ctrl = 4.0/3.0 * M_PI * radius * radius * radius;
+          surface_ctrl = 4.0 * M_PI * radius * radius;
+        }
       //statistic variables:
       apde->AddVariable ("npgeomtest.maxits", 0.0, 6);
       n_maxits = & apde->GetVariable ("npgeomtest.maxits");
