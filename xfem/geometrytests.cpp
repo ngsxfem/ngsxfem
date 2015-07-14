@@ -15,71 +15,6 @@ using namespace ngfem;
    ---------------------------------------- */
 namespace ngcomp
 {
-
-
-  template<int D>
-  void SearchCorrespondingPoint (
-    const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,  //<- lset_ho
-    const Vec<D> & init_point, double goal_val,                      //<- init.point and goal val
-    const Mat<D> & trafo_of_normals, const Vec<D> & init_search_dir, //<- search direction
-    bool dynamic_search_dir,
-    Vec<D> & final_point, LocalHeap & lh,                            //<- result and localheap
-    double * n_totalits = nullptr,
-    double * n_maxits = nullptr
-    )                            
-  {
-    HeapReset hr(lh);
-      
-    IntegrationPoint curr_ip;
-    for (int d = 0; d < D; ++d) curr_ip(d) = init_point(d);
-
-    Vec<D> search_dir = init_search_dir;
-
-    FlatVector<> shape(sca_fe.GetNDof(),lh);
-    FlatMatrixFixWidth<D> dshape(sca_fe.GetNDof(),lh);
-
-    int it = 0;
-    for (it = 0; it < 100; ++it)
-    {
-      sca_fe.CalcShape(curr_ip, shape);
-      sca_fe.CalcDShape(curr_ip, dshape);
-
-      const double curr_val = InnerProduct(shape, sca_values);
-      const Vec<D> curr_grad = Trans(dshape) * sca_values;
-
-      const double curr_defect = goal_val - curr_val;
-      if (abs(curr_defect) < 1e-16)
-        break;
-
-      if (dynamic_search_dir)
-      {
-        search_dir = trafo_of_normals * curr_grad;
-        search_dir /= L2Norm(search_dir);
-      }
-        
-      const double dphidn = InnerProduct(curr_grad,search_dir);
-
-      for (int d = 0; d < D; ++d)
-        curr_ip(d) += curr_defect / dphidn * search_dir(d);
-
-    }
-
-    if (n_totalits)
-#pragma omp critical (totalits)
-      *n_totalits += it;
-#pragma omp critical (maxits)
-    if (n_maxits)
-      *n_maxits = max((double)it,*n_maxits);
-
-    if (it == 100){
-      std::cout << " SearchCorrespondingPoint:: did not converge " << std::endl;
-      final_point = init_point;
-    }
-    else
-      for (int d = 0; d < D; ++d) final_point(d) = curr_ip(d);
-  }
-
-  
   template<int D>
   void CalcGradientOfCoeff(shared_ptr<CoefficientFunction> coef, const MappedIntegrationPoint<D,D>& mip,
                            Vec<D>& der, LocalHeap& lh)
@@ -112,6 +47,206 @@ namespace ngcomp
     }
     der = Trans(mip.GetJacobianInverse()) * der_ref;
   }
+  
+
+  template<int D>
+  class LsetEvaluator
+  {
+    const ScalarFiniteElement<D> * scafe = NULL;
+    FlatVector<> scavalues;
+    shared_ptr<CoefficientFunction> coef = NULL;
+    const ElementTransformation * eltrans = NULL;
+  public:
+    LsetEvaluator(const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values) :
+      scafe(&sca_fe), scavalues(sca_values)
+    { ; }
+
+    LsetEvaluator(shared_ptr<CoefficientFunction> acoef, const ElementTransformation & aeltrans) :
+      coef(acoef), eltrans(&aeltrans)
+    { ; }
+
+    double Evaluate(const IntegrationPoint & ip, LocalHeap & lh) const
+    {
+      if (scafe)
+      {
+        HeapReset hr (lh);
+        FlatVector<> shape(scafe->GetNDof(), lh);
+        scafe->CalcShape(ip, shape);
+        return InnerProduct(shape, scavalues);
+      }
+      else
+      {
+        MappedIntegrationPoint<D,D> mip(ip,*eltrans);
+        return coef->Evaluate(mip);
+      }
+    }
+
+    Vec<D> EvaluateGrad(const IntegrationPoint & ip, LocalHeap & lh) const 
+    {
+      if (scafe)
+      {
+        HeapReset hr (lh);
+        FlatMatrixFixWidth<D> dshape(scafe->GetNDof(), lh);
+        scafe->CalcDShape(ip, dshape);
+        return Trans(dshape) * scavalues;
+      }
+      else
+      {
+        MappedIntegrationPoint<D,D> mip(ip,*eltrans);
+        Vec<D> der;
+        CalcGradientOfCoeff(coef, mip, der, lh);
+        return Trans(mip.GetJacobian()) * der;
+      }
+    }
+
+  };
+
+  template<int D>
+  void SearchCorrespondingPoint (
+    const LsetEvaluator<D> & lseteval,                               //<- lset_ho
+    const Vec<D> & init_point, double goal_val,                      //<- init.point and goal val
+    const Mat<D> & trafo_of_normals, const Vec<D> & init_search_dir, //<- search direction
+    bool dynamic_search_dir,
+    Vec<D> & final_point, LocalHeap & lh,                            //<- result and localheap
+    double * n_totalits = nullptr,
+    double * n_maxits = nullptr
+    )                            
+  {
+    HeapReset hr(lh);
+      
+    IntegrationPoint curr_ip;
+    for (int d = 0; d < D; ++d) curr_ip(d) = init_point(d);
+
+    Vec<D> search_dir = init_search_dir;
+
+    int it = 0;
+    for (it = 0; it < 100; ++it)
+    {
+      const double curr_val = lseteval.Evaluate(curr_ip,lh); // InnerProduct(shape, sca_values);
+      const Vec<D> curr_grad = lseteval.EvaluateGrad(curr_ip,lh); //Trans(dshape) * sca_values;
+      const double curr_defect = goal_val - curr_val;
+      if (abs(curr_defect) < 1e-14)
+        break;
+
+      if (dynamic_search_dir)
+      {
+        search_dir = trafo_of_normals * curr_grad;
+        search_dir /= L2Norm(search_dir);
+      }
+        
+      const double dphidn = InnerProduct(curr_grad,search_dir);
+
+      for (int d = 0; d < D; ++d)
+        curr_ip(d) += curr_defect / dphidn * search_dir(d);
+    }
+
+    if (n_totalits)
+#pragma omp critical (totalits)
+      *n_totalits += it;
+#pragma omp critical (maxits)
+    if (n_maxits)
+      *n_maxits = max((double)it,*n_maxits);
+
+    if (it == 100){
+      std::cout << " SearchCorrespondingPoint:: did not converge " << std::endl;
+      // getchar();
+      final_point = init_point;
+    }
+    else
+      for (int d = 0; d < D; ++d) final_point(d) = curr_ip(d);
+  }
+
+
+
+  template <int D>
+  class PsiStarIntegrator : public LinearFormIntegrator
+  {
+    shared_ptr<CoefficientFunction> coef_lset_p1;
+    shared_ptr<CoefficientFunction> coef_lset_ho;
+    double max_deform = -1;
+  public:
+    PsiStarIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+      : coef_lset_p1(coeffs[0]),coef_lset_ho(coeffs[1]) 
+    {
+      if (coeffs.Size() > 2)
+        max_deform = coeffs[2]->EvaluateConst();
+      // if (D==3)
+      //   throw Exception("Implementation only 2D for now");
+    }
+    virtual ~PsiStarIntegrator(){ ; };
+
+    virtual string Name () const { return "PsiStarIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementVector (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatVector<double> elvec,
+                       LocalHeap & lh) const
+    {
+      elvec = 0.0;
+      const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);
+      
+      FlatMatrixFixWidth<D> elvecmat(scafe.GetNDof(),&elvec(0));
+      
+      FlatVector<> shape (scafe.GetNDof(),lh);
+      
+      IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
+      for (int l = 0 ; l < ir.GetNIP(); l++)
+      {
+        MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
+        scafe.CalcShape(ir[l],shape);
+
+        Vec<D> grad;
+        CalcGradientOfCoeff(coef_lset_p1, mip, grad, lh);
+        Mat<D> trafo_of_normals = mip.GetJacobianInverse() * Trans(mip.GetJacobianInverse());
+        
+        Vec<D> normal = mip.GetJacobianInverse() * grad;
+        double len = L2Norm(normal);
+        normal /= len;
+
+        Vec<D> orig_point;
+        for (int d = 0; d < D; ++d)
+          orig_point(d) = ir[l](d);
+
+        double goal_val = coef_lset_p1->Evaluate(mip);
+        Vec<D> final_point;
+        SearchCorrespondingPoint<D>(LsetEvaluator<D>(coef_lset_ho, eltrans),
+                                    orig_point, goal_val, 
+                                    trafo_of_normals, normal, false,
+                                    final_point, lh);
+        Vec<D> ref_dist = (final_point - orig_point);
+        const double ref_dist_size = L2Norm(ref_dist);
+        if ((max_deform >= 0.0) && (ref_dist_size > max_deform))
+        {
+          ref_dist *= max_deform / ref_dist_size; 
+        }
+
+        
+        Vec<D> deform = mip.GetJacobian() * ref_dist;
+
+
+        elvecmat += mip.GetWeight() * shape * Trans(deform);
+      }      
+      
+      
+      
+    }
+  };
+
+  template class PsiStarIntegrator<2>;
+  template class PsiStarIntegrator<3>;
+
+  static RegisterLinearFormIntegrator<PsiStarIntegrator<2> > initpsistar2d ("psistar", 2, 2);
+  static RegisterLinearFormIntegrator<PsiStarIntegrator<3> > initpsistar3d ("psistar", 3, 2);
+
+  
+  
 
 
   void PrintConvergenceTable(const Array<double> & tab, string label="")
@@ -175,6 +310,7 @@ namespace ngcomp
     bool adaptive = false;
     
     int order = -1;
+
     
   public:
     // statistics
@@ -295,6 +431,10 @@ namespace ngcomp
       double diff_phi_l2 = 0.0;
       double diff_phi_max = 0.0;
       double diff_phi_vol = 0.0;
+
+      Vec<D> diff_phi_max_location;
+      Vec<D> diff_phi_max_location2;
+      
       int ne=ma->GetNE();
 
       if (adaptive && (D == 3))
@@ -317,6 +457,7 @@ namespace ngcomp
 
         ma->SetDeformation(deform);
         ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+
         ma->SetDeformation(nullptr);
         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
 
@@ -342,7 +483,7 @@ namespace ngcomp
           }
           if (has_pos && has_neg)
           {
-            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order);
+            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order + 2);
             for (int i = 0 ; i < pir.GetNIP(); i++)
             {
               MappedIntegrationPoint<D,D> mip(pir[i], eltrans_curved);
@@ -354,7 +495,16 @@ namespace ngcomp
               const double lset_val = gf_lset_ho->Evaluate(mipy);
 
               diff_phi_l2 += mip.GetWeight() * sqr(lset_val_transf_p1-lset_val);
-              diff_phi_max = max(diff_phi_max,abs(lset_val_transf_p1-lset_val));
+              if (abs(lset_val_transf_p1-lset_val) > diff_phi_max)
+              {
+                diff_phi_max_location = mipy.GetPoint();
+                MappedIntegrationPoint<D,D> mip_orig(pir[i], eltrans);
+                diff_phi_max_location2 = mip_orig.GetPoint();
+                diff_phi_max = abs(lset_val_transf_p1-lset_val);
+
+                // cout << " lset_val_transf_p1 = " << lset_val_transf_p1 << endl;
+                // cout << " lset_val = " << lset_val << endl;
+              }
               diff_phi_vol += mip.GetWeight();
             }
             if (adaptive)
@@ -369,6 +519,24 @@ namespace ngcomp
             }
         }
 
+        /*
+        {
+
+          IntegrationPoint ip(&fquad_if.points(i,0),0.0); // x_hathat
+          MappedIntegrationPoint<D,D> mip(ip, eltrans_curved); // x
+
+          Vec<D> y = mx0.GetJacobianInverse() * (mip.GetPoint() - mx0.GetPoint()); //point such that level set is approximately that of x_hathat
+          IntegrationPoint ipy(y);
+          MappedIntegrationPoint<D,D> mipy(ipy,eltrans);
+          // now mip.GetPoint() == mipy.GetPoint()
+
+          const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
+          
+          const double lset_val = gf_lset_ho->Evaluate(mipy);
+
+
+        }
+        */
 
 
 
@@ -395,7 +563,7 @@ namespace ngcomp
           if (first_dt==NEG)
           {
             
-            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order);
+            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order + 2);
             for (int i = 0 ; i < pir.GetNIP(); i++)
             {
               MappedIntegrationPoint<D,D> mip(pir[i], eltrans_curved);
@@ -471,11 +639,15 @@ namespace ngcomp
         surface_errors.Append(abs(surface-surface_ctrl));
         PrintConvergenceTable(surface_errors,"surface_error");
       }
+      else
+        cout << " surface = " << surface-4.096 << endl;
       if (volume_ctrl>0)
       {
         volume_errors.Append(abs(volume-volume_ctrl));
         PrintConvergenceTable(volume_errors,"volume_error");
       }
+      else
+        cout << " volume = " << volume << endl;
 
       lset_l1_errors.Append(lset_l1);
       PrintConvergenceTable(lset_l1_errors,"lset_l1_error");
@@ -488,6 +660,9 @@ namespace ngcomp
       
       diff_phi_max_errors.Append(diff_phi_max);
       PrintConvergenceTable(diff_phi_max_errors,"phi_max_error");
+
+      cout << " diff_phi_max_location = " << diff_phi_max_location << endl;
+      cout << " diff_phi_max_location2 = " << diff_phi_max_location2 << endl;
       
       ma->SetDeformation(deform);
     }
@@ -660,8 +835,59 @@ namespace ngcomp
       shared_ptr<FESpace> fes_deform = deform->GetFESpace();
 
       SetInterpolants(clh);
-      
+
+      if (true)
       {
+        std::cout << " q " << std::endl;
+
+        Flags flags;
+        flags.SetFlag("symmetric");
+        auto blfm = CreateBilinearForm(deform->GetFESpace(),"proj",flags);
+        auto bfi_mass = make_shared<MassIntegrator<D> > (make_shared<ConstantCoefficientFunction>(1.0));
+        auto bfi_mass1 = make_shared<BlockBilinearFormIntegrator> (bfi_mass,D,0);
+        blfm -> AddIntegrator ( bfi_mass1 );
+        auto bfi_mass2 = make_shared<BlockBilinearFormIntegrator> (bfi_mass,D,1);
+        blfm -> AddIntegrator ( bfi_mass2);
+
+        std::cout << " r " << std::endl;
+        Flags lfflags;
+        auto lfpsi = CreateLinearForm(deform->GetFESpace(),"lfpsistar",lfflags);
+        std::cout << " s " << std::endl;
+        Array<shared_ptr<CoefficientFunction>> coefs;
+        coefs.Append(gf_lset_p1);
+        coefs.Append(gf_lset_ho);
+        coefs.Append(make_shared<ConstantCoefficientFunction>(accept_threshold));
+        std::cout << " t " << std::endl;
+        auto lfi_psi = make_shared<PsiStarIntegrator<D>> (coefs);
+        lfpsi -> AddIntegrator (lfi_psi);
+        // auto lfi_psi = make_shared<SourceIntegrator<D>> (make_shared<ConstantCoefficientFunction>(1.0));        lfpsi -> AddIntegrator (make_shared<BlockLinearFormIntegrator>(lfi_psi,D ,0));
+
+        std::cout << " u " << std::endl;
+        blfm -> Assemble(clh);
+        std::cout << " v " << std::endl;
+        lfpsi -> Assemble(clh);
+        std::cout << " w " << std::endl;
+
+        deform->GetVector() = *(blfm->GetMatrix().InverseMatrix(deform->GetFESpace()->GetFreeDofs())) * lfpsi->GetVector();
+        std::cout << " x " << std::endl;
+        
+      }
+      else
+      for (int q = 0; q < 2; ++q)
+      {
+        if (q==0)
+        {
+          no_faces = true;
+          no_edges = false;
+        }
+        else
+        {
+          no_faces = false;
+          no_edges = true;
+        }
+
+        *factor=0.0;
+        
         auto gf_fes_ho = gf_lset_ho->GetFESpace();
         auto gf_fes_p1 = gf_lset_p1->GetFESpace();
         LocalHeap lh(clh.Split());
@@ -739,6 +965,13 @@ namespace ngcomp
           FlatMatrixFixWidth<D> element_count(el_dnums_deform.Size(),lh);
           element_coefs = 0.0;
           element_count = 0.0;
+
+          if (no_faces && !no_edges)
+          {
+            FlatVector<> el_coefs_as_vec(D*el_dnums_deform.Size(),&element_coefs(0,0));
+            deform->GetVector().GetIndirect(el_dnums_deform,el_coefs_as_vec);
+          }
+          
 
           // classify degrees of freedoms into verts/edge/face/cell dofs:
           Array<IntRange> dof_range_of_vert;
@@ -824,7 +1057,7 @@ namespace ngcomp
             FlatMatrixFixWidth<D> edge_coefs(inner_edge_dofs,
                                              &element_coefs(dof_range_of_edge[ref_edge_nr].First(),0));
 
-            const IntegrationRule & ir_edge = SelectIntegrationRule (ET_SEGM, 2*edge_order);
+            const IntegrationRule & ir_edge = SelectIntegrationRule (ET_SEGM, 2*edge_order + 2);
             IntegrationPoint curr_vol_ip;
 
             for (int l = 0; l < ir_edge.GetNIP(); l++)
@@ -846,10 +1079,11 @@ namespace ngcomp
             
               //statistics:
               *n_deformed_points_edge+=1.0;
-              SearchCorrespondingPoint<D>(sca_fe_ho, lset_vals_ho, orig_point,
+              SearchCorrespondingPoint<D>(LsetEvaluator<D>(sca_fe_ho, lset_vals_ho),
+                                          orig_point,
                                           lset_lin, trafo_of_normals, normal, dynamic_search_dir,
                                           final_point, lh, n_totalits, n_maxits);
-              for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
+              // for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
 
@@ -974,7 +1208,7 @@ namespace ngcomp
             face_mass_mat = 0.0;
             face_rhs_mat = 0.0;
             
-            const IntegrationRule & ir_face = SelectIntegrationRule (etface, 2*face_order);
+            const IntegrationRule & ir_face = SelectIntegrationRule (etface, 2 * face_order + 2);
 
             IntegrationPoint curr_vol_ip;
             FlatMatrixFixWidth<D> face_coefs(inner_face_dofs, &element_coefs(dof_range_of_face[ref_face_nr].First(),0));
@@ -1003,7 +1237,8 @@ namespace ngcomp
             
               //statistics:
               *n_deformed_points_face+=1.0;
-              SearchCorrespondingPoint<D>(sca_fe_ho, lset_vals_ho, orig_point,
+              SearchCorrespondingPoint<D>(LsetEvaluator<D>(sca_fe_ho, lset_vals_ho),
+                                          orig_point,
                                           lset_lin, trafo_of_normals, normal, dynamic_search_dir,
                                           final_point, lh, n_totalits, n_maxits);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
@@ -1039,6 +1274,7 @@ namespace ngcomp
               face_mass_mat += curr_ip_face.Weight() * shape_only_face_ho * Trans(shape_only_face_ho);
 
               Vec<D> transf_dist = mip_center.GetJacobian() * dist;
+
               // correction with deformation of edges..
               transf_dist -= Trans(coefs_edges) * shape_only_edges_ho;
 
@@ -1050,6 +1286,7 @@ namespace ngcomp
               
             }
             CalcInverse(face_mass_mat);
+            element_coefs = 0.0;
             face_coefs = face_mass_mat * face_rhs_mat;
 
             // cout << " face_coefs = " << face_coefs << endl;
@@ -1057,7 +1294,7 @@ namespace ngcomp
               element_count(l,0) += 1.0;
             
           }
-
+          
           if (!no_cells)
           if (D==3) // cell inner 
           {
@@ -1082,12 +1319,6 @@ namespace ngcomp
             for (int k = 0; k < factors.Size(); k+=D)
               factors(k) += element_count(k) ;
             factor->SetIndirect(el_dnums_deform,factors);
-
-            // cout << " deform_vec = " << deform_vec << endl;
-            // cout << " deform_vec_as_vec = " << deform_vec_as_vec << endl;
-            // cout << " factors = " << factors << endl;
-            // Ng_Redraw();
-            // getchar();
           }
           
         }
