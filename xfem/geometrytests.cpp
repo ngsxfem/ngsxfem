@@ -9,13 +9,77 @@
 using namespace ngsolve;
 // using namespace xintegration;
 using namespace ngfem;
-#include <typeinfo>  //for 'typeid' to work  
 
 /* ---------------------------------------- 
    numproc
    ---------------------------------------- */
 namespace ngcomp
-{ 
+{
+
+
+  template<int D>
+  void SearchCorrespondingPoint (
+    const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,  //<- lset_ho
+    const Vec<D> & init_point, double goal_val,                      //<- init.point and goal val
+    const Mat<D> & trafo_of_normals, const Vec<D> & init_search_dir, //<- search direction
+    bool dynamic_search_dir,
+    Vec<D> & final_point, LocalHeap & lh,                            //<- result and localheap
+    double * n_totalits = nullptr,
+    double * n_maxits = nullptr
+    )                            
+  {
+    HeapReset hr(lh);
+      
+    IntegrationPoint curr_ip;
+    for (int d = 0; d < D; ++d) curr_ip(d) = init_point(d);
+
+    Vec<D> search_dir = init_search_dir;
+
+    FlatVector<> shape(sca_fe.GetNDof(),lh);
+    FlatMatrixFixWidth<D> dshape(sca_fe.GetNDof(),lh);
+
+    int it = 0;
+    for (it = 0; it < 100; ++it)
+    {
+      sca_fe.CalcShape(curr_ip, shape);
+      sca_fe.CalcDShape(curr_ip, dshape);
+
+      const double curr_val = InnerProduct(shape, sca_values);
+      const Vec<D> curr_grad = Trans(dshape) * sca_values;
+
+      const double curr_defect = goal_val - curr_val;
+      if (abs(curr_defect) < 1e-16)
+        break;
+
+      if (dynamic_search_dir)
+      {
+        search_dir = trafo_of_normals * curr_grad;
+        search_dir /= L2Norm(search_dir);
+      }
+        
+      const double dphidn = InnerProduct(curr_grad,search_dir);
+
+      for (int d = 0; d < D; ++d)
+        curr_ip(d) += curr_defect / dphidn * search_dir(d);
+
+    }
+
+    if (n_totalits)
+#pragma omp critical (totalits)
+      *n_totalits += it;
+#pragma omp critical (maxits)
+    if (n_maxits)
+      *n_maxits = max((double)it,*n_maxits);
+
+    if (it == 100){
+      std::cout << " SearchCorrespondingPoint:: did not converge " << std::endl;
+      final_point = init_point;
+    }
+    else
+      for (int d = 0; d < D; ++d) final_point(d) = curr_ip(d);
+  }
+
+  
   template<int D>
   void CalcGradientOfCoeff(shared_ptr<CoefficientFunction> coef, const MappedIntegrationPoint<D,D>& mip,
                            Vec<D>& der, LocalHeap& lh)
@@ -112,6 +176,7 @@ namespace ngcomp
     
     int order = -1;
     
+  public:
     // statistics
     double * n_maxits;
     double * n_totalits;
@@ -130,7 +195,6 @@ namespace ngcomp
     double * n_accepted_points_cell;
     double * n_rejected_points_cell;
     double * n_corrected_points_cell;
-  public:
 
 
     NumProcGeometryTest (shared_ptr<PDE> apde, const Flags & flags)
@@ -206,57 +270,6 @@ namespace ngcomp
       return "NumProcGeometryTest";
     }
 
-    void SearchCorrespondingPoint (
-      const ScalarFiniteElement<D> & sca_fe, FlatVector<> sca_values,
-      const Vec<D> & init_point, double goal_val,
-      const Mat<D> & trafo_of_normals,
-      const Vec<D> & init_search_dir, Vec<D> & final_point, LocalHeap & lh)
-    {
-      HeapReset hr(lh);
-      
-      IntegrationPoint curr_ip;
-      for (int d = 0; d < D; ++d) curr_ip(d) = init_point(d);
-
-      Vec<D> search_dir = init_search_dir;
-
-      FlatVector<> shape(sca_fe.GetNDof(),lh);
-      FlatMatrixFixWidth<D> dshape(sca_fe.GetNDof(),lh);
-
-      int it = 0;
-      for (it = 0; it < 100; ++it)
-      {
-        sca_fe.CalcShape(curr_ip, shape);
-        sca_fe.CalcDShape(curr_ip, dshape);
-
-        const double curr_val = InnerProduct(shape, sca_values);
-        const Vec<D> curr_grad = Trans(dshape) * sca_values;
-
-        const double curr_defect = goal_val - curr_val;
-        if (abs(curr_defect) < 1e-12)
-          break;
-
-        if (dynamic_search_dir)
-        {
-          search_dir = trafo_of_normals * curr_grad;
-          search_dir /= L2Norm(search_dir);
-        }
-        
-        const double dphidn = InnerProduct(curr_grad,search_dir);
-
-        for (int d = 0; d < D; ++d)
-          curr_ip(d) += curr_defect / dphidn * search_dir(d);
-      }
-
-#pragma omp critical (totalits)
-      *n_totalits += it;
-#pragma omp critical (maxits)
-      *n_maxits = max((double)it,*n_maxits);
-
-      if (it == 100)
-        final_point = init_point;
-      else
-        for (int d = 0; d < D; ++d) final_point(d) = curr_ip(d);
-    }
 
 
     
@@ -821,8 +834,9 @@ namespace ngcomp
             
               //statistics:
               *n_deformed_points_edge+=1.0;
-              SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, trafo_of_normals, normal, final_point, lh);
+              SearchCorrespondingPoint<D>(sca_fe_ho, lset_vals_ho, orig_point,
+                                          lset_lin, trafo_of_normals, normal, dynamic_search_dir,
+                                          final_point, lh, n_totalits, n_maxits);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
@@ -977,8 +991,9 @@ namespace ngcomp
             
               //statistics:
               *n_deformed_points_face+=1.0;
-              SearchCorrespondingPoint(sca_fe_ho, lset_vals_ho, orig_point,
-                                       lset_lin, trafo_of_normals, normal, final_point, lh);
+              SearchCorrespondingPoint<D>(sca_fe_ho, lset_vals_ho, orig_point,
+                                          lset_lin, trafo_of_normals, normal, dynamic_search_dir,
+                                          final_point, lh, n_totalits, n_maxits);
               for (int d = 0; d < D; ++d) curr_vol_ip(d) = final_point(d);
             
               Vec<D> dist = final_point - orig_point;
