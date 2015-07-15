@@ -164,12 +164,18 @@ namespace ngcomp
     shared_ptr<CoefficientFunction> coef_lset_p1;
     shared_ptr<CoefficientFunction> coef_lset_ho;
     double max_deform = -1;
+    double lower_lset_bound = 0.0;
+    double upper_lset_bound = 0.0;
   public:
     PsiStarIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_lset_p1(coeffs[0]),coef_lset_ho(coeffs[1]) 
     {
       if (coeffs.Size() > 2)
         max_deform = coeffs[2]->EvaluateConst();
+      if (coeffs.Size() > 3)
+        lower_lset_bound = coeffs[3]->EvaluateConst();
+      if (coeffs.Size() > 4)
+        upper_lset_bound = coeffs[4]->EvaluateConst();
       // if (D==3)
       //   throw Exception("Implementation only 2D for now");
     }
@@ -193,6 +199,25 @@ namespace ngcomp
       const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);
       
       FlatMatrixFixWidth<D> elvecmat(scafe.GetNDof(),&elvec(0));
+      elvecmat = 0.0;
+
+      ELEMENT_TYPE et = eltrans.GetElementType();
+      bool has_neg = false;
+      bool has_pos = false;
+      for (int s = 0; s < ElementTopology::GetNVertices(et); ++s)
+      {
+        const double * v = ElementTopology::GetVertices(et)[s];
+        IntegrationPoint ip(v[0],v[1],v[2]);
+        MappedIntegrationPoint<D,D> mip(ip, eltrans);
+        const double val = coef_lset_p1->Evaluate(mip);
+        if (val==0.0) has_neg = has_pos = true;
+        if (val > lower_lset_bound)
+          has_pos = true;
+        if (val < upper_lset_bound)
+          has_neg = true;
+      }
+      if (!has_neg || !has_pos)
+        return;
       
       FlatVector<> shape (scafe.GetNDof(),lh);
       
@@ -246,6 +271,85 @@ namespace ngcomp
   static RegisterLinearFormIntegrator<PsiStarIntegrator<3> > initpsistar3d ("psistar", 3, 2);
 
   
+
+
+
+  template <int D>
+  class RestrictedMassIntegrator : public BilinearFormIntegrator
+  {
+    shared_ptr<CoefficientFunction> coef;
+    shared_ptr<CoefficientFunction> coef_lset_p1;
+    double lower_lset_bound = 0.0;
+    double upper_lset_bound = 0.0;
+  public:
+    RestrictedMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+      : coef(coeffs[0]), coef_lset_p1(coeffs[1])
+    {
+      if (coeffs.Size() > 2)
+        lower_lset_bound = coeffs[2]->EvaluateConst();
+      if (coeffs.Size() > 3)
+        upper_lset_bound = coeffs[3]->EvaluateConst();
+      // if (D==3)
+      //   throw Exception("Implementation only 2D for now");
+    }
+    virtual ~RestrictedMassIntegrator(){ ; };
+
+    virtual string Name () const { return "RestrictedMassIntegrator"; }
+
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    // it is not a boundary integral (but a domain integral)
+    virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return true; }
+
+    // Calculates the element matrix
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                       const ElementTransformation & eltrans,
+                       FlatMatrix<double> elmat,
+                       LocalHeap & lh) const
+    {
+      elmat = 0.0;
+      const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);
+      
+      elmat = 0.0;
+
+      ELEMENT_TYPE et = eltrans.GetElementType();
+      bool has_neg = false;
+      bool has_pos = false;
+      for (int s = 0; s < ElementTopology::GetNVertices(et); ++s)
+      {
+        const double * v = ElementTopology::GetVertices(et)[s];
+        IntegrationPoint ip(v[0],v[1],v[2]);
+        MappedIntegrationPoint<D,D> mip(ip, eltrans);
+        const double val = coef_lset_p1->Evaluate(mip);
+        if (val==0.0) has_neg = has_pos = true;
+        if (val > lower_lset_bound)
+          has_pos = true;
+        if (val < upper_lset_bound)
+          has_neg = true;
+      }
+      if (!has_neg || !has_pos)
+        return;
+      
+      FlatVector<> shape (scafe.GetNDof(),lh);
+      
+      IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
+      for (int l = 0 ; l < ir.GetNIP(); l++)
+      {
+        MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
+        const double coef_val = coef->Evaluate(mip);
+        scafe.CalcShape(ir[l],shape);
+        elmat += coef_val * mip.GetWeight() * shape * Trans(shape);
+      }      
+    }
+  };
+
+  template class RestrictedMassIntegrator<2>;
+  template class RestrictedMassIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<2> > initmassstar2d ("massstar", 2, 2);
+  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<3> > initmassstar3d ("massstar", 3, 2);
   
 
 
@@ -363,7 +467,8 @@ namespace ngcomp
       surface_ctrl = flags.GetNumFlag("surface",-1);
 
       double radius = flags.GetNumFlag("radius",-1);
-      if (radius >0)
+      if (radius > 0)
+      {
         if (D==2)
         {
           volume_ctrl = M_PI * radius * radius;
@@ -374,6 +479,7 @@ namespace ngcomp
           volume_ctrl = 4.0/3.0 * M_PI * radius * radius * radius;
           surface_ctrl = 4.0 * M_PI * radius * radius;
         }
+      }
       //statistic variables:
       apde->AddVariable ("npgeomtest.maxits", 0.0, 6);
       n_maxits = & apde->GetVariable ("npgeomtest.maxits");
@@ -424,6 +530,7 @@ namespace ngcomp
 
     void Test (LocalHeap & lh)
     {
+      cout << setprecision(18) << endl;
       double volume = 0.0;
       double surface = 0.0;
       double max_lset = 0.0;
@@ -483,7 +590,7 @@ namespace ngcomp
           }
           if (has_pos && has_neg)
           {
-            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 2*order + 2);
+            IntegrationRule pir = SelectIntegrationRule (eltrans_curved.GetElementType(), 4*order + 2);
             for (int i = 0 ; i < pir.GetNIP(); i++)
             {
               MappedIntegrationPoint<D,D> mip(pir[i], eltrans_curved);
@@ -609,7 +716,7 @@ namespace ngcomp
           MappedIntegrationPoint<D,D> mipy(ipy,eltrans);
           // now mip.GetPoint() == mipy.GetPoint()
 
-          const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
+          // const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
           
           const double lset_val = gf_lset_ho->Evaluate(mipy);
 
@@ -640,7 +747,7 @@ namespace ngcomp
         PrintConvergenceTable(surface_errors,"surface_error");
       }
       else
-        cout << " surface = " << surface-4.096 << endl;
+        cout << " surface = " << surface << endl;
       if (volume_ctrl>0)
       {
         volume_errors.Append(abs(volume-volume_ctrl));
@@ -830,7 +937,8 @@ namespace ngcomp
       *factor = 0.0;
       deform->GetVector() = 0.0;
       
-      int ne=ma->GetNE();
+      int ne = ma->GetNE();
+      // int ned = ma->GetNEdges();
 
       shared_ptr<FESpace> fes_deform = deform->GetFESpace();
 
@@ -838,39 +946,92 @@ namespace ngcomp
 
       if (true)
       {
-        std::cout << " q " << std::endl;
 
+        // BitArray non_dir_edges(deform->GetFESpace()->GetNDof());
+        // non_dir_edges.Clear();
+
+        // for (int ednr = 0; ednr < ne; ++ednr)
+        // {
+        //   if (deform->GetFESpace()->IsDirichletEdge(ednr))
+        //     continue;
+        //   deform->GetFESpace()->GetEdgeDofNrs(ednr,dnums);
+        //   for( auto dof : dnums )
+        //     non_dir_edges.Set(dof);
+        // }
+
+        BitArray if_dofs(deform->GetFESpace()->GetNDof());
+        if_dofs.Clear();
+
+        Array<int> dnums;
+        
+        for (int elnr = 0; elnr < ne; ++elnr)
+        {
+          Array<int> dnums_lset_p1;
+          gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dnums_lset_p1);
+          FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),clh);
+          gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
+
+          // element only predicts its own deformation if (linear) intersected
+          {
+            bool has_pos = (lset_vals_p1[D] > lower_lset_bound);
+            bool has_neg = (lset_vals_p1[D] < upper_lset_bound);
+            for (int d = 0; d < D; ++d)
+            {
+              if (lset_vals_p1[d] > lower_lset_bound)
+                has_pos = true;
+              if (lset_vals_p1[d] < upper_lset_bound)
+                has_neg = true;
+            }
+            if (! (has_pos && has_neg) ) 
+              continue;
+          }
+          
+          deform->GetFESpace()->GetDofNrs(elnr,dnums);
+          for( auto dof : dnums)
+            if_dofs.Set(dof);
+        }
+
+        if_dofs.And(*deform->GetFESpace()->GetFreeDofs());
+
+        // if_dofs.Or(*deform->GetFESpace()->GetFreeDofs());
+        
+
+        
         Flags flags;
         flags.SetFlag("symmetric");
         auto blfm = CreateBilinearForm(deform->GetFESpace(),"proj",flags);
-        auto bfi_mass = make_shared<MassIntegrator<D> > (make_shared<ConstantCoefficientFunction>(1.0));
+        Array<shared_ptr<CoefficientFunction>> coefs_rm;
+        coefs_rm.Append(make_shared<ConstantCoefficientFunction>(1.0));
+        coefs_rm.Append(gf_lset_p1);
+        coefs_rm.Append(make_shared<ConstantCoefficientFunction>(lower_lset_bound));
+        coefs_rm.Append(make_shared<ConstantCoefficientFunction>(upper_lset_bound));
+        auto bfi_mass = make_shared<RestrictedMassIntegrator<D> > (coefs_rm);
         auto bfi_mass1 = make_shared<BlockBilinearFormIntegrator> (bfi_mass,D,0);
         blfm -> AddIntegrator ( bfi_mass1 );
         auto bfi_mass2 = make_shared<BlockBilinearFormIntegrator> (bfi_mass,D,1);
         blfm -> AddIntegrator ( bfi_mass2);
+        if (D==3)
+        {
+          auto bfi_mass3 = make_shared<BlockBilinearFormIntegrator> (bfi_mass,D,2);
+          blfm -> AddIntegrator ( bfi_mass3);
+        }
 
-        std::cout << " r " << std::endl;
         Flags lfflags;
         auto lfpsi = CreateLinearForm(deform->GetFESpace(),"lfpsistar",lfflags);
-        std::cout << " s " << std::endl;
         Array<shared_ptr<CoefficientFunction>> coefs;
         coefs.Append(gf_lset_p1);
         coefs.Append(gf_lset_ho);
         coefs.Append(make_shared<ConstantCoefficientFunction>(accept_threshold));
-        std::cout << " t " << std::endl;
+        coefs.Append(make_shared<ConstantCoefficientFunction>(lower_lset_bound));
+        coefs.Append(make_shared<ConstantCoefficientFunction>(upper_lset_bound));
         auto lfi_psi = make_shared<PsiStarIntegrator<D>> (coefs);
         lfpsi -> AddIntegrator (lfi_psi);
         // auto lfi_psi = make_shared<SourceIntegrator<D>> (make_shared<ConstantCoefficientFunction>(1.0));        lfpsi -> AddIntegrator (make_shared<BlockLinearFormIntegrator>(lfi_psi,D ,0));
 
-        std::cout << " u " << std::endl;
         blfm -> Assemble(clh);
-        std::cout << " v " << std::endl;
         lfpsi -> Assemble(clh);
-        std::cout << " w " << std::endl;
-
-        deform->GetVector() = *(blfm->GetMatrix().InverseMatrix(deform->GetFESpace()->GetFreeDofs())) * lfpsi->GetVector();
-        std::cout << " x " << std::endl;
-        
+        // blfm->GetMatrix().SetInverseType("sparsecholesky");
+        deform->GetVector() = *(blfm->GetMatrix().InverseMatrix(&if_dofs)) * lfpsi->GetVector();
       }
       else
       for (int q = 0; q < 2; ++q)
@@ -937,8 +1098,8 @@ namespace ngcomp
           MappedIntegrationPoint<D,D> mip_center(ip_center,eltrans);
           
           sca_fe_p1.CalcShape(ip_center,shape_p1);
-          const double lset_center_p1 = InnerProduct(shape_p1,lset_vals_p1);
-          const double h = pow(mip_center.GetJacobiDet(),1.0/D);
+          // const double lset_center_p1 = InnerProduct(shape_p1,lset_vals_p1);
+          // const double h = pow(mip_center.GetJacobiDet(),1.0/D);
           
 
           sca_fe_p1.CalcDShape(ip_center,dshape_p1);
@@ -1226,7 +1387,7 @@ namespace ngcomp
               }
 
               IntegrationPoint old_ip(curr_vol_ip);
-              Vec<D> old_ref_point = old_ip.Point();
+              // Vec<D> old_ref_point = old_ip.Point();
 
               sca_fe_p1.CalcShape(curr_vol_ip,shape_p1);
               double lset_lin = InnerProduct(shape_p1,lset_vals_p1);
