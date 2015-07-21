@@ -46,6 +46,6 @@ define preconditioner cdeform -type=direct -bilinearform=mdeform
               
 numproc bvp npbvpdeform -gridfunction=deform -bilinearform=mdeform -linearform=fdeform -solver=cg -preconditioner=cdeform -maxsteps=1000 -prec=1e-6 # -print
                        
-
+numproc unsetdeformation npudef
           
                 
