@@ -100,7 +100,7 @@ namespace ngfem
       const double curr_val = lseteval.Evaluate(curr_ip,lh); // InnerProduct(shape, sca_values);
       const Vec<D> curr_grad = lseteval.EvaluateGrad(curr_ip,lh); //Trans(dshape) * sca_values;
       const double curr_defect = goal_val - curr_val;
-      if (abs(curr_defect) < 1e-14 && it > 2)
+      if (abs(curr_defect) < 1e-14) // && it > 2)
         break;
 
       if (dynamic_search_dir)
