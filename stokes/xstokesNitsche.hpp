@@ -6,9 +6,9 @@
 #include <ngstd.hpp> // for Array
 
 #include "../cutint/xintegration.hpp"
-#include "xfiniteelement.hpp"
-#include "xfemIntegrators.hpp"
-#include "stxfemIntegrators.hpp"
+#include "../xfem/xfiniteelement.hpp"
+#include "../xfem/xfemIntegrators.hpp"
+#include "../xfem/stxfemIntegrators.hpp"
 
 namespace ngfem
 {
