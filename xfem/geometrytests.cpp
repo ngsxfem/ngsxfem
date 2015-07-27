@@ -6,6 +6,11 @@
 
 ///HACKED.... INCLUDES are done outside
 
+/// TODO:
+// * (CODE): refactor
+// * (debug): measure ||deform_h - deform|| (convergence behavior)
+// * (debug): measure [|[deform_h]|] over facets...
+
 using namespace ngsolve;
 // using namespace xintegration;
 using namespace ngfem;
@@ -166,6 +171,7 @@ namespace ngcomp
     double max_deform = -1;
     double lower_lset_bound = 0.0;
     double upper_lset_bound = 0.0;
+    shared_ptr<CoefficientFunction> qn;
   public:
     PsiStarIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_lset_p1(coeffs[0]),coef_lset_ho(coeffs[1]) 
@@ -176,6 +182,8 @@ namespace ngcomp
         lower_lset_bound = coeffs[3]->EvaluateConst();
       if (coeffs.Size() > 4)
         upper_lset_bound = coeffs[4]->EvaluateConst();
+      if (coeffs.Size() > 5)
+        qn = coeffs[5];
       // if (D==3)
       //   throw Exception("Implementation only 2D for now");
     }
@@ -235,6 +243,18 @@ namespace ngcomp
         double len = L2Norm(normal);
         normal /= len;
 
+        if (qn)
+        {
+          // cout << " normal = " << normal << endl;
+          Vec<D> qnormal;
+          qn->Evaluate(mip,qnormal);
+          Vec<D> normal = mip.GetJacobianInverse() * qnormal;
+          double len = L2Norm(normal);
+          normal /= len;
+          // cout << " normal = " << normal << endl;
+          // getchar();
+        }
+        
         Vec<D> orig_point;
         for (int d = 0; d < D; ++d)
           orig_point(d) = ir[l](d);
@@ -385,6 +405,7 @@ namespace ngcomp
   class NumProcGeometryTest : public NumProc
   {
   protected:
+    shared_ptr<CoefficientFunction> qn;
     shared_ptr<CoefficientFunction> lset;
     shared_ptr<GridFunction> gf_lset_p1;
     shared_ptr<GridFunction> gf_lset_ho;
@@ -447,6 +468,8 @@ namespace ngcomp
         gf_lset_ho  = apde->GetGridFunction (flags.GetStringFlag ("gf_levelset_p2", ""), false);
       deform  = apde->GetGridFunction (flags.GetStringFlag ("deformation", ""));
 
+      qn  = apde->GetCoefficientFunction (flags.GetStringFlag ("quasinormal", ""), true);
+      
       order = deform->GetFESpace()->GetOrder();
       
       no_edges = flags.GetDefineFlag("no_edges");
@@ -682,7 +705,7 @@ namespace ngcomp
         }
 
         ScalarFieldEvaluator * lset_eval_p
-          = ScalarFieldEvaluator::Create(D,*gf_lset_ho,eltrans,lh);
+          = ScalarFieldEvaluator::Create(D,*gf_lset_p1,eltrans,lh);
 
         auto cquad = new CompositeQuadratureRule<D>() ;
 
@@ -1024,6 +1047,7 @@ namespace ngcomp
         coefs.Append(make_shared<ConstantCoefficientFunction>(accept_threshold));
         coefs.Append(make_shared<ConstantCoefficientFunction>(lower_lset_bound));
         coefs.Append(make_shared<ConstantCoefficientFunction>(upper_lset_bound));
+        coefs.Append(qn);
         auto lfi_psi = make_shared<PsiStarIntegrator<D>> (coefs);
         lfpsi -> AddIntegrator (lfi_psi);
         // auto lfi_psi = make_shared<SourceIntegrator<D>> (make_shared<ConstantCoefficientFunction>(1.0));        lfpsi -> AddIntegrator (make_shared<BlockLinearFormIntegrator>(lfi_psi,D ,0));
@@ -1237,7 +1261,7 @@ namespace ngcomp
               Vec<D> orig_point;
               for (int d = 0; d < D; ++d) orig_point(d) = curr_vol_ip(d);
               Vec<D> final_point;
-            
+
               //statistics:
               *n_deformed_points_edge+=1.0;
               SearchCorrespondingPoint<D>(LsetEvaluator<D>(sca_fe_ho, lset_vals_ho),

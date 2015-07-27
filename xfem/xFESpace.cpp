@@ -256,7 +256,7 @@ namespace ngcomp
             lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
           CompositeQuadratureRule<SD> cquad;
           auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                         cquad, llh, 2*order_space, 2*order_time, ref_lvl_space, ref_lvl_time);
+                                                         cquad, llh, 2*order_space+2, 2*order_time, ref_lvl_space, ref_lvl_time);
           xgeom->SetDistanceThreshold(2.0*(h+(ti.second-ti.first)*vmax));
           DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
@@ -310,7 +310,7 @@ namespace ngcomp
 
         CompositeQuadratureRule<SD-1> cquad;
         auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                              cquad, lh, 2*order_space, 2*order_time, ref_lvl_space, ref_lvl_time);
+                                                                              cquad, lh, 2*order_space+2, 2*order_time, ref_lvl_space, ref_lvl_time);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
         Array<int> fnums;
@@ -627,7 +627,7 @@ namespace ngcomp
 
       auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                             *cquad, lh, 
-                                                                            2*order_space, 2*order_time, 
+                                                                            2*order_space+2, 2*order_time, 
                                                                             ref_lvl_space, ref_lvl_time);
       // DOMAIN_TYPE dt;
       {
@@ -647,7 +647,7 @@ namespace ngcomp
         auto xgeom_past = 
           XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
                                             *cquadp, lh, 
-                                            2*order_space, 2*order_time, 
+                                            2*order_space+2, 2*order_time, 
                                             ref_lvl_space, ref_lvl_time);
         {
           static Timer timer ("XFESpace::GetFE::PastMakeQuadRule");
@@ -663,7 +663,7 @@ namespace ngcomp
           cquadf = new CompositeQuadratureRule<D>() ;
           auto xgeom_future = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
                                                            *cquadf, lh, 
-                                                           2*order_space, 2*order_time, 
+                                                           2*order_space+2, 2*order_time, 
                                                            ref_lvl_space, ref_lvl_time);
           {
             static Timer timer ("XFESpace::GetFE::FutureMakeQuadRule");
@@ -729,7 +729,7 @@ namespace ngcomp
 
       auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
                                                                             *cquad, lh, 
-                                                                            2*order_space, 2*order_time, 
+                                                                            2*order_space+2, 2*order_time, 
                                                                             ref_lvl_space, ref_lvl_time);
       {
         static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");

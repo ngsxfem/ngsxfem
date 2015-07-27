@@ -10,22 +10,22 @@ namespace ngfem
     
     if (coeffs.Size() > 2)
     {
-      std::cout << " asdf " << std::endl;
+      std::cout << " ShiftIntegrator called with more than 2 arguments " << std::endl;
       max_deform = coeffs[2]->EvaluateConst();
     }
     if (coeffs.Size() > 3)
     {
-      std::cout << " asdf " << std::endl;
+      std::cout << " ShiftIntegrator called with more than 3 arguments " << std::endl;
       lower_lset_bound = coeffs[3]->EvaluateConst();
     }
     if (coeffs.Size() > 4)
     {
-      std::cout << " asdf " << std::endl;
+      std::cout << " ShiftIntegrator called with more than 4 arguments " << std::endl;
       upper_lset_bound = coeffs[4]->EvaluateConst();
     }
     if (coeffs.Size() > 5)
     {
-      std::cout << " asdf " << std::endl;
+      std::cout << " ShiftIntegrator called with more than 5 arguments " << std::endl;
       qn = coeffs[5];
     }
   }
