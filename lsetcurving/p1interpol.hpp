@@ -21,7 +21,6 @@ namespace ngcomp
    or an h1ho function into the space of
    piecewise linears
    ---------------------------------------- */
-  template <int D> 
   class InterpolateP1
   {
   protected:
@@ -39,8 +38,7 @@ namespace ngcomp
   class NumProcInterpolateP1 : public NumProc
   {
   protected:
-    shared_ptr<InterpolateP1<2>> interpol2d = nullptr;
-    shared_ptr<InterpolateP1<3>> interpol3d = nullptr;
+    shared_ptr<InterpolateP1> interpol = nullptr;
   public:
     NumProcInterpolateP1 (shared_ptr<PDE> apde, const Flags & flags);
     virtual ~NumProcInterpolateP1() { }

@@ -447,7 +447,7 @@ namespace ngcomp
     PrintConvergenceTable(deform_error_container.ErrorMisc, "deform_jump");
   }
 
-
+  
 }
 
 static RegisterNumProc<NumProcCalcErrors> npcalcerr("calcerrors");

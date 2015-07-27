@@ -4,6 +4,9 @@
 #include "../xfem/xFESpace.hpp"
 #include "../stokes/xstokesspace.hpp"
 #include "../utils/vtkoutput.hpp"
+#include "../lsetcurving/p1interpol.hpp"
+#include "../lsetcurving/calcgeomerrors.hpp"
+#include "../lsetcurving/lsetrefine.hpp"
 
 //using namespace ngcomp;
 
@@ -142,6 +145,76 @@ void ExportNgsx()
     ;
 
     
+  bp::def("InterpolateToP1", FunctionPointer( [] (shared_ptr<GridFunction> gf_ho, shared_ptr<GridFunction> gf_p1, int heapsize)
+                                              {
+                                                InterpolateP1 interpol(gf_ho, gf_p1);
+                                                LocalHeap lh (heapsize, "InterpolateP1-Heap");
+                                                interpol.Do(lh);
+                                              } ),
+          (bp::arg("gf_ho")=NULL,bp::arg("gf_p1")=NULL,bp::arg("heapsize")=1000000))
+    ;
+
+  bp::class_<StatisticContainer, shared_ptr<StatisticContainer>,  boost::noncopyable>("StatisticContainer", bp::no_init)
+    .def("__init__", bp::make_constructor 
+         (FunctionPointer ([]()
+                           {
+                             return make_shared<StatisticContainer> ();
+                           })))
+    .def("Print", FunctionPointer ([](StatisticContainer & self, string label, string select)
+                           {
+                             if (select == "L1")
+                               PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
+                             if (select == "L2")
+                               PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
+                             if (select == "max")
+                               PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
+                             if (select == "misc")
+                               PrintConvergenceTable(self.ErrorMisc,label+"_misc");
+                             if (select == "all")
+                             {
+                               PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
+                               PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
+                               PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
+                               PrintConvergenceTable(self.ErrorMisc,label+"_misc");
+                             }
+                           }),
+         (bp::arg("self")=NULL,bp::arg("label")="something",bp::arg("select")="all")
+      )
+    ;
+
+  bp::def("CalcDistances", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & stats, int heapsize)
+                                              {
+                                                LocalHeap lh (heapsize, "CalcDistance-Heap");
+                                                if (lset_p1->GetMeshAccess()->GetDimension()==2)
+                                                  CalcDistances<2>(lset_ho, lset_p1, deform,  stats, lh);
+                                                else
+                                                  CalcDistances<3>(lset_ho, lset_p1, deform,  stats, lh);
+                                              } ),
+          (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("stats")=NULL,bp::arg("heapsize")=1000000))
+    ;
+
+  bp::def("CalcDeformationError", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & stats, double lower, double upper, int heapsize)
+                                              {
+                                                LocalHeap lh (heapsize, "CalcDeformationError-Heap");
+                                                if (lset_p1->GetMeshAccess()->GetDimension()==2)
+                                                  CalcDeformationError<2>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
+                                                else
+                                                  CalcDeformationError<3>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
+                                              } ),
+          (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("qn")=NULL,bp::arg("stats")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
+    ;
+
+  bp::def("RefineAtLevelSet", FunctionPointer( [] (shared_ptr<GridFunction> lset_p1, double lower, double upper, int heapsize)
+                                              {
+                                                LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
+                                                RefineAtLevelSet(lset_p1, lower, upper, lh);
+                                              } ),
+          (bp::arg("lset_p1")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
+    ;
+
+
+  // void RefineAtLevelSet (shared_ptr<GridFunction> gf_lset_p1, double lower_lset_bound, double upper_lset_bound, LocalHeap & lh){
+  
   
   // bp::docstring_options local_docstring_options(true, true, false);
   
