@@ -76,16 +76,14 @@ namespace ngfem
       double len = L2Norm(normal);
       normal /= len;
 
+      Vec<D> qnormal;
       if (qn)
       {
-        // cout << " normal = " << normal << endl;
-        Vec<D> qnormal;
         qn->Evaluate(mip,qnormal);
         Vec<D> normal = mip.GetJacobianInverse() * qnormal;
         double len = L2Norm(normal);
         normal /= len;
-        // cout << " normal = " << normal << endl;
-        // getchar();
+        qnormal /= L2Norm(qnormal);
       }
         
       Vec<D> orig_point;
@@ -107,6 +105,8 @@ namespace ngfem
 
         
       Vec<D> deform = mip.GetJacobian() * ref_dist;
+      if (qn)
+        deform = InnerProduct(deform,qnormal) * qnormal;
 
 
       elvecmat += mip.GetWeight() * shape * Trans(deform);

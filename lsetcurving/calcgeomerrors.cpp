@@ -6,6 +6,7 @@
 
 #include "calcgeomerrors.hpp"
 #include "../cutint/xintegration.hpp"
+#include "shiftintegrators.hpp"
 
 using namespace xintegration;
 
@@ -147,32 +148,303 @@ namespace ngcomp
   }
 
 
+  template<int D>
+  void CalcDeformationError (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & cont, LocalHeap & lh, double lower_lset_bound, double upper_lset_bound){
+    auto ma = deform->GetMeshAccess();
+    
+    int ne=ma->GetNE();
+
+    BitArray el_curved(ne);
+    el_curved.Clear();
+    
+
+    int order = deform->GetFESpace()->GetOrder();
+
+    double deform_l2 = 0.0;
+    double domain_l2 = 0.0;
+    double deform_max = 0.0;
+    for (int elnr = 0; elnr < ne; ++elnr)
+    {
+      HeapReset hr(lh);
+      Ngs_Element ngel = ma->GetElement(elnr);
+      ELEMENT_TYPE eltype = ngel.GetType();
+      Array<int> dofs;
+      gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
+      FlatVector<> lset_vals_p1(dofs.Size(),lh);
+      gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
+
+      ma->SetDeformation(deform);
+      ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+
+      ma->SetDeformation(nullptr);
+      ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+
+      IntegrationPoint ipzero(0.0,0.0,0.0);
+      MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
+
+      bool has_pos = (lset_vals_p1[D] > lower_lset_bound);
+      bool has_neg = (lset_vals_p1[D] < upper_lset_bound);
+      for (int d = 0; d < D; ++d)
+      {
+        if (lset_vals_p1[d] > 0.0)
+          has_pos = true;
+        if (lset_vals_p1[d] < 0.0)
+          has_neg = true;
+      }
+
+      if (has_neg && has_pos)
+      {
+        el_curved.Set(elnr);
+        
+        const ScalarFiniteElement<D> & scafe
+          = dynamic_cast<const ScalarFiniteElement<D> &>(deform->GetFESpace()->GetFE(elnr,lh));
+        FlatVector<> shape(scafe.GetNDof(),lh);
+        FlatMatrixFixWidth<D> elvec(scafe.GetNDof(),lh);
+        FlatVector<> elvec_as_vec(D*scafe.GetNDof(),&elvec(0,0));
+        Array<int> dnums;
+        deform->GetFESpace()->GetDofNrs(elnr,dnums);
+        deform->GetVector().GetIndirect(dnums,elvec_as_vec);
+        
+        IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
+        for (int l = 0 ; l < ir.GetNIP(); l++)
+        {
+          MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
+          scafe.CalcShape(ir[l],shape);
+          Vec<D> deform_h = Trans(elvec) * shape;
+
+          Vec<D> deform;          
+          { // point search:
+            Vec<D> grad;
+            CalcGradientOfCoeff(gf_lset_p1, mip, grad, lh);
+            Mat<D> trafo_of_normals = mip.GetJacobianInverse() * Trans(mip.GetJacobianInverse());
+        
+            Vec<D> normal = mip.GetJacobianInverse() * grad;
+            double len = L2Norm(normal);
+            normal /= len;
+
+            Vec<D> qnormal;
+            if (qn)
+            {
+              qn->Evaluate(mip,qnormal);
+              Vec<D> normal = mip.GetJacobianInverse() * qnormal;
+              double len = L2Norm(normal);
+              normal /= len;
+              qnormal /= L2Norm(qnormal);
+            }
+            Vec<D> orig_point;
+            for (int d = 0; d < D; ++d)
+              orig_point(d) = ir[l](d);
+
+            double goal_val = gf_lset_p1->Evaluate(mip);
+            Vec<D> final_point;
+            SearchCorrespondingPoint<D>(LsetEvaluator<D>(lset_ho, eltrans),
+                                        orig_point, goal_val, 
+                                        trafo_of_normals, normal, false,
+                                        final_point, lh);
+            Vec<D> ref_dist = (final_point - orig_point);
+            deform = mip.GetJacobian() * ref_dist;
+            if (qn)
+              deform = InnerProduct(deform,qnormal) * qnormal;
+            
+          }
+
+          deform_h -= deform;
+
+          deform_l2 += mip.GetWeight() * sqr(L2Norm(deform_h));
+          domain_l2 += mip.GetWeight();
+          if (L2Norm(deform_h) > deform_max)
+            deform_max = L2Norm(deform_h);
+        }        
+      }
+    }
+
+    deform_l2 /= domain_l2;
+    
+    cont.ErrorL2Norm.Append(sqrt(deform_l2));
+    cont.ErrorMaxNorm.Append(deform_max);
+
+
+
+
+    double deform_jump_integral = 0.0;
+    double facet_integral = 0.0;
+    
+    int nf=ma->GetNFacets();
+
+    int dim = ma->GetDimension();
+    BitArray fine_facet(nf);
+    fine_facet.Clear();
+    Array<int> elfacets;
+    for (int i = 0; i < ne; ++i)
+    {
+      if(dim==2)
+        ma->GetElEdges(i,elfacets);
+      else
+        ma->GetElFaces(i,elfacets);
+      for (int j=0;j<elfacets.Size();j++)
+        fine_facet.Set(elfacets[j]);
+    }
+
+
+    for (int facnr = 0; facnr < nf; ++facnr)
+    {
+      if (!fine_facet.Test(facnr)) continue;
+      HeapReset hr(lh);
+
+      int el1 = -1;
+      int el2 = -1;
+      int facnr1 = -1;
+      int facnr2 = -1;
+      
+      Array<int> elnums, fnums;
+      ma->GetFacetElements(facnr,elnums);
+      el1 = elnums[0];
+
+      if(elnums.Size()<2) continue;
+      el2 = elnums[1];
+
+      if(!el_curved.Test(el1) || !el_curved.Test(el2)) continue;
+      
+      ma->GetElFacets(el1,fnums);
+      for (int k=0; k<fnums.Size(); k++)
+        if(facnr==fnums[k]) facnr1 = k;
+
+      ma->GetElFacets(el2,fnums);
+      for (int k=0; k<fnums.Size(); k++)
+        if(facnr==fnums[k]) facnr2 = k;
+      
+      ElementTransformation & eltrans1 = ma->GetTrafo (ElementId(VOL,el1), lh);
+      ElementTransformation & eltrans2 = ma->GetTrafo (ElementId(VOL,el2), lh);
+      Array<int> vnums1, vnums2;
+
+      ma->GetElVertices (el1, vnums1);
+      ma->GetElVertices (el2, vnums2);
+
+      ELEMENT_TYPE eltype1 = deform->GetFESpace()->GetFE(el1,lh).ElementType();
+      ELEMENT_TYPE eltype2 = deform->GetFESpace()->GetFE(el2,lh).ElementType();
+      
+      Facet2ElementTrafo transform1(eltype1,vnums1); 
+      const NORMAL * normals1 = ElementTopology::GetNormals(eltype1);
+
+      Vec<D> normal_ref1; //, normal_ref2;
+      for (int i=0; i<D; i++){
+	normal_ref1(i) = normals1[facnr1][i];
+	// normal_ref2(i) = normals2[LocalFacetNr2][i];
+      }
+      
+      Facet2ElementTrafo transform2(eltype2,vnums2); 
+      // const NORMAL * normals2 = ElementTopology::GetNormals(eltype2);
+      
+      ELEMENT_TYPE etfacet = ElementTopology::GetFacetType (eltype1, facnr1);
+
+      const IntegrationRule & ir_facet =
+	SelectIntegrationRule (etfacet, 2*deform->GetFESpace()->GetOrder());
+
+
+      for (int l = 0; l < ir_facet.GetNIP(); l++)
+      {
+        Vec<D> deform_at_point [2];
+        IntegrationPoint ip[2];
+        ip[0] = transform1(facnr1, ir_facet[l]);
+        ip[1] = transform2(facnr2, ir_facet[l]);
+
+        double weight = 0.0;
+          
+        ElementTransformation * eltransj [] = {&eltrans1, &eltrans2};
+        for (int j = 0; j < 2; ++j)
+        {
+          MappedIntegrationPoint<D,D> mip (ip[j], *eltransj[j]);
+
+          { // point search:
+            Vec<D> grad;
+            CalcGradientOfCoeff(gf_lset_p1, mip, grad, lh);
+            Mat<D> trafo_of_normals = mip.GetJacobianInverse() * Trans(mip.GetJacobianInverse());
+        
+            Vec<D> normal = mip.GetJacobianInverse() * grad;
+            double len = L2Norm(normal);
+            normal /= len;
+
+            Vec<D> qnormal;
+            if (qn)
+            {
+              qn->Evaluate(mip,qnormal);
+              Vec<D> normal = mip.GetJacobianInverse() * qnormal;
+              double len = L2Norm(normal);
+              normal /= len;
+              qnormal /= L2Norm(qnormal);
+            }
+        
+            Vec<D> orig_point;
+            for (int d = 0; d < D; ++d)
+              orig_point(d) = ip[j](d);
+
+            double goal_val = gf_lset_p1->Evaluate(mip);
+            Vec<D> final_point;
+            SearchCorrespondingPoint<D>(LsetEvaluator<D>(lset_ho, *eltransj[j]),
+                                        orig_point, goal_val, 
+                                        trafo_of_normals, normal, false,
+                                        final_point, lh);
+            Vec<D> ref_dist = (final_point - orig_point);
+
+            deform_at_point[j] = mip.GetJacobian() * ref_dist;
+
+            if (qn)
+              deform_at_point[j] = InnerProduct(deform_at_point[j],qnormal) * qnormal;
+          }
+            
+
+          Vec<D> normal1 = mip.GetJacobiDet() * Trans (mip.GetJacobianInverse()) * normal_ref1;       
+          weight = L2Norm (normal1);
+            
+        }
+        Vec<D> deform_jump = deform_at_point[1] - deform_at_point[0];
+        deform_jump_integral += weight * sqr(L2Norm(deform_jump));
+        facet_integral += weight;
+      }
+    }
+    cont.ErrorMisc.Append(sqrt(deform_jump_integral/facet_integral));
+  }
+
 
   NumProcCalcErrors::NumProcCalcErrors (shared_ptr<PDE> apde, const Flags & flags)
   {
-    // lower_lset_bound = flags.GetNumFlag("lower_lset_bound",0.0);
-    // upper_lset_bound = flags.GetNumFlag("upper_lset_bound",0.0);
+    lower_lset_bound = flags.GetNumFlag("lset_lower_bound",0.0);
+    upper_lset_bound = flags.GetNumFlag("lset_upper_bound",0.0);
     gf_lset_p1 = apde->GetGridFunction(flags.GetStringFlag("levelset_p1","gf_lset_p1"));
     lset = apde->GetCoefficientFunction(flags.GetStringFlag("levelset","lset"));
     deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
+    qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
   }
   
   void NumProcCalcErrors::Do (LocalHeap & lh)
   {
     auto ma = deform->GetMeshAccess();
     if (ma->GetDimension() == 2)
+    {
       CalcDistances<2>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
-                       error_container, lh);
+                       lset_error_container, lh);
+      CalcDeformationError<2>(lset, gf_lset_p1, deform, qn,
+                              // lower_lset_bound, upper_lset_bound,
+                              deform_error_container, lh, lower_lset_bound, upper_lset_bound);
+    }
     else
+    {
       CalcDistances<3>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
-                       error_container, lh);
+                       lset_error_container, lh);
+      CalcDeformationError<3>(lset, gf_lset_p1, deform, qn, 
+                              // lower_lset_bound, upper_lset_bound,
+                              deform_error_container, lh, lower_lset_bound, upper_lset_bound);
+    }
 
 
 
-    PrintConvergenceTable(error_container.ErrorL1Norm, "lset_on_gamma_l1");
-    PrintConvergenceTable(error_container.ErrorMaxNorm, "lset_on_gamma_max");
+    PrintConvergenceTable(lset_error_container.ErrorL1Norm, "lset_on_gamma_l1");
+    PrintConvergenceTable(lset_error_container.ErrorMaxNorm, "lset_on_gamma_max");
+    PrintConvergenceTable(deform_error_container.ErrorL2Norm, "deform_l2");
+    PrintConvergenceTable(deform_error_container.ErrorMaxNorm, "deform_max");
+    PrintConvergenceTable(deform_error_container.ErrorMisc, "deform_jump");
   }
 
 
