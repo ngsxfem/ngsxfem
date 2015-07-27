@@ -38,12 +38,13 @@ namespace ngcomp
       Mat<1,D> pointmat;
       pointmat.Row(0) = point;
       IntegrationPoint ip(0.0);
-      FE_ElementTransformation<0,D> eltrans(ET_POINT,pointmat);
-      MappedIntegrationPoint<0,D> mip(ip,eltrans);
+      // FE_ElementTransformation<0,D> eltrans(ET_POINT,pointmat);
+      // MappedIntegrationPoint<0,D> mip(ip,eltrans);
 
       double val_lset;
       if (coef)
-        val_lset = coef->Evaluate(mip);
+        throw Exception (" not without dimension hack for MIP<0,D>...");
+        // val_lset = coef->Evaluate(mip);
       else
       {
         Array<int> dof;
