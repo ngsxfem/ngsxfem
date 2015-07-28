@@ -5,6 +5,7 @@
 /*********************************************************************/
 
 #include "lsetrefine.hpp"
+#include "calcpointshift.hpp"
 
 namespace ngcomp
 { 
@@ -29,17 +30,8 @@ namespace ngcomp
       gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dnums_lset_p1);
       FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
       gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
-            
-      bool has_pos = (lset_vals_p1[D] > lower_lset_bound);
-      bool has_neg = (lset_vals_p1[D] < upper_lset_bound);
-      for (int d = 0; d < D; ++d)
-      {
-        if (lset_vals_p1[d] > lower_lset_bound)
-          has_pos = true;
-        if (lset_vals_p1[d] < upper_lset_bound)
-          has_neg = true;
-      }
-      if (has_pos && has_neg)
+
+      if (ElementInRelevantBand(lset_vals_p1, lower_lset_bound, upper_lset_bound))
         Ng_SetRefinementFlag (elnr+1, 1);
       else
         Ng_SetRefinementFlag (elnr+1, 0);
