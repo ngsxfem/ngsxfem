@@ -38,10 +38,14 @@ namespace ngcomp
     shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
     *factor = 0.0;
     deform->GetVector() = 0.0;
+
+    ProgressOutput progress (ma, "project shift on element", ma->GetNE());
     
     for (int elnr = 0; elnr < ne; ++elnr)
     {
       HeapReset hr(lh);
+      progress.Update();
+      
       Ngs_Element ngel = ma->GetElement(elnr);
       ELEMENT_TYPE eltype = ngel.GetType();
       Array<int> p1_dofs;
@@ -101,6 +105,7 @@ namespace ngcomp
       factor->SetIndirect(def_dofs,factors);
       
     }
+    progress.Done();
     
     // averaging of the (summed) deformation
     Array<int> dnums(1);
