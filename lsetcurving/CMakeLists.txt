@@ -1,5 +1,6 @@
 add_library(ngsxfem_lsetcurving ${NGS_LIB_TYPE}
   p1interpol.cpp shiftintegrators.cpp calcpointshift.cpp setdeformation.cpp calcgeomerrors.cpp lsetrefine.cpp
+  projshift.cpp
   )
 
 set_target_properties(ngsxfem_lsetcurving PROPERTIES SUFFIX ".so")
@@ -7,6 +8,7 @@ set_target_properties(ngsxfem_lsetcurving PROPERTIES SUFFIX ".so")
 
 install( FILES
   p1interpol.hpp shiftintegrators.hpp calcpointshift.hpp calcgeomerrors.hpp lsetrefine.hpp
+  projshift.hpp
   DESTINATION include
   )
 

@@ -7,6 +7,7 @@
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
+#include "../lsetcurving/projshift.hpp"
 
 //using namespace ngcomp;
 
@@ -204,6 +205,17 @@ void ExportNgsx()
           (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("qn")=NULL,bp::arg("stats")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
     ;
 
+  bp::def("ProjectShift", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, double lower, double upper, double threshold, int heapsize)
+                                              {
+                                                LocalHeap lh (heapsize, "ProjectShift-Heap");
+                                                ProjectShift(lset_ho, lset_p1, deform, qn, lower, upper, threshold, lh);
+                                              } ),
+          (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("qn")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("threshold")=1.0,bp::arg("heapsize")=1000000))
+    ;
+
+// ProjectShift
+
+  
   bp::def("RefineAtLevelSet", FunctionPointer( [] (shared_ptr<GridFunction> lset_p1, double lower, double upper, int heapsize)
                                               {
                                                 LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
@@ -212,6 +224,8 @@ void ExportNgsx()
           (bp::arg("lset_p1")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
     ;
 
+
+  
 
   // void RefineAtLevelSet (shared_ptr<GridFunction> gf_lset_p1, double lower_lset_bound, double upper_lset_bound, LocalHeap & lh){
   
