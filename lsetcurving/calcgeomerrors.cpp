@@ -205,10 +205,10 @@ namespace ngcomp
             if (qn)
             {
               qn->Evaluate(mip,qnormal);
-              Vec<D> normal = mip.GetJacobianInverse() * qnormal;
-              double len = L2Norm(normal);
-              normal /= len;
-              qnormal /= L2Norm(qnormal);
+              normal = mip.GetJacobianInverse() * qnormal;
+              // double len = L2Norm(normal);
+              // normal /= len;
+              // qnormal /= L2Norm(qnormal);
             }
             Vec<D> orig_point;
             for (int d = 0; d < D; ++d)
@@ -222,8 +222,8 @@ namespace ngcomp
                                         final_point, lh);
             Vec<D> ref_dist = (final_point - orig_point);
             deform = mip.GetJacobian() * ref_dist;
-            if (qn)
-              deform = InnerProduct(deform,qnormal) * qnormal;
+            // if (qn)
+            //   deform = InnerProduct(deform,qnormal) * qnormal;
             
           }
 
@@ -347,10 +347,10 @@ namespace ngcomp
             if (qn)
             {
               qn->Evaluate(mip,qnormal);
-              Vec<D> normal = mip.GetJacobianInverse() * qnormal;
-              double len = L2Norm(normal);
-              normal /= len;
-              qnormal /= L2Norm(qnormal);
+              normal = mip.GetJacobianInverse() * qnormal;
+              // double len = L2Norm(normal);
+              // normal /= len;
+              // qnormal /= L2Norm(qnormal);
             }
         
             Vec<D> orig_point;
@@ -364,11 +364,13 @@ namespace ngcomp
                                         trafo_of_normals, normal, false,
                                         final_point, lh);
             Vec<D> ref_dist = (final_point - orig_point);
-
+            
             deform_at_point[j] = mip.GetJacobian() * ref_dist;
-
-            if (qn)
-              deform_at_point[j] = InnerProduct(deform_at_point[j],qnormal) * qnormal;
+            
+            // if (qn)
+            // {
+            //   deform_at_point[j] = InnerProduct(deform_at_point[j],qnormal) * qnormal;
+            // }
           }
             
 

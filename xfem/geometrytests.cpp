@@ -248,7 +248,7 @@ namespace ngcomp
           // cout << " normal = " << normal << endl;
           Vec<D> qnormal;
           qn->Evaluate(mip,qnormal);
-          Vec<D> normal = mip.GetJacobianInverse() * qnormal;
+          normal = mip.GetJacobianInverse() * qnormal;
           double len = L2Norm(normal);
           normal /= len;
           // cout << " normal = " << normal << endl;
