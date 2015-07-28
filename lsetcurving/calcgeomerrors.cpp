@@ -133,6 +133,7 @@ namespace ngcomp
           // surface += weight;
         }        
         pointsout << endl;
+        delete cquad;
       }
     }
     // progress.Done();
