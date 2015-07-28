@@ -71,18 +71,7 @@ namespace ngcomp
       MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
 
 
-
-      bool has_pos = (lset_vals_p1[D] > 0.0);
-      bool has_neg = (lset_vals_p1[D] < 0.0);
-      for (int d = 0; d < D; ++d)
-      {
-        if (lset_vals_p1[d] > 0.0)
-          has_pos = true;
-        if (lset_vals_p1[d] < 0.0)
-          has_neg = true;
-      }
-
-      if (has_neg && has_pos)
+      if (ElementInRelevantBand(lset_vals_p1, 0.0, 0.0))
       {
 
         ScalarFieldEvaluator * lset_eval_p
@@ -182,17 +171,7 @@ namespace ngcomp
       IntegrationPoint ipzero(0.0,0.0,0.0);
       MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
 
-      bool has_pos = (lset_vals_p1[D] > lower_lset_bound);
-      bool has_neg = (lset_vals_p1[D] < upper_lset_bound);
-      for (int d = 0; d < D; ++d)
-      {
-        if (lset_vals_p1[d] > 0.0)
-          has_pos = true;
-        if (lset_vals_p1[d] < 0.0)
-          has_neg = true;
-      }
-
-      if (has_neg && has_pos)
+      if (ElementInRelevantBand(lset_vals_p1, lower_lset_bound, upper_lset_bound))
       {
         el_curved.Set(elnr);
         

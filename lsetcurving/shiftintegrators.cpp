@@ -29,7 +29,7 @@ namespace ngfem
       qn = coeffs[5];
     }
   }
-
+  
   template <int D>
   void ShiftIntegrator<D> :: CalcElementVector (const FiniteElement & fel,
                                                 const ElementTransformation & eltrans,
@@ -42,24 +42,9 @@ namespace ngfem
     FlatMatrixFixWidth<D> elvecmat(scafe.GetNDof(),&elvec(0));
     elvecmat = 0.0;
 
-    ELEMENT_TYPE et = eltrans.GetElementType();
-    bool has_neg = false;
-    bool has_pos = false;
-    for (int s = 0; s < ElementTopology::GetNVertices(et); ++s)
-    {
-      const double * v = ElementTopology::GetVertices(et)[s];
-      IntegrationPoint ip(v[0],v[1],v[2]);
-      MappedIntegrationPoint<D,D> mip(ip, eltrans);
-      const double val = coef_lset_p1->Evaluate(mip);
-      if (val==0.0) has_neg = has_pos = true;
-      if (val > lower_lset_bound)
-        has_pos = true;
-      if (val < upper_lset_bound)
-        has_neg = true;
-    }
-    if (!has_neg || !has_pos)
+    if (!ElementInRelevantBand(coef_lset_p1, eltrans, lower_lset_bound, upper_lset_bound))
       return;
-      
+    
     FlatVector<> shape (scafe.GetNDof(),lh);
       
     IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
@@ -134,12 +119,10 @@ namespace ngfem
   {
     if (coeffs.Size() > 2)
     {
-      std::cout << " asdfad " << std::endl;
       lower_lset_bound = coeffs[2]->EvaluateConst();
     }
     if (coeffs.Size() > 3)
     {
-      std::cout << " asdfda " << std::endl;
       upper_lset_bound = coeffs[3]->EvaluateConst();
     }
   }
@@ -155,22 +138,7 @@ namespace ngfem
       
     elmat = 0.0;
 
-    ELEMENT_TYPE et = eltrans.GetElementType();
-    bool has_neg = false;
-    bool has_pos = false;
-    for (int s = 0; s < ElementTopology::GetNVertices(et); ++s)
-    {
-      const double * v = ElementTopology::GetVertices(et)[s];
-      IntegrationPoint ip(v[0],v[1],v[2]);
-      MappedIntegrationPoint<D,D> mip(ip, eltrans);
-      const double val = coef_lset_p1->Evaluate(mip);
-      if (val==0.0) has_neg = has_pos = true;
-      if (val > lower_lset_bound)
-        has_pos = true;
-      if (val < upper_lset_bound)
-        has_neg = true;
-    }
-    if (!has_neg || !has_pos)
+    if (!ElementInRelevantBand(coef_lset_p1, eltrans, lower_lset_bound, upper_lset_bound))
       return;
       
     FlatVector<> shape (scafe.GetNDof(),lh);

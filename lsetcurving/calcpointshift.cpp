@@ -76,6 +76,66 @@ namespace ngfem
     }
   }
 
+
+  bool ElementInRelevantBand (shared_ptr<CoefficientFunction> lset_p1,
+                              const ElementTransformation & eltrans,
+                              double lower_lset_bound, 
+                              double upper_lset_bound)
+  {
+    ELEMENT_TYPE et = eltrans.GetElementType();
+    bool has_neg = false;
+    bool has_pos = false;
+    for (int s = 0; s < ElementTopology::GetNVertices(et); ++s)
+    {
+      const double * v = ElementTopology::GetVertices(et)[s];
+      IntegrationPoint ip(v[0],v[1],v[2]);
+      double val;
+      if (ElementTopology::GetSpaceDim(et)==2)
+      {
+        MappedIntegrationPoint<2,2> mip(ip, eltrans);
+        val = lset_p1->Evaluate(mip);
+      }
+      else
+      {
+        MappedIntegrationPoint<3,3> mip(ip, eltrans);
+        val = lset_p1->Evaluate(mip);
+      }
+      if (val==0.0) has_neg = has_pos = true;
+      if (val > lower_lset_bound)
+        has_pos = true;
+      if (val < upper_lset_bound)
+        has_neg = true;
+    }
+    
+    if (!has_neg || !has_pos)
+      return false;
+    else
+      return true;
+  }  
+
+  bool ElementInRelevantBand (FlatVector<> lset_p1,
+                              double lower_lset_bound, 
+                              double upper_lset_bound)
+  {
+    bool has_neg = false;
+    bool has_pos = false;
+    for (int s = 0; s < lset_p1.Size(); ++s)
+    {
+      const double val = lset_p1[s];
+      if (val==0.0) has_neg = has_pos = true;
+      if (val > lower_lset_bound)
+        has_pos = true;
+      if (val < upper_lset_bound)
+        has_neg = true;
+    }
+    
+    if (!has_neg || !has_pos)
+      return false;
+    else
+      return true;
+  }  
+
+
   
   template<int D>
   void SearchCorrespondingPoint (

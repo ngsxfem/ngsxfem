@@ -32,6 +32,18 @@ namespace ngfem
     Vec<D> EvaluateGrad(const IntegrationPoint & ip, LocalHeap & lh) const;
   };
 
+
+
+
+  bool ElementInRelevantBand (shared_ptr<CoefficientFunction> lset_p1,
+                              const ElementTransformation & eltrans,
+                              double lower_lset_bound, 
+                              double upper_lset_bound);
+
+  bool ElementInRelevantBand (FlatVector<> lset_p1,
+                              double lower_lset_bound, 
+                              double upper_lset_bound);
+  
   
   template<int D>
   void SearchCorrespondingPoint (
