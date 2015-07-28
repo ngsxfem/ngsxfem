@@ -51,9 +51,14 @@ namespace ngcomp
     Vec<D> point_of_max_lset_error;
     IntegrationPoint ip_of_max_lset_error;
     ofstream pointsout("pointsout");
+    
+    // ProgressOutput progress (ma, "calc distance on element", ma->GetNE());
+    
     for (int elnr = 0; elnr < ne; ++elnr)
     {
       HeapReset hr(lh);
+      // progress.Update ();
+      
       Ngs_Element ngel = ma->GetElement(elnr);
       ELEMENT_TYPE eltype = ngel.GetType();
       Array<int> dofs;
@@ -130,6 +135,8 @@ namespace ngcomp
         pointsout << endl;
       }
     }
+    // progress.Done();
+    
     cont.ErrorL1Norm.Append(lset_error_l1);
     cont.ErrorMaxNorm.Append(lset_error_max);
     cout << " point_of_max_lset_error = " << point_of_max_lset_error << endl;
@@ -152,9 +159,13 @@ namespace ngcomp
     double deform_l2 = 0.0;
     double domain_l2 = 0.0;
     double deform_max = 0.0;
+    // ProgressOutput progress (ma, "calc deformation on element", ma->GetNE());
+    
     for (int elnr = 0; elnr < ne; ++elnr)
     {
       HeapReset hr(lh);
+      // progress.Update ();
+      
       Ngs_Element ngel = ma->GetElement(elnr);
       ELEMENT_TYPE eltype = ngel.GetType();
       Array<int> dofs;
@@ -265,8 +276,11 @@ namespace ngcomp
     }
 
 
+    // ProgressOutput progress_f (ma, "calc jump of deformation on facet", nf);
+    
     for (int facnr = 0; facnr < nf; ++facnr)
     {
+      // progress_f.Update();
       if (!fine_facet.Test(facnr)) continue;
       HeapReset hr(lh);
 
