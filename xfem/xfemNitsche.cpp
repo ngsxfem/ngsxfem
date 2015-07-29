@@ -418,7 +418,7 @@ namespace ngfem
       // elvec += 1.5 * Trans(L) * A * L;
     }
     else
-      elvec = Nc + lam*(p+1)/p/h * Ns;
+      elvec = Nc + lam*(p+1)*p/h * Ns;
       // elvec = Nc + Trans(Nc) + lam*(p+1)/p/h * Ns; 
       // elmat = lam*(p+1)/p/h * Ns; 
 
