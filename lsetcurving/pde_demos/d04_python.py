@@ -24,10 +24,11 @@ deform_stats = StatisticContainer()
 # z = CoordCF(2)
 
 R = 2.0/3.0
-levelset = VariableCF("sqrt(x*x+y*y+z*z") - R
+levelset = VariableCF("sqrt(x*x+y*y+z*z)-(0.5+0.1*sin(8*atan2(x,y)))")
+
 
 dim = 2
-for [cnt,meshstring] in [[0,"d01_03.vol.gz"]]: #,[1,"d01_02.vol.gz"],[2,"d01_03.vol.gz"],[3,"d01_04.vol.gz"]]:
+for [cnt,meshstring] in [[0,"d01_01.vol.gz"],[1,"d01_02.vol.gz"],[2,"d01_03.vol.gz"],[3,"d01_04.vol.gz"]]:
 
     mesh = Mesh(meshstring)
 
@@ -36,7 +37,7 @@ for [cnt,meshstring] in [[0,"d01_03.vol.gz"]]: #,[1,"d01_02.vol.gz"],[2,"d01_03.
     lset_ho.Set(levelset)
 
     v_qn = FESpace("h1ho", mesh, order=order_qn, flags = { "vec" : True })
-    qn = GridFunction(v_qn, "h.o. quasi normal")
+    qn = GridFunction(v_qn, "quasi normal")
     qn.Set(lset_ho.Deriv())
     
     v_p1 = FESpace("h1ho", mesh, order=1)
@@ -73,6 +74,8 @@ for [cnt,meshstring] in [[0,"d01_03.vol.gz"]]: #,[1,"d01_02.vol.gz"],[2,"d01_03.
     lset_stats.Print("lset_dist","max")
     deform_stats.Print("deform_error","max")
     
-    # mark elements in band of interest for refinement
-    RefineAtLevelSet(lset_p1,lset_lower_bound,lset_upper_bound)
+    # # mark elements in band of interest for refinement
+    # RefineAtLevelSet(lset_p1,lset_lower_bound,lset_upper_bound)
+
+    Draw(deform, mesh, "Mesh Deformation")
 
