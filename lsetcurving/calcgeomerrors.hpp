@@ -41,6 +41,7 @@ namespace ngcomp
     shared_ptr<GridFunction> deform;
     StatisticContainer lset_error_container;
     StatisticContainer deform_error_container;
+    bool only_distance;
   public:
     NumProcCalcErrors (shared_ptr<PDE> apde, const Flags & flags);
     virtual ~NumProcCalcErrors() { }

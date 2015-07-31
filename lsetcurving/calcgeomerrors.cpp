@@ -40,6 +40,9 @@ namespace ngcomp
   
   template<int D>
   void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & lh){
+    static Timer time_fct ("CalcDistances");
+    RegionTimer reg (time_fct);
+    
     auto ma = deform->GetMeshAccess();
     
     int ne=ma->GetNE();
@@ -147,6 +150,9 @@ namespace ngcomp
 
   template<int D>
   void CalcDeformationError (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & cont, LocalHeap & lh, double lower_lset_bound, double upper_lset_bound){
+    static Timer time_fct ("CalcDeformationError");
+    RegionTimer reg (time_fct);
+    
     auto ma = deform->GetMeshAccess();
     
     int ne=ma->GetNE();
@@ -412,6 +418,7 @@ namespace ngcomp
     lset = apde->GetCoefficientFunction(flags.GetStringFlag("levelset","lset"));
     deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
     qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
+    only_distance = flags.GetDefineFlag("only_distance");
   }
   
   void NumProcCalcErrors::Do (LocalHeap & lh)
@@ -422,18 +429,20 @@ namespace ngcomp
       CalcDistances<2>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
                        lset_error_container, lh);
-      CalcDeformationError<2>(lset, gf_lset_p1, deform, qn,
-                              // lower_lset_bound, upper_lset_bound,
-                              deform_error_container, lh, lower_lset_bound, upper_lset_bound);
+      if (!only_distance)
+        CalcDeformationError<2>(lset, gf_lset_p1, deform, qn,
+                                // lower_lset_bound, upper_lset_bound,
+                                deform_error_container, lh, lower_lset_bound, upper_lset_bound);
     }
     else
     {
       CalcDistances<3>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
                        lset_error_container, lh);
-      CalcDeformationError<3>(lset, gf_lset_p1, deform, qn, 
-                              // lower_lset_bound, upper_lset_bound,
-                              deform_error_container, lh, lower_lset_bound, upper_lset_bound);
+      if (!only_distance)
+        CalcDeformationError<3>(lset, gf_lset_p1, deform, qn, 
+                                // lower_lset_bound, upper_lset_bound,
+                                deform_error_container, lh, lower_lset_bound, upper_lset_bound);
     }
 
 

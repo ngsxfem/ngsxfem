@@ -5,11 +5,14 @@
 namespace ngcomp
 {
 
-  void ProjectShift (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
+  void ProjectShift (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
                      shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn,
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & lh)
   {
+    static Timer time_fct ("ProjectShift");
+    RegionTimer reg (time_fct);
+    
     auto ma = lset_p1->GetMeshAccess();
     int ne=ma->GetNE();
     int D =ma->GetDimension();
@@ -29,11 +32,12 @@ namespace ngcomp
     shift_array.Append(make_shared<ConstantCoefficientFunction>(upper_lset_bound));
     shift_array.Append(qn);
     
-    shared_ptr<LinearFormIntegrator> shift;
+    shared_ptr<ShiftIntegrator<2>> shift2D;
+    shared_ptr<ShiftIntegrator<3>> shift3D;
     if (D==2)
-      shift = make_shared<ShiftIntegrator<2>>(shift_array);
+      shift2D = make_shared<ShiftIntegrator<2>>(shift_array);
     else
-      shift = make_shared<ShiftIntegrator<3>>(shift_array);
+      shift3D = make_shared<ShiftIntegrator<3>>(shift_array);
 
     shared_ptr<BaseVector> factor = deform->GetVector().CreateVector();
     *factor = 0.0;
@@ -47,7 +51,7 @@ namespace ngcomp
       progress.Update();
       
       Ngs_Element ngel = ma->GetElement(elnr);
-      ELEMENT_TYPE eltype = ngel.GetType();
+      // ELEMENT_TYPE eltype = ngel.GetType();
       Array<int> p1_dofs;
       lset_p1->GetFESpace()->GetDofNrs(elnr,p1_dofs);
       FlatVector<> vals(p1_dofs.Size(),lh);
@@ -69,10 +73,19 @@ namespace ngcomp
       mass->CalcElementMatrix(fel_deform, eltrans, massmat, lh);
       CalcInverse(massmat);
 
-      shift->CalcElementVector(fel_deform, eltrans, elvec, lh);
+      
+      Array<int> lset_ho_dofs;
+      lset_ho->GetFESpace()->GetDofNrs(elnr,lset_ho_dofs);
+      FlatVector<> lset_ho_vals(lset_ho_dofs.Size(),lh);
+      lset_ho->GetVector().GetIndirect(lset_ho_dofs,lset_ho_vals);
+      const FiniteElement & fel_lset_ho = lset_ho->GetFESpace()->GetFE(elnr,lh);
       
       if (D==2)
       {
+        const ScalarFiniteElement<2> & scafe_lset_ho = dynamic_cast< const ScalarFiniteElement<2> &>(fel_lset_ho);
+        shared_ptr<LsetEvaluator<2>> lseteval = make_shared<LsetEvaluator<2>>(scafe_lset_ho,lset_ho_vals);
+        shift2D->CalcElementVector(fel_deform, eltrans, elvec, lh, lseteval);
+        
         FlatMatrixFixWidth<2> elvec_vec(def_dofs.Size(),&elvec(0));
         FlatMatrixFixWidth<2> shift_vec(def_dofs.Size(),&elres(0));
         for (int d = 0; d < D; ++d)
@@ -83,6 +96,11 @@ namespace ngcomp
       }
       else
       {
+        const ScalarFiniteElement<3> & scafe_lset_ho = dynamic_cast< const ScalarFiniteElement<3> &>(fel_lset_ho);
+        shared_ptr<LsetEvaluator<3>> lseteval = make_shared<LsetEvaluator<3>>(scafe_lset_ho,lset_ho_vals);
+        
+        shift3D->CalcElementVector(fel_deform, eltrans, elvec, lh, lseteval);
+        
         FlatMatrixFixWidth<3> elvec_vec(def_dofs.Size(),&elvec(0));
         FlatMatrixFixWidth<3> shift_vec(def_dofs.Size(),&elres(0));
         for (int d = 0; d < D; ++d)
@@ -130,7 +148,7 @@ namespace ngcomp
     upper_lset_bound = flags.GetNumFlag("lset_upper_bound",0.0);
     threshold = flags.GetNumFlag("threshold",1.0);
     gf_lset_p1 = apde->GetGridFunction(flags.GetStringFlag("levelset_p1","gf_lset_p1"));
-    lset = apde->GetCoefficientFunction(flags.GetStringFlag("levelset","lset"));
+    lset = apde->GetGridFunction(flags.GetStringFlag("levelset","lset"));
     deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
     qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
   }

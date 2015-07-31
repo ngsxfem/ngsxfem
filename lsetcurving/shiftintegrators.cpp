@@ -34,11 +34,18 @@ namespace ngfem
   void ShiftIntegrator<D> :: CalcElementVector (const FiniteElement & fel,
                                                 const ElementTransformation & eltrans,
                                                 FlatVector<double> elvec,
-                                                LocalHeap & lh) const
+                                                LocalHeap & lh,
+                                                shared_ptr<LsetEvaluator<D>> lseteval) const
   {
+    static Timer time_fct ("ShiftIntegrator<D>::CalcElementVector");
+    RegionTimer reg (time_fct);
+    
     elvec = 0.0;
     const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);
-      
+
+    if (!lseteval)
+      lseteval = make_shared<LsetEvaluator<D>>(coef_lset_ho, eltrans);
+    
     FlatMatrixFixWidth<D> elvecmat(scafe.GetNDof(),&elvec(0));
     elvecmat = 0.0;
 
@@ -47,29 +54,28 @@ namespace ngfem
     
     FlatVector<> shape (scafe.GetNDof(),lh);
       
+    Vec<D> grad;
+    if (!qn) //grad is constant on element...
+    {
+      IntegrationPoint ip(0.0,0.0,0.0);
+      MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      CalcGradientOfCoeff(coef_lset_p1, mip, grad, lh);
+    }
+    
     IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
     for (int l = 0 ; l < ir.GetNIP(); l++)
     {
       MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
       scafe.CalcShape(ir[l],shape);
 
-      Vec<D> grad;
-      CalcGradientOfCoeff(coef_lset_p1, mip, grad, lh);
       Mat<D> trafo_of_normals = mip.GetJacobianInverse() * Trans(mip.GetJacobianInverse());
         
-      Vec<D> normal = mip.GetJacobianInverse() * grad;
-      double len = L2Norm(normal);
-      normal /= len;
-
-      Vec<D> qnormal;
       if (qn)
-      {
-        qn->Evaluate(mip,qnormal);
-        normal = mip.GetJacobianInverse() * qnormal;
-        // double len = L2Norm(normal);
-        // normal /= len;
-        // qnormal /= L2Norm(qnormal);
-      }
+        qn->Evaluate(mip,grad);
+
+      Vec<D> normal = mip.GetJacobianInverse() * grad;
+      // double len = L2Norm(normal);
+      // normal /= len;
         
       Vec<D> orig_point;
       for (int d = 0; d < D; ++d)
@@ -77,7 +83,7 @@ namespace ngfem
 
       double goal_val = coef_lset_p1->Evaluate(mip);
       Vec<D> final_point;
-      SearchCorrespondingPoint<D>(LsetEvaluator<D>(coef_lset_ho, eltrans),
+      SearchCorrespondingPoint<D>(*lseteval,
                                   orig_point, goal_val, 
                                   trafo_of_normals, normal, false,
                                   final_point, lh);
@@ -132,11 +138,12 @@ namespace ngfem
                                                          FlatMatrix<double> elmat,
                                                          LocalHeap & lh) const
   {
+    static Timer time_fct ("RestrictedMassIntegrator<D>::CalcElementMatrix");
+    RegionTimer reg (time_fct);
+    
     elmat = 0.0;
     const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);
       
-    elmat = 0.0;
-
     if (!ElementInRelevantBand(coef_lset_p1, eltrans, lower_lset_bound, upper_lset_bound))
       return;
       

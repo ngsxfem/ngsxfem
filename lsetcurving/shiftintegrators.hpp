@@ -27,7 +27,15 @@ namespace ngfem
     virtual void CalcElementVector (const FiniteElement & fel,
                                     const ElementTransformation & eltrans,
                                     FlatVector<double> elvec,
-                                    LocalHeap & lh) const;
+                                    LocalHeap & lh,
+                                    shared_ptr<LsetEvaluator<D>> lseteval) const;
+    virtual void CalcElementVector (const FiniteElement & fel,
+                                    const ElementTransformation & eltrans,
+                                    FlatVector<double> elvec,
+                                    LocalHeap & lh) const
+    {
+      CalcElementVector(fel,eltrans,elvec,lh,nullptr);
+    }
   };
 
   

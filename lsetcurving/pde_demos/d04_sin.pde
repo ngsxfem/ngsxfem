@@ -1,16 +1,16 @@
 geometry = d01_testgeom.in2d
-mesh = d01_01.vol.gz
+# mesh = d01_01.vol.gz
 #mesh = d04_refined.vol.gz
-#mesh = d04_unstr.vol.gz
+mesh = d04_unstr.vol.gz
 # mesh = d99_testgeom_unstr.vol.gz
 shared = libngsxfem_xfem
 shared = libngsxfem_lsetcurving
 
 flags tracer = -max_size=0
         
-define constant order_deform = "5"
+define constant order_deform = "3"
 define constant order_qn = "1"
-define constant order_lset = "5"
+define constant order_lset = "3"
 
 constant levelset_lower_bound = "-0.0"
 constant levelset_upper_bound = "0.0"
@@ -176,6 +176,7 @@ numproc levelsetrefine nplsref -levelset=lset_p1
 numproc calcerrors npcalcerr -levelset_ho=lset -levelset_p1=lset_p1 -quasinormal=qn -deform=deform
                 -lset_lower_bound=$(levelset_lower_bound)
                 -lset_upper_bound=$(levelset_upper_bound)
+                -only_distance
 
 
 numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=0  -minval=0.0 -maxval=0.0 -nolineartexture
@@ -187,4 +188,3 @@ numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -defo
         
 #        -gridfunctions=[gf_negpos.1,gf_negpos.2]
 
-        

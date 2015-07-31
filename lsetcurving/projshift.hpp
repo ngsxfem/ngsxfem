@@ -10,7 +10,7 @@
 namespace ngcomp
 {
 
-  void ProjectShift (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
+  void ProjectShift (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
                      shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn,
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & lh);
@@ -23,7 +23,7 @@ namespace ngcomp
     double upper_lset_bound;
     double threshold;
     shared_ptr<GridFunction> gf_lset_p1;
-    shared_ptr<CoefficientFunction> lset;
+    shared_ptr<GridFunction> lset;
     shared_ptr<CoefficientFunction> qn;
     shared_ptr<GridFunction> deform;
     

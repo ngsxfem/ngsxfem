@@ -205,7 +205,7 @@ void ExportNgsx()
           (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("qn")=NULL,bp::arg("stats")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
     ;
 
-  bp::def("ProjectShift", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, double lower, double upper, double threshold, int heapsize)
+  bp::def("ProjectShift", FunctionPointer( [] (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, double lower, double upper, double threshold, int heapsize)
                                               {
                                                 LocalHeap lh (heapsize, "ProjectShift-Heap");
                                                 ProjectShift(lset_ho, lset_p1, deform, qn, lower, upper, threshold, lh);
