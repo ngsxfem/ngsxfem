@@ -39,7 +39,7 @@ namespace ngcomp
 
   
   template<int D>
-  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & lh){
+  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & clh){
     static Timer time_fct ("CalcDistances");
     RegionTimer reg (time_fct);
     
@@ -56,89 +56,102 @@ namespace ngcomp
     ofstream pointsout("pointsout");
     
     ProgressOutput progress (ma, "calc distance on element", ma->GetNE());
-    
-    for (int elnr = 0; elnr < ne; ++elnr)
-    {
-      HeapReset hr(lh);
-      progress.Update ();
+
+
+    IterateElements
+      (*(gf_lset_p1->GetFESpace()), VOL, clh,  [&] (FESpace::Element el, LocalHeap & lh)
+       {
+         int elnr = el.Nr();
+         HeapReset hr(lh);
+         progress.Update ();
       
-      Ngs_Element ngel = ma->GetElement(elnr);
-      ELEMENT_TYPE eltype = ngel.GetType();
-      Array<int> dofs;
-      gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
-      FlatVector<> lset_vals_p1(dofs.Size(),lh);
-      gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
+         Ngs_Element ngel = ma->GetElement(elnr);
+         ELEMENT_TYPE eltype = ngel.GetType();
+         Array<int> dofs;
+         gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
+         FlatVector<> lset_vals_p1(dofs.Size(),lh);
+         gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
 
-      ma->SetDeformation(deform);
-      ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+         ElementTransformation * eltrans_curved;
+         ElementTransformation * eltrans;
 
-      ma->SetDeformation(nullptr);
-      ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+#pragma omp critical(deform)
+         {
+           ma->SetDeformation(deform);
+           eltrans_curved = &ma->GetTrafo (ElementId(VOL,elnr), lh);
+         }
+#pragma omp critical(deform)
+         {
+           ma->SetDeformation(nullptr);
+           eltrans = &ma->GetTrafo (ElementId(VOL,elnr), lh);
+         }
+         IntegrationPoint ipzero(0.0,0.0,0.0);
+         MappedIntegrationPoint<D,D> mx0(ipzero,*eltrans);
 
-      IntegrationPoint ipzero(0.0,0.0,0.0);
-      MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
 
+         if (ElementInRelevantBand(lset_vals_p1, 0.0, 0.0))
+         {
 
-      if (ElementInRelevantBand(lset_vals_p1, 0.0, 0.0))
-      {
+           ScalarFieldEvaluator * lset_eval_p
+             = ScalarFieldEvaluator::Create(D,*gf_lset_p1,*eltrans,lh);
 
-        ScalarFieldEvaluator * lset_eval_p
-          = ScalarFieldEvaluator::Create(D,*gf_lset_p1,eltrans,lh);
+           auto cquad = new CompositeQuadratureRule<D>() ;
 
-        auto cquad = new CompositeQuadratureRule<D>() ;
+           ELEMENT_TYPE et_time = ET_POINT;
 
-        ELEMENT_TYPE et_time = ET_POINT;
+           auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                          *cquad, lh, 
+                                                          2*order, 0, 
+                                                          0, 0);
 
-        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                       *cquad, lh, 
-                                                       2*order, 0, 
-                                                       0, 0);
+           xgeom->MakeQuadRule();
+           FlatXLocalGeometryInformation fxgeom(*xgeom,lh);
+           const FlatCompositeQuadratureRule<D> & fcompr(fxgeom.GetCompositeRule<D>());
+           // const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
+           const FlatQuadratureRuleCoDim1<D> & fquad_if(fcompr.GetInterfaceRule());
 
-        xgeom->MakeQuadRule();
-        FlatXLocalGeometryInformation fxgeom(*xgeom,lh);
-        const FlatCompositeQuadratureRule<D> & fcompr(fxgeom.GetCompositeRule<D>());
-        // const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
-        const FlatQuadratureRuleCoDim1<D> & fquad_if(fcompr.GetInterfaceRule());
+           for (int i = 0; i < fquad_if.Size(); ++i)
+           {
+             IntegrationPoint ip(&fquad_if.points(i,0),0.0); // x_hathat
+             MappedIntegrationPoint<D,D> mip(ip, *eltrans_curved); // x
 
-        for (int i = 0; i < fquad_if.Size(); ++i)
-        {
-          IntegrationPoint ip(&fquad_if.points(i,0),0.0); // x_hathat
-          MappedIntegrationPoint<D,D> mip(ip, eltrans_curved); // x
+             Vec<D> y = mx0.GetJacobianInverse() * (mip.GetPoint() - mx0.GetPoint()); //point such that level set is approximately that of x_hathat
+             IntegrationPoint ipy(y);
+             MappedIntegrationPoint<D,D> mipy(ipy,*eltrans);
+             // now mip.GetPoint() == mipy.GetPoint()
 
-          Vec<D> y = mx0.GetJacobianInverse() * (mip.GetPoint() - mx0.GetPoint()); //point such that level set is approximately that of x_hathat
-          IntegrationPoint ipy(y);
-          MappedIntegrationPoint<D,D> mipy(ipy,eltrans);
-          // now mip.GetPoint() == mipy.GetPoint()
-
-          // const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
+             // const double lset_val_transf_p1 = gf_lset_p1->Evaluate(mip);
           
-          const double lset_val = lset_ho->Evaluate(mipy);
+             const double lset_val = lset_ho->Evaluate(mipy);
 
-          pointsout << mip.GetPoint()[0] << " " << mip.GetPoint()[1] << " " <<  abs(lset_val) << endl;
-          if (abs(lset_val) > lset_error_max)
-          {
-            lset_error_max = abs(lset_val);
-            point_of_max_lset_error = mip.GetPoint();
-            ip_of_max_lset_error = ip;
-          }
+             pointsout << mip.GetPoint()[0] << " " << mip.GetPoint()[1] << " " <<  abs(lset_val) << endl;
+#pragma omp critical(max)
+             if (abs(lset_val) > lset_error_max)
+             {
+               lset_error_max = abs(lset_val);
+               point_of_max_lset_error = mip.GetPoint();
+               ip_of_max_lset_error = ip;
+             }
           
-          Mat<D,D> Finv = mip.GetJacobianInverse();
-          const double absdet = mip.GetMeasure();
+             Mat<D,D> Finv = mip.GetJacobianInverse();
+             const double absdet = mip.GetMeasure();
 
-          Vec<D> nref = fquad_if.normals.Row(i);
-          Vec<D> normal = absdet * Trans(Finv) * nref ;
-          double len = L2Norm(normal);
-          normal /= len;
+             Vec<D> nref = fquad_if.normals.Row(i);
+             Vec<D> normal = absdet * Trans(Finv) * nref ;
+             double len = L2Norm(normal);
+             normal /= len;
 
-          const double weight = fquad_if.weights(i) * len;
+             const double weight = fquad_if.weights(i) * len;
 
-          lset_error_l1 += weight * abs(lset_val);
-          // surface += weight;
-        }        
-        pointsout << endl;
-        delete cquad;
-      }
-    }
+#pragma omp atomic
+             lset_error_l1 += weight * abs(lset_val);
+             // surface += weight;
+           }        
+           pointsout << endl;
+           delete cquad;
+         }
+       });
+       
     progress.Done();
     
     cont.ErrorL1Norm.Append(lset_error_l1);
@@ -149,7 +162,7 @@ namespace ngcomp
 
 
   template<int D>
-  void CalcDeformationError (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & cont, LocalHeap & lh, double lower_lset_bound, double upper_lset_bound){
+  void CalcDeformationError (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & cont, LocalHeap & clh, double lower_lset_bound, double upper_lset_bound){
     static Timer time_fct ("CalcDeformationError");
     RegionTimer reg (time_fct);
     
@@ -167,93 +180,101 @@ namespace ngcomp
     double domain_l2 = 0.0;
     double deform_max = 0.0;
     ProgressOutput progress (ma, "calc deformation on element", ma->GetNE());
-    
-    for (int elnr = 0; elnr < ne; ++elnr)
-    {
-      HeapReset hr(lh);
-      progress.Update ();
+
+
+    IterateElements
+      (*(deform->GetFESpace()), VOL, clh,  [&] (FESpace::Element el, LocalHeap & lh)
+       {
+         int elnr = el.Nr();
+         HeapReset hr(lh);
+         progress.Update ();
       
-      Ngs_Element ngel = ma->GetElement(elnr);
-      ELEMENT_TYPE eltype = ngel.GetType();
-      Array<int> dofs;
-      gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
-      FlatVector<> lset_vals_p1(dofs.Size(),lh);
-      gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
+         Ngs_Element ngel = ma->GetElement(elnr);
+         ELEMENT_TYPE eltype = ngel.GetType();
+         Array<int> dofs;
+         gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
+         FlatVector<> lset_vals_p1(dofs.Size(),lh);
+         gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
 
-      ma->SetDeformation(deform);
-      ElementTransformation & eltrans_curved = ma->GetTrafo (ElementId(VOL,elnr), lh);
+         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+           
+         IntegrationPoint ipzero(0.0,0.0,0.0);
+         MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
 
-      ma->SetDeformation(nullptr);
-      ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+         if (ElementInRelevantBand(lset_vals_p1, lower_lset_bound, upper_lset_bound))
+         {
+           el_curved.Set(elnr);
 
-      IntegrationPoint ipzero(0.0,0.0,0.0);
-      MappedIntegrationPoint<D,D> mx0(ipzero,eltrans);
-
-      if (ElementInRelevantBand(lset_vals_p1, lower_lset_bound, upper_lset_bound))
-      {
-        el_curved.Set(elnr);
+           const ScalarFiniteElement<D> & scafe
+             = dynamic_cast<const ScalarFiniteElement<D> &>(el.GetFE());
+           FlatVector<> shape(scafe.GetNDof(),lh);
+           FlatMatrixFixWidth<D> elvec(scafe.GetNDof(),lh);
+           FlatVector<> elvec_as_vec(D*scafe.GetNDof(),&elvec(0,0));
+           Array<int> dnums;
+           deform->GetFESpace()->GetDofNrs(elnr,dnums);
+           deform->GetVector().GetIndirect(dnums,elvec_as_vec);
         
-        const ScalarFiniteElement<D> & scafe
-          = dynamic_cast<const ScalarFiniteElement<D> &>(deform->GetFESpace()->GetFE(elnr,lh));
-        FlatVector<> shape(scafe.GetNDof(),lh);
-        FlatMatrixFixWidth<D> elvec(scafe.GetNDof(),lh);
-        FlatVector<> elvec_as_vec(D*scafe.GetNDof(),&elvec(0,0));
-        Array<int> dnums;
-        deform->GetFESpace()->GetDofNrs(elnr,dnums);
-        deform->GetVector().GetIndirect(dnums,elvec_as_vec);
+           IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
+           for (int l = 0 ; l < ir.GetNIP(); l++)
+           {
+             MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
+             scafe.CalcShape(ir[l],shape);
+             Vec<D> deform_h = Trans(elvec) * shape;
+
+             Vec<D> deform;          
+             { // point search:
+               Vec<D> grad;
+               CalcGradientOfCoeff(gf_lset_p1, mip, grad, lh);
+               Mat<D> trafo_of_normals = mip.GetJacobianInverse() * Trans(mip.GetJacobianInverse());
         
-        IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
-        for (int l = 0 ; l < ir.GetNIP(); l++)
-        {
-          MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
-          scafe.CalcShape(ir[l],shape);
-          Vec<D> deform_h = Trans(elvec) * shape;
+               Vec<D> normal = mip.GetJacobianInverse() * grad;
+               double len = L2Norm(normal);
+               normal /= len;
 
-          Vec<D> deform;          
-          { // point search:
-            Vec<D> grad;
-            CalcGradientOfCoeff(gf_lset_p1, mip, grad, lh);
-            Mat<D> trafo_of_normals = mip.GetJacobianInverse() * Trans(mip.GetJacobianInverse());
-        
-            Vec<D> normal = mip.GetJacobianInverse() * grad;
-            double len = L2Norm(normal);
-            normal /= len;
+               Vec<D> qnormal;
+               if (qn)
+               {
+                 qn->Evaluate(mip,qnormal);
+                 normal = mip.GetJacobianInverse() * qnormal;
+                 // double len = L2Norm(normal);
+                 // normal /= len;
+                 // qnormal /= L2Norm(qnormal);
+               }
+               Vec<D> orig_point;
+               for (int d = 0; d < D; ++d)
+                 orig_point(d) = ir[l](d);
 
-            Vec<D> qnormal;
-            if (qn)
-            {
-              qn->Evaluate(mip,qnormal);
-              normal = mip.GetJacobianInverse() * qnormal;
-              // double len = L2Norm(normal);
-              // normal /= len;
-              // qnormal /= L2Norm(qnormal);
-            }
-            Vec<D> orig_point;
-            for (int d = 0; d < D; ++d)
-              orig_point(d) = ir[l](d);
-
-            double goal_val = gf_lset_p1->Evaluate(mip);
-            Vec<D> final_point;
-            SearchCorrespondingPoint<D>(LsetEvaluator<D>(lset_ho, eltrans),
-                                        orig_point, goal_val, 
-                                        trafo_of_normals, normal, false,
-                                        final_point, lh);
-            Vec<D> ref_dist = (final_point - orig_point);
-            deform = mip.GetJacobian() * ref_dist;
-            // if (qn)
-            //   deform = InnerProduct(deform,qnormal) * qnormal;
+               double goal_val = gf_lset_p1->Evaluate(mip);
+               Vec<D> final_point;
+               SearchCorrespondingPoint<D>(LsetEvaluator<D>(lset_ho, eltrans),
+                                           orig_point, goal_val, 
+                                           trafo_of_normals, normal, false,
+                                           final_point, lh);
+               Vec<D> ref_dist = (final_point - orig_point);
+               deform = mip.GetJacobian() * ref_dist;
+               // if (qn)
+               //   deform = InnerProduct(deform,qnormal) * qnormal;
             
-          }
+             }
 
-          deform_h -= deform;
+             deform_h -= deform;
 
-          deform_l2 += mip.GetWeight() * sqr(L2Norm(deform_h));
-          domain_l2 += mip.GetWeight();
-          if (L2Norm(deform_h) > deform_max)
-            deform_max = L2Norm(deform_h);
-        }        
-      }
-    }
+             const double weight = mip.GetWeight();
+             const double weight_deform_sqr = weight * sqr(L2Norm(deform_h));
+#pragma omp atomic
+             deform_l2 += weight_deform_sqr;
+#pragma omp atomic
+             domain_l2 += weight;
+             const double new_max = L2Norm(deform_h);
+#pragma omp critical(max)
+             if (new_max > deform_max)
+               deform_max = new_max;
+           }        
+         }
+
+
+       });
+       
     progress.Done ();
 
     deform_l2 /= domain_l2;
@@ -275,16 +296,15 @@ namespace ngcomp
     Array<int> elfacets;
     for (int i = 0; i < ne; ++i)
     {
-      if(dim==2)
-        ma->GetElEdges(i,elfacets);
-      else
-        ma->GetElFaces(i,elfacets);
+      ma->GetElFacets(i,elfacets);
       for (int j=0;j<elfacets.Size();j++)
         fine_facet.Set(elfacets[j]);
     }
 
 
     ProgressOutput progress_f (ma, "calc jump of deformation on facet", nf);
+
+    LocalHeap & lh(clh);
     
     for (int facnr = 0; facnr < nf; ++facnr)
     {
