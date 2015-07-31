@@ -1,5 +1,6 @@
 geometry = d01_testgeom.in2d
-mesh = d08_ref.vol.gz
+#mesh = d08_ref.vol.gz
+mesh = d01_testgeom.vol.gz
 #mesh = d04_refined.vol.gz
 #mesh = d04_unstr.vol.gz
 # mesh = d99_testgeom_unstr.vol.gz
@@ -8,10 +9,10 @@ shared = libngsxfem_lsetcurving
 
 flags tracer = -max_size=0
         
-define constant order_deform = "4"
+define constant order_deform = "3"
 define constant order_qn = "1"
-define constant order_lset = "4"
-define constant order_scalar = "4"
+define constant order_lset = "3"
+define constant order_scalar = "3"
 
 constant levelset_lower_bound = "-0.0"
 constant levelset_upper_bound = "0.0"
@@ -23,7 +24,7 @@ constant threshold = "0.1"
         #0.5/$(order_deform)
 # constant threshold = 0.1
         
-define constant heapsize = 2e9
+define constant heapsize = 1e9
 constant R = 2.0/3.0
 
 constant omega = 5.0
@@ -63,7 +64,7 @@ fespace fes_deform -type=h1ho -order=$(order_deform) -vec -dirichlet=[1,2,3,4]
         
 gridfunction deform -fespace=fes_deform
 
-numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=$(lset_lower_bound) -lset_upper_bound=$(lset_upper_bound) -threshold=$(threshold)
+numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=$(lset_lower_bound) -lset_upper_bound=$(lset_upper_bound) -threshold=0.1
         
 
 #numproc levelsetrefine nplsref -levelset=lset_p1
@@ -74,6 +75,9 @@ numproc calcerrors npcalcerr -levelset_ho=lset -levelset_p1=lset_p1 -quasinormal
 
 
 numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=0  -minval=0.0 -maxval=0.0 -nolineartexture
+
+        
+        
 
 
 
@@ -153,7 +157,7 @@ define coefficient fluxjumprhs
 )
 ,
 
-define constant lambda = 200
+define constant lambda = 2
 
 define fespace fescomp
        -type=xstdfespace
@@ -212,4 +216,43 @@ numproc xdifference npxd
 
 
 numproc unsetdeformation npudef
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
+
+
+
+
+
+
+                
+# define fespace fesustd
+#         -type=h1ho
+#         -order=$(order)
+
+# define fespace fesunegpos
+#         -type=compound
+#         -spaces=[fesustd,fesustd]
+        
+# define gridfunction gf_u_negpos -fespace=fesunegpos -novisual
+
+# numproc xtonegpos npxtonegposp -xstd_gridfunction=u -negpos_gridfunction=gf_u_negpos
+        
+# numproc vtkoutput npout -filename=d08_output_sd2_
+#         -coefficients=[lset]
+#         -gridfunctions=[gf_u_negpos.1,gf_u_negpos.2]
+#         -fieldnames=[levelset,uneg,upos]
+#         -subdivision=2
+                
