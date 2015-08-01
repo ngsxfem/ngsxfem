@@ -183,15 +183,15 @@ void ExportNgsx()
       )
     ;
 
-  bp::def("CalcDistances", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & stats, int heapsize)
+  bp::def("CalcDistances", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & stats, int heapsize, double refine_threshold)
                                               {
                                                 LocalHeap lh (heapsize, "CalcDistance-Heap");
                                                 if (lset_p1->GetMeshAccess()->GetDimension()==2)
-                                                  CalcDistances<2>(lset_ho, lset_p1, deform,  stats, lh);
+                                                  CalcDistances<2>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold);
                                                 else
-                                                  CalcDistances<3>(lset_ho, lset_p1, deform,  stats, lh);
+                                                  CalcDistances<3>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold);
                                               } ),
-          (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("stats")=NULL,bp::arg("heapsize")=1000000))
+          (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("stats")=NULL,bp::arg("heapsize")=1000000),bp::arg("refine_threshold")=-1.0)
     ;
 
   bp::def("CalcDeformationError", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & stats, double lower, double upper, int heapsize)

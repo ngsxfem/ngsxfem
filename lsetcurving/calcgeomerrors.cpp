@@ -39,11 +39,24 @@ namespace ngcomp
 
   
   template<int D>
-  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & clh){
+  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & clh, double refine_threshold){
     static Timer time_fct ("CalcDistances");
     RegionTimer reg (time_fct);
     
     auto ma = deform->GetMeshAccess();
+
+    if (refine_threshold > 0)
+    {
+      int ne = ma->GetNE();
+      for (int i = 0; i < ne; i++)
+        Ng_SetRefinementFlag (i+1, 0);
+      if (D==3)
+      {
+        int nse = ma->GetNSE();
+        for (int i = 0; i < nse; i++)
+          Ng_SetSurfaceRefinementFlag (i+1, 0);
+      }
+    }
     
     int ne=ma->GetNE();
 
@@ -53,7 +66,7 @@ namespace ngcomp
     double lset_error_max = 0.0;
     Vec<D> point_of_max_lset_error;
     IntegrationPoint ip_of_max_lset_error;
-    ofstream pointsout("pointsout");
+    // ofstream pointsout("pointsout");
     
     ProgressOutput progress (ma, "calc distance on element", ma->GetNE());
 
@@ -110,6 +123,7 @@ namespace ngcomp
            // const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
            const FlatQuadratureRuleCoDim1<D> & fquad_if(fcompr.GetInterfaceRule());
 
+
            for (int i = 0; i < fquad_if.Size(); ++i)
            {
              IntegrationPoint ip(&fquad_if.points(i,0),0.0); // x_hathat
@@ -124,7 +138,8 @@ namespace ngcomp
           
              const double lset_val = lset_ho->Evaluate(mipy);
 
-             pointsout << mip.GetPoint()[0] << " " << mip.GetPoint()[1] << " " <<  abs(lset_val) << endl;
+             // pointsout << mip.GetPoint()[0] << " " << mip.GetPoint()[1] << " " <<  abs(lset_val) << endl;
+             const double h = std::pow(mipy.GetJacobiDet(),1.0/D);
 #pragma omp critical(max)
              if (abs(lset_val) > lset_error_max)
              {
@@ -132,7 +147,12 @@ namespace ngcomp
                point_of_max_lset_error = mip.GetPoint();
                ip_of_max_lset_error = ip;
              }
-          
+
+             if (abs(lset_val) > refine_threshold * h)
+             {
+               Ng_SetRefinementFlag (elnr+1, 1);
+             }
+
              Mat<D,D> Finv = mip.GetJacobianInverse();
              const double absdet = mip.GetMeasure();
 
@@ -147,7 +167,7 @@ namespace ngcomp
              lset_error_l1 += weight * abs(lset_val);
              // surface += weight;
            }        
-           pointsout << endl;
+           // pointsout << endl;
            delete cquad;
          }
        });
@@ -434,6 +454,7 @@ namespace ngcomp
   {
     lower_lset_bound = flags.GetNumFlag("lset_lower_bound",0.0);
     upper_lset_bound = flags.GetNumFlag("lset_upper_bound",0.0);
+    refine_threshold = flags.GetNumFlag("refine_threshold",-1.0);
     gf_lset_p1 = apde->GetGridFunction(flags.GetStringFlag("levelset_p1","gf_lset_p1"));
     lset = apde->GetCoefficientFunction(flags.GetStringFlag("levelset","lset"));
     deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
@@ -448,7 +469,7 @@ namespace ngcomp
     {
       CalcDistances<2>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
-                       lset_error_container, lh);
+                       lset_error_container, lh, refine_threshold);
       if (!only_distance)
         CalcDeformationError<2>(lset, gf_lset_p1, deform, qn,
                                 // lower_lset_bound, upper_lset_bound,
@@ -458,7 +479,7 @@ namespace ngcomp
     {
       CalcDistances<3>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
-                       lset_error_container, lh);
+                       lset_error_container, lh, refine_threshold);
       if (!only_distance)
         CalcDeformationError<3>(lset, gf_lset_p1, deform, qn, 
                                 // lower_lset_bound, upper_lset_bound,
