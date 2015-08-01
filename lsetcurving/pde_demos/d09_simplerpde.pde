@@ -10,10 +10,10 @@ shared = libngsxfem_lsetcurving
 
 flags tracer = -max_size=0
         
-define constant order_deform = "6"
+define constant order_deform = "3"
 define constant order_qn = "1"
-define constant order_lset = "6"
-define constant order_scalar = "6"
+define constant order_lset = "3"
+define constant order_scalar = "3"
 
 constant levelset_lower_bound = "-0.0"
 constant levelset_upper_bound = "0.0"
@@ -32,7 +32,7 @@ constant omega = 5.0
 constant omega2 = (pi)
 constant x0 = 0.0
 constant y0 = 0.0
-constant r0 = 0.3
+constant r0 = 0.6
 
 define coefficient lset
 (
@@ -65,7 +65,7 @@ fespace fes_deform -type=h1ho -order=$(order_deform) -vec -dirichlet=[1,2,3,4]
         
 gridfunction deform -fespace=fes_deform
 
-numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=$(lset_lower_bound) -lset_upper_bound=$(lset_upper_bound) -threshold=0.1
+numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=$(lset_lower_bound) -lset_upper_bound=$(lset_upper_bound) -threshold=0.2
         
 
 # numproc levelsetrefine nplsref -levelset=lset_p1
