@@ -1,26 +1,12 @@
 /*********************************************************************/
-/* File:   npxtest.cpp                                               */
+/* File:   vtkoutput.hpp                                             */
 /* Author: Christoph Lehrenfeld                                      */
-/* Date:   2. Feb. 2014                                              */
+/* Date:   1. June 2014                                              */
 /*********************************************************************/
 
-
-/*
- */
-
 #include <solve.hpp>
-// #include "xintegration.hpp"
-#include "../spacetime/spacetimefespace.hpp"
-#include "../xfem/xfemIntegrators.hpp"
-#include "../xfem/stxfemIntegrators.hpp"
-#include "../xfem/setvaluesx.hpp"
-#include "../utils/error.hpp"
-#include "../utils/output.hpp"
-#include "../utils/calccond.hpp"
-#include "../xfem/xFESpace.hpp"
 
 using namespace ngsolve;
-// using namespace xintegration;
 using namespace ngfem;
 
 namespace ngcomp
@@ -28,8 +14,13 @@ namespace ngcomp
 
   class ValueField : public Array<double>
   {
+    int dim = 1;
     string name = "none";
   public:
+    ValueField(){;};
+    ValueField(int adim, string aname);
+    void SetDimension(int adim){ dim = adim; }
+    int Dimension(){ return dim;}
     void SetName(string aname){ name = aname; }
     string Name(){ return name;}
   };
@@ -37,38 +28,37 @@ namespace ngcomp
 /* ---------------------------------------- 
    numproc
    ---------------------------------------- */
+
+  class BaseVTKOutput
+  {
+  public:
+    virtual void Do (LocalHeap & lh) = 0;
+  };
+  
   template <int D> 
-  class VTKOutput
+  class VTKOutput : public BaseVTKOutput
   {
   protected:
 
     shared_ptr<MeshAccess> ma = nullptr;
-    
-    Array<shared_ptr<GridFunction>> gfus;
     Array<shared_ptr<CoefficientFunction>> coefs;
-    
+    Array<string> fieldnames;
+    string filename;
     int subdivision;
-    bool onlygrid;
-    Flags myflags;
-    
-    shared_ptr<ofstream> fileout;
 
+    Array<shared_ptr<ValueField>> value_field;
     Array<Vec<D>> points;
     Array<INT<D+1>> cells;
 
-    int n_coef_fields;
-    int n_gf_fields;
-    
-    Array<shared_ptr<ValueField>> value_field;
-
-    string filename;
+    shared_ptr<ofstream> fileout;
     
   public:
 
-    VTKOutput (const Array<shared_ptr<CoefficientFunction>> & a_coef_lset,
-               const Array<shared_ptr<GridFunction>> & a_gfus,
-               const Flags & flags,
-               shared_ptr<MeshAccess> ama = nullptr);
+    VTKOutput (const Array<shared_ptr<CoefficientFunction>> &,
+               const Flags &,shared_ptr<MeshAccess>);
+
+    VTKOutput (shared_ptr<MeshAccess>, const Array<shared_ptr<CoefficientFunction>> &,
+               const Array<string> &, string, int);
     
     void ResetArrays();
     
@@ -79,15 +69,14 @@ namespace ngcomp
     void PrintCellTypes();
     void PrintFieldData();    
 
-    void Do (LocalHeap & lh);
+    virtual void Do (LocalHeap & lh);
   };
 
 
   class NumProcVTKOutput : public NumProc
   {
   protected:
-    shared_ptr<VTKOutput<2>> vtkout2 = nullptr;
-    shared_ptr<VTKOutput<3>> vtkout3 = nullptr;
+    shared_ptr<BaseVTKOutput> vtkout = nullptr;
   public:
     NumProcVTKOutput (shared_ptr<PDE> apde, const Flags & flags);
     virtual ~NumProcVTKOutput() { }

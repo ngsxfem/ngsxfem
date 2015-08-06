@@ -85,64 +85,41 @@ void ExportNgsx()
          "return 'standard' FESpace part of XStdFESpace")
     ;
 
-
-  bp::class_<VTKOutput<3>, shared_ptr<VTKOutput<3>>,  boost::noncopyable>("VTKOutput3D", bp::no_init)
+  bp::class_<BaseVTKOutput, shared_ptr<BaseVTKOutput>,  boost::noncopyable>("VTKOutput", bp::no_init)
     .def("__init__", bp::make_constructor 
-         (FunctionPointer ([](bp::list coefs_list, bp::list gf_list,
-                              Flags flags )
-                           { 
+         (FunctionPointer ([](shared_ptr<MeshAccess> ma, bp::list coefs_list,
+                              bp::list names_list, string filename, int subdivision)
+                           {
                              Array<shared_ptr<CoefficientFunction> > coefs
                                = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
-                             Array<shared_ptr<GridFunction> > gfs
-                               = makeCArray<shared_ptr<GridFunction>> (gf_list);
-                             return make_shared<VTKOutput<3>> (coefs, gfs, flags, nullptr); 
+                             Array<string > names
+                               = makeCArray<string> (names_list);
+                             shared_ptr<BaseVTKOutput> ret;
+                             if (ma->GetDimension() == 2)
+                               ret = make_shared<VTKOutput<2>> (ma, coefs, names, filename, subdivision);
+                             else
+                               ret = make_shared<VTKOutput<3>> (ma, coefs, names, filename, subdivision);
+                             return ret;
                            }),
 
           bp::default_call_policies(),     // need it to use named arguments
-          (bp::arg("coefs")= bp::list(),
-           bp::arg("gfs")= bp::list(),
-           bp::arg("flags") = bp::dict()
+          (
+            bp::arg("ma"),
+            bp::arg("coefs")= bp::list(),
+            bp::arg("names") = bp::list(),
+            bp::arg("filename") = "vtkout",
+            bp::arg("subdivision") = 0
             )
            )
         )
 
-    .def("Do", FunctionPointer([](VTKOutput<3> & self, int heapsize)
-                                   { 
-                                     LocalHeap lh (heapsize, "VTKOutput-heap");
-                                     self.Do(lh);
-                                   }),
+    .def("Do", FunctionPointer([](BaseVTKOutput & self, int heapsize)
+                               { 
+                                 LocalHeap lh (heapsize, "VTKOutput-heap");
+                                 self.Do(lh);
+                               }),
          (bp::arg("self"),bp::arg("heapsize")=1000000))
-
-    ;
-
     
-  bp::class_<VTKOutput<2>, shared_ptr<VTKOutput<2>>,  boost::noncopyable>("VTKOutput2D", bp::no_init)
-    .def("__init__", bp::make_constructor 
-         (FunctionPointer ([](bp::list coefs_list, bp::list gf_list,
-                              Flags flags )
-                           { 
-                             Array<shared_ptr<CoefficientFunction> > coefs
-                               = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
-                             Array<shared_ptr<GridFunction> > gfs
-                               = makeCArray<shared_ptr<GridFunction>> (gf_list);
-                             return make_shared<VTKOutput<2>> (coefs, gfs, flags, nullptr); 
-                           }),
-
-          bp::default_call_policies(),     // need it to use named arguments
-          (bp::arg("coefs")= bp::list(),
-           bp::arg("gfs")= bp::list(),
-           bp::arg("flags") = bp::dict()
-            )
-           )
-        )
-
-    .def("Do", FunctionPointer([](VTKOutput<2> & self, int heapsize)
-                                   { 
-                                     LocalHeap lh (heapsize, "VTKOutput-heap");
-                                     self.Do(lh);
-                                   }),
-         (bp::arg("self"),bp::arg("heapsize")=1000000))
-
     ;
 
     

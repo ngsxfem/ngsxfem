@@ -9,44 +9,37 @@
 namespace ngcomp
 { 
 
-/* ---------------------------------------- 
-   numproc
-   ---------------------------------------- */
-
+  ValueField::ValueField(int adim, string aname) : Array<double>(),  dim(adim), name(aname){;}
 
   template <int D> 
   VTKOutput<D>::VTKOutput (const Array<shared_ptr<CoefficientFunction>> & a_coefs,
-                           const Array<shared_ptr<GridFunction>> & a_gfus,
                            const Flags & flags,
                            shared_ptr<MeshAccess> ama )
-    : ma(ama), gfus(a_gfus), coefs(a_coefs), myflags(flags)
+    : VTKOutput(ama, a_coefs, 
+                flags.GetStringListFlag ("fieldnames" ),
+                flags.GetStringFlag ("filename","output"),
+                (int) flags.GetNumFlag ( "subdivision", 0))
+  {;}
+
+
+  template <int D> 
+  VTKOutput<D>::VTKOutput (shared_ptr<MeshAccess> ama,
+                           const Array<shared_ptr<CoefficientFunction>> & a_coefs,
+                           const Array<string> & a_field_names,
+                           string a_filename, int a_subdivision)
+    : ma(ama), coefs(a_coefs), fieldnames(a_field_names),
+      filename(a_filename), subdivision(a_subdivision)
   {
-    if ((a_gfus.Size()==0) && (ama == nullptr))
-      throw Exception("need mesh access");
-    if (!ma)
-      ma = a_gfus[0]->GetMeshAccess();
-    
-    subdivision = (int) flags.GetNumFlag ( "subdivision", 0);
-    onlygrid = flags.GetDefineFlag ("onlymesh");
-    filename = flags.GetStringFlag ("filename","output");
-
-    Array<string> fieldnames(flags.GetStringListFlag ("fieldnames" ));
-    
-    n_coef_fields = a_coefs.Size();
-    n_gf_fields = a_gfus.Size();
-    
-    value_field.SetSize(n_coef_fields+n_gf_fields);
-    for (int i = 0; i < n_coef_fields+n_gf_fields; i++)
-    {
-      value_field[i] = make_shared<ValueField>();
+    value_field.SetSize(a_coefs.Size());
+    for (int i = 0; i < a_coefs.Size(); i++)
       if (fieldnames.Size() > i)
-        value_field[i]->SetName(fieldnames[i]);
+        value_field[i] = make_shared<ValueField>(coefs[i]->Dimension(),fieldnames[i]);
       else 
-        value_field[i]->SetName("dummy" + to_string(i));
-    }
-
+        value_field[i] = make_shared<ValueField>(coefs[i]->Dimension(),"dummy" + to_string(i));
   }
 
+
+  /// Empty all field 
   template <int D> 
   void VTKOutput<D>::ResetArrays()
   {
@@ -56,6 +49,7 @@ namespace ngcomp
       field->SetSize(0);
   }
     
+  /// Fill principil lattices (points and connections on subdivided reference simplex) in 2D
   template <int D> 
   void VTKOutput<D>::FillReferenceData2D(Array<IntegrationPoint> & ref_coords, Array<INT<D+1>> & ref_trigs)
   {
@@ -71,12 +65,6 @@ namespace ngcomp
       const int r = 1<<subdivision;
       const int s = r + 1;
 
-      // std::cout << " r = " << r << std::endl;
-      // std::cout << " s = " << s << std::endl;
-
-//       Array<INT<D>> pidx_to_ij ( (r+1)*(r+2) / 2);
-
-      
       const double h = 1.0/r;
 
       int pidx = 0;
@@ -84,10 +72,8 @@ namespace ngcomp
         for (int j = 0; i+j <= r; ++j)
           {
             ref_coords.Append(IntegrationPoint(j*h,i*h));
-//             pidx_to_ij[pidx++] = INT<2>(i,j);
           }
 
-//       cout << ref_coords << endl;
       pidx = 0;
       for (int i = 0; i <= r; ++i)
         for (int j = 0; i+j <= r; ++j, pidx++)
@@ -100,13 +86,6 @@ namespace ngcomp
             ref_trigs.Append(INT<3>(pidx,pidx_incr_i,pidx_incr_j));
 
             int pidx_incr_ij = pidx_incr_j + 1;
-//             std::cout << " i = " << i << std::endl;
-//             std::cout << " j = " << j << std::endl;
-//             std::cout << " pidx = " << pidx << std::endl;
-//             std::cout << " pidx_incr_j = " << pidx_incr_j << std::endl;
-//             std::cout << " pidx_incr_i = " << pidx_incr_i << std::endl;
-//             std::cout << " pidx_incr_ij = " << pidx_incr_ij << std::endl;
-//             getchar();
 
             if(i+j+1<r) 
               ref_trigs.Append(INT<3>(pidx_incr_i,pidx_incr_ij,pidx_incr_j));
@@ -114,6 +93,7 @@ namespace ngcomp
     }
   }
 
+  /// Fill principil lattices (points and connections on subdivided reference simplex) in 3D
   template <int D> 
     void VTKOutput<D>::FillReferenceData3D(Array<IntegrationPoint> & ref_coords, Array<INT<D+1>> & ref_tets)
       {
@@ -127,17 +107,9 @@ namespace ngcomp
     }
     else
     {
-//       throw Exception("not yet implemented");
-        
       const int r = 1<<subdivision;
       const int s = r + 1;
 
-      // std::cout << " r = " << r << std::endl;
-      // std::cout << " s = " << s << std::endl;
-
-      // Array<INT<D+1>> pidx_to_ijk ( (r+1)*(r+2)*(r+3) / 6);
-
-      
       const double h = 1.0/r;
 
       int pidx = 0;
@@ -146,7 +118,6 @@ namespace ngcomp
           for (int k = 0; i+j+k <= r; ++k)
           {
             ref_coords.Append(IntegrationPoint(i*h,j*h,k*h));
-            // pidx_to_ijk[pidx++] = INT<3>(i,j,k);
           }
 
       pidx = 0;
@@ -170,22 +141,8 @@ namespace ngcomp
             if (i+j+k+1 == r)
               continue;
 
-            // std::cout << " i = " << i << std::endl;
-            // std::cout << " j = " << j << std::endl;
-            // std::cout << " k = " << k << std::endl;
-            // std::cout << " pidx = " << pidx << std::endl;
-            // std::cout << " pidx_incr_k = " << pidx_incr_k << std::endl;
-            // std::cout << " pidx_incr_j = " << pidx_incr_j << std::endl;
-            // std::cout << " pidx_incr_i = " << pidx_incr_i << std::endl;
-            // std::cout << " pidx_incr_ki = " << pidx_incr_ki << std::endl;
-            // std::cout << " pidx_incr_kj = " << pidx_incr_kj << std::endl;
-            // std::cout << " pidx_incr_ij = " << pidx_incr_ij << std::endl;
-            // std::cout << " pidx_incr_kij = " << pidx_incr_kij << std::endl;
-
             ref_tets.Append(INT<4>(pidx_incr_k,pidx_incr_kj,pidx_incr_j,pidx_incr_i));
             ref_tets.Append(INT<4>(pidx_incr_k,pidx_incr_kj,pidx_incr_ki,pidx_incr_i));
-
-            // ref_tets.Append(INT<4>(pidx_incr_kj,pidx_incr_ki,pidx_incr_kij,pidx_incr_i));
 
             ref_tets.Append(INT<4>(pidx_incr_j,pidx_incr_i,pidx_incr_kj,pidx_incr_ij));
             ref_tets.Append(INT<4>(pidx_incr_i,pidx_incr_kj,pidx_incr_ij,pidx_incr_ki));
@@ -196,6 +153,7 @@ namespace ngcomp
     }
   }
 
+  /// output of data points
   template <int D> 
   void VTKOutput<D>::PrintPoints()
   {
@@ -209,6 +167,7 @@ namespace ngcomp
     }
   }
 
+  /// output of cells in form vertices
   template <int D> 
   void VTKOutput<D>::PrintCells()
   {
@@ -217,6 +176,7 @@ namespace ngcomp
       *fileout << D+1 <<" " << c << endl;
   }
 
+  /// output of cell types (here only simplices)
   template <int D> 
   void VTKOutput<D>::PrintCellTypes()
   {
@@ -231,6 +191,7 @@ namespace ngcomp
     *fileout << "POINT_DATA " << points.Size() << endl;
   }
 
+  /// output of field data (coefficient values)
   template <int D> 
   void VTKOutput<D>::PrintFieldData()
   {
@@ -238,7 +199,9 @@ namespace ngcomp
 
     for (auto field : value_field)
     {
-      *fileout << field->Name() << " 1 " << field->Size() << " float" << endl;
+      *fileout << field->Name() << " "
+               << field->Dimension() << " "
+               << field->Size()/field->Dimension() << " float" << endl;
       for (auto v : *field)
         *fileout << v << " ";
       *fileout << endl;
@@ -287,35 +250,19 @@ namespace ngcomp
         points.Append(mip.GetPoint());
       }
       
-      for (int i = 0; i < n_coef_fields; i++)
+      for (int i = 0; i < coefs.Size(); i++)
       {
         for ( auto ip : ref_vertices)
         {
           MappedIntegrationPoint<D,D> mip(ip, eltrans);
-          value_field[i]->Append(coefs[i]->Evaluate(mip));
+          const int dim = coefs[i]->Dimension();
+          FlatVector<> tmp(dim,lh);
+          coefs[i]->Evaluate(mip,tmp);
+          for (int d = 0; d < dim; ++d)
+            value_field[i]->Append(tmp(d));
         }
       }
       
-      for (int i = n_coef_fields; i < n_coef_fields + n_gf_fields; i++)
-      {
-        int k = i - n_coef_fields;
-        const FiniteElement & fel = gfus[k]->GetFESpace()->GetFE (elnr, lh);
-        const ScalarFiniteElement<D> & scafe =
-          dynamic_cast<const ScalarFiniteElement<D> & > (fel);
-        int ndof = scafe.GetNDof();
-        FlatVector<> shape(ndof,lh);
-        Array<int> dnums (ndof, lh);
-        gfus[k]->GetFESpace()->GetDofNrs (elnr, dnums);
-        FlatVector<> elvec(ndof,lh);
-        gfus[k]->GetVector().GetIndirect (dnums, elvec);
-        
-        for ( auto ip : ref_vertices)
-        {
-          scafe.CalcShape (ip,shape);
-          value_field[i]->Append(InnerProduct(shape,elvec));
-        }
-      }
-
       for ( auto tet : ref_tets)
       {
         INT<D+1> new_tet = tet;
@@ -337,31 +284,21 @@ namespace ngcomp
     : NumProc (apde)
   {
     const Array<string> & coefs_strings = flags.GetStringListFlag ("coefficients");
-    const Array<string> & gfs_strings = flags.GetStringListFlag ("gridfunctions");
     
     Array<shared_ptr<CoefficientFunction>> coefs;
     for (int i = 0; i < coefs_strings.Size(); ++i)
       coefs.Append(apde->GetCoefficientFunction (coefs_strings[i]));
 
-    Array<shared_ptr<GridFunction>> gfus;
-    for (int i = 0; i < gfs_strings.Size(); ++i)
-    {
-      gfus.Append(apde->GetGridFunction (gfs_strings[i]));
-    }
-    
     if (apde->GetMeshAccess()->GetDimension() == 2)
-      vtkout2 = make_shared<VTKOutput<2>>(coefs, gfus, flags, apde->GetMeshAccess());
+      vtkout = make_shared<VTKOutput<2>>(coefs, flags, apde->GetMeshAccess());
     else 
-      vtkout3 = make_shared<VTKOutput<3>>(coefs, gfus, flags, apde->GetMeshAccess());
+      vtkout = make_shared<VTKOutput<3>>(coefs, flags, apde->GetMeshAccess());
   }
 
 
   void NumProcVTKOutput::Do (LocalHeap & lh)
   {
-    if (vtkout2)
-      vtkout2->Do(lh);
-    if (vtkout3)
-      vtkout3->Do(lh);
+    vtkout->Do(lh);
   }
   
 }
