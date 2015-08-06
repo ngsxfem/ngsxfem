@@ -3,7 +3,6 @@
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
 #include "../stokes/xstokesspace.hpp"
-#include "../utils/vtkoutput.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
@@ -84,44 +83,6 @@ void ExportNgsx()
          // bp::return_value_policy<bp::reference_existing_object>(),
          "return 'standard' FESpace part of XStdFESpace")
     ;
-
-  bp::class_<BaseVTKOutput, shared_ptr<BaseVTKOutput>,  boost::noncopyable>("VTKOutput", bp::no_init)
-    .def("__init__", bp::make_constructor 
-         (FunctionPointer ([](shared_ptr<MeshAccess> ma, bp::list coefs_list,
-                              bp::list names_list, string filename, int subdivision)
-                           {
-                             Array<shared_ptr<CoefficientFunction> > coefs
-                               = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
-                             Array<string > names
-                               = makeCArray<string> (names_list);
-                             shared_ptr<BaseVTKOutput> ret;
-                             if (ma->GetDimension() == 2)
-                               ret = make_shared<VTKOutput<2>> (ma, coefs, names, filename, subdivision);
-                             else
-                               ret = make_shared<VTKOutput<3>> (ma, coefs, names, filename, subdivision);
-                             return ret;
-                           }),
-
-          bp::default_call_policies(),     // need it to use named arguments
-          (
-            bp::arg("ma"),
-            bp::arg("coefs")= bp::list(),
-            bp::arg("names") = bp::list(),
-            bp::arg("filename") = "vtkout",
-            bp::arg("subdivision") = 0
-            )
-           )
-        )
-
-    .def("Do", FunctionPointer([](BaseVTKOutput & self, int heapsize)
-                               { 
-                                 LocalHeap lh (heapsize, "VTKOutput-heap");
-                                 self.Do(lh);
-                               }),
-         (bp::arg("self"),bp::arg("heapsize")=1000000))
-    
-    ;
-
     
   bp::def("InterpolateToP1", FunctionPointer( [] (shared_ptr<GridFunction> gf_ho, shared_ptr<GridFunction> gf_p1, int heapsize)
                                               {
