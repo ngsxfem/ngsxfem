@@ -4,78 +4,61 @@ from ngsolve.solve import *
 from ngsolve.la import *
 
 from libngsxfem_py.xfem import *
+from deform import *
 
-lset_lower_bound = 0
-lset_upper_bound = 0
+from netgen.geom2d import SplineGeometry
+from netgen.meshing import MeshingParameters
 
-order_deform = 3
-order_qn = 3
-order_lset = 3
+geom = SplineGeometry("d01_testgeom.in2d")
+mp = MeshingParameters (maxh=0.1)
+mesh = Mesh(geom.GenerateMesh (mp))
 
-threshold = 10.2
-
-project_local = True
-
-lset_stats = StatisticContainer()
-deform_stats = StatisticContainer()
-
-# x = CoordCF(0)
-# y = CoordCF(1)
-# z = CoordCF(2)
+# lset_stats = StatisticContainer()
+# deform_stats = StatisticContainer()
+order = 4
 
 R = 2.0/3.0
-levelset = VariableCF("sqrt(x*x+y*y+z*z)-(0.5+0.1*sin(8*atan2(x,y)))")
+levelset = VariableCF("sqrt(x*x+y*y)-(0.5+0.1*sin(8*atan2(x,y)))")
 
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2)
 
-dim = 2
-for [cnt,meshstring] in [[0,"d01_01.vol.gz"],[1,"d01_02.vol.gz"],[2,"d01_03.vol.gz"],[3,"d01_04.vol.gz"]]:
+error_tab = []
+error_tab_order_k = [[] for k in range(order+2)]
 
-    mesh = Mesh(meshstring)
+adaptive = True
+moreadaptive = False
 
-    v_ho = FESpace("h1ho", mesh, order=order_lset)
-    lset_ho = GridFunction (v_ho, "h.o. level set fct.")
-    lset_ho.Set(levelset)
+nrefs = 35
+for cnt in range(nrefs+1):
+    if cnt > 0 :
+        maxdist = lsetmeshadap.CalcMaxDistance(levelset);
+        error_tab.append ( maxdist )
+        if (cnt==1):
+            c = [200 * maxdist / pow(2,k) for k in range(order+2)]
+        for k in range(order+2):
+            error_tab_order_k[k].append ( c[k] / pow(pow(2.0,k),cnt) )
+        print(maxdist)
+        if (adaptive):
+            if moreadaptive:
+                lsetmeshadap.MarkForRefinement(levelset,0.25*maxdist,absolute=True)
+            else:
+                lsetmeshadap.MarkForRefinement(levelset,1e-99,absolute=False)
+    if cnt > 0 and maxdist < 1e-12:
+        break
+    if cnt != nrefs - 1:
+        mesh.Refine()
+        deformation = lsetmeshadap.CalcDeformation(levelset)
+Draw(deformation)
+Draw(lsetmeshadap.lset_p1)
 
-    v_qn = FESpace("h1ho", mesh, order=order_qn, flags = { "vec" : True })
-    qn = GridFunction(v_qn, "quasi normal")
-    qn.Set(lset_ho.Deriv())
-    
-    v_p1 = FESpace("h1ho", mesh, order=1)
-    lset_p1 = GridFunction (v_p1, "P1 level set fct.")
-    
-    InterpolateToP1(lset_ho,lset_p1)
+import matplotlib.pyplot as plt
+plt.yscale('log')
+plt.plot(error_tab, "-*", label="max dist (k = " + str(order) + ")")
+for k in range(max(order-1,1),order+2):
+    plt.plot(error_tab_order_k[k], "-+", label="order "+str(k))
+plt.legend()
+plt.ion()
+plt.show()
+ 
 
-    v_def = FESpace("h1ho", mesh, order=order_deform, flags = { "vec" : True })
-    deform = GridFunction(v_def, "Mesh Deformation")
-
-
-    if not project_local:
-        f_def = LinearForm (v_def)
-        f_def += LFI (name = "shiftsource_6", coef = [lset_p1, levelset, ConstantCF(threshold), ConstantCF(lset_lower_bound), ConstantCF(lset_upper_bound), qn])
-    
-        f_def.Assemble()
-    
-        a_def = BilinearForm (v_def)
-        for d in range(0,dim):
-            a_def += BlockBFI( BFI (name = "restrictedmass_4", coef = [ConstantCF(1.0), lset_p1, ConstantCF(lset_lower_bound), ConstantCF(lset_upper_bound)]), dim, d);
-    
-            a_def.Assemble()
-    
-            inv_def = a_def.mat.Inverse(v_def.FreeDofs())
-            deform.vec.data = inv_def * f_def.vec
-    else:
-        ProjectShift(levelset, lset_p1, deform, qn, lset_lower_bound, lset_upper_bound, threshold);
-    
-    # calculate errors and store data
-    CalcDistances(lset_ho,lset_p1,deform,lset_stats)
-    
-    CalcDeformationError(lset_ho=lset_ho,lset_p1=lset_p1,deform=deform,qn=qn,stats=deform_stats,lower=lset_lower_bound,upper=lset_upper_bound)
-    
-    lset_stats.Print("lset_dist","max")
-    deform_stats.Print("deform_error","max")
-    
-    # # mark elements in band of interest for refinement
-    # RefineAtLevelSet(lset_p1,lset_lower_bound,lset_upper_bound)
-
-    Draw(deform, mesh, "Mesh Deformation")
-
+input("finished")  

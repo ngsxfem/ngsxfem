@@ -39,7 +39,8 @@ namespace ngcomp
 
   
   template<int D>
-  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & clh, double refine_threshold){
+  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform,
+                      StatisticContainer & cont, LocalHeap & clh, double refine_threshold, bool abs_ref_threshold){
     static Timer time_fct ("CalcDistances");
     RegionTimer reg (time_fct);
     
@@ -70,6 +71,7 @@ namespace ngcomp
     
     ProgressOutput progress (ma, "calc distance on element", ma->GetNE());
 
+    int marked = 0;
 
     IterateElements
       (*(gf_lset_p1->GetFESpace()), VOL, clh,  [&] (FESpace::Element el, LocalHeap & lh)
@@ -123,6 +125,7 @@ namespace ngcomp
            // const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
            const FlatQuadratureRuleCoDim1<D> & fquad_if(fcompr.GetInterfaceRule());
 
+           bool mark_this_el = false;
 
            for (int i = 0; i < fquad_if.Size(); ++i)
            {
@@ -148,10 +151,13 @@ namespace ngcomp
                ip_of_max_lset_error = ip;
              }
 
-             if (abs(lset_val) > refine_threshold * h)
-             {
-               Ng_SetRefinementFlag (elnr+1, 1);
-             }
+             
+             if (refine_threshold > 0)
+               if ( (abs_ref_threshold && (abs(lset_val) > refine_threshold))
+                    || (!abs_ref_threshold && (abs(lset_val) > refine_threshold * h)) )
+               {
+                 mark_this_el = true;
+               }
 
              Mat<D,D> Finv = mip.GetJacobianInverse();
              const double absdet = mip.GetMeasure();
@@ -169,15 +175,26 @@ namespace ngcomp
            }        
            // pointsout << endl;
            delete cquad;
+
+           if (mark_this_el)
+           {
+             Ng_SetRefinementFlag (elnr+1, 1);
+#pragma omp atomic
+             marked++;
+           }
+
          }
        });
        
     progress.Done();
+
+    if (refine_threshold > 0)
+      cout << " marked " << marked << " elements for refinement " << endl;
     
     cont.ErrorL1Norm.Append(lset_error_l1);
     cont.ErrorMaxNorm.Append(lset_error_max);
-    cout << " point_of_max_lset_error = " << point_of_max_lset_error << endl;
-    cout << " ip_of_max_lset_error = " << ip_of_max_lset_error << endl;
+    // cout << " point_of_max_lset_error = " << point_of_max_lset_error << endl;
+    // cout << " ip_of_max_lset_error = " << ip_of_max_lset_error << endl;
   }
 
 
@@ -460,6 +477,7 @@ namespace ngcomp
     deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
     qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
     only_distance = flags.GetDefineFlag("only_distance");
+    abs_ref_threshold = flags.GetDefineFlag("abs_ref_threshold");
   }
   
   void NumProcCalcErrors::Do (LocalHeap & lh)
@@ -469,7 +487,7 @@ namespace ngcomp
     {
       CalcDistances<2>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
-                       lset_error_container, lh, refine_threshold);
+                       lset_error_container, lh, refine_threshold, abs_ref_threshold);
       if (!only_distance)
         CalcDeformationError<2>(lset, gf_lset_p1, deform, qn,
                                 // lower_lset_bound, upper_lset_bound,
@@ -479,7 +497,7 @@ namespace ngcomp
     {
       CalcDistances<3>(lset, gf_lset_p1, deform,
                        // lower_lset_bound, upper_lset_bound,
-                       lset_error_container, lh, refine_threshold);
+                       lset_error_container, lh, refine_threshold, abs_ref_threshold);
       if (!only_distance)
         CalcDeformationError<3>(lset, gf_lset_p1, deform, qn, 
                                 // lower_lset_bound, upper_lset_bound,

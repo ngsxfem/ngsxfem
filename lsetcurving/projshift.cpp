@@ -129,29 +129,45 @@ namespace ngcomp
     
     progress.Done();
     
+    if (task_manager)
+    {
+      SharedLoop sl (Range (factor->Size()));
+      task_manager->CreateJob
+        ( [&] (const TaskInfo & ti) {
+          LocalHeap lh = clh.Split();
+          
+          // averaging of the (summed) deformation
+          Array<int> dnums(1);
 
-    SharedLoop sl (Range (factor->Size()));
-
-    task_manager->CreateJob
-      ( [&] (const TaskInfo & ti) {
-        LocalHeap lh = clh.Split();
-    
-        // averaging of the (summed) deformation
-        Array<int> dnums(1);
-
-        for (int i : sl)
-        {
-          FlatVector<> val_fac(D,lh);
-          FlatVector<> values(D,lh);
-          dnums[0] = i;
-          deform->GetVector().GetIndirect(dnums,values);
-          factor->GetIndirect(dnums,val_fac);
-          if (val_fac(0) > 0)
-            values *= 1.0/val_fac(0);
-          deform->GetVector().SetIndirect(dnums,values);
-        }
-      });
-
+          for (int i : sl)
+          {
+            FlatVector<> val_fac(D,lh);
+            FlatVector<> values(D,lh);
+            dnums[0] = i;
+            deform->GetVector().GetIndirect(dnums,values);
+            factor->GetIndirect(dnums,val_fac);
+            if (val_fac(0) > 0)
+              values *= 1.0/val_fac(0);
+            deform->GetVector().SetIndirect(dnums,values);
+          }
+        });
+    }
+    else
+    {
+      Array<int> dnums(1);
+      for (int i : Range(factor->Size()) )
+      {
+        HeapReset hr(clh);
+        FlatVector<> val_fac(D,clh);
+        FlatVector<> values(D,clh);
+        dnums[0] = i;
+        deform->GetVector().GetIndirect(dnums,values);
+        factor->GetIndirect(dnums,val_fac);
+        if (val_fac(0) > 0)
+              values *= 1.0/val_fac(0);
+        deform->GetVector().SetIndirect(dnums,values);
+      }
+    }
   }
     
   

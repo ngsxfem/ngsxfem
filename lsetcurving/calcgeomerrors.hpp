@@ -25,7 +25,7 @@ namespace ngcomp
   };
   
   template <int D>
-  void CalcDistances (shared_ptr<CoefficientFunction> gf_lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & lh, double define_threshold = -1.0);
+  void CalcDistances (shared_ptr<CoefficientFunction> gf_lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & lh, double define_threshold = -1.0, bool abs_ref_threshold = false);
 
   template<int D>
   void CalcDeformationError (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & cont, LocalHeap & lh, double, double);
@@ -43,6 +43,7 @@ namespace ngcomp
     StatisticContainer lset_error_container;
     StatisticContainer deform_error_container;
     bool only_distance;
+    bool abs_ref_threshold;
   public:
     NumProcCalcErrors (shared_ptr<PDE> apde, const Flags & flags);
     virtual ~NumProcCalcErrors() { }

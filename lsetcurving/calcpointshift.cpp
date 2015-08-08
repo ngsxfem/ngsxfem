@@ -163,7 +163,6 @@ namespace ngfem
 
     Vec<D> search_dir = init_search_dir;
 
-    int it = 0;
     for (it = 0; it < 20; ++it)
     {
       RegionTimer reg_its (time_its);
