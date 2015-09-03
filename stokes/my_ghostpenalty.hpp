@@ -5,7 +5,7 @@
 #include <ngstd.hpp> // for Array
 
 #include "../cutint/xintegration.hpp"
-#include "xfiniteelement.hpp"
+#include "../xfem/xfiniteelement.hpp"
 //#include "../spacetime/spacetimefe.hpp"
 //#include "../spacetime/spacetimeintegrators.hpp"
 // #include "../utils/stcoeff.hpp"
