@@ -11,7 +11,7 @@ from netgen.meshing import MeshingParameters
 
 geom = SplineGeometry("d01_testgeom.in2d")
 mp = MeshingParameters (maxh=0.1)
-mesh = Mesh(geom.GenerateMesh (mp))
+mesh = Mesh(geom.GenerateMesh (mp=mp))
 
 # lset_stats = StatisticContainer()
 # deform_stats = StatisticContainer()
