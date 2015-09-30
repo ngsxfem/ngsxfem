@@ -20,12 +20,12 @@ class LevelSetMeshAdaptation:
 
     # deform
     
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1):
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False):
         """
         Deformation
         """
         self.order_deform = order
-        self.order_qn = 1
+        self.order_qn = order
         self.order_lset = order
 
         self.lset_lower_bound = lset_lower_bound
@@ -35,7 +35,10 @@ class LevelSetMeshAdaptation:
         self.v_ho = FESpace("h1ho", mesh, order=self.order_lset)
         self.lset_ho = GridFunction (self.v_ho, "lset_ho")
 
-        self.v_qn = FESpace("h1ho", mesh, order=self.order_qn, flags = { "vec" : True })
+        if (discontinuous_qn):
+            self.v_qn = FESpace("l2ho", mesh, order=self.order_qn, flags = { "vec" : True })
+        else:
+            self.v_qn = FESpace("h1ho", mesh, order=self.order_qn, flags = { "vec" : True })
         self.qn = GridFunction(self.v_qn, "qn")
     
         self.v_p1 = FESpace("h1ho", mesh, order=1)

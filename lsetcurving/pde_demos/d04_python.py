@@ -20,7 +20,7 @@ order = 4
 R = 2.0/3.0
 levelset = VariableCF("sqrt(x*x+y*y)-(0.5+0.1*sin(8*atan2(x,y)))")
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2)
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
 
 error_tab = []
 error_tab_order_k = [[] for k in range(order+2)]
@@ -56,6 +56,7 @@ plt.yscale('log')
 plt.plot(error_tab, "-*", label="max dist (k = " + str(order) + ")")
 for k in range(max(order-1,1),order+2):
     plt.plot(error_tab_order_k[k], "-+", label="order "+str(k))
+print ("error_tab_order_k =", error_tab_order_k)
 plt.legend()
 plt.ion()
 plt.show()
