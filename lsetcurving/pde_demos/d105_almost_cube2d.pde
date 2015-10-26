@@ -1,7 +1,7 @@
 geometry = d105_almost_cube2d.in2d
 #mesh = d08_ref.vol.gz
-#mesh = d104_almost_cube.vol.gz
-mesh = d105_almost_cube2d_start.vol.gz
+mesh = d105_almost_cube2d.vol.gz
+#mesh = d105_almost_cube2d_start.vol.gz
 #mesh = d04_refined.vol.gz
 #mesh = d04_unstr.vol.gz
 # mesh = d99_testgeom_unstr.vol.gz
@@ -11,10 +11,10 @@ shared = libngsxfem_lsetcurving
 flags tracer = -max_size=0
         
 define constant pi = 3.141592746410207
-define constant order_deform = "2"
-define constant order_qn = "2"
-define constant order_lset = "2"
-define constant order_scalar = "2"
+define constant order_deform = "1"
+define constant order_qn = "1"
+define constant order_lset = "1"
+define constant order_scalar = "1"
 
 constant levelset_lower_bound = "-0.0"
 constant levelset_upper_bound = "0.0"
@@ -74,7 +74,7 @@ numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform
 numproc calcerrors npcalcerr -levelset_ho=lset -levelset_p1=lset_p1 -quasinormal=qn -deform=deform
                 -lset_lower_bound=$(levelset_lower_bound)
                 -lset_upper_bound=$(levelset_upper_bound)
-#                -refine_threshold=0.005
+#                -refine_threshold=0.001
 #
 
 # numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=0  -minval=0.0 -maxval=0.0 -nolineartexture
@@ -167,10 +167,10 @@ define coefficient rhsneg
 (-1.0*sqrt(2.0)*pi*(pi*cos(pi/4*(r44))*(r66)+3*sin(pi/4*(r44))*(r22))),
         
 define coefficient rhspos
-(-2.0*3/2*(r4m3)*(-0.25*(r63)/(r44)+(r22))),
+(-2.0*pi*3/2*(r4m3)*(-(r66)/(r44)+(r22))),
 #(0.0),
 
-define constant lambda = 2
+define constant lambda = 20
 
 define fespace fescomp
        -type=xstdfespace
@@ -186,18 +186,18 @@ numproc informxfem npix
 define gridfunction u -fespace=fescomp
 
 define linearform f -fespace=fescomp # -print
-#xsource rhsneg rhspos
+xsource rhsneg rhspos
 
-xsource solneg solpos
+#xsource solneg solpos
 
-define bilinearform a -fespace=fescomp -printelmat #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
-xmass one one
+define bilinearform a -fespace=fescomp #-eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
+#xmass one one
 
-#xlaplace abneg abpos
-#xnitsche_heaviside aneg apos bneg bpos lambda
+xlaplace abneg abpos
+xnitsche_heaviside aneg apos bneg bpos lambda
 
 #xnitsche_minstab_hansbo aneg apos bneg bpos
-# lo_ghostpenalty aneg apos one
+#lo_ghostpenalty aneg apos one
 
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary -print
 
@@ -207,7 +207,7 @@ define preconditioner c -type=direct -bilinearform=a #-test
 
 ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
-numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=100000 -prec=1e-10 # -print
+numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-8 # -print
 
 define coefficient veczero
 (0,0),
