@@ -97,7 +97,7 @@ namespace ngcomp
   }
 
 
-  void XFESpace::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos)
+  void XFESpace::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const
   {
     shared_ptr<GridFunction> gf_neg = gf_neg_pos->GetComponent(0);
     BaseVector & bv_neg = gf_neg->GetVector();
@@ -116,16 +116,14 @@ namespace ngcomp
     FlatVector<> vx = bv_x.FVDouble();
 
     const int basendof = vneg.Size();
-    shared_ptr<XFESpace> xfes = dynamic_pointer_cast<XFESpace>(gf_x->GetFESpace());
-    
     for (int i = 0; i < basendof; ++i)
     {
       vneg(i) = vbase(i);
       vpos(i) = vbase(i);
-      const int xdof = xfes->GetBaseDofOfXDof(i);
+      const int xdof = basedof2xdof[i];
       if (xdof != -1)
       {
-        if (xfes->GetDomOfDof(xdof) == POS)
+        if (domofdof[xdof] == POS)
           vpos(i) += vx(xdof);
         else
           vneg(i) += vx(xdof);
@@ -289,7 +287,7 @@ namespace ngcomp
       }
     }
     el2dofs = make_shared<Table<int>>(creator.MoveTable());
-          
+
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
     {
@@ -865,7 +863,7 @@ namespace ngcomp
   static RegisterNumProc<NumProcXToNegPos> npxtonegpos("xtonegpos");
 
 
-  
+
 
   XStdFESpace::XStdFESpace (shared_ptr<MeshAccess> ama, 		   
                           const Array<shared_ptr<FESpace>> & aspaces,

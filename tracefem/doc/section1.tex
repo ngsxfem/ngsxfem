@@ -1,0 +1,159 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%section 1
+\section{The Physical Problem}
+Consider a moving bubble of one liquid in a fluid milieu of a different liquid, with a certain concentration of some species, which adheres to the surface. Such a species is called a surfactant. An example for such a constellation would be molecules with a hydrophobic and a hydrophilic end on some bubble in water (e.g. tensides, lipids, ...).
+
+\subsection{Mathematical model}
+Let $\domain\subseteq\mathbb{R}^n$ be an open domain and let $\domain_1,\,\domain_2\subseteq\mathbb{R}^d$ describe the interior and exterior part of our bubble such that $\overline{\domain_1}\cup\overline{\domain_2}=\domain$, $\partial\domain_1:=\boundary$, $\boundary\cap\partial\domain=\emptyset$ and let $n$ and $\kappa$ denote the outward normal and mean curvature on $\boundary$ respectively.\\
+Further we denote the densities and viscosities of our fluids by $\rho_i$ and $\mu_i$ respectively. 
+Then the classical two-phase fluid dynamics model reads (cf. \ref{lehrenfeld}):\\
+\begin{prob}
+	Find a velocity field $u\of{x,t}$ and a pressure $p\of{x,t}$, such that
+	\begin{subequations}
+		\begin{align}
+			\rho_i\left(\frac{\partial}{\partial t} u +\left(u\cdot\nabla\right) u\right) -\text{div}\of{\mu_iD\of{u}}+\nabla p&=\rho_ig,&\text{in }\domain_i\of{t}.\\
+			\text{div}\of{u}&=0,&\text{in }\domain_i\of{t}.\\
+			\left[[\sigma\cdot n\right]]&=-\tau\kappa n,&\text{on }\boundary\of{t}.\\
+			\left[[u\right]]&=0,&\text{on }\boundary\of{t},
+		\end{align}
+	\end{subequations}
+	where $D\of{u}:=\nabla u + \nabla u^T$, $\left[[\cdot\right]]$ denotes the jump in normal direction, $\tau$ is the surface tension force, $\sigma$ the stress tensor, and $g$ the gravitational force.
+\end{prob}
+
+%%%%%%%%%%%%%%%diffgeo
+\subsubsection{Some remarks on differential geometry}
+Let $\boundary\subseteq\mathbb{R}^d$ be an oriented $C^2$-hypersurface and let $n\of{x}$ denote its outward normal.
+For a $C^1$-function $f$ on $\boundary$ we define its tangential derivative by
+\begin{equation}
+	\nabla_\boundary f:=P\nabla f,
+\end{equation}
+where $P\of{x}:=I-n\of{x}n\of{x}^T$ is the orthogonal projection on the tangential space. Further we define the tangential gradient $\text{div}_\boundary$ of some vector field  $\vec v$ by
+\begin{equation}
+	\text{div}_\boundary\of{\vec v}:=\nabla_\boundary \cdot \vec v=\sum_{n=1}^d \left(P\nabla\right)_n v_n=\text{div}\of{\vec v} - n^T\vec v n.
+\end{equation}
+\begin{rmk}
+	For a differentiable scalar function $f$ and a vector field $\vec g$ on $\boundary$, there holds the product rule
+	\begin{equation}
+		\textrm{div}_\boundary\of{f\vec g}=f\mathrm{div}_\boundary\of{\vec g}+\nabla_\boundary f\cdot \vec g.
+	\end{equation}
+\end{rmk}
+\begin{rmk}
+	Let $W\subseteq\boundary$ be an open subset and $n_W$ denote its outward normal in the tangential plane of $\boundary$. Then there holds integration of parts in $\boundary$
+	\begin{equation}
+		\int_Wf\,\mathrm{div}_\boundary\of{\vec v}ds=-\int_W\nabla_\boundary f\cdot\vec v+\int_{\partial W}f \vec v \cdot n_W d\tilde s.
+	\end{equation}
+\end{rmk}
+
+\begin{thm}[Reynold's transport theorem on an interface]
+The rate of change for a smooth function $f(x,t)$ on $W\of{t}\subseteq \boundary$ can be described by
+\begin{equation}
+	\frac{d}{dt}\int_{W\of{t}}f\of{x,t}ds=\int_{W\of{t}}\dot f\of{x,t}+f\of{x,t}\mathrm{div}_\boundary\of{\vec v}ds
+\end{equation}
+with the material derivative $\dot f$ for a given velocity field $\vec v$ defined as
+\begin{equation}
+\dot f:=\frac{\partial f}{\partial t}+\vec v\cdot\nabla f
+\end{equation}
+\end{thm}
+\subsubsection{Transport of a surfactant}
+Next let $c\of{x,t}$ describe the concentration of the surfactant on $\boundary$. Then conservation of mass in an arbitrary control volume $W\of{t}\subseteq\boundary$, with source $f$ yields
+\begin{equation}
+	\frac{d}{dt}\int_{W\of{t}}c\,ds=-\int_{\partial W\of{t}}\vec q\cdot n_W \,d\tilde s+\int_{W\of{t}}f\,ds
+\end{equation}
+If we assume $\vec q$ to be a diffusive flux $\vec q:=-\alpha \nabla_\boundary c$ and use integration by parts, we obtain
+\begin{multline}
+	\frac{d}{dt}\int_{W\of{t}}c\,ds=\int_{\partial W\of{t}}\alpha \nabla_\boundary c\cdot n_W \,d \tilde s +\int_{W\of{t}}f\,ds\\= \int_{W\of{t}}\mathrm{div}_\boundary\of{\alpha\nabla_\boundary c}ds+\int_{W\of{t}}f\,ds.
+\end{multline}
+Combined with Reynold's transport theorem we arrive at
+\begin{align}
+	\frac{d}{dt}\int_{W\of{t}}c\,ds&=\int_{W\of{t}}\dot c+c\,\mathrm{div}_\boundary\of{\vec v}ds\\
+	&=\int_{W\of{t}}\frac{\partial c}{\partial t}+\vec v\cdot\nabla c+c\,\mathrm{div}_\boundary\of{\vec v}ds\\
+	&=\int_{W\of{t}}\mathrm{div}_\boundary\of{\alpha\nabla_\boundary c}ds+\int_{W\of{t}}f\,ds.
+\end{align}
+If we assume, that the velocity $\vec v$ is always tangential to the surface (i.e. $\vec v \cdot n = 0$) there holds
+\begin{equation}
+	\vec v\cdot\nabla c =P\vec v\cdot\nabla c =\vec v\cdot P\nabla c =\vec v\cdot \nabla_\boundary c
+\end{equation}
+and
+\begin{equation}
+	\vec v\cdot\nabla c+c\,\mathrm{div}_\boundary\of{\vec v}=\mathrm{div}_\boundary\of{c \vec v}.
+\end{equation}
+Our final problem for the surfactant species transport in strong form reads:
+\begin{prob}
+	Given suitable boundary and initial conditions for $\vec v$ and $c$ and a source function $f$, find $\vec v$, $p$ and $c$ such that
+	\begin{subequations}
+
+		\begin{align}
+				\label{eq:momentum}
+				\rho_i\left(\frac{\partial}{\partial t} \vec v +\left(u\cdot\nabla\right) \vec v\right) -\text{div}\of{\mu_iD\of{\vec v}}+\nabla p&=\rho_ig,&&\text{in }\domain_i\of{t},\\
+				\label{eq:continuity}
+				\text{div}\of{\vec v}&=0,&&\text{in }\domain_i\of{t},\\
+				\left[[\sigma\cdot n\right]]&=-\tau\kappa n,&&\text{on }\boundary\of{t},\\
+				\left[[\vec v\right]]&=0,&&\text{on }\boundary\of{t},\\
+				\label{eq:surface}
+				\frac{\partial}{\partial t}c+\mathrm{div}_\boundary\of{c \vec v}-\mathrm{div}_\boundary\of{\alpha\nabla_\boundary c}&=f, && \text{on }\boundary\of{t}.
+		\end{align}
+	\end{subequations}
+\end{prob}
+In the following, we will concentrate on equation \refeq{surface} for a given velocity field $\vec v$.
+
+\begin{ex}[Stokes flow past a sphere]
+Let $\domain_1\subseteq\mathbb{R}^d$ ($d=2,3$) be a sphere (circle) with radius $r_0$ rising with constant velocity $v_0$. We are interested in the resulting velocity field $\vec v$ relative to the sphere. To this end we study a stationary, linearized version of \refeq{momentum} and \refeq{continuity}, namely
+\begin{subequations}
+	\label{eq:stokes}
+	\begin{align}
+		\mathrm{div}\of{\vec v}&=0\\
+		-\nabla p+\mu_i\Delta\vec v&=0,
+	\end{align}
+\end{subequations}
+In general an axial symmetric solution of \refeq{stokes} can be written in the form 
+\begin{equation}
+	\vec v = v_r \vec e_r+v_\theta \vec e_\theta=\frac{1}{r^2\sin\theta}\frac{\partial \psi}{\partial \theta}\vec e_r-\frac{1}{r\sin\theta}\frac{\partial \psi}{\partial r}\vec e_\theta
+\end{equation}
+with a stream function
+\begin{equation}
+\psi\of{r,\theta}=r\sin^2\theta \left(A+Br^2+Cr^3+Dr^5\right). 
+\end{equation}
+and some coefficients $A,\,B,\,C,\,D$ ($r$ and $\theta$ are the usual spherical coordinates).
+To deduce the coefficients $A_i,\,B_i,\,C_i,\,D_i$ for the inner and outer stream function, we need the following boundary conditions
+\begin{subequations}
+	\begin{align}
+		\lim_{r\to\infty}v_r(r,\theta)&=-v_0\\
+		\lim_{r\to0}\left|v_r(r,\theta)\right|&<\infty\\
+		\lim_{r\to {r_0}_-}v_\theta\of{r,\theta}&=\lim_{r\to {r_0}_+}v_\theta\of{r,\theta}\\
+		\lim_{r\to {r_0}_-}\sigma\of{r,\theta}&=\lim_{r\to {r_0}_+}\sigma\of{r,\theta}\\
+		\lim_{r\to {r_0}_-}v_r\of{r,\theta}&=\lim_{r\to {r_0}_+}v_r\of{r,\theta}=0,
+	\end{align}
+\end{subequations}
+which lead to a system of linear equations
+\begin{subequations}
+\label{eq:linsys}
+	\begin{align}
+		2 C_2&=v_0\\
+		A_1=B_1&=0\\
+		-A_2+B_2r_0^2+v_0r_0^3&=2C_1r_0^3+4D_1r_0^5\\
+		\mu_2A_2&=\mu_1D_1r_0^5\\
+		A_2+B_2r_0^2+\frac{1}{2}v_0r_0^3&=0\\
+		C_2+D_2r_0^2&=0.
+	\end{align}
+\end{subequations}
+Solving \refeq{linsys} gives a stream function
+\begin{equation}
+	\psi\of{r,\theta}=\left\{
+	\begin{array}{ll}
+		\frac{v_0}{4}\sin^2\theta\frac{1}{\mu_1+\mu_2}\left(\frac{r_0^3}{r}\mu_2-r_0\left(2\mu_2+3\mu_1\right)r+2\left(\mu_1+\mu_2\right)r^2\right),&r\geq r_0\\
+		\frac{v_0}{4}\sin^2\theta\frac{\mu_2}{\mu_1+\mu_2}r^2\left(\frac{r^2}{r_0^2}-1\right)&r\leq r_0.
+	\end{array}
+	\right.
+\end{equation}
+\end{ex}
+Calculating the radial and tangential component and substituting $r=r_0$ yields the sought-after velocity field on the sphere, namely
+\begin{equation}
+	\vec v=\vec e_\theta \frac{v_0}{2}\frac{\mu_2}{\mu_1+\mu_2}\sin\theta.
+\end{equation}
+In cartesian coordinates and two dimensions, this reads
+\begin{equation}
+	\vec v=\frac{v_0}{2}\frac{\mu_2}{\mu_1+\mu_2}\frac{1}{r_0^2}\left(\!\!\begin{array}{c}yx\\-x^2\end{array}\!\!\right).
+\end{equation}
+In three dimensions we obtain
+\begin{equation}
+	\vec v=\frac{v_0}{2}\frac{\mu_2}{\mu_1+\mu_2}\frac{1}{r_0^2}\left(\!\!\begin{array}{c}zx\\zy\\-x^2-y^2\end{array}\!\!\right).
+\end{equation}
