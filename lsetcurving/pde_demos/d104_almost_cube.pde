@@ -11,10 +11,10 @@ shared = libngsxfem_lsetcurving
 flags tracer = -max_size=0
         
 define constant pi = 3.141592746410207
-define constant order_deform = "2"
-define constant order_qn = "2"
-define constant order_lset = "2"
-define constant order_scalar = "2"
+define constant order_deform = "3"
+define constant order_qn = "3"
+define constant order_lset = "3"
+define constant order_scalar = "3"
 
 constant levelset_lower_bound = "-0.0"
 constant levelset_upper_bound = "0.0"
@@ -50,7 +50,7 @@ numproc setvalues npsv -gridfunction=lset_ho -coefficient=lset
 ########################### quasi-normal field ############################
 ###########################################################################
 
-fespace fes_normal -type=l2ho -order=$(order_qn) -vec #-dirichlet=[1,2,3,4,5,6]
+fespace fes_normal -type=h1ho -order=$(order_qn) -vec #-dirichlet=[1,2,3,4,5,6]
 gridfunction qn -fespace=fes_normal
         
 numproc setvalues npsv -gridfunction=qn -coefficient=grad_lset_ho 
@@ -66,7 +66,7 @@ fespace fes_deform -type=h1ho -order=$(order_deform) -vec -dirichlet=[1,2,3,4]
         
 gridfunction deform -fespace=fes_deform
 
-numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=$(lset_lower_bound) -lset_upper_bound=$(lset_upper_bound) -threshold=0.1
+numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=$(lset_lower_bound) -lset_upper_bound=$(lset_upper_bound) -threshold=1000.2
         
 
 #numproc levelsetrefine nplsref -levelset=lset_p1
@@ -74,7 +74,8 @@ numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform
 numproc calcerrors npcalcerr -levelset_ho=lset -levelset_p1=lset_p1 -quasinormal=qn -deform=deform
                 -lset_lower_bound=$(levelset_lower_bound)
                 -lset_upper_bound=$(levelset_upper_bound)
-#                -refine_threshold=0.05
+#                -refine_threshold=0.04
+#                -abs_ref_threshold
 
 
 #numproc visualization npvis -scalarfunction=lset_p1 -vectorfunction=deform -deformationscale=1 -subdivision=0  -minval=0.0 -maxval=0.0 -nolineartexture
@@ -160,10 +161,10 @@ define coefficient rhsneg
 (-1.0*sqrt(2.0)*pi*(pi*cos(pi/4*(r44))*(r66)+3*sin(pi/4*(r44))*(r22))),
         
 define coefficient rhspos
-(-2.0*3/2*(r4m3)*(-0.25*(r63)/(r44)+(r22))),
+(-2.0*pi*3/2*(r4m3)*(-(r66)/(r44)+(r22))),
 #(0.0),
 
-define constant lambda = 2
+define constant lambda = 2000
 
 define fespace fescomp
        -type=xstdfespace
@@ -179,24 +180,24 @@ numproc informxfem npix
 define gridfunction u -fespace=fescomp
 
 define linearform f -fespace=fescomp # -print
-#xsource rhsneg rhspos
+xsource rhsneg rhspos
 
-xsource solneg solpos
+#xsource solneg solpos
 
-define bilinearform a -fespace=fescomp -printelmat -eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
-xmass one one
+define bilinearform a -fespace=fescomp -eliminate_internal -keep_internal -symmetric -linearform=f # -printelmat -print
+#xmass one one
 
-#xlaplace abneg abpos
-#xnitsche_heaviside aneg apos bneg bpos lambda
+xlaplace abneg abpos
+xnitsche_heaviside aneg apos bneg bpos lambda
 
 #xnitsche_minstab_hansbo aneg apos bneg bpos
-# lo_ghostpenalty aneg apos one
+#lo_ghostpenalty aneg apos one
 
-numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary -print
+numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=solneg -coefficient_pos=solpos -boundary #-print
 
-define preconditioner c -type=local -bilinearform=a #-test -block
+define preconditioner c -type=local -bilinearform=a #-block #-test -block
 #define preconditioner c -type=direct -bilinearform=a #-test
-#define preconditioner c -type=bddc -bilinearform=a
+#define preconditioner c -type=multigrid -bilinearform=a
 
 ##define preconditioner c -type=multigrid -bilinearform=a -test #-smoother=block
 
