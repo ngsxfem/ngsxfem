@@ -97,7 +97,7 @@ namespace ngcomp
   }
 
 
-  void XFESpace::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos) const
+  void XFESpace::XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos)
   {
     shared_ptr<GridFunction> gf_neg = gf_neg_pos->GetComponent(0);
     BaseVector & bv_neg = gf_neg->GetVector();
@@ -120,10 +120,10 @@ namespace ngcomp
     {
       vneg(i) = vbase(i);
       vpos(i) = vbase(i);
-      const int xdof = basedof2xdof[i];
+      const int xdof = dynamic_pointer_cast<XFESpace>(gf->GetFESpace())->GetBaseDofOfXDof(i);
       if (xdof != -1)
       {
-        if (domofdof[xdof] == POS)
+        if (dynamic_pointer_cast<XFESpace>(gf->GetFESpace())->GetDomOfDof(xdof) == POS)
           vpos(i) += vx(xdof);
         else
           vneg(i) += vx(xdof);
