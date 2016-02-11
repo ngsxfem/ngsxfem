@@ -76,6 +76,50 @@ namespace ngfem
 
   };
 
+  template <int D, int difforder>
+  class TraceGhostPenaltyIntegrator : public FacetBilinearFormIntegrator
+  {
+  protected:
+    shared_ptr<CoefficientFunction> coef_lam;
+  public:
+    TraceGhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
+      : FacetBilinearFormIntegrator(coeffs)
+    { 
+      coef_lam  = coeffs[0];
+    }
+
+    virtual ~TraceGhostPenaltyIntegrator () { ; }
+    
+    virtual bool BoundaryForm () const 
+    { return 0; }
+
+    virtual bool IsSymmetric () const 
+    { return true; }
+    
+    static Integrator * Create (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+    {
+      return new TraceGhostPenaltyIntegrator (coeffs);
+    }
+
+    virtual void CalcElementMatrix (const FiniteElement & fel,
+                                    const ElementTransformation & eltrans, 
+                                    FlatMatrix<double> elmat,
+                                    LocalHeap & lh) const
+    {
+      throw Exception("TraceGhostPenaltyIntegrator::CalcElementMatrix - not implemented!");
+    }
+    
+    virtual void CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                                  const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                                  const FiniteElement & volumefel2, int LocalFacetNr2,
+                                  const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                                  FlatMatrix<double> & elmat,
+                                  LocalHeap & lh// ,
+                                  // BitArray* twice
+                                 ) const;
+
+  };
+  
 
 }
 
