@@ -598,11 +598,60 @@ namespace ngcomp
     }
   };
 
+/* ---------------------------------------- 
+   numproc
+   ---------------------------------------- */
+  template <int D> 
+  class NumProcTraceDiff : public NumProc
+  {
+  protected:
+    shared_ptr<GridFunction> gfu;
+    shared_ptr<CoefficientFunction> coef;
+    int intorder;
+    const Flags myflags;
+    bool nooutput = false;
+  public:
+
+
+    NumProcTraceDiff (shared_ptr<PDE> apde, const Flags & flags)
+        : NumProc (apde), myflags(flags)
+    { 
+      gfu  = apde->GetGridFunction (flags.GetStringFlag ("gridfunction", flags.GetStringFlag("gridfunction","")));
+      coef = apde->GetCoefficientFunction (flags.GetStringFlag ("coef", flags.GetStringFlag("coef","")),true);
+      intorder = (int) flags.GetNumFlag ( "intorder", 2);
+      nooutput = flags.GetDefineFlag ("nooutput");
+    }
+
+    virtual ~NumProcTraceDiff()
+    {
+      ;
+    }
+
+    virtual string GetClassName () const
+    {
+      return "NumProcTraceDiff";
+    }
+
+
+    virtual void Do (LocalHeap & lh)
+    {
+      static int refinements = 0;
+      cout << " This is the Do-call on refinement level " << refinements << std::endl;
+      refinements++;
+      CalcTraceDiff<D>(gfu, coef, intorder, lh, !nooutput, myflags);
+    }    
+    
+
+  };
+
+  
 }
 
 static RegisterNumProc<NumProcSetValuesX> npinittestxfem2d("setvaluesx");
 static RegisterNumProc<NumProcXDifference<2> > npxdiff("xdifference");
 static RegisterNumProc<NumProcXDifference<3> > npxdiff3d("xdifference3d");
+static RegisterNumProc<NumProcTraceDiff<2> > nptdiff("tracediff");
+static RegisterNumProc<NumProcTraceDiff<3> > nptdiff3d("tracediff3d");
 static RegisterNumProc<NumProcSpecialOutput<2> > npxoutp("xoutput");
 static RegisterNumProc<NumProcCalcCondition> npinitcalccond("calccond");
 static RegisterNumProc<NumProcMarkElementsOnInterface> npinitmark("markinterface");
