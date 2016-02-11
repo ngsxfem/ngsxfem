@@ -1,6 +1,7 @@
 
 #include "xFESpace.hpp"
 #include "xfemVisInts.hpp"
+#include "../tracefem/traceintegrators.hpp"
 using namespace ngsolve;
 using namespace ngfem;
 
@@ -167,6 +168,8 @@ namespace ngcomp
     // cout << "Constructor of XFESpace end" << endl;
     // static ConstantCoefficientFunction one(1);
     // integrator = new MassIntegrator<D> (&one);
+    if (flags.GetDefineFlag("trace"))
+        evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
   }
 
   template <int D, int SD>
@@ -890,12 +893,13 @@ namespace ngcomp
     if (ma->GetDimension() == 2)
     {
       integrator = make_shared<XVisIntegrator<2> > (one);
+      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
       // boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
       integrator = make_shared<XVisIntegrator<3> >(one);
-      // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
+      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
       // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
     }
   }
