@@ -1,7 +1,7 @@
 
-geometry = cube_simple.geo
+geometry = square_simple.in2d
 #mesh = cube.vol.gz
-mesh = cube_simple.vol.gz
+mesh = square_simple.vol.gz
 
 
 #load xfem-library and python-bindings
@@ -19,14 +19,14 @@ constant one = 1.0
 coefficient lset
 ( sqrt(x*x+y*y+z*z) - R),
 
-fespace fes_lset_ho -type=h1ho -order=4
+fespace fes_lset_ho -type=h1ho -order=2
 gridfunction lset_ho -fespace=fes_lset_ho
 numproc setvalues npsv1 -gridfunction=lset_ho -coefficient=lset
         
 ###########################################################################
 ########################### quasi-normal field ############################
 ###########################################################################
-fespace fes_normal -type=h1ho -order=4 -vec #-dirichlet=[1,2,3,4,5,6]
+fespace fes_normal -type=h1ho -order=2 -vec #-dirichlet=[1,2,3,4,5,6]
 gridfunction qn -fespace=fes_normal
 numproc setvalues npsv3 -gridfunction=qn -coefficient=grad_lset_ho
 
@@ -62,13 +62,8 @@ gridfunction lset_p1 -fespace=fes_lset_p1
 numproc interpolatep1 npipp1b -gridfunction_ho=lset_ho -gridfunction_p1=lset_p1
 
 ### determine the deformation 
-fespace fes_deform -type=h1ho -order=4 -vec
+fespace fes_deform -type=h1ho -order=2 -vec
 gridfunction deform -fespace=fes_deform
-
-constant lset_lower_bound = 0.0
-constant lset_upper_bound = 0.0
-constant one = 1.0
-constant threshold = 10.0
 
 numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=0.0 -lset_upper_bound=0.0 -threshold=1.0
                                                 
@@ -77,6 +72,8 @@ numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform
 ########################### deformation ###################################
 ###########################################################################
 
+numproc calcerrors npcalcerr -levelset_ho=lset_ho -levelset_p1=lset_p1 -deform=deform
+        
 
 
 
@@ -85,27 +82,27 @@ numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform
 
 
 
-#numproc setdeformation npudef -gridfunction=deform
+numproc setdeformation npudef -gridfunction=deform
                 
 define fespace fesh1
        -type=h1ho
-       -order=2
        -dirichlet=[1,2,3,4]
-
-# use an "extended" continuous finite element space
-# you may change the order here
+       -dgjumps
+       -order=2
+        
 define fespace tracefes
        -type=xfespace
        -type_std=h1ho
        -ref_space=0
        -dirichlet=[1,2,3,4]
        -trace
+       -dgjumps
+       -order=2
 
-#update "extended" part of XFE space:
 numproc informxfem npix
         -xfespace=tracefes
         -fespace=fesh1
-        -coef_levelset=lset_p1
+        -coef_levelset=lset_ho
 
 gridfunction gf_u -fespace=tracefes
 
@@ -114,21 +111,24 @@ gridfunction gf_u -fespace=tracefes
 bilinearform a -fespace=tracefes
 tracemass 1.0
 tracelaplacebeltrami 1.0
+lo_traceghostpenalty 0.1
+sec_traceghostpenalty 0.001
+                
 #tracelaplace 1.0
 # tracediv conv
 
 linearform f -fespace=tracefes
 # tracesource (sin(pi*z)*(1+pi*pi*(1-z*z*z))+cos(pi*z)*4*pi*z)
-tracesource (z*z+6*z*z-2)#solution u=z**2
+tracesource (y*y+4*y*y-2)#solution u=z**2
 #tracesource (z) #solution u=z ???
-#tracesource (sin(pi*z)*(pi*pi*(1-z*z)+1)+cos(pi*z)*2*pi*z) #solution u=sin(pi*z)
-# tracesource (sin(pi*z))
+# tracesource (sin(pi*y)*(pi*pi*(1-y*y)+1)+cos(pi*y)*2*pi*y) #solution u=sin(pi*z)
+#tracesource (sin(pi*y))
 
 coefficient u_sol
-(z*z),
+(y*y),
 
 # coefficient u_sol
-# (sin(pi*z)),
+# (sin(pi*y)),
 
 coefficient gradu_gamma_sol
 ((-x*pi*z*cos(pi*z)),(-y*pi*z*cos(pi*z)),(pi*cos(pi*z)-z*pi*z*cos(pi*z))),
@@ -138,10 +138,6 @@ define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
 numproc bvp npbvp -gridfunction=gf_u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 # define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
-
-# numproc traceoutput npto -gridfunction=u -levelset=lset -subdivision=0 -reset -instat
-# numproc traceoutput npto -gridfunction=u -levelset=lset -subdivision=0 -instat
-# numproc parabolic3d np1 -bilinearforma=a -bilinearformm=m -linearform=f -visnumproc=npto -gridfunction=u -dt=0.01 -tend=3
 
 
 bilinearform evalu -fespace=tracefes -nonassemble
@@ -153,9 +149,7 @@ numproc visualization npviz -scalarfunction=u
     -minval=-1.5 -maxval=1.5
     -nolineartexture -deformationscale=0.25 -subdivision=0
 
-numproc calcerrors npcalcerr -levelset_ho=lset_ho -levelset_p1=lset_p1 -deform=deform
-        
-numproc tracediff3d npxd 
+numproc tracediff npxd 
         -gridfunction=gf_u 
         -coef=u_sol
         -intorder=6
