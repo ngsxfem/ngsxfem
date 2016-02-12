@@ -17,7 +17,7 @@ constant one = 1.0
         
 ####levelsets
 coefficient lset
-( sqrt(x*x+y*y+z*z) - R),
+( sqrt(x*x+y*y) - R),
 
 fespace fes_lset_ho -type=h1ho -order=2
 gridfunction lset_ho -fespace=fes_lset_ho
@@ -55,13 +55,6 @@ numproc calcerrors npcalcerr -levelset_ho=lset -levelset_p1=lset_p1 -quasinormal
                 -lset_lower_bound=0
                 -lset_upper_bound=0
 
-
-
-
-
-
-
-
 numproc setdeformation npudef -gridfunction=deform
                 
 define fespace fesh1
@@ -93,9 +86,6 @@ tracemass 1.0
 tracelaplacebeltrami 1.0
 lo_traceghostpenalty 0.1
 sec_traceghostpenalty 0.001
-                
-#tracelaplace 1.0
-# tracediv conv
 
 linearform f -fespace=tracefes
 # tracesource (y*y+4*y*y-2)#solution u=z**2
@@ -127,9 +117,8 @@ exttrace 1.0
 
 numproc drawflux npdf -solution=gf_u -bilinearform=evalu -applyd -label=u
 
-numproc visualization npviz -scalarfunction=u
-    -minval=-1.5 -maxval=1.5
-    -nolineartexture -deformationscale=0.25 -subdivision=0
+numproc visualization npviz -scalarfunction=u -vectorfunction=deform
+    -nolineartexture -deformationscale=1.0 -subdivision=2
 
 numproc tracediff npxd 
         -gridfunction=gf_u 
