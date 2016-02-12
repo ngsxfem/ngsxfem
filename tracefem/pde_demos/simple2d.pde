@@ -26,54 +26,34 @@ numproc setvalues npsv1 -gridfunction=lset_ho -coefficient=lset
 ###########################################################################
 ########################### quasi-normal field ############################
 ###########################################################################
-fespace fes_normal -type=h1ho -order=2 -vec #-dirichlet=[1,2,3,4,5,6]
+fespace fes_normal -type=l2ho -order=2 -vec #-dirichlet=[1,2,3,4,5,6]
 gridfunction qn -fespace=fes_normal
 numproc setvalues npsv3 -gridfunction=qn -coefficient=grad_lset_ho
 
-                
-# bilinearform mqn -fespace=fes_normal
-# mass 1.0 --comp=1        
-# mass 1.0 --comp=2
-# mass 1.0 --comp=3
 
-# coefficient test1
-# (grad_lset_ho*(1,0,0))
-# coefficient test2
-# (grad_lset_ho*(0,1,0))
-# coefficient test3
-# (grad_lset_ho*(0,0,1))
+###########################################################################
+########################### P1 ############################################
+###########################################################################
                 
-# linearform fqn -fespace=fes_normal
-# source test1 --comp=1
-# source test2 --comp=2
-# source test3 --comp=3
-
-# define preconditioner cqn -type=direct -bilinearform=mqn
-              
-# numproc bvp npbvpqn -gridfunction=qn -bilinearform=mqn -linearform=fqn -solver=cg -preconditioner=cqn -maxsteps=1000 -prec=1e-6 # -print
-        
-###########################################################################
-########################### quasi-normal field ############################
-###########################################################################
-        
 ### project this level set function into a finite element space of order 1
 fespace fes_lset_p1 -type=h1ho -order=1
 gridfunction lset_p1 -fespace=fes_lset_p1
 numproc interpolatep1 npipp1b -gridfunction_ho=lset_ho -gridfunction_p1=lset_p1
 
 ### determine the deformation 
-fespace fes_deform -type=h1ho -order=2 -vec
+fespace fes_deform -type=h1ho -order=2 -vec -dirichlet=[1,2,3,4]
 gridfunction deform -fespace=fes_deform
 
-numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=0.0 -lset_upper_bound=0.0 -threshold=1.0
+numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=0.0 -lset_upper_bound=0.0 -threshold=0.1
                                                 
 
 ###########################################################################
 ########################### deformation ###################################
 ###########################################################################
 
-numproc calcerrors npcalcerr -levelset_ho=lset_ho -levelset_p1=lset_p1 -deform=deform
-        
+numproc calcerrors npcalcerr -levelset_ho=lset -levelset_p1=lset_p1 -quasinormal=qn -deform=deform
+                -lset_lower_bound=0
+                -lset_upper_bound=0
 
 
 
@@ -118,20 +98,22 @@ sec_traceghostpenalty 0.001
 # tracediv conv
 
 linearform f -fespace=tracefes
-# tracesource (sin(pi*z)*(1+pi*pi*(1-z*z*z))+cos(pi*z)*4*pi*z)
-tracesource (y*y+4*y*y-2)#solution u=z**2
+# tracesource (y*y+4*y*y-2)#solution u=z**2
 #tracesource (z) #solution u=z ???
-# tracesource (sin(pi*y)*(pi*pi*(1-y*y)+1)+cos(pi*y)*2*pi*y) #solution u=sin(pi*z)
-#tracesource (sin(pi*y))
-
-coefficient u_sol
-(y*y),
+tracesource (sin(pi*y)*(1+pi*pi*(1-y*y))+pi*y*cos(pi*y)) #solution u=sin(pi*z) ???
+# tracesource (4*y*y*y*(3*(1-y*y)-y)+y*y*y*y) #???
 
 # coefficient u_sol
-# (sin(pi*y)),
+# (y*y*y*y),
 
-coefficient gradu_gamma_sol
-((-x*pi*z*cos(pi*z)),(-y*pi*z*cos(pi*z)),(pi*cos(pi*z)-z*pi*z*cos(pi*z))),
+# coefficient u_sol
+# (y*y),
+
+coefficient u_sol
+(sin(pi*y)),
+
+# coefficient gradu_gamma_sol
+# ((-x*pi*z*cos(pi*z)),(-y*pi*z*cos(pi*z)),(pi*cos(pi*z)-z*pi*z*cos(pi*z))),
         
 #define preconditioner c -type=local -bilinearform=a -test #-block
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
