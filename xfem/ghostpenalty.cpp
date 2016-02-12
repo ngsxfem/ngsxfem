@@ -334,7 +334,6 @@ namespace ngfem
     static int timer = NgProfiler::CreateTimer ("TraceGhostPenaltyIntegrator");
 
     if (LocalFacetNr2==-1) throw Exception("TraceGhostPenaltyIntegrator: LocalFacetNr2==-1");
-    if (D==3) throw Exception("scaling is not correct!");
     NgProfiler::RegionTimer reg (timer);
 
     const XFiniteElement * xfe1 = dynamic_cast<const XFiniteElement* >(&volumefel1);
