@@ -490,7 +490,7 @@ namespace ngfem
       bmat.Col(0).Range(  0,    nd1) = mat1_dudn;
       bmat.Col(0).Range(nd1,nd1+nd2) = mat2_dudn;
           
-      double pen = std::pow(orthdist, 2*difforder-1);
+      double pen = std::pow(orthdist, 2*difforder-2);
       elmat += pen * lam * len1 * ir_facet[l].Weight() * bmat * Trans (bmat);
     }
   }
