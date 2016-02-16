@@ -85,7 +85,7 @@ bilinearform a -fespace=tracefes
 tracemass 1.0
 tracelaplacebeltrami 1.0
 lo_traceghostpenalty 0.1
-sec_traceghostpenalty 0.001
+#sec_traceghostpenalty 0.00001
 
 linearform f -fespace=tracefes
 # tracesource (y*y+4*y*y-2)#solution u=z**2

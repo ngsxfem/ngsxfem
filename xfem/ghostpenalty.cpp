@@ -397,6 +397,9 @@ namespace ngfem
 
     // IntegrationRule ir_facet;
     // commonedge->FillSurfaceIntegrationRule(2*p,sign,ir_facet);
+
+    const double eps = 1e-3;
+
     bmat = 0.0;
     for (int l = 0; l < ir_facet.GetNIP(); l++)
     {
@@ -410,36 +413,48 @@ namespace ngfem
       double len1 = L2Norm (normal1);
       normal1 /= len1;
       Vec<D> invjac_normal1 = inv_jac1 * normal1;
-      
       if (difforder==1)
       {
         mat1_dudn = scafe1.GetDShape (sip1.IP(), lh) * invjac_normal1;
       }
       else
       {
+        const double norminvjacn = L2Norm(invjac_normal1);
+        Vec<D> normal_dir_wrt_ref = (1.0/norminvjacn)  * invjac_normal1;
+        
         // DO num diff in normal direction
-        double eps = 1e-7;
-
+        IntegrationPoint ipll(ip1);
         IntegrationPoint ipl(ip1);
         IntegrationPoint ipc(ip1);
         IntegrationPoint ipr(ip1);
+        IntegrationPoint iprr(ip1);
 
         for (int d = 0; d < D; ++d)
-          ipl(d) += eps * invjac_normal1(d);
+          ipl(d) -= eps * normal_dir_wrt_ref(d);
         for (int d = 0; d < D; ++d)
-          ipr(d) -= eps * invjac_normal1(d);
+          ipr(d) += eps * normal_dir_wrt_ref(d);
+        for (int d = 0; d < D; ++d)
+          ipll(d) -= 2.0 * eps * normal_dir_wrt_ref(d);
+        for (int d = 0; d < D; ++d)
+          iprr(d) += 2.0 * eps * normal_dir_wrt_ref(d);
 
-        // double len = L2Norm(invjac_normal1);
+        double len = L2Norm(invjac_normal1);
 
         FlatVector<> shapeleft = scafe1.GetShape (ipl, lh);
         FlatVector<> shapecenter = scafe1.GetShape (ipc, lh);
         FlatVector<> shaperight = scafe1.GetShape (ipr, lh);
+        FlatVector<> shapeleft2 = scafe1.GetShape (ipll, lh);
+        FlatVector<> shaperight2 = scafe1.GetShape (iprr, lh);
 
-        mat1_dudn = shaperight - 2 * shapecenter + shapeleft;
-        mat1_dudn *= 1.0/(eps*eps);
-
+        // mat1_dudn = shapeleft - 2 * shapecenter + shaperight;
+        mat1_dudn = -1.0/12.0*shapeleft2 + 4.0/3.0*shapeleft - 2.5*shapecenter + 4.0/3.0*shaperight - 1.0/12.0*shaperight2;
+        mat1_dudn *= 1.0*norminvjacn*norminvjacn/(eps*eps);
+        // mat1_dudn = shaperight - shapeleft;
+        // mat1_dudn *= 0.5*norminvjacn/eps;
       }
 
+      // cout << " mat1_dudn = " << mat1_dudn << endl; getchar();
+      
       const double orthdist = abs(InnerProduct(pointsdiff,normal1));
 
       IntegrationPoint ip2 = transform2(LocalFacetNr2, ir_facet[l]);
@@ -462,29 +477,41 @@ namespace ngfem
       }
       else
       {
+        const double norminvjacn = L2Norm(invjac_normal2);
+        Vec<D> normal_dir_wrt_ref = (1.0/norminvjacn)  * invjac_normal2;
+        
         // DO num diff in normal direction
-        double eps = 1e-7;
-
+        IntegrationPoint ipll(ip2);
         IntegrationPoint ipl(ip2);
         IntegrationPoint ipc(ip2);
         IntegrationPoint ipr(ip2);
+        IntegrationPoint iprr(ip2);
 
         for (int d = 0; d < D; ++d)
-          ipl(d) -= eps * invjac_normal2(d);
+          ipl(d) -= eps * normal_dir_wrt_ref(d);
         for (int d = 0; d < D; ++d)
-          ipr(d) += eps * invjac_normal2(d);
+          ipr(d) += eps * normal_dir_wrt_ref(d);
+        for (int d = 0; d < D; ++d)
+          ipll(d) -= 2.0 * eps * normal_dir_wrt_ref(d);
+        for (int d = 0; d < D; ++d)
+          iprr(d) += 2.0 * eps * normal_dir_wrt_ref(d);
 
-        // double len = L2Norm(invjac_normal2);
+        double len = L2Norm(invjac_normal2);
 
         FlatVector<> shapeleft = scafe2.GetShape (ipl, lh);
         FlatVector<> shapecenter = scafe2.GetShape (ipc, lh);
         FlatVector<> shaperight = scafe2.GetShape (ipr, lh);
+        FlatVector<> shapeleft2 = scafe2.GetShape (ipll, lh);
+        FlatVector<> shaperight2 = scafe2.GetShape (iprr, lh);
 
-        mat2_dudn = shaperight - 2 * shapecenter + shapeleft;
-        mat2_dudn *= 1.0/(eps*eps);
-
+        // mat2_dudn = shapeleft - 2 * shapecenter + shaperight;
+        mat2_dudn = -1.0/12.0*shapeleft2 + 4.0/3.0*shapeleft - 2.5*shapecenter + 4.0/3.0*shaperight - 1.0/12.0*shaperight2;
+        mat2_dudn *= 1.0*norminvjacn*norminvjacn/(eps*eps);
+        // mat2_dudn = shaperight - shapeleft;
+        // mat2_dudn *= 0.5*norminvjacn/eps;
       }
          
+      // cout << " mat2_dudn = " << mat2_dudn << endl; getchar();
 
       bmat = 0.0;
       bmat.Col(0).Range(  0,    nd1) = mat1_dudn;

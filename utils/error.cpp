@@ -837,16 +837,6 @@ namespace ngfem
     shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
 
     ProgressOutput progress (ma, "CalcTraceDiff element", ma->GetNE());
-
-    // const ElementTransformation & eltrans = ma->GetTrafo(2,false,clh);
-    // std::cout << " cba1 " << std::endl;
-    // IntegrationPoint ipc(0.0,0.0,0.0);
-    // std::cout << " cba2 " << std::endl;
-    // MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
-    // std::cout << " cba3 " << std::endl;
-    // const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
-    // std::cout << " cba4 " << std::endl;
-    // cout << " h = " << h << endl;
     
     IterateElements 
       (*gfu->GetFESpace(), VOL, clh, 
@@ -866,32 +856,6 @@ namespace ngfem
 
          const XFiniteElement * xfe
            = dynamic_cast<const XFiniteElement* >(&(gfu->GetFESpace()->GetFE(elnr,lh)) );
-
-         
-//          int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
-//          int ndof = spacetime ? scastfe->GetNDof() : scafe->GetNDof();
-//          int ndof_total = ndof+ndof_x;
-//          FlatVector<> shape(ndof,&shape_total(0));
-//          FlatVector<> shapex(ndof_x,&shape_total(ndof));
-
-//          FlatMatrixFixWidth<D> dshape_total(ndof_total,lh);
-//          FlatMatrixFixWidth<D> dshape(ndof,&dshape_total(0,0));
-//          FlatMatrixFixWidth<D> dshapex(ndof_x,&dshape_total(ndof,0));
-
-//          FlatVector<> dshapen_total(ndof_total,lh);
-//          FlatVector<> dshapen(ndof,&dshapen_total(0));
-//          FlatVector<> dshapenx(ndof_x,&dshapen_total(ndof));
-
-//          int ndof_x2 = xfe2!=NULL ? xfe2->GetNDof() : 0;
-//          int ndof2 = gfu2 == NULL ? 0 : (spacetime ? scastfe2->GetNDof() : scafe2->GetNDof());
-//          int ndof_total2 = gfu2 == NULL ? 0 : (ndof2+ndof_x2);
-//          FlatVector<> shape_total2(ndof_total2,lh);
-//          FlatVector<> shape2(ndof2,&shape_total2(0));
-//          FlatVector<> shapex2(ndof_x2,&shape_total2(ndof2));
-
-//          FlatMatrixFixWidth<D> dshape_total2(ndof_total2,lh);
-//          FlatMatrixFixWidth<D> dshape2(ndof2,&dshape_total2(0,0));
-//          FlatMatrixFixWidth<D> dshapex2(ndof_x2,&dshape_total2(ndof2,0));
 
          if (xfe)
          {
@@ -932,126 +896,13 @@ namespace ngfem
                const double error_contrib_l2 = sqr(discrete_val - sol_val) * weight;
 #pragma omp atomic
                l2diff += error_contrib_l2;
-#pragma omp single
-               maxdiff = max(maxdiff,abs(discrete_val - sol_val));
+               const double curr_maxdiff = abs(discrete_val - sol_val);
+#pragma omp critical (max)
+               {
+                 if (curr_maxdiff > maxdiff)
+                   maxdiff = curr_maxdiff;
+               }
                
-//                jump.Range(0,ndof) = (b_pos-b_neg) * shape;
-//                jump.Range(ndof,ndof_total) = shape;
-
-//                for (int l = 0; l < ndof_x; ++l)
-//                {
-//                  if (xfe->GetSignsOfDof()[l] == NEG)
-//                    jump(ndof+l) *= -b_neg;
-//                  else
-//                    jump(ndof+l) *= b_pos;
-//                }
-            
-//                double jumpval = InnerProduct(jump,elvec);
-//                if (solcoef.HasJumpRhs())
-//                  jumpval -= solcoef.GetJumpRhs().Evaluate(mip);
-
-// #pragma omp atomic
-//                ifjumpl2 += weight * sqr(jumpval);
-
-
-//                if (!spacetime)
-//                {
-//                  scafe->CalcMappedDShape(mip, dshape);
-//                  if (gfu2)
-//                    scafe2->CalcMappedDShape(mip, dshape2);
-//                }
-//                else
-//                {
-//                  scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
-//                  if (gfu2)
-//                    scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
-//                }
-
-//                dshapex = dshape;
-
-//                double kappa_neg = xgeom.kappa[NEG];
-//                double kappa_pos = xgeom.kappa[POS];
-
-//                dshapen = (a_pos*kappa_pos+a_neg*kappa_neg) * (dshape * normal);
-//                dshapenx = dshape * normal;
-
-//                for (int l = 0; l < ndof_x; ++l)
-//                  if (xfe->GetSignsOfDof()[l] == NEG)
-//                    dshapenx(l) *= kappa_neg * a_neg;
-//                  else
-//                    dshapenx(l) *= kappa_pos * a_pos;
-
-
-//                double discdnval = InnerProduct(dshapen_total,elvec);
-
-//                Vec<D> soldvalneg;
-//                Vec<D> soldvalpos;
-//                if (gfu2)
-//                {
-//                  cout << " no H^-1/2 - norm for gfu2 yet" << endl;
-//                  // dshapex2 = dshape2;
-
-//                  // for (int l = 0; l < ndof_x2; ++l)
-//                  // {
-//                  //   if (xfe2->GetSignsOfDof()[l] != dt)
-//                  //   {
-//                  //     dshapex2.Row(l) = 0.0;
-//                  //   }
-//                  // }
-//                  // solval = InnerProduct(shape_total2,elvec2);
-//                  // soldval = Trans(dshape_total2) * elvec2;
-
-//                }
-//                else
-//                {
-//                  if (solcoef.HasSolutionDNeg() && solcoef.HasSolutionDPos())
-//                  {
-//                    // if (dt == POS)
-//                    solcoef.GetSolutionDPos().Evaluate(mip,soldvalpos);
-//                    // else
-//                    solcoef.GetSolutionDNeg().Evaluate(mip,soldvalneg);
-//                  }
-//                  else
-//                  {
-//                    // if (dt == POS)
-//                    CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionPos()),mip,time,soldvalpos,lh);
-//                    // else
-//                    CalcDxShapeOfCoeff<D>(&(solcoef.GetSolutionNeg()),mip,time,soldvalneg,lh);
-//                  }
-//                }
-//                double soldnvalpos = a_pos * InnerProduct(soldvalpos,normal);
-//                double soldnvalneg = a_neg * InnerProduct(soldvalneg,normal);
-            
-//                if (abs(soldnvalpos-soldnvalneg)/max(abs(soldnvalpos),abs(soldnvalneg)) > 1e-4)
-//                {
-//                  static bool warndudn = false;
-//                  if (!warndudn)
-//                  {
-//                    std::cout << " soldnvalpos = " << soldnvalpos << std::endl;
-//                    std::cout << " soldnvalneg = " << soldnvalneg << std::endl;
-//                    cout << "solutions neg/pos do not fit";
-//                  }
-//                  warndudn = true;
-//                }            
-            
-//                double soldnval = kappa_neg * soldnvalneg + kappa_pos * soldnvalpos;
-            
-// #pragma omp atomic
-//                ifdudnl2 += weight * sqr(soldnval - discdnval);
-
-//                const double ava = a_pos*kappa_pos+a_neg*kappa_neg;
-//                const double lam = 2;
-//                const double p = 1;
-//                // std::cout << " discdnval = " << discdnval << std::endl;
-//                discdnval -=  lam*(p+1)/p/h * ava * jumpval;
-//                // std::cout << " orig_jumpval = " << orig_jumpval << std::endl;
-//                // std::cout << " lam*(p+1)/p/h * ava * orig_jumpval = " << lam*(p+1)/p/h * ava * orig_jumpval << std::endl;
-
-//                // std::cout << " discdnval = " << discdnval << std::endl;
-//                // std::cout << " soldnval = " << soldnval << std::endl;
-
-// #pragma omp atomic
-//                ifsigmanl2 += weight * sqr(soldnval - discdnval);
              }
          } // is xfe 
        }); //iterate elements end
@@ -1059,147 +910,6 @@ namespace ngfem
     cout << " surf = " << surf << endl;
     cout << " l2diff = " << l2diff << endl;
     cout << " maxdiff = " << maxdiff << endl;
-//     ifjumpl2 = sqrt(ifjumpl2); errtab.iferr.Append(ifjumpl2);
-//     ifdudnl2 = sqrt(ifdudnl2); errtab.ifdudnerr.Append(ifdudnl2);
-//     ifsigmanl2 = sqrt(ifsigmanl2); errtab.ifsigmanerr.Append(ifsigmanl2);
-//     l2diff = b_pos * l2diff_p + b_neg * l2diff_n;
-//     h1diff = b_pos * h1diff_p + b_neg * h1diff_n;
-//     l2diff_p = sqrt(l2diff_p); errtab.l2err_p.Append(l2diff_p);
-//     h1diff_p = sqrt(h1diff_p); errtab.h1err_p.Append(h1diff_p);
-//     l2diff_n = sqrt(l2diff_n); errtab.l2err_n.Append(l2diff_n);
-//     h1diff_n = sqrt(h1diff_n); errtab.h1err_n.Append(h1diff_n);
-//     l2diff = sqrt(l2diff); errtab.l2err.Append(l2diff);
-//     h1diff = sqrt(h1diff); errtab.h1err.Append(h1diff);
-//     // cout << " activeels = " << activeels << endl;
-//     if (!output) //hack for stokes
-//     {
-//       shared_ptr<BaseVector> corr = gfu->GetComponent(0)->GetVector().CreateVector();
-//       corr->FVDouble() = (mass_sol_n + mass_sol_p - mass_n - mass_p)/vol;
-//       cout << " vol = " << vol << endl;
-//       cout << " correction = " << (mass_sol_n + mass_sol_p - mass_n - mass_p)/vol << endl;
-//       gfu->GetComponent(0)->GetVector() += *corr;
-//     }
-//     if (output)
-//     {
-//       cout << endl;
-//       cout << " mass_n = " << mass_n << endl;
-//       cout << " mass_p = " << mass_p << endl;
-//       cout << " mass_sol_n = " << mass_sol_n << endl;
-//       cout << " mass_sol_p = " << mass_sol_p << endl;
-//       cout << " total mass = " << mass_p + mass_n << endl;
-//       cout << " total mass_sol = " << mass_sol_p + mass_sol_n << endl;
-
-//       cout << endl;
-//       cout << setw(12) << "l2_n" << "       |";
-//       cout << setw(12) << "l2_p" << "       |";
-//       cout << setw(12) << "l2" << "       |";
-//       cout << setw(12) << "h1_n" << "       |";
-//       cout << setw(12) << "h1_p" << "       |";
-//       cout << setw(12) << "h1" << "       |";
-//       cout << setw(12) << "ifl2" << "       |";
-//       cout << setw(12) << "ifdudnl2" << "        |";
-//       cout << setw(12) << "ifsigml2" << endl;
-//       for (int i = 0; i < 174; ++i)
-//         cout << "-";
-//       cout << endl;
-
-//       std::streamsize p = cout.precision();
-//       const int N = errtab.l2err_n.Size();
-//       for (int i = 0; i < N; ++i)
-//       {
-//         cout << setw(12) << errtab.l2err_n[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.l2err_n[i]/errtab.l2err_n[i-1])/log(0.5) << "]|";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.l2err_p[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.l2err_p[i]/errtab.l2err_p[i-1])/log(0.5) << "]|";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.l2err[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.l2err[i]/errtab.l2err[i-1])/log(0.5) << "]|";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.h1err_n[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.h1err_n[i]/errtab.h1err_n[i-1])/log(0.5) << "]|";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.h1err_p[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.h1err_p[i]/errtab.h1err_p[i-1])/log(0.5) << "]|";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.h1err[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.h1err[i]/errtab.h1err[i-1])/log(0.5) << "]|";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.iferr[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "      |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.iferr[i]/errtab.iferr[i-1])/log(0.5) << "]| ";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.ifdudnerr[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "       |";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.ifdudnerr[i]/errtab.ifdudnerr[i-1])/log(0.5) << "]| ";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << setw(12) << errtab.ifsigmanerr[i] << " ";
-//         cout.setf(ios::fixed);
-//         cout.precision(2);
-//         if (N>0 && i==0)
-//           cout << "       ";
-//         if (i>0)
-//           cout << "[" << setw(4) << log(errtab.ifsigmanerr[i]/errtab.ifsigmanerr[i-1])/log(0.5) << "] ";
-//         cout.precision(p);
-//         cout.unsetf(ios::fixed);
-
-//         cout << endl;
-//       }
-//     }
   }
 
   template void CalcTraceDiff<2>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh, bool output, const Flags & flags);
