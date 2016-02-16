@@ -85,7 +85,7 @@ bilinearform a -fespace=tracefes
 tracemass 1.0
 tracelaplacebeltrami 1.0
 lo_traceghostpenalty 0.01
-sec_traceghostpenalty 0.001
+#sec_traceghostpenalty 0.001
 
 linearform f -fespace=tracefes
 # tracesource (sin(pi*z)*(1+pi*pi*(1-z*z*z))+cos(pi*z)*4*pi*z)
@@ -128,10 +128,10 @@ numproc tracediff3d npxd
                 
 numproc unsetdeformation npudef
         
-# numproc vtkoutput npout -filename=simple
-#         -coefficients=[lset,lset_ho,lset_p1,deform,gf_u,u_sol]
-#         -fieldnames=[lset,lsetho,lsetp1,deformation,u,u_sol]
-#         -subdivision=2
+numproc vtkoutput npout -filename=simple
+        -coefficients=[lset,lset_ho,lset_p1,deform,gf_u,u_sol]
+        -fieldnames=[lset,lsetho,lsetp1,deformation,u,u_sol]
+        -subdivision=2
 
 numproc levelsetrefine nplsref -levelset=lset_p1
 
