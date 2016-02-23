@@ -119,6 +119,27 @@ namespace ngfem
                                  ) const;
 
   };
+
+  template <int D>
+  class NormalLaplaceTraceIntegrator : public BilinearFormIntegrator
+  {
+    shared_ptr<CoefficientFunction> coef;
+    shared_ptr<CoefficientFunction> coef_normal;
+  public:
+    NormalLaplaceTraceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+      : coef(coeffs[0]), coef_normal(coeffs[1]){;}
+    virtual ~NormalLaplaceTraceIntegrator(){ ; };
+    virtual string Name () const { return "NormalLaplaceTraceIntegrator"; }
+    virtual int DimElement () const { return D; }
+    virtual int DimSpace () const { return D; }
+    virtual bool BoundaryForm () const { return false; }
+    virtual bool IsSymmetric () const { return true; }
+    virtual void
+    CalcElementMatrix (const FiniteElement & fel,
+                         const ElementTransformation & eltrans,
+                         FlatMatrix<double> elmat,
+                         LocalHeap & lh) const;
+  };
   
 
 }

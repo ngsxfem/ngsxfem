@@ -529,5 +529,75 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<TraceGhostPenaltyIntegrator<3,1> > init_trace_gp_3d ("lo_traceghostpenalty", 3, 1);
   static RegisterBilinearFormIntegrator<TraceGhostPenaltyIntegrator<2,2> > init_trace_gp2_2d ("sec_traceghostpenalty", 2, 1);
   static RegisterBilinearFormIntegrator<TraceGhostPenaltyIntegrator<3,2> > init_trace_gp2_3d ("sec_traceghostpenalty", 3, 1);
+
+
+
+
+  template<int D>
+  void NormalLaplaceTraceIntegrator<D> ::
+  CalcElementMatrix (const FiniteElement & base_fel,
+		     const ElementTransformation & eltrans, 
+		     FlatMatrix<double> elmat,
+		     LocalHeap & lh) const
+  {
+    static Timer timer ("NormalLaplaceTraceIntegrator::CalcElementMatrix");
+    RegionTimer reg (timer);
+
+    const XFiniteElement * xfe =
+      dynamic_cast<const XFiniteElement *> (&base_fel);
+
+    elmat = 0.0;
+    if (!xfe) return;					////if base_fel is no extended element return
+
+    const ScalarFiniteElement<D> & scafe =
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());		//get base functions
+
+    int ndof = scafe.GetNDof();
+    FlatMatrixFixWidth<D> dshape(ndof,lh);
+    FlatMatrixFixWidth<D> dshape_ref(ndof,lh);
+    FlatVector<> dshapen(ndof,lh);
+    
+    int p = scafe.Order();
+
+    IntegrationRule ir(scafe.ElementType(), 2*p-2);
+
+    // loop over integration points
+    for (int i = 0 ; i < ir.GetNIP(); i++)
+      {
+        // calculate Jacobi matrix in the integration point
+        MappedIntegrationPoint<D,D> mip(ir[i], eltrans);
+
+        // lambda(x)
+        double lam = coef -> Evaluate (mip);
+
+        Vec<D> normal;
+        coef_normal -> Evaluate(mip, normal);
+
+        normal /= L2Norm(normal);
+        
+        scafe.CalcMappedDShape (mip, dshape);
+        
+        dshapen = dshape * normal;
+        
+        // integration weight and Jacobi determinant
+        double fac = mip.IP().Weight() * mip.GetMeasure();
+
+        const double h = D==2 ? sqrt(mip.GetMeasure()) : cbrt(mip.GetMeasure());
+        
+        // elmat_{i,j} += (fac*lam) * InnerProduct (grad shape_i, grad shape_j)
+        elmat += (fac*h*lam) * dshapen * Trans(dshapen);
+        
+      }
+
+    // cout << " elmat = " << elmat << endl; getchar();
+    
+  }
+
+  template class NormalLaplaceTraceIntegrator<2>;
+  template class NormalLaplaceTraceIntegrator<3>;
+
+  static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<2>> init_stab2_2d ("normallaplacetrace", 2, 2);
+  static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<3>> init_stab2_3d ("normallaplacetrace", 3, 2);
+  
   
 }
