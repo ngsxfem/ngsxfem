@@ -60,7 +60,7 @@ numproc setdeformation npudef -gridfunction=deform
 define fespace fesh1
        -type=h1ho
        -dirichlet=[1,2,3,4,5,6]
-       -dgjumps
+       # -dgjumps
        -order=2
 
 define fespace tracefes
@@ -69,7 +69,7 @@ define fespace tracefes
        -ref_space=0
        -dirichlet=[1,2,3,4,5,6]
        -trace
-       -dgjumps
+       # -dgjumps
        -order=2
 
 numproc informxfem npix
@@ -79,14 +79,18 @@ numproc informxfem npix
 
 gridfunction gf_u -fespace=tracefes
 
-
+coefficient normal
+(x,y,z),
 
 bilinearform a -fespace=tracefes
 tracemass 1.0
 tracelaplacebeltrami 1.0
-lo_traceghostpenalty 0.01
+#tracelaplace 1.0
+# lo_traceghostpenalty 0.01
 #sec_traceghostpenalty 0.001
 
+#normallaplacetrace 0.1 normal
+        
 linearform f -fespace=tracefes
 # tracesource (sin(pi*z)*(1+pi*pi*(1-z*z*z))+cos(pi*z)*4*pi*z)
 # tracesource (z*z+6*z*z-2)#solution u=z**2
@@ -103,11 +107,11 @@ coefficient u_sol
 # coefficient gradu_gamma_sol
 # ((-x*pi*z*cos(pi*z)),(-y*pi*z*cos(pi*z)),(pi*cos(pi*z)-z*pi*z*cos(pi*z))),
         
-#define preconditioner c -type=local -bilinearform=a -test #-block
- define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
-#define preconditioner c -type=local -bilinearform=a -test #-block
+define preconditioner c -type=local -bilinearform=a -test #-block
+#efine preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
+# define preconditioner c -type=bddc -bilinearform=a -test #-block
 
-numproc bvp npbvp -gridfunction=gf_u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=10000 -prec=1e-6
+numproc bvp npbvp -gridfunction=gf_u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=100000 -prec=1e-7
 # define preconditioner c -type=direct -bilinearform=a -inverse=pardiso -test
 
 
