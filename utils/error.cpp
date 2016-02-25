@@ -865,7 +865,7 @@ namespace ngfem
              dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
            IntegrationPoint ipc(0.0,0.0,0.0);
            MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
-           const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+           // const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
 //              FlatVector<> jump(ndof_total,lh);
 
            const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
