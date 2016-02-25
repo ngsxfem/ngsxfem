@@ -94,11 +94,11 @@ namespace ngfem
       // (nu  grud u, grad v)
       double val = (dt==POS) ? coef_pos -> EvaluateConst() : coef_neg -> EvaluateConst();
       for (int i = 0; i < D*D; i++)
-        mat(i, i) = val;
+        mat(i, i) = 0.5 * val;
 
       // (du1/dx+du2/dy, p)
       for (int d = 0; d < D; ++d)
-        mat(D*D,(D+1)*d) = mat((D+1)*d,D*D) = -1;
+        mat(D*D,(D+1)*d) = mat((D+1)*d,D*D) = -0.5;
 
 
       HeapReset hr(lh);
@@ -130,7 +130,7 @@ namespace ngfem
           // the first nd_u shape functions belong to u_x, the next nd_u belong to u_y:
           for (int d = 0; d < D; ++d)
             for (int k = 0; k < D; ++k)
-              bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d);
+              bmat.Row(d*D+k).Range(*dofrangeuv[k]) += gradu.Col(d);
 
           // ... and finally nd_p shape functions for the pressure:
           bmat.Row(D*D).Range(dofrangep) = vecp;
@@ -174,7 +174,7 @@ namespace ngfem
           for (int l = 0; l < ndofuv_x; ++l)
           {
             if (feuvx->GetSignsOfDof()[l] != dt)
-              gradux(l) = 0.0;
+              gradux.Row(l) = 0.0;
           }
 
           bmat = 0.0;
@@ -185,7 +185,7 @@ namespace ngfem
           // \nabla u^T
           for (int d = 0; d < D; ++d)
             for (int k = 0; k < D; ++k)
-              bmat.Row(d*D+k).Range(*dofrangeuv[k]) = gradu.Col(d); // du_k / dx_d
+              bmat.Row(d*D+k).Range(*dofrangeuv[k]) += gradu.Col(d); // du_k / dx_d
 
 
           if (ndofuv_x > 0)
@@ -196,7 +196,7 @@ namespace ngfem
             // \nabla u_x^T
             for (int d = 0; d < D; ++d)
               for (int k = 0; k < D; ++k)
-                bmat.Row(d*D+k).Range(*dofrangeuv_x[k]) = gradux.Col(d);
+                bmat.Row(d*D+k).Range(*dofrangeuv_x[k]) += gradux.Col(d);
           }
           // ... and finally nd_p shape functions for the pressure:
           bmat.Row(D*D).Range(dofrangep) = vecp;

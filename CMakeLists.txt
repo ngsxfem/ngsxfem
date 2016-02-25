@@ -80,6 +80,8 @@ add_subdirectory(stokes)
 add_subdirectory(utils)
 add_subdirectory(xfem)
 add_subdirectory(pde_tutorial)
+add_subdirectory(tracefem)
+add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 
 # get_directory_property( DirDefs COMPILE_DEFINITIONS )

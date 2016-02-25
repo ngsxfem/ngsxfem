@@ -818,4 +818,102 @@ namespace ngfem
                               double b_neg, double b_pos, double time, ErrorTable & errtab, LocalHeap & lh, bool output, const Flags & flags);
 
 
+  template<int D>
+  void CalcTraceDiff (shared_ptr<GridFunction> gfu, 
+                   shared_ptr<CoefficientFunction> coef, 
+                   int intorder, 
+                   LocalHeap & clh,
+                   bool output,
+                   const Flags & flags)
+  {
+    static Timer time_fct ("CalcTraceDiff");
+    RegionTimer reg (time_fct);
+    
+    double l2diff = 0;
+    double maxdiff = 0;
+    // double h1diff = 0;
+    double surf = 0.0;
+    
+    shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
+
+    ProgressOutput progress (ma, "CalcTraceDiff element", ma->GetNE());
+    
+    IterateElements 
+      (*gfu->GetFESpace(), VOL, clh, 
+       [&] (ElementId ei, LocalHeap & lh)
+       {
+         int elnr = ei.Nr();
+         progress.Update ();
+         HeapReset hr(lh);
+
+         Array<int> dnums;
+         gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
+         const int ndof = dnums.Size();
+         FlatVector<double> elvec (ndof, lh);
+         gfu -> GetVector().GetIndirect (dnums, elvec);   
+
+         ElementTransformation & eltrans = ma->GetTrafo(ei,lh);
+
+         const XFiniteElement * xfe
+           = dynamic_cast<const XFiniteElement* >(&(gfu->GetFESpace()->GetFE(elnr,lh)) );
+
+         if (xfe)
+         {
+           FlatVector<> shape(ndof,lh);
+
+           const ScalarFiniteElement<D> & scafe =
+             dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+           IntegrationPoint ipc(0.0,0.0,0.0);
+           MappedIntegrationPoint<D,D> mipc(ipc, eltrans);
+           const double h = D == 2 ? sqrt(mipc.GetMeasure()) : cbrt(mipc.GetMeasure());
+//              FlatVector<> jump(ndof_total,lh);
+
+           const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+           const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
+           const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
+
+             for (int i = 0; i < fquad.Size(); ++i)
+             {
+               IntegrationPoint ip(&fquad.points(i,0),0.0);
+               MappedIntegrationPoint<D,D> mip(ip, eltrans);
+      
+               Mat<D,D> Finv = mip.GetJacobianInverse();
+               const double absdet = mip.GetMeasure();
+
+               Vec<D> nref = fquad.normals.Row(i);
+               Vec<D> normal = absdet * Trans(Finv) * nref ;
+               double len = L2Norm(normal);
+               normal /= len;
+
+               const double weight = fquad.weights(i) * len; 
+
+#pragma omp atomic
+               surf += weight;
+               shape = scafe.GetShape(mip.IP(), lh);
+               const double discrete_val = InnerProduct(shape,elvec);
+               const double sol_val = coef->Evaluate(mip);
+
+               const double error_contrib_l2 = sqr(discrete_val - sol_val) * weight;
+#pragma omp atomic
+               l2diff += error_contrib_l2;
+               const double curr_maxdiff = abs(discrete_val - sol_val);
+#pragma omp critical (max)
+               {
+                 if (curr_maxdiff > maxdiff)
+                   maxdiff = curr_maxdiff;
+               }
+               
+             }
+         } // is xfe 
+       }); //iterate elements end
+    l2diff = sqrt(l2diff);
+    cout << " surf = " << surf << endl;
+    cout << " l2diff = " << l2diff << endl;
+    cout << " maxdiff = " << maxdiff << endl;
+  }
+
+  template void CalcTraceDiff<2>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh, bool output, const Flags & flags);
+  template void CalcTraceDiff<3>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh, bool output, const Flags & flags);
+
+
 }

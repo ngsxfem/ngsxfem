@@ -2,7 +2,10 @@ add_library(ngsxfem_xstokes ${NGS_LIB_TYPE}
   xstokesIntegrators.cpp
   xmeancurv.cpp
   xstokesspace.cpp
+  gammaforce.cpp
   python_stokes.cpp
+  my_ghostpenalty.cpp
+  xstokesNitsche.cpp
   )
 
 set_target_properties(ngsxfem_xstokes PROPERTIES SUFFIX ".so")
@@ -16,6 +19,9 @@ install( FILES
   xstokesIntegrators.hpp
   xmeancurv.hpp
   xstokesspace.hpp
+  gammaforce.hpp
+  my_ghostpenalty.hpp
+  xstokesNitsche.hpp
   DESTINATION include
   )
 

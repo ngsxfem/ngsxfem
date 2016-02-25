@@ -113,7 +113,13 @@ namespace ngfem
                    bool output,
                    const Flags & flags);
   
-
+  template<int D>
+  void CalcTraceDiff (shared_ptr<GridFunction> gfu,
+                      shared_ptr<CoefficientFunction> coef,
+                      int intorder,
+                      LocalHeap & lh,
+                      bool output,
+                      const Flags & flags);
 
 }
 #endif
