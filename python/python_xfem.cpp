@@ -3,7 +3,6 @@
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
 #include "../stokes/xstokesspace.hpp"
-#include "../utils/vtkoutput.hpp"
 
 //using namespace ngcomp;
 
@@ -81,68 +80,6 @@ void ExportNgsx()
          "return 'standard' FESpace part of XStdFESpace")
     ;
 
-
-  bp::class_<VTKOutput<3>, shared_ptr<VTKOutput<3>>,  boost::noncopyable>("VTKOutput3D", bp::no_init)
-    .def("__init__", bp::make_constructor 
-         (FunctionPointer ([](bp::list coefs_list, bp::list gf_list,
-                              Flags flags )
-                           { 
-                             Array<shared_ptr<CoefficientFunction> > coefs
-                               = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
-                             Array<shared_ptr<GridFunction> > gfs
-                               = makeCArray<shared_ptr<GridFunction>> (gf_list);
-                             return make_shared<VTKOutput<3>> (coefs, gfs, flags, nullptr); 
-                           }),
-
-          bp::default_call_policies(),     // need it to use named arguments
-          (bp::arg("coefs")= bp::list(),
-           bp::arg("gfs")= bp::list(),
-           bp::arg("flags") = bp::dict()
-            )
-           )
-        )
-
-    .def("Do", FunctionPointer([](VTKOutput<3> & self, int heapsize)
-                                   { 
-                                     LocalHeap lh (heapsize, "VTKOutput-heap");
-                                     self.Do(lh);
-                                   }),
-         (bp::arg("self"),bp::arg("heapsize")=1000000))
-
-    ;
-
-    
-  bp::class_<VTKOutput<2>, shared_ptr<VTKOutput<2>>,  boost::noncopyable>("VTKOutput2D", bp::no_init)
-    .def("__init__", bp::make_constructor 
-         (FunctionPointer ([](bp::list coefs_list, bp::list gf_list,
-                              Flags flags )
-                           { 
-                             Array<shared_ptr<CoefficientFunction> > coefs
-                               = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
-                             Array<shared_ptr<GridFunction> > gfs
-                               = makeCArray<shared_ptr<GridFunction>> (gf_list);
-                             return make_shared<VTKOutput<2>> (coefs, gfs, flags, nullptr); 
-                           }),
-
-          bp::default_call_policies(),     // need it to use named arguments
-          (bp::arg("coefs")= bp::list(),
-           bp::arg("gfs")= bp::list(),
-           bp::arg("flags") = bp::dict()
-            )
-           )
-        )
-
-    .def("Do", FunctionPointer([](VTKOutput<2> & self, int heapsize)
-                                   { 
-                                     LocalHeap lh (heapsize, "VTKOutput-heap");
-                                     self.Do(lh);
-                                   }),
-         (bp::arg("self"),bp::arg("heapsize")=1000000))
-
-    ;
-
-    
-  
   // bp::docstring_options local_docstring_options(true, true, false);
   
   // std::string nested_name = "comp";
