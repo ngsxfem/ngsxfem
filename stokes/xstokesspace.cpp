@@ -178,12 +178,14 @@ namespace ngcomp
     if (ma->GetDimension() == 2)
     {
       integrator = make_shared< StokesUIntegrator<2>> (arr);
+      evaluator = make_shared<T_DifferentialOperator<DiffOpIdU<2>>>();
       //   integrator = make_shared<MassVecHDGIntegrator<2>> (one);
       //   // boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
       integrator = make_shared< StokesUIntegrator<3>> (arr);
+      evaluator = make_shared<T_DifferentialOperator<DiffOpIdU<3>>>();
       //shared_ptr<BilinearFormIntegrator> integrator_inner 
       //  = make_shared<XVisIntegrator<3>>(one) ;
       //integrator = make_shared< CompoundBilinearFormIntegrator> (integrator_inner, 2);      //   integrator = make_shared<MassVecHDGIntegrator<3>> (one);
