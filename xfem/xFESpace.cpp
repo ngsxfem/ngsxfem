@@ -233,10 +233,10 @@ namespace ngcomp
     TableCreator<int> creator;
     for ( ; !creator.Done(); creator++)
     {
-#pragma omp parallel
+// #pragma omp parallel
       {
         LocalHeap llh(lh.Split());
-#pragma omp for schedule(static)
+// #pragma omp for schedule(static)
         for (int elnr = 0; elnr < ne; ++elnr)
         {
           HeapReset hr(llh);
@@ -282,7 +282,7 @@ namespace ngcomp
             for (int k = 0; k < basednums.Size(); ++k)
             {
               activedofs.Set(basednums[k]);
-#pragma omp critical(creatoraddel)
+// #pragma omp critical(creatoraddel)
               creator.Add(elnr,basednums[k]);
             }
           }
