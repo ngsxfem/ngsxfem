@@ -97,15 +97,16 @@ namespace ngfem
                    double b_neg, double b_pos, 
                    double time, 
                    ErrorTable & errtab, 
-                   LocalHeap & lh,
+                   LocalHeap & clh,
                    bool output,
                    const Flags & flags)
   {
+    static Timer time_fct ("CalcXError");
+    RegionTimer reg (time_fct);
+    
     double threshold  = flags.GetNumFlag ( "threshold", -1.0);
 
     // cout << " CalcXError at time = " << time << endl;
-    Array<int> dnums;
-    Array<int> dnums2;
     // int activeels = 0;
     double l2diff_n = 0;
     double l2diff_p = 0;
@@ -119,10 +120,25 @@ namespace ngfem
 
     double mass_n = 0;
     double mass_p = 0;
+    double mass_sol_n = 0;
+    double mass_sol_p = 0;
+    double vol = 0.0;
+    
     shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
-    for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
+
+    ProgressOutput progress (ma, "CalcXError element", ma->GetNE());
+
+    IterateElements 
+      (*gfu->GetFESpace(), VOL, clh, 
+       [&] (ElementId ei, LocalHeap & lh)
     {
+         int elnr = ei.Nr();
+         progress.Update ();
       HeapReset hr(lh);
+
+         Array<int> dnums;
+         Array<int> dnums2;
+         
       gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
       const int size = dnums.Size();
 
@@ -339,20 +355,32 @@ namespace ngfem
             {
               if (threshold <= 0.0)
               {
+#pragma omp atomic
                 l2diff_p += b_pos*fac*sqr(discval-solval);
+#pragma omp atomic
                 h1diff_p += b_pos*fac*diffdsqr;
               }
+#pragma omp atomic
               mass_p += discval*fac;
+#pragma omp atomic
+                 mass_sol_p += solval*fac;
             }
             else
             {
               if (threshold <= 0.0)
               {
+#pragma omp atomic
                 l2diff_n += b_neg*fac*sqr(discval-solval);
+#pragma omp atomic
                 h1diff_n += b_neg*fac*diffdsqr;
               }
+#pragma omp atomic
               mass_n += discval*fac;
+#pragma omp atomic
+                 mass_sol_n += solval*fac;
             }
+#pragma omp atomic
+               vol += fac;
           } // quad rule
         } // dt
 
@@ -404,6 +432,7 @@ namespace ngfem
             if (solcoef.HasJumpRhs())
               jumpval -= solcoef.GetJumpRhs().Evaluate(mip);
 
+#pragma omp atomic
             ifjumpl2 += weight * sqr(jumpval);
 
 
@@ -489,6 +518,7 @@ namespace ngfem
             
             double soldnval = kappa_neg * soldnvalneg + kappa_pos * soldnvalpos;
             
+#pragma omp atomic
             ifdudnl2 += weight * sqr(soldnval - discdnval);
 
             const double ava = a_pos*kappa_pos+a_neg*kappa_neg;
@@ -502,6 +532,7 @@ namespace ngfem
             // std::cout << " discdnval = " << discdnval << std::endl;
             // std::cout << " soldnval = " << soldnval << std::endl;
 
+#pragma omp atomic
             ifsigmanl2 += weight * sqr(soldnval - discdnval);
           }
         }
@@ -611,20 +642,32 @@ namespace ngfem
           double fac = mip.GetWeight();
           if (dt == POS)
           {
+#pragma omp atomic
             l2diff_p += b_pos*fac*sqr(discval-solval);
+#pragma omp atomic
             h1diff_p += b_pos*fac*diffdsqr;
+#pragma omp atomic
             mass_p += discval*fac;
+#pragma omp atomic
+                 mass_sol_p += solval*fac;
           }
           else
           {
             // cout << "discval, solval: " << discval << ", " << solval << endl;
+#pragma omp atomic
             l2diff_n += b_neg*fac*sqr(discval-solval);
+#pragma omp atomic
             h1diff_n += b_neg*fac*diffdsqr;
+#pragma omp atomic
             mass_n += discval*fac;
+#pragma omp atomic
+                 mass_sol_n += solval*fac;
           }
+#pragma omp atomic
+               vol += fac;
         }
       }
-    }
+       });
 
     ifjumpl2 = sqrt(ifjumpl2); errtab.iferr.Append(ifjumpl2);
     ifdudnl2 = sqrt(ifdudnl2); errtab.ifdudnerr.Append(ifdudnl2);
@@ -638,13 +681,23 @@ namespace ngfem
     l2diff = sqrt(l2diff); errtab.l2err.Append(l2diff);
     h1diff = sqrt(h1diff); errtab.h1err.Append(h1diff);
     // cout << " activeels = " << activeels << endl;
-
+    if (!output) //hack for stokes
+    {
+      shared_ptr<BaseVector> corr = gfu->GetComponent(0)->GetVector().CreateVector();
+      corr->FVDouble() = (mass_sol_n + mass_sol_p - mass_n - mass_p)/vol;
+      cout << " vol = " << vol << endl;
+      cout << " correction = " << (mass_sol_n + mass_sol_p - mass_n - mass_p)/vol << endl;
+      gfu->GetComponent(0)->GetVector() += *corr;
+    }
     if (output)
     {
       cout << endl;
       cout << " mass_n = " << mass_n << endl;
       cout << " mass_p = " << mass_p << endl;
+      cout << " mass_sol_n = " << mass_sol_n << endl;
+      cout << " mass_sol_p = " << mass_sol_p << endl;
       cout << " total mass = " << mass_p + mass_n << endl;
+      cout << " total mass_sol = " << mass_sol_p + mass_sol_n << endl;
 
       cout << endl;
       cout << setw(12) << "l2_n" << "       |";
