@@ -305,7 +305,8 @@ namespace ngcomp
     void SetLevelSet(shared_ptr<CoefficientFunction> lset_){ 
       dynamic_pointer_cast<XFESpace>(spaces[1])->SetLevelSet(lset_);
     };
-
+    shared_ptr<XFESpace> GetXFESpace() const { return dynamic_pointer_cast<XFESpace>(spaces[1]);}
+    shared_ptr<FESpace> GetStdFESpace() const { return spaces[0];}
     
   };
   

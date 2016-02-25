@@ -116,15 +116,22 @@ namespace ngcomp
     BaseVector & bv_x = gf_x->GetVector();
     FlatVector<> vx = bv_x.FVDouble();
 
+    auto xstdfes = dynamic_pointer_cast<XStdFESpace>(gf->GetFESpace());
+    if (!xstdfes)
+      throw Exception("cast failed: not an XStdFESpace");
+    auto xfes = xstdfes->GetXFESpace();
+    if (!xfes)
+      throw Exception("cast failed: not an XFESpace");
+
     const int basendof = vneg.Size();
     for (int i = 0; i < basendof; ++i)
     {
       vneg(i) = vbase(i);
       vpos(i) = vbase(i);
-      const int xdof = dynamic_pointer_cast<XFESpace>(gf->GetFESpace())->GetBaseDofOfXDof(i);
+      const int xdof = xfes->GetBaseDofOfXDof(i);
       if (xdof != -1)
       {
-        if (dynamic_pointer_cast<XFESpace>(gf->GetFESpace())->GetDomOfDof(xdof) == POS)
+        if (xfes->GetDomOfDof(xdof) == POS)
           vpos(i) += vx(xdof);
         else
           vneg(i) += vx(xdof);
