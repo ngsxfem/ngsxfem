@@ -20,7 +20,7 @@ namespace ngfem
     double gamma = 1.0;
   public:
     MyGhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
-      : FacetBilinearFormIntegrator(coeffs)
+      : FacetBilinearFormIntegrator()
     { 
       gamma = coeffs[0]->EvaluateConst();
     }
