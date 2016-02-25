@@ -26,7 +26,7 @@ namespace ngfem
     double delta = 1.0;
   public:
     GhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
-      : FacetBilinearFormIntegrator(coeffs)
+      : FacetBilinearFormIntegrator()
     { 
       coef_lam_neg  = coeffs[0];
       coef_lam_pos  = coeffs[1];

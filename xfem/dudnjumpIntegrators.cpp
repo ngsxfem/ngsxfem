@@ -39,7 +39,7 @@ namespace ngfem
     shared_ptr<CoefficientFunction> coef;
   public:
     dudnJumpIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
-      : FacetBilinearFormIntegrator(coeffs),coef(coeffs[0])
+      : FacetBilinearFormIntegrator(),coef(coeffs[0])
     { 
     }
 
@@ -203,7 +203,7 @@ namespace ngfem
     shared_ptr<CoefficientFunction> coef;
   public:
     dudnboundBLIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
-      : FacetBilinearFormIntegrator(coeffs),coef(coeffs[0])
+      : FacetBilinearFormIntegrator(),coef(coeffs[0])
     { 
     }
 
