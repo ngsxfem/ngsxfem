@@ -116,16 +116,14 @@ namespace ngcomp
     FlatVector<> vx = bv_x.FVDouble();
 
     const int basendof = vneg.Size();
-    shared_ptr<XFESpace> xfes = dynamic_pointer_cast<XFESpace>(gf_x->GetFESpace());
-    
     for (int i = 0; i < basendof; ++i)
     {
       vneg(i) = vbase(i);
       vpos(i) = vbase(i);
-      const int xdof = xfes->GetBaseDofOfXDof(i);
+      const int xdof = dynamic_pointer_cast<XFESpace>(gf->GetFESpace())->GetBaseDofOfXDof(i);
       if (xdof != -1)
       {
-        if (xfes->GetDomOfDof(xdof) == POS)
+        if (dynamic_pointer_cast<XFESpace>(gf->GetFESpace())->GetDomOfDof(xdof) == POS)
           vpos(i) += vx(xdof);
         else
           vneg(i) += vx(xdof);
@@ -232,10 +230,10 @@ namespace ngcomp
     TableCreator<int> creator;
     for ( ; !creator.Done(); creator++)
     {
-#pragma omp parallel
+// #pragma omp parallel
       {
         LocalHeap llh(lh.Split());
-#pragma omp for schedule(static)
+// #pragma omp for schedule(static)
         for (int elnr = 0; elnr < ne; ++elnr)
         {
           HeapReset hr(llh);
@@ -281,7 +279,7 @@ namespace ngcomp
             for (int k = 0; k < basednums.Size(); ++k)
             {
               activedofs.Set(basednums[k]);
-#pragma omp critical(creatoraddel)
+// #pragma omp critical(creatoraddel)
               creator.Add(elnr,basednums[k]);
             }
           }
@@ -892,12 +890,13 @@ namespace ngcomp
     if (ma->GetDimension() == 2)
     {
       integrator = make_shared<XVisIntegrator<2> > (one);
+      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
       // boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
       integrator = make_shared<XVisIntegrator<3> >(one);
-      // evaluator = new T_DifferentialOperator<DiffOpVecIdHDG<3> >();
+      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
       // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
     }
   }
