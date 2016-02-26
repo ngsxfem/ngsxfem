@@ -232,9 +232,13 @@ namespace ngfem
     virtual string Name () const { return "FictVisIntegrator"; }
   };
 
-
-
-
+#ifndef FILE_XFEMVISINTS_CPP
+  extern template class T_DifferentialOperator<DiffOpEvalX<2>>;
+  extern template class T_DifferentialOperator<DiffOpEvalX<3>>;
+  extern template class XVisIntegrator<2>;
+  extern template class XVisIntegrator<3>;
+#endif
+  
 }
 
 #endif

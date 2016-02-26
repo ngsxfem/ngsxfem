@@ -1,3 +1,4 @@
+#define FILE_XFEMVISINTS_CPP
 #include "xfemVisInts.hpp"
 #include <diffop_impl.hpp>
 
@@ -162,7 +163,6 @@ namespace ngfem
     } 
   }
 
-
   template <int D>  XVisIntegrator<D> :: XVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalX<D>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
   { ; }
@@ -172,6 +172,9 @@ namespace ngfem
   { ; }
 
   template <int D>  XVisIntegrator<D> :: ~XVisIntegrator () { ; }
+
+  template class T_DifferentialOperator<DiffOpEvalX<2>>;
+  template class T_DifferentialOperator<DiffOpEvalX<3>>;
 
   template class XVisIntegrator<2>;
   template class XVisIntegrator<3>;
