@@ -162,6 +162,13 @@ namespace ngfem
     virtual string Name () const { return "ExtTraceIntegrator"; }
   };
 
+#ifndef FILE_TRACEINTEGRATORS_CPP
+  extern template class T_DifferentialOperator<DiffOpEvalExtTrace<2>>;
+  extern template class T_DifferentialOperator<DiffOpEvalExtTrace<3>>;
+  extern template class ExtTraceIntegrator<2>;
+  extern template class ExtTraceIntegrator<3>;
+#endif
+
 }
 
 #endif

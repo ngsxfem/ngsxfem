@@ -1,3 +1,4 @@
+#define FILE_TRACEINTEGRATORS_CPP
 #include "traceintegrators.hpp"
 
 namespace ngfem
@@ -138,6 +139,8 @@ namespace ngfem
 
   template <int D>  ExtTraceIntegrator<D> :: ~ExtTraceIntegrator () { ; }
 
+  template class T_DifferentialOperator<DiffOpEvalExtTrace<2>>;
+  template class T_DifferentialOperator<DiffOpEvalExtTrace<3>>;
   template class ExtTraceIntegrator<2>;
   template class ExtTraceIntegrator<3>;
 

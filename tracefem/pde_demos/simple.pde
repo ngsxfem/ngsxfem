@@ -19,14 +19,14 @@ constant one = 1.0
 coefficient lset
 ( sqrt(x*x+y*y+z*z) - R),
 
-fespace fes_lset_ho -type=h1ho -order=2
+fespace fes_lset_ho -type=h1ho -order=4
 gridfunction lset_ho -fespace=fes_lset_ho
 numproc setvalues npsv1 -gridfunction=lset_ho -coefficient=lset
         
 ###########################################################################
 ########################### quasi-normal field ############################
 ###########################################################################
-fespace fes_normal -type=h1ho -order=2 -vec #-dirichlet=[1,2,3,4,5,6]
+fespace fes_normal -type=h1ho -order=4 -vec #-dirichlet=[1,2,3,4,5,6]
 gridfunction qn -fespace=fes_normal
 numproc setvalues npsv3 -gridfunction=qn -coefficient=grad_lset_ho
 
@@ -41,19 +41,19 @@ gridfunction lset_p1 -fespace=fes_lset_p1
 numproc interpolatep1 npipp1b -gridfunction_ho=lset_ho -gridfunction_p1=lset_p1
 
 ### determine the deformation 
-fespace fes_deform -type=h1ho -order=2 -vec -dirichlet=[1,2,3,4,5,6]
+fespace fes_deform -type=h1ho -order=4 -vec -dirichlet=[1,2,3,4,5,6]
 gridfunction deform -fespace=fes_deform
 
-numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=0.0 -lset_upper_bound=0.0 -threshold=0.5
+numproc projectshift nppsh -levelset=lset_ho -levelset_p1=lset_p1 -deform=deform -quasinormal=qn -lset_lower_bound=0.0 -lset_upper_bound=0.0 -threshold=50.5
                                                 
 
 ###########################################################################
 ########################### deformation ###################################
 ###########################################################################
 
-numproc calcerrors npcalcerr -levelset_ho=lset_ho -levelset_p1=lset_p1 -deform=deform
-                -lset_lower_bound=0
-                -lset_upper_bound=0
+# numproc calcerrors npcalcerr -levelset_ho=lset_ho -levelset_p1=lset_p1 -deform=deform
+#                 -lset_lower_bound=0
+#                 -lset_upper_bound=0
 
 numproc setdeformation npudef -gridfunction=deform
                 
@@ -61,7 +61,7 @@ define fespace fesh1
        -type=h1ho
        -dirichlet=[1,2,3,4,5,6]
        # -dgjumps
-       -order=2
+       -order=4
 
 define fespace tracefes
        -type=xfespace
@@ -70,7 +70,7 @@ define fespace tracefes
        -dirichlet=[1,2,3,4,5,6]
        -trace
        # -dgjumps
-       -order=2
+       -order=4
 
 numproc informxfem npix
         -xfespace=tracefes
@@ -132,10 +132,10 @@ numproc tracediff3d npxd
                 
 numproc unsetdeformation npudef
         
-numproc vtkoutput npout -filename=simple
-        -coefficients=[lset,lset_ho,lset_p1,deform,gf_u,u_sol]
-        -fieldnames=[lset,lsetho,lsetp1,deformation,u,u_sol]
-        -subdivision=2
+# numproc vtkoutput npout -filename=simple
+#         -coefficients=[lset,lset_ho,lset_p1,deform,gf_u,u_sol]
+#         -fieldnames=[lset,lsetho,lsetp1,deformation,u,u_sol]
+#         -subdivision=2
 
 numproc levelsetrefine nplsref -levelset=lset_p1
 

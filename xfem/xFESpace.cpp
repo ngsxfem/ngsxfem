@@ -175,8 +175,8 @@ namespace ngcomp
     // cout << "Constructor of XFESpace end" << endl;
     // static ConstantCoefficientFunction one(1);
     // integrator = new MassIntegrator<D> (&one);
-    if (flags.GetDefineFlag("trace"))
-        evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
+    // if (flags.GetDefineFlag("trace"))
+    //     evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
   }
 
   template <int D, int SD>
@@ -1292,4 +1292,5 @@ namespace ngcomp
   
     Init init;
   }
+
 }
