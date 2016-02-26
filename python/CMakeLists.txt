@@ -5,6 +5,6 @@ add_library(ngsxfem_py ${NGS_LIB_TYPE}
 set_target_properties(ngsxfem_py PROPERTIES SUFFIX ".so")
 
 if(NOT WIN32)
-    target_link_libraries(ngsxfem_py ngsxfem_cutint ngsxfem_xfem ngsxfem_utils ngsxfem_spacetime ngsxfem_lsetcurving  ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
+    target_link_libraries(ngsxfem_py ngsxfem_xfem ngsxfem_cutint ngsxfem_tracefem ngsxfem_utils ngsxfem_spacetime ngsxfem_lsetcurving  ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
     install( TARGETS ngsxfem_py ${ngs_install_dir})
 endif(NOT WIN32)
