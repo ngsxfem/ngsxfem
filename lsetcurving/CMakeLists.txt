@@ -17,3 +17,4 @@ if(NOT WIN32)
   install( TARGETS ngsxfem_lsetcurving ${ngs_install_dir})
 endif(NOT WIN32)
 
+install ( FILES deform.py DESTINATION python)
