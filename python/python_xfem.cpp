@@ -69,6 +69,8 @@ void ExportNgsx()
 
   // bp::def("CastToFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<FESpace>(fes); } ) );
 
+  REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XFESpace>);
+  
 
   bp::class_<XStdFESpace, shared_ptr<XStdFESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
     ("XStdFESpace", bp::no_init)
