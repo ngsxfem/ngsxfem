@@ -638,7 +638,7 @@ namespace ngcomp
       static int refinements = 0;
       cout << " This is the Do-call on refinement level " << refinements << std::endl;
       refinements++;
-      CalcTraceDiff<D>(gfu, coef, intorder, lh, !nooutput, myflags);
+      CalcTraceDiff<D>(gfu, coef, intorder, lh);
     }    
     
 

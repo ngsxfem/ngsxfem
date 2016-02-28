@@ -7,6 +7,7 @@
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
+#include "../utils/error.hpp"
 
 //using namespace ngcomp;
 
@@ -70,7 +71,6 @@ void ExportNgsx()
   // bp::def("CastToFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<FESpace>(fes); } ) );
 
   REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XFESpace>);
-  
 
   bp::class_<XStdFESpace, shared_ptr<XStdFESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
     ("XStdFESpace", bp::no_init)
@@ -178,6 +178,28 @@ void ExportNgsx()
     ;
 
 
+  bp::def("CalcTraceDiff", FunctionPointer( [] (shared_ptr<GridFunction> gf, shared_ptr<CoefficientFunction> coef, int intorder, int heapsize)
+                                              {
+                                                LocalHeap lh (heapsize, "CalcTraceDiff-Heap");
+                                                if (gf->GetMeshAccess()->GetDimension() == 2)
+                                                  CalcTraceDiff<2>(gf,coef,intorder,lh);
+                                                else 
+                                                  CalcTraceDiff<3>(gf,coef,intorder,lh);
+                                              } ),
+          (bp::arg("gf"),bp::arg("coef"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
+    ;
+
+
+  bp::def("RefineAtLevelSet", FunctionPointer( [] (shared_ptr<GridFunction> gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
+                                              {
+                                                LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
+                                                RefineAtLevelSet(gf,lower_lset_bound,upper_lset_bound,lh);
+                                              } ),
+          (bp::arg("gf"),bp::arg("lower_lset_bound")=0.0,bp::arg("upper_lset_bound")=0.0,bp::arg("heapsize")=10000000))
+    ;
+
+  
+  
   
 
   // void RefineAtLevelSet (shared_ptr<GridFunction> gf_lset_p1, double lower_lset_bound, double upper_lset_bound, LocalHeap & lh){

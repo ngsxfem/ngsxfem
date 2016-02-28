@@ -822,9 +822,7 @@ namespace ngfem
   void CalcTraceDiff (shared_ptr<GridFunction> gfu, 
                    shared_ptr<CoefficientFunction> coef, 
                    int intorder, 
-                   LocalHeap & clh,
-                   bool output,
-                   const Flags & flags)
+                   LocalHeap & clh)
   {
     static Timer time_fct ("CalcTraceDiff");
     RegionTimer reg (time_fct);
@@ -912,8 +910,8 @@ namespace ngfem
     cout << " maxdiff = " << maxdiff << endl;
   }
 
-  template void CalcTraceDiff<2>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh, bool output, const Flags & flags);
-  template void CalcTraceDiff<3>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh, bool output, const Flags & flags);
+  template void CalcTraceDiff<2>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh);
+  template void CalcTraceDiff<3>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh);
 
 
 }

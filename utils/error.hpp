@@ -117,9 +117,7 @@ namespace ngfem
   void CalcTraceDiff (shared_ptr<GridFunction> gfu,
                       shared_ptr<CoefficientFunction> coef,
                       int intorder,
-                      LocalHeap & lh,
-                      bool output,
-                      const Flags & flags);
+                      LocalHeap & lh);
 
 }
 #endif
