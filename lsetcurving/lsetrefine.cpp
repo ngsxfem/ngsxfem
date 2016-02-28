@@ -25,6 +25,7 @@ namespace ngcomp
       
     for (int elnr = 0; elnr < ne; ++elnr)
     {
+      HeapReset hr(lh);
       // element only measure error if "at the interface"
       Array<int> dnums_lset_p1;
       gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dnums_lset_p1);
