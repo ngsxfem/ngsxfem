@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 # for asking for interactive shell or not
 import sys    
 
+import os
 
 # geometry stuff
 # unit square [-1.41,1.41]^2 (boundary index 1 everywhere)
@@ -65,7 +66,10 @@ c = Preconditioner(a, type="local", flags= { "test" : True })
 
 u = GridFunction(Vh_tr)
 
-#vtk = VTKOutput(ma=mesh,coefs=[levelset,lsetmeshadap.lset_ho,lsetmeshadap.lset_p1,lsetmeshadap.deform,u,sol],names=["lset","lsetho","lsetp1","deform","u","uexact"],filename="vtkout_simple_",subdivision=2)
+
+if not os.path.exists("LapBeltrResults"):
+    os.makedirs("LapBeltrResults")
+vtk = VTKOutput(ma=mesh,coefs=[levelset,lsetmeshadap.lset_ho,lsetmeshadap.lset_p1,lsetmeshadap.deform,u,sol],names=["lset","lsetho","lsetp1","deform","u","uexact"],filename="LapBeltrResults/vtkout_",subdivision=2)
 
 global last_num_its
 last_num_its = 0
@@ -113,7 +117,7 @@ def PostProcess():
     statistics.append ( (level, Vh_tr.ndof, maxdistlset, l2diff, maxdiff, last_num_its) )
     
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
-    #vtk.Do()
+    vtk.Do()
     Draw(lsetmeshadap.lset_p1,mesh,"lsetp1")
     Draw(lsetmeshadap.deform,mesh,"deformation")
     Draw(u,mesh,"u",draw_surf=False)
@@ -122,7 +126,12 @@ def PostProcess():
 def PlotConvergence():
     lvl,ndof,geomerr,l2err,maxerr,itcnts = zip(*statistics)
 
-
+    fo = open("LapBeltrResults/l2err.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,l2err)])
+    fo = open("LapBeltrResults/ndof.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,ndof)])
+    fo = open("LapBeltrResults/geomerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,geomerr)])
+    fo = open("LapBeltrResults/maxerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,maxerr)])
+    fo = open("LapBeltrResults/itcnts.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,itcnts)])
+    
     plt.figure(0)
     plt.yscale('log')
     plt.xlabel("level")
