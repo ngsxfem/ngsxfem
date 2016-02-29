@@ -191,4 +191,8 @@ def LaplaceBeltramiOnSphere(reflvls = 1):
         PlotConvergence()
     
 if __name__ == "__main__":
-    LaplaceBeltramiOnSphere(reflvls = 5)
+    if (len(sys.argv) > 1):
+        LaplaceBeltramiOnSphere(reflvls = int(sys.argv[1]))
+    else:
+        LaplaceBeltramiOnSphere(reflvls = 3)
+        
