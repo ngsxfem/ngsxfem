@@ -50,6 +50,40 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 set(ADDITIONAL_PATHS "" CACHE PATH "List of paths to additional libraries in non-standard locations, seperated by ';'")
 
+SET(USE_PYTHON TRUE)
+
+if (USE_PYTHON)
+    set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake_modules/python")
+    set(PYTHON_VERSION "3" CACHE STRING "Python version (only Python >= 3.0 supported)")
+    set(Python_ADDITIONAL_VERSIONS 3.5)
+    if( PYTHON_VERSION VERSION_LESS 3 )
+        message(FATAL_ERROR "NGSolve/ngsxfem supports only Python 3")
+    endif( PYTHON_VERSION VERSION_LESS 3 )
+    find_package(PythonInterp ${PYTHON_VERSION} REQUIRED)
+    find_package(PythonLibs ${PYTHON_VERSION}  REQUIRED)
+    set(Boost_FIND_QUIETLY ON)
+    if(NOT Boost_LIBRARIES)
+        FIND_PACKAGE(Boost COMPONENTS python${PYTHON_VERSION_MAJOR})
+    endif(NOT Boost_LIBRARIES)
+    if(NOT Boost_LIBRARIES)
+        find_package(Boost COMPONENTS python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+    endif(NOT Boost_LIBRARIES)
+    if(NOT Boost_LIBRARIES)
+        find_package(Boost COMPONENTS python)
+    endif(NOT Boost_LIBRARIES)
+    if(NOT Boost_LIBRARIES)
+        message(FATAL_ERROR "Could NOT find Boost-Python" )
+    endif(NOT Boost_LIBRARIES)
+
+    add_definitions(-DNGS_PYTHON)
+
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    include_directories(${Boost_INCLUDE_DIRS})
+    set(PYTHON_LIBS "${PYTHON_LIBRARIES};${Boost_LIBRARIES}")
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1,0,''))" OUTPUT_VARIABLE PYTHON_PACKAGES_INSTALL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+     message("python install path: ${PYTHON_PACKAGES_INSTALL_DIR}")
+endif (USE_PYTHON)
+
 #######################################################################
 # CTest
 enable_testing()

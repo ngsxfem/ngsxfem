@@ -18,3 +18,11 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 install ( FILES lsetcurv.py DESTINATION python)
+
+if(USE_PYTHON)
+    install (FILES
+            lsetcurv.py 
+            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+            COMPONENT xfem
+            )
+endif(USE_PYTHON)

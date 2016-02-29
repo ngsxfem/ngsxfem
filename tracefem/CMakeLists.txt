@@ -13,3 +13,11 @@ install( FILES
   traceintegrators.hpp
   DESTINATION include
   )
+
+if(USE_PYTHON)
+    install (FILES
+            tracefem.py 
+            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+            COMPONENT xfem
+            )
+endif(USE_PYTHON)
