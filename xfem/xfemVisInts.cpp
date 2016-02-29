@@ -365,5 +365,47 @@ namespace ngfem
 
 
 
+// ---------------------
+
+  template <int D>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpEvalExtTrace<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                          MAT & mat, LocalHeap & lh)
+  {
+    const XFiniteElement * xfe = dynamic_cast<const XFiniteElement *> (&bfel);
+    if (!xfe)
+      return;
+    const ScalarFiniteElement<D> & scafe =
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+    FlatVector<> shape (scafe.GetNDof(), &mat(0,0));
+    shape = scafe.GetShape(mip.IP(), lh);
+  }
+
+
+  template <int D>  ExtTraceIntegrator<D> :: ExtTraceIntegrator  (shared_ptr<CoefficientFunction> coeff)
+    : T_BDBIntegrator<DiffOpEvalExtTrace<D>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
+  { ; }
+
+  template <int D>  ExtTraceIntegrator<D> :: ExtTraceIntegrator  (const Array<shared_ptr<CoefficientFunction>> & coeffs)
+    : T_BDBIntegrator<DiffOpEvalExtTrace<D>, DiagDMat<1>, CompoundFiniteElement > (coeffs)
+  { ; }
+
+  template <int D>  ExtTraceIntegrator<D> :: ~ExtTraceIntegrator () { ; }
+
+  template class T_DifferentialOperator<DiffOpEvalExtTrace<2>>;
+  template class T_DifferentialOperator<DiffOpEvalExtTrace<3>>;
+  template class DiffOpEvalExtTrace<2>;
+  template class DiffOpEvalExtTrace<3>;
+
+  static RegisterBilinearFormIntegrator<ExtTraceIntegrator<2> > initexttracemass0 ("exttrace", 2, 1);
+  static RegisterBilinearFormIntegrator<ExtTraceIntegrator<3> > initexttracemass1 ("exttrace", 3, 1);
+
+// ---------------------
+
+
+
+  
+
+
 }
 

@@ -130,45 +130,6 @@ namespace ngfem
                          LocalHeap & lh) const;
   };
 
-  template <int D>
-  class DiffOpEvalExtTrace : public DiffOp<DiffOpEvalExtTrace<D> >
-  {
-
-  public:
-    enum { DIM = 1 };          // just one copy of the spaces
-    enum { DIM_SPACE = D };    // 2D space
-    enum { DIM_ELEMENT = D };  // 2D elements (in contrast to 1D boundary elements)
-    enum { DIM_DMAT = 1 };     // D-matrix is 2x2
-    enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
-
-    template <typename FEL, typename MIP, typename MAT>
-    static void GenerateMatrix (const FEL & bfel, const MIP & sip,
-                                MAT & mat, LocalHeap & lh);
-  };
-
-  ///
-  template <int D >
-  class ExtTraceIntegrator
-    : public T_BDBIntegrator<DiffOpEvalExtTrace<D>, DiagDMat<1>, CompoundFiniteElement >
-  {
-  public:
-    ///
-    ExtTraceIntegrator (shared_ptr<CoefficientFunction> coeff);
-    ///
-    ExtTraceIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
-    ///
-    virtual ~ExtTraceIntegrator ();
-    ///
-    virtual string Name () const { return "ExtTraceIntegrator"; }
-  };
-
-#ifndef FILE_TRACEINTEGRATORS_CPP
-  extern template class T_DifferentialOperator<DiffOpEvalExtTrace<2>>;
-  extern template class T_DifferentialOperator<DiffOpEvalExtTrace<3>>;
-  extern template class ExtTraceIntegrator<2>;
-  extern template class ExtTraceIntegrator<3>;
-#endif
-
 }
 
 #endif

@@ -1,7 +1,5 @@
-
 #include "xFESpace.hpp"
 #include "xfemVisInts.hpp"
-#include "../tracefem/traceintegrators.hpp"
 using namespace ngsolve;
 using namespace ngfem;
 
