@@ -141,6 +141,7 @@ namespace ngcomp
 
           for (int i : sl)
           {
+            HeapReset hr(lh);
             FlatVector<> val_fac(D,lh);
             FlatVector<> values(D,lh);
             dnums[0] = i;
