@@ -1,65 +1,79 @@
 # solve the Laplace Beltrami equation on a sphere
 # with Dirichlet boundary condition u = 0
 from math import pi
-
 # ngsolve stuff
 from ngsolve import *
-
 # xfem and trace fem stuff
 import libngsxfem_py.xfem as xfem                                 
-
 # for plotting (convergence plots)
 import matplotlib.pyplot as plt
-
 # for asking for interactive shell or not
 import sys    
-
+# for making a directory (if it doesn't exist)
 import os
+# For LevelSetAdaptationMachinery
+from xfem.lsetcurv import *
+# For TraceFEM-Integrators (convenience)
+from xfem.tracefem import *
 
-# geometry stuff
-# unit square [-1.41,1.41]^2 (boundary index 1 everywhere)
-def MakeSquare():
+# 2D: circle configuration
+def Make2DProblem():
     from netgen.geom2d import SplineGeometry
     square = SplineGeometry()
     square.AddRectangle([-1.41,-1.41],[1.41,1.41],bc=1)
-    return square;
+    mesh = Mesh (square.GenerateMesh(maxh=1, quad_dominated=False))
+    mesh.Refine()
 
-# unit cube [-1.41,1.41]^3 (boundary index 1 everywhere)
-def MakeCube():
+    problem = {"Diffusion" : 1.0,
+               "Convection" : None,
+               "Reaction" : 1.0,
+               "Source" : sin(pi*y)*(1+pi*pi*(1-y*y))+pi*y*cos(pi*y),
+               "Solution" : sin(pi*y),
+               "Levelset" : sqrt(x*x+y*y)-1,
+               "Mesh" : mesh
+              }
+    return problem;
+
+# 3D: circle configuration
+def Make3DProblem():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
     cube = CSGeometry()
     cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
-    return cube;
+    mesh = Mesh (cube.GenerateMesh(maxh=1, quad_dominated=False))
+    mesh.Refine()
 
-# meshing
-from netgen.meshing import MeshingParameters
-ngsglobals.msg_level = 1
-mesh = Mesh (MakeCube().GenerateMesh(maxh=4.0, quad_dominated=False))
-mesh.Refine()
-# criss cross mesh with midpoint
-mesh.Refine()
+    problem = {"Diffusion" : 1.0,
+               "Convection" : None,
+               "Reaction" : 1.0,
+               "Source" : sin(pi*z)*(pi*pi*(1-z*z)+1)+cos(pi*z)*2*pi*z,
+               "Solution" : sin(pi*z),
+               "Levelset" : sqrt(x*x+y*y+z*z)-1,
+               "Mesh" : mesh
+              }
+    return problem;
 
-# The mesh deformation calculator
-from xfem.lsetcurv import *
+problemdata = Make3DProblem()
+mesh = problemdata["Mesh"]
 order = 2
+
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
 
-# The level set
-levelset = sqrt(x*x+y*y+z*z) - 1
+### Setting up discrete variational problem
 
-# the solution
-sol = sin(pi*z)
-
-from xfem.tracefem import *
 Vh = H1(mesh, order=order, dirichlet=[])
-Vh_tr = TraceFESpace(mesh, Vh, levelset)
+Vh_tr = TraceFESpace(mesh, Vh, problemdata["Levelset"])
 
 a = BilinearForm(Vh_tr, symmetric = True, flags = { })
-a += TraceMass(1.0)
-a += TraceLaplaceBeltrami(1.0)
+if (problemdata["Reaction"] != None):
+    a += TraceMass(problemdata["Reaction"])
+if (problemdata["Diffusion"] != None):
+    a += TraceLaplaceBeltrami(problemdata["Diffusion"])
+if (problemdata["Convection"] != None):
+    a += TraceConvection(problemdata["Convection"])
 
 f = LinearForm(Vh_tr)
-f += TraceSource(sin(pi*z)*(pi*pi*(1-z*z)+1)+cos(pi*z)*2*pi*z)
+if (problemdata["Source"] != None):
+    f += TraceSource(problemdata["Source"])
 
 c = Preconditioner(a, type="local", flags= { "test" : True })
 #c = Preconditioner(a, type="direct", flags= { "inverse" : "pardiso", "test" : True })
@@ -69,7 +83,7 @@ u = GridFunction(Vh_tr)
 
 if not os.path.exists("LapBeltrResults"):
     os.makedirs("LapBeltrResults")
-vtk = VTKOutput(ma=mesh,coefs=[levelset,lsetmeshadap.lset_ho,lsetmeshadap.lset_p1,lsetmeshadap.deform,u,sol],names=["lset","lsetho","lsetp1","deform","u","uexact"],filename="LapBeltrResults/vtkout_",subdivision=2)
+vtk = VTKOutput(ma=mesh,coefs=[problemdata["Levelset"],lsetmeshadap.lset_ho,lsetmeshadap.lset_p1,lsetmeshadap.deform,u,problemdata["Solution"]],names=["lset","lsetho","lsetp1","deform","u","uexact"],filename="LapBeltrResults/vtkout_",subdivision=2)
 
 global last_num_its
 last_num_its = 0
@@ -78,7 +92,7 @@ level = 0
 
 def SolveProblem():
     # Calculation of the deformation:
-    deformation = lsetmeshadap.CalcDeformation(levelset)
+    deformation = lsetmeshadap.CalcDeformation(problemdata["Levelset"])
     # Applying the mesh deformation
     mesh.SetDeformation(deformation)
 
@@ -100,10 +114,10 @@ def SolveProblem():
     mesh.UnsetDeformation()
 
 def PostProcess():
-    maxdistlset = lsetmeshadap.CalcMaxDistance(levelset);
+    maxdistlset = lsetmeshadap.CalcMaxDistance(problemdata["Levelset"]);
     # maxdistlsetho = lsetmeshadap.CalcMaxDistance(lsetmeshadap.lset_ho);
     mesh.SetDeformation(lsetmeshadap.deform)
-    [l2diff,maxdiff] = CalcTraceDiff( u, sol, intorder=2*order+2)
+    [l2diff,maxdiff] = CalcTraceDiff( u, problemdata["Solution"], intorder=2*order+2)
     mesh.UnsetDeformation()
 
     print ("The mesh Refinement level :", level)
