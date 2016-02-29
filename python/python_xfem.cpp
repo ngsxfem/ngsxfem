@@ -34,6 +34,8 @@ void ExportNgsx()
 
   bp::def("CastToXStokesFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStokesFESpace>(fes); } ) );
 
+  REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XStokesFESpace>);
+  
   bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
 
   // bp::implicitly_convertible 
