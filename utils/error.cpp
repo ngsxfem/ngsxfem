@@ -830,7 +830,7 @@ namespace ngfem
     double l2diff = 0;
     double maxdiff = 0;
     // double h1diff = 0;
-    double surf = 0.0;
+    // double surf = 0.0;
     
     shared_ptr<MeshAccess> ma (gfu->GetFESpace()->GetMeshAccess());
 
@@ -886,7 +886,7 @@ namespace ngfem
                const double weight = fquad.weights(i) * len; 
 
 #pragma omp atomic
-               surf += weight;
+               // surf += weight;
                shape = scafe.GetShape(mip.IP(), lh);
                const double discrete_val = InnerProduct(shape,elvec);
                const double sol_val = coef->Evaluate(mip);
@@ -905,7 +905,7 @@ namespace ngfem
          } // is xfe 
        }); //iterate elements end
     l2diff = sqrt(l2diff);
-    cout << " surf = " << surf << endl;
+    // cout << " surf = " << surf << endl;
     cout << " l2diff = " << l2diff << endl;
     cout << " maxdiff = " << maxdiff << endl;
   }
