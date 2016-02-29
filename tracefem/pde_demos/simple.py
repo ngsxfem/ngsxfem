@@ -57,6 +57,8 @@ c = Preconditioner(a, type="local", flags= { "test" : True })
 
 u = GridFunction(Vh_tr)
 
+vtk = VTKOutput(ma=mesh,coefs=[levelset,lsetmeshadap.lset_ho,lsetmeshadap.lset_p1,lsetmeshadap.deform,u,sol],names=["lset","lsetho","lsetp1","deform","u","uexact"],filename="vtkout_simple_",subdivision=2)
+
 def SolveProblem():
 
     # Calculation of the deformation:
@@ -84,11 +86,11 @@ def PostProcess():
     CalcTraceDiff( u, sol, intorder=2*order);
     mesh.UnsetDeformation()
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
-
+    vtk.Do()
     
 SolveProblem()
 PostProcess()
-for i in range(4):
+for i in range(2):
     mesh.Refine()
     SolveProblem()
     PostProcess()
