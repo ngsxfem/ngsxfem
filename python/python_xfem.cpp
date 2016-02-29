@@ -180,11 +180,13 @@ void ExportNgsx()
 
   bp::def("CalcTraceDiff", FunctionPointer( [] (shared_ptr<GridFunction> gf, shared_ptr<CoefficientFunction> coef, int intorder, int heapsize)
                                               {
+                                                Array<double> errors;
                                                 LocalHeap lh (heapsize, "CalcTraceDiff-Heap");
                                                 if (gf->GetMeshAccess()->GetDimension() == 2)
-                                                  CalcTraceDiff<2>(gf,coef,intorder,lh);
+                                                  CalcTraceDiff<2>(gf,coef,intorder,errors,lh);
                                                 else 
-                                                  CalcTraceDiff<3>(gf,coef,intorder,lh);
+                                                  CalcTraceDiff<3>(gf,coef,intorder,errors,lh);
+                                                return errors;
                                               } ),
           (bp::arg("gf"),bp::arg("coef"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
     ;

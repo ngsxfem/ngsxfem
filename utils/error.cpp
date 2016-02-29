@@ -820,9 +820,9 @@ namespace ngfem
 
   template<int D>
   void CalcTraceDiff (shared_ptr<GridFunction> gfu, 
-                   shared_ptr<CoefficientFunction> coef, 
-                   int intorder, 
-                   LocalHeap & clh)
+                      shared_ptr<CoefficientFunction> coef, 
+                      int intorder, Array<double> & errors,
+                      LocalHeap & clh)
   {
     static Timer time_fct ("CalcTraceDiff");
     RegionTimer reg (time_fct);
@@ -885,7 +885,7 @@ namespace ngfem
 
                const double weight = fquad.weights(i) * len; 
 
-#pragma omp atomic
+// #pragma omp atomic
                // surf += weight;
                shape = scafe.GetShape(mip.IP(), lh);
                const double discrete_val = InnerProduct(shape,elvec);
@@ -906,12 +906,13 @@ namespace ngfem
        }); //iterate elements end
     l2diff = sqrt(l2diff);
     // cout << " surf = " << surf << endl;
-    cout << " l2diff = " << l2diff << endl;
-    cout << " maxdiff = " << maxdiff << endl;
+    errors.SetSize(2);
+    errors[0] = l2diff;
+    errors[1] = maxdiff;
   }
 
-  template void CalcTraceDiff<2>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh);
-  template void CalcTraceDiff<3>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, LocalHeap & lh);
+  template void CalcTraceDiff<2>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, Array<double>& errors, LocalHeap & lh);
+  template void CalcTraceDiff<3>(shared_ptr<GridFunction> gfu, shared_ptr<CoefficientFunction> coef, int intorder, Array<double>& errors, LocalHeap & lh);
 
 
 }

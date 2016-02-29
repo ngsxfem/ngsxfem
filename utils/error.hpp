@@ -116,7 +116,7 @@ namespace ngfem
   template<int D>
   void CalcTraceDiff (shared_ptr<GridFunction> gfu,
                       shared_ptr<CoefficientFunction> coef,
-                      int intorder,
+                      int intorder, Array<double>& errors,
                       LocalHeap & lh);
 
 }
