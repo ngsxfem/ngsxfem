@@ -105,7 +105,7 @@ def SolveProblem():
     f.Assemble();
     c.Update();
     
-    solvea = CGSolver( mat=a.mat, pre=c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=2000)
+    solvea = CGSolver( mat=a.mat, pre=c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
     # # the boundary value problem to be solved on each level
     u.vec.data = solvea * f.vec;
     
