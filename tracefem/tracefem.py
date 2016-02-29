@@ -21,6 +21,9 @@ def TraceLaplaceBeltrami (coef):
 def TraceLaplace (coef):
     return BFI("tracelaplace", coef=coef)
 
+def TraceConvection (coef):
+    return BFI("tracediv", coef=coef)
+
 def TraceSource (coef):
     return LFI("tracesource", coef=coef)
 
