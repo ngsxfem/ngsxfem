@@ -1,6 +1,5 @@
 # solve the Laplace Beltrami equation on a sphere
 # with Dirichlet boundary condition u = 0
-
 from math import pi
 
 # ngsolve stuff
@@ -10,24 +9,26 @@ from ngsolve import *
 import libngsxfem_py.xfem as xfem                                 
 
 # geometry stuff
-# unit square [-2,2]^2 (boundary index 1 everywhere)
+# unit square [-1.41,1.41]^2 (boundary index 1 everywhere)
 def MakeSquare():
     from netgen.geom2d import SplineGeometry
     square = SplineGeometry()
-    square.AddRectangle([-2,-2],[2,2],bc=1)
+    square.AddRectangle([-1.41,-1.41],[1.41,1.41],bc=1)
     return square;
 
-# unit cube [-2,2]^3 (boundary index 1 everywhere)
+# unit cube [-1.41,1.41]^3 (boundary index 1 everywhere)
 def MakeCube():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
     cube = CSGeometry()
-    cube.Add (OrthoBrick(Pnt(-2,-2,-2), Pnt(2,2,2)))
+    cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
     return cube;
 
 # meshing
 from netgen.meshing import MeshingParameters
 ngsglobals.msg_level = 1
-mesh = Mesh (MakeCube().GenerateMesh(maxh=1.0, quad_dominated=False))
+mesh = Mesh (MakeCube().GenerateMesh(maxh=4.0, quad_dominated=False))
+mesh.Refine()
+mesh.Refine()
 
 # The mesh deformation calculator
 from lsetcurv import *
@@ -87,6 +88,9 @@ def PostProcess():
     mesh.UnsetDeformation()
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
     vtk.Do()
+    Draw(lsetmeshadap.lset_p1,mesh,"lsetp1")
+    Draw(lsetmeshadap.deform,mesh,"deformation")
+    Draw(u,mesh,"u",draw_surf=False)
     
 SolveProblem()
 PostProcess()
@@ -94,3 +98,5 @@ for i in range(2):
     mesh.Refine()
     SolveProblem()
     PostProcess()
+
+    
