@@ -65,7 +65,7 @@ void ExportNgsx()
                                          { self.SetBaseFESpace(fes); }),
          "Update information on base FESpace")
     ;
-
+  
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
   bp::def("CastToXFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XFESpace>(fes); } ) );
   bp::def("XToNegPos", FunctionPointer( [] (shared_ptr<GridFunction> gfx, shared_ptr<GridFunction> gfnegpos) { XFESpace::XToNegPos(gfx,gfnegpos); } ) );
@@ -87,7 +87,14 @@ void ExportNgsx()
          // bp::return_value_policy<bp::reference_existing_object>(),
          "return 'standard' FESpace part of XStdFESpace")
     ;
-    
+
+  bp::implicitly_convertible 
+    <shared_ptr<XFESpace>, shared_ptr<FESpace> >(); 
+  bp::implicitly_convertible 
+    <shared_ptr<XStokesFESpace>, shared_ptr<FESpace> >(); 
+  bp::implicitly_convertible 
+    <shared_ptr<XStdFESpace>, shared_ptr<FESpace> >(); 
+  
   bp::def("InterpolateToP1", FunctionPointer( [] (shared_ptr<GridFunction> gf_ho, shared_ptr<GridFunction> gf_p1, int heapsize)
                                               {
                                                 InterpolateP1 interpol(gf_ho, gf_p1);
