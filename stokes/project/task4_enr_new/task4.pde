@@ -1,17 +1,17 @@
 
 # load geometry
-geometry = d7_stokes.in2d                                        
+geometry = d7_stokes.in2d
 # and mesh
 mesh = d7_stokes.vol.gz
 
 #load xfem-library and python-bindings
-shared = libngsxfem_xfem                                       
-shared = libngsxfem_xstokes                                       
+shared = libngsxfem_xfem
+shared = libngsxfem_xstokes
 shared = libngsxfem_lsetcurving
 # pymodule = d7_stokes
 define constant heapsize = 1e9
 
-define constant R = 0.6666666
+define constant R = 0.6666666666
 #define constant R = 0.5
 define constant one = 1.0
 
@@ -193,7 +193,7 @@ xstokesnitsche mu1 mu2 lambda
 #define preconditioner c -type=local -bilinearform=a -test #-block           
 define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
 
-numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
+numproc bvp npbvp -gridfunction=uvp -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-9
 
 
 define coefficient velocity ( (uvp.1, uvp.2) )
