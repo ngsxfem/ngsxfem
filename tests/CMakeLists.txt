@@ -25,6 +25,9 @@ add_test("pde_d7_stokes" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester"
 add_test("pde_d8_stokes3D" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
 
+add_test(NAME py_lapbeltr COMMAND python3 
+  "${PROJECT_SOURCE_DIR}/tracefem/pde_demos/laplacebeltrami.py" "--no-plot" "--no-vtkout" "--reflvls=3" )
+
 # cmake_minimum_required(VERSION 2.8)
 
 #find_package(Boost COMPONENTS unit_test_framework REQUIRED)

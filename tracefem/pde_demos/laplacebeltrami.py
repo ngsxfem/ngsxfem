@@ -113,7 +113,7 @@ def SolveProblem():
     last_num_its = solvea.GetSteps()
     mesh.UnsetDeformation()
 
-def PostProcess():
+def PostProcess(vtkout = False):
     maxdistlset = lsetmeshadap.CalcMaxDistance(problemdata["Levelset"]);
     # maxdistlsetho = lsetmeshadap.CalcMaxDistance(lsetmeshadap.lset_ho);
     mesh.SetDeformation(lsetmeshadap.deform)
@@ -131,13 +131,14 @@ def PostProcess():
     statistics.append ( (level, Vh_tr.ndof, maxdistlset, l2diff, maxdiff, last_num_its) )
     
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
-    vtk.Do()
+    if (vtkout):
+        vtk.Do()
     Draw(lsetmeshadap.lset_p1,mesh,"lsetp1")
     Draw(lsetmeshadap.deform,mesh,"deformation")
     Draw(u,mesh,"u",draw_surf=False)
 
 
-def PlotConvergence():
+def ConvergenceStudy(plot=True):
     lvl,ndof,geomerr,l2err,maxerr,itcnts = zip(*statistics)
 
     fo = open("LapBeltrResults/l2err.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,l2err)])
@@ -145,68 +146,79 @@ def PlotConvergence():
     fo = open("LapBeltrResults/geomerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,geomerr)])
     fo = open("LapBeltrResults/maxerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,maxerr)])
     fo = open("LapBeltrResults/itcnts.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,itcnts)])
+
+    if (plot):
+        plt.figure(0)
+        plt.yscale('log')
+        plt.xlabel("level")
+        
+        plt.plot(lvl,l2err, "-*")
+        plt.plot(geomerr, "-+")
+        plt.legend(["L2error","geometry (max) error"])
     
-    plt.figure(0)
-    plt.yscale('log')
-    plt.xlabel("level")
+        # plt.figure(1)
+        # plt.yscale('log')
+        # plt.xlabel("level")
     
-    plt.plot(lvl,l2err, "-*")
-    plt.plot(geomerr, "-+")
-    plt.legend(["L2error","geometry (max) error"])
-
-    # plt.figure(1)
-    # plt.yscale('log')
-    # plt.xlabel("level")
-
-    # plt.plot(lvl,ndof, "-*")
-    # plt.plot(itcnts, "-+")
-    # plt.legend(["D.o.f.","iterations"])
-
-    # plt.figure(2)
-    # plt.xscale('log')
-    # plt.yscale('log')
-    # plt.xlabel("ndof")
-    # plt.ylabel("error")
-
-    # plt.plot(ndof,l2err, "-*")
-    # plt.legend(["L2error"])
+        # plt.plot(lvl,ndof, "-*")
+        # plt.plot(itcnts, "-+")
+        # plt.legend(["D.o.f.","iterations"])
     
-    plt.ion()
-    plt.show()
-
+        # plt.figure(2)
+        # plt.xscale('log')
+        # plt.yscale('log')
+        # plt.xlabel("ndof")
+        # plt.ylabel("error")
+    
+        # plt.plot(ndof,l2err, "-*")
+        # plt.legend(["L2error"])
+        
+        plt.ion()
+        plt.show()
+    
     
     l2conv = [ log(l2err[i]/l2err[i-1])/log(0.5) for i in range(1,len(l2err))]
     maxconv = [ log(maxerr[i]/maxerr[i-1])/log(0.5) for i in range(1,len(maxerr))]
     geomconv = [ log(geomerr[i]/geomerr[i-1])/log(0.5) for i in range(1,len(geomerr))]
     print ("l2err convergence orders (eoc):", l2conv)
     print ("geom. convergence orders (eoc):", geomconv)
-    if (not hasattr(sys,'ps1')):
+    if (plot and not hasattr(sys,'ps1')):
         input("<press enter to quit>")
 
-def InitialSolve():
+def InitialSolve(vtkout = False):
     with TaskManager():
         SolveProblem()
-    PostProcess()
+    PostProcess(vtkout = vtkout)
     
-def RefineAndSolve():
+def RefineAndSolve(vtkout = False):
     with TaskManager():
         mesh.Refine()
     global level
     level = level + 1
     with TaskManager():
         SolveProblem()
-    PostProcess()
+    PostProcess(vtkout = vtkout)
 
-def LaplaceBeltramiOnSphere(reflvls = 1):
-    InitialSolve()
+def LaplaceBeltramiOnSphere(reflvls = 1, vtkout = False, plot = True):
+    InitialSolve(vtkout = vtkout)
     for i in range(reflvls-1):
-        RefineAndSolve()
+        RefineAndSolve(vtkout = vtkout)
     if (reflvls > 1):
-        PlotConvergence()
-    
+        ConvergenceStudy(plot = plot)
+
+
+import argparse        
 if __name__ == "__main__":
-    if (len(sys.argv) > 1):
-        LaplaceBeltramiOnSphere(reflvls = int(sys.argv[1]))
-    else:
-        LaplaceBeltramiOnSphere(reflvls = 3)
+    parser = argparse.ArgumentParser(description='Solve Laplace-Betrami example problem.')
+    parser.add_argument('--reflvls', metavar='N', type=int, default=2, help='number of refinement levels (>=1)')
+    parser.add_argument('--vtkout', dest='vtkout', action='store_true', help='enable VTKOutput')
+    parser.add_argument('--no-vtkout', dest='vtkout', action='store_false', help='disable VTKOutput')
+    parser.set_defaults(vtkout=False)
+    parser.add_argument('--plot', dest='plot', action='store_true', help='enable plotting')
+    parser.add_argument('--no-plot', dest='plot', action='store_false', help='disable plotting')
+    parser.set_defaults(plot=True)
+    args = parser.parse_args()
+    options = vars(args)
+    print("call arguments: ", options)
+    LaplaceBeltramiOnSphere(reflvls=options['reflvls'], vtkout=options['vtkout'], plot=options['plot'])    
         
