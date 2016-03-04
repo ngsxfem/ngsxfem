@@ -1,6 +1,7 @@
 from ngsolve.comp import *
 from ngsolve.fem import *
 from libngsxfem_py.xfem import *
+import libngsxfem_tracefem
 
 def TraceFESpace(mesh, stdfes=None, levelset=None, dgjumps=False, ref_space=0 ):
     Vh_tr = CastToXFESpace (FESpace ("xfespace", mesh=mesh, flags = {"trace" : True, "dgjumps" : dgjumps, "ref_space" : ref_space}) )
