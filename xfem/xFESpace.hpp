@@ -56,6 +56,7 @@ namespace ngcomp
 
     double vmax = 1e99;
 
+    bool trace = false;
     bool empty = false;
   public:
     XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags): FESpace(ama, flags){;}

@@ -85,6 +85,34 @@ namespace ngcomp
         }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
     // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
+
+
+    if (trace && ma->GetDimension() == 3)
+    // face bubbles on the outer part of the band will be local dofs... (for static cond.)
+    {
+      for (int facnr = 0; facnr < ma->GetNFaces(); ++facnr)
+      {
+        Array<int> elnums;
+        ma->GetFaceElements (facnr, elnums);
+        int cutels = 0;
+        for (auto elnr : elnums)
+        {
+          if (activeelem.Test(elnr))
+            cutels++;
+        }
+        if (cutels<2)
+        {
+          Array<int> facedofs;
+          basefes->GetFaceDofNrs (facnr, facedofs);
+          for (auto basedof : facedofs)
+          {
+            const int dof = basedof2xdof[basedof];
+            if (dof != -1)
+              ctofdof[dof] = LOCAL_DOF;
+          }
+        }
+      }
+    }
   }
 
 
@@ -175,7 +203,10 @@ namespace ngcomp
     // static ConstantCoefficientFunction one(1);
     // integrator = new MassIntegrator<D> (&one);
     if (flags.GetDefineFlag("trace"))
+    {
+        trace = true;
         evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
+    }
   }
 
   template <int D, int SD>
