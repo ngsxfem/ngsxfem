@@ -20,7 +20,7 @@ class LevelSetMeshAdaptation:
 
     # deform
     
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False):
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000):
         """
         Deformation
         """
@@ -46,7 +46,7 @@ class LevelSetMeshAdaptation:
 
         self.v_def = FESpace("h1ho", mesh, order=self.order_deform, flags = { "vec" : True })
         self.deform = GridFunction(self.v_def, "deform")
-        
+        self.heapsize = heapsize
 
     def CalcDeformation(self, levelset):
         """
@@ -64,7 +64,7 @@ class LevelSetMeshAdaptation:
         self.lset_ho.Set(levelset)
         self.qn.Set(self.lset_ho.Deriv())
         InterpolateToP1(self.lset_ho,self.lset_p1)
-        ProjectShift(self.lset_ho, self.lset_p1, self.deform, self.qn, self.lset_lower_bound, self.lset_upper_bound, self.threshold);
+        ProjectShift(self.lset_ho, self.lset_p1, self.deform, self.qn, self.lset_lower_bound, self.lset_upper_bound, self.threshold, heapsize=self.heapsize);
         return self.deform
 
 
