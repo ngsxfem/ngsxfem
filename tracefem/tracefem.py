@@ -28,3 +28,7 @@ def TraceConvection (coef):
 def TraceSource (coef):
     return LFI("tracesource", coef=coef)
 
+def NormalLaplaceStabilization (param,normalfield):
+    return BFI("normallaplacetrace", coef=[param,normalfield])
+
+
