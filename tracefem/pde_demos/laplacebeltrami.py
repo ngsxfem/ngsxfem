@@ -55,6 +55,7 @@ def Make3DProblem():
 problemdata = Make3DProblem()
 mesh = problemdata["Mesh"]
 order = 2
+static_condensation = True
 
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
 
@@ -63,7 +64,7 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discont
 Vh = H1(mesh, order=order, dirichlet=[])
 Vh_tr = TraceFESpace(mesh, Vh, problemdata["Levelset"])
 
-a = BilinearForm(Vh_tr, symmetric = True, flags = {"eliminate_internal" : False})
+a = BilinearForm(Vh_tr, symmetric = True, flags = {"eliminate_internal" : static_condensation})
 if (problemdata["Reaction"] != None):
     a += TraceMass(problemdata["Reaction"])
 if (problemdata["Diffusion"] != None):
@@ -107,9 +108,16 @@ def SolveProblem():
     f.Assemble();
     c.Update();
     
+    # BVP(bf=a,lf=f,gf=u,pre=c,maxsteps=200000,prec=1e-8).Do()
+   
     solvea = CGSolver( mat=a.mat, pre=c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
     # # the boundary value problem to be solved on each level
+    if static_condensation:
+        f.vec.data += a.harmonic_extension_trans * f.vec
     u.vec.data = solvea * f.vec;
+    if static_condensation:
+        u.vec.data += a.inner_solve * f.vec
+        u.vec.data += a.harmonic_extension * u.vec
     
     global last_num_its
     last_num_its = solvea.GetSteps()
