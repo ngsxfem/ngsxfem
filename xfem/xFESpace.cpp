@@ -81,9 +81,10 @@ namespace ngcomp
         {
             const int dof = basedof2xdof[i];
             if (dof != -1)
-                ctofdof[dof] = INTERFACE_DOF; //basefes->GetDofCouplingType(i);
+              ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
         }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
+    // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
   }
 
 
