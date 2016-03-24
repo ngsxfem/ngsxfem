@@ -63,11 +63,13 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discont
 Vh = H1(mesh, order=order, dirichlet=[])
 Vh_tr = TraceFESpace(mesh, Vh, problemdata["Levelset"])
 
-a = BilinearForm(Vh_tr, symmetric = True, flags = { })
+a = BilinearForm(Vh_tr, symmetric = True, flags = {"eliminate_internal" : False})
 if (problemdata["Reaction"] != None):
     a += TraceMass(problemdata["Reaction"])
 if (problemdata["Diffusion"] != None):
     a += TraceLaplaceBeltrami(problemdata["Diffusion"])
+    a += NormalLaplaceStabilization(problemdata["Diffusion"],lsetmeshadap.lset_p1.Deriv())
+                                    #/(sqrt(lsetmeshadap.lset_p1.Deriv()*lsetmeshadap.lset_p1.Deriv())))
 if (problemdata["Convection"] != None):
     a += TraceConvection(problemdata["Convection"])
 
