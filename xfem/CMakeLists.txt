@@ -30,6 +30,16 @@ install( FILES
   DESTINATION include
   )
 
+
+if(USE_PYTHON)
+    install (FILES
+            basics.py 
+            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+            COMPONENT xfem
+            )
+endif(USE_PYTHON)
+
+
 # install (FILES ngfemcf.py DESTINATION python)
 
 
