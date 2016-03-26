@@ -26,3 +26,11 @@ install( FILES
   )
 
 
+
+if(USE_PYTHON)
+    install (FILES
+            stokes.py 
+            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+            COMPONENT xfem
+            )
+endif(USE_PYTHON)
