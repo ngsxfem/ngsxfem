@@ -76,12 +76,15 @@ namespace ngcomp
     ctofdof.SetSize(ndof);
     ctofdof = WIREBASKET_DOF;
 
-    if (!empty)
+    if (!empty && !trace)
         for (int i = 0; i < basedof2xdof.Size(); ++i)
         {
             const int dof = basedof2xdof[i];
             if (dof != -1)
-              ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
+              if (trace)
+                ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
+              else
+                ctofdof[dof] = INTERFACE_DOF; //
         }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
     // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
