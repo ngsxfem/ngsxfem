@@ -209,6 +209,75 @@ void ExportNgsx()
           (bp::arg("gf"),bp::arg("lower_lset_bound")=0.0,bp::arg("upper_lset_bound")=0.0,bp::arg("heapsize")=10000000))
     ;
 
+
+  bp::def("IntegrateX", 
+          FunctionPointer([](shared_ptr<CoefficientFunction> cf,
+                             shared_ptr<CoefficientFunction> lset,
+                             shared_ptr<MeshAccess> ma, 
+                             int order)
+                          {
+                            static mutex addcomplex_mutex;
+                            LocalHeap lh(1000000, "lh-Integrate");
+                            
+                            Vector<> domain_sum(2);
+                            
+                            ma->IterateElements
+                              (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
+                               {
+                                 auto & trafo = ma->GetTrafo (el, lh);
+                                 auto lset_eval
+                                   = ScalarFieldEvaluator::Create(ma->GetDimension(),
+                                                                  *lset,trafo,lh);
+                                 ELEMENT_TYPE eltype = el.GetType();
+
+                                 CompositeQuadratureRule<2> cquad;
+                                 auto xgeom
+                                   = XLocalGeometryInformation::Create(eltype, ET_POINT,
+                                                                       *lset_eval, cquad, lh,
+                                                                       order, 0, 0, 0);
+                                 DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
+                                 if (element_domain == IF)
+                                 {
+                                   for (auto domtype : {NEG,POS})
+                                   {
+                                     QuadratureRule<2> & domain_quad = cquad.GetRule(domtype);
+
+                                     double hsum = 0.0;
+                                     double value = 0.0; //TODO: allow vectors here
+                                     for (int i = 0; i < domain_quad.Size(); ++i)
+                                     {
+                                       IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
+                                       MappedIntegrationPoint<2,2> mip(ip, trafo);
+                                       value = cf -> Evaluate (mip);
+                                       hsum += value * mip.GetWeight(); 
+                                     }
+                                     double & rsum = domain_sum(int(domtype));
+                                     AsAtomic(rsum) += hsum;
+                                   }
+                                 }
+                                 else
+                                 {
+                                   double hsum = 0.0;
+                                   double value = 0.0;
+                                   IntegrationRule ir(trafo.GetElementType(), order);
+                                   BaseMappedIntegrationRule & mir = trafo(ir, lh);
+
+                                   FlatMatrix<> values(ir.Size(), 1, lh);
+                                   cf -> Evaluate (mir, values);
+                                   for (int i = 0; i < values.Height(); i++)
+                                     hsum += mir[i].GetWeight() * values(i,0);
+
+                                   double & rsum = domain_sum(int(element_domain));
+                                   AsAtomic(rsum) += hsum;
+                                 }
+                                   
+                               });
+                            bp::object result;
+                            return  bp::list(bp::object(domain_sum));
+                          }),
+          (bp::arg("cf"), bp::arg("lset"), bp::arg("mesh"), bp::arg("order")=5))
+    ;
+  
   
   
   
