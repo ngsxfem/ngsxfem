@@ -24,16 +24,11 @@ def Make2DProblem():
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1],bc="dirbound")
     mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
-    # mesh.Refine()
-    # mesh.Refine()
-    # mesh.Refine()
-    # mesh.Refine()
 
     mu1 = 1.0
     mu2 = 10.0
 
-    # R = 2.0/3.0
-    R = 0.6666666666
+    R = 2.0/3.0
     aneg = 1.0/mu1
     apos = 1.0/mu2 + (1.0/mu1 - 1.0/mu2)*exp(x*x+y*y-R*R)
     gammaf = 0.5
@@ -109,19 +104,18 @@ def SolveProblem():
     f.vec.data -= a.mat * uvp.vec
     uvp.vec.data += inv * f.vec;
    
-    sol_velocity_inner = CoefficientFunction((problemdata["SolutionInnerVelX"],problemdata["SolutionInnerVelY"]))
-    sol_velocity_outer = CoefficientFunction((problemdata["SolutionOuterVelX"],problemdata["SolutionOuterVelY"]))
-
+    sol_velocity_x = IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelX"],problemdata["SolutionInnerVelX"])
+    sol_velocity_y = IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelY"],problemdata["SolutionInnerVelY"])
+    sol_velocity = CoefficientFunction((sol_velocity_x,sol_velocity_y))
+    
     velocity = CoefficientFunction (uvp.components[0:2])
 
-    err_velocity_vec_inner = velocity - sol_velocity_inner
-    err_velocity_inner_sqr = err_velocity_vec_inner * err_velocity_vec_inner
-    err_velocity_vec_outer = velocity - sol_velocity_outer
-    err_velocity_outer_sqr = err_velocity_vec_outer * err_velocity_vec_outer
+    err_velocity_vec = velocity - sol_velocity
+    err_velocity_sqr = err_velocity_vec * err_velocity_vec
 
     l2error_vel = sqrt(IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,
-                                              cf_neg=err_velocity_inner_sqr,
-                                              cf_pos=err_velocity_outer_sqr,
+                                              cf_neg=err_velocity_sqr,
+                                              cf_pos=err_velocity_sqr,
                                               order=2*order+2))
     
     print("(velocity) l2 error = {}".format(l2error_vel))
@@ -132,19 +126,14 @@ def SolveProblem():
     print (" pressure offset is {}".format(pressure_offset))
     pressure = CoefficientFunction (uvp.components[2]) - pressure_offset
 
-    pressure_offset2 = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,cf_neg= problemdata["SolutionInnerPressure"],cf_pos= problemdata["SolutionOuterPressure"],order=order) / 4.0
-    print (" pressure offset is {}".format(pressure_offset2))
-
-    problemdata["SolutionInnerPressure"] = problemdata["SolutionInnerPressure"] - pressure_offset2
-    problemdata["SolutionOuterPressure"] = problemdata["SolutionOuterPressure"] - pressure_offset2
-
-    err_pressure_inner_sqr = (pressure - problemdata["SolutionInnerPressure"])*(pressure - problemdata["SolutionInnerPressure"])
-    err_pressure_outer_sqr = (pressure - problemdata["SolutionOuterPressure"])*(pressure - problemdata["SolutionOuterPressure"])
+    sol_pressure = IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterPressure"],problemdata["SolutionInnerPressure"])
+    
+    err_pressure_sqr = (pressure - sol_pressure)*(pressure - sol_pressure)
 
     l2error_pre = sqrt(IntegrateOnWholeDomain(problemdata["Levelset"],mesh,
-                                              cf_neg=err_pressure_inner_sqr,
-                                              cf_pos=err_pressure_outer_sqr,
-                                              order=2*order))
+                                              cf_neg=err_pressure_sqr,
+                                              cf_pos=err_pressure_sqr,
+                                              order=2*order+1))
     print("(pressure) l2 error = {}".format(l2error_pre))
 
 
@@ -156,7 +145,11 @@ def SolveProblem():
 
     mesh.UnsetDeformation()
 
-
+def RefineAndSolve(n=1):
+    for i in range(n):
+        mesh.Refine()
+        SolveProblem()
+    
 if __name__ == "__main__":
     SolveProblem()
-    
+    RefineAndSolve(2)
