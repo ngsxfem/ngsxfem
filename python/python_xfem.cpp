@@ -211,9 +211,11 @@ void ExportNgsx()
 
 
   bp::def("IntegrateX", 
-          FunctionPointer([](shared_ptr<CoefficientFunction> cf,
-                             shared_ptr<CoefficientFunction> lset,
+          FunctionPointer([](shared_ptr<CoefficientFunction> lset,
                              shared_ptr<MeshAccess> ma, 
+                             shared_ptr<CoefficientFunction> cf_neg,
+                             shared_ptr<CoefficientFunction> cf_pos,
+                             shared_ptr<CoefficientFunction> cf_interface,
                              int order, int subdivlvl, bp::dict domains)
                           {
                             LocalHeap lh(1000000, "lh-Integrate");
@@ -221,9 +223,28 @@ void ExportNgsx()
                             Flags flags = bp::extract<Flags> (domains)();
                             
                             Array<bool> tointon(3); tointon = false;
-                            if (flags.GetDefineFlag("negdomain")) tointon[int(NEG)] = true;
-                            if (flags.GetDefineFlag("posdomain")) tointon[int(POS)] = true;
-                            if (flags.GetDefineFlag("interface")) tointon[int( IF)] = true;
+                            Array<shared_ptr<CoefficientFunction>> cf(3); cf = nullptr;
+                            if (flags.GetDefineFlag("negdomain")){
+                              tointon[int(NEG)] = true;
+                              if (cf_neg == nullptr)
+                                throw Exception("no coef for neg domain given");
+                              else
+                                cf[int(NEG)] = cf_neg;
+                            }
+                            if (flags.GetDefineFlag("posdomain")){
+                              tointon[int(POS)] = true;
+                              if (cf_pos == nullptr)
+                                throw Exception("no coef for pos domain given");
+                              else
+                                cf[int(POS)] = cf_pos;
+                            }
+                            if (flags.GetDefineFlag("interface")){
+                              tointon[int(IF)] = true;
+                              if (cf_interface == nullptr)
+                                throw Exception("no coef for interface domain given");
+                              else
+                                cf[int(IF)] = cf_interface;
+                            }
 
                             Vector<> domain_sum(3); // [val_neg,val_pos,val_interface]
                             domain_sum = 0.0;
@@ -264,7 +285,7 @@ void ExportNgsx()
                                        {
                                          IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
                                          MappedIntegrationPoint<2,2> mip(ip, trafo);
-                                         value = cf -> Evaluate (mip);
+                                         value = cf[int(domtype)] -> Evaluate (mip);
                                          hsum += value * mip.GetWeight(); 
                                        }
                                      }
@@ -275,7 +296,7 @@ void ExportNgsx()
                                        {
                                          IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
                                          MappedIntegrationPoint<3,3> mip(ip, trafo);
-                                         value = cf -> Evaluate (mip);
+                                         value = cf[int(domtype)] -> Evaluate (mip);
                                          hsum += value * mip.GetWeight(); 
                                        }
                                      }
@@ -306,7 +327,7 @@ void ExportNgsx()
                                          // normal /= len;
                                          const double weight = interface_quad.weights[i] * len;
 
-                                         value_if = cf -> Evaluate (mip);
+                                         value_if = cf[int(IF)] -> Evaluate (mip);
                                          hsum_if += value_if * weight; 
                                        }
                                      }
@@ -327,7 +348,7 @@ void ExportNgsx()
                                          // normal /= len;
                                          const double weight = interface_quad.weights[i] * len;
 
-                                         value_if = cf -> Evaluate (mip);
+                                         value_if = cf[int(IF)] -> Evaluate (mip);
                                          hsum_if += value_if * weight; 
                                        }
                                      }
@@ -343,7 +364,7 @@ void ExportNgsx()
                                    BaseMappedIntegrationRule & mir = trafo(ir, lh);
 
                                    FlatMatrix<> values(ir.Size(), 1, lh);
-                                   cf -> Evaluate (mir, values);
+                                   cf[int(element_domain)] -> Evaluate (mir, values);
                                    for (int i = 0; i < values.Height(); i++)
                                      hsum += mir[i].GetWeight() * values(i,0);
 
@@ -365,7 +386,11 @@ void ExportNgsx()
                             // bp::object result;
                             // return  bp::list(bp::object(result_vec));
                           }),
-          (bp::arg("cf"), bp::arg("lset"), bp::arg("mesh"), bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict()))
+          (bp::arg("lset"), bp::arg("mesh"), 
+           bp::arg("cf_neg")=make_shared<ConstantCoefficientFunction>(0.0), 
+           bp::arg("cf_pos")=make_shared<ConstantCoefficientFunction>(0.0),
+           bp::arg("cf_interface")=make_shared<ConstantCoefficientFunction>(0.0),
+           bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict()))
     ;
   
   

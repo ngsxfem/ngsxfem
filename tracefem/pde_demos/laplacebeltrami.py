@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import sys    
 # for making a directory (if it doesn't exist)
 import os
+# For Integration on Interface
+from xfem.basics import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 # For TraceFEM-Integrators (convenience)
@@ -128,6 +130,9 @@ def PostProcess(vtkout = False):
     # maxdistlsetho = lsetmeshadap.CalcMaxDistance(lsetmeshadap.lset_ho);
     mesh.SetDeformation(lsetmeshadap.deform)
     [l2diff,maxdiff] = CalcTraceDiff( u, problemdata["Solution"], intorder=2*order+2)
+    
+    coef_error = (u - problemdata["Solution"])*(u - problemdata["Solution"])
+    print("error is {}".format(sqrt(IntegrateOnInterface(problemdata["Levelset"],mesh,coef_error,order=2*order+2))))
     mesh.UnsetDeformation()
 
     print ("The mesh Refinement level :", level)

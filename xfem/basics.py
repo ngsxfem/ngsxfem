@@ -28,13 +28,21 @@ interface_and_volume_domains["negdomain"] = True
 interface_and_volume_domains["posdomain"] = True
 interface_and_volume_domains["interface"] = True
 
-def IntegrateOnInterface(coef,lset,mesh,order=5,subdivlvl=0):
-    return IntegrateX(coef,lset,mesh,order,subdivlvl,interface_domain)["interface"]
+def IntegrateOnInterface(lset,mesh,coef,order=5,subdivlvl=0):
+    return IntegrateX(lset,mesh,cf_interface=coef,order=order,
+                      subdivlvl=subdivlvl,domains=interface_domain)["interface"]
 
-def IntegrateOnPosDomain(coef,lset,mesh,order=5,subdivlvl=0):
-    return IntegrateX(coef,lset,mesh,order,subdivlvl,positive_domain)["posdomain"]
+def IntegrateOnPosDomain(lset,mesh,coef,order=5,subdivlvl=0):
+    return IntegrateX(lset,mesh,cf_pos=coef,order=order,
+                      subdivlvl=subdivlvl,domains=positive_domain)["posdomain"]
 
-def IntegrateOnNegDomain(coef,lset,mesh,order=5,subdivlvl=0):
-    return IntegrateX(coef,lset,mesh,order,subdivlvl,negative_domain)["negdomain"]
+def IntegrateOnNegDomain(lset,mesh,coef,order=5,subdivlvl=0):
+    return IntegrateX(lset,mesh,cf_neg=coef,order=order,
+                      subdivlvl=subdivlvl,domains=negative_domain)["negdomain"]
+
+def IntegrateOnWholeDomain(lset,mesh,cf_neg,cf_pos,order=5,subdivlvl=0):
+    ints = IntegrateX(lset,mesh,cf_neg=cf_neg,cf_pos=cf_pos, 
+                      order=order,subdivlvl=subdivlvl,domains=volume_domains)
+    return ints["negdomain"] + ints["posdomain"]
 
 

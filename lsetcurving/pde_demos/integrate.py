@@ -44,13 +44,13 @@ for reflevel in range(6):
     if(reflevel > 0):
         mesh.Refine()
     
-    testcoef = CoefficientFunction (1.0)
-    integrals_uncurved = IntegrateX(testcoef,levelset,mesh,order=order, domains=domains)
+    f = CoefficientFunction (1.0)
+    integrals_uncurved = IntegrateX(levelset,mesh,cf_neg=f,cf_pos=f,cf_interface=f,order=order, domains=domains)
     # Applying the mesh deformation
     deformation = lsetmeshadap.CalcDeformation(levelset)
     mesh.SetDeformation(deformation)
 
-    integrals_curved = IntegrateX(testcoef,levelset,mesh,order=order, domains=domains)
+    integrals_curved = IntegrateX(levelset,mesh,cf_neg=f,cf_pos=f,cf_interface=f,order=order, domains=domains)
     # Unapply the mesh deformation (for refinement)
     mesh.UnsetDeformation()
 
