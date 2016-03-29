@@ -5,12 +5,6 @@ from math import pi
 from ngsolve import *
 # xfem and trace fem stuff
 import libngsxfem_py.xfem as xfem                                 
-# for plotting (convergence plots)
-import matplotlib.pyplot as plt
-# for asking for interactive shell or not
-import sys    
-# for making a directory (if it doesn't exist)
-import os
 # basic xfem functionality
 from xfem.basics import *
 # For LevelSetAdaptationMachinery
@@ -22,14 +16,12 @@ def Make2DProblem(maxh=2):
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1],bc=1)
     mesh = Mesh (square.GenerateMesh(maxh=maxh, quad_dominated=False))
-    mesh.Refine()
-    mesh.Refine()
     return mesh;
 
 levelset = sqrt(x*x+y*y)-0.5
 referencevals = [4.0-0.25*pi,0.25*pi]
 
-mesh = Make2DProblem(maxh=2)
+mesh = Make2DProblem(maxh=0.5)
 
 order = 5 # Pk+1 Pk
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
@@ -37,7 +29,7 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, disconti
 errors_uncurved = []
 errors_curved = []
 
-for reflevel in range(8):
+for reflevel in range(6):
 
     if(reflevel > 0):
         mesh.Refine()
@@ -68,6 +60,8 @@ print("   eoc (uncurved):  {}\n".format(   eoc_uncurved))
 print("errors (  curved):  {}\n".format(  errors_curved))
 print("   eoc (  curved):  {}\n".format(     eoc_curved))
 
+Draw(levelset,mesh,"levelset")
 Draw(lsetmeshadap.deform,mesh,"deformation")
+Draw(lsetmeshadap.lset_p1,mesh,"levelset(P1)")
 
 
