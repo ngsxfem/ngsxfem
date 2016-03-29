@@ -22,19 +22,36 @@ from xfem.stokes import *
 def Make2DProblem():
     from netgen.geom2d import SplineGeometry
     square = SplineGeometry()
-    square.AddRectangle([-1,-1],[1,1],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=2, quad_dominated=False))
-    mesh.Refine()
-    mesh.Refine()
+    square.AddRectangle([-1,-1],[1,1],bc="dirbound")
+    mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
+    # mesh.Refine()
+    # mesh.Refine()
+    # mesh.Refine()
+    # mesh.Refine()
 
-    problem = {"ViscosityInner" : 1.0,
-               "ViscosityOuter" : 10.0,
-               "GammaF" : 0.5,
-               "Levelset" : sqrt(x*x+y*y)-2.0/3.0,
+    mu1 = 1.0
+    mu2 = 10.0
+
+    # R = 2.0/3.0
+    R = 0.6666666666
+    aneg = 1.0/mu1
+    apos = 1.0/mu2 + (1.0/mu1 - 1.0/mu2)*exp(x*x+y*y-R*R)
+    gammaf = 0.5
+    q = gammaf - pi*R*R/4.0*gammaf
+    problem = {"ViscosityInner" : mu1,
+               "ViscosityOuter" : mu2,
+               "GammaF" : gammaf,
+               "Levelset" : sqrt(x*x+y*y)-R,
                "SourceInnerX" : (exp(-1*(x*x+y*y))*((-8*y)+(4*x*x*y)+(4*y*y*y))+3*x*x),
                "SourceOuterX" : (exp(-1*(x*x+y*y))*((-8*y)+(4*x*x*y)+(4*y*y*y))+3*x*x),
                "SourceInnerY" : (exp(-1*(x*x+y*y))*((-4*x*x*x)+(8*x)-(4*x*y*y))),
                "SourceOuterY" : (exp(-1*(x*x+y*y))*((-4*x*x*x)+(8*x)-(4*x*y*y))),
+               "SolutionOuterVelX" : (apos*exp(-1.0 *( x * x + y * y)) * -1.0 * y),
+               "SolutionOuterVelY" : (apos*exp(-1.0 *( x * x + y * y)) * x),
+               "SolutionInnerVelX" : (aneg*exp(-1.0 *( x * x + y * y)) * -1.0 * y),
+               "SolutionInnerVelY" : (aneg*exp(-1.0 *( x * x + y * y)) * x),
+               "SolutionInnerPressure" : (x*x*x + q),
+               "SolutionOuterPressure" : (x*x*x - (pi*R*R/4.0*gammaf)),
                "NitscheParam" : 20,
                "GhostPenaltyParam" : -0.1,
                "Mesh" : mesh
@@ -45,7 +62,7 @@ problemdata = Make2DProblem()
 mesh = problemdata["Mesh"]
 order = 1 # Pk+1 Pk
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order+1, threshold=1000, discontinuous_qn=True)
 
 # ### Setting up discrete variational problem
 
@@ -66,7 +83,7 @@ f.components[0] += TwoDomainSourceIntegrator(problemdata["SourceInnerX"],
 f.components[1] += TwoDomainSourceIntegrator(problemdata["SourceInnerY"],
                                              problemdata["SourceOuterY"])
 
-c = Preconditioner(a, type="direct", flags= { "inverse" : "pardiso" })
+# c = Preconditioner(a, type="direct", flags= { "inverse" : "pardiso" })
 
 uvp = GridFunction(Vh)
 
@@ -80,24 +97,66 @@ def SolveProblem():
     print("XStokesFESpace NDof:", Vh.ndof)
     uvp.Update()
 
-    u.components[0].Set(uin, definedon=mesh.Boundaries("inlet"))
+    uvp.components[0].components[0].Set(problemdata["SolutionOuterVelX"], boundary=True, definedon=mesh.Boundaries("dirbound"))
+    uvp.components[1].components[0].Set(problemdata["SolutionOuterVelY"], boundary=True, definedon=mesh.Boundaries("dirbound"))
     
     a.Assemble();
     f.Assemble();
-    c.Update();
+    # c.Update();
 
+    # the boundary value problem to be solved on each level
     inv = a.mat.Inverse(Vh.FreeDofs(), inverse="pardiso")
-    # # the boundary value problem to be solved on each level
-    uvp.vec.data = inv * f.vec;
+    f.vec.data -= a.mat * uvp.vec
+    uvp.vec.data += inv * f.vec;
    
-#     mesh.UnsetDeformation()
+    sol_velocity_inner = CoefficientFunction((problemdata["SolutionInnerVelX"],problemdata["SolutionInnerVelY"]))
+    sol_velocity_outer = CoefficientFunction((problemdata["SolutionOuterVelX"],problemdata["SolutionOuterVelY"]))
+
+    velocity = CoefficientFunction (uvp.components[0:2])
+
+    err_velocity_vec_inner = velocity - sol_velocity_inner
+    err_velocity_inner_sqr = err_velocity_vec_inner * err_velocity_vec_inner
+    err_velocity_vec_outer = velocity - sol_velocity_outer
+    err_velocity_outer_sqr = err_velocity_vec_outer * err_velocity_vec_outer
+
+    l2error_vel = sqrt(IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,
+                                              cf_neg=err_velocity_inner_sqr,
+                                              cf_pos=err_velocity_outer_sqr,
+                                              order=2*order+2))
+    
+    print("(velocity) l2 error = {}".format(l2error_vel))
+
+
+
+    pressure_offset = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,cf_neg=CoefficientFunction (uvp.components[2]),cf_pos=CoefficientFunction (uvp.components[2]),order=order) / 4.0
+    print (" pressure offset is {}".format(pressure_offset))
+    pressure = CoefficientFunction (uvp.components[2]) - pressure_offset
+
+    pressure_offset2 = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,cf_neg= problemdata["SolutionInnerPressure"],cf_pos= problemdata["SolutionOuterPressure"],order=order) / 4.0
+    print (" pressure offset is {}".format(pressure_offset2))
+
+    problemdata["SolutionInnerPressure"] = problemdata["SolutionInnerPressure"] - pressure_offset2
+    problemdata["SolutionOuterPressure"] = problemdata["SolutionOuterPressure"] - pressure_offset2
+
+    err_pressure_inner_sqr = (pressure - problemdata["SolutionInnerPressure"])*(pressure - problemdata["SolutionInnerPressure"])
+    err_pressure_outer_sqr = (pressure - problemdata["SolutionOuterPressure"])*(pressure - problemdata["SolutionOuterPressure"])
+
+    l2error_pre = sqrt(IntegrateOnWholeDomain(problemdata["Levelset"],mesh,
+                                              cf_neg=err_pressure_inner_sqr,
+                                              cf_pos=err_pressure_outer_sqr,
+                                              order=2*order))
+    print("(pressure) l2 error = {}".format(l2error_pre))
+
+
+    Draw(problemdata["Levelset"],mesh,"levelset")
+    Draw(lsetmeshadap.deform,mesh,"deformation")
+    Draw(lsetmeshadap.lset_p1,mesh,"levelset(P1)")
+    Draw(velocity,mesh,"velocity")
+    Draw(pressure,mesh,"pressure")
+
+    mesh.UnsetDeformation()
+
 
 if __name__ == "__main__":
     SolveProblem()
-    velocity = CoefficientFunction (uvp.components[0:2])
-    absvelocity = sqrt(velocity*velocity)
-    Draw(velocity,mesh,"velocity")
-    Draw(absvelocity,mesh,"absvelocity")
-    print("Boundary conditions not yet set...")
-    print("Error not yet evaluated...")
     
