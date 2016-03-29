@@ -5,7 +5,7 @@ from libngsxfem_py.xfem import *
 import libngsxfem_xstokes
 
 def XStokesFESpace(mesh, order=1, levelset=None, dgjumps=False, dirichlet =[], ref_space=0 ):
-    Vh = CastToXStokesFESpace ( FESpace ("xstokes", mesh=mesh, dirichlet=dirichlet, flags = {"order" : order, "dgjumps" : dgjumps, "ref_space" : ref_space}) )
+    Vh = CastToXStokesFESpace ( FESpace ("xstokes", mesh=mesh, dirichlet=dirichlet, flags = {"order" : order, "dgjumps" : dgjumps, "ref_space" : ref_space, "dirichlet_vel" : dirichlet}) )
     if (levelset!=None):
         Vh.SetLevelSet(levelset)
     Vh.Update()
