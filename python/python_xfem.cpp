@@ -214,51 +214,131 @@ void ExportNgsx()
           FunctionPointer([](shared_ptr<CoefficientFunction> cf,
                              shared_ptr<CoefficientFunction> lset,
                              shared_ptr<MeshAccess> ma, 
-                             int order)
+                             int order, int subdivlvl, bp::dict domains)
                           {
-                            static mutex addcomplex_mutex;
                             LocalHeap lh(1000000, "lh-Integrate");
+
+                            Flags flags = bp::extract<Flags> (domains)();
                             
-                            Vector<> domain_sum(2);
-                            
+                            Array<bool> tointon(3); tointon = false;
+                            if (flags.GetDefineFlag("negdomain")) tointon[int(NEG)] = true;
+                            if (flags.GetDefineFlag("posdomain")) tointon[int(POS)] = true;
+                            if (flags.GetDefineFlag("interface")) tointon[int( IF)] = true;
+
+                            Vector<> domain_sum(3); // [val_neg,val_pos,val_interface]
+                            domain_sum = 0.0;
+                            int DIM = ma->GetDimension();
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
                                  auto & trafo = ma->GetTrafo (el, lh);
                                  auto lset_eval
-                                   = ScalarFieldEvaluator::Create(ma->GetDimension(),
-                                                                  *lset,trafo,lh);
+                                   = ScalarFieldEvaluator::Create(DIM,*lset,trafo,lh);
                                  ELEMENT_TYPE eltype = el.GetType();
 
-                                 CompositeQuadratureRule<2> cquad;
-                                 auto xgeom
-                                   = XLocalGeometryInformation::Create(eltype, ET_POINT,
-                                                                       *lset_eval, cquad, lh,
-                                                                       order, 0, 0, 0);
+                                 shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
+
+                                 CompositeQuadratureRule<2> cquad2d;
+                                 CompositeQuadratureRule<3> cquad3d;
+                                 if (DIM == 2)
+                                   xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT,
+                                                                             *lset_eval, cquad2d, lh,
+                                                                             order, 0, subdivlvl, 0);
+                                 else
+                                  xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT,
+                                                                             *lset_eval, cquad3d, lh,
+                                                                             order, 0, subdivlvl, 0);
                                  DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
                                  if (element_domain == IF)
                                  {
                                    for (auto domtype : {NEG,POS})
                                    {
-                                     QuadratureRule<2> & domain_quad = cquad.GetRule(domtype);
-
+                                     if( ! tointon[domtype] ) continue;
                                      double hsum = 0.0;
-                                     double value = 0.0; //TODO: allow vectors here
-                                     for (int i = 0; i < domain_quad.Size(); ++i)
+                                     double value = 0.0;
+
+                                     if (DIM == 2)
                                      {
-                                       IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
-                                       MappedIntegrationPoint<2,2> mip(ip, trafo);
-                                       value = cf -> Evaluate (mip);
-                                       hsum += value * mip.GetWeight(); 
+                                       const QuadratureRule<2> & domain_quad = cquad2d.GetRule(domtype);
+                                       for (int i = 0; i < domain_quad.Size(); ++i)
+                                       {
+                                         IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
+                                         MappedIntegrationPoint<2,2> mip(ip, trafo);
+                                         value = cf -> Evaluate (mip);
+                                         hsum += value * mip.GetWeight(); 
+                                       }
                                      }
+                                     else
+                                     {
+                                       const QuadratureRule<3> & domain_quad = cquad3d.GetRule(domtype);
+                                       for (int i = 0; i < domain_quad.Size(); ++i)
+                                       {
+                                         IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
+                                         MappedIntegrationPoint<3,3> mip(ip, trafo);
+                                         value = cf -> Evaluate (mip);
+                                         hsum += value * mip.GetWeight(); 
+                                       }
+                                     }
+
+
                                      double & rsum = domain_sum(int(domtype));
                                      AsAtomic(rsum) += hsum;
                                    }
+
+                                   if (tointon[int(IF)])
+                                   {
+                                     double hsum_if = 0.0;
+                                     double value_if = 0.0;
+                                     if (DIM == 2)
+                                     {
+                                       const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
+                                       for (int i = 0; i < interface_quad.Size(); ++i)
+                                       {
+                                         IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
+                                         MappedIntegrationPoint<2,2> mip(ip, trafo);
+
+                                         Mat<2,2> Finv = mip.GetJacobianInverse();
+                                         const double absdet = mip.GetMeasure();
+
+                                         Vec<2> nref = interface_quad.normals[i];
+                                         Vec<2> normal = absdet * Trans(Finv) * nref ;
+                                         double len = L2Norm(normal);
+                                         // normal /= len;
+                                         const double weight = interface_quad.weights[i] * len;
+
+                                         value_if = cf -> Evaluate (mip);
+                                         hsum_if += value_if * weight; 
+                                       }
+                                     }
+                                     else
+                                     {
+                                       const QuadratureRuleCoDim1<3> & interface_quad(cquad3d.GetInterfaceRule());
+                                       for (int i = 0; i < interface_quad.Size(); ++i)
+                                       {
+                                         IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
+                                         MappedIntegrationPoint<3,3> mip(ip, trafo);
+
+                                         Mat<3,3> Finv = mip.GetJacobianInverse();
+                                         const double absdet = mip.GetMeasure();
+
+                                         Vec<3> nref = interface_quad.normals[i];
+                                         Vec<3> normal = absdet * Trans(Finv) * nref ;
+                                         double len = L2Norm(normal);
+                                         // normal /= len;
+                                         const double weight = interface_quad.weights[i] * len;
+
+                                         value_if = cf -> Evaluate (mip);
+                                         hsum_if += value_if * weight; 
+                                       }
+                                     }
+
+                                     double & rsum_if = domain_sum(int(IF));
+                                     AsAtomic(rsum_if) += hsum_if;
+                                   }
                                  }
-                                 else
+                                 else if( tointon[element_domain] )
                                  {
                                    double hsum = 0.0;
-                                   double value = 0.0;
                                    IntegrationRule ir(trafo.GetElementType(), order);
                                    BaseMappedIntegrationRule & mir = trafo(ir, lh);
 
@@ -272,10 +352,20 @@ void ExportNgsx()
                                  }
                                    
                                });
-                            bp::object result;
-                            return  bp::list(bp::object(domain_sum));
+
+                            bp::dict resdict;
+                            if (tointon[int(NEG)])
+                              resdict["negdomain"] = domain_sum(int(NEG));
+                            if (tointon[int(POS)])
+                              resdict["posdomain"] = domain_sum(int(POS));
+                            if (tointon[int(IF)])
+                              resdict["interface"] = domain_sum(int(IF));
+
+                            return resdict;
+                            // bp::object result;
+                            // return  bp::list(bp::object(result_vec));
                           }),
-          (bp::arg("cf"), bp::arg("lset"), bp::arg("mesh"), bp::arg("order")=5))
+          (bp::arg("cf"), bp::arg("lset"), bp::arg("mesh"), bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict()))
     ;
   
   
