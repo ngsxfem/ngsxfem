@@ -82,12 +82,16 @@ f.components[1] += TwoDomainSourceIntegrator(problemdata["SourceInnerY"],
 
 uvp = GridFunction(Vh)
 
-def SolveProblem():
+def ApplyMeshTrafo():
     # Calculation of the deformation:
     deformation = lsetmeshadap.CalcDeformation(problemdata["Levelset"])
     # Applying the mesh deformation
     mesh.SetDeformation(deformation)
 
+def UnapplyMeshTrafo():
+    mesh.UnsetDeformation()
+    
+def SolveProblem():
     Vh.Update()
     print("XStokesFESpace NDof:", Vh.ndof)
     uvp.Update()
@@ -103,7 +107,17 @@ def SolveProblem():
     inv = a.mat.Inverse(Vh.FreeDofs(), inverse="pardiso")
     f.vec.data -= a.mat * uvp.vec
     uvp.vec.data += inv * f.vec;
-   
+
+def DictionaryAppend(cont,key,val):
+    if (cont != None):
+        if (not(key in cont)):
+            cont[key] = []
+        cont[key].append(val)
+
+    
+def ComputeErrors(statistics_dict=None):
+    DictionaryAppend(statistics_dict,"total ndof",Vh.ndof)
+    ### velocity error
     sol_velocity_x = IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelX"],problemdata["SolutionInnerVelX"])
     sol_velocity_y = IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelY"],problemdata["SolutionInnerVelY"])
     sol_velocity = CoefficientFunction((sol_velocity_x,sol_velocity_y))
@@ -118,13 +132,14 @@ def SolveProblem():
                                               order=2*order+2))
     
     print("(velocity) l2 error = {}".format(l2error_vel))
-
-
-
+    DictionaryAppend(statistics_dict,"error uv (L2)",l2error_vel)
+        
+    ### pressure offset correction
     pressure_offset = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,coef=CoefficientFunction (uvp.components[2]),order=order) / 4.0
     print (" pressure offset is {}".format(pressure_offset))
     pressure = CoefficientFunction (uvp.components[2]) - pressure_offset
 
+    ### pressure error
     sol_pressure = IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterPressure"],problemdata["SolutionInnerPressure"])
     
     err_pressure_sqr = (pressure - sol_pressure)*(pressure - sol_pressure)
@@ -133,21 +148,89 @@ def SolveProblem():
                                               coef=err_pressure_sqr,
                                               order=2*order+1))
     print("(pressure) l2 error = {}".format(l2error_pre))
+    DictionaryAppend(statistics_dict,"error p (L2)",l2error_pre)
 
+def PrintDictionaryFormatted(statistics_dict):
+    if statistics_dict == None:
+        return
+    else:
+        for key,val in statistics_dict.items():
+            nlvl = len(statistics_dict[key])
+            break
+    for key,val in statistics_dict.items():
+        print(" {:>14} ".format(key),end="")
+        if ("error" in key):
+            print("( eoc) ".format(key),end="")
+    print("")
+    for key,val in statistics_dict.items():
+        print("----------------",end="")
+        if ("error" in key):
+            print("-------".format(key),end="")
+    print("")
+    for lvl in range(0,nlvl):
+        for key,val in statistics_dict.items():
+            if ("error" in key):
+                print("   {:10e} ".format(val[lvl]),end="")
+                if (lvl>0):
+                    print("({:.2f}) ".format(log(val[lvl-1]/val[lvl])/log(2)),end="")
+                else:
+                    print("( -- ) ",end="")
+            else:
+                print("    {:>11} ".format(val[lvl]),end="")
+        print("")
 
+    
+def MakeVTKOutput():
+
+    Vhh1 = H1(mesh, order=order+1, dirichlet=[1,2,3,4])
+    Vhp = H1(mesh, order=order, dirichlet=[])
+
+    Vhuvnegpos = FESpace([Vhh1,Vhh1])
+    Vhpnegpos = FESpace([Vhp,Vhp])
+    
+    unegpos = GridFunction(Vhuvnegpos)
+    vnegpos = GridFunction(Vhuvnegpos)
+    pnegpos = GridFunction(Vhpnegpos)
+    
+    XToNegPos(uvp.components[0],unegpos)
+    XToNegPos(uvp.components[1],vnegpos)
+    XToNegPos(uvp.components[2],pnegpos)
+
+    velneg = CoefficientFunction((unegpos.components[0],vnegpos.components[0]))
+    velpos = CoefficientFunction((unegpos.components[1],vnegpos.components[1]))
+    
+    
+    pairs = [(problemdata["Levelset"],"levelset"),
+             (lsetmeshadap.deform,"deformation"),
+             (lsetmeshadap.lset_p1,"levelset(P1)"),
+             (velneg,"velocity_neg"),
+             (velpos,"velocity_pos"),
+             (pnegpos.components[0],"pressure_neg"),
+             (pnegpos.components[1],"pressure_pos")]
+
+    coefs,names = [list(t) for t in zip(*pairs)]
+    VTKOutput(ma=mesh,coefs=coefs,names=names,filename="vtkout_",subdivision=3).Do()
+    
+        
+def DrawSolution():
     Draw(problemdata["Levelset"],mesh,"levelset")
     Draw(lsetmeshadap.deform,mesh,"deformation")
     Draw(lsetmeshadap.lset_p1,mesh,"levelset(P1)")
-    Draw(velocity,mesh,"velocity")
-    Draw(pressure,mesh,"pressure")
+    Draw(CoefficientFunction (uvp.components[0:2]),mesh,"velocity")
+    Draw(CoefficientFunction (uvp.components[2]),mesh,"pressure")
 
-    mesh.UnsetDeformation()
-
-def RefineAndSolve(n=1):
+def RefineAndSolve(n=1, statistics_dict=None):
     for i in range(n):
-        mesh.Refine()
+        if (i!=0):
+            mesh.Refine()
+        ApplyMeshTrafo()
         SolveProblem()
-    
+        ComputeErrors(statistics_dict)
+        UnapplyMeshTrafo()
+        MakeVTKOutput()
+
 if __name__ == "__main__":
-    SolveProblem()
-    RefineAndSolve(2)
+    statistics_dict=dict()
+    RefineAndSolve(3,statistics_dict)
+    PrintDictionaryFormatted(statistics_dict)
+    DrawSolution()
