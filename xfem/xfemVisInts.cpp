@@ -163,6 +163,41 @@ namespace ngfem
     } 
   }
 
+  template <int D>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpGradX<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                       MAT & mat, LocalHeap & lh)
+  {
+    const CompoundFiniteElement & cfel = 
+      dynamic_cast<const CompoundFiniteElement&> (bfel);
+
+    const ScalarFiniteElement<D> & scafe = 
+      dynamic_cast<const ScalarFiniteElement<D> & > (cfel[0]);
+
+    const int ndof = scafe.GetNDof();
+    FlatMatrix<> dshape (ndof,D,lh);
+
+    scafe.CalcMappedDShape(mip, dshape);
+    IntRange range = cfel.GetRange(0);
+    mat.Rows(range) = dshape;
+    const XFiniteElement * xfe = 
+      dynamic_cast<const XFiniteElement *> (&cfel[1]);
+
+    if (xfe)
+    {
+      const FlatXLocalGeometryInformation & xgeom(xfe->GetFlatLocalGeometry());
+      const double lsetval = xgeom.EvaluateLsetAtPoint<D,D>(mip.IP(),0.0);
+
+      DOMAIN_TYPE dt_here = lsetval > 0 ? POS : NEG;
+      const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+      for (int i =0; i < ndof; i++)
+        if (xsign[i]==dt_here)
+          mat.Row(ndof+i) = dshape.Row(i);
+        else
+          mat.Row(ndof+i) = Vec<D>(0.0);
+    } 
+  }
+  
   template <int D>  XVisIntegrator<D> :: XVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalX<D>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
   { ; }
@@ -172,6 +207,9 @@ namespace ngfem
   { ; }
 
   template <int D>  XVisIntegrator<D> :: ~XVisIntegrator () { ; }
+
+  template class T_DifferentialOperator<DiffOpGradX<2>>;
+  template class T_DifferentialOperator<DiffOpGradX<3>>;
 
   template class T_DifferentialOperator<DiffOpEvalX<2>>;
   template class T_DifferentialOperator<DiffOpEvalX<3>>;
@@ -382,6 +420,21 @@ namespace ngfem
   }
 
 
+  template <int D>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpGradExtTrace<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                          MAT & mat, LocalHeap & lh)
+  {
+    const XFiniteElement * xfe = dynamic_cast<const XFiniteElement *> (&bfel);
+    if (!xfe)
+      return;
+    const ScalarFiniteElement<D> & scafe =
+      dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+    FlatMatrix<> dshape (scafe.GetNDof(), D, &mat(0,0));
+    scafe.CalcMappedDShape(mip, dshape);
+  }
+
+  
   template <int D>  ExtTraceIntegrator<D> :: ExtTraceIntegrator  (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalExtTrace<D>, DiagDMat<1>, CompoundFiniteElement > (DiagDMat<1> (coeff))
   { ; }
@@ -397,6 +450,11 @@ namespace ngfem
   template class DiffOpEvalExtTrace<2>;
   template class DiffOpEvalExtTrace<3>;
 
+  template class T_DifferentialOperator<DiffOpGradExtTrace<2>>;
+  template class T_DifferentialOperator<DiffOpGradExtTrace<3>>;
+  template class DiffOpGradExtTrace<2>;
+  template class DiffOpGradExtTrace<3>;
+  
   static RegisterBilinearFormIntegrator<ExtTraceIntegrator<2> > initexttracemass0 ("exttrace", 2, 1);
   static RegisterBilinearFormIntegrator<ExtTraceIntegrator<3> > initexttracemass1 ("exttrace", 3, 1);
 

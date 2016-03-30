@@ -81,10 +81,12 @@ namespace ngcomp
         {
             const int dof = basedof2xdof[i];
             if (dof != -1)
+            {
               if (trace)
                 ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
               else
                 ctofdof[dof] = INTERFACE_DOF; //
+            }
         }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
     // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
@@ -209,6 +211,7 @@ namespace ngcomp
     {
         trace = true;
         evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
+        flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
     }
   }
 
@@ -934,12 +937,14 @@ namespace ngcomp
     {
       integrator = make_shared<XVisIntegrator<2> > (one);
       evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
+      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradX<2>>>();
       // boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
       integrator = make_shared<XVisIntegrator<3> >(one);
       evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
+      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradX<3>>>();
       // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
     }
   }
