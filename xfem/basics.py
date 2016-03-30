@@ -40,7 +40,11 @@ def IntegrateOnNegDomain(lset,mesh,coef,order=5,subdivlvl=0):
     return IntegrateX(lset,mesh,cf_neg=coef,order=order,
                       subdivlvl=subdivlvl,domains=negative_domain)["negdomain"]
 
-def IntegrateOnWholeDomain(lset,mesh,cf_neg,cf_pos,order=5,subdivlvl=0):
+def IntegrateOnWholeDomain(lset,mesh,cf_neg=None,cf_pos=None,coef=None,order=5,subdivlvl=0):
+    if ((cf_neg == None) and (coef != None)):
+        cf_neg = coef
+    if ((cf_pos == None) and (coef != None)):
+        cf_pos = coef
     ints = IntegrateX(lset,mesh,cf_neg=cf_neg,cf_pos=cf_pos, 
                       order=order,subdivlvl=subdivlvl,domains=volume_domains)
     return ints["negdomain"] + ints["posdomain"]

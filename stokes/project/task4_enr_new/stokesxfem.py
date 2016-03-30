@@ -114,15 +114,14 @@ def SolveProblem():
     err_velocity_sqr = err_velocity_vec * err_velocity_vec
 
     l2error_vel = sqrt(IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,
-                                              cf_neg=err_velocity_sqr,
-                                              cf_pos=err_velocity_sqr,
+                                              coef=err_velocity_sqr,
                                               order=2*order+2))
     
     print("(velocity) l2 error = {}".format(l2error_vel))
 
 
 
-    pressure_offset = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,cf_neg=CoefficientFunction (uvp.components[2]),cf_pos=CoefficientFunction (uvp.components[2]),order=order) / 4.0
+    pressure_offset = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,coef=CoefficientFunction (uvp.components[2]),order=order) / 4.0
     print (" pressure offset is {}".format(pressure_offset))
     pressure = CoefficientFunction (uvp.components[2]) - pressure_offset
 
@@ -131,8 +130,7 @@ def SolveProblem():
     err_pressure_sqr = (pressure - sol_pressure)*(pressure - sol_pressure)
 
     l2error_pre = sqrt(IntegrateOnWholeDomain(problemdata["Levelset"],mesh,
-                                              cf_neg=err_pressure_sqr,
-                                              cf_pos=err_pressure_sqr,
+                                              coef=err_pressure_sqr,
                                               order=2*order+1))
     print("(pressure) l2 error = {}".format(l2error_pre))
 
