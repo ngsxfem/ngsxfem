@@ -176,8 +176,8 @@ namespace ngcomp
     // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
 
     DOMAIN_TYPE GetDomOfDof(int n) const { return domofdof[n];}
-    int GetBaseDofOfXDof(int n) const { return basedof2xdof[n];}
-    int GetXDofOfBaseDof(int n) const { return xdof2basedof[n];}
+    int GetBaseDofOfXDof(int n) const { return xdof2basedof[n];}
+    int GetXDofOfBaseDof(int n) const { return basedof2xdof[n];}
     
     static void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos);
   };

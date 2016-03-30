@@ -160,7 +160,7 @@ namespace ngcomp
     {
       vneg(i) = vbase(i);
       vpos(i) = vbase(i);
-      const int xdof = xfes->GetBaseDofOfXDof(i);
+      const int xdof = xfes->GetXDofOfBaseDof(i);
       if (xdof != -1)
       {
         if (xfes->GetDomOfDof(xdof) == POS)
