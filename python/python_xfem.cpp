@@ -64,6 +64,9 @@ void ExportNgsx()
     .def("SetBaseFESpace", FunctionPointer ([](XFESpace & self, shared_ptr<FESpace> fes) 
                                          { self.SetBaseFESpace(fes); }),
          "Update information on base FESpace")
+    .def("BaseDofOfXDof", FunctionPointer ([](XFESpace & self, int i) 
+                                         { return self.GetBaseDofOfXDof(i); }),
+         "get corresponding dof of base FESpace")
     ;
   
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
@@ -72,6 +75,7 @@ void ExportNgsx()
 
   // bp::def("CastToFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<FESpace>(fes); } ) );
 
+  REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XStdFESpace>);
   REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XFESpace>);
 
   bp::class_<XStdFESpace, shared_ptr<XStdFESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
