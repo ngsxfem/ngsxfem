@@ -312,6 +312,9 @@ namespace ngfem
 
   extern template class T_DifferentialOperator<DiffOpGradExtTrace<2>>;
   extern template class T_DifferentialOperator<DiffOpGradExtTrace<3>>;
+
+  extern template class T_DifferentialOperator<DiffOpGradX<2>>;
+  extern template class T_DifferentialOperator<DiffOpGradX<3>>;
 #endif
   
 }
