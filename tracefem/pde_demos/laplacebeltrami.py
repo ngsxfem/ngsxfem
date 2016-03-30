@@ -49,6 +49,9 @@ def Make3DProblem():
                "Reaction" : 1.0,
                "Source" : sin(pi*z)*(pi*pi*(1-z*z)+1)+cos(pi*z)*2*pi*z,
                "Solution" : sin(pi*z),
+               "GradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
+               "SurfGradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
+               "VolumeStabilization" : True,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "Mesh" : mesh
               }
@@ -56,8 +59,11 @@ def Make3DProblem():
 
 problemdata = Make3DProblem()
 mesh = problemdata["Mesh"]
-order = 2
-static_condensation = True
+order = 3
+if (problemdata["VolumeStabilization"]):
+    static_condensation = True
+else:
+    static_condensation = False
 
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
 
@@ -71,8 +77,8 @@ if (problemdata["Reaction"] != None):
     a += TraceMass(problemdata["Reaction"])
 if (problemdata["Diffusion"] != None):
     a += TraceLaplaceBeltrami(problemdata["Diffusion"])
+if (problemdata["VolumeStabilization"]):
     a += NormalLaplaceStabilization(problemdata["Diffusion"],lsetmeshadap.lset_p1.Deriv())
-                                    #/(sqrt(lsetmeshadap.lset_p1.Deriv()*lsetmeshadap.lset_p1.Deriv())))
 if (problemdata["Convection"] != None):
     a += TraceConvection(problemdata["Convection"])
 
@@ -129,10 +135,21 @@ def PostProcess(vtkout = False):
     maxdistlset = lsetmeshadap.CalcMaxDistance(problemdata["Levelset"]);
     # maxdistlsetho = lsetmeshadap.CalcMaxDistance(lsetmeshadap.lset_ho);
     mesh.SetDeformation(lsetmeshadap.deform)
-    [l2diff,maxdiff] = CalcTraceDiff( u, problemdata["Solution"], intorder=2*order+2)
-    
+    # [l2diff,maxdiff] = CalcTraceDiff( u, problemdata["Solution"], intorder=2*order+2)
     coef_error = (u - problemdata["Solution"])*(u - problemdata["Solution"])
-    print("error is {}".format(sqrt(IntegrateOnInterface(problemdata["Levelset"],mesh,coef_error,order=2*order+2))))
+    l2diff = sqrt(IntegrateOnInterface(problemdata["Levelset"],mesh,coef_error,order=2*order+2))
+
+    nhelp = lsetmeshadap.lset_p1.Deriv()
+    n = 1.0/sqrt(nhelp*nhelp) * nhelp
+    un = u.Deriv()*n
+    coef_gradnormal_error = un*un
+    h1normdiff = sqrt(IntegrateOnInterface(problemdata["Levelset"],mesh,coef_gradnormal_error,order=2*order))
+
+    tanggrad = u.Deriv() - un * n
+    coef_gradtang_error = (tanggrad - problemdata["GradSolution"])*(tanggrad - problemdata["GradSolution"])
+    h1tangdiff = sqrt(IntegrateOnInterface(problemdata["Levelset"],mesh,coef_gradtang_error,order=2*order))
+    
+    print("error is {}".format(l2diff))
     mesh.UnsetDeformation()
 
     print ("The mesh Refinement level :", level)
@@ -141,9 +158,11 @@ def PostProcess(vtkout = False):
     print ("Max. distance to interface:", maxdistlset)
   # print ("Max. distance to ho-intfce:", maxdistlsetho)
     print ("L2-norm error on interface:", l2diff)
-    print ("maxnorm error on interface:", maxdiff)
+    print ("surf-H1-norm err on interf:", h1tangdiff)
+    print ("normalgrad (L2)  on interf:", h1normdiff)
+    # print ("maxnorm error on interface:", maxdiff)
     print ("Numb. of CG-Solver iterat.:", last_num_its)
-    statistics.append ( (level, Vh_tr.ndof, maxdistlset, l2diff, maxdiff, last_num_its) )
+    statistics.append ( (level, Vh_tr.ndof, maxdistlset, l2diff, h1tangdiff, h1normdiff, last_num_its) )
     
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
     if (vtkout):
@@ -154,12 +173,14 @@ def PostProcess(vtkout = False):
 
 
 def ConvergenceStudy(plot=True):
-    lvl,ndof,geomerr,l2err,maxerr,itcnts = zip(*statistics)
+    lvl,ndof,geomerr,l2err,h1tangerr,h1normerr,itcnts = zip(*statistics)
 
     fo = open("LapBeltrResults/l2err.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,l2err)])
+    fo = open("LapBeltrResults/h1tangerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,h1tangerr)])
+    fo = open("LapBeltrResults/h1normerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,h1normerr)])
     fo = open("LapBeltrResults/ndof.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,ndof)])
     fo = open("LapBeltrResults/geomerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,geomerr)])
-    fo = open("LapBeltrResults/maxerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,maxerr)])
+    # fo = open("LapBeltrResults/maxerr.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,maxerr)])
     fo = open("LapBeltrResults/itcnts.csv","w"); fo.writelines(["{}: {}\n".format(a,b) for a,b in zip(lvl,itcnts)])
 
     if (plot):
@@ -168,8 +189,10 @@ def ConvergenceStudy(plot=True):
         plt.xlabel("level")
         
         plt.plot(lvl,l2err, "-*")
+        plt.plot(h1tangerr, "-.")
+        plt.plot(h1normerr, "--")
         plt.plot(geomerr, "-+")
-        plt.legend(["L2error","geometry (max) error"])
+        plt.legend(["L2error","H1error(tang.)","H1error(norm.)","geometry (max) error"])
     
         # plt.figure(1)
         # plt.yscale('log')
@@ -193,9 +216,13 @@ def ConvergenceStudy(plot=True):
     
     
     l2conv = [ log(l2err[i]/l2err[i-1])/log(0.5) for i in range(1,len(l2err))]
-    maxconv = [ log(maxerr[i]/maxerr[i-1])/log(0.5) for i in range(1,len(maxerr))]
+    h1tconv = [ log(h1tangerr[i]/h1tangerr[i-1])/log(0.5) for i in range(1,len(l2err))]
+    h1nconv = [ log(h1normerr[i]/h1normerr[i-1])/log(0.5) for i in range(1,len(l2err))]
+    # maxconv = [ log(maxerr[i]/maxerr[i-1])/log(0.5) for i in range(1,len(maxerr))]
     geomconv = [ log(geomerr[i]/geomerr[i-1])/log(0.5) for i in range(1,len(geomerr))]
     print ("l2err convergence orders (eoc):", l2conv)
+    print ("h1 tang err conv. orders (eoc):", h1tconv)
+    print ("h1 norm err conv. orders (eoc):", h1nconv)
     print ("geom. convergence orders (eoc):", geomconv)
     if (plot and not hasattr(sys,'ps1')):
         input("<press enter to quit>")
