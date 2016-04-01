@@ -9,8 +9,11 @@ def TraceFESpace(mesh, stdfes=None, levelset=None, dgjumps=False, ref_space=0 ):
         Vh_tr.SetBaseFESpace(stdfes)
     if (levelset!=None):
         Vh_tr.SetLevelSet(levelset)
-    Vh_tr.Update()
-    print ("TraceFESpace-Update: done")
+    if (levelset==None or stdfes==None):
+        print ("TraceFESpace-Update: postponed")
+    else:
+        Vh_tr.Update()
+        print ("TraceFESpace-Update: done")
     return Vh_tr
 
 def TraceMass (coef):
