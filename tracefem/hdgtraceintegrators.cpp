@@ -193,7 +193,7 @@ namespace ngfem
           comp_jumps.Row(l) = jump(comp_facetdofs);
           double fac = lam*weight;
           comp_facjumps.Row(l) = (fac * (order+1) * (order+1)/h) * jump(comp_facetdofs);
-          facdudn.Row(l) = (-fac) * mat_dudn;
+          facdudn.Row(l) = (-weight) * mat_dudn;
 
         }
 
@@ -212,8 +212,8 @@ namespace ngfem
 
       // non-positive IP terms:
       // TODO: something wrong with these terms !!! ;)...
-      // elmat.Rows(l2_dofs) += mat_coupling;
-      // elmat.Cols(l2_dofs) += Trans(mat_coupling);
+      elmat.Rows(l2_dofs) += mat_coupling;
+      elmat.Cols(l2_dofs) += Trans(mat_coupling);
       
     }
 
