@@ -25,10 +25,10 @@ def Make3DProblem():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
     cube = CSGeometry()
     cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
-    mesh = Mesh (cube.GenerateMesh(maxh=4, quad_dominated=False))
-    mesh.Refine()
-    mesh.Refine()
-    mesh.Refine()
+    mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
+    # mesh.Refine()
+    # mesh.Refine()
+    # mesh.Refine()
     # mesh.Refine()
     # mesh.Refine()
 
@@ -39,7 +39,7 @@ def Make3DProblem():
                "Solution" : sin(pi*z),
                "GradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
                "SurfGradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
-               "VolumeStabilization" : 1.0,
+               "VolumeStabilization" : 1,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "Lambda" : 10,
                "Mesh" : mesh
@@ -77,64 +77,72 @@ with TaskManager():
   if (problemdata["Source"] != None):
       f.components[0] += TraceSource(problemdata["Source"])
   
-  # c = Preconditioner(a, type="local", flags= { "test" : True })
+  c = Preconditioner(a, type="local", flags= { "test" : True })
   
   u = GridFunction(Vh_tr)
   
-  
-  # Calculation of the deformation:
-  deformation = lsetmeshadap.CalcDeformation(problemdata["Levelset"])
-  # Applying the mesh deformation
-  mesh.SetDeformation(deformation)
-  
-  Vh_facet.Update()
-  Vh_l2.Update()
-  Vh_tr.Update()
-  
-  for i in range(Vh_tr.ndof):
-      if (Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
-          Vh_tr.FreeDofs()[i] = 0
-  
-  u.Update()
-  a.Assemble();
-  f.Assemble();
-  
-  # c.Update();
-  # BVP(bf=a,lf=f,gf=u,pre=c,maxsteps=200000,prec=1e-8).Do()
-  
-  # solvea = CGSolver( mat=a.mat, pre=c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
-  
-  solvea = a.mat.Inverse(Vh_tr.FreeDofs())
-  # u.vec.data = ainv * f.vec
-  
-  if static_condensation:
-      f.vec.data += a.harmonic_extension_trans * f.vec
-  u.vec.data = solvea * f.vec;
-  if static_condensation:
-      u.vec.data += a.inner_solve * f.vec
-      u.vec.data += a.harmonic_extension * u.vec
-      
-  # global last_num_its
-  # last_num_its = solvea.GetSteps()
-  
-  
-  
-  coef_error_sqr = (u.components[0] - problemdata["Solution"])*(u.components[0] - problemdata["Solution"])
-  l2diff = sqrt(IntegrateOnInterface(lsetmeshadap.lset_p1,mesh,coef_error_sqr,order=2*order+2))
-  print("l2diff = {}".format(l2diff))
-  mesh.UnsetDeformation()
-  
-  Draw(u.components[0],mesh,"u",draw_surf=False)
-  
-  vtk = VTKOutput(ma=mesh,coefs=[lsetmeshadap.lset_p1,lsetmeshadap.deform,u.components[0]],
-                  names=["lsetp1","deform","u"],filename="vtkout_",subdivision=1)
-  vtk.Do()
 
-  RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
-  
-  ### print hdg-intergrator timers
-  hdgtimers = [a for a in Timers() if "HDG" in a["name"]]
-  hdgtimers = sorted(hdgtimers, key=lambda k: k["time"], reverse=True)
-  for timer in hdgtimers:
-      print("{:<45}: {:6} cts, {:.8f} s, {:.6e} s(avg.)"
-            .format(timer["name"],timer["counts"],timer["time"],timer["time"]/timer["counts"]))
+def SolveProblem():
+    with TaskManager():
+        
+        # Calculation of the deformation:
+        deformation = lsetmeshadap.CalcDeformation(problemdata["Levelset"])
+        # Applying the mesh deformation
+        mesh.SetDeformation(deformation)
+        
+        Vh_facet.Update()
+        Vh_l2.Update()
+        Vh_tr.Update()
+        
+        for i in range(Vh_tr.ndof):
+            if (Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
+                Vh_tr.FreeDofs()[i] = 0
+        
+        u.Update()
+        a.Assemble();
+        f.Assemble();
+        
+        c.Update();
+        
+        solvea = CGSolver( mat=a.mat, pre=c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
+        
+        # solvea = a.mat.Inverse(Vh_tr.FreeDofs())
+        # u.vec.data = ainv * f.vec
+        
+        if static_condensation:
+            f.vec.data += a.harmonic_extension_trans * f.vec
+        u.vec.data = solvea * f.vec;
+        if static_condensation:
+            u.vec.data += a.inner_solve * f.vec
+            u.vec.data += a.harmonic_extension * u.vec
+            
+        global last_num_its
+        last_num_its = solvea.GetSteps()
+        print("number of iterations: " + str(last_num_its))
+        
+        
+        coef_error_sqr = (u.components[0] - problemdata["Solution"])*(u.components[0] - problemdata["Solution"])
+        l2diff = sqrt(IntegrateOnInterface(lsetmeshadap.lset_p1,mesh,coef_error_sqr,order=2*order+2))
+        print("l2diff = {}".format(l2diff))
+        mesh.UnsetDeformation()
+
+for i in range(3):
+    if (i!=0):
+        mesh.Refine()
+    SolveProblem()
+    RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
+
+    
+Draw(u.components[0],mesh,"u",draw_surf=False)
+
+vtk = VTKOutput(ma=mesh,coefs=[lsetmeshadap.lset_p1,lsetmeshadap.deform,u.components[0]],
+                names=["lsetp1","deform","u"],filename="vtkout_",subdivision=1)
+vtk.Do()
+
+
+### print hdg-intergrator timers
+hdgtimers = [a for a in Timers() if "HDG" in a["name"]]
+hdgtimers = sorted(hdgtimers, key=lambda k: k["time"], reverse=True)
+for timer in hdgtimers:
+    print("{:<45}: {:6} cts, {:.8f} s, {:.6e} s(avg.)"
+          .format(timer["name"],timer["counts"],timer["time"],timer["time"]/timer["counts"]))
