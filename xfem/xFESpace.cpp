@@ -76,7 +76,7 @@ namespace ngcomp
     ctofdof.SetSize(ndof);
     ctofdof = WIREBASKET_DOF;
 
-    if (!empty && !trace)
+    if (!empty)
         for (int i = 0; i < basedof2xdof.Size(); ++i)
         {
             const int dof = basedof2xdof[i];
@@ -88,6 +88,7 @@ namespace ngcomp
                 ctofdof[dof] = INTERFACE_DOF; //
             }
         }
+
     if (trace && ma->GetDimension() == 3)
     // face bubbles on the outer part of the band will be local dofs... (for static cond.)
     {
@@ -354,7 +355,7 @@ namespace ngcomp
 
         CompositeQuadratureRule<SD-1> cquad;
         auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                              cquad, lh, 2*order_space+2, 2*order_time, ref_lvl_space, ref_lvl_time);
+                                                       cquad, lh, 2*order_space+2, 2*order_time, ref_lvl_space, ref_lvl_time);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
         Array<int> fnums;
@@ -365,9 +366,10 @@ namespace ngcomp
 
         if (dt == IF) // IsFacetCut(ed)
         {
-          activeselem.Set(selnr);
           Array<int> basednums;
           basefes->GetSDofNrs(selnr,basednums);
+          if (basednums.Size())
+            activeselem.Set(selnr);
           for (int k = 0; k < basednums.Size(); ++k)
           {
             activedofs.Set(basednums[k]); // might be twice, but who cares..
