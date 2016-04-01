@@ -54,7 +54,7 @@ if (problemdata["VolumeStabilization"]):
 else:
     static_condensation = False
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order+1, threshold=1000, discontinuous_qn=True)
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
 
 ### Setting up discrete variational problem
 with TaskManager():
@@ -118,6 +118,7 @@ def SolveProblem():
             
         global last_num_its
         last_num_its = solvea.GetSteps()
+        print("nze: " + str(a.mat.AsVector().size))
         print("number of iterations: " + str(last_num_its))
         
         
