@@ -17,9 +17,10 @@ namespace ngfem
   class HDGTraceLaplaceBeltramiIntegrator : public BilinearFormIntegrator
   {
     shared_ptr<CoefficientFunction> coef;
+    double lambda;
   public:
     HDGTraceLaplaceBeltramiIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
-      : coef(coeffs[0]){;}
+      : coef(coeffs[0]), lambda(coeffs[1] -> EvaluateConst()){;}
     virtual ~HDGTraceLaplaceBeltramiIntegrator(){ ; };
     virtual string Name () const { return "HDGTraceLaplaceBeltramiIntegrator"; }
     virtual int DimElement () const { return D; }

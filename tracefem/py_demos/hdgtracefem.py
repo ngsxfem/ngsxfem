@@ -20,24 +20,6 @@ from xfem.tracefem import *
 # For HDGTraceFEM-Integrators (convenience)
 from xfem.hdgtracefem import *
 
-# 2D: circle configuration
-def Make2DProblem():
-    from netgen.geom2d import SplineGeometry
-    square = SplineGeometry()
-    square.AddRectangle([-1.41,-1.41],[1.41,1.41],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=1, quad_dominated=False))
-    mesh.Refine()
-
-    problem = {"Diffusion" : 1.0,
-               "Convection" : None,
-               "Reaction" : 1.0,
-               "Source" : sin(pi*y)*(1+pi*pi*(1-y*y))+pi*y*cos(pi*y),
-               "Solution" : sin(pi*y),
-               "Levelset" : sqrt(x*x+y*y)-1,
-               "Mesh" : mesh
-              }
-    return problem;
-
 # 3D: circle configuration
 def Make3DProblem():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
@@ -55,6 +37,7 @@ def Make3DProblem():
                "SurfGradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
                "VolumeStabilization" : True,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
+               "Lambda" : 10,
                "Mesh" : mesh
               }
     return problem;
@@ -82,7 +65,7 @@ if (problemdata["Reaction"] != None):
     a.components[0] += TraceMass(problemdata["Reaction"])
 if (problemdata["Diffusion"] != None):
     a.components[0] += TraceLaplaceBeltrami(problemdata["Diffusion"])
-    a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"])
+    a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"],param_lambda = problemdata["Lambda"])
 if (problemdata["VolumeStabilization"]):
     a.components[0] += NormalLaplaceStabilization(problemdata["Diffusion"],lsetmeshadap.lset_p1.Deriv())
 # if (problemdata["Convection"] != None):
@@ -120,6 +103,9 @@ f.Assemble();
 ainv = a.mat.Inverse(Vh_tr.FreeDofs())
 u.vec.data = ainv * f.vec
 
+coef_error_sqr = (u.components[0] - problemdata["Solution"])*(u.components[0] - problemdata["Solution"])
+l2diff = sqrt(IntegrateOnInterface(lsetmeshadap.lset_p1,mesh,coef_error_sqr,order=2*order+2))
+print("l2diff = {}".format(l2diff))
 mesh.UnsetDeformation()
 
 Draw(u.components[0],mesh,"u",draw_surf=False)

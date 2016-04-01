@@ -89,8 +89,6 @@ namespace ngfem
     // cout << " nd_l2 = " << nd_l2 << endl;
     // cout << " nd_facet = " << nd_facet << endl;
     
-    const double lam = 100;
-    
     // The facet contribution
     {
       int nfacet = ElementTopology::GetNFacets(eltype);
@@ -191,8 +189,8 @@ namespace ngfem
           jump.Range(facet_dofs) = -mat_facet;
           
           comp_jumps.Row(l) = jump(comp_facetdofs);
-          double fac = lam*weight;
           comp_facjumps.Row(l) = (fac * (order+1) * (order+1)/h) * jump(comp_facetdofs);
+          double fac = lambda*weight;
           facdudn.Row(l) = (-weight) * mat_dudn;
 
         }
