@@ -160,7 +160,7 @@ namespace ngfem
 
   /// compute shape
   template <int D>
-  void ScalarSpaceTimeFiniteElement<D> :: CalcMappedDxShapeSpaceTime (const SpecificIntegrationPoint<D,D> & sip, 
+  void ScalarSpaceTimeFiniteElement<D> :: CalcMappedDxShapeSpaceTime (const MappedIntegrationPoint<D,D> & sip, 
                                                                       double time,
                                                                       FlatMatrixFixWidth<D> dshape, 
                                                                       LocalHeap & lh) const
@@ -187,7 +187,7 @@ namespace ngfem
 
   /// compute dshape, matrix: ndof x spacedim
   template <int D>
-  void SpaceTimeFiniteElement<D> :: CalcMappedDShape (const SpecificIntegrationPoint<D,D> & sip, 
+  void SpaceTimeFiniteElement<D> :: CalcMappedDShape (const MappedIntegrationPoint<D,D> & sip, 
                                              FlatMatrixFixWidth<D> dshape) const
   {
     base.CalcMappedDShape(sip,dshape);

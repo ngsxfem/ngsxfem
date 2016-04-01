@@ -129,7 +129,7 @@ typedef std::pair<double,double> TimeInterval;
                                        FlatMatrixFixWidth<D> dshape, LocalHeap & lh) const;
 
     /// compute dshape, matrix: ndof x spacedim
-    virtual void CalcMappedDxShapeSpaceTime (const SpecificIntegrationPoint<D,D> & sip, double time,
+    virtual void CalcMappedDxShapeSpaceTime (const MappedIntegrationPoint<D,D> & sip, double time,
                                              FlatMatrixFixWidth<D> dshape, LocalHeap & lh) const;
   };
 
