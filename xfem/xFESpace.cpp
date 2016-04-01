@@ -88,10 +88,6 @@ namespace ngcomp
                 ctofdof[dof] = INTERFACE_DOF; //
             }
         }
-    *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
-    // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
-
-
     if (trace && ma->GetDimension() == 3)
     // face bubbles on the outer part of the band will be local dofs... (for static cond.)
     {
@@ -118,6 +114,10 @@ namespace ngcomp
         }
       }
     }
+    *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
+    // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
+
+
   }
 
 
