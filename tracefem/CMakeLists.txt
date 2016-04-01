@@ -1,5 +1,5 @@
 add_library(ngsxfem_tracefem ${NGS_LIB_TYPE}
-  traceintegrators.cpp traceoutput.cpp traceinstat.cpp tracefem_python.cpp
+  hdgtraceintegrators.cpp traceintegrators.cpp traceoutput.cpp traceinstat.cpp tracefem_python.cpp
   )
 
 set_target_properties(ngsxfem_tracefem PROPERTIES SUFFIX ".so")
@@ -16,7 +16,7 @@ install( FILES
 
 if(USE_PYTHON)
     install (FILES
-            tracefem.py 
+            tracefem.py hdgtracefem.py 
             DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
             COMPONENT xfem
             )
