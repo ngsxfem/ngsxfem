@@ -42,108 +42,169 @@ def Make3DProblem():
                "VolumeStabilization" : 1,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "Lambda" : 10,
+               "Order" : 2,
                "Mesh" : mesh
               }
     return problem;
 
-problemdata = Make3DProblem()
-mesh = problemdata["Mesh"]
-order = 2
-if (problemdata["VolumeStabilization"]):
-    static_condensation = True
-else:
-    static_condensation = False
-
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
-
-### Setting up discrete variational problem
-with TaskManager():
-  Vh_l2 = L2(mesh, order=order, dirichlet=[])
-  Vh_l2_tr = TraceFESpace(mesh, Vh_l2, problemdata["Levelset"])
-  Vh_facet = FacetFESpace(mesh, order=order, dirichlet=[]) #, flags = {"highest_order_dc" : False}
-  Vh_facet_tr = TraceFESpace(mesh, Vh_facet, problemdata["Levelset"])
-  Vh_tr = FESpace([Vh_l2_tr,Vh_facet_tr])
-  
-  a = BilinearForm(Vh_tr, symmetric = True, flags = {"eliminate_internal" : static_condensation})
-  if (problemdata["Reaction"] != None):
-      a.components[0] += TraceMass(problemdata["Reaction"])
-  if (problemdata["Diffusion"] != None):
-      a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"],
-                                   param_IP_edge = problemdata["Lambda"],
-                                   param_normaldiffusion = problemdata["VolumeStabilization"],
-                                   param_IP_facet = problemdata["Lambda"])
-  
-  f = LinearForm(Vh_tr)
-  if (problemdata["Source"] != None):
-      f.components[0] += TraceSource(problemdata["Source"])
-  
-  c = Preconditioner(a, type="local", flags= { "test" : True })
-  
-  u = GridFunction(Vh_tr)
-  
-
-def SolveProblem():
-    with TaskManager():
-        
-        # Calculation of the deformation:
-        deformation = lsetmeshadap.CalcDeformation(problemdata["Levelset"])
-        # Applying the mesh deformation
-        mesh.SetDeformation(deformation)
-        
-        Vh_facet.Update()
-        Vh_l2.Update()
-        Vh_tr.Update()
-        
-        for i in range(Vh_tr.ndof):
-            if (Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
-                Vh_tr.FreeDofs()[i] = 0
-        
-        u.Update()
-        a.Assemble();
-        f.Assemble();
-        
-        c.Update();
-        
-        solvea = CGSolver( mat=a.mat, pre=c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
-        
-        # solvea = a.mat.Inverse(Vh_tr.FreeDofs())
-        # u.vec.data = ainv * f.vec
-        
-        if static_condensation:
-            f.vec.data += a.harmonic_extension_trans * f.vec
-        u.vec.data = solvea * f.vec;
-        if static_condensation:
-            u.vec.data += a.inner_solve * f.vec
-            u.vec.data += a.harmonic_extension * u.vec
+class Discretization(object):
+    """
+    Discretization: definition of FESpaces, bi/linear forms, etc..
+    """
+    
+    def __init__(self, problemdata):
+        """
+        """
+        self.problemdata = problemdata
+        self.mesh = problemdata["Mesh"]
+        self.order = problemdata["Order"]
+        if (problemdata["VolumeStabilization"]):
+            self.static_condensation = True
+        else:
+            self.static_condensation = False
             
-        global last_num_its
-        last_num_its = solvea.GetSteps()
-        print("nze: " + str(a.mat.AsVector().size))
-        print("number of iterations: " + str(last_num_its))
-        
-        
-        coef_error_sqr = (u.components[0] - problemdata["Solution"])*(u.components[0] - problemdata["Solution"])
-        l2diff = sqrt(IntegrateOnInterface(lsetmeshadap.lset_p1,mesh,coef_error_sqr,order=2*order+2))
-        print("l2diff = {}".format(l2diff))
-        mesh.UnsetDeformation()
+        self.lsetmeshadap = LevelSetMeshAdaptation(self.mesh, order=self.order, threshold=1000, discontinuous_qn=True,heapsize=10000000)
 
-for i in range(3):
-    if (i!=0):
-        mesh.Refine()
-    SolveProblem()
-    RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
+        ### Setting up discrete variational problem
+        with TaskManager():
+            self.Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
+            Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"])
+            self.Vh_facet = FacetFESpace(self.mesh, order=self.order, dirichlet=[], flags = {"highest_order_dc" : False})
+            Vh_facet_tr = TraceFESpace(self.mesh, self.Vh_facet, problemdata["Levelset"])
+            self.Vh_tr = FESpace([Vh_l2_tr,Vh_facet_tr])
+  
+        self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})
+        if (problemdata["Reaction"] != None):
+            self.a.components[0] += TraceMass(problemdata["Reaction"])
+        if (problemdata["Diffusion"] != None):
+            self.a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"],
+                                         param_IP_edge = problemdata["Lambda"],
+                                         param_normaldiffusion = problemdata["VolumeStabilization"],
+                                         param_IP_facet = problemdata["Lambda"])
+  
+        self.f = LinearForm(self.Vh_tr)
+        if (problemdata["Source"] != None):
+            self.f.components[0] += TraceSource(problemdata["Source"])
+  
+        self.c = Preconditioner(self.a, type="local", flags= { "test" : True })
+  
+        self.u = GridFunction(self.Vh_tr)
+  
+
+    def SolveProblem(self):
+        with TaskManager():
+        
+            # Calculation of the deformation:
+            deformation = discretization.lsetmeshadap.CalcDeformation(self.problemdata["Levelset"])
+            # Applying the mesh deformation
+            self.mesh.SetDeformation(deformation)
+            
+            self.Vh_facet.Update()
+            self.Vh_l2.Update()
+            self.Vh_tr.Update()
+            
+            for i in range(self.Vh_tr.ndof):
+            #     print (str(i) + " : " + str(Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF))
+                if (self.Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
+                    self.Vh_tr.FreeDofs()[i] = 0
+            
+            self.u.Update()
+            self.a.Assemble(heapsize=10000000);
+            self.f.Assemble();
+            
+            self.c.Update();
+            
+            solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-9, maxsteps=200000)
+            
+            # solvea = self.a.mat.Inverse(self.Vh_tr.FreeDofs())
+            # u.vec.data = ainv * f.vec
+            
+            if self.static_condensation:
+                self.f.vec.data += self.a.harmonic_extension_trans * self.f.vec
+            self.u.vec.data = solvea * self.f.vec;
+            if self.static_condensation:
+                self.u.vec.data += self.a.inner_solve * self.f.vec
+                self.u.vec.data += self.a.harmonic_extension * self.u.vec
+                
+            # global last_num_its
+            last_num_its = solvea.GetSteps()
+            print("nze: " + str(self.a.mat.AsVector().size))
+            print("number of iterations: " + str(last_num_its))
+            
+            
+            coef_error_sqr = (self.u.components[0] - self.problemdata["Solution"])*(self.u.components[0] - self.problemdata["Solution"])
+            l2diff = sqrt(IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,coef_error_sqr,order=2*self.order+2))
+            print("l2diff = {}".format(l2diff))
+            self.mesh.UnsetDeformation()
+        return l2diff
+
+def PrintHDGTimers():            
+    ### print hdg-intergrator timers
+    hdgtimers = [a for a in Timers() if "HDG" in a["name"]]
+    hdgtimers = sorted(hdgtimers, key=lambda k: k["time"], reverse=True)
+    for timer in hdgtimers:
+        print("{:<45}: {:6} cts, {:.8f} s, {:.6e} s(avg.)"
+              .format(timer["name"],timer["counts"],timer["time"],timer["time"]/timer["counts"]))
+
+import argparse        
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Solve Laplace-Betrami example problem.')
+    parser.add_argument('--reflvls', metavar='N', type=int, default=2, help='number of refinement levels (>=1)')
+    parser.add_argument('--vtkout', dest='vtkout', action='store_true', help='enable VTKOutput')
+    parser.add_argument('--no-vtkout', dest='vtkout', action='store_false', help='disable VTKOutput')
+    parser.set_defaults(vtkout=False)
+    args = parser.parse_args()
+    options = vars(args)
+    print("call arguments: ", options)
+
+    problemdata = Make3DProblem()
+    discretization = Discretization(problemdata)
+
+    orders = [1,2,3,4,5]
+    l2diffresults = [] 
+    for i in range(options['reflvls']):
+        l2diffresults.append([])
+        if (i!=0):
+            discretization.mesh.Refine()
+        for order in orders:
+            print("""
+            ------------------------------------------------------------------
+               refinement level = {}, order = {}
+            ------------------------------------------------------------------
+            """.format(i,order))
+            
+            problemdata["Order"] = order
+            result = False
+            while result == False:
+                try:
+                    discretization = Discretization(problemdata)
+                    l2diff = discretization.SolveProblem()
+                    l2diffresults[i].append(l2diff)
+                    result = True
+                except Exception as e:
+                    print ("Exception = ".format(e))
+#                    l2diffresults[i].append(None)
+                    result = False
+            
+            print(l2diffresults)
+            print(list(map(list, zip(*l2diffresults))))
+        RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
+    print(list(map(list, zip(*l2diffresults))))
+    
+    #Draw(discretization.u.components[0],discretization.mesh,"u",draw_surf=False)
+
+    if (options['vtkout']):
+        vtk = VTKOutput(ma=discretization.mesh,coefs=[discretization.lsetmeshadap.lset_p1,
+                                       discretization.lsetmeshadap.deform,u.components[0]],
+                        names=["lsetp1","deform","u"],filename="vtkout_",subdivision=1)
+        vtk.Do()
 
     
-Draw(u.components[0],mesh,"u",draw_surf=False)
+#observations:
+# 1. for p=1 it seems that lsetcurving p+1=2 is necessary to achieve optimal order convergence (not true for p>1)
+# 2. l2order=p+1, facetorder=p gives stable result (optimal order, i.e. p+1 in the l2-norm) - however p+1 together with highest_order_dc is not stable yet (?!)
 
-vtk = VTKOutput(ma=mesh,coefs=[lsetmeshadap.lset_p1,lsetmeshadap.deform,u.components[0]],
-                names=["lsetp1","deform","u"],filename="vtkout_",subdivision=1)
-vtk.Do()
-
-
-### print hdg-intergrator timers
-hdgtimers = [a for a in Timers() if "HDG" in a["name"]]
-hdgtimers = sorted(hdgtimers, key=lambda k: k["time"], reverse=True)
-for timer in hdgtimers:
-    print("{:<45}: {:6} cts, {:.8f} s, {:.6e} s(avg.)"
-          .format(timer["name"],timer["counts"],timer["time"],timer["time"]/timer["counts"]))
+    
+#[[0.8096913452313329, 0.3084025787817622, 0.11076925787924134, 0.05982871422924973], [0.11632850331154547, None, None, None], [0.03555471657060665, None, 0.00017200706247022353, None], [0.009986051916781962, 0.00018175774467425786, 7.737886013822911e-06, 3.3478037062295224e-07]]
+#[[0.8096913452313312, 0.30840257878176336, 0.11076925787924342, 0.059828714229247626], [0.11632850331154539, 0.011519875896363744, 0.0013504456177305935, None], [0.03555471657059834, 0.002877418615964477, 0.00017200706247589748, 1.156914966874773e-05], [0.009986051916787501, None, 7.737886032776415e-06, None], [0.0025838732528165125, 2.249281684957255e-05, None, None]]
+#[[0.8096913452313316, 0.30840257878176175, 0.11076925787923653, 0.059828714229247425], [0.11632850331153247, 0.011519875896377813, 0.001350445617732032, 0.0001810449912049936], [0.03555471657059834, 0.0028774186159388226, 0.00017200706248403185, 1.1569149801119469e-05], [0.00998605191678209, 0.00018175774468649536, 7.737886033220925e-06, 3.3478017691898923e-07]]
