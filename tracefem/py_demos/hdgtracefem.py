@@ -26,8 +26,6 @@ def Make3DProblem():
     cube = CSGeometry()
     cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
     mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
-    mesh.Refine()
-    mesh.Refine()
 
     problem = {"Diffusion" : 1.0,
                "Convection" : None,
@@ -237,7 +235,7 @@ if __name__ == "__main__":
     problemdata = Make3DProblem()
     discretization = Discretization(problemdata)
 
-    orders = [3]
+    orders = [1,2,3,4,5]
     l2diffresults = []
     resultdict = {}
     for i in range(options['reflvls']):
