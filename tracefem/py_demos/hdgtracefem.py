@@ -26,6 +26,8 @@ def Make3DProblem():
     cube = CSGeometry()
     cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
     mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
+    mesh.Refine()
+    mesh.Refine()
 
     problem = {"Diffusion" : 1.0,
                "Convection" : None,
@@ -122,6 +124,7 @@ class Discretization(object):
             with TaskManager():
                 self.Vh.Update()
                 self.Vh_tr.Update()
+
         for i in range(self.Vh_tr.ndof):
             if (self.Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
                 self.Vh_tr.FreeDofs()[i] = 0
@@ -142,6 +145,16 @@ class Discretization(object):
 
             self.UpdateSpace()
             
+            if (self.problemdata["HDG"]):
+                Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
+                Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"], dgjumps=True)
+                results["dg_ndofs"] = Vh_l2_tr.ndof
+                b = BilinearForm(Vh_l2_tr)
+                b.Assemble()
+                results["dg_nze"] = b.mat.AsVector().size
+                
+
+
             results["total_ndofs"] = self.Vh_tr.ndof
             global_ndofs = self.Vh_tr.ndof
             for i in range(self.Vh_tr.ndof):
@@ -210,6 +223,7 @@ def PrintHDGTimers():
               .format(timer["name"],timer["counts"],timer["time"],timer["time"]/timer["counts"]))
 
 import argparse        
+import pickle
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Solve Laplace-Betrami example problem.')
     parser.add_argument('--reflvls', metavar='N', type=int, default=2, help='number of refinement levels (>=1)')
@@ -223,7 +237,7 @@ if __name__ == "__main__":
     problemdata = Make3DProblem()
     discretization = Discretization(problemdata)
 
-    orders = [1,2]
+    orders = [3]
     l2diffresults = []
     resultdict = {}
     for i in range(options['reflvls']):
@@ -251,10 +265,13 @@ if __name__ == "__main__":
 #                    l2diffresults[i].append(None)
                     result = False
             
+            with open('results.pkl', 'wb') as f:
+                pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
             print(l2diffresults)
             print(list(map(list, zip(*l2diffresults))))
         RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
     print(list(map(list, zip(*l2diffresults))))
+
 
     for i in range(options['reflvls']):
         for order in orders:
@@ -263,12 +280,10 @@ if __name__ == "__main__":
     # print(resultdict)
     #Draw(discretization.u.components[0],discretization.mesh,"u",draw_surf=False)
     
-    import pickle
-    with open('results.pkl', 'wb') as f:
-        pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
 
     # with open('results.pkl', 'rb') as f:
     #     resultdict = pickle.load(f)
+
     PrintHDGTimers()
     
     if (options['vtkout']):

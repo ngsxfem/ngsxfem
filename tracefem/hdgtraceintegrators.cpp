@@ -128,7 +128,7 @@ namespace ngfem
         CompositeQuadratureRule<D-1> cquad2d;
         xgeom = XLocalGeometryInformation::Create(etfacet, ET_POINT,
                                                   *lset_eval, cquad2d, lh,
-                                                  2*order, 0, 0, 0);
+                                                  2*order, 0, 0, 0); // at least order - 1 is needed here...
         DOMAIN_TYPE facet_domain;
 
         {
