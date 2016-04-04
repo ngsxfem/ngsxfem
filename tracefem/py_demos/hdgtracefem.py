@@ -26,11 +26,6 @@ def Make3DProblem():
     cube = CSGeometry()
     cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
     mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
-    # mesh.Refine()
-    # mesh.Refine()
-    # mesh.Refine()
-    # mesh.Refine()
-    # mesh.Refine()
 
     problem = {"Diffusion" : 1.0,
                "Convection" : None,
@@ -42,8 +37,10 @@ def Make3DProblem():
                "VolumeStabilization" : 1,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "Lambda" : 10,
+               "Iterative" : False,
                "Order" : 2,
-               "Mesh" : mesh
+               "Mesh" : mesh,
+               "HDG": True
               }
     return problem;
 
@@ -67,56 +64,100 @@ class Discretization(object):
 
         ### Setting up discrete variational problem
         with TaskManager():
-            self.Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
-            Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"])
-            self.Vh_facet = FacetFESpace(self.mesh, order=self.order, dirichlet=[], flags = {"highest_order_dc" : False})
-            Vh_facet_tr = TraceFESpace(self.mesh, self.Vh_facet, problemdata["Levelset"])
-            self.Vh_tr = FESpace([Vh_l2_tr,Vh_facet_tr])
-  
-        self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})
-        if (problemdata["Reaction"] != None):
-            self.a.components[0] += TraceMass(problemdata["Reaction"])
-        if (problemdata["Diffusion"] != None):
-            self.a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"],
-                                         param_IP_edge = problemdata["Lambda"],
-                                         param_normaldiffusion = problemdata["VolumeStabilization"],
-                                         param_IP_facet = problemdata["Lambda"])
-  
-        self.f = LinearForm(self.Vh_tr)
-        if (problemdata["Source"] != None):
-            self.f.components[0] += TraceSource(problemdata["Source"])
-  
-        self.c = Preconditioner(self.a, type="local", flags= { "test" : True })
-  
-        self.u = GridFunction(self.Vh_tr)
-  
+            if self.problemdata["HDG"]:
+                self.Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
+                Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"])
+                self.Vh_facet = FacetFESpace(self.mesh, order=self.order, dirichlet=[], flags = {"highest_order_dc" : False})
+                Vh_facet_tr = TraceFESpace(self.mesh, self.Vh_facet, problemdata["Levelset"])
+                self.Vh_tr = FESpace([Vh_l2_tr,Vh_facet_tr])
+                
+                self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})
+                if (problemdata["Reaction"] != None):
+                    self.a.components[0] += TraceMass(problemdata["Reaction"])
+                if (problemdata["Diffusion"] != None):
+                    self.a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"],
+                                                      param_IP_edge = problemdata["Lambda"],
+                                                      param_normaldiffusion = problemdata["VolumeStabilization"],
+                                                      param_IP_facet = problemdata["Lambda"])
+                
+                self.f = LinearForm(self.Vh_tr)
+                if (problemdata["Source"] != None):
+                    self.f.components[0] += TraceSource(problemdata["Source"])
+                if (not problemdata["VolumeStabilization"]):
+                    raise Exception(" cannot turn off VolumeStabilization with HDG ")
+                if (problemdata["Convection"] != None):
+                    raise Exception(" No HDG convection yet ")
+            else:
+                self.Vh = H1(self.mesh, order=self.order, dirichlet=[])
+                self.Vh_tr = TraceFESpace(self.mesh, self.Vh, problemdata["Levelset"])
 
+                self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})
+                if (problemdata["Reaction"] != None):
+                    self.a += TraceMass(problemdata["Reaction"])
+                if (problemdata["Diffusion"] != None):
+                    self.a += TraceLaplaceBeltrami(problemdata["Diffusion"])
+                if (problemdata["VolumeStabilization"]!=None):
+                    self.a += NormalLaplaceStabilization(problemdata["Diffusion"]*problemdata["VolumeStabilization"],
+                                                         self.lsetmeshadap.lset_p1.Deriv())
+                if (problemdata["Convection"] != None):
+                    self.a += TraceConvection(problemdata["Convection"])
+
+                self.f = LinearForm(self.Vh_tr)
+                if (problemdata["Source"] != None):
+                    self.f += TraceSource(problemdata["Source"])
+            if (self.problemdata["Iterative"]):
+                self.c = Preconditioner(self.a, type="local", flags= { "test" : True })
+            else:
+                self.c = Preconditioner(self.a, type="direct", flags= { "test" : True })
+                
+            self.u = GridFunction(self.Vh_tr)
+  
+    def UpdateSpace(self):
+        if self.problemdata["HDG"]:
+            with TaskManager():
+                self.Vh_facet.Update()
+                self.Vh_l2.Update()
+                self.Vh_tr.Update()
+        else:
+            with TaskManager():
+                self.Vh.Update()
+                self.Vh_tr.Update()
+        for i in range(self.Vh_tr.ndof):
+            if (self.Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
+                self.Vh_tr.FreeDofs()[i] = 0
+
+    def VolumeSolution(self):
+        if self.problemdata["HDG"]:
+            return self.u.components[0]
+        else:
+            return self.u
+                    
     def SolveProblem(self):
         with TaskManager():
-        
+            results = {}
             # Calculation of the deformation:
             deformation = discretization.lsetmeshadap.CalcDeformation(self.problemdata["Levelset"])
             # Applying the mesh deformation
             self.mesh.SetDeformation(deformation)
+
+            self.UpdateSpace()
             
-            self.Vh_facet.Update()
-            self.Vh_l2.Update()
-            self.Vh_tr.Update()
-            
+            results["total_ndofs"] = self.Vh_tr.ndof
+            global_ndofs = self.Vh_tr.ndof
             for i in range(self.Vh_tr.ndof):
             #     print (str(i) + " : " + str(Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF))
                 if (self.Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
-                    self.Vh_tr.FreeDofs()[i] = 0
+                    # self.Vh_tr.FreeDofs()[i] = 0
+                    global_ndofs = global_ndofs - 1
+            results["global_ndofs"] = global_ndofs
             
             self.u.Update()
             self.a.Assemble(heapsize=10000000);
             self.f.Assemble();
             
             self.c.Update();
-            
+
             solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-9, maxsteps=200000)
-            
-            # solvea = self.a.mat.Inverse(self.Vh_tr.FreeDofs())
             # u.vec.data = ainv * f.vec
             
             if self.static_condensation:
@@ -126,17 +167,39 @@ class Discretization(object):
                 self.u.vec.data += self.a.inner_solve * self.f.vec
                 self.u.vec.data += self.a.harmonic_extension * self.u.vec
                 
-            # global last_num_its
-            last_num_its = solvea.GetSteps()
             print("nze: " + str(self.a.mat.AsVector().size))
+            results["nze"] = self.a.mat.AsVector().size
+
+            last_num_its = solvea.GetSteps()
             print("number of iterations: " + str(last_num_its))
+            results["numits"] = last_num_its
             
-            
-            coef_error_sqr = (self.u.components[0] - self.problemdata["Solution"])*(self.u.components[0] - self.problemdata["Solution"])
+            coef_error_sqr = (self.VolumeSolution() - self.problemdata["Solution"])*(self.VolumeSolution() - self.problemdata["Solution"])
             l2diff = sqrt(IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,coef_error_sqr,order=2*self.order+2))
             print("l2diff = {}".format(l2diff))
+            results["l2err"] = l2diff
+
+
+            nhelp = self.lsetmeshadap.lset_p1.Deriv()
+            n = 1.0/sqrt(nhelp*nhelp) * nhelp
+            un = self.VolumeSolution().Deriv()*n
+            coef_gradnormal_error = un*un
+            h1normdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradnormal_error,order=2*self.order))
+            print("h1normerr = {}".format(h1normdiff))
+            results["h1normerr"] = h1normdiff
+
+            tanggrad = self.VolumeSolution().Deriv() - un * n
+            coef_gradtang_error = (tanggrad - self.problemdata["GradSolution"])*(tanggrad - self.problemdata["GradSolution"])
+            h1tangdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradtang_error,order=2*self.order))
+            print("h1tangerr = {}".format(h1tangdiff))
+            results["h1tangerr"] = h1tangdiff
+
+            maxdistlset = self.lsetmeshadap.CalcMaxDistance(self.problemdata["Levelset"]);
+            print("maxdist = {}".format(maxdistlset))
+            results["maxdist"] = maxdistlset
+            
             self.mesh.UnsetDeformation()
-        return l2diff
+        return results
 
 def PrintHDGTimers():            
     ### print hdg-intergrator timers
@@ -160,8 +223,9 @@ if __name__ == "__main__":
     problemdata = Make3DProblem()
     discretization = Discretization(problemdata)
 
-    orders = [1,2,3,4,5]
-    l2diffresults = [] 
+    orders = [1,2]
+    l2diffresults = []
+    resultdict = {}
     for i in range(options['reflvls']):
         l2diffresults.append([])
         if (i!=0):
@@ -178,8 +242,9 @@ if __name__ == "__main__":
             while result == False:
                 try:
                     discretization = Discretization(problemdata)
-                    l2diff = discretization.SolveProblem()
-                    l2diffresults[i].append(l2diff)
+                    resultdict[(i,order)] = discretization.SolveProblem()
+                    print("simulation results:\n {}".format(resultdict[(i,order)]))
+                    l2diffresults[i].append(resultdict[(i,order)]["l2err"])
                     result = True
                 except Exception as e:
                     print ("Exception = ".format(e))
@@ -190,9 +255,22 @@ if __name__ == "__main__":
             print(list(map(list, zip(*l2diffresults))))
         RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
     print(list(map(list, zip(*l2diffresults))))
-    
-    #Draw(discretization.u.components[0],discretization.mesh,"u",draw_surf=False)
 
+    for i in range(options['reflvls']):
+        for order in orders:
+            print("({},{}): {}".format(i,order,resultdict[(i,order)]))
+            
+    # print(resultdict)
+    #Draw(discretization.u.components[0],discretization.mesh,"u",draw_surf=False)
+    
+    import pickle
+    with open('results.pkl', 'wb') as f:
+        pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
+
+    # with open('results.pkl', 'rb') as f:
+    #     resultdict = pickle.load(f)
+    PrintHDGTimers()
+    
     if (options['vtkout']):
         vtk = VTKOutput(ma=discretization.mesh,coefs=[discretization.lsetmeshadap.lset_p1,
                                        discretization.lsetmeshadap.deform,u.components[0]],
@@ -204,7 +282,11 @@ if __name__ == "__main__":
 # 1. for p=1 it seems that lsetcurving p+1=2 is necessary to achieve optimal order convergence (not true for p>1)
 # 2. l2order=p+1, facetorder=p gives stable result (optimal order, i.e. p+1 in the l2-norm) - however p+1 together with highest_order_dc is not stable yet (?!)
 
-    
-#[[0.8096913452313329, 0.3084025787817622, 0.11076925787924134, 0.05982871422924973], [0.11632850331154547, None, None, None], [0.03555471657060665, None, 0.00017200706247022353, None], [0.009986051916781962, 0.00018175774467425786, 7.737886013822911e-06, 3.3478037062295224e-07]]
-#[[0.8096913452313312, 0.30840257878176336, 0.11076925787924342, 0.059828714229247626], [0.11632850331154539, 0.011519875896363744, 0.0013504456177305935, None], [0.03555471657059834, 0.002877418615964477, 0.00017200706247589748, 1.156914966874773e-05], [0.009986051916787501, None, 7.737886032776415e-06, None], [0.0025838732528165125, 2.249281684957255e-05, None, None]]
-#[[0.8096913452313316, 0.30840257878176175, 0.11076925787923653, 0.059828714229247425], [0.11632850331153247, 0.011519875896377813, 0.001350445617732032, 0.0001810449912049936], [0.03555471657059834, 0.0028774186159388226, 0.00017200706248403185, 1.1569149801119469e-05], [0.00998605191678209, 0.00018175774468649536, 7.737886033220925e-06, 3.3478017691898923e-07]]
+
+#L2diff
+#p1-> [   0.8096913452313316,      0.30840257878176175,    0.11076925787923653,   0.059828714229247425],
+#p2-> [  0.11632850331153247,     0.011519875896377813,   0.001350445617732032,  0.0001810449912049936],
+#p3-> [  0.03555471657059834,    0.0028774186159388226, 0.00017200706248403185, 1.1569149801119469e-05],
+#p4-> [  0.00998605191678209,   0.00018175774468649536,  7.737886033220925e-06, 3.3478017691898923e-07],
+#p5-> [0.0025838731998405035,   2.2492819637261814e-05,  9.017758296511354e-07,                       ],
+
