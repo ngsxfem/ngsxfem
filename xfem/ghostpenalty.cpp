@@ -540,7 +540,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("NormalLaplaceTraceIntegrator::CalcElementMatrix");
+    static Timer timer ("TraceFEM:dudn-stabInt::CalcElementMatrix");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =
@@ -559,7 +559,7 @@ namespace ngfem
     
     int p = scafe.Order();
 
-    IntegrationRule ir(scafe.ElementType(), 2*p-2);
+    IntegrationRule ir(scafe.ElementType(), 4*p-2);
 
     // loop over integration points
     for (int i = 0 ; i < ir.GetNIP(); i++)
