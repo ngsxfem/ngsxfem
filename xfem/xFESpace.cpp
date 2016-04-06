@@ -180,6 +180,7 @@ namespace ngcomp
     // cout << "Constructor of XFESpace begin" << endl;
     spacetime = flags.GetDefineFlag("spacetime");
     empty = flags.GetDefineFlag("empty");
+    fenocut = flags.GetDefineFlag("fenocut");
     // if (empty)
     //     cout << " EMPTY XFESPACE active..." << endl;
     ti.first = flags.GetNumFlag("t0",0.0);
@@ -676,6 +677,7 @@ namespace ngcomp
                                                                             2*order_space+2, 2*order_time, 
                                                                             ref_lvl_space, ref_lvl_time);
       // DOMAIN_TYPE dt;
+      if(! fenocut)
       {
         static Timer timer ("XFESpace::GetFE::MakeQuadRule");
         RegionTimer regq (timer);
@@ -777,6 +779,7 @@ namespace ngcomp
                                                                             *cquad, lh, 
                                                                             2*order_space+2, 2*order_time, 
                                                                             ref_lvl_space, ref_lvl_time);
+      if(! fenocut)
       {
         static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
         RegionTimer regq (timer);

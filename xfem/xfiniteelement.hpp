@@ -83,6 +83,11 @@ namespace ngfem
 
     const FlatArray<DOMAIN_TYPE>& GetSignsOfDof() const; 
 
+    bool HasFlatLocalGeometry() const 
+    {
+      return !fxgeom.empty;
+    }
+
     const FlatXLocalGeometryInformation & GetFlatLocalGeometry() const 
     { 
       if (fxgeom.empty)

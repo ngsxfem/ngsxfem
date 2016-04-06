@@ -56,8 +56,9 @@ namespace ngcomp
 
     double vmax = 1e99;
 
-    bool trace = false;
-    bool empty = false;
+    bool trace = false;   // xfespace is a trace fe space (special case for further optimization (CouplingDofTypes...))
+    bool fenocut = false; // finite element does not get a cut geometry (efficiency...)
+    bool empty = false;   // no d.o.f.s but finite element has cut geometry information (will become obsolete at some point, hopefully)
   public:
     XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags): FESpace(ama, flags){;}
     
