@@ -220,13 +220,13 @@ void ExportNgsx()
                              shared_ptr<CoefficientFunction> cf_neg,
                              shared_ptr<CoefficientFunction> cf_pos,
                              shared_ptr<CoefficientFunction> cf_interface,
-                             int order, int subdivlvl, bp::dict domains)
+                             int order, int subdivlvl, bp::dict domains, int heapsize)
                           {
                             static Timer timer ("IntegrateX");
                             static Timer timercutgeom ("IntegrateX::MakeCutGeom");
                             static Timer timerevalcoef ("IntegrateX::EvalCoef");
                             RegionTimer reg (timer);
-                            LocalHeap lh(1000000, "lh-Integrate");
+                            LocalHeap lh(heapsize, "lh-Integrate");
                             
                             Flags flags = bp::extract<Flags> (domains)();
                             
@@ -426,7 +426,7 @@ void ExportNgsx()
            bp::arg("cf_neg")=make_shared<ConstantCoefficientFunction>(0.0), 
            bp::arg("cf_pos")=make_shared<ConstantCoefficientFunction>(0.0),
            bp::arg("cf_interface")=make_shared<ConstantCoefficientFunction>(0.0),
-           bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict()))
+           bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict(), bp::arg("heapsize")=1000000))
     ;
   
   

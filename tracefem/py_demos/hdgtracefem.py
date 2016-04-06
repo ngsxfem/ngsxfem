@@ -189,7 +189,7 @@ class Discretization(object):
         results["numits"] = last_num_its
         
         coef_error_sqr = (self.VolumeSolution() - self.problemdata["Solution"])*(self.VolumeSolution() - self.problemdata["Solution"])
-        l2diff = sqrt(IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,coef_error_sqr,order=2*self.order+2))
+        l2diff = sqrt(IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,coef_error_sqr,order=2*self.order+2,heapsize=10000000))
         print("l2diff = {}".format(l2diff))
         results["l2err"] = l2diff
         
@@ -198,13 +198,13 @@ class Discretization(object):
         n = 1.0/sqrt(nhelp*nhelp) * nhelp
         un = self.VolumeSolution().Deriv()*n
         coef_gradnormal_error = un*un
-        h1normdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradnormal_error,order=2*self.order))
+        h1normdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradnormal_error,order=2*self.order,heapsize=10000000))
         print("h1normerr = {}".format(h1normdiff))
         results["h1normerr"] = h1normdiff
         
         tanggrad = self.VolumeSolution().Deriv() - un * n
         coef_gradtang_error = (tanggrad - self.problemdata["GradSolution"])*(tanggrad - self.problemdata["GradSolution"])
-        h1tangdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradtang_error,order=2*self.order))
+        h1tangdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradtang_error,order=2*self.order,heapsize=10000000))
         print("h1tangerr = {}".format(h1tangdiff))
         results["h1tangerr"] = h1tangdiff
         
