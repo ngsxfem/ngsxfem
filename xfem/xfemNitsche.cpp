@@ -10,7 +10,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
+    static Timer timer ("XNitscheInt::CalcElMat");
     RegionTimer reg (timer);
 
     const ScalarFiniteElement<D> * scafe;
@@ -216,7 +216,7 @@ namespace ngfem
 		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
+    static Timer timer ("XNitscheInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 
@@ -431,7 +431,7 @@ namespace ngfem
 		     FlatVector<double> elvec,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("XNitscheIntegrator::CalcElementMatrix");
+    static Timer timer ("XNitscheInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 
@@ -757,7 +757,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXNitscheIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXNitscheInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 
@@ -1049,7 +1049,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("FictXNitscheIntegrator::CalcElementMatrix");
+    static Timer timer ("FictXNitscheInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 

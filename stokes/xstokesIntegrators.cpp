@@ -10,7 +10,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("XStokesIntegrator::CalcElementMatrix");
+    static Timer timer ("XStokesInt::CalcElMat");
     RegionTimer reg (timer);
 
 

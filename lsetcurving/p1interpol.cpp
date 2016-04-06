@@ -24,7 +24,7 @@ namespace ngcomp
 
   void InterpolateP1::Do(LocalHeap & lh)
   {
-    static Timer time_fct ("InterpolateP1::Do");
+    static Timer time_fct ("LsetCurv::InterpolateP1::Do");
     RegionTimer reg (time_fct);
     
     int nv=ma->GetNV();

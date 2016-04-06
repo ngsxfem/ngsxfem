@@ -102,7 +102,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("SDXIntegrator::CalcElementMatrix");
+    static Timer timer ("SDXInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 

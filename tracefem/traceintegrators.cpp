@@ -11,7 +11,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("TraceMassIntegrator::CalcElementMatrix");
+    static Timer timer ("TraceMassInt::CalcElMat");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =
@@ -118,7 +118,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("TraceLaplaceIntegrator::CalcElementMatrix");
+    static Timer timer ("TraceLaplaceInt::CalcElMat");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =
@@ -178,7 +178,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("TraceLaplaceBeltramiIntegrator::CalcElementMatrix");
+    static Timer timer ("TraceLaplaceBeltramiInt::CalcElMat");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =
@@ -235,7 +235,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("TraceConvectionIntegrator::CalcElementMatrix");
+    static Timer timer ("TraceConvectionInt::CalcElMat");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =
@@ -293,7 +293,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("TraceDivIntegrator::CalcElementMatrix");
+    static Timer timer ("TraceDivInt::CalcElMat");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =

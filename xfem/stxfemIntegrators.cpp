@@ -10,7 +10,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXMassIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXMassInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 
@@ -103,7 +103,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXLaplaceIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXLaplaceInt::CalcElMat");
     RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -196,7 +196,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXTimeDerivativeIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXTimeDerivativeInt::CalcElMat");
     RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -304,7 +304,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXConvectionIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXConvectionInt::CalcElMat");
     RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -434,7 +434,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXLaplaceIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXLaplaceInt::CalcElMat");
     RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -542,7 +542,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXTraceMassIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXTraceMassInt::CalcElMat");
     RegionTimer reg (timer);
     const CompoundFiniteElement & cfel = 
       dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -836,7 +836,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("SpaceTimeXRobinIntegrator::CalcElementMatrix");
+    static Timer timer ("SpaceTimeXRobinInt::CalcElMat");
     RegionTimer reg (timer);
 
     const CompoundFiniteElement & cfel = 

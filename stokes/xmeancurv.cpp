@@ -10,7 +10,7 @@ namespace ngfem
                      FlatVector<double> elvec,
                      LocalHeap & lh) const
   {
-    static Timer timer ("XmodLBMeanCurvIntegrator::CalcElementMatrix");
+    static Timer timer ("XmodLBMeanCurvInt::CalcElMat");
     RegionTimer reg (timer);
 
 

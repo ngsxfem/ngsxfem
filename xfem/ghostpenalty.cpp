@@ -540,7 +540,7 @@ namespace ngfem
 		     FlatMatrix<double> elmat,
 		     LocalHeap & lh) const
   {
-    static Timer timer ("TraceFEM:dudn-stabInt::CalcElementMatrix");
+    static Timer timer ("TraceFEM:dudn-stabInt::CalcElMat");
     RegionTimer reg (timer);
 
     const XFiniteElement * xfe =

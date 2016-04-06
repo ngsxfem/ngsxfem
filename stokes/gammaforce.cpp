@@ -10,7 +10,7 @@ namespace ngfem
                      FlatVector<double> elvec,
                      LocalHeap & lh) const
   {
-    static Timer timer ("GammaForceIntegrator::CalcElementMatrix");
+    static Timer timer ("GammaForceInt::CalcElMat");
     RegionTimer reg (timer);
 
 

@@ -10,7 +10,7 @@ namespace ngcomp
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & clh)
   {
-    static Timer time_fct ("ProjectShift");
+    static Timer time_fct ("LsetCurv::ProjectShift");
     RegionTimer reg (time_fct);
     
     auto ma = lset_p1->GetMeshAccess();

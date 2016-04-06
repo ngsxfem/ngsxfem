@@ -138,7 +138,7 @@ namespace ngfem
                                                          FlatMatrix<double> elmat,
                                                          LocalHeap & lh) const
   {
-    static Timer time_fct ("RestrictedMassIntegrator<D>::CalcElementMatrix");
+    static Timer time_fct ("RestrictedMassInt::CalcElMat");
     RegionTimer reg (time_fct);
     
     elmat = 0.0;

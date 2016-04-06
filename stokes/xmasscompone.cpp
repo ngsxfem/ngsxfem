@@ -10,7 +10,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("XMassCompOneIntegrator::CalcElementMatrix");
+    static Timer timer ("XMassCompOneInt::CalcElMat");
     RegionTimer reg (timer);
 
     const ScalarFiniteElement<D> * scafe;
