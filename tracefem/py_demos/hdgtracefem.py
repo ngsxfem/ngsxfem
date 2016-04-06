@@ -239,7 +239,7 @@ if __name__ == "__main__":
     with TaskManager():
         problemdata = Make3DProblem()
 
-        orders = [4]
+        orders = [2,3,4,5]
         l2diffresults = []
         resultdict = {}
         for i in range(options['reflvls']):
@@ -289,6 +289,7 @@ if __name__ == "__main__":
     PrintTimers(substring="HDG")
     PrintTimers(substring="Trace")
     PrintTimers(substring="XFE")
+    PrintTimers(substring="IntegrateX")
     PrintTimers(substring="LsetCurv")
     
     if (options['vtkout']):
