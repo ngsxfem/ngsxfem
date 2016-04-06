@@ -69,9 +69,9 @@ class Discretization(object):
         ### Setting up discrete variational problem
         if self.problemdata["HDG"]:
             self.Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
-            Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"])
+            Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"], postpone_update = True)
             self.Vh_facet = FacetFESpace(self.mesh, order=self.order, dirichlet=[], flags = {"highest_order_dc" : False})
-            Vh_facet_tr = TraceFESpace(self.mesh, self.Vh_facet, problemdata["Levelset"])
+            Vh_facet_tr = TraceFESpace(self.mesh, self.Vh_facet, problemdata["Levelset"], postpone_update = True)
             self.Vh_tr = FESpace([Vh_l2_tr,Vh_facet_tr])
             
             self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})

@@ -3,14 +3,14 @@ from ngsolve.fem import *
 from libngsxfem_py.xfem import *
 import libngsxfem_tracefem
 
-def TraceFESpace(mesh, stdfes=None, levelset=None, dgjumps=False, ref_space=0 ):
+def TraceFESpace(mesh, stdfes=None, levelset=None, dgjumps=False, ref_space=0, postpone_update = False ):
     fes = FESpace ("xfespace", mesh=mesh, flags = {"trace" : True, "dgjumps" : dgjumps, "ref_space" : ref_space})
     Vh_tr = CastToXFESpace (fes)
     if (stdfes!=None):
         Vh_tr.SetBaseFESpace(stdfes)
     if (levelset!=None):
         Vh_tr.SetLevelSet(levelset)
-    if (levelset==None or stdfes==None):
+    if (postpone_update or levelset==None or stdfes==None):
         print ("TraceFESpace-Update: postponed")
     else:
         Vh_tr.Update()
