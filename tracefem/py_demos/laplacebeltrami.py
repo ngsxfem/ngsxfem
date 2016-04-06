@@ -18,6 +18,7 @@ from xfem.lsetcurv import *
 # For TraceFEM-Integrators (convenience)
 from xfem.tracefem import *
 
+h = specialcf.mesh_size
 # 2D: circle configuration
 def Make2DProblem():
     from netgen.geom2d import SplineGeometry
@@ -78,7 +79,7 @@ if (problemdata["Reaction"] != None):
 if (problemdata["Diffusion"] != None):
     a += TraceLaplaceBeltrami(problemdata["Diffusion"])
 if (problemdata["VolumeStabilization"]):
-    a += NormalLaplaceStabilization(problemdata["Diffusion"],lsetmeshadap.lset_p1.Deriv())
+    a += NormalLaplaceStabilization(problemdata["Diffusion"]*1.0/h,lsetmeshadap.lset_p1.Deriv())
 if (problemdata["Convection"] != None):
     a += TraceConvection(problemdata["Convection"])
 

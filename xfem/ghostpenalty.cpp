@@ -585,7 +585,7 @@ namespace ngfem
         const double h = D==2 ? sqrt(mip.GetMeasure()) : cbrt(mip.GetMeasure());
         
         // elmat_{i,j} += (fac*lam) * InnerProduct (grad shape_i, grad shape_j)
-        elmat += (fac/h*lam) * dshapen * Trans(dshapen);
+        elmat += (fac*lam) * dshapen * Trans(dshapen);
         
       }
 

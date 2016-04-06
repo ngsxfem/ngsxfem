@@ -20,6 +20,7 @@ from xfem.tracefem import *
 # For HDGTraceFEM-Integrators (convenience)
 from xfem.hdgtracefem import *
 
+h = specialcf.mesh_size
 # 3D: circle configuration
 def Make3DProblem():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
@@ -36,7 +37,7 @@ def Make3DProblem():
                "Solution" : sin(pi*z),
                "GradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
                "SurfGradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
-               "VolumeStabilization" : 1,
+               "VolumeStabilization" : 1.0/h,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "GradLevelset" : CoefficientFunction((x,y,z)),
                "Lambda" : 10,
@@ -110,9 +111,9 @@ class Discretization(object):
             if (problemdata["Source"] != None):
                 self.f += TraceSource(problemdata["Source"])
         if (self.problemdata["Iterative"]):
-            self.c = Preconditioner(self.a, type="local", flags= { "test" : True })
+            self.c = Preconditioner(self.a, type="local")
         else:
-            self.c = Preconditioner(self.a, type="direct", flags= { "test" : True })
+            self.c = Preconditioner(self.a, type="direct")
             
         self.u = GridFunction(self.Vh_tr)
   
@@ -239,7 +240,7 @@ if __name__ == "__main__":
     with TaskManager():
         problemdata = Make3DProblem()
 
-        orders = [2,3,4,5]
+        orders = [1,2,3,4,5]
         l2diffresults = []
         resultdict = {}
         for i in range(options['reflvls']):

@@ -18,13 +18,13 @@ namespace ngfem
   {
     shared_ptr<CoefficientFunction> coef_alpha;
     double param_IP_edge;
-    double param_normaldiff;
+    shared_ptr<CoefficientFunction> coef_param_normaldiff;
     double param_IP_facet;
   public:
     HDGTraceLaplaceBeltramiIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs)
       : coef_alpha(coeffs[0]),
         param_IP_edge(coeffs[1] -> EvaluateConst()),
-        param_normaldiff(coeffs[2] -> EvaluateConst()),
+        coef_param_normaldiff(coeffs[2]),
         param_IP_facet(coeffs[3] -> EvaluateConst())
     {;}
     virtual ~HDGTraceLaplaceBeltramiIntegrator(){ ; };

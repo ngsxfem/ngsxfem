@@ -245,7 +245,10 @@ namespace ngfem
                 double alpha = coef_alpha -> Evaluate (mip);
                 
 	        Mat<D> inv_jac = mip.GetJacobianInverse();
-	        double det = mip.GetMeasure();
+
+                double param_normaldiff = coef_param_normaldiff -> Evaluate (mip);
+
+                double det = mip.GetMeasure();
 
 	        Vec<D> facet_normal = det * Trans (inv_jac) * facet_normal_ref;       
 	        double len = L2Norm (facet_normal);
@@ -295,6 +298,7 @@ namespace ngfem
         // calculate Jacobi matrix in the integration point
         MappedIntegrationPoint<D,D> mip(ir[i], eltrans);
 
+        double param_normaldiff = coef_param_normaldiff -> Evaluate (mip);
         // alpha(x) (diffusion coefficient)
         double alpha = coef_alpha -> Evaluate (mip);
 
