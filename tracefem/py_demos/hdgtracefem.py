@@ -287,8 +287,9 @@ if __name__ == "__main__":
     #     resultdict = pickle.load(f)
 
     PrintTimers(substring="HDG")
-    PrintTimers(substring="TraceFEM")
+    PrintTimers(substring="Trace")
     PrintTimers(substring="XFE")
+    PrintTimers(substring="LsetCurv")
     
     if (options['vtkout']):
         vtk = VTKOutput(ma=discretization.mesh,coefs=[discretization.lsetmeshadap.lset_p1,

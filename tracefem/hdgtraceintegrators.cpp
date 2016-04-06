@@ -12,7 +12,7 @@ namespace ngfem
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    static Timer timer ("HDGTraceLBInt::CalcElementMatrix");
+    static Timer timer ("HDGTraceLBInt::CalcElMat");
     RegionTimer reg (timer);
 
     static Timer timer_facet_prepare1 ("HDGTraceLBInt::facetprepare 1");
