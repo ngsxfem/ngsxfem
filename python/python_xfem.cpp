@@ -222,8 +222,12 @@ void ExportNgsx()
                              shared_ptr<CoefficientFunction> cf_interface,
                              int order, int subdivlvl, bp::dict domains)
                           {
+                            static Timer timer ("IntegrateX");
+                            static Timer timercutgeom ("IntegrateX::MakeCutGeom");
+                            static Timer timerevalcoef ("IntegrateX::EvalCoef");
+                            RegionTimer reg (timer);
                             LocalHeap lh(1000000, "lh-Integrate");
-
+                            
                             Flags flags = bp::extract<Flags> (domains)();
                             
                             Array<bool> tointon(3); tointon = false;
@@ -260,7 +264,7 @@ void ExportNgsx()
                                  auto lset_eval
                                    = ScalarFieldEvaluator::Create(DIM,*lset,trafo,lh);
                                  ELEMENT_TYPE eltype = el.GetType();
-
+                                 timercutgeom.Start();
                                  shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
 
                                  CompositeQuadratureRule<2> cquad2d;
@@ -270,10 +274,11 @@ void ExportNgsx()
                                                                              *lset_eval, cquad2d, lh,
                                                                              order, 0, subdivlvl, 0);
                                  else
-                                  xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT,
+                                   xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT,
                                                                              *lset_eval, cquad3d, lh,
                                                                              order, 0, subdivlvl, 0);
                                  DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
+                                 timercutgeom.Stop();
                                  if (element_domain == IF)
                                  {
                                    for (auto domtype : {NEG,POS})
@@ -285,24 +290,34 @@ void ExportNgsx()
                                      if (DIM == 2)
                                      {
                                        const QuadratureRule<2> & domain_quad = cquad2d.GetRule(domtype);
+                                       IntegrationRule ir_domain (domain_quad.Size(),lh);
+                                       for (int i = 0; i < ir_domain.Size(); ++i)
+                                         ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+                                       
+                                       MappedIntegrationRule<2,2> mir_domain(ir_domain, trafo,lh);
+                                       FlatMatrix<> values(mir_domain.Size(), 1, lh);
+                                       timerevalcoef.Start();
+                                       cf[int(IF)] -> Evaluate (mir_domain, values);
+                                       timerevalcoef.Stop();
+
                                        for (int i = 0; i < domain_quad.Size(); ++i)
-                                       {
-                                         IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
-                                         MappedIntegrationPoint<2,2> mip(ip, trafo);
-                                         value = cf[int(domtype)] -> Evaluate (mip);
-                                         hsum += value * mip.GetWeight(); 
-                                       }
+                                         hsum += values(i,0) * mir_domain[i].GetWeight(); 
                                      }
                                      else
                                      {
                                        const QuadratureRule<3> & domain_quad = cquad3d.GetRule(domtype);
+                                       IntegrationRule ir_domain (domain_quad.Size(),lh);
+                                       for (int i = 0; i < ir_domain.Size(); ++i)
+                                         ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+                                       
+                                       MappedIntegrationRule<3,3> mir_domain(ir_domain, trafo,lh);
+                                       FlatMatrix<> values(mir_domain.Size(), 1, lh);
+                                       timerevalcoef.Start();
+                                       cf[int(IF)] -> Evaluate (mir_domain, values);
+                                       timerevalcoef.Stop();
+
                                        for (int i = 0; i < domain_quad.Size(); ++i)
-                                       {
-                                         IntegrationPoint ip(&domain_quad.points[i](0),domain_quad.weights[i]);
-                                         MappedIntegrationPoint<3,3> mip(ip, trafo);
-                                         value = cf[int(domtype)] -> Evaluate (mip);
-                                         hsum += value * mip.GetWeight(); 
-                                       }
+                                         hsum += values(i,0) * mir_domain[i].GetWeight(); 
                                      }
 
 
@@ -317,10 +332,19 @@ void ExportNgsx()
                                      if (DIM == 2)
                                      {
                                        const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
+                                       IntegrationRule ir_interface (interface_quad.Size(),lh);
+                                       for (int i = 0; i < ir_interface.Size(); ++i)
+                                         ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i]);
+                                       
+                                       MappedIntegrationRule<2,2> mir_interface(ir_interface, trafo,lh);
+                                       FlatMatrix<> values(mir_interface.Size(), 1, lh);
+                                       timerevalcoef.Start();
+                                       cf[int(IF)] -> Evaluate (mir_interface, values);
+                                       timerevalcoef.Stop();
+                                       
                                        for (int i = 0; i < interface_quad.Size(); ++i)
                                        {
-                                         IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
-                                         MappedIntegrationPoint<2,2> mip(ip, trafo);
+                                         MappedIntegrationPoint<2,2> & mip(mir_interface[i]);
 
                                          Mat<2,2> Finv = mip.GetJacobianInverse();
                                          const double absdet = mip.GetMeasure();
@@ -328,20 +352,28 @@ void ExportNgsx()
                                          Vec<2> nref = interface_quad.normals[i];
                                          Vec<2> normal = absdet * Trans(Finv) * nref ;
                                          double len = L2Norm(normal);
-                                         // normal /= len;
                                          const double weight = interface_quad.weights[i] * len;
 
-                                         value_if = cf[int(IF)] -> Evaluate (mip);
-                                         hsum_if += value_if * weight; 
+                                         hsum_if += values(i,0) * weight; 
                                        }
                                      }
                                      else
                                      {
+                                       
                                        const QuadratureRuleCoDim1<3> & interface_quad(cquad3d.GetInterfaceRule());
+                                       IntegrationRule ir_interface (interface_quad.Size(),lh);
+                                       for (int i = 0; i < ir_interface.Size(); ++i)
+                                         ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i]);
+                                       
+                                       MappedIntegrationRule<3,3> mir_interface(ir_interface, trafo,lh);
+                                       FlatMatrix<> values(mir_interface.Size(), 1, lh);
+                                       timerevalcoef.Start();
+                                       cf[int(IF)] -> Evaluate (mir_interface, values);
+                                       timerevalcoef.Stop();
+                                       
                                        for (int i = 0; i < interface_quad.Size(); ++i)
                                        {
-                                         IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
-                                         MappedIntegrationPoint<3,3> mip(ip, trafo);
+                                         MappedIntegrationPoint<3,3> & mip(mir_interface[i]);
 
                                          Mat<3,3> Finv = mip.GetJacobianInverse();
                                          const double absdet = mip.GetMeasure();
@@ -349,11 +381,9 @@ void ExportNgsx()
                                          Vec<3> nref = interface_quad.normals[i];
                                          Vec<3> normal = absdet * Trans(Finv) * nref ;
                                          double len = L2Norm(normal);
-                                         // normal /= len;
                                          const double weight = interface_quad.weights[i] * len;
-
-                                         value_if = cf[int(IF)] -> Evaluate (mip);
-                                         hsum_if += value_if * weight; 
+                                         
+                                         hsum_if += values(i,0) * weight; 
                                        }
                                      }
 
@@ -368,7 +398,9 @@ void ExportNgsx()
                                    BaseMappedIntegrationRule & mir = trafo(ir, lh);
 
                                    FlatMatrix<> values(ir.Size(), 1, lh);
+                                   timerevalcoef.Start();
                                    cf[int(element_domain)] -> Evaluate (mir, values);
+                                   timerevalcoef.Stop();
                                    for (int i = 0; i < values.Height(); i++)
                                      hsum += mir[i].GetWeight() * values(i,0);
 
