@@ -136,14 +136,15 @@ class Discretization(object):
         else:
             return self.u
                     
-    def SolveProblem(self):
+    def SolveProblem(self,firstcall=False):
         results = {}
         # Calculation of the deformation:
         deformation = discretization.lsetmeshadap.CalcDeformation(self.problemdata["Levelset"])
         # Applying the mesh deformation
         self.mesh.SetDeformation(deformation)
-        
-        self.UpdateSpace()
+
+        if (not firstcall):
+            self.UpdateSpace()
         
         if (self.problemdata["HDG"]):
             Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
@@ -237,7 +238,6 @@ if __name__ == "__main__":
     # if True:
     with TaskManager():
         problemdata = Make3DProblem()
-        discretization = Discretization(problemdata)
 
         orders = [4]
         l2diffresults = []
@@ -258,7 +258,7 @@ if __name__ == "__main__":
                 while result == False:
                     try:
                         discretization = Discretization(problemdata)
-                        resultdict[(i,order)] = discretization.SolveProblem()
+                        resultdict[(i,order)] = discretization.SolveProblem(firstcall=True)
                         print("simulation results:\n {}".format(resultdict[(i,order)]))
                         l2diffresults[i].append(resultdict[(i,order)]["l2err"])
                         result = True
