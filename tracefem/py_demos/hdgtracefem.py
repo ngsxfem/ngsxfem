@@ -20,6 +20,8 @@ from xfem.tracefem import *
 # For HDGTraceFEM-Integrators (convenience)
 from xfem.hdgtracefem import *
 
+ngsglobals.numthreads=16
+
 h = specialcf.mesh_size
 # 3D: circle configuration
 def Make3DProblem():
@@ -45,8 +47,11 @@ def Make3DProblem():
                "Order" : 2,
                "Mesh" : mesh,
                "StaticCondensation" : False,
-               "HDG": False
-              }
+               "HDG": False,
+               "checkDGpattern" : False,
+               "checkCGpattern" : False,
+               "checkCG_GP_pattern" : False
+    }
     return problem;
 
 class Discretization(object):
@@ -147,13 +152,29 @@ class Discretization(object):
         if (not firstcall):
             self.UpdateSpace()
         
-        if (self.problemdata["HDG"]):
+        if (self.problemdata["checkDGpattern"]):
             Vh_l2 = L2(self.mesh, order=self.order, dirichlet=[])
-            Vh_l2_tr = TraceFESpace(self.mesh, self.Vh_l2, problemdata["Levelset"], dgjumps=True)
+            Vh_l2_tr = TraceFESpace(self.mesh, Vh_l2, problemdata["Levelset"], dgjumps=True)
             results["dg_ndofs"] = Vh_l2_tr.ndof
             b = BilinearForm(Vh_l2_tr)
-            b.Assemble()
+            b.Assemble(heapsize=10000000)
             results["dg_nze"] = b.mat.AsVector().size
+
+        if (self.problemdata["checkCGpattern"]):
+            Vh_h1 = H1(self.mesh, order=self.order, dirichlet=[])
+            Vh_h1_tr = TraceFESpace(self.mesh, Vh_h1, problemdata["Levelset"])
+            results["cg_ndofs"] = Vh_h1_tr.ndof
+            b = BilinearForm(Vh_h1_tr)
+            b.Assemble(heapsize=10000000)
+            results["cg_nze"] = b.mat.AsVector().size
+
+        if (self.problemdata["checkCG_GP_pattern"]):
+            Vh_h1 = H1(self.mesh, order=self.order, dirichlet=[])
+            Vh_h1_tr = TraceFESpace(self.mesh, Vh_h1, problemdata["Levelset"], dgjumps=True)
+            results["cg_ndofs"] = Vh_h1_tr.ndof
+            b = BilinearForm(Vh_h1_tr)
+            b.Assemble(heapsize=10000000)
+            results["cg_gp_nze"] = b.mat.AsVector().size
             
         
         
@@ -168,8 +189,7 @@ class Discretization(object):
         
         self.u.Update()
         self.a.Assemble(heapsize=10000000);
-        self.f.Assemble();
-        
+        self.f.Assemble(heapsize=10000000);
         self.c.Update();
         
         solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
@@ -209,7 +229,7 @@ class Discretization(object):
         print("h1tangerr = {}".format(h1tangdiff))
         results["h1tangerr"] = h1tangdiff
         
-        maxdistlset = self.lsetmeshadap.CalcMaxDistance(self.problemdata["Levelset"]);
+        maxdistlset = self.lsetmeshadap.CalcMaxDistance(self.problemdata["Levelset"],heapsize=10000000);
         print("maxdist = {}".format(maxdistlset))
         results["maxdist"] = maxdistlset
         
@@ -229,24 +249,30 @@ import pickle
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Solve Laplace-Betrami example problem.')
     parser.add_argument('--reflvls', metavar='N', type=int, default=2, help='number of refinement levels (>=1)')
+    parser.add_argument('--global_ndof_limit', metavar='N', type=int, default=-1, help='max. number of degrees of freedom (global)')
     parser.add_argument('--vtkout', dest='vtkout', action='store_true', help='enable VTKOutput')
     parser.add_argument('--no-vtkout', dest='vtkout', action='store_false', help='disable VTKOutput')
     parser.set_defaults(vtkout=False)
     args = parser.parse_args()
     options = vars(args)
     print("call arguments: ", options)
-    
-    # if True:
+
+    if (options["global_ndof_limit"] == -1):
+        global_ndofs_limit = None
+    else: 
+        global_ndofs_limit = options["global_ndof_limit"]
+        options["reflvls"] = 20
+
     with TaskManager():
         problemdata = Make3DProblem()
 
-        orders = [1,2,3,4,5]
-        l2diffresults = []
+        orders = [1,2,3,4,5,6,7,8,9,10]
         resultdict = {}
+        trynextlevel = True
         for i in range(options['reflvls']):
-            l2diffresults.append([])
             if (i!=0):
                 discretization.mesh.Refine()
+            trynextorder = True
             for order in orders:
                 print("""
                 ------------------------------------------------------------------
@@ -255,30 +281,44 @@ if __name__ == "__main__":
                 """.format(i,order))
                 
                 problemdata["Order"] = order
-                result = False
-                while result == False:
+                result = 0
+                while result < 10:
                     try:
                         discretization = Discretization(problemdata)
-                        resultdict[(i,order)] = discretization.SolveProblem(firstcall=True)
-                        print("simulation results:\n {}".format(resultdict[(i,order)]))
-                        l2diffresults[i].append(resultdict[(i,order)]["l2err"])
-                        result = True
+
+                        global_ndofs = discretization.Vh_tr.ndof
+                        for j in range(discretization.Vh_tr.ndof):
+                            #     print (str(i) + " : " + str(Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF))
+                            if (discretization.Vh_tr.CouplingType(j) == COUPLING_TYPE.LOCAL_DOF):
+                                # discretization.Vh_tr.FreeDofs()[i] = 0
+                                global_ndofs = global_ndofs - 1
+                        if (global_ndofs_limit==None) or (global_ndofs < global_ndofs_limit):
+                            resultdict[(i,order)] = discretization.SolveProblem(firstcall=True)
+                            print("simulation results:\n {}".format(resultdict[(i,order)]))
+                        else:
+                            print("global ndofs({}) > {}.".format(global_ndofs,global_ndofs_limit))
+                            trynextorder = False
+                            if (order==orders[0]):
+                                trynextlevel = False
+                        result = 10
                     except Exception as e:
                         print ("Exception = ".format(e))
-    #                    l2diffresults[i].append(None)
-                        result = False
+                        result = result + 1
                 
                 with open('results.pkl', 'wb') as f:
                     pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
-                print(l2diffresults)
-                print(list(map(list, zip(*l2diffresults))))
-            RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
-    print(list(map(list, zip(*l2diffresults))))
+                if (not trynextorder):
+                    break
+            if trynextlevel:
+                RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
+            else:
+                break
 
 
     for i in range(options['reflvls']):
         for order in orders:
-            print("({},{}): {}".format(i,order,resultdict[(i,order)]))
+            if (i,order) in resultdict:
+                print("({},{}): {}".format(i,order,resultdict[(i,order)]))
             
     # print(resultdict)
     #Draw(discretization.u.components[0],discretization.mesh,"u",draw_surf=False)
@@ -298,17 +338,3 @@ if __name__ == "__main__":
                                        discretization.lsetmeshadap.deform,u.components[0]],
                         names=["lsetp1","deform","u"],filename="vtkout_",subdivision=1)
         vtk.Do()
-
-    
-#observations:
-# 1. for p=1 it seems that lsetcurving p+1=2 is necessary to achieve optimal order convergence (not true for p>1)
-# 2. l2order=p+1, facetorder=p gives stable result (optimal order, i.e. p+1 in the l2-norm) - however p+1 together with highest_order_dc is not stable yet (?!)
-
-
-#L2diff
-#p1-> [   0.8096913452313316,      0.30840257878176175,    0.11076925787923653,   0.059828714229247425],
-#p2-> [  0.11632850331153247,     0.011519875896377813,   0.001350445617732032,  0.0001810449912049936],
-#p3-> [  0.03555471657059834,    0.0028774186159388226, 0.00017200706248403185, 1.1569149801119469e-05],
-#p4-> [  0.00998605191678209,   0.00018175774468649536,  7.737886033220925e-06, 3.3478017691898923e-07],
-#p5-> [0.0025838731998405035,   2.2492819637261814e-05,  9.017758296511354e-07,                       ],
-
