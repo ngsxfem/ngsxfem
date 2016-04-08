@@ -61,8 +61,8 @@ class LevelSetMeshAdaptation:
         self.v_def.Update()
         self.deform.Update()
         
-        self.lset_ho.Set(levelset)
-        self.qn.Set(self.lset_ho.Deriv())
+        self.lset_ho.Set(levelset,heapsize=self.heapsize)
+        self.qn.Set(self.lset_ho.Deriv(),heapsize=self.heapsize)
         InterpolateToP1(self.lset_ho,self.lset_p1)
         ProjectShift(self.lset_ho, self.lset_p1, self.deform, self.qn, self.lset_lower_bound, self.lset_upper_bound, self.threshold, heapsize=self.heapsize);
         return self.deform
@@ -74,11 +74,14 @@ class LevelSetMeshAdaptation:
         """
         CalcDistances(levelset,self.lset_p1,self.deform,lset_stats)
 
-    def CalcMaxDistance(self, levelset):
+    def CalcMaxDistance(self, levelset, heapsize=None):
         """
         Compute largest distance
         """
-        return CalcMaxDistance(levelset,self.lset_p1,self.deform)
+        if (heapsize == None):
+            return CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize)
+        else:
+            return CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=heapsize)
         
     def MarkForRefinement(self, levelset, refine_threshold, absolute = False):
         """
