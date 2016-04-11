@@ -45,14 +45,14 @@ def Make3DProblem():
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "GradLevelset" : CoefficientFunction((x,y,z)),
                "Lambda" : 10,
-               "Iterative" : True,
+               "Iterative" : False,
                "Order" : 2,
                "Mesh" : mesh,
-               "StaticCondensation" : False,
-               "HDG": False,
-               "checkDGpattern" : False,
-               "checkCGpattern" : False,
-               "checkCG_GP_pattern" : False
+               "StaticCondensation" : True,
+               "HDG": True,
+               "checkDGpattern" : True,
+               "checkCGpattern" : True,
+               "checkCG_GP_pattern" : True
     }
     return problem;
 
@@ -165,10 +165,23 @@ class Discretization(object):
         if (self.problemdata["checkCGpattern"]):
             Vh_h1 = H1(self.mesh, order=self.order, dirichlet=[])
             Vh_h1_tr = TraceFESpace(self.mesh, Vh_h1, problemdata["Levelset"])
+
+            global_cg_ndofs = Vh_h1_tr.ndof
+            for i in range(Vh_h1_tr.ndof):
+                #     print (str(i) + " : " + str(Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF))
+                if (Vh_h1_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF):
+                    # self.Vh_tr.FreeDofs()[i] = 0
+                    global_cg_ndofs = global_cg_ndofs - 1
+
             results["cg_ndofs"] = Vh_h1_tr.ndof
-            b = BilinearForm(Vh_h1_tr)
+            results["cg_global_ndofs"] = global_cg_ndofs
+
+            b = BilinearForm(Vh_h1_tr, flags = {"eliminate_internal" : False})
             b.Assemble(heapsize=10000000)
             results["cg_nze"] = b.mat.AsVector().size
+            b = BilinearForm(Vh_h1_tr, flags = {"eliminate_internal" : True})
+            b.Assemble(heapsize=10000000)
+            results["cg_nze_cond"] = b.mat.AsVector().size
 
         if (self.problemdata["checkCG_GP_pattern"]):
             Vh_h1 = H1(self.mesh, order=self.order, dirichlet=[])
