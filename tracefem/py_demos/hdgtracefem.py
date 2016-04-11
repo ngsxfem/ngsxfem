@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import sys    
 # for making a directory (if it doesn't exist)
 import os
+import os.path
 # For Integration on Interface
 from xfem.basics import *
 # For LevelSetAdaptationMachinery
@@ -19,6 +20,7 @@ from xfem.lsetcurv import *
 from xfem.tracefem import *
 # For HDGTraceFEM-Integrators (convenience)
 from xfem.hdgtracefem import *
+
 
 ngsglobals.numthreads=16
 
@@ -192,7 +194,7 @@ class Discretization(object):
         self.f.Assemble(heapsize=10000000);
         self.c.Update();
         
-        solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=200000)
+        solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=2000000)
         # u.vec.data = ainv * f.vec
         
         if self.static_condensation:
@@ -249,7 +251,10 @@ import pickle
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Solve Laplace-Betrami example problem.')
     parser.add_argument('--reflvls', metavar='N', type=int, default=2, help='number of refinement levels (>=1)')
+    parser.add_argument('--minorder', metavar='N', type=int, default=1, help='min k')
+    parser.add_argument('--maxorder', metavar='N', type=int, default=4, help='max k')
     parser.add_argument('--global_ndof_limit', metavar='N', type=int, default=-1, help='max. number of degrees of freedom (global)')
+    parser.add_argument('--addto', dest="former_results", nargs='?', default="results.pkl", help='reuse old results from file')
     parser.add_argument('--vtkout', dest='vtkout', action='store_true', help='enable VTKOutput')
     parser.add_argument('--no-vtkout', dest='vtkout', action='store_false', help='disable VTKOutput')
     parser.set_defaults(vtkout=False)
@@ -266,12 +271,18 @@ if __name__ == "__main__":
     with TaskManager():
         problemdata = Make3DProblem()
 
-        orders = [1,2,3,4,5,6,7,8,9,10]
+        orders = range(options["minorder"],options["maxorder"]+1)
+
         resultdict = {}
+        if os.path.isfile(options["former_results"]):
+            with open(options["former_results"], 'rb') as f:
+                resultdict = pickle.load(f)
+
+        discretization = None
         trynextlevel = True
         for i in range(options['reflvls']):
             if (i!=0):
-                discretization.mesh.Refine()
+                problemdata["Mesh"].Refine()
             trynextorder = True
             for order in orders:
                 print("""
@@ -280,37 +291,44 @@ if __name__ == "__main__":
                 ------------------------------------------------------------------
                 """.format(i,order))
                 
-                problemdata["Order"] = order
-                result = 0
-                while result < 10:
-                    try:
-                        discretization = Discretization(problemdata)
+                if (i,order) in resultdict:
+                    print("found results in dictionary")
+                    continue
 
-                        global_ndofs = discretization.Vh_tr.ndof
-                        for j in range(discretization.Vh_tr.ndof):
-                            #     print (str(i) + " : " + str(Vh_tr.CouplingType(i) == COUPLING_TYPE.LOCAL_DOF))
-                            if (discretization.Vh_tr.CouplingType(j) == COUPLING_TYPE.LOCAL_DOF):
-                                # discretization.Vh_tr.FreeDofs()[i] = 0
-                                global_ndofs = global_ndofs - 1
-                        if (global_ndofs_limit==None) or (global_ndofs < global_ndofs_limit):
-                            resultdict[(i,order)] = discretization.SolveProblem(firstcall=True)
-                            print("simulation results:\n {}".format(resultdict[(i,order)]))
-                        else:
-                            print("global ndofs({}) > {}.".format(global_ndofs,global_ndofs_limit))
-                            trynextorder = False
-                            if (order==orders[0]):
-                                trynextlevel = False
-                        result = 10
-                    except Exception as e:
-                        print ("Exception = ".format(e))
-                        result = result + 1
+                problemdata["Order"] = order
+
+                discretization = Discretization(problemdata)
+
+                global_ndofs = discretization.Vh_tr.ndof
+                for j in range(discretization.Vh_tr.ndof):
+                    if (discretization.Vh_tr.CouplingType(j) == COUPLING_TYPE.LOCAL_DOF):
+                        # discretization.Vh_tr.FreeDofs()[i] = 0
+                        global_ndofs = global_ndofs - 1
+                if (global_ndofs_limit==None) or (global_ndofs < global_ndofs_limit):
+                    resultdict[(i,order)] = discretization.SolveProblem(firstcall=True)
+                    print("simulation results:\n {}".format(resultdict[(i,order)]))
+                else:
+                    print("global ndofs({}) > {}.".format(global_ndofs,global_ndofs_limit))
+                    trynextorder = False
+                    if (order==orders[0]):
+                        trynextlevel = False
                 
-                with open('results.pkl', 'wb') as f:
-                    pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
+                if (options["former_results"] != "None"):
+                    with open(options["former_results"], 'wb') as f:
+                        pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
+                else:
+                    with open('results.pkl', 'wb') as f:
+                        pickle.dump(resultdict, f, 0) #pickle.HIGHEST_PROTOCOL)
                 if (not trynextorder):
                     break
             if trynextlevel:
-                RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
+                if (discretization == None):
+
+                    lsetmeshadap = LevelSetMeshAdaptation(problemdata["Mesh"], order=1, threshold=1000, discontinuous_qn=True,heapsize=10000000)
+                    lsetmeshadap.CalcDeformation(problemdata["Levelset"])
+                    RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
+                else:
+                    RefineAtLevelSet(gf=discretization.lsetmeshadap.lset_p1)
             else:
                 break
 
