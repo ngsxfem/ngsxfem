@@ -74,6 +74,22 @@ namespace ngcomp
     // function which can create fe-space (needed by pde-parser)
     static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags);
 
+    /// update element coloring
+    virtual void FinalizeUpdate(LocalHeap & lh)
+    {
+      if ( basefes == NULL )
+      {
+        cout << " no basefes, FinalizeUpdate postponed " << endl;
+        return;
+      }
+      if ( coef_lset == NULL )
+      {
+        cout << " no lset, FinalizeUpdate postponed " << endl;
+        return;
+      }
+      FESpace::FinalizeUpdate (lh);
+    }
+
     virtual int GetNDof () const { return ndof; }
 
     virtual void GetDofNrs (int elnr, Array<int> & dnums) const;
