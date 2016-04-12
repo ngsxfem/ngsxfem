@@ -245,11 +245,12 @@ class Discretization(object):
         print("h1normerr = {}".format(h1normdiff))
         results["h1normerr"] = h1normdiff
         
-        tanggrad = self.VolumeSolution().Deriv() - un * n
-        coef_gradtang_error = (tanggrad - self.problemdata["GradSolution"])*(tanggrad - self.problemdata["GradSolution"])
-        h1tangdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradtang_error,order=2*self.order,heapsize=10000000))
-        print("h1tangerr = {}".format(h1tangdiff))
-        results["h1tangerr"] = h1tangdiff
+        if self.problemdata["GradSolution"] != None:
+            tanggrad = self.VolumeSolution().Deriv() - un * n
+            coef_gradtang_error = (tanggrad - self.problemdata["GradSolution"])*(tanggrad - self.problemdata["GradSolution"])
+            h1tangdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradtang_error,order=2*self.order,heapsize=10000000))
+            print("h1tangerr = {}".format(h1tangdiff))
+            results["h1tangerr"] = h1tangdiff
         
         maxdistlset = self.lsetmeshadap.CalcMaxDistance(self.problemdata["Levelset"],heapsize=10000000);
         print("maxdist = {}".format(maxdistlset))
