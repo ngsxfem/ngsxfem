@@ -373,6 +373,7 @@ if __name__ == "__main__":
     
     if (options['vtkout']):
         vtk = VTKOutput(ma=discretization.mesh,coefs=[discretization.lsetmeshadap.lset_p1,
-                                       discretization.lsetmeshadap.deform,u.components[0]],
-                        names=["lsetp1","deform","u"],filename="vtkout_",subdivision=1)
+                                                      discretization.lsetmeshadap.deform,
+                                                      discretization.VolumeSolution()],
+                        names=["lsetp1","deform","u"],filename="vtkout_",subdivision=0)
         vtk.Do()
