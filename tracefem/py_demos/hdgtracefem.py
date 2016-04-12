@@ -93,6 +93,7 @@ class Discretization(object):
                 self.a.components[0] += TraceMass(problemdata["Reaction"])
             if (problemdata["Diffusion"] != None):
                 self.a += HDGTraceLaplaceBeltrami(problemdata["Diffusion"],
+                                                  wind = problemdata["Convection"],
                                                   param_IP_edge = problemdata["Lambda"],
                                                   param_normaldiffusion = problemdata["VolumeStabilization"],
                                                   param_IP_facet = problemdata["Lambda"])
@@ -102,8 +103,6 @@ class Discretization(object):
                 self.f.components[0] += TraceSource(problemdata["Source"])
             if (not problemdata["VolumeStabilization"]):
                 raise Exception(" cannot turn off VolumeStabilization with HDG ")
-            if (problemdata["Convection"] != None):
-                raise Exception(" No HDG convection yet ")
         else:
             self.Vh = H1(self.mesh, order=self.order, dirichlet=[])
             self.Vh_tr = TraceFESpace(self.mesh, self.Vh, problemdata["Levelset"])

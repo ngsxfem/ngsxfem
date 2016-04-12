@@ -156,7 +156,12 @@ namespace ngfem
 	    
           FlatMatrix<> comp_jumps(edge_quad.Size(), comp_facetdofs.Size(), lh);
           FlatMatrix<> comp_facjumps(edge_quad.Size(), comp_facetdofs.Size(), lh);
+
+          FlatMatrix<> comp_conv_bmat(2*edge_quad.Size(), comp_facetdofs.Size(), lh);
+          FlatMatrix<> comp_conv_dbmat(2*edge_quad.Size(), comp_facetdofs.Size(), lh);
+
           FlatMatrix<> facdudn(edge_quad.Size(), nd_l2, lh);
+          Mat<2> dmat; //convection
           
           for (int l = 0; l < edge_quad.Size(); ++l)
           {
@@ -210,6 +215,34 @@ namespace ngfem
             comp_facjumps.Row(l) = (fac * (order+1) * (order+1) * (order+1) * (order+1)/h) * jump(comp_facetdofs);
             facdudn.Row(l) = (-weight*alpha) * mat_dudn;
 
+            //convection part computations:
+            jump.Range(l2_dofs) = mat_l2;
+            jump.Range(facet_dofs) = 0.0;
+            comp_conv_bmat.Row(2*l+0) = jump(comp_facetdofs);
+            jump.Range(l2_dofs) = 0.0;
+            jump.Range(facet_dofs) = mat_facet;
+            comp_conv_bmat.Row(2*l+1) = jump(comp_facetdofs);
+            
+            Vec<D> conv;
+            coef_w->Evaluate(mip,conv);
+            double wn = InnerProduct (conv, conormal);
+            bool inflow = (wn < 0);
+            dmat = 0.0;
+            if (inflow)
+            {
+              dmat(0,1) = wn;
+            }
+            else
+            {
+              dmat(0,0) = wn;
+            }
+            if (!inflow)
+            {
+              dmat(1,0) = -wn; 
+              dmat(1,1) = wn;
+            }
+            dmat *= weight;
+            comp_conv_dbmat.Rows(2*l+0,2*l+2) = Trans(dmat) * comp_conv_bmat.Rows(2*l+0,2*l+2);
           }
 
           FlatMatrix<> comp_elmat(comp_facetdofs.Size(), comp_facetdofs.Size(), lh);
@@ -222,6 +255,10 @@ namespace ngfem
           FlatMatrix<> comp_elmat2(nd_l2, comp_facetdofs.Size(), lh);
           comp_elmat2 = Trans(facdudn) * comp_jumps | Lapack;
           mat_coupling.Cols(comp_facetdofs) += comp_elmat2;
+
+          // convection term:
+          comp_elmat = Trans (comp_conv_dbmat) * comp_conv_bmat | Lapack;
+          elmat.Rows(comp_facetdofs).Cols(comp_facetdofs) += comp_elmat;
           
         }
 
@@ -310,7 +347,7 @@ namespace ngfem
 
         const double h = D==2 ? sqrt(mip.GetMeasure()) : cbrt(mip.GetMeasure());
         
-        elmat.Rows(l2_dofs).Cols(l2_dofs) += (fac/h*alpha*param_normaldiff) * dshapen * Trans(dshapen);
+        elmat.Rows(l2_dofs).Cols(l2_dofs) += (fac/h*param_normaldiff) * dshapen * Trans(dshapen);
         
       }
     }
@@ -321,6 +358,8 @@ namespace ngfem
 
       FlatMatrixFixWidth<D> dshape(nd_l2,lh);
       FlatMatrixFixWidth<D> proj_dshape(nd_l2,lh);
+      FlatVector<> shape(nd_l2,lh);
+      FlatVector<> dirderivshape(nd_l2,lh);
       const FlatXLocalGeometryInformation & xgeom(tracel2fe->GetFlatLocalGeometry());
       const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
       const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
@@ -340,9 +379,17 @@ namespace ngfem
         const double weight = fquad.weights(i) * len;
         const double alpha = coef_alpha->Evaluate(mip);
 
+        Vec<3> wind;
+        coef_w->Evaluate(mip,wind);
+
         fel_l2.CalcMappedDShape(mip, dshape);
         proj_dshape = dshape * (Id<D>() - normal * Trans(normal)) ;
+
+        dirderivshape = proj_dshape * wind;
+        fel_l2.CalcShape(mip.IP(), shape);
+
         elmat.Rows(l2_dofs).Cols(l2_dofs) += (alpha * weight) * proj_dshape * Trans(proj_dshape);
+        elmat.Rows(l2_dofs).Cols(l2_dofs) -= weight * dirderivshape * Trans(shape);
       }
 
     }
