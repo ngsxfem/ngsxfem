@@ -203,12 +203,12 @@ namespace ngfem
             mat_dudn = fel_l2.GetDShape (mip.IP(), lh) * invjac_conormal;
 
             jump.Range(l2_dofs) = mat_l2;
-            jump.Range(facet_dofs) = - alpha * mat_facet;
+            jump.Range(facet_dofs) = -mat_facet;
           
             comp_jumps.Row(l) = jump(comp_facetdofs);
             double fac = param_IP_edge*weight*alpha;
             comp_facjumps.Row(l) = (fac * (order+1) * (order+1) * (order+1) * (order+1)/h) * jump(comp_facetdofs);
-            facdudn.Row(l) = (-weight) * mat_dudn;
+            facdudn.Row(l) = (-weight*alpha) * mat_dudn;
 
           }
 
@@ -218,8 +218,8 @@ namespace ngfem
           comp_elmat = Trans (comp_facjumps) * comp_jumps | Lapack;
           elmat.Rows(comp_facetdofs).Cols(comp_facetdofs) += comp_elmat;
 
+          // IP consistency terms:
           FlatMatrix<> comp_elmat2(nd_l2, comp_facetdofs.Size(), lh);
-
           comp_elmat2 = Trans(facdudn) * comp_jumps | Lapack;
           mat_coupling.Cols(comp_facetdofs) += comp_elmat2;
           
@@ -242,8 +242,6 @@ namespace ngfem
 	      {
 	        MappedIntegrationPoint<D,D> & mip = mir[l];
 
-                double alpha = coef_alpha -> Evaluate (mip);
-                
 	        Mat<D> inv_jac = mip.GetJacobianInverse();
 
                 double param_normaldiff = coef_param_normaldiff -> Evaluate (mip);
@@ -265,7 +263,7 @@ namespace ngfem
 	        comp_jumps.Row(l) = jump(comp_facetdofs);
 	        double h = cbrt(mip.GetMeasure());
 	        double weight = len * ir_facet[l].Weight() * 1.0/h;
-	        comp_facjumps.Row(l) = (param_IP_facet*param_normaldiff*alpha
+	        comp_facjumps.Row(l) = (param_IP_facet*param_normaldiff
                                         *weight*(order+1)*(order+1)/h)
                   *jump(comp_facetdofs);
 	      }
@@ -299,8 +297,6 @@ namespace ngfem
         MappedIntegrationPoint<D,D> mip(ir[i], eltrans);
 
         double param_normaldiff = coef_param_normaldiff -> Evaluate (mip);
-        // alpha(x) (diffusion coefficient)
-        double alpha = coef_alpha -> Evaluate (mip);
 
         Mat<D> inv_jac = mip.GetJacobianInverse();
         Vec<D> interface_normal = Trans(inv_jac) * interface_normal_ref ;
@@ -324,7 +320,7 @@ namespace ngfem
       RegionTimer reg (timere);
 
       FlatMatrixFixWidth<D> dshape(nd_l2,lh);
-      FlatMatrixFixWidth<D> proj(nd_l2,lh);
+      FlatMatrixFixWidth<D> proj_dshape(nd_l2,lh);
       const FlatXLocalGeometryInformation & xgeom(tracel2fe->GetFlatLocalGeometry());
       const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
       const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
@@ -345,8 +341,8 @@ namespace ngfem
         const double alpha = coef_alpha->Evaluate(mip);
 
         fel_l2.CalcMappedDShape(mip, dshape);
-        proj = dshape * (Id<D>() - normal * Trans(normal)) ;
-        elmat.Rows(l2_dofs).Cols(l2_dofs) += (alpha * weight) * proj * Trans(proj);
+        proj_dshape = dshape * (Id<D>() - normal * Trans(normal)) ;
+        elmat.Rows(l2_dofs).Cols(l2_dofs) += (alpha * weight) * proj_dshape * Trans(proj_dshape);
       }
 
     }

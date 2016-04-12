@@ -33,15 +33,17 @@ def Make3DProblem():
     # mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
     mesh = Mesh (cube.GenerateMesh(maxh=1, quad_dominated=False))
     mesh.Refine()
-
-    problem = {"Diffusion" : 1.0,
+    
+    a = 1
+    c = 1
+    
+    problem = {"Diffusion" : a,
                "Convection" : None,
-               "Reaction" : 1.0,
-               "Source" : sin(pi*z)*(pi*pi*(1-z*z)+1)+cos(pi*z)*2*pi*z,
+               "Reaction" : c,
+               "Source" : (sin(pi*z)*(a*pi*pi*(1-z*z)+c)+a*cos(pi*z)*2*pi*z),
                "Solution" : sin(pi*z),
                "GradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
-               "SurfGradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
-               "VolumeStabilization" : 1.0/h,
+               "VolumeStabilization" : a/h+c*h,
                "Levelset" : sqrt(x*x+y*y+z*z)-1,
                "GradLevelset" : CoefficientFunction((x,y,z)),
                "Lambda" : 10,
@@ -73,6 +75,10 @@ class Discretization(object):
             self.static_condensation = False
             
         self.lsetmeshadap = LevelSetMeshAdaptation(self.mesh, order=self.order, threshold=1000, discontinuous_qn=True,heapsize=10000000)
+        symmetric = True
+        if (problemdata["Convection"] != None):
+            symmetric = False
+            
 
         ### Setting up discrete variational problem
         if self.problemdata["HDG"]:
@@ -82,7 +88,7 @@ class Discretization(object):
             Vh_facet_tr = TraceFESpace(self.mesh, self.Vh_facet, problemdata["Levelset"], postpone_update = True)
             self.Vh_tr = FESpace([Vh_l2_tr,Vh_facet_tr])
             
-            self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})
+            self.a = BilinearForm(self.Vh_tr, symmetric = symmetric, flags = {"eliminate_internal" : self.static_condensation})
             if (problemdata["Reaction"] != None):
                 self.a.components[0] += TraceMass(problemdata["Reaction"])
             if (problemdata["Diffusion"] != None):
@@ -102,13 +108,13 @@ class Discretization(object):
             self.Vh = H1(self.mesh, order=self.order, dirichlet=[])
             self.Vh_tr = TraceFESpace(self.mesh, self.Vh, problemdata["Levelset"])
 
-            self.a = BilinearForm(self.Vh_tr, symmetric = True, flags = {"eliminate_internal" : self.static_condensation})
+            self.a = BilinearForm(self.Vh_tr, symmetric = symmetric, flags = {"eliminate_internal" : self.static_condensation})
             if (problemdata["Reaction"] != None):
                 self.a += TraceMass(problemdata["Reaction"])
             if (problemdata["Diffusion"] != None):
                 self.a += TraceLaplaceBeltrami(problemdata["Diffusion"])
             if (problemdata["VolumeStabilization"]!=None):
-                self.a += NormalLaplaceStabilization(problemdata["Diffusion"]*problemdata["VolumeStabilization"],
+                self.a += NormalLaplaceStabilization(problemdata["VolumeStabilization"],
                                                      # problemdata["GradLevelset"])
                                                      self.lsetmeshadap.lset_p1.Deriv())
             if (problemdata["Convection"] != None):
@@ -233,6 +239,7 @@ class Discretization(object):
         nhelp = self.lsetmeshadap.lset_p1.Deriv()
         n = 1.0/sqrt(nhelp*nhelp) * nhelp
         un = self.VolumeSolution().Deriv()*n
+
         coef_gradnormal_error = un*un
         h1normdiff = sqrt(IntegrateOnInterface(self.problemdata["Levelset"],self.mesh,coef_gradnormal_error,order=2*self.order,heapsize=10000000))
         print("h1normerr = {}".format(h1normdiff))
