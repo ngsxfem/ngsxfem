@@ -55,18 +55,19 @@ for order in orders:
             # for othertype in ["nze","dg_nze","cg_gp_nze","cg_nze","cg_nze_cond"]:
             #     if othertype in resultdict[(i,order)]:
             #         print("& {:6}".format(int(resultdict[(i,order)][othertype]/1000)),end="")
-            for othertype in ["global_ndofs","total_ndofs","dg_ndofs","cg_ndofs","cg_global_ndofs"]:
-                if othertype in resultdict[(i,order)]:
-                    print("& {:5.2f}".format(resultdict[(i,order)][othertype]/resultdict[(i,order)]["cg_global_ndofs"]),end="")
-            for othertype in ["cg_global_ndofs"]:
-                if othertype in resultdict[(i,order)]:
-                    print("& {:8}".format(resultdict[(i,order)][othertype]),end="")
-            for othertype in ["nze","dg_nze","cg_gp_nze","cg_nze","cg_nze_cond"]:
-                if othertype in resultdict[(i,order)]:
-                    print("& {:5.2f}".format(resultdict[(i,order)][othertype]/resultdict[(i,order)]["cg_nze_cond"]),end="")
-            for othertype in ["cg_nze_cond"]:
-                if othertype in resultdict[(i,order)]:
-                    print("& {:6}".format(int(resultdict[(i,order)][othertype]/1000)),end="")
+
+            # for othertype in ["global_ndofs","total_ndofs","dg_ndofs","cg_ndofs","cg_global_ndofs"]:
+            #     if othertype in resultdict[(i,order)]:
+            #         print("& {:5.2f}".format(resultdict[(i,order)][othertype]/resultdict[(i,order)]["cg_global_ndofs"]),end="")
+            # for othertype in ["cg_global_ndofs"]:
+            #     if othertype in resultdict[(i,order)]:
+            #         print("& {:8}".format(resultdict[(i,order)][othertype]),end="")
+            # for othertype in ["nze","dg_nze","cg_gp_nze","cg_nze","cg_nze_cond"]:
+            #     if othertype in resultdict[(i,order)]:
+            #         print("& {:5.2f}".format(resultdict[(i,order)][othertype]/resultdict[(i,order)]["cg_nze_cond"]),end="")
+            # for othertype in ["cg_nze_cond"]:
+            #     if othertype in resultdict[(i,order)]:
+            #         print("& {:6}".format(int(resultdict[(i,order)][othertype]/1000)),end="")
             print(" \\\\")
 print("\\bottomrule")
 
