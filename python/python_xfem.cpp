@@ -297,7 +297,7 @@ void ExportNgsx()
                                        MappedIntegrationRule<2,2> mir_domain(ir_domain, trafo,lh);
                                        FlatMatrix<> values(mir_domain.Size(), 1, lh);
                                        timerevalcoef.Start();
-                                       cf[int(IF)] -> Evaluate (mir_domain, values);
+                                       cf[int(domtype)] -> Evaluate (mir_domain, values);
                                        timerevalcoef.Stop();
 
                                        for (int i = 0; i < domain_quad.Size(); ++i)
@@ -313,7 +313,7 @@ void ExportNgsx()
                                        MappedIntegrationRule<3,3> mir_domain(ir_domain, trafo,lh);
                                        FlatMatrix<> values(mir_domain.Size(), 1, lh);
                                        timerevalcoef.Start();
-                                       cf[int(IF)] -> Evaluate (mir_domain, values);
+                                       cf[int(domtype)] -> Evaluate (mir_domain, values);
                                        timerevalcoef.Stop();
 
                                        for (int i = 0; i < domain_quad.Size(); ++i)
