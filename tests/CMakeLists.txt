@@ -25,8 +25,12 @@ add_test("pde_d7_stokes" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester"
 add_test("pde_d8_stokes3D" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
 
-add_test(NAME py_lapbeltr COMMAND python3 
-  "${PROJECT_SOURCE_DIR}/tracefem/pde_demos/laplacebeltrami.py" "--no-plot" "--no-vtkout" "--reflvls=3" )
+add_test(NAME py_tracefem COMMAND python3 
+  "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_tracefem.py")
+
+add_test(NAME py_hdgtracefem COMMAND python3 
+  "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_hdgtracefem.py")
+
 
 # cmake_minimum_required(VERSION 2.8)
 
