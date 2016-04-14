@@ -179,7 +179,7 @@ namespace ngfem
 
     scafe.CalcMappedDShape(mip, dshape);
     IntRange range = cfel.GetRange(0);
-    mat.Rows(range) = dshape;
+    mat.Cols(range) = Trans(dshape);
     const XFiniteElement * xfe = 
       dynamic_cast<const XFiniteElement *> (&cfel[1]);
 
@@ -192,10 +192,11 @@ namespace ngfem
       const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
       for (int i =0; i < ndof; i++)
         if (xsign[i]==dt_here)
-          mat.Row(ndof+i) = dshape.Row(i);
+          mat.Col(ndof+i) = dshape.Row(i);
         else
-          mat.Row(ndof+i) = Vec<D>(0.0);
+          mat.Col(ndof+i) = Vec<D>(0.0);
     } 
+    
   }
   
   template <int D>  XVisIntegrator<D> :: XVisIntegrator  (shared_ptr<CoefficientFunction> coeff)
