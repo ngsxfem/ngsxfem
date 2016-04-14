@@ -45,6 +45,14 @@ def Make2DProblem():
                "SolutionOuterVelY" : (apos*exp(-1.0 *( x * x + y * y)) * x),
                "SolutionInnerVelX" : (aneg*exp(-1.0 *( x * x + y * y)) * -1.0 * y),
                "SolutionInnerVelY" : (aneg*exp(-1.0 *( x * x + y * y)) * x),
+               "SolutionOuterVelX_DX" : (2.0*x*y/mu2*exp(-1.0 *( x * x + y * y))),
+               "SolutionOuterVelX_DY" : ((2.0*y*y/mu2-apos)*exp(-1.0 *( x * x + y * y))),
+               "SolutionOuterVelY_DX" : ((apos - 2*x*x / mu2)*exp(-1.0 *( x * x + y * y))),
+               "SolutionOuterVelY_DY" : (-2.0*x*y/mu2*exp(-1.0 *( x * x + y * y))),
+               "SolutionInnerVelX_DX" : (aneg*2*x*y*exp(-1.0 *( x * x + y * y))),
+               "SolutionInnerVelX_DY" : (aneg*(2*y*y-1)*exp(-1.0 *( x * x + y * y))),
+               "SolutionInnerVelY_DX" : (aneg*(1-2*x*x)*exp(-1.0 *( x * x + y * y))),
+               "SolutionInnerVelY_DY" : (aneg*(-2)*x*y*exp(-1.0 *( x * x + y * y))),
                "SolutionInnerPressure" : (x*x*x + q),
                "SolutionOuterPressure" : (x*x*x - (pi*R*R/4.0*gammaf)),
                "NitscheParam" : 20,
@@ -61,7 +69,7 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order+1, threshold=1000, disco
 
 # ### Setting up discrete variational problem
 
-Vh = XStokesFESpace(mesh, order=order, levelset=problemdata["Levelset"], dirichlet=[1,2,3,4])
+Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4])
 
 a = BilinearForm(Vh, symmetric = True, flags = { })
 a += TwoDomainStokesIntegrator(problemdata["ViscosityInner"],problemdata["ViscosityOuter"])
@@ -133,6 +141,25 @@ def ComputeErrors(statistics_dict=None):
     
     print("(velocity) l2 error = {}".format(l2error_vel))
     DictionaryAppend(statistics_dict,"error uv (L2)",l2error_vel)
+
+    velocity_grad = CoefficientFunction ((uvp.components[0].Deriv()[0],uvp.components[0].Deriv()[1],uvp.components[1].Deriv()[0],uvp.components[1].Deriv()[1]))
+
+    sol_velocity_grad = CoefficientFunction((
+        IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelX_DX"],problemdata["SolutionInnerVelX_DX"]),
+        IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelX_DY"],problemdata["SolutionInnerVelX_DY"]),
+        IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelY_DX"],problemdata["SolutionInnerVelY_DX"]),
+        IfPos(lsetmeshadap.lset_p1,problemdata["SolutionOuterVelY_DY"],problemdata["SolutionInnerVelY_DY"])))
+
+    err_velocity_grad_vec = sol_velocity_grad - velocity_grad
+    err_velocity_grad_sqr = err_velocity_grad_vec * err_velocity_grad_vec
+
+    h1seminormerror_vel = sqrt(IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,
+                                              coef=err_velocity_grad_sqr,
+                                              order=2*order))
+    
+    print("(velocity) h1 error = {}".format(l2error_vel + h1seminormerror_vel))
+    DictionaryAppend(statistics_dict,"error uv (H1)",l2error_vel + h1seminormerror_vel)
+
         
     ### pressure offset correction
     pressure_offset = IntegrateOnWholeDomain(lsetmeshadap.lset_p1,mesh,coef=CoefficientFunction (uvp.components[2]),order=order) / 4.0
