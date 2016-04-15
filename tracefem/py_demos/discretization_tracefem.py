@@ -9,6 +9,53 @@ from xfem.lsetcurv import *
 # For TraceFEM-Integrators (convenience)
 from xfem.tracefem import *
 
+
+def constraint_pcg(mat, pre, rhs, constraint, e, prec = 1e-8, maxits = 100):
+    """preconditioned conjugate gradient method"""
+
+    u = rhs.CreateVector()
+    d = rhs.CreateVector()
+    w = rhs.CreateVector()
+    s = rhs.CreateVector()
+
+    u *= 0
+    d.data = rhs - mat * u
+    w.data = pre * d
+    s.data = w
+    wdn = InnerProduct (w,d)
+    print ("|u0| = ", wdn)
+    
+    for it in range(maxits):
+        w.data = mat * s
+        wd = wdn
+        Ass = InnerProduct (s, w)
+        alpha = wd / Ass
+        u.data += alpha * s
+        d.data += (-alpha) * w
+
+        w.data = pre * d
+        wdn = InnerProduct (w, d)
+        beta = wdn / wd
+
+        s *= beta
+        s.data += w
+
+        err = sqrt(wd)
+        if err < prec:
+            break
+        print ("\rit = ", it, " err = ", err, end="")
+
+        corr = InnerProduct(constraint,u)
+        u.data -= corr * e
+
+    print("")
+    return (u,it)
+
+
+
+
+
+
 class TraceFEMDiscretization(object):
     """
     Tracefem(continuous)Discretization: definition of FESpaces, bi/linear forms, etc..
@@ -48,10 +95,6 @@ class TraceFEMDiscretization(object):
         if (problemdata["Convection"] != None):
             self.a += TraceConvection(problemdata["Convection"])
 
-        self.f = LinearForm(self.Vh_tr)
-        if (problemdata["Source"] != None):
-            self.f += TraceSource(problemdata["Source"])
-
         if (self.problemdata["Iterative"]):
             self.c = Preconditioner(self.a, type="local")
         else:
@@ -87,16 +130,50 @@ class TraceFEMDiscretization(object):
         results["global_ndofs"] = global_ndofs
         
         self.u.Update()
+
+        self.f = LinearForm(self.Vh_tr)
+        if ("SourceMeanValue" in self.problemdata and self.problemdata["SourceMeanValue"] != None):
+            surface_meas = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,CoefficientFunction(1.0),order=self.order,heapsize=10000000)
+            total_f = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,self.problemdata["Source"],order=self.order,heapsize=10000000)
+            f_h = self.problemdata["Source"] + ( self.problemdata["SourceMeanValue"] - total_f/surface_meas )
+            self.f += TraceSource(f_h)
+            print("correction constant in r.h.s. (to match SourceMeanValue) = {}".format(total_f))
+        else:
+            self.f += TraceSource(self.problemdata["Source"])
+
+        constraint = LinearForm(self.Vh_tr)
+        constraint += TraceSource(CoefficientFunction(1.0))
+        constraint.Assemble(heapsize=10000000);
+
+        surface_meas = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,CoefficientFunction(1.0),order=self.order,heapsize=10000000)
+
+        m = BilinearForm(self.Vh_tr)
+        m += TraceMass(CoefficientFunction(surface_meas))
+        m += NormalLaplaceStabilization(specialcf.mesh_size,self.lsetmeshadap.lset_p1.Deriv())
+
+        m.Assemble(heapsize=10000000);
+
+        e = self.u.vec.CreateVector()
+        e.data = m.mat.Inverse() * constraint.vec
+        
+        print (e.data)
+        input("q")
+        print ("Asf = ", InnerProduct(e,constraint.vec))
+
         self.a.Assemble(heapsize=10000000);
         self.f.Assemble(heapsize=10000000);
         self.c.Update();
+
+        self.u.vec[:] = 0
         
-        solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=2000000)
+        # pcg(self.a.mat, self.c.pre, self.f.vec, maxits = 100)
+        # solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=2000000)
         # u.vec.data = ainv * f.vec
         
         if self.static_condensation:
             self.f.vec.data += self.a.harmonic_extension_trans * self.f.vec
-        self.u.vec.data = solvea * self.f.vec;
+        self.u.vec.data, last_num_its = constraint_pcg(self.a.mat, self.c.mat, self.f.vec, constraint.vec, e, prec=abs(total_f), maxits = 10000)
+        # self.u.vec.data = solvea * self.f.vec;
         if self.static_condensation:
             self.u.vec.data += self.a.inner_solve * self.f.vec
             self.u.vec.data += self.a.harmonic_extension * self.u.vec
@@ -104,7 +181,7 @@ class TraceFEMDiscretization(object):
         print("nze: " + str(self.a.mat.AsVector().size))
         results["nze"] = self.a.mat.AsVector().size
         
-        last_num_its = solvea.GetSteps()
+        # last_num_its = solvea.GetSteps()
         print("number of iterations: " + str(last_num_its))
         results["numits"] = last_num_its
         

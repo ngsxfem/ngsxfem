@@ -4,8 +4,43 @@ from ngsolve import *
 
 h = specialcf.mesh_size
 
-# 3D: circle configuration
-def Make3DProblem_Diffusion():
+# 3D: sphere configuration
+def Make3DProblem_PureDiffusion():
+    from netgen.csg import CSGeometry, OrthoBrick, Pnt
+    cube = CSGeometry()
+    cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
+    # mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
+    mesh = Mesh (cube.GenerateMesh(maxh=1, quad_dominated=False))
+    mesh.Refine()
+    
+    a = 1
+    c = 0.0
+
+    problem = {"Diffusion" : a,
+               "Convection" : None,
+               "Reaction" : c,
+               "Source" : (sin(pi*z)*(a*pi*pi*(1-z*z)+c)+a*cos(pi*z)*2*pi*z),
+               "SourceMeanValue" : 0.0,
+               "Solution" : sin(pi*z),
+               "GradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
+               "VolumeStabilization" : a/h+c*h,
+               "Levelset" : sqrt(x*x+y*y+z*z)-1,
+               "GradLevelset" : CoefficientFunction((x,y,z)),
+               "Lambda" : 10,
+               "Iterative" : True,
+               "Order" : 2,
+               "Mesh" : mesh,
+               "StaticCondensation" : False,
+               "HDG": False,
+               # "checkDGpattern" : True,
+               # "checkCGpattern" : True,
+               # "checkCGGPpattern" : True,
+               # "checkHDGpattern" : True,
+    }
+    return problem;
+
+# 3D: sphere configuration
+def Make3DProblem_DiffusionReactionSphere():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
     cube = CSGeometry()
     cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
@@ -29,8 +64,8 @@ def Make3DProblem_Diffusion():
                "Iterative" : False,
                "Order" : 2,
                "Mesh" : mesh,
-               "StaticCondensation" : True,
-               "HDG": True,
+               "StaticCondensation" : False,
+               "HDG": False,
                # "checkDGpattern" : True,
                # "checkCGpattern" : True,
                # "checkCGGPpattern" : True,
@@ -70,8 +105,3 @@ def Make3DProblem_Convection():
                # "checkCGGPpattern" : True
     }
     return problem;
-
-
-def Make3DProblem():
-    return Make3DProblem_Diffusion()
-    # return Make3DProblem_Convection()

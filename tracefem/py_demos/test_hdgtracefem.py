@@ -3,7 +3,7 @@ from discretization_tracefem import *
 from discretization_hdgtracefem import *
 from eval_errors import *
 
-problemdata = Make3DProblem_Diffusion()
+problemdata = Make3DProblem_DiffusionReactionSphere()
 problemdata["Mesh"].Refine()
 discretization = HDGTraceFEMDiscretization(problemdata)
 discretization.SolveProblem(firstcall=True)

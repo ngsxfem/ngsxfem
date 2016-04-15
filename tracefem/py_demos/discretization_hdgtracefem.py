@@ -51,9 +51,6 @@ class HDGTraceFEMDiscretization(object):
                                               param_normaldiffusion = problemdata["VolumeStabilization"],
                                               param_IP_facet = problemdata["Lambda"])
             
-        self.f = LinearForm(self.Vh_tr)
-        if (problemdata["Source"] != None):
-            self.f.components[0] += TraceSource(problemdata["Source"])
         if (not problemdata["VolumeStabilization"]):
             raise Exception(" cannot turn off VolumeStabilization with HDG ")
 
@@ -93,6 +90,17 @@ class HDGTraceFEMDiscretization(object):
         results["global_ndofs"] = global_ndofs
         
         self.u.Update()
+
+        self.f = LinearForm(self.Vh_tr)
+        if ("SourceMeanValue" in self.problemdata and self.problemdata["SourceMeanValue"] != None):
+            surface_meas = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,CoefficientFunction(1.0),order=self.order,heapsize=10000000)
+            total_f = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,self.problemdata["Source"],order=self.order,heapsize=10000000)
+            f_h = self.problemdata["Source"] + ( self.problemdata["SourceMeanValue"] - total_f/surface_meas )
+            self.f.components[0] += TraceSource(f_h)
+            print("correction constant in r.h.s. (to match SourceMeanValue) = {}".format(total_f))
+        else:
+            self.f.components[0] += TraceSource(self.problemdata["Source"])
+
         self.a.Assemble(heapsize=10000000);
         self.f.Assemble(heapsize=10000000);
         self.c.Update();

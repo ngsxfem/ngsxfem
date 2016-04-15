@@ -15,7 +15,15 @@ def EvalErrorsOnInterface(mesh,lsetmeshadap,discrete_solution,order,problemdata,
     mesh.SetDeformation(lsetmeshadap.deform)
 
     if problemdata["Solution"] != None:
-        coef_error_sqr = (discrete_solution - problemdata["Solution"])*(discrete_solution - problemdata["Solution"])
+
+        if (problemdata["Reaction"] == None or problemdata["Reaction"] == 0.0):
+            surface_meas = IntegrateOnInterface(lsetmeshadap.lset_p1,mesh,CoefficientFunction(1.0),order=order,heapsize=10000000)
+            total_u = IntegrateOnInterface(lsetmeshadap.lset_p1,mesh,CoefficientFunction(discrete_solution)-problemdata["Solution"],order=order,heapsize=10000000)
+            correction_constant = total_u / surface_meas
+            coef_error_sqr = (discrete_solution - correction_constant - problemdata["Solution"])*(discrete_solution - correction_constant - problemdata["Solution"])
+        else:
+            coef_error_sqr = (discrete_solution - problemdata["Solution"])*(discrete_solution - problemdata["Solution"])
+
         l2diff = sqrt(IntegrateOnInterface(levelset_p1,mesh,coef_error_sqr,order=2*order+2,heapsize=10000000))
         print("l2diff = {}".format(l2diff))
         resultdict["l2err"] = l2diff

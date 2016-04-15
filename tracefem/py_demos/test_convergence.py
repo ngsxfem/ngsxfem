@@ -41,7 +41,7 @@ if __name__ == "__main__":
         options["reflvls"] = 20
 
     with TaskManager():
-        problemdata = Make3DProblem()
+        problemdata = Make3DProblem_PureDiffusion()
 
         orders = range(options["minorder"],options["maxorder"]+1)
 
