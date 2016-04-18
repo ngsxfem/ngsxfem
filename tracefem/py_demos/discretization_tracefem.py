@@ -9,17 +9,40 @@ from xfem.lsetcurv import *
 # For TraceFEM-Integrators (convenience)
 from xfem.tracefem import *
 
+def constraint_pcg(mat, pre, rhs, constraint, initialval = None, prec = 1e-8, maxits = 100):
+    """
+       Preconditioned conjugate gradient method for matrix A + e trans(e)
+       Solve (A + e·eT)·x = b + q·e
+       If e = ker(A) this gives the solution to Ax=b with eT·x = q
+       The constraint eT·x = q is passed using the tuple 'constraint'=(e,q) 
+       which consists of a constraintvector e and a value q.
+    """
+    cvec, constraint_val = constraint
 
-def constraint_pcg(mat, pre, rhs, constraint, e, prec = 1e-8, maxits = 100):
-    """preconditioned conjugate gradient method"""
+    constraint_vec = rhs.CreateVector()
+    constraint_vec.data = cvec
 
     u = rhs.CreateVector()
     d = rhs.CreateVector()
     w = rhs.CreateVector()
     s = rhs.CreateVector()
 
-    u *= 0
-    d.data = rhs - mat * u
+    q = 1.0/constraint_vec.Norm()
+    constraint_val *= q
+    constraint_vec *= q
+
+    if initialval!=None:
+        u = initialval
+        d.data = rhs - mat * u
+        d.data -= InnerProduct(constraint_vec,u) * constraint_vec
+    else:
+        u *= 0.0
+        d.data = rhs
+
+    if constraint_val > 0.0:
+        d.data += constraint_val * constraint_vec
+        
+
     w.data = pre * d
     s.data = w
     wdn = InnerProduct (w,d)
@@ -27,6 +50,8 @@ def constraint_pcg(mat, pre, rhs, constraint, e, prec = 1e-8, maxits = 100):
     
     for it in range(maxits):
         w.data = mat * s
+        w.data += InnerProduct(constraint_vec,s) * constraint_vec
+        
         wd = wdn
         Ass = InnerProduct (s, w)
         alpha = wd / Ass
@@ -43,18 +68,11 @@ def constraint_pcg(mat, pre, rhs, constraint, e, prec = 1e-8, maxits = 100):
         err = sqrt(wd)
         if err < prec:
             break
-        print ("\rit = ", it, " err = ", err, end="")
+        if it < 100 or it % 10 == 0:
+            print ("\rit = ", it, " err = ", err, end="")
+    print ("\r                                        \rit = ", it, " err = ", err)
 
-        corr = InnerProduct(constraint,u)
-        u.data -= corr * e
-
-    print("")
     return (u,it)
-
-
-
-
-
 
 class TraceFEMDiscretization(object):
     """
@@ -72,7 +90,7 @@ class TraceFEMDiscretization(object):
         else:
             self.static_condensation = False
             
-        self.lsetmeshadap = LevelSetMeshAdaptation(self.mesh, order=self.order+1, threshold=1000, discontinuous_qn=True,heapsize=10000000)
+        self.lsetmeshadap = LevelSetMeshAdaptation(self.mesh, order=self.order, threshold=1000, discontinuous_qn=True,heapsize=10000000)
 
         symmetric = True
         if (problemdata["Convection"] != None):
@@ -142,23 +160,20 @@ class TraceFEMDiscretization(object):
             self.f += TraceSource(self.problemdata["Source"])
 
         constraint = LinearForm(self.Vh_tr)
-        constraint += TraceSource(CoefficientFunction(1.0))
+        surface_meas = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,CoefficientFunction(1.0),order=2*self.order,heapsize=10000000)
+
+        constraint += TraceSource(1.0)
         constraint.Assemble(heapsize=10000000);
 
-        surface_meas = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,CoefficientFunction(1.0),order=self.order,heapsize=10000000)
 
         m = BilinearForm(self.Vh_tr)
-        m += TraceMass(CoefficientFunction(surface_meas))
+        m += TraceMass(CoefficientFunction(1.0))
         m += NormalLaplaceStabilization(specialcf.mesh_size,self.lsetmeshadap.lset_p1.Deriv())
 
         m.Assemble(heapsize=10000000);
 
         e = self.u.vec.CreateVector()
         e.data = m.mat.Inverse() * constraint.vec
-        
-        print (e.data)
-        input("q")
-        print ("Asf = ", InnerProduct(e,constraint.vec))
 
         self.a.Assemble(heapsize=10000000);
         self.f.Assemble(heapsize=10000000);
@@ -166,14 +181,25 @@ class TraceFEMDiscretization(object):
 
         self.u.vec[:] = 0
         
-        # pcg(self.a.mat, self.c.pre, self.f.vec, maxits = 100)
-        # solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=2000000)
-        # u.vec.data = ainv * f.vec
+
+        self.f.vec.data -= InnerProduct(self.f.vec,e)/InnerProduct(constraint.vec,e) * constraint.vec
         
         if self.static_condensation:
             self.f.vec.data += self.a.harmonic_extension_trans * self.f.vec
-        self.u.vec.data, last_num_its = constraint_pcg(self.a.mat, self.c.mat, self.f.vec, constraint.vec, e, prec=abs(total_f), maxits = 10000)
-        # self.u.vec.data = solvea * self.f.vec;
+
+        if (self.problemdata["Reaction"] > 0.0):
+            solvea = CGSolver( mat=self.a.mat, pre=self.c.mat, complex=False, printrates=False, precision=1e-8, maxsteps=2000000)
+            last_num_its = solvea.GetSteps()
+            self.u.vec.data = solvea * self.f.vec;
+        else:
+            # solve (A + e eT) · x  = b + a eT , so that eT x = a and A x = b
+            self.u.vec.data, last_num_its = constraint_pcg(self.a.mat, self.c.mat, self.f.vec, (e,0.0), prec=1e-8, maxits = 10000)
+
+            self.u.vec.data -= InnerProduct(constraint.vec,self.u.vec) / InnerProduct(constraint.vec,e) * e
+
+        print("Integral Value : {}".format(InnerProduct(constraint.vec,self.u.vec)))
+        results["intval"] = abs(InnerProduct(constraint.vec,self.u.vec))
+
         if self.static_condensation:
             self.u.vec.data += self.a.inner_solve * self.f.vec
             self.u.vec.data += self.a.harmonic_extension * self.u.vec
@@ -181,7 +207,6 @@ class TraceFEMDiscretization(object):
         print("nze: " + str(self.a.mat.AsVector().size))
         results["nze"] = self.a.mat.AsVector().size
         
-        # last_num_its = solvea.GetSteps()
         print("number of iterations: " + str(last_num_its))
         results["numits"] = last_num_its
         
