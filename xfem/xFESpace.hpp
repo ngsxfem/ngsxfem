@@ -23,7 +23,7 @@ namespace ngcomp
   {
   protected:  
     int ndof;
-
+    int nvertdofs; // <- number of x vertex dofs
     int order_space = 1;
     int order_time = 1;
 
@@ -91,6 +91,7 @@ namespace ngcomp
     }
 
     virtual int GetNDof () const { return ndof; }
+    virtual int GetNVertexDof () const { return nvertdofs; }
 
     virtual void GetDofNrs (int elnr, Array<int> & dnums) const;
     virtual void GetSDofNrs (int selnr, Array<int> & dnums) const;
