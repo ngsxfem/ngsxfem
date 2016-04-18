@@ -515,6 +515,7 @@ namespace ngcomp
       }
     }
 
+    nvertdofs = 0;
     domofvertex.SetSize(nv);
     for (int vnr = 0; vnr < nv; ++vnr)
     {
@@ -548,8 +549,11 @@ namespace ngcomp
         {
           int xdof = basedof2xdof[dnums[l]];
           if ( xdof != -1)
+          {
             domofdof[xdof] = domofvertex[vnr];
-         }
+            nvertdofs++;
+          }
+        }
       }
     }
 

@@ -35,4 +35,8 @@ def TraceSource (coef):
 def NormalLaplaceStabilization (param,normalfield):
     return BFI("normallaplacetrace", coef=[param,normalfield])
 
-
+def MakeVectorToConstantFunction(fes,vec,constant=1.0):
+    fesx = CastToXFESpace (fes)
+    nvx = fesx.GetNVertexDofs()
+    vec[:][0:nvx] = 1.0
+    vec[:][nvx:] = 0.0

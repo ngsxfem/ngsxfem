@@ -67,6 +67,9 @@ void ExportNgsx()
     .def("BaseDofOfXDof", FunctionPointer ([](XFESpace & self, int i) 
                                          { return self.GetBaseDofOfXDof(i); }),
          "get corresponding dof of base FESpace")
+    .def("GetNVertexDofs", FunctionPointer ([](XFESpace & self) 
+                                         { return self.GetNVertexDof(); }),
+         "get number of x dofs at vertices")
     ;
   
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
