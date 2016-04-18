@@ -27,6 +27,8 @@ def constraint_pcg(mat, pre, rhs, constraint, initialval = None, prec = 1e-8, ma
     w = rhs.CreateVector()
     s = rhs.CreateVector()
 
+    r = rhs.CreateVector()
+
     q = 1.0/constraint_vec.Norm()
     constraint_val *= q
     constraint_vec *= q
@@ -36,7 +38,7 @@ def constraint_pcg(mat, pre, rhs, constraint, initialval = None, prec = 1e-8, ma
         d.data = rhs - mat * u
         d.data -= InnerProduct(constraint_vec,u) * constraint_vec
     else:
-        u *= 0.0
+        u.data = 0.0 * rhs
         d.data = rhs
 
     if constraint_val > 0.0:
@@ -55,6 +57,7 @@ def constraint_pcg(mat, pre, rhs, constraint, initialval = None, prec = 1e-8, ma
         wd = wdn
         Ass = InnerProduct (s, w)
         alpha = wd / Ass
+        
         u.data += alpha * s
         d.data += (-alpha) * w
 
@@ -68,9 +71,8 @@ def constraint_pcg(mat, pre, rhs, constraint, initialval = None, prec = 1e-8, ma
         err = sqrt(wd)
         if err < prec:
             break
-        if it < 100 or it % 10 == 0:
-            print ("\rit = ", it, " err = ", err, end="")
-    print ("\r                                        \rit = ", it, " err = ", err)
+        print ("\rit = {:7}, err = {:10.5e}".format(it, err), end="")
+    print ("\rit = {:7}, err = {:10.5e}".format(it, err))
 
     return (u,it)
 
@@ -159,22 +161,6 @@ class TraceFEMDiscretization(object):
         else:
             self.f += TraceSource(self.problemdata["Source"])
 
-        constraint = LinearForm(self.Vh_tr)
-        surface_meas = IntegrateOnInterface(self.lsetmeshadap.lset_p1,self.mesh,CoefficientFunction(1.0),order=2*self.order,heapsize=10000000)
-
-        constraint += TraceSource(1.0)
-        constraint.Assemble(heapsize=10000000);
-
-
-        m = BilinearForm(self.Vh_tr)
-        m += TraceMass(CoefficientFunction(1.0))
-        m += NormalLaplaceStabilization(specialcf.mesh_size,self.lsetmeshadap.lset_p1.Deriv())
-
-        m.Assemble(heapsize=10000000);
-
-        e = self.u.vec.CreateVector()
-        e.data = m.mat.Inverse() * constraint.vec
-
         self.a.Assemble(heapsize=10000000);
         self.f.Assemble(heapsize=10000000);
         self.c.Update();
@@ -182,7 +168,6 @@ class TraceFEMDiscretization(object):
         self.u.vec[:] = 0
         
 
-        self.f.vec.data -= InnerProduct(self.f.vec,e)/InnerProduct(constraint.vec,e) * constraint.vec
         
         if self.static_condensation:
             self.f.vec.data += self.a.harmonic_extension_trans * self.f.vec
@@ -192,13 +177,21 @@ class TraceFEMDiscretization(object):
             last_num_its = solvea.GetSteps()
             self.u.vec.data = solvea * self.f.vec;
         else:
+            constraint = LinearForm(self.Vh_tr)
+            constraint += TraceSource(1.0)
+            constraint.Assemble(heapsize=10000000);
+
+            e = self.u.vec.CreateVector()
+            MakeVectorToConstantFunction(self.Vh_tr,e,1.0)
+
+            self.f.vec.data -= InnerProduct(self.f.vec,e)/InnerProduct(constraint.vec,e) * constraint.vec
             # solve (A + e eT) · x  = b + a eT , so that eT x = a and A x = b
             self.u.vec.data, last_num_its = constraint_pcg(self.a.mat, self.c.mat, self.f.vec, (e,0.0), prec=1e-8, maxits = 10000)
 
             self.u.vec.data -= InnerProduct(constraint.vec,self.u.vec) / InnerProduct(constraint.vec,e) * e
 
-        print("Integral Value : {}".format(InnerProduct(constraint.vec,self.u.vec)))
-        results["intval"] = abs(InnerProduct(constraint.vec,self.u.vec))
+            print("Integral Value : {}".format(InnerProduct(constraint.vec,self.u.vec)))
+            results["intval"] = abs(InnerProduct(constraint.vec,self.u.vec))
 
         if self.static_condensation:
             self.u.vec.data += self.a.inner_solve * self.f.vec
