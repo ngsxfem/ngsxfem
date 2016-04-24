@@ -2,8 +2,6 @@
 from math import pi
 # ngsolve stuff
 from ngsolve import *
-# xfem stuff
-import libngsxfem_py.xfem as xfem                                 
 # basic xfem functionality
 from xfem.basics import *
 # For LevelSetAdaptationMachinery

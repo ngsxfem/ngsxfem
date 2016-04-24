@@ -96,6 +96,7 @@ def TwoDomainMassIntegrator (coefneg,coefpos):
 def TwoDomainSourceIntegrator (coefneg,coefpos):
     return LFI("xsource", coef=[coefneg,coefpos])
 
+        elif weighting.lower() == "heaviside":
 
 
 negative_domain = dict()

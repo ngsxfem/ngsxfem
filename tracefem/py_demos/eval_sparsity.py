@@ -1,7 +1,5 @@
 # ngsolve stuff
 from ngsolve import *
-# xfem and trace fem stuff
-import libngsxfem_py.xfem as xfem                                 
 # For TraceFEM-Integrators (convenience)
 from xfem.tracefem import *
 

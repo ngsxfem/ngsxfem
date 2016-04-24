@@ -3,8 +3,6 @@
 from math import pi
 # ngsolve stuff
 from ngsolve import *
-# xfem and trace fem stuff
-import libngsxfem_py.xfem as xfem                                 
 # for plotting (convergence plots)
 import matplotlib.pyplot as plt
 # for asking for interactive shell or not
