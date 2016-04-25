@@ -31,6 +31,12 @@ add_test(NAME py_tracefem COMMAND python3
 add_test(NAME py_hdgtracefem COMMAND python3 
   "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_hdgtracefem.py")
 
+add_test(NAME py_nxfem COMMAND python3 
+  "${PROJECT_SOURCE_DIR}/py_tutorials/nitschexfem.py")
+
+add_test(NAME py_stokes_buoyancy COMMAND python3 
+  "${PROJECT_SOURCE_DIR}/stokes/py_demos/buoyancy.py")
+
 
 # cmake_minimum_required(VERSION 2.8)
 
