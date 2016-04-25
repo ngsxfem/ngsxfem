@@ -263,6 +263,9 @@ def DoInstatStokes():
     print("before time loop - waiting for input(press enter) to start..")
     input()
 
+    Draw (lset_solver.lset.gf, mesh, "lset" ) 
+    Draw (CoefficientFunction(velpre.gf.components[0:2]), mesh, "vel" ) 
+    
     for i in range(1,solverparams["timesteps"]+1):
         lset_solver.Update()
         lset_solver.Solve()
