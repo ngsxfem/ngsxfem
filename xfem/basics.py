@@ -90,13 +90,13 @@ def XFESpace(basefes,levelset=None,flags={},empty=None,ref_space=None):
     return fes
         
 def TwoDomainLaplaceIntegrator (coefneg,coefpos):
-    return BFI("xlaplace", coef=[coefneg,coefpos])
+    return BFI("xlaplace", coef=[CoefficientFunction(coefneg),CoefficientFunction(coefpos)])
 
 def TwoDomainMassIntegrator (coefneg,coefpos):
-    return BFI("xmass", coef=[coefneg,coefpos])
+    return BFI("xmass", coef=[CoefficientFunction(coefneg),CoefficientFunction(coefpos)])
 
 def TwoDomainSourceIntegrator (coefneg,coefpos):
-    return LFI("xsource", coef=[coefneg,coefpos])
+    return LFI("xsource", coef=[CoefficientFunction(coefneg),CoefficientFunction(coefpos)])
 
 def XNitscheIntegrators (diffusion, henryweights=[1.0,1.0], weighting="hansbo", stab_param=10.0, minstab=False,fluxjump=None,jump=None):
     """

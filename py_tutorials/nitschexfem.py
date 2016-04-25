@@ -1,5 +1,4 @@
 from math import pi
-from time import sleep
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
@@ -23,7 +22,6 @@ r21 = sqrt(r22)
 
 levelset = (sqrt(sqrt(x*x*x*x+y*y*y*y)) - 1.0)
 
-sleep(1)
 solution = [1.0+pi/2.0-sqrt(2.0)*cos(pi/4.0*r44),pi/2.0*r41]
 alpha = [1.0,2.0]
 coef_f = [ (-1.0*sqrt(2.0)*pi*(pi*cos(pi/4*(r44))*(r66)+3*sin(pi/4*(r44))*(r22))),
