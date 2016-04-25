@@ -34,7 +34,7 @@ a += TwoDomainLaplaceIntegrator(alpha[0],alpha[1])
 f = LinearForm(VhG)
 f += TwoDomainSourceIntegrator(coef_f[0],coef_f[1])
 
-nitsche_lhs, nitsche_jumpint, nitsche_fluxjumpint = XNitscheIntegrators(alpha,flux=1.0,fluxjump=1.0)
+nitsche_lhs, nitsche_jumpint, nitsche_fluxjumpint = XNitscheIntegrators(alpha,jump=1.0,fluxjump=1.0)
 
 a += nitsche_lhs
 
