@@ -81,8 +81,8 @@ def Make3DProblem():
 # torus with parameters as in 'Grande, Reusken, A higher order finite element method for partial differential euqations on surface, SINUM, 2016'
 def Make3DProblem_Torus():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
-    cube = CSGeometry()
-    cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
+    cube = CS-Geometry()
+    cube.Add (OrthoBrick(Pnt(-2,-2,-2), Pnt(2,2,2)))
     # mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
     mesh = Mesh (cube.GenerateMesh(maxh=1, quad_dominated=False))
     mesh.Refine()
@@ -100,7 +100,7 @@ def Make3DProblem_Torus():
                "Reaction" : c,
                "Source" : (1.0/(r*r)*(9.0*sin(3.0*phi)*cos(3.0*theta+phi)) - 1.0/((R + r*cos(theta))*(R + r*cos(theta))) * (-10.0*sin(3.0*phi)*cos(3.0*theta+phi)-6.0*cos(3*phi)*sin(3.0*theta+phi))
                - (1.0/(r*(R+r*cos(theta))))*(3.0*sin(theta)*sin(3.0*phi)*sin(3.0*theta+phi))).Compile(),
-               "Solution" : sin(3.0*theta)*cos(3*theta+phi),
+               "Solution" : sin(3.0*phi)*cos(3*theta+phi),
                "GradSolution" : CoefficientFunction((0,0,0)),
                "VolumeStabilization" : a/h+c*h,
                "Levelset" : LevelsetExamples["torus"],
