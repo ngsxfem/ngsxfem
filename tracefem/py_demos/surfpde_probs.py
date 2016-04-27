@@ -94,6 +94,15 @@ def Make3DProblem_Torus():
     r = 0.6
     theta = atan2(z,sqrt(x*x+y*y)-R)
     phi = atan2(y,x)
+
+    dudphi = 3.0*cos(3.0*phi)*cos(3*theta+phi)-sin(3*phi)*sin(3*theta+phi)
+    dudthe = -3.0*sin(3*phi)*sin(3*theta+phi)
+    dphidx = -y/(x*x+y*y)
+    dphidy = x/(x*x+y*y)
+    dphidz = CoefficientFunction(0.0)
+    dthedx = -x*z/(r*r*sqrt(x*x+y*y))
+    dthedy = -y*z/(r*r*sqrt(x*x+y*y))
+    dthedz = (sqrt(x*x+y*y)-R)/(r*r)
     
     problem = {"Diffusion" : a,
                "Convection" : None,
@@ -101,7 +110,9 @@ def Make3DProblem_Torus():
                "Source" : (1.0/(r*r)*(9.0*sin(3.0*phi)*cos(3.0*theta+phi)) - 1.0/((R + r*cos(theta))*(R + r*cos(theta))) * (-10.0*sin(3.0*phi)*cos(3.0*theta+phi)-6.0*cos(3*phi)*sin(3.0*theta+phi))
                - (1.0/(r*(R+r*cos(theta))))*(3.0*sin(theta)*sin(3.0*phi)*sin(3.0*theta+phi))).Compile(),
                "Solution" : sin(3.0*phi)*cos(3*theta+phi),
-               "GradSolution" : CoefficientFunction((0,0,0)),
+               "GradSolution" : CoefficientFunction(( (dudphi*dphidx+dudthe*dthedx).Compile(),
+                                                      (dudphi*dphidy+dudthe*dthedy).Compile(),
+                                                      (dudphi*dphidz+dudthe*dthedz).Compile())),
                "VolumeStabilization" : a/h+c*h,
                "Levelset" : LevelsetExamples["torus"],
                "GradLevelset" : CoefficientFunction((x,y,z)),
