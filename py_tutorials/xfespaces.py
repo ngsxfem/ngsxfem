@@ -1,8 +1,6 @@
 from time import sleep
 # ngsolve stuff
 from ngsolve import *
-# xfem and trace fem stuff
-import libngsxfem_py.xfem as xfem                                 
 # basic xfem functionality
 from xfem.basics import *
 

@@ -168,10 +168,14 @@ namespace ngcomp
     }
 
     void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
+    shared_ptr<FESpace> GetBaseFESpace() const { return basefes;};
+    
     void SetLevelSet(shared_ptr<GridFunction> lset_){ 
       coef_lset = make_shared<GridFunctionCoefficientFunction>(lset_);
     };
     void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
+    shared_ptr<CoefficientFunction> GetLevelSet() const { return coef_lset;};
+    
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
@@ -314,6 +318,26 @@ namespace ngcomp
       return fes;
     }
 
+
+    /// update element coloring
+    virtual void FinalizeUpdate(LocalHeap & lh)
+    {
+      auto coef_lset = dynamic_pointer_cast<XFESpace>(spaces[1])->GetLevelSet();
+      auto basefes = dynamic_pointer_cast<XFESpace>(spaces[1])->GetBaseFESpace();
+      
+      if ( basefes == NULL )
+      {
+        cout << " no basefes, FinalizeUpdate postponed " << endl;
+        return;
+      }
+      if ( coef_lset == NULL )
+      {
+        cout << " no lset, FinalizeUpdate postponed " << endl;
+        return;
+      }
+      CompoundFESpace::FinalizeUpdate (lh);
+    }
+    
     Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
     Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
     bool IsSpaceTime() const { return spacetime;}

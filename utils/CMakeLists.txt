@@ -9,6 +9,17 @@ if(NOT WIN32)
   install( TARGETS ngsxfem_utils ${ngs_install_dir})
 endif(NOT WIN32)
 
+
+
+if(USE_PYTHON)
+    install (FILES
+            utils.py 
+            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+            COMPONENT xfem
+            )
+endif(USE_PYTHON)
+
+
 # install( FILES
 #         DESTINATION include
 #        )

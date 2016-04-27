@@ -10,8 +10,7 @@ from ngsolve.bla import *
 import ngsolve.ngstd as ngstd
 from ngsolve.solve import Redraw
 
-#from libngsxfem_py.xfem import *
-import libngsxfem_py.xfem as xfem                                 
+from xfem.basics import *
 
 from math import sin                                                  
 from time import sleep

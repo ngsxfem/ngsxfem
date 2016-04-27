@@ -9,8 +9,7 @@ import numpy as np
 # from math import sin
 from time import sleep
 
-#import libngsxfem_py.xfem as xfem                                 
-from libngsxfem_py.xfem import *
+from xfem.basics import *
 
 # from libxfem import *
 
