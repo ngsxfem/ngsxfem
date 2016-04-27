@@ -2,6 +2,8 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 
+from xfem.utils import *
+
 h = specialcf.mesh_size
 
 # 3D: circle configuration
@@ -23,7 +25,7 @@ def Make3DProblem_Diffusion():
                "Solution" : sin(pi*z),
                "GradSolution" : CoefficientFunction((pi*cos(pi*z)*(-x*z),pi*cos(pi*z)*(-y*z),pi*cos(pi*z)*(1-z*z))),
                "VolumeStabilization" : a/h+c*h,
-               "Levelset" : sqrt(x*x+y*y+z*z)-1,
+               "Levelset" : LevelsetExamples["sphere"],
                "GradLevelset" : CoefficientFunction((x,y,z)),
                "Lambda" : 10,
                "Iterative" : False,
@@ -56,7 +58,7 @@ def Make3DProblem_Convection():
                "Solution" : x*y*atan(2*z/sqrt(eps)),
                "GradSolution" : None,
                "VolumeStabilization" : 1+eps/h+c*h,
-               "Levelset" : sqrt(x*x+y*y+z*z)-1,
+               "Levelset" : LevelsetExamples["sphere"],
                "GradLevelset" : CoefficientFunction((x,y,z)),
                "Lambda" : 10,
                "Iterative" : False,
