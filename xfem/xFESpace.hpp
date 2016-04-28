@@ -179,6 +179,9 @@ namespace ngcomp
     void SetTimeInterval( const TimeInterval & a_ti){ ti = a_ti;};
     
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
+    const BitArray & CutElements() const { return activeelem; }
+    const BitArray & CutSurfaceElements() const { return activeselem; }
+    
     bool IsNeighborElementCut(int elnr) const 
     { 
       Array<int> faces(0);
