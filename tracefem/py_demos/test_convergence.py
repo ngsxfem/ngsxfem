@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
 
                     if (options['vtkout']):
-                        vtk_mesh = VTKOutput(ma=discretization.mesh,coefs=[],names=[],filename="vtkout_mesh",subdivision=0)
+                        vtk_mesh = VTKOutput(ma=discretization.mesh,coefs=[],names=[],filename="vtkout_mesh_lvl"+str(i),subdivision=0)
                         vtk_mesh.Do(discretization.CutElements())
                         vtk = VTKOutput(ma=discretization.mesh,
                                         coefs=[discretization.lsetmeshadap.lset_p1,
