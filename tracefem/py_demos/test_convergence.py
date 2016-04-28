@@ -98,6 +98,18 @@ if __name__ == "__main__":
                         CheckHDGpattern(problemdata["Mesh"],order,problemdata["Levelset"],resultdict[(i,order)])
                         
                     print("simulation results:\n {}".format(resultdict[(i,order)]))
+
+
+                    if (options['vtkout']):
+                        vtk_mesh = VTKOutput(ma=discretization.mesh,coefs=[],names=[],filename="vtkout_mesh",subdivision=0)
+                        vtk_mesh.Do(discretization.CutElements())
+                        vtk = VTKOutput(ma=discretization.mesh,
+                                        coefs=[discretization.lsetmeshadap.lset_p1,
+                                               discretization.lsetmeshadap.deform,
+                                               discretization.VolumeSolution()],
+                                        names=["lsetp1","deform","u"],filename="vtkout_p"+str(order)+"_lvl"+str(i),subdivision=2)
+                        vtk.Do(discretization.CutElements())
+                    
                 else:
                     print("global ndofs({}) > {}.".format(global_ndofs,global_ndofs_limit))
                     trynextorder = False
@@ -123,7 +135,6 @@ if __name__ == "__main__":
             else:
                 break
 
-
     for i in range(options['reflvls']):
         for order in orders:
             if (i,order) in resultdict:
@@ -137,10 +148,3 @@ if __name__ == "__main__":
     PrintTimers(substring="XFE")
     PrintTimers(substring="IntegrateX")
     PrintTimers(substring="LsetCurv")
-    
-    if (options['vtkout']):
-        vtk = VTKOutput(ma=discretization.mesh,coefs=[discretization.lsetmeshadap.lset_p1,
-                                                      discretization.lsetmeshadap.deform,
-                                                      discretization.VolumeSolution()],
-                        names=["lsetp1","deform","u"],filename="vtkout_",subdivision=0)
-        vtk.Do()

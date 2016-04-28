@@ -64,6 +64,9 @@ class TraceFEMDiscretization(object):
     def VolumeSolution(self):
         return self.u
                     
+    def CutElements(self):
+        return self.Vh_tr.CutElements()
+
     def SolveProblem(self,firstcall=False, results = None):
         if results == None:
             results = {}

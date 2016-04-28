@@ -69,7 +69,10 @@ class HDGTraceFEMDiscretization(object):
     
     def VolumeSolution(self):
         return self.u.components[0]
-        
+
+    def CutElements(self):
+        return self.Vh_l2_tr.CutElements()
+    
     def SolveProblem(self,firstcall=False, results = None):
         if results == None:
             results = {}
