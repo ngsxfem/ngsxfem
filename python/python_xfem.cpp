@@ -70,6 +70,12 @@ void ExportNgsx()
     .def("GetNVertexDofs", FunctionPointer ([](XFESpace & self) 
                                          { return self.GetNVertexDof(); }),
          "get number of x dofs at vertices")
+    .def("CutElements", FunctionPointer ([](XFESpace & self) 
+                                         { return self.CutElements(); }),
+         "get BitArray of cut elements")
+    .def("CutSurfaceElements", FunctionPointer ([](XFESpace & self) 
+                                         { return self.CutSurfaceElements(); }),
+         "get BitArray of cut surface elements")
     ;
   
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
