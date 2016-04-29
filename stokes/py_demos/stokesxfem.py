@@ -54,7 +54,7 @@ def Make2DProblem():
                "SolutionInnerPressure" : (x*x*x + q),
                "SolutionOuterPressure" : (x*x*x - (pi*R*R/4.0*gammaf)),
                "NitscheParam" : 20,
-               "GhostPenaltyParam" : -0.1,
+               "GhostPenaltyParam" : 0.0,
                "Mesh" : mesh
               }
     return problem;
@@ -67,7 +67,9 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order+1, threshold=1000, disco
 
 # ### Setting up discrete variational problem
 
-Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4])
+dgjumps = "GhostPenaltyParam" in problemdata and problemdata["GhostPenaltyParam"] != 0.0
+    
+Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4], dgjumps=dgjumps)
 
 a = BilinearForm(Vh, symmetric = True, flags = { })
 a += TwoDomainStokesIntegrator(problemdata["ViscosityInner"],problemdata["ViscosityOuter"])
@@ -75,6 +77,11 @@ nitsche_a, nitsche_f = NitscheStokesIntegrators(problemdata["ViscosityInner"],
                                                 problemdata["ViscosityOuter"],
                                                 lamb=problemdata["NitscheParam"],
                                                 gammaf=problemdata["GammaF"])
+
+if dgjumps:
+    a.components[2] += GhostPenaltyIntegrator(coefneg=1.0/problemdata["ViscosityInner"],
+                                              coefpos=1.0/problemdata["ViscosityOuter"],
+                                              stab_param=problemdata["GhostPenaltyParam"],dim=mesh.dim)
 a += nitsche_a
 
 f = LinearForm(Vh)
