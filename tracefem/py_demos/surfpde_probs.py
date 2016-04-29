@@ -84,7 +84,8 @@ def Make3DProblem_Torus():
     cube.Add (OrthoBrick(Pnt(-2,-2,-2), Pnt(2,2,2)))
     cube = CSGeometry()
     # mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
-    mesh = Mesh (cube.GenerateMesh(maxh=1, quad_dominated=False))
+    mesh = Mesh (cube.GenerateMesh(maxh=5, quad_dominated=False))
+    mesh.Refine()
     mesh.Refine()
     
     a = 1
