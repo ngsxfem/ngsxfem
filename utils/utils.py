@@ -13,6 +13,8 @@ LevelsetExamples = {
     "sphere" : sqrt(x*x+y*y+z*z)-1.0,
     # torus with parameters as in 'Grande, Reusken, A higher order finite element method for partial differential euqations on surface, SINUM, 2016'
     "torus" : sqrt(z*z + (sqrt(x*x+y*y) - 1.0)*(sqrt(x*x+y*y) - 1.0)) - 0.6,
+    # gyroid from Lehrenfeld, CMAME, 2016
+    "gyroid" : cos(pi*x)*sin(pi*y)+cos(pi*y)*sin(pi*z)+cos(pi*z)*sin(pi*x),
 }
 
 BoundingBoxes = {
@@ -21,4 +23,5 @@ BoundingBoxes = {
     "dziuk88" : OrthoBrick(Pnt(-2,-2,-2), Pnt(2,2,2)),
     "sphere" : OrthoBrick(Pnt(-1.5,-1.5,-1.5), Pnt(1.5,1.5,1.5)),
     "torus" : OrthoBrick(Pnt(-2,-2,-2), Pnt(2,2,2)),
+    "gyroid" : OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)),
 }
