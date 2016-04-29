@@ -81,7 +81,7 @@ nitsche_a, nitsche_f = NitscheStokesIntegrators(problemdata["ViscosityInner"],
 if dgjumps:
     a.components[2] += GhostPenaltyIntegrator(coefneg=1.0/problemdata["ViscosityInner"],
                                               coefpos=1.0/problemdata["ViscosityOuter"],
-                                              stab_param=problemdata["GhostPenaltyParam"],dim=mesh.dim)
+                                              stab_param=problemdata["GhostPenaltyParam"])
 a += nitsche_a
 
 f = LinearForm(Vh)
