@@ -186,6 +186,7 @@ namespace ngfem
           IntegrationPoint ip1 = transform1(LocalFacetNr1, ir_facet[l]);
           MappedIntegrationPoint<D,D> sip1 (ip1, eltrans1);
           double lam = (dt == POS) ? coef_lam_pos->Evaluate(sip1) : coef_lam_neg->Evaluate(sip1);
+          const double delta = coef_delta->Evaluate(sip1);
           Mat<D> inv_jac1 = sip1.GetJacobianInverse();
           double det1 = sip1.GetJacobiDet();
 
