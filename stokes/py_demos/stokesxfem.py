@@ -57,6 +57,7 @@ def Make2DProblem():
                "SolutionOuterPressure" : (x*x*x - (pi*R*R/4.0*gammaf)),
                "NitscheParam" : 20,
                "GhostPenaltyParam" : -0.1 * h * h, # GP-integrator has scaling h, but we need h^3
+               "EmptyVel" : False,
                "Mesh" : mesh
               }
     return problem;
@@ -71,7 +72,7 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order+1, threshold=1000, disco
 
 dgjumps = "GhostPenaltyParam" in problemdata and problemdata["GhostPenaltyParam"] != 0.0
     
-Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4], dgjumps=dgjumps)
+Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4], dgjumps=dgjumps, empty_vel=problemdata["EmptyVel"])
 
 a = BilinearForm(Vh, symmetric = True, flags = { })
 a += TwoDomainStokesIntegrator(problemdata["ViscosityInner"],problemdata["ViscosityOuter"])
