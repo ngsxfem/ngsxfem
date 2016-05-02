@@ -116,8 +116,8 @@ def Make3DProblem():
 # torus with parameters as in 'Grande, Reusken, A higher order finite element method for partial differential euqations on surface, SINUM, 2016'
 def Make3DProblem_Torus():
     from netgen.csg import CSGeometry, OrthoBrick, Pnt
-    cube.Add (OrthoBrick(Pnt(-2,-2,-2), Pnt(2,2,2)))
     cube = CSGeometry()
+    cube.Add (BoundingBoxes["torus"])
     # mesh = Mesh (cube.GenerateMesh(maxh=0.5, quad_dominated=False))
     mesh = Mesh (cube.GenerateMesh(maxh=5, quad_dominated=False))
     mesh.Refine()
