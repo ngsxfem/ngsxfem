@@ -98,11 +98,8 @@ def TwoDomainMassIntegrator (coefneg,coefpos):
 def TwoDomainSourceIntegrator (coefneg,coefpos):
     return LFI("xsource", coef=[CoefficientFunction(coefneg),CoefficientFunction(coefpos)])
 
-def GhostPenaltyIntegrator (coefneg=1.0,coefpos=1.0,stab_param=1.0,dim=-1):
-    if dim == -1:
-        print(" need a dimension. Otherwise AnyDim wraps around me and I am not seen as a FacetBLFI")
-        raise Exception("need a dimension. Otherwise AnyDim wraps around me and I am not seen as a FacetBLFI")
-    return BFI("lo_ghostpenalty", coef=[CoefficientFunction(coefneg),CoefficientFunction(coefpos),CoefficientFunction(stab_param)], dim=dim)
+def GhostPenaltyIntegrator (coefneg=1.0,coefpos=1.0,stab_param=1.0):
+    return BFI("lo_ghostpenalty", coef=[CoefficientFunction(coefneg),CoefficientFunction(coefpos),CoefficientFunction(stab_param)])
 
 
 

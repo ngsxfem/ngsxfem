@@ -23,7 +23,7 @@ namespace ngfem
     double told = 0.0;
     double tnew = 1.0;
     double tau = 1.0;
-    double delta = 1.0;
+    shared_ptr<CoefficientFunction> coef_delta;
   public:
     GhostPenaltyIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) 
       : FacetBilinearFormIntegrator()
@@ -35,10 +35,10 @@ namespace ngfem
         told = coeffs[2]->EvaluateConst();
         tnew = coeffs[3]->EvaluateConst();
         tau = tnew-told;
-        delta = coeffs[4]->EvaluateConst();
+        coef_delta = coeffs[4];
       }
       else
-        delta = coeffs[2]->EvaluateConst();
+        coef_delta = coeffs[2];
     }
 
     virtual ~GhostPenaltyIntegrator () { ; }

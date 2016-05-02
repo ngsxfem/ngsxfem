@@ -16,6 +16,8 @@ from xfem.lsetcurv import *
 # For Stokes-FESpace and Stokes-Integrators (convenience)
 from xfem.stokes import *
 
+h = specialcf.mesh_size
+
 # 2D: circle configuration
 def Make2DProblem():
     from netgen.geom2d import SplineGeometry
@@ -54,7 +56,8 @@ def Make2DProblem():
                "SolutionInnerPressure" : (x*x*x + q),
                "SolutionOuterPressure" : (x*x*x - (pi*R*R/4.0*gammaf)),
                "NitscheParam" : 20,
-               "GhostPenaltyParam" : 0.0,
+               "GhostPenaltyParam" : -0.1 * h * h, # GP-integrator has scaling h, but we need h^3
+               "EmptyVel" : False,
                "Mesh" : mesh
               }
     return problem;
@@ -69,7 +72,7 @@ lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order+1, threshold=1000, disco
 
 dgjumps = "GhostPenaltyParam" in problemdata and problemdata["GhostPenaltyParam"] != 0.0
     
-Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4], dgjumps=dgjumps)
+Vh = XStokesFESpace(mesh, order=order, levelset=lsetmeshadap.lset_p1, dirichlet=[1,2,3,4], dgjumps=dgjumps, empty_vel=problemdata["EmptyVel"])
 
 a = BilinearForm(Vh, symmetric = True, flags = { })
 a += TwoDomainStokesIntegrator(problemdata["ViscosityInner"],problemdata["ViscosityOuter"])
@@ -81,7 +84,7 @@ nitsche_a, nitsche_f = NitscheStokesIntegrators(problemdata["ViscosityInner"],
 if dgjumps:
     a.components[2] += GhostPenaltyIntegrator(coefneg=1.0/problemdata["ViscosityInner"],
                                               coefpos=1.0/problemdata["ViscosityOuter"],
-                                              stab_param=problemdata["GhostPenaltyParam"],dim=mesh.dim)
+                                              stab_param=problemdata["GhostPenaltyParam"])
 a += nitsche_a
 
 f = LinearForm(Vh)
@@ -212,7 +215,7 @@ def PrintDictionaryFormatted(statistics_dict):
         print("")
 
     
-def MakeVTKOutput():
+def MakeVTKOutput(lvl=0):
 
     Vhh1 = H1(mesh, order=order+1, dirichlet=[1,2,3,4])
     Vhp = H1(mesh, order=order, dirichlet=[])
@@ -241,7 +244,7 @@ def MakeVTKOutput():
              (pnegpos.components[1],"pressure_pos")]
 
     coefs,names = [list(t) for t in zip(*pairs)]
-    VTKOutput(ma=mesh,coefs=coefs,names=names,filename="vtkout_",subdivision=3).Do()
+    VTKOutput(ma=mesh,coefs=coefs,names=names,filename="vtkout_lvl"+str(lvl),subdivision=3).Do()
     
         
 def DrawSolution():
@@ -259,7 +262,7 @@ def RefineAndSolve(n=1, statistics_dict=None):
         SolveProblem()
         ComputeErrors(statistics_dict)
         UnapplyMeshTrafo()
-        MakeVTKOutput()
+        MakeVTKOutput(lvl=i)
 
 if __name__ == "__main__":
     statistics_dict=dict()
