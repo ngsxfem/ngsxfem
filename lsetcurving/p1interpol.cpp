@@ -33,18 +33,40 @@ namespace ngcomp
     for (int vnr = 0; vnr < nv; ++vnr)
     {
       HeapReset hr(lh);
-      // Vec<D> point;
-      // ma->GetPoint<D>(vnr,point);
-      // Mat<1,D> pointmat;
-      // pointmat.Row(0) = point;
-      // IntegrationPoint ip(0.0);
-      // FE_ElementTransformation<0,D> eltrans(ET_POINT,pointmat);
-      // MappedIntegrationPoint<0,D> mip(ip,eltrans);
 
       double val_lset;
       if (coef)
-        throw Exception (" not without dimension hack for MIP<0,D>...");
-        // val_lset = coef->Evaluate(mip);
+      {
+        Array<int> elnums;
+        ma -> GetVertexElements (vnr, elnums);
+        Ngs_Element ngel = ma -> GetElement (elnums[0]);
+        auto & eltrans = ma -> GetTrafo (ngel, lh);
+        
+        if( ma -> GetDimension() == 2)
+        {
+          Vec<2> point;
+          ma->GetPoint<2>(vnr,point);
+          IntegrationPoint ip(0.0);
+          MappedIntegrationPoint<2,2> mip(ip,eltrans);
+          Vec<2> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
+          IntegrationPoint ip_f(refpoint,0.0);
+          MappedIntegrationPoint<2,2> mip_f(ip_f,eltrans);
+          val_lset = coef->Evaluate(mip);
+        }
+        else if ( ma -> GetDimension() == 3)
+        {
+          Vec<3> point;
+          ma->GetPoint<3>(vnr,point);
+          IntegrationPoint ip(0.0);
+          MappedIntegrationPoint<3,3> mip(ip,eltrans);
+          Vec<3> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
+          IntegrationPoint ip_f(refpoint,0.0);
+          MappedIntegrationPoint<3,3> mip_f(ip_f,eltrans);
+          val_lset = coef->Evaluate(mip);
+        }
+        else
+          throw Exception ("D==0,D==1 not yet implemnted");
+      }
       else
       {
         Array<int> dof;
@@ -56,8 +78,9 @@ namespace ngcomp
       Array<int> dof;
       gf_p1->GetFESpace()->GetVertexDofNrs(vnr,dof);
       FlatVector<> val(1,&val_lset);
-      gf_p1->GetVector().SetIndirect(dof,val);
-    }
+      if (dof[0] != -1)
+        gf_p1->GetVector().SetIndirect(dof,val);
+  }
 
 
   }

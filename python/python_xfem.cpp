@@ -117,6 +117,15 @@ void ExportNgsx()
           (bp::arg("gf_ho")=NULL,bp::arg("gf_p1")=NULL,bp::arg("heapsize")=1000000))
     ;
 
+  bp::def("InterpolateToP1", FunctionPointer( [] (shared_ptr<CoefficientFunction> coef, shared_ptr<GridFunction> gf_p1, int heapsize)
+                                              {
+                                                InterpolateP1 interpol(coef, gf_p1);
+                                                LocalHeap lh (heapsize, "InterpolateP1-Heap");
+                                                interpol.Do(lh);
+                                              } ),
+          (bp::arg("coef"),bp::arg("heapsize")=1000000))
+    ;
+
   bp::class_<StatisticContainer, shared_ptr<StatisticContainer>,  boost::noncopyable>("StatisticContainer", bp::no_init)
     .def("__init__", bp::make_constructor 
          (FunctionPointer ([]()
