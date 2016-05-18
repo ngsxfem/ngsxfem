@@ -51,7 +51,7 @@ namespace ngcomp
           Vec<2> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint,0.0);
           MappedIntegrationPoint<2,2> mip_f(ip_f,eltrans);
-          val_lset = coef->Evaluate(mip);
+          val_lset = coef->Evaluate(mip_f);
         }
         else if ( ma -> GetDimension() == 3)
         {
@@ -62,7 +62,7 @@ namespace ngcomp
           Vec<3> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint,0.0);
           MappedIntegrationPoint<3,3> mip_f(ip_f,eltrans);
-          val_lset = coef->Evaluate(mip);
+          val_lset = coef->Evaluate(mip_f);
         }
         else
           throw Exception ("D==0,D==1 not yet implemnted");
