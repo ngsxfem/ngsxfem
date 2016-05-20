@@ -76,6 +76,13 @@ void ExportNgsx()
     .def("CutSurfaceElements", FunctionPointer ([](XFESpace & self) 
                                          { return self.CutSurfaceElements(); }),
          "get BitArray of cut surface elements")
+    .def("GetDomainOfDof", &XFESpace::GetDomainOfDof)
+    .def("GetDomainOfElement", &XFESpace::GetDomainOfElement)
+    .def("GetDomainNrs",  FunctionPointer( [] (XFESpace & self, int elnr) {
+               Array<DOMAIN_TYPE> domnums;
+               self.GetDomainNrs( elnr, domnums );
+               return domnums;
+            }))
     ;
   
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
