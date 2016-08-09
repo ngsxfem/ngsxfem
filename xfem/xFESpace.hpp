@@ -230,6 +230,9 @@ namespace ngcomp
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
     virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
 
+
+    SymbolTable<shared_ptr<DifferentialOperator>> GetAdditionalEvaluators () const;
+    
   };
 
 

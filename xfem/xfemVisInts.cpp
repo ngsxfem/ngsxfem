@@ -5,6 +5,10 @@
 namespace ngfem
 {
 
+
+
+  
+  
   template <int D, TIME t>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpEvalSTX<D,t>::GenerateMatrix (const FEL & bfel, const MIP & mip,
@@ -128,6 +132,71 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<2,FUTURE> > initnegposxwmass0f ("st_np_vis_future", 2, 1);
   static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<3,FUTURE> > initnegposxwmass1f ("st_np_vis_future", 3, 1);
 
+
+
+  template <int D, DIFFOPX DOX>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpX<D,DOX>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                       MAT & mat, LocalHeap & lh)
+  {
+    const XFiniteElement * xfe = 
+      dynamic_cast<const XFiniteElement *> (&bfel);
+
+    if (!xfe)
+    {
+      mat = 0.0;
+    }
+    else
+    {
+
+      const ScalarFiniteElement<D> & scafe = 
+        dynamic_cast<const ScalarFiniteElement<D> & > (xfe->GetBaseFE());
+      
+      const int ndof = scafe.GetNDof();
+
+      if (DOX < DIFFOPX::EXTEND)
+      {
+        FlatVector<> shape (ndof,lh);
+        shape = scafe.GetShape(mip.IP(), lh);
+
+        if (DOX==DIFFOPX::RNEG || DOX==DIFFOPX::RPOS)
+        {
+          DOMAIN_TYPE dt_here = DOX==DIFFOPX::RNEG ? DOMAIN_TYPE::NEG : DOMAIN_TYPE::POS;
+          const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+          for (int i =0; i < ndof; i++)
+            if (xsign[i]==dt_here)
+              mat(0,i) = shape(i);
+            else
+              mat(0,i) = 0.0;
+        }
+        else
+        {
+          mat.Row(0) = shape;
+        }
+      }
+      else
+      {
+        FlatMatrixFixWidth<D> dshape (ndof,lh);
+        scafe.CalcMappedDShape(mip, dshape);
+        
+        if (DOX==DIFFOPX::RNEG_GRAD || DOX==DIFFOPX::RPOS_GRAD)
+        {
+          DOMAIN_TYPE dt_here = DOX==DIFFOPX::RNEG_GRAD ? DOMAIN_TYPE::NEG : DOMAIN_TYPE::POS;
+          const FlatArray<DOMAIN_TYPE> & xsign = xfe->GetSignsOfDof();
+          for (int i =0; i < ndof; i++)
+            if (xsign[i]==dt_here)
+              mat.Col(i) = dshape.Row(i);
+            else
+              mat.Col(i) = 0.0;
+        }
+        else
+        {
+          mat = Trans(dshape);
+        }
+      } // GRAD
+    }// xfe
+  }// generate matrix
+  
   template <int D>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpEvalX<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
@@ -209,6 +278,21 @@ namespace ngfem
 
   template <int D>  XVisIntegrator<D> :: ~XVisIntegrator () { ; }
 
+  template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>;
+  template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>;
+  template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>;
+  template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND_GRAD>>;
+  template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG_GRAD>>;
+  template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS_GRAD>>;
+
+  template class T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND>>;
+  template class T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG>>;
+  template class T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS>>;
+  template class T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND_GRAD>>;
+  template class T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG_GRAD>>;
+  template class T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS_GRAD>>;
+
+  
   template class T_DifferentialOperator<DiffOpGradX<2>>;
   template class T_DifferentialOperator<DiffOpGradX<3>>;
 

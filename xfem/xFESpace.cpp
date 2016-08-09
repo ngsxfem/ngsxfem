@@ -211,12 +211,48 @@ namespace ngcomp
     // integrator = new MassIntegrator<D> (&one);
     if (flags.GetDefineFlag("trace"))
     {
-        trace = true;
-        evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
-        flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
+      trace = true;
+      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
+      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
+    }
+    else
+    {
+      evaluator = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
+      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
     }
   }
 
+
+  template <int D, int SD>
+  SymbolTable<shared_ptr<DifferentialOperator>>
+  T_XFESpace<D,SD> :: GetAdditionalEvaluators () const
+  {
+    SymbolTable<shared_ptr<DifferentialOperator>> additional;
+    switch (ma->GetDimension())
+    {
+    case 1:
+        throw Exception("dim==1 not implemented"); break;
+    case 2:
+      additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>> ()); 
+      additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>> ()); 
+      additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>> ()); 
+      additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND_GRAD>>> ());
+      additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS_GRAD>>> ()); 
+      additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG_GRAD>>> ()); break;
+    case 3:
+      additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND>>> ());
+      additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS>>> ());
+      additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG>>> ());
+      additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND_GRAD>>> ());
+      additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS_GRAD>>> ());
+      additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG_GRAD>>> ()); break;
+    default:
+      ;
+    }
+    return additional;
+  }
+
+    
   template <int D, int SD>
   T_XFESpace<D,SD> :: ~T_XFESpace ()
   {

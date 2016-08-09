@@ -265,3 +265,51 @@ def IntegrateOnWholeDomain(lset,mesh,cf_neg=None,cf_pos=None,coef=None,order=5,s
     return ints["negdomain"] + ints["posdomain"]
 
 
+def extend(func):
+    if func.derivname == "extend":
+        return func.Deriv()
+    add = func.Operator("extend")
+    if add:
+        return add        
+    raise Exception("cannot form extend")
+
+def pos(func):
+    if func.derivname == "pos":
+        return func.Deriv()
+    add = func.Operator("pos")
+    if add:
+        return add        
+    raise Exception("cannot form pos")
+
+def neg(func):
+    if func.derivname == "neg":
+        return func.Deriv()
+    add = func.Operator("neg")
+    if add:
+        return add        
+    raise Exception("cannot form neg")
+
+def extend_grad(func):
+    if func.derivname == "extendgrad":
+        return func.Deriv()
+    add = func.Operator("extendgrad")
+    if add:
+        return add        
+    raise Exception("cannot form extend_grad")
+
+def pos_grad(func):
+    if func.derivname == "posgrad":
+        return func.Deriv()
+    add = func.Operator("posgrad")
+    if add:
+        return add        
+    raise Exception("cannot form pos_grad")
+
+def neg_grad(func):
+    if func.derivname == "neggrad":
+        return func.Deriv()
+    add = func.Operator("neggrad")
+    if add:
+        return add        
+    raise Exception("cannot form neg_grad")
+
