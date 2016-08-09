@@ -308,7 +308,7 @@ void ExportNgsx()
                                  {
                                    for (auto domtype : {NEG,POS})
                                    {
-                                     if( ! tointon[domtype] ) continue;
+                                     if( ! tointon[int(domtype)] ) continue;
                                      double hsum = 0.0;
                                      double value = 0.0;
 
@@ -416,7 +416,7 @@ void ExportNgsx()
                                      AsAtomic(rsum_if) += hsum_if;
                                    }
                                  }
-                                 else if( tointon[element_domain] )
+                                 else if( tointon[int(element_domain)] )
                                  {
                                    double hsum = 0.0;
                                    IntegrationRule ir(trafo.GetElementType(), order);
