@@ -82,10 +82,10 @@ namespace ngcomp
             const int dof = basedof2xdof[i];
             if (dof != -1)
             {
-              if (trace)
+              // if (trace)
                 ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
-              else
-                ctofdof[dof] = INTERFACE_DOF; //
+              // else
+              //   ctofdof[dof] = INTERFACE_DOF; //
             }
         }
 
@@ -117,7 +117,7 @@ namespace ngcomp
     }
     *testout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
     // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
-
+    // getchar();
 
   }
 
@@ -211,12 +211,48 @@ namespace ngcomp
     // integrator = new MassIntegrator<D> (&one);
     if (flags.GetDefineFlag("trace"))
     {
-        trace = true;
-        evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
-        flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
+      trace = true;
+      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
+      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
+    }
+    else
+    {
+      evaluator = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
+      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
     }
   }
 
+
+  template <int D, int SD>
+  SymbolTable<shared_ptr<DifferentialOperator>>
+  T_XFESpace<D,SD> :: GetAdditionalEvaluators () const
+  {
+    SymbolTable<shared_ptr<DifferentialOperator>> additional;
+    switch (ma->GetDimension())
+    {
+    case 1:
+        throw Exception("dim==1 not implemented"); break;
+    case 2:
+      additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>> ()); 
+      additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>> ()); 
+      additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>> ()); 
+      additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND_GRAD>>> ());
+      additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS_GRAD>>> ()); 
+      additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG_GRAD>>> ()); break;
+    case 3:
+      additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND>>> ());
+      additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS>>> ());
+      additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG>>> ());
+      additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND_GRAD>>> ());
+      additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS_GRAD>>> ());
+      additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG_GRAD>>> ()); break;
+    default:
+      ;
+    }
+    return additional;
+  }
+
+    
   template <int D, int SD>
   T_XFESpace<D,SD> :: ~T_XFESpace ()
   {
@@ -1028,6 +1064,17 @@ namespace ngcomp
 
           if (vertexpatch)
           {
+
+            for (int i = 0; i < nv; i++)
+            {
+              GetVertexDofNrs(i,dnums);
+              for (int j = 0; j < dnums.Size(); ++j)
+                for (int k = 0; k < dnums.Size(); ++k)
+                  if (filter.Test(dnums[j]))
+                    if (dnums[j] < basendof)
+                      creator.Add(offset+i,dnums[k]);
+            }
+            
             for (int i = 0; i < ned; i++)
             {
               Ng_Node<1> edge = ma->GetNode<1> (i);
@@ -1035,29 +1082,45 @@ namespace ngcomp
               GetVertexDofNrs(edge.vertices[0],dnums);
               GetVertexDofNrs(edge.vertices[1],dnums2);
               GetEdgeDofNrs(i,dnums3);
-            
+              
               for (int j = 0; j < dnums.Size(); ++j)
+              {
                 for (int k = 0; k < dnums2.Size(); ++k)
                 {
                   if (filter.Test(dnums[j]))
                     if (dnums[j] < basendof)
-                      creator.Add(offset+dnums[j],dnums2[k]);
+                      creator.Add(offset+edge.vertices[0],dnums2[k]);
                   if (filter.Test(dnums2[k]))
                     if (dnums2[k] < basendof)
-                      creator.Add(offset+dnums2[k],dnums[j]);
+                      creator.Add(offset+edge.vertices[1],dnums[j]);
                 }
+              }
 
-            
+              
               for (int j = 0; j < dnums.Size(); ++j)
                 if (filter.Test(dnums[j]))
                   if (dnums[j] < basendof)
-                    creator.Add(offset+dnums[j],dnums3);
+                    creator.Add(offset+edge.vertices[0],dnums3);
 
               for (int j = 0; j < dnums2.Size(); ++j)
                 if (filter.Test(dnums2[j]))
                   if (dnums2[j] < basendof)
-                    creator.Add(offset+dnums2[j],dnums3);
+                    creator.Add(offset+edge.vertices[1],dnums3);
             }
+
+            for (int elnr = 0; elnr < ne; ++elnr)
+            {
+              Ng_Node<2> cell = ma->GetNode<2> (elnr);
+              GetInnerDofNrs(elnr,dnums);
+              for (int i = 0; i < dnums.Size(); ++i)
+              {
+                GetVertexDofNrs(cell.vertices[0],dnums);
+                GetVertexDofNrs(cell.vertices[1],dnums);
+                GetVertexDofNrs(cell.vertices[2],dnums);
+              }
+            }
+              
+            // }            
             offset += nv;
           }
 
@@ -1224,7 +1287,7 @@ namespace ngcomp
 
   Array<int> * XStdFESpace :: CreateDirectSolverClusters (const Flags & flags) const
   {
-    bool bddc = true;
+    bool bddc = false;
 
     if (true || flags.GetDefineFlag("subassembled"))
     {
@@ -1262,6 +1325,7 @@ namespace ngcomp
       }
       else // put all degrees of freedoms at the interface on the coarse grid
       {
+
         Array<int> dnums;
         BitArray mark(GetNDof());
         mark.Clear();
@@ -1315,6 +1379,8 @@ namespace ngcomp
         for (int i = 0; i < freedofs.Size(); i++)
           if (!freedofs.Test(i)) clusters[i] = 0;
         *testout << "XStdFESpace, dsc = " << endl << clusters << endl;
+        // cout << "XStdFESpace, dsc = " << endl << clusters << endl;
+        // getchar();
         return &clusters;
       }
     }

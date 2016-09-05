@@ -96,6 +96,7 @@ namespace ngcomp
     virtual void GetDofNrs (int elnr, Array<int> & dnums) const;
     virtual void GetSDofNrs (int selnr, Array<int> & dnums) const;
 
+    DOMAIN_TYPE GetDomainOfDof (int dof) const { return domofdof[dof]; }
     void GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const;
     void GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const;
 
@@ -166,6 +167,7 @@ namespace ngcomp
       else
         return activeelem.Test(int(id));
     }
+    DOMAIN_TYPE GetDomainOfElement(int elnr) const {return domofel[elnr];}
 
     void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
     shared_ptr<FESpace> GetBaseFESpace() const { return basefes;};
@@ -228,6 +230,9 @@ namespace ngcomp
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
     virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
 
+
+    SymbolTable<shared_ptr<DifferentialOperator>> GetAdditionalEvaluators () const;
+    
   };
 
 

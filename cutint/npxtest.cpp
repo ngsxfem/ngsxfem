@@ -264,14 +264,14 @@ public:
                     {
                         static Timer timer ("npxtest - MakeQuadRule - total");
                         RegionTimer reg (timer);
-                        els_of_dt[numint.MakeQuadRule()]++;
+                        els_of_dt[(int)numint.MakeQuadRule()]++;
                     }
 #pragma omp critical(measpos)
                     for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
-                        meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                      meas_of_dt[(int)POS] += absdet * compositerule.quadrule_pos.weights[i];
 #pragma omp critical(measneg)
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
-                        meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                      meas_of_dt[(int)NEG] += absdet * compositerule.quadrule_neg.weights[i];
                     for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
                     {
                         static Timer timer ("npxtest - Transform n");
@@ -287,7 +287,7 @@ public:
                         Vec<3> n (n_sp(0),n_sp(1),n_t);
                         double fac = L2Norm(n);
 #pragma omp critical(measif)
-                        meas_of_dt[IF] +=  compositerule.quadrule_if.weights[i] * fac;
+                        meas_of_dt[(int)IF] +=  compositerule.quadrule_if.weights[i] * fac;
                     }
                     if (output)
                     {
@@ -332,14 +332,14 @@ public:
                     {
                         static Timer timer ("MakeQuadRule - total");
                         RegionTimer reg (timer);
-                        els_of_dt[numint.MakeQuadRule()]++;
+                        els_of_dt[(int)numint.MakeQuadRule()]++;
                     }
 #pragma omp critical(measpos)
                     for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
-                        meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                        meas_of_dt[(int)POS] += absdet * compositerule.quadrule_pos.weights[i];
 #pragma omp critical(measneg)
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
-                        meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                        meas_of_dt[(int)NEG] += absdet * compositerule.quadrule_neg.weights[i];
 #pragma omp critical(measif)
                     for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
                     {
@@ -350,7 +350,7 @@ public:
                         Vec<2> nref = compositerule.quadrule_if.normals[i];
                         Vec<2> n = absdet * Trans(Finv) * nref ;
                         double fac = L2Norm(n);
-                        meas_of_dt[IF] += compositerule.quadrule_if.weights[i] * fac;
+                        meas_of_dt[(int)IF] += compositerule.quadrule_if.weights[i] * fac;
                     }
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
                     {
@@ -384,16 +384,16 @@ public:
                                                                         num_int_ref_space, 
                                                                         num_int_ref_time);
 
-                    els_of_dt[numint.MakeQuadRule()]++;
+                    els_of_dt[(int)numint.MakeQuadRule()]++;
 #pragma omp critical(measpos)
                     for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
-                        meas_of_dt[POS] += compositerule.quadrule_pos.weights[i];
+                        meas_of_dt[(int)POS] += compositerule.quadrule_pos.weights[i];
 #pragma omp critical(measneg)
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
-                        meas_of_dt[NEG] += compositerule.quadrule_neg.weights[i];
+                        meas_of_dt[(int)NEG] += compositerule.quadrule_neg.weights[i];
 #pragma omp critical(measif)
                     for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
-                        meas_of_dt[IF] += compositerule.quadrule_if.weights[i];
+                        meas_of_dt[(int)IF] += compositerule.quadrule_if.weights[i];
 
                 }
 
@@ -411,15 +411,15 @@ public:
                     {
                         static Timer timer ("MakeQuadRule - total");
                         RegionTimer reg (timer);
-                        els_of_dt[numint.MakeQuadRule()]++;
+                        els_of_dt[(int)numint.MakeQuadRule()]++;
                     }
 
 #pragma omp critical(measpos)
                     for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
-                        meas_of_dt[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                        meas_of_dt[(int)POS] += absdet * compositerule.quadrule_pos.weights[i];
 #pragma omp critical(measneg)
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
-                        meas_of_dt[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                        meas_of_dt[(int)NEG] += absdet * compositerule.quadrule_neg.weights[i];
 #pragma omp critical(measif)
                     for (int i = 0; i < compositerule.quadrule_if.Size(); ++i)
                     {
@@ -430,7 +430,7 @@ public:
                         Vec<3> nref = compositerule.quadrule_if.normals[i];
                         Vec<3> n = absdet * Trans(Finv) * nref ;
                         double fac = L2Norm(n);
-                        meas_of_dt[IF] += compositerule.quadrule_if.weights[i] * fac;
+                        meas_of_dt[(int)IF] += compositerule.quadrule_if.weights[i] * fac;
                     }
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
                     {
@@ -457,12 +457,12 @@ public:
             
             }
         }
-        cout << " pos elements : " << els_of_dt[POS] << endl;
-        cout << " neg elements : " << els_of_dt[NEG] << endl;
-        cout << " cut elements : " << els_of_dt[IF] << endl;
-        cout << " pos measure : " << meas_of_dt[POS] << endl;
-        cout << " neg measure : " << meas_of_dt[NEG] << endl;
-        cout << " cut measure : " << meas_of_dt[IF] << endl;
+        cout << " pos elements : " << els_of_dt[(int)POS] << endl;
+        cout << " neg elements : " << els_of_dt[(int)NEG] << endl;
+        cout << " cut elements : " << els_of_dt[(int)IF] << endl;
+        cout << " pos measure : " << meas_of_dt[(int)POS] << endl;
+        cout << " neg measure : " << meas_of_dt[(int)NEG] << endl;
+        cout << " cut measure : " << meas_of_dt[(int)IF] << endl;
 
 
         if (bound)
@@ -550,14 +550,14 @@ public:
                     {
                         static Timer timer ("npxtest - MakeQuadRule bnd - total");
                         RegionTimer reg (timer);
-                        sels_of_dt[numint.MakeQuadRule()]++;
+                        sels_of_dt[(int)numint.MakeQuadRule()]++;
                     }
 #pragma omp critical(bndmeaspos)
                     for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
-                        meas_of_dt_bnd[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                        meas_of_dt_bnd[(int)POS] += absdet * compositerule.quadrule_pos.weights[i];
 #pragma omp critical(bndmeasneg)
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
-                        meas_of_dt_bnd[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                        meas_of_dt_bnd[(int)NEG] += absdet * compositerule.quadrule_neg.weights[i];
                 }
 
 
@@ -574,14 +574,14 @@ public:
                     {
                         static Timer timer ("npxtest - MakeQuadRule bnd - total");
                         RegionTimer reg (timer);
-                        sels_of_dt[numint.MakeQuadRule()]++;
+                        sels_of_dt[(int)numint.MakeQuadRule()]++;
                     }
 #pragma omp critical(bndmeaspos)
                     for (int i = 0; i < compositerule.quadrule_pos.Size(); ++i)
-                        meas_of_dt_bnd[POS] += absdet * compositerule.quadrule_pos.weights[i];
+                        meas_of_dt_bnd[(int)POS] += absdet * compositerule.quadrule_pos.weights[i];
 #pragma omp critical(bndmeasneg)
                     for (int i = 0; i < compositerule.quadrule_neg.Size(); ++i)
-                        meas_of_dt_bnd[NEG] += absdet * compositerule.quadrule_neg.weights[i];
+                        meas_of_dt_bnd[(int)NEG] += absdet * compositerule.quadrule_neg.weights[i];
                 }
 
                 if( et_space == ET_TRIG && et_time == ET_SEGM)
@@ -596,11 +596,11 @@ public:
 
             }
 
-            cout << " pos surf. elements : " << sels_of_dt[POS] << endl;
-            cout << " neg surf. elements : " << sels_of_dt[NEG] << endl;
-            cout << " cut surf. elements : " << sels_of_dt[IF] << endl;
-            cout << " pos measure bndary : " << meas_of_dt_bnd[POS] << endl;
-            cout << " neg measure bndary : " << meas_of_dt_bnd[NEG] << endl;
+            cout << " pos surf. elements : " << sels_of_dt[(int)POS] << endl;
+            cout << " neg surf. elements : " << sels_of_dt[(int)NEG] << endl;
+            cout << " cut surf. elements : " << sels_of_dt[(int)IF] << endl;
+            cout << " pos measure bndary : " << meas_of_dt_bnd[(int)POS] << endl;
+            cout << " neg measure bndary : " << meas_of_dt_bnd[(int)NEG] << endl;
 
         }
     }

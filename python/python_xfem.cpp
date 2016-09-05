@@ -76,6 +76,13 @@ void ExportNgsx()
     .def("CutSurfaceElements", FunctionPointer ([](XFESpace & self) 
                                          { return self.CutSurfaceElements(); }),
          "get BitArray of cut surface elements")
+    .def("GetDomainOfDof", &XFESpace::GetDomainOfDof)
+    .def("GetDomainOfElement", &XFESpace::GetDomainOfElement)
+    .def("GetDomainNrs",  FunctionPointer( [] (XFESpace & self, int elnr) {
+               Array<DOMAIN_TYPE> domnums;
+               self.GetDomainNrs( elnr, domnums );
+               return domnums;
+            }))
     ;
   
   bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
@@ -301,7 +308,7 @@ void ExportNgsx()
                                  {
                                    for (auto domtype : {NEG,POS})
                                    {
-                                     if( ! tointon[domtype] ) continue;
+                                     if( ! tointon[int(domtype)] ) continue;
                                      double hsum = 0.0;
                                      double value = 0.0;
 
@@ -409,7 +416,7 @@ void ExportNgsx()
                                      AsAtomic(rsum_if) += hsum_if;
                                    }
                                  }
-                                 else if( tointon[element_domain] )
+                                 else if( tointon[int(element_domain)] )
                                  {
                                    double hsum = 0.0;
                                    IntegrationRule ir(trafo.GetElementType(), order);
