@@ -23,7 +23,8 @@ InterpolateToP1(levelset,lset_approx)
 
 # extended FESpace 
 
-VhG = XStdFESpace(mesh, lset_approx, order=order, basetype="h1ho", dirichlet=[1,2,3,4])
+bulkfes = H1(mesh, order=order, dirichlet=[1,2,3,4])
+VhG = FESpace([bulkfes,bulkfes])
 gfu = GridFunction(VhG)
 
 # coefficients / parameters: 
@@ -42,20 +43,14 @@ stab = 10*(alpha_pos+alpha_neg)*order*order/h
 
 # expressions of test and trial functions:
 
-u_std, u_x = VhG.TrialFunction()
-v_std, v_x = VhG.TestFunction()
+u_neg, u_pos = VhG.TrialFunction()
+v_neg, v_pos = VhG.TestFunction()
 
-u_pos = u_std + pos(u_x)
-u_neg = u_std + neg(u_x)
+gradu_pos = grad(u_pos)
+gradu_neg = grad(u_neg)
 
-v_pos = v_std + pos(v_x)
-v_neg = v_std + neg(v_x)
-
-gradu_pos = grad(u_std) + pos_grad(u_x)
-gradu_neg = grad(u_std) + neg_grad(u_x)
-
-gradv_pos = grad(v_std) + pos_grad(v_x)
-gradv_neg = grad(v_std) + neg_grad(v_x)
+gradv_pos = grad(v_pos)
+gradv_neg = grad(v_neg)
 
 betajump_u = beta_pos * u_pos - beta_neg * u_neg
 betajump_v = beta_pos * v_pos - beta_neg * v_neg
@@ -80,23 +75,28 @@ a += SymbolicBFI(levelset_domain = lset_if , coef =  average_flux_u * betajump_v
 
 a.Assemble()
 
-
+# hack for right hand side (no SymbolicCutLFI yet..)
+f_a = BilinearForm(VhG, symmetric = True, flags = { })
+f_a += SymbolicBFI(levelset_domain = lset_neg, coef = 10 * u_neg * v_neg)
 f = LinearForm(VhG)
-# TODO: SymbolicLFI
-f += TwoDomainSourceIntegrator(10,0)
 f.Assemble();
+gfu.components[0].Set(CoefficientFunction(1), boundary=False)
+# gfu.components[1].Set(CoefficientFunction(1), boundary=True)
+f_a.Assemble()
+f.vec.data = f_a.mat * gfu.vec
 
 gfu.components[0].Set(CoefficientFunction(0), boundary=True)
+gfu.components[1].Set(CoefficientFunction(0), boundary=True)
 
 res = f.vec.CreateVector()
 res.data = f.vec - a.mat * gfu.vec.data
 gfu.vec.data += a.mat.Inverse(VhG.FreeDofs()) * res
 
 
-u = gfu.components[0] + IfPos(lset_approx, pos(gfu.components[1]), neg(gfu.components[1]))
+u = IfPos(lset_approx, gfu.components[1], gfu.components[0])
 
-Draw(gfu.components[0],mesh,"u_std")
-Draw(extend(gfu.components[1]),mesh,"u_x")
+Draw(gfu.components[0],mesh,"u_neg")
+Draw(gfu.components[1],mesh,"u_pos")
 Draw(u,mesh,"u")
 
 
