@@ -310,7 +310,7 @@ void ExportNgsx()
                                    {
                                      if( ! tointon[int(domtype)] ) continue;
                                      double hsum = 0.0;
-                                     double value = 0.0;
+                                     // double value = 0.0;
 
                                      if (DIM == 2)
                                      {
