@@ -458,11 +458,11 @@ void ExportNgsx()
 
   bp::def("SymbolicCutBFI", FunctionPointer
           ([](shared_ptr<CoefficientFunction> lset,
-              shared_ptr<CoefficientFunction> cf,
               DOMAIN_TYPE dt,
-              VorB vb,
               int order,
               int subdivlvl,
+              shared_ptr<CoefficientFunction> cf,
+              VorB vb,
               bool element_boundary,
               bool skeleton,
               bp::object definedon)
@@ -503,12 +503,12 @@ void ExportNgsx()
              
              return bfi;
            }),
-          (bp::arg("lset"),
-           bp::arg("coef"),
-           bp::arg("domain_type")=NEG,
+          (bp::args("lset"),
+           bp::args("domain_type")=NEG,
+           bp::args("force_intorder")=-1,
+           bp::args("subdivlvl")=0,
+           bp::args("coef"),
            bp::args("VOL_or_BND")=VOL,
-           bp::arg("order")=-1,
-           bp::arg("subdivlvl")=0,
            bp::args("element_boundary")=false,
            bp::args("skeleton")=false,
            bp::arg("definedon")=bp::object())

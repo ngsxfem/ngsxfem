@@ -15,8 +15,8 @@ namespace ngfem
 {
 
   SymbolicCutBilinearFormIntegrator ::
-  SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> & acf,
-                                     shared_ptr<CoefficientFunction> & acf_lset,
+  SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> & acf_lset,
+                                     shared_ptr<CoefficientFunction> & acf,
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder,
                                      int asubdivlvl)
@@ -24,6 +24,29 @@ namespace ngfem
         force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
   {
     
+  }
+
+  void 
+  SymbolicCutBilinearFormIntegrator ::
+  CalcElementMatrix (const FiniteElement & fel,
+                     const ElementTransformation & trafo, 
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+  {
+    T_CalcElementMatrix<double> (fel, trafo, elmat, lh);
+  }
+  
+  void 
+  SymbolicCutBilinearFormIntegrator ::
+  CalcElementMatrix (const FiniteElement & fel,
+                     const ElementTransformation & trafo, 
+                     FlatMatrix<Complex> elmat,
+                     LocalHeap & lh) const
+  {
+    if (fel.ComplexShapes() || trafo.IsComplex())
+      T_CalcElementMatrix<Complex,Complex> (fel, trafo, elmat, lh);
+    else
+      T_CalcElementMatrix<Complex,double> (fel, trafo, elmat, lh);
   }
   
   template <typename SCAL, typename SCAL_SHAPES>
@@ -33,7 +56,7 @@ namespace ngfem
                        FlatMatrix<SCAL> elmat,
                        LocalHeap & lh) const
     
-  { 
+  {
     static Timer t("symbolicCutBFI - CalcElementMatrix", 2);
     static Timer timercutgeom ("symbolicCutBFI::MakeCutGeom");
     // static Timer tstart("symbolicCutBFI - CalcElementMatrix startup", 2);
@@ -88,8 +111,6 @@ namespace ngfem
     if (force_intorder >= 0)
       intorder = force_intorder;
     
-    IntegrationRule ir(trafo.GetElementType(), intorder);
-    BaseMappedIntegrationRule & mir = trafo(ir, lh);
     
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
@@ -116,6 +137,70 @@ namespace ngfem
                                                 intorder, 0, subdivlvl, 0);
     DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
     timercutgeom.Stop();
+
+    const IntegrationRule* ir = nullptr;
+
+    if (element_domain == IF) // there is a cut on the current element
+    {
+      if (dt == IF)
+      {
+        if (DIM == 2)
+        {
+          const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
+          IntegrationRule ir_interface (interface_quad.Size(),lh);
+          for (int i = 0; i < interface_quad.Size(); ++i)
+          {
+            IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
+            MappedIntegrationPoint<2,2> mip(ip,trafo);
+
+            Mat<2,2> Finv = mip.GetJacobianInverse();
+            const double absdet = mip.GetMeasure();
+
+            Vec<2> nref = interface_quad.normals[i];
+            Vec<2> normal = absdet * Trans(Finv) * nref ;
+            double len = L2Norm(normal);
+            const double weight = interface_quad.weights[i] * len;
+
+            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len);
+            
+            ir = &ir_interface;
+          }
+        }
+        else
+          throw Exception("not yet implemented");
+      }
+      else
+      {
+        if (DIM == 2)
+        {
+          const QuadratureRule<2> & domain_quad = cquad2d.GetRule(dt);
+          IntegrationRule ir_domain(domain_quad.Size(),lh);
+          for (int i = 0; i < ir_domain.Size(); ++i)
+            ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+          ir = &ir_domain;
+        }
+        else
+        {
+          const QuadratureRule<3> & domain_quad = cquad3d.GetRule(dt);
+          IntegrationRule ir_domain (domain_quad.Size(),lh);
+          for (int i = 0; i < ir_domain.Size(); ++i)
+            ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+          ir = &ir_domain;
+        }
+      }
+    }
+    else
+    {
+      if (element_domain != dt) //no integration on this element
+        return;
+      
+      ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
+    }
+
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+
+
+    /// WHAT FOLLOWS IN THIS FUNCTION THIS IS COPY+PASTE FROM NGSOLVE !!!
       
     int k1 = 0;
     for (auto proxy1 : trial_proxies)
@@ -203,7 +288,7 @@ namespace ngfem
                     else
                       for (int i = 0; i < mir.Size(); i++)
                         diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *=
-                          static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*ir[i].Weight();
+                          static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*(*ir)[i].Weight();
                   }
                 IntRange r1 = proxy1->Evaluator()->UsedDofs(fel);
                 IntRange r2 = proxy2->Evaluator()->UsedDofs(fel);

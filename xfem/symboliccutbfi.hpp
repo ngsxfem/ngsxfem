@@ -22,7 +22,7 @@ namespace ngfem
     int subdivlvl = 0;
   public:
     
-    SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> & cf_lset,
+    SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> & acf_lset,
                                        shared_ptr<CoefficientFunction> & acf,
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
@@ -31,6 +31,18 @@ namespace ngfem
     virtual bool BoundaryForm() const { return false; }
     virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
+
+    virtual void 
+    CalcElementMatrix (const FiniteElement & fel,
+		       const ElementTransformation & trafo, 
+		       FlatMatrix<double> elmat,
+		       LocalHeap & lh) const;
+
+    virtual void 
+    CalcElementMatrix (const FiniteElement & fel,
+		       const ElementTransformation & trafo, 
+		       FlatMatrix<Complex> elmat,
+		       LocalHeap & lh) const;    
 
     template <typename SCAL, typename SCAL_SHAPES = double>
     void T_CalcElementMatrix (const FiniteElement & fel,
