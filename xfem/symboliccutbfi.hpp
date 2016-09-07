@@ -22,8 +22,8 @@ namespace ngfem
     int subdivlvl = 0;
   public:
     
-    SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> & acf_lset,
-                                       shared_ptr<CoefficientFunction> & acf,
+    SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
+                                       shared_ptr<CoefficientFunction> acf,
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
                                        int asubdivlvl = 0);

@@ -15,8 +15,8 @@ namespace ngfem
 {
 
   SymbolicCutBilinearFormIntegrator ::
-  SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> & acf_lset,
-                                     shared_ptr<CoefficientFunction> & acf,
+  SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
+                                     shared_ptr<CoefficientFunction> acf,
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder,
                                      int asubdivlvl)
