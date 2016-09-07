@@ -2,6 +2,7 @@
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
+#include "../xfem/symboliccutbfi.hpp"
 #include "../stokes/xstokesspace.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
@@ -453,6 +454,65 @@ void ExportNgsx()
            bp::arg("cf_interface")=make_shared<ConstantCoefficientFunction>(0.0),
            bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict(), bp::arg("heapsize")=1000000))
     ;
+
+
+  bp::def("SymbolicCutBFI", FunctionPointer
+          ([](shared_ptr<CoefficientFunction> lset,
+              shared_ptr<CoefficientFunction> cf,
+              DOMAIN_TYPE dt,
+              VorB vb,
+              int order,
+              int subdivlvl,
+              bool element_boundary,
+              bool skeleton,
+              bp::object definedon)
+           -> shared_ptr<BilinearFormIntegrator>
+           {
+             
+             bp::extract<Region> defon_region(definedon);
+             if (defon_region.check())
+               vb = VorB(defon_region());
+
+             if (vb == BND)
+               throw Exception("Symbolic cuts not yet (tested) for boundaries..");
+
+             // check for DG terms
+             bool has_other = false;
+             cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
+                               {
+                                 if (dynamic_cast<ProxyFunction*> (&cf))
+                                   if (dynamic_cast<ProxyFunction&> (cf).IsOther())
+                                     has_other = true;
+                               });
+               
+             
+             if (has_other || element_boundary || skeleton)
+               throw Exception("No Facet BFI with Symbolic cuts..");
+             
+             shared_ptr<BilinearFormIntegrator> bfi
+               = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+             
+             if (bp::extract<bp::list> (definedon).check())
+               bfi -> SetDefinedOn (makeCArray<int> (definedon));
+
+             if (defon_region.check())
+               {
+                 cout << IM(3) << "defineon = " << defon_region().Mask() << endl;
+                 bfi->SetDefinedOn(defon_region().Mask());
+               }
+             
+             return bfi;
+           }),
+          (bp::arg("lset"),
+           bp::arg("coef"),
+           bp::arg("domain_type")=NEG,
+           bp::args("VOL_or_BND")=VOL,
+           bp::arg("order")=-1,
+           bp::arg("subdivlvl")=0,
+           bp::args("element_boundary")=false,
+           bp::args("skeleton")=false,
+           bp::arg("definedon")=bp::object())
+          );
   
   
   
