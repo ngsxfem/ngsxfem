@@ -97,5 +97,9 @@ Draw(gfu.components[0],mesh,"u_std")
 Draw(extend(gfu.components[1]),mesh,"u_x")
 Draw(u,mesh,"u")
 
+# Draw(IsCut(mesh,lset_approx),mesh,"iscut")
+# Draw(kappa_neg,mesh,"kappa-")
+# Draw(kappa_pos,mesh,"kappa+")
+
 
 
