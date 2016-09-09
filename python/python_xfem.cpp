@@ -223,7 +223,7 @@ void ExportNgsx()
                                                   CalcTraceDiff<3>(gf.Get(),coef.Get(),intorder,errors,lh);
                                                 return errors;
                                               } ),
-          (bp::arg("gf"),bp::arg("coef"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
+          (bp::arg("gf"),bp::arg("form"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
     ;
 
 
