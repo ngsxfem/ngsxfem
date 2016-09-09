@@ -58,7 +58,6 @@ namespace ngfem
     
   {
     static Timer t("symbolicCutBFI - CalcElementMatrix", 2);
-    static Timer timercutgeom ("symbolicCutBFI::MakeCutGeom");
     // static Timer tstart("symbolicCutBFI - CalcElementMatrix startup", 2);
     // static Timer tstart1("symbolicCutBFI - CalcElementMatrix startup 1", 2);
     // static Timer tmain("symbolicCutBFI - CalcElementMatrix main", 2);
@@ -117,90 +116,15 @@ namespace ngfem
     
     elmat = 0;
 
-    int DIM = trafo.SpaceDim();
-    auto lset_eval
-      = ScalarFieldEvaluator::Create(DIM,*cf_lset,trafo,lh);
-      // tstart.Stop();
-    timercutgeom.Start();
-
-    shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
-
-    CompositeQuadratureRule<2> cquad2d;
-    CompositeQuadratureRule<3> cquad3d;
-    if (DIM == 2)
-      xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
-                                                *lset_eval, cquad2d, lh,
-                                                intorder, 0, subdivlvl, 0);
-    else
-      xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
-                                                *lset_eval, cquad3d, lh,
-                                                intorder, 0, subdivlvl, 0);
-    DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
-    timercutgeom.Stop();
-
-    const IntegrationRule* ir = nullptr;
-
-    if (element_domain == IF) // there is a cut on the current element
-    {
-      if (dt == IF)
-      {
-        if (DIM == 2)
-        {
-          const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
-          IntegrationRule ir_interface (interface_quad.Size(),lh);
-          for (int i = 0; i < interface_quad.Size(); ++i)
-          {
-            IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
-            MappedIntegrationPoint<2,2> mip(ip,trafo);
-
-            Mat<2,2> Finv = mip.GetJacobianInverse();
-            const double absdet = mip.GetMeasure();
-
-            Vec<2> nref = interface_quad.normals[i];
-            Vec<2> normal = absdet * Trans(Finv) * nref ;
-            double len = L2Norm(normal);
-            const double weight = interface_quad.weights[i] * len;
-
-            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len);
-            
-            ir = &ir_interface;
-          }
-        }
-        else
-          throw Exception("not yet implemented");
-      }
-      else
-      {
-        if (DIM == 2)
-        {
-          const QuadratureRule<2> & domain_quad = cquad2d.GetRule(dt);
-          IntegrationRule ir_domain(domain_quad.Size(),lh);
-          for (int i = 0; i < ir_domain.Size(); ++i)
-            ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
-          ir = &ir_domain;
-        }
-        else
-        {
-          const QuadratureRule<3> & domain_quad = cquad3d.GetRule(dt);
-          IntegrationRule ir_domain (domain_quad.Size(),lh);
-          for (int i = 0; i < ir_domain.Size(); ++i)
-            ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
-          ir = &ir_domain;
-        }
-      }
-    }
-    else
-    {
-      if (element_domain != dt) //no integration on this element
-        return;
-      
-      ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
-    }
+    const IntegrationRule * ir = CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
+    if (ir == nullptr)
+      return;
+    ///
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
 
-    /// WHAT FOLLOWS IN THIS FUNCTION THIS IS COPY+PASTE FROM NGSOLVE !!!
+    /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
       
     int k1 = 0;
     for (auto proxy1 : trial_proxies)
