@@ -9,7 +9,7 @@ from discretization_tracefem import *
 from eval_sparsity import *
 from eval_errors import *
 
-ngsglobals.numthreads=16
+ngsglobals.numthreads=23
 
 def PrintTimers(substring="HDG"):            
     ### print hdg-intergrator timers
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         options["reflvls"] = 20
 
     with TaskManager():
-        problemdata = Make3DProblem_PureDiffusion()
+        problemdata = MakeSPPProblem()
 
         orders = range(options["minorder"],options["maxorder"]+1)
 
