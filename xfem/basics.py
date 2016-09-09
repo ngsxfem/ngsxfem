@@ -356,9 +356,9 @@ def SymbolicLFI(levelset_domain=None, *args, **kwargs):
         print("SymbolicLFI-Wrapper: original SymbolicLFI called")
         return SymbolicLFI_old(*args,**kwargs)
 
-def kappa(mesh,lset_approx):
+def kappa(mesh,lset_approx, subdivlvl=0):
     kappa1 = GridFunction(L2(mesh,order=0))
-    lset_neg = { "levelset" : lset_approx, "domain_type" : NEG, "subdivlvl" : 0}
+    lset_neg = { "levelset" : lset_approx, "domain_type" : NEG, "subdivlvl" : subdivlvl}
     kappa_f = LinearForm(kappa1.space)
     kappa_f += SymbolicLFI(levelset_domain = lset_neg, form = kappa1.space.TestFunction() )
     kappa_f.Assemble();
@@ -367,13 +367,13 @@ def kappa(mesh,lset_approx):
     kappa2 = 1.0 - kappa1
     return (kappa1,kappa2)
 
-def IsCut(mesh,lset_approx):
+def IsCut(mesh,lset_approx, subdivlvl=0):
     def cut(kappa):
-        if (kappa > 0.0 and kappa < 1.0):
+        if (kappa > 1e-16 and kappa < 1.0-1e-16):
             return 1.0
         else:
             return 0.0
-    kappa1, dummycf = kappa(mesh,lset_approx)
+    kappa1, dummycf = kappa(mesh,lset_approx,subdivlvl)
     from numpy import vectorize
     cut = vectorize(cut)
     kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
