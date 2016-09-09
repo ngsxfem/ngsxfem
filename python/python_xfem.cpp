@@ -2,6 +2,8 @@
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
+#include "../xfem/symboliccutbfi.hpp"
+#include "../xfem/symboliccutlfi.hpp"
 #include "../stokes/xstokesspace.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
@@ -25,6 +27,11 @@ void ExportNgsx()
 
   bp::scope local_scope(module);
 
+  typedef PyWrapper<FESpace> PyFES;
+  typedef PyWrapper<CoefficientFunction> PyCF;
+  typedef GridFunction GF;
+  typedef PyWrapperDerived<GF, CoefficientFunction> PyGF;
+  
   bp::enum_<DOMAIN_TYPE>("DOMAIN_TYPE")
     .value("POS", POS)
     .value("NEG", NEG)
@@ -32,101 +39,92 @@ void ExportNgsx()
     .export_values()
     ;
 
-  bp::def("CastToXStokesFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStokesFESpace>(fes); } ) );
-
-  REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XStokesFESpace>);
-  
-  bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
-
-  // bp::implicitly_convertible 
-  //   <shared_ptr<GridFunctionCoefficientFunction>, 
-  //   shared_ptr<CoefficientFunction> >(); 
-
-  bp::class_<XStokesFESpace, shared_ptr<XStokesFESpace>, bp::bases<FESpace>, boost::noncopyable>
-    ("XStokesFESpace", bp::no_init)
-    .def("SetLevelSet", FunctionPointer ([](XStokesFESpace & self, shared_ptr<CoefficientFunction> cf) 
-                                         { self.SetLevelSet(cf); }),
-         "Update information on level set function")
-    .def("SetLevelSet", FunctionPointer ([](XStokesFESpace & self, shared_ptr<GridFunction> gf) 
-                                         { self.SetLevelSet(gf); }),
-         "Update information on level set function")
-    ;
-
-
-  bp::class_<XFESpace, shared_ptr<XFESpace>, bp::bases<FESpace>, boost::noncopyable>
-    ("XFESpace", bp::no_init)
-    .def("SetLevelSet", FunctionPointer ([](XFESpace & self, shared_ptr<CoefficientFunction> cf) 
-                                         { self.SetLevelSet(cf); }),
-         "Update information on level set function")
-    .def("SetLevelSet", FunctionPointer ([](XFESpace & self, shared_ptr<GridFunction> gf) 
-                                         { self.SetLevelSet(gf); }),
-         "Update information on level set function")
-    .def("SetBaseFESpace", FunctionPointer ([](XFESpace & self, shared_ptr<FESpace> fes) 
-                                         { self.SetBaseFESpace(fes); }),
-         "Update information on base FESpace")
-    .def("BaseDofOfXDof", FunctionPointer ([](XFESpace & self, int i) 
-                                         { return self.GetBaseDofOfXDof(i); }),
-         "get corresponding dof of base FESpace")
-    .def("GetNVertexDofs", FunctionPointer ([](XFESpace & self) 
-                                         { return self.GetNVertexDof(); }),
-         "get number of x dofs at vertices")
-    .def("CutElements", FunctionPointer ([](XFESpace & self) 
-                                         { return self.CutElements(); }),
-         "get BitArray of cut elements")
-    .def("CutSurfaceElements", FunctionPointer ([](XFESpace & self) 
-                                         { return self.CutSurfaceElements(); }),
-         "get BitArray of cut surface elements")
-    .def("GetDomainOfDof", &XFESpace::GetDomainOfDof)
-    .def("GetDomainOfElement", &XFESpace::GetDomainOfElement)
-    .def("GetDomainNrs",  FunctionPointer( [] (XFESpace & self, int elnr) {
-               Array<DOMAIN_TYPE> domnums;
-               self.GetDomainNrs( elnr, domnums );
-               return domnums;
-            }))
-    ;
-  
-  bp::def("CastToXStdFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XStdFESpace>(fes); } ) );
-  bp::def("CastToXFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<XFESpace>(fes); } ) );
-  bp::def("XToNegPos", FunctionPointer( [] (shared_ptr<GridFunction> gfx, shared_ptr<GridFunction> gfnegpos) { XFESpace::XToNegPos(gfx,gfnegpos); } ) );
-
-  // bp::def("CastToFESpace", FunctionPointer( [] (shared_ptr<FESpace> fes) { return dynamic_pointer_cast<FESpace>(fes); } ) );
+  typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
+  typedef PyWrapperDerived<XStdFESpace, FESpace> PyXStdFES;
+  typedef PyWrapperDerived<XStokesFESpace, FESpace> PyXStokesFES;
 
   REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XStdFESpace>);
   REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XFESpace>);
+  REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XStokesFESpace>);
+  
+  bp::def("CastToXFESpace", FunctionPointer( [] (PyFES fes) { return PyXFES(dynamic_pointer_cast<XFESpace>(fes.Get())); } ) );
+  bp::def("CastToXStdFESpace", FunctionPointer( [] (PyFES fes) { return PyXStdFES(dynamic_pointer_cast<XStdFESpace>(fes.Get())); } ) );
+  bp::def("CastToXStokesFESpace", FunctionPointer( [] (PyFES fes) { return PyXStokesFES(dynamic_pointer_cast<XStokesFESpace>(fes.Get())); } ) );
 
-  bp::class_<XStdFESpace, shared_ptr<XStdFESpace>, bp::bases<CompoundFESpace>, boost::noncopyable>
+  bp::def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) { XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get()); } ) );
+  
+
+  bp::class_<PyXFES, bp::bases<PyFES>>
+    ("XFESpace", bp::no_init)
+    .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyCF cf) 
+                                         { self.Get()->SetLevelSet(cf.Get()); }),
+         "Update information on level set function")
+    .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyGF gf) 
+                                         { self.Get()->SetLevelSet(gf.Get()); }),
+         "Update information on level set function")
+    .def("SetBaseFESpace", FunctionPointer ([](PyXFES self, PyFES fes) 
+                                            { self.Get()->SetBaseFESpace(fes.Get()); }),
+         "Update information on base FESpace")
+    .def("BaseDofOfXDof", FunctionPointer ([](PyXFES self, int i) 
+                                         { return self.Get()->GetBaseDofOfXDof(i); }),
+         "get corresponding dof of base FESpace")
+    .def("GetNVertexDofs", FunctionPointer ([](PyXFES self) 
+                                            { return self.Get()->GetNVertexDof(); }),
+         "get number of x dofs at vertices")
+    .def("CutElements", FunctionPointer ([](PyXFES self) 
+                                         { return self.Get()->CutElements(); }),
+         "get BitArray of cut elements")
+    .def("CutSurfaceElements", FunctionPointer ([](PyXFES self) 
+                                         { return self.Get()->CutSurfaceElements(); }),
+         "get BitArray of cut surface elements")
+    .def("GetDomainOfDof", FunctionPointer ([](PyXFES self, int i) 
+                                         { return self.Get()->GetDomainOfDof(i); }),
+         "get domain_type of degree of freedom")
+    .def("GetDomainOfElement", FunctionPointer ([](PyXFES self, int i) 
+                                         { return self.Get()->GetDomainOfElement(i); }),
+         "get domain_type of element")
+    .def("GetDomainNrs",  FunctionPointer( [] (PyXFES self, int elnr) {
+               Array<DOMAIN_TYPE> domnums;
+               self.Get()->GetDomainNrs( elnr, domnums );
+               return domnums;
+            }))
+    ;
+
+
+  bp::class_<PyXStdFES, bp::bases<PyFES>>
     ("XStdFESpace", bp::no_init)
-    .add_property("XFESpace", FunctionPointer ([](XStdFESpace & self) 
-                                               { return dynamic_pointer_cast<XFESpace> (self[1]); }
+    .add_property("XFESpace", FunctionPointer ([](const PyXStdFES self) 
+                                               { return PyXFES(dynamic_pointer_cast<XFESpace> ((*self.Get())[1])); }
                     ),
-         // bp::return_value_policy<bp::reference_existing_object>(),
          "return XFESpace part of XStdFESpace")
-    .add_property("StdFESpace", FunctionPointer ([](XStdFESpace & self) 
-                                               { return self[0]; }
+    .add_property("StdFESpace", FunctionPointer ([](const PyXStdFES self) 
+                                                 { return PyFES((*self.Get())[0]); }
                     ),
-         // bp::return_value_policy<bp::reference_existing_object>(),
          "return 'standard' FESpace part of XStdFESpace")
     ;
 
-  bp::implicitly_convertible 
-    <shared_ptr<XFESpace>, shared_ptr<FESpace> >(); 
-  bp::implicitly_convertible 
-    <shared_ptr<XStokesFESpace>, shared_ptr<FESpace> >(); 
-  bp::implicitly_convertible 
-    <shared_ptr<XStdFESpace>, shared_ptr<FESpace> >(); 
-  
-  bp::def("InterpolateToP1", FunctionPointer( [] (shared_ptr<GridFunction> gf_ho, shared_ptr<GridFunction> gf_p1, int heapsize)
+  bp::class_<PyXStokesFES, bp::bases<PyFES>>
+    ("XStokesFESpace", bp::no_init)
+    .def("SetLevelSet", FunctionPointer ([](PyXStokesFES & self, PyCF cf) 
+                                         { self.Get()->SetLevelSet(cf.Get()); }),
+         "Update information on level set function")
+    .def("SetLevelSet", FunctionPointer ([](PyXStokesFES & self, PyGF gf) 
+                                         { self.Get()->SetLevelSet(gf.Get()); }),
+         "Update information on level set function")
+    ;
+
+  bp::def("InterpolateToP1", FunctionPointer( [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
                                               {
-                                                InterpolateP1 interpol(gf_ho, gf_p1);
+                                                InterpolateP1 interpol(gf_ho.Get(), gf_p1.Get());
                                                 LocalHeap lh (heapsize, "InterpolateP1-Heap");
                                                 interpol.Do(lh);
                                               } ),
           (bp::arg("gf_ho")=NULL,bp::arg("gf_p1")=NULL,bp::arg("heapsize")=1000000))
     ;
 
-  bp::def("InterpolateToP1", FunctionPointer( [] (shared_ptr<CoefficientFunction> coef, shared_ptr<GridFunction> gf_p1, int heapsize)
+  bp::def("InterpolateToP1", FunctionPointer( [] (PyCF coef, PyGF gf_p1, int heapsize)
                                               {
-                                                InterpolateP1 interpol(coef, gf_p1);
+                                                InterpolateP1 interpol(coef.Get(), gf_p1.Get());
                                                 LocalHeap lh (heapsize, "InterpolateP1-Heap");
                                                 interpol.Do(lh);
                                               } ),
@@ -161,45 +159,45 @@ void ExportNgsx()
       )
     ;
 
-  bp::def("CalcMaxDistance", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, int heapsize)
+  bp::def("CalcMaxDistance", FunctionPointer( [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, int heapsize)
                                               {
                                                 StatisticContainer dummy;
                                                 LocalHeap lh (heapsize, "CalcDistance-Heap");
                                                 if (lset_p1->GetMeshAccess()->GetDimension()==2)
-                                                  CalcDistances<2>(lset_ho, lset_p1, deform,  dummy, lh, -1.0, false);
+                                                  CalcDistances<2>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  dummy, lh, -1.0, false);
                                                 else
-                                                  CalcDistances<3>(lset_ho, lset_p1, deform,  dummy, lh, -1.0, false);
+                                                  CalcDistances<3>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  dummy, lh, -1.0, false);
                                                 return (double) dummy.ErrorMaxNorm[dummy.ErrorMaxNorm.Size()-1];
                                               } ),
           (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("heapsize")=1000000))
     ;
 
-  bp::def("CalcDistances", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & stats, int heapsize, double refine_threshold, bool absolute)
+  bp::def("CalcDistances", FunctionPointer( [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, StatisticContainer & stats, int heapsize, double refine_threshold, bool absolute)
                                               {
                                                 LocalHeap lh (heapsize, "CalcDistance-Heap");
-                                                if (lset_p1->GetMeshAccess()->GetDimension()==2)
-                                                  CalcDistances<2>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold, absolute);
+                                                if (lset_p1.Get()->GetMeshAccess()->GetDimension()==2)
+                                                  CalcDistances<2>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  stats, lh, refine_threshold, absolute);
                                                 else
-                                                  CalcDistances<3>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold, absolute);
+                                                  CalcDistances<3>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  stats, lh, refine_threshold, absolute);
                                               } ),
           (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("stats")=NULL,bp::arg("heapsize")=1000000,bp::arg("refine_threshold")=-1.0,bp::arg("absolute")=false))
     ;
 
-  bp::def("CalcDeformationError", FunctionPointer( [] (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, StatisticContainer & stats, double lower, double upper, int heapsize)
+  bp::def("CalcDeformationError", FunctionPointer( [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, StatisticContainer & stats, double lower, double upper, int heapsize)
                                               {
                                                 LocalHeap lh (heapsize, "CalcDeformationError-Heap");
-                                                if (lset_p1->GetMeshAccess()->GetDimension()==2)
-                                                  CalcDeformationError<2>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
+                                                if (lset_p1.Get()->GetMeshAccess()->GetDimension()==2)
+                                                  CalcDeformationError<2>(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), stats, lh, lower, upper);
                                                 else
-                                                  CalcDeformationError<3>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
+                                                  CalcDeformationError<3>(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), stats, lh, lower, upper);
                                               } ),
           (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("qn")=NULL,bp::arg("stats")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
     ;
 
-  bp::def("ProjectShift", FunctionPointer( [] (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1, shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn, double lower, double upper, double threshold, int heapsize)
+  bp::def("ProjectShift", FunctionPointer( [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, double lower, double upper, double threshold, int heapsize)
                                               {
                                                 LocalHeap lh (heapsize, "ProjectShift-Heap");
-                                                ProjectShift(lset_ho, lset_p1, deform, qn, lower, upper, threshold, lh);
+                                                ProjectShift(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), lower, upper, threshold, lh);
                                               } ),
           (bp::arg("lset_ho")=NULL,bp::arg("lset_p1")=NULL,bp::arg("deform")=NULL,bp::arg("qn")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("threshold")=1.0,bp::arg("heapsize")=1000000))
     ;
@@ -207,44 +205,44 @@ void ExportNgsx()
 // ProjectShift
 
   
-  bp::def("RefineAtLevelSet", FunctionPointer( [] (shared_ptr<GridFunction> lset_p1, double lower, double upper, int heapsize)
+  bp::def("RefineAtLevelSet", FunctionPointer( [] (PyGF lset_p1, double lower, double upper, int heapsize)
                                               {
                                                 LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
-                                                RefineAtLevelSet(lset_p1, lower, upper, lh);
+                                                RefineAtLevelSet(lset_p1.Get(), lower, upper, lh);
                                               } ),
           (bp::arg("lset_p1")=NULL,bp::arg("lower")=0.0,bp::arg("upper")=0.0,bp::arg("heapsize")=1000000))
     ;
 
 
-  bp::def("CalcTraceDiff", FunctionPointer( [] (shared_ptr<GridFunction> gf, shared_ptr<CoefficientFunction> coef, int intorder, int heapsize)
+  bp::def("CalcTraceDiff", FunctionPointer( [] (PyGF gf, PyCF coef, int intorder, int heapsize)
                                               {
                                                 Array<double> errors;
                                                 LocalHeap lh (heapsize, "CalcTraceDiff-Heap");
-                                                if (gf->GetMeshAccess()->GetDimension() == 2)
-                                                  CalcTraceDiff<2>(gf,coef,intorder,errors,lh);
+                                                if (gf.Get()->GetMeshAccess()->GetDimension() == 2)
+                                                  CalcTraceDiff<2>(gf.Get(),coef.Get(),intorder,errors,lh);
                                                 else 
-                                                  CalcTraceDiff<3>(gf,coef,intorder,errors,lh);
+                                                  CalcTraceDiff<3>(gf.Get(),coef.Get(),intorder,errors,lh);
                                                 return errors;
                                               } ),
           (bp::arg("gf"),bp::arg("coef"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
     ;
 
 
-  bp::def("RefineAtLevelSet", FunctionPointer( [] (shared_ptr<GridFunction> gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
+  bp::def("RefineAtLevelSet", FunctionPointer( [] (PyGF gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
                                               {
                                                 LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
-                                                RefineAtLevelSet(gf,lower_lset_bound,upper_lset_bound,lh);
+                                                RefineAtLevelSet(gf.Get(),lower_lset_bound,upper_lset_bound,lh);
                                               } ),
           (bp::arg("gf"),bp::arg("lower_lset_bound")=0.0,bp::arg("upper_lset_bound")=0.0,bp::arg("heapsize")=10000000))
     ;
 
 
   bp::def("IntegrateX", 
-          FunctionPointer([](shared_ptr<CoefficientFunction> lset,
+          FunctionPointer([](PyCF lset,
                              shared_ptr<MeshAccess> ma, 
-                             shared_ptr<CoefficientFunction> cf_neg,
-                             shared_ptr<CoefficientFunction> cf_pos,
-                             shared_ptr<CoefficientFunction> cf_interface,
+                             PyCF cf_neg,
+                             PyCF cf_pos,
+                             PyCF cf_interface,
                              int order, int subdivlvl, bp::dict domains, int heapsize)
                           {
                             static Timer timer ("IntegrateX");
@@ -259,24 +257,24 @@ void ExportNgsx()
                             Array<shared_ptr<CoefficientFunction>> cf(3); cf = nullptr;
                             if (flags.GetDefineFlag("negdomain")){
                               tointon[int(NEG)] = true;
-                              if (cf_neg == nullptr)
+                              if (cf_neg.Get() == nullptr)
                                 throw Exception("no coef for neg domain given");
                               else
-                                cf[int(NEG)] = cf_neg;
+                                cf[int(NEG)] = cf_neg.Get();
                             }
                             if (flags.GetDefineFlag("posdomain")){
                               tointon[int(POS)] = true;
-                              if (cf_pos == nullptr)
+                              if (cf_pos.Get() == nullptr)
                                 throw Exception("no coef for pos domain given");
                               else
-                                cf[int(POS)] = cf_pos;
+                                cf[int(POS)] = cf_pos.Get();
                             }
                             if (flags.GetDefineFlag("interface")){
                               tointon[int(IF)] = true;
-                              if (cf_interface == nullptr)
+                              if (cf_interface.Get() == nullptr)
                                 throw Exception("no coef for interface domain given");
                               else
-                                cf[int(IF)] = cf_interface;
+                                cf[int(IF)] = cf_interface.Get();
                             }
 
                             Vector<> domain_sum(3); // [val_neg,val_pos,val_interface]
@@ -287,7 +285,7 @@ void ExportNgsx()
                                {
                                  auto & trafo = ma->GetTrafo (el, lh);
                                  auto lset_eval
-                                   = ScalarFieldEvaluator::Create(DIM,*lset,trafo,lh);
+                                   = ScalarFieldEvaluator::Create(DIM,*(lset.Get()),trafo,lh);
                                  ELEMENT_TYPE eltype = el.GetType();
                                  timercutgeom.Start();
                                  shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
@@ -310,7 +308,7 @@ void ExportNgsx()
                                    {
                                      if( ! tointon[int(domtype)] ) continue;
                                      double hsum = 0.0;
-                                     double value = 0.0;
+                                     // double value = 0.0;
 
                                      if (DIM == 2)
                                      {
@@ -448,17 +446,132 @@ void ExportNgsx()
                             // return  bp::list(bp::object(result_vec));
                           }),
           (bp::arg("lset"), bp::arg("mesh"), 
-           bp::arg("cf_neg")=make_shared<ConstantCoefficientFunction>(0.0), 
-           bp::arg("cf_pos")=make_shared<ConstantCoefficientFunction>(0.0),
-           bp::arg("cf_interface")=make_shared<ConstantCoefficientFunction>(0.0),
+           bp::arg("cf_neg")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)), 
+           bp::arg("cf_pos")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+           bp::arg("cf_interface")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
            bp::arg("order")=5, bp::arg("subdivlvl")=0, bp::arg("domains")=bp::dict(), bp::arg("heapsize")=1000000))
     ;
+
+
+  typedef PyWrapper<BilinearFormIntegrator> PyBFI;
+  typedef PyWrapper<LinearFormIntegrator> PyLFI;
+  
+  bp::def("SymbolicCutBFI", FunctionPointer
+          ([](PyCF lset,
+              DOMAIN_TYPE dt,
+              int order,
+              int subdivlvl,
+              PyCF cf,
+              VorB vb,
+              bool element_boundary,
+              bool skeleton,
+              bp::object definedon)
+           -> PyBFI
+           {
+             
+             bp::extract<Region> defon_region(definedon);
+             if (defon_region.check())
+               vb = VorB(defon_region());
+
+             if (vb == BND)
+               throw Exception("Symbolic cuts not yet (tested) for boundaries..");
+
+             // check for DG terms
+             bool has_other = false;
+             cf.Get()->TraverseTree ([&has_other] (CoefficientFunction & cf)
+                               {
+                                 if (dynamic_cast<ProxyFunction*> (&cf))
+                                   if (dynamic_cast<ProxyFunction&> (cf).IsOther())
+                                     has_other = true;
+                               });
+               
+             
+             if (has_other || element_boundary || skeleton)
+               throw Exception("No Facet BFI with Symbolic cuts..");
+             
+             shared_ptr<BilinearFormIntegrator> bfi
+               = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+             
+             if (bp::extract<bp::list> (definedon).check())
+               bfi -> SetDefinedOn (makeCArray<int> (definedon));
+
+             if (defon_region.check())
+               {
+                 cout << IM(3) << "defineon = " << defon_region().Mask() << endl;
+                 bfi->SetDefinedOn(defon_region().Mask());
+               }
+             
+             return PyBFI(bfi);
+           }),
+          (bp::args("lset"),
+           bp::args("domain_type")=NEG,
+           bp::args("force_intorder")=-1,
+           bp::args("subdivlvl")=0,
+           bp::args("form"),
+           bp::args("VOL_or_BND")=VOL,
+           bp::args("element_boundary")=false,
+           bp::args("skeleton")=false,
+           bp::arg("definedon")=bp::object())
+          );
   
   
+  bp::def("SymbolicCutLFI", FunctionPointer
+          ([](PyCF lset,
+              DOMAIN_TYPE dt,
+              int order,
+              int subdivlvl,
+              PyCF cf,
+              VorB vb,
+              bool element_boundary,
+              bool skeleton,
+              bp::object definedon)
+           -> PyLFI
+           {
+             
+             bp::extract<Region> defon_region(definedon);
+             if (defon_region.check())
+               vb = VorB(defon_region());
+
+             if (vb == BND)
+               throw Exception("Symbolic cuts not yet (tested) for boundaries..");
+               
+             if (element_boundary || skeleton)
+               throw Exception("No Facet LFI with Symbolic cuts..");
+             
+             shared_ptr<LinearFormIntegrator> lfi
+               = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+             
+             if (bp::extract<bp::list> (definedon).check())
+               lfi -> SetDefinedOn (makeCArray<int> (definedon));
+
+             if (defon_region.check())
+               {
+                 cout << IM(3) << "defineon = " << defon_region().Mask() << endl;
+                 lfi->SetDefinedOn(defon_region().Mask());
+               }
+             
+             return PyLFI(lfi);
+           }),
+          (bp::args("lset"),
+           bp::args("domain_type")=NEG,
+           bp::args("force_intorder")=-1,
+           bp::args("subdivlvl")=0,
+           bp::args("form"),
+           bp::args("VOL_or_BND")=VOL,
+           bp::args("element_boundary")=false,
+           bp::args("skeleton")=false,
+           bp::arg("definedon")=bp::object())
+          );
   
+  
+  // bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
+
+  // bp::implicitly_convertible 
+  //   <shared_ptr<GridFunctionCoefficientFunction>, 
+  //   shared_ptr<CoefficientFunction> >(); 
   
 
-  // void RefineAtLevelSet (shared_ptr<GridFunction> gf_lset_p1, double lower_lset_bound, double upper_lset_bound, LocalHeap & lh){
+  // void RefineAtLevelSet (PyGF gf_lset_p1, double lower_lset_bound, double upper_lset_bound, LocalHeap & lh){
 
  
   // bp::docstring_options local_docstring_options(true, true, false);

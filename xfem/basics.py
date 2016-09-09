@@ -1,5 +1,6 @@
 from ngsolve.comp import *
 from ngsolve.fem import *
+from ngsolve.utils import L2
 from libngsxfem_py.xfem import *
 
 def XStdFESpace(mesh,levelset=None,flags={},basetype=None,empty=None,order=1,dirichlet=[],ref_space=None):
@@ -313,3 +314,56 @@ def neg_grad(func):
         return add        
     raise Exception("cannot form neg_grad")
 
+SymbolicBFI_old = SymbolicBFI
+def SymbolicBFI(levelset_domain=None, *args, **kwargs):
+    if levelset_domain != None:
+        if not "force_intorder" in levelset_domain:
+            levelset_domain["force_intorder"] = -1
+        if not "subdivlvl" in levelset_domain:
+            levelset_domain["subdivlvl"] = 0
+        if not "levelset" in levelset_domain:
+            print("Please provide a level set function")
+        if not "domain_type" in levelset_domain:
+            print("Please provide a domain type (NEG,POS or IF)")
+        print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
+        return SymbolicCutBFI(lset=levelset_domain["levelset"],
+                              domain_type=levelset_domain["domain_type"],
+                              force_intorder=levelset_domain["force_intorder"],
+                              subdivlvl=levelset_domain["subdivlvl"],
+                              *args, **kwargs)
+    else:
+        print("SymbolicBFI-Wrapper: original SymbolicBFI called")
+        return SymbolicBFI_old(*args,**kwargs)
+
+SymbolicLFI_old = SymbolicLFI
+def SymbolicLFI(levelset_domain=None, *args, **kwargs):
+    if levelset_domain != None:
+        if not "force_intorder" in levelset_domain:
+            levelset_domain["force_intorder"] = -1
+        if not "subdivlvl" in levelset_domain:
+            levelset_domain["subdivlvl"] = 0
+        if not "levelset" in levelset_domain:
+            print("Please provide a level set function")
+        if not "domain_type" in levelset_domain:
+            print("Please provide a domain type (NEG,POS or IF)")
+        print("SymbolicLFI-Wrapper: SymbolicCutLFI called")
+        return SymbolicCutLFI(lset=levelset_domain["levelset"],
+                              domain_type=levelset_domain["domain_type"],
+                              force_intorder=levelset_domain["force_intorder"],
+                              subdivlvl=levelset_domain["subdivlvl"],
+                              *args, **kwargs)
+    else:
+        print("SymbolicLFI-Wrapper: original SymbolicLFI called")
+        return SymbolicLFI_old(*args,**kwargs)
+
+def kappa(mesh,lset_approx):
+    kappa1 = GridFunction(L2(mesh,order=0))
+    lset_neg = { "levelset" : lset_approx, "domain_type" : NEG, "subdivlvl" : 0}
+    kappa_f = LinearForm(kappa1.space)
+    kappa_f += SymbolicLFI(levelset_domain = lset_neg, form = kappa1.space.TestFunction() )
+    kappa_f.Assemble();
+    kappa1.space.SolveM(CoefficientFunction(1.0),kappa_f.vec)
+    kappa1.vec.data = kappa_f.vec
+    kappa2 = 1.0 - kappa1
+    return (kappa1,kappa2)
+    

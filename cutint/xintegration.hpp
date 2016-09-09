@@ -818,6 +818,13 @@ namespace xintegration
                                 const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
 
 
+  const IntegrationRule * CutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
+                                             const ElementTransformation & trafo,
+                                             DOMAIN_TYPE dt,
+                                             int intorder,
+                                             int subdivlvl,
+                                             LocalHeap & lh);
+  
 }
 
 #endif
