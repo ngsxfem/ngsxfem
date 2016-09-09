@@ -67,23 +67,17 @@ lset_if  = { "levelset" : lset_approx, "domain_type" : IF , "subdivlvl" : 0}
 # bilinear forms:
 
 a = BilinearForm(VhG, symmetric = True, flags = { })
-a += SymbolicBFI(levelset_domain = lset_neg, coef = beta_neg * alpha_neg * gradu_neg * gradv_neg)
-a += SymbolicBFI(levelset_domain = lset_pos, coef = beta_pos * alpha_pos * gradu_pos * gradv_pos)
-a += SymbolicBFI(levelset_domain = lset_if , coef =  average_flux_u * betajump_v
+a += SymbolicBFI(levelset_domain = lset_neg, form = beta_neg * alpha_neg * gradu_neg * gradv_neg)
+a += SymbolicBFI(levelset_domain = lset_pos, form = beta_pos * alpha_pos * gradu_pos * gradv_pos)
+a += SymbolicBFI(levelset_domain = lset_if , form =  average_flux_u * betajump_v
                                                    + average_flux_v * betajump_u
                                                    + stab * betajump_u * betajump_v)
 
 a.Assemble()
 
-# hack for right hand side (no SymbolicCutLFI yet..)
-f_a = BilinearForm(VhG, symmetric = True, flags = { })
-f_a += SymbolicBFI(levelset_domain = lset_neg, coef = 10 * u_neg * v_neg)
 f = LinearForm(VhG)
+f += SymbolicLFI(levelset_domain = lset_neg, form = 10 * v_neg)
 f.Assemble();
-gfu.components[0].Set(CoefficientFunction(1), boundary=False)
-# gfu.components[1].Set(CoefficientFunction(1), boundary=True)
-f_a.Assemble()
-f.vec.data = f_a.mat * gfu.vec
 
 gfu.components[0].Set(CoefficientFunction(0), boundary=True)
 gfu.components[1].Set(CoefficientFunction(0), boundary=True)

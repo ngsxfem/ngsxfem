@@ -3,6 +3,7 @@
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
+#include "../xfem/symboliccutlfi.hpp"
 #include "../stokes/xstokesspace.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
@@ -223,7 +224,7 @@ void ExportNgsx()
                                                   CalcTraceDiff<3>(gf.Get(),coef.Get(),intorder,errors,lh);
                                                 return errors;
                                               } ),
-          (bp::arg("gf"),bp::arg("form"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
+          (bp::arg("gf"),bp::arg("coef"),bp::arg("intorder")=6,bp::arg("heapsize")=1000000))
     ;
 
 
@@ -453,6 +454,7 @@ void ExportNgsx()
 
 
   typedef PyWrapper<BilinearFormIntegrator> PyBFI;
+  typedef PyWrapper<LinearFormIntegrator> PyLFI;
   
   bp::def("SymbolicCutBFI", FunctionPointer
           ([](PyCF lset,
@@ -505,13 +507,61 @@ void ExportNgsx()
            bp::args("domain_type")=NEG,
            bp::args("force_intorder")=-1,
            bp::args("subdivlvl")=0,
-           bp::args("coef"),
+           bp::args("form"),
            bp::args("VOL_or_BND")=VOL,
            bp::args("element_boundary")=false,
            bp::args("skeleton")=false,
            bp::arg("definedon")=bp::object())
           );
   
+  
+  bp::def("SymbolicCutLFI", FunctionPointer
+          ([](PyCF lset,
+              DOMAIN_TYPE dt,
+              int order,
+              int subdivlvl,
+              PyCF cf,
+              VorB vb,
+              bool element_boundary,
+              bool skeleton,
+              bp::object definedon)
+           -> PyLFI
+           {
+             
+             bp::extract<Region> defon_region(definedon);
+             if (defon_region.check())
+               vb = VorB(defon_region());
+
+             if (vb == BND)
+               throw Exception("Symbolic cuts not yet (tested) for boundaries..");
+               
+             if (element_boundary || skeleton)
+               throw Exception("No Facet LFI with Symbolic cuts..");
+             
+             shared_ptr<LinearFormIntegrator> lfi
+               = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+             
+             if (bp::extract<bp::list> (definedon).check())
+               lfi -> SetDefinedOn (makeCArray<int> (definedon));
+
+             if (defon_region.check())
+               {
+                 cout << IM(3) << "defineon = " << defon_region().Mask() << endl;
+                 lfi->SetDefinedOn(defon_region().Mask());
+               }
+             
+             return PyLFI(lfi);
+           }),
+          (bp::args("lset"),
+           bp::args("domain_type")=NEG,
+           bp::args("force_intorder")=-1,
+           bp::args("subdivlvl")=0,
+           bp::args("form"),
+           bp::args("VOL_or_BND")=VOL,
+           bp::args("element_boundary")=false,
+           bp::args("skeleton")=false,
+           bp::arg("definedon")=bp::object())
+          );
   
   
   // bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );

@@ -72,18 +72,16 @@ lset_if  = { "levelset" : lset_approx, "domain_type" : IF , "subdivlvl" : 0}
 # bilinear forms:
 
 a = BilinearForm(VhG, symmetric = True, flags = { })
-a += SymbolicBFI(levelset_domain = lset_neg, coef = beta_neg * alpha_neg * gradu_neg * gradv_neg)
-a += SymbolicBFI(levelset_domain = lset_pos, coef = beta_pos * alpha_pos * gradu_pos * gradv_pos)
-a += SymbolicBFI(levelset_domain = lset_if , coef =  average_flux_u * betajump_v
+a += SymbolicBFI(levelset_domain = lset_neg, form = beta_neg * alpha_neg * gradu_neg * gradv_neg)
+a += SymbolicBFI(levelset_domain = lset_pos, form = beta_pos * alpha_pos * gradu_pos * gradv_pos)
+a += SymbolicBFI(levelset_domain = lset_if , form =  average_flux_u * betajump_v
                                                    + average_flux_v * betajump_u
                                                    + stab * betajump_u * betajump_v)
-
 a.Assemble()
 
 
 f = LinearForm(VhG)
-# TODO: SymbolicLFI
-f += TwoDomainSourceIntegrator(10,0)
+f += SymbolicLFI(levelset_domain = lset_neg, form = 10 * v_neg)
 f.Assemble();
 
 gfu.components[0].Set(CoefficientFunction(0), boundary=True)

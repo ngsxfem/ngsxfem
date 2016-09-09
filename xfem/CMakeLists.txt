@@ -10,6 +10,7 @@ add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   xfiniteelement.cpp
   python_xfem.cpp
   symboliccutbfi.cpp
+  symboliccutlfi.cpp
   )
 
 set_target_properties(ngsxfem_xfem PROPERTIES SUFFIX ".so")
@@ -29,6 +30,7 @@ install( FILES
   xfemVisInts.hpp
   xfiniteelement.hpp
   symboliccutbfi.hpp
+  symboliccutlfi.hpp
   DESTINATION include
   )
 
