@@ -366,4 +366,15 @@ def kappa(mesh,lset_approx):
     kappa1.vec.data = kappa_f.vec
     kappa2 = 1.0 - kappa1
     return (kappa1,kappa2)
-    
+
+def IsCut(mesh,lset_approx):
+    def cut(kappa):
+        if (kappa > 0.0 and kappa < 1.0):
+            return 1.0
+        else:
+            return 0.0
+    kappa1, dummycf = kappa(mesh,lset_approx)
+    from numpy import vectorize
+    cut = vectorize(cut)
+    kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
+    return kappa1
