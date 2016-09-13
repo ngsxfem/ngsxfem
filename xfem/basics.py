@@ -316,7 +316,7 @@ def neg_grad(func):
 
 SymbolicBFI_old = SymbolicBFI
 def SymbolicBFI(levelset_domain=None, *args, **kwargs):
-    if levelset_domain != None:
+    if levelset_domain != None and type(levelset_domain)==dict:
         if not "force_intorder" in levelset_domain:
             levelset_domain["force_intorder"] = -1
         if not "subdivlvl" in levelset_domain:
@@ -333,11 +333,14 @@ def SymbolicBFI(levelset_domain=None, *args, **kwargs):
                               *args, **kwargs)
     else:
         print("SymbolicBFI-Wrapper: original SymbolicBFI called")
-        return SymbolicBFI_old(*args,**kwargs)
+        if (levelset_domain == None):
+            return SymbolicBFI_old(*args,**kwargs)
+        else:
+            return SymbolicBFI_old(levelset_domain,*args,**kwargs)
 
 SymbolicLFI_old = SymbolicLFI
 def SymbolicLFI(levelset_domain=None, *args, **kwargs):
-    if levelset_domain != None:
+    if levelset_domain != None and type(levelset_domain)==dict:
         if not "force_intorder" in levelset_domain:
             levelset_domain["force_intorder"] = -1
         if not "subdivlvl" in levelset_domain:
@@ -354,7 +357,10 @@ def SymbolicLFI(levelset_domain=None, *args, **kwargs):
                               *args, **kwargs)
     else:
         print("SymbolicLFI-Wrapper: original SymbolicLFI called")
-        return SymbolicLFI_old(*args,**kwargs)
+        if (levelset_domain == None):
+            return SymbolicLFI_old(*args,**kwargs)
+        else:
+            return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
 def kappa(mesh,lset_approx, subdivlvl=0):
     kappa1 = GridFunction(L2(mesh,order=0))
