@@ -362,6 +362,57 @@ def SymbolicLFI(levelset_domain=None, *args, **kwargs):
         else:
             return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
+def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, region_wise=False, element_wise = False, heapsize=1000000):
+    domain_type = levelset_domain["domain_type"]
+    if (domain_type == IF):
+        domain = interface_domain
+    elif (domain_type == NEG):
+        domain = negative_domain
+    else:
+        domain = positive_domain
+        
+    if not "force_intorder" in levelset_domain:
+        levelset_domain["force_intorder"] = -1
+    else:
+        order = levelset_domain["force_intorder"]
+        
+    if not "subdivlvl" in levelset_domain:
+        levelset_domain["subdivlvl"] = 0
+    if not "levelset" in levelset_domain:
+        print("Please provide a level set function")
+    if not "domain_type" in levelset_domain:
+        print("Please provide a domain type (NEG,POS or IF)")
+    
+    return IntegrateX(lset=levelset_domain["levelset"],
+                      mesh=mesh, cf_neg=cf, cf_pos=cf, cf_interface=cf,
+                      order=order,
+                      subdivlvl=levelset_domain["subdivlvl"],
+                      domains=domain, heapsize=heapsize)
+    
+
+##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO        
+Integrate_old = Integrate
+def Integrate(levelset_domain=None, *args, **kwargs):
+    if levelset_domain != None and type(levelset_domain)==dict:
+        print("Integrate-Wrapper: IntegrateX called")
+        resdict = Integrate_X_special_args(levelset_domain, *args, **kwargs)
+        if levelset_domain["domain_type"] == IF:
+            return resdict["interface"]
+        elif levelset_domain["domain_type"] == NEG:
+            return resdict["negdomain"]
+        else:
+            return resdict["posdomain"]
+    else:
+        print("Integrate-Wrapper: original Integrate called")
+        if (levelset_domain == None):
+            return Integrate_old(*args,**kwargs)
+        else:
+            newargs = [levelset_domain]
+            for q in args:
+                newargs.append(q)
+            return Integrate_old(*newargs,**kwargs)
+
+        
 def kappa(mesh,lset_approx, subdivlvl=0):
     kappa1 = GridFunction(L2(mesh,order=0))
     lset_neg = { "levelset" : lset_approx, "domain_type" : NEG, "subdivlvl" : subdivlvl}
