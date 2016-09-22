@@ -15,15 +15,6 @@ levelset = sqrt(x*x+y*y) - 1.0
 # level set approximation that is used in the implementation:
 lset_approx = levelset
 
-from netgen.geom2d import SplineGeometry
-square = SplineGeometry()
-square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.1, quad_dominated=False))
-
-levelset = sqrt(x*x+y*y) - 1.0
-# level set approximation that is used in the implementation:
-lset_approx = levelset
-
 # diffusion coefficients
 alpha = [2.0,1.0]
 # source terms w.r.t. domain 1/2
