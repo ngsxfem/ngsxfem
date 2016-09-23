@@ -37,6 +37,9 @@ add_test(NAME py_nxfem COMMAND python3
 add_test(NAME py_stokes_buoyancy COMMAND python3 
   "${PROJECT_SOURCE_DIR}/stokes/py_demos/buoyancy.py")
 
+add_test(NAME py_tut_xfespaces COMMAND python3 
+  "${PROJECT_SOURCE_DIR}/tracefem/py_demos/xfespaces.py")
+
 
 # cmake_minimum_required(VERSION 2.8)
 
