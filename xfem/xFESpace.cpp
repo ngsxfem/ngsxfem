@@ -265,12 +265,12 @@ namespace ngcomp
   {
     if ( basefes == NULL )
     {
-      cout << " no basefes, Update postponed " << endl;
+      cout << " T_XFESpace<" <<  D << "," << SD << "> no basefes, Update postponed " << endl;
       return;
     }
     if ( coef_lset == NULL )
     {
-      cout << " no lset, Update postponed " << endl;
+      cout << " T_XFESpace<" <<  D << "," << SD << "> no lset, Update postponed " << endl;
       return;
     }
     CleanUp();

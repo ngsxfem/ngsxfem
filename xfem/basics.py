@@ -48,7 +48,7 @@ def XStdFESpace(mesh,levelset=None,flags={},basetype=None,empty=None,order=1,dir
         fes.Update()
         print("XStdFESpace created with {} unknowns ({} normal + {} enriched)".format(fes.ndof,fes.StdFESpace.ndof,fes.XFESpace.ndof))
     else:
-        print("no levelset given, update postponed")
+        print("XStdFESpace: no levelset given, update postponed")
     return fes
         
 

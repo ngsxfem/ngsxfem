@@ -39,6 +39,8 @@ void ExportNgsx()
     .export_values()
     ;
 
+  // typedef PyWrapperDerived<CompoundFESpace, FESpace> PyCompFES;
+  
   typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
   typedef PyWrapperDerived<XStdFESpace, FESpace> PyXStdFES;
   typedef PyWrapperDerived<XStokesFESpace, FESpace> PyXStokesFES;
@@ -47,9 +49,9 @@ void ExportNgsx()
   REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XFESpace>);
   REGISTER_PTR_TO_PYTHON_BOOST_1_60_FIX(shared_ptr<XStokesFESpace>);
   
-  bp::def("CastToXFESpace", FunctionPointer( [] (PyFES fes) { return PyXFES(dynamic_pointer_cast<XFESpace>(fes.Get())); } ) );
-  bp::def("CastToXStdFESpace", FunctionPointer( [] (PyFES fes) { return PyXStdFES(dynamic_pointer_cast<XStdFESpace>(fes.Get())); } ) );
-  bp::def("CastToXStokesFESpace", FunctionPointer( [] (PyFES fes) { return PyXStokesFES(dynamic_pointer_cast<XStokesFESpace>(fes.Get())); } ) );
+  bp::def("CastToXFESpace", FunctionPointer( [] (PyFES fes) -> PyXFES { return PyXFES(dynamic_pointer_cast<XFESpace>(fes.Get())); } ) );
+  bp::def("CastToXStdFESpace", FunctionPointer( [] (PyFES fes) -> PyXStdFES { return PyXStdFES(dynamic_pointer_cast<XStdFESpace>(fes.Get())); } ) );
+  bp::def("CastToXStokesFESpace", FunctionPointer( [] (PyFES fes) -> PyXStokesFES { return PyXStokesFES(dynamic_pointer_cast<XStokesFESpace>(fes.Get())); } ) );
 
   bp::def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) { XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get()); } ) );
   
