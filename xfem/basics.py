@@ -52,7 +52,7 @@ def XStdFESpace(mesh,levelset=None,flags={},basetype=None,empty=None,order=1,dir
     return fes
         
 
-def XFESpace(basefes,levelset=None,flags={},empty=None,ref_space=None):
+def XFESpace(basefes, mesh, levelset=None,flags={},empty=None,ref_space=None):
     """
     Creates an extended finite element space
     =============================================================
@@ -61,6 +61,7 @@ def XFESpace(basefes,levelset=None,flags={},empty=None,ref_space=None):
     =============================================================
     necessary arguments:
     - basefes : reference FESpace
+    - mesh : Mesh Access to mesh
     optional arguments:
     - levelset : coefficient function w.r.t. which 
                  the xfespace is created
@@ -79,7 +80,7 @@ def XFESpace(basefes,levelset=None,flags={},empty=None,ref_space=None):
             flags["ref_space"] = 0
     if (empty!=None):
         flags["empty"] = empty
-    fes = CastToXFESpace(FESpace("xfespace",mesh=basefes.mesh, flags=flags, order=basefes.globalorder))
+    fes = CastToXFESpace(FESpace("xfespace",mesh=mesh, flags=flags, order=basefes.globalorder))
     fes.SetBaseFESpace(basefes)
     if (levelset != None):
         fes.SetLevelSet(levelset)
