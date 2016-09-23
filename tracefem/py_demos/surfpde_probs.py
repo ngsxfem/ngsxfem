@@ -125,6 +125,8 @@ def Make3DProblem_Torus():
     
     a = 1
     c = 0
+    def atan2(y,x):
+        return IfPos(x,atan(y/x),IfPos(y,pi+atan(y/x),-pi+atan(y/x)))
 
     R = 1.0
     r = 0.6

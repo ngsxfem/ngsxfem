@@ -41,7 +41,7 @@ if __name__ == "__main__":
         options["reflvls"] = 20
 
     with TaskManager():
-        problemdata = MakeSPPProblem()
+        problemdata = Make3DProblem_Torus() #MakeSPPProblem()
 
         orders = range(options["minorder"],options["maxorder"]+1)
 
