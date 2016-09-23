@@ -1,5 +1,11 @@
 include(CTest)
 
+if(USE_PYTHON)
+  set(test_driver python3 ${CMAKE_CURRENT_SOURCE_DIR}/pde_tester.py)
+else()
+  set(test_driver "${CMAKE_INSTALL_PREFIX}/bin/pde_tester")
+endif()
+
 #set(test_driver "${CMAKE_CURRENT_BINARY_DIR}/pde_tester")
 
 # file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/../ngs_solved "echo CTEST_FULL_OUTPUT\nngs \$1 &> test_out \nret_code=\$? \ncat test_out\necho \"ret_code=\${ret_code}\"\nFOUND=`grep \"Solved\" test_out` \nif [ \"\${FOUND}\" != \"\" ] \nthen \n cat ng.prof \n exit \${ret_code} \nelse \n exit 1 \nfi\n")
@@ -13,16 +19,16 @@ include(CTest)
 
 add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
 
-add_test("pde_d1_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
+add_test(NAME "pde_d1_xnitsche" COMMAND ${test_driver}
   "${PROJECT_SOURCE_DIR}/pde_tutorial/d1_approx.pde")
 
-add_test("pde_d2_xnitsche" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
+add_test(NAME "pde_d2_xnitsche" COMMAND ${test_driver}
   "${PROJECT_SOURCE_DIR}/pde_tutorial/d2_xnitsche.pde")
 
-add_test("pde_d7_stokes" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
+add_test(NAME "pde_d7_stokes" COMMAND ${test_driver}
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d7_stokes.pde")
 
-add_test("pde_d8_stokes3D" "${CMAKE_INSTALL_PREFIX}/bin/pde_tester" 
+add_test(NAME "pde_d8_stokes3D" COMMAND ${test_driver}
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
 
 add_test(NAME py_tracefem COMMAND python3 
