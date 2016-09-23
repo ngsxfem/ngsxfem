@@ -58,6 +58,7 @@ namespace ngfem
     
   {
     static Timer t("symbolicCutBFI - CalcElementMatrix", 2);
+    HeapReset hr(lh);
     // static Timer tstart("symbolicCutBFI - CalcElementMatrix startup", 2);
     // static Timer tstart1("symbolicCutBFI - CalcElementMatrix startup 1", 2);
     // static Timer tmain("symbolicCutBFI - CalcElementMatrix main", 2);

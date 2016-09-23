@@ -55,6 +55,7 @@ namespace ngfem
                        LocalHeap & lh) const
   {
     static Timer t("symbolicCutLFI - CalcElementMatrix", 2);
+    HeapReset hr(lh);
     
     // tstart.Start();
     
