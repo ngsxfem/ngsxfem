@@ -198,15 +198,29 @@ namespace ngfem
 
                 if (!mir.IsComplex())
                   {
-                    if (!is_diagonal)
-                      for (int i = 0; i < mir.Size(); i++)
-                        proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+
+                    if (dt==IF)
+                    {
+                      if (!is_diagonal)
+                        for (int i = 0; i < mir.Size(); i++)
+                          proxyvalues(i,STAR,STAR) *= mir[i].IP().Weight();
+                      else
+                        for (int i = 0; i < mir.Size(); i++)
+                          diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].IP().Weight();
+                    }
                     else
-                      for (int i = 0; i < mir.Size(); i++)
-                        diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].GetWeight();
+                    {
+                      if (!is_diagonal)
+                        for (int i = 0; i < mir.Size(); i++)
+                          proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+                      else
+                        for (int i = 0; i < mir.Size(); i++)
+                          diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].GetWeight();
+                    }
                   }
                 else
                   { // pml
+                    throw Exception("not treated yet (interface-weights!)");
                     if (!is_diagonal)
                       for (int i = 0; i < mir.Size(); i++)
                         proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
