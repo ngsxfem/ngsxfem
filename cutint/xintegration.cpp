@@ -2,7 +2,7 @@
 
 namespace xintegration
 {
-  
+
 
   template<int SD>
   PointContainer<SD>::PointContainer()
@@ -16,10 +16,10 @@ namespace xintegration
   template<int SD>
   const Vec<SD>* PointContainer<SD>::operator()(const Vec<SD> & p)
   {
-    
+
     static Timer timer ("PointContainer::operator()");
     RegionTimer reg (timer);
-    
+
     typename SetOfPoints::iterator it;
     it = pset.find(p);
     if (it == pset.end())
@@ -52,19 +52,19 @@ namespace xintegration
   ostream & operator<<(ostream & s, DOMAIN_TYPE dt)
   {
     switch (dt)
-	{
-	case NEG: 
+  {
+  case NEG:
       s << "NEG";
       break;
-	case POS: 
+  case POS:
       s << "POS";
       break;
-	case IF: 
+  case IF:
       s << "IF";
       break;
-	default:
+  default:
       ;
-	}
+  }
     return s;
   }
 
@@ -160,7 +160,7 @@ namespace xintegration
     Vec<3> d = pospoint - *s[0];
     if (InnerProduct(d,c) >= 0)
       c *= -1.0;
-    
+
 
     const IntegrationRule & ir = SelectIntegrationRule (ET_TRIG, intorder);
 
@@ -230,13 +230,13 @@ namespace xintegration
 
   shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                           ELEMENT_TYPE ET_TIME,
-                                                                          const ScalarFieldEvaluator & a_lset, 
+                                                                          const ScalarFieldEvaluator & a_lset,
                                                                           CompositeQuadratureRule<1> & a_compquadrule1,
                                                                           LocalHeap & a_lh,
-                                                                          int a_int_order_space, int a_int_order_time, 
+                                                                          int a_int_order_space, int a_int_order_time,
                                                                           int a_ref_level_space, int a_ref_level_time)
   {
-    return  XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+    return  XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset,
                                               &a_compquadrule1, NULL, NULL, NULL,
                                               a_lh, a_int_order_space, a_int_order_time,
                                               a_ref_level_space, a_ref_level_time);
@@ -244,13 +244,13 @@ namespace xintegration
 
   shared_ptr<XLocalGeometryInformation>XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                          ELEMENT_TYPE ET_TIME,
-                                                                         const ScalarFieldEvaluator & a_lset, 
+                                                                         const ScalarFieldEvaluator & a_lset,
                                                                          CompositeQuadratureRule<2> & a_compquadrule2,
                                                                          LocalHeap & a_lh,
-                                                                         int a_int_order_space, int a_int_order_time, 
+                                                                         int a_int_order_space, int a_int_order_time,
                                                                          int a_ref_level_space, int a_ref_level_time)
   {
-    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset,
                                              NULL, &a_compquadrule2, NULL, NULL,
                                              a_lh, a_int_order_space, a_int_order_time,
                                              a_ref_level_space, a_ref_level_time);
@@ -258,13 +258,13 @@ namespace xintegration
 
   shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                           ELEMENT_TYPE ET_TIME,
-                                                                          const ScalarFieldEvaluator & a_lset, 
+                                                                          const ScalarFieldEvaluator & a_lset,
                                                                           CompositeQuadratureRule<3> & a_compquadrule3,
                                                                           LocalHeap & a_lh,
-                                                                          int a_int_order_space, int a_int_order_time, 
+                                                                          int a_int_order_space, int a_int_order_time,
                                                                           int a_ref_level_space, int a_ref_level_time)
   {
-    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset,
                                              NULL, NULL, &a_compquadrule3, NULL,
                                              a_lh, a_int_order_space, a_int_order_time,
                                              a_ref_level_space, a_ref_level_time);
@@ -272,13 +272,13 @@ namespace xintegration
 
   shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                           ELEMENT_TYPE ET_TIME,
-                                                                          const ScalarFieldEvaluator & a_lset, 
+                                                                          const ScalarFieldEvaluator & a_lset,
                                                                           CompositeQuadratureRule<4> & a_compquadrule4,
                                                                           LocalHeap & a_lh,
-                                                                          int a_int_order_space, int a_int_order_time, 
+                                                                          int a_int_order_space, int a_int_order_time,
                                                                           int a_ref_level_space, int a_ref_level_time)
   {
-    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset, 
+    return XLocalGeometryInformation::Create(ET_SPACE,ET_TIME, a_lset,
                                              NULL, NULL, NULL, &a_compquadrule4,
                                              a_lh, a_int_order_space, a_int_order_time,
                                              a_ref_level_space, a_ref_level_time);
@@ -286,13 +286,13 @@ namespace xintegration
 
   shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                 ELEMENT_TYPE ET_TIME,
-                                                                const ScalarFieldEvaluator & a_lset, 
+                                                                const ScalarFieldEvaluator & a_lset,
                                                                 CompositeQuadratureRule<1> * a_compquadrule1,
                                                                 CompositeQuadratureRule<2> * a_compquadrule2,
                                                                 CompositeQuadratureRule<3> * a_compquadrule3,
                                                                 CompositeQuadratureRule<4> * a_compquadrule4,
                                                                 LocalHeap & a_lh,
-                                                                int a_int_order_space, int a_int_order_time, 
+                                                                int a_int_order_space, int a_int_order_time,
                                                                 int a_ref_level_space, int a_ref_level_time)
   {
     if (ET_TIME == ET_POINT)
@@ -300,22 +300,22 @@ namespace xintegration
       switch (ET_SPACE)
       {
       case ET_SEGM:
-        return 
+        return
           make_shared<NumericalIntegrationStrategy<ET_SEGM,ET_POINT>>
-          (a_lset, *a_compquadrule1, a_lh, 
-           a_int_order_space, a_int_order_time, 
+          (a_lset, *a_compquadrule1, a_lh,
+           a_int_order_space, a_int_order_time,
            a_ref_level_space, a_ref_level_time);
       case ET_TRIG:
-        return 
+        return
           make_shared<NumericalIntegrationStrategy<ET_TRIG,ET_POINT>>
-          (a_lset, *a_compquadrule2, a_lh, 
-           a_int_order_space, a_int_order_time, 
+          (a_lset, *a_compquadrule2, a_lh,
+           a_int_order_space, a_int_order_time,
            a_ref_level_space, a_ref_level_time);
       case ET_TET:
-        return 
+        return
           make_shared<NumericalIntegrationStrategy<ET_TET,ET_POINT>>
-          (a_lset, *a_compquadrule3, a_lh, 
-           a_int_order_space, a_int_order_time, 
+          (a_lset, *a_compquadrule3, a_lh,
+           a_int_order_space, a_int_order_time,
            a_ref_level_space, a_ref_level_time);
       default:
         throw Exception(" XLocalGeometryInformation * Create | ELEMENT_TYPE is not treated ");
@@ -329,20 +329,20 @@ namespace xintegration
       case ET_SEGM:
         return
           make_shared<NumericalIntegrationStrategy<ET_SEGM,ET_SEGM>>
-          (a_lset, *a_compquadrule2, a_lh, 
-           a_int_order_space, a_int_order_time, 
+          (a_lset, *a_compquadrule2, a_lh,
+           a_int_order_space, a_int_order_time,
            a_ref_level_space, a_ref_level_time);
       case ET_TRIG:
-        return 
+        return
           make_shared<NumericalIntegrationStrategy<ET_TRIG,ET_SEGM>>
-          (a_lset, *a_compquadrule3, a_lh, 
-           a_int_order_space, a_int_order_time, 
+          (a_lset, *a_compquadrule3, a_lh,
+           a_int_order_space, a_int_order_time,
            a_ref_level_space, a_ref_level_time);
       case ET_TET:
-        return 
+        return
           make_shared<NumericalIntegrationStrategy<ET_TET,ET_SEGM>>
-          (a_lset, *a_compquadrule4, a_lh, 
-           a_int_order_space, a_int_order_time, 
+          (a_lset, *a_compquadrule4, a_lh,
+           a_int_order_space, a_int_order_time,
            a_ref_level_space, a_ref_level_time);
       default:
         throw Exception(" XLocalGeometryInformation * Create | ELEMENT_TYPE is not treated ");
@@ -353,9 +353,9 @@ namespace xintegration
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: NumericalIntegrationStrategy(const NumericalIntegrationStrategy & a, int reduce_ref_space, int reduce_ref_time)
-    : XLocalGeometryInformation(a.lset), pc(a.pc), 
+    : XLocalGeometryInformation(a.lset), pc(a.pc),
       simplex_array_neg(a.simplex_array_neg),
       simplex_array_pos(a.simplex_array_pos),
       ref_level_space(a.ref_level_space-reduce_ref_space), ref_level_time(a.ref_level_time-reduce_ref_time),
@@ -366,14 +366,14 @@ namespace xintegration
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
-  :: NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset, 
-                                  PointContainer<SD> & a_pc, 
+  NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
+  :: NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset,
+                                  PointContainer<SD> & a_pc,
                                   CompositeQuadratureRule<SD> & a_compquadrule,
                                   LocalHeap & a_lh,
-                                  int a_int_order_space, int a_int_order_time, 
+                                  int a_int_order_space, int a_int_order_time,
                                   int a_ref_level_space, int a_ref_level_time)
-    : XLocalGeometryInformation(&a_lset), pc(a_pc), 
+    : XLocalGeometryInformation(&a_lset), pc(a_pc),
       ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
       int_order_space(a_int_order_space), int_order_time(a_int_order_time),
       lh(a_lh), compquadrule(a_compquadrule)
@@ -384,13 +384,13 @@ namespace xintegration
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
-  :: NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset, 
+  NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
+  :: NumericalIntegrationStrategy(const ScalarFieldEvaluator & a_lset,
                                   CompositeQuadratureRule<SD> & a_compquadrule,
                                   LocalHeap & a_lh,
-                                  int a_int_order_space, int a_int_order_time, 
+                                  int a_int_order_space, int a_int_order_time,
                                   int a_ref_level_space, int a_ref_level_time)
-    : XLocalGeometryInformation(&a_lset), pc(*(new PointContainer<SD>())), 
+    : XLocalGeometryInformation(&a_lset), pc(*(new PointContainer<SD>())),
       ref_level_space(a_ref_level_space), ref_level_time(a_ref_level_time),
       int_order_space(a_int_order_space), int_order_time(a_int_order_time),
     lh(a_lh), compquadrule(a_compquadrule), ownpc(true)
@@ -401,7 +401,7 @@ namespace xintegration
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: SetVerticesSpace()
   {
     const POINT3D * verts = ElementTopology::GetVertices(ET_SPACE);
@@ -417,7 +417,7 @@ namespace xintegration
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: SetVerticesTime(const Array<double> & verts)
   {
     verts_time.SetSize(verts.Size());
@@ -426,7 +426,7 @@ namespace xintegration
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: SetVerticesTime()
   {
     const int np1dt = pow(2,ref_level_time);
@@ -439,7 +439,7 @@ namespace xintegration
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: SetVerticesTimeFromUpperHalf(const Array< double >& verts_t)
   {
     const int newsize = (verts_t.Size()+1)/2;
@@ -452,7 +452,7 @@ namespace xintegration
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: SetVerticesTimeFromLowerHalf(const Array< double >& verts_t)
   {
     const int newsize = (verts_t.Size()+1)/2;
@@ -464,7 +464,7 @@ namespace xintegration
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: SetVerticesSpace(const Array<Vec<D> > & verts)
   {
     verts_space.SetSize(verts.Size());
@@ -474,7 +474,7 @@ namespace xintegration
 
   // Check prism for cut
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: CheckIfCut() const
   {
     enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
@@ -490,7 +490,7 @@ namespace xintegration
     int np1dt = pow(2,ref_level_time);
 
     double dx_scalar = 1.0 / np1ds;
-    
+
     Array<double> time (0);
     // double ht = 1.0;
 
@@ -553,7 +553,7 @@ namespace xintegration
             hasneg = true;
           // cout << " :: " << lsetval << ",\t";
           // cout << endl;
-          
+
           if(haspos && hasneg)
           {
             // finish = true;
@@ -562,7 +562,7 @@ namespace xintegration
             return IF;
           }
         }
-        
+
         I[0]++;
         int sum = 0;
         for (int checkdim = 0; checkdim < D; ++checkdim)
@@ -610,7 +610,7 @@ namespace xintegration
 
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME> 
+  DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: MakeQuadRule() const
   {
 
@@ -643,7 +643,7 @@ namespace xintegration
           refine_space = true;
         }
       }
-      
+
       // divide space-time prism into upper and lower half
       if (refine_time)
       {
@@ -678,7 +678,7 @@ namespace xintegration
                                      { 1, 2, 4},
                                      { 1, 3, 4},
                                      { 3, 4, 5}};
-          
+
           for (int i = 0; i < 4; ++i) // triangles
           {
             NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
@@ -687,7 +687,7 @@ namespace xintegration
             for (int j = 0; j < 3; ++j) //vertices
             {
               newverts[j] = Vec<D>(0.0);
-              for (int d = 0; d < 3; ++d) 
+              for (int d = 0; d < 3; ++d)
                 newverts[j] += baryc[trigs[i][j]][d] * verts_space[d];
             }
             numint_i.SetVerticesSpace(newverts);
@@ -697,7 +697,7 @@ namespace xintegration
               numint_i.SetDistanceThreshold(distance_threshold);
             numint_i.MakeQuadRule(); // recursive call!
           }
-          
+
         }
         else if ( ET_SPACE == ET_SEGM)
         {
@@ -709,7 +709,7 @@ namespace xintegration
             // new segms as connectivity information of the vertices baryc above
             const int segm[2][2] = { { 0, 1},
                                      { 1, 2}};
-          
+
             for (int i = 0; i < 2; ++i) // segms
             {
               NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
@@ -718,7 +718,7 @@ namespace xintegration
               for (int j = 0; j < 2; ++j) //vertices
               {
                 newverts[j] = Vec<D>(0.0);
-                for (int d = 0; d < 2; ++d) 
+                for (int d = 0; d < 2; ++d)
                   newverts[j] += baryc[segm[i][j]][d] * verts_space[d];
               }
               numint_i.SetVerticesSpace(newverts);
@@ -757,7 +757,7 @@ namespace xintegration
             for (int j = 0; j < 4; ++j) //vertices
             {
               newverts[j] = Vec<D>(0.0);
-              for (int d = 0; d < 4; ++d) 
+              for (int d = 0; d < 4; ++d)
                 newverts[j] += baryc[tets[i][j]][d] * verts_space[d];
             }
             numint_i.SetVerticesSpace(newverts);
@@ -788,7 +788,7 @@ namespace xintegration
             Vec<SD> newpoint;
             for (int j = 0; j < D; ++j)
             {
-              newpoint[j] = verts_space[i][j]; 
+              newpoint[j] = verts_space[i][j];
               if (ET_TIME == ET_SEGM)
                 newpoint[D] = K == 0 ? verts_time[0] : verts_time[verts_time.Size()-1];
             }
@@ -819,7 +819,7 @@ namespace xintegration
 
         for (int i = 0; i < simplices.Size(); ++i)
         {
-          // Check for each simplex if it is cut. 
+          // Check for each simplex if it is cut.
           // If yes call decomposition strategy for according dimension
           // If no  direction fill the composition rule accordingly
           DOMAIN_TYPE dt_simplex = simplices[i]->CheckIfCut(eval);
@@ -829,8 +829,8 @@ namespace xintegration
           }
           else
           {
-            FillSimplexWithRule<SD>(*simplices[i], 
-                                    compquadrule.GetRule(dt_simplex), 
+            FillSimplexWithRule<SD>(*simplices[i],
+                                    compquadrule.GetRule(dt_simplex),
                                     GetIntegrationOrderMax());
             if (SD==2 && simplex_array_neg)
             {
@@ -851,7 +851,7 @@ namespace xintegration
       static Timer timer ("MakeQuadRule::FillUnCutSimplex");
       RegionTimer reg (timer);
 
-      double trafofac = 1.0; 
+      double trafofac = 1.0;
       if (D==2)
       {
         Vec<D> a = verts_space[1] - verts_space[0];
@@ -885,9 +885,10 @@ namespace xintegration
       const double dt = verts_time[verts_time.Size()-1] - verts_time[0];
       const double t0 = verts_time[0];
 
+
       const IntegrationRule & ir_time = SelectIntegrationRule (ET_TIME, int_order_time);
       const IntegrationRule & ir_space = SelectIntegrationRule (ET_SPACE, int_order_space);
-      
+
 
       for (int l = 0; l < ir_time.GetNIP(); l++)
       {
@@ -903,12 +904,12 @@ namespace xintegration
             point += ir_space[k](m) * verts_space[m+1];
           const double weight = ir_time[l].Weight() * dt * ir_space[k].Weight() * trafofac;
           Vec<SD> ipoint(0.0);
-          
+
           for (int m = 0; m < D ;++m)
             ipoint(m) = point(m);
           if (ET_trait<ET_TIME>::DIM > 0)
             ipoint(SD-1) = current;
-          
+
           compquadrule.GetRule(dt_self).points.Append(ipoint);
           compquadrule.GetRule(dt_self).weights.Append(weight);
 
@@ -930,18 +931,18 @@ namespace xintegration
   namespace DecompositionRules
   {
     template<int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-    void CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <D> & s, 
+    void CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <D> & s,
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
-    { 
+    {
       cout << " ET_SPACE = " << ET_SPACE << ", ET_TIME = " << ET_TIME << endl;
       throw Exception("CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad --- no implementation for these Element Types");
     }
 
 
     template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-    void CutSimplex<3,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <3> & s, 
+    void CutSimplex<3,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <3> & s,
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
-    { 
+    {
 
       // {
       //   std::cout << "\n\n\n repeat inner <D=3> " << std::endl;
@@ -987,8 +988,8 @@ namespace xintegration
 
       // vertex idx connected to cut idx (just in case of 4 cut positions)
       // connectivity information of cuts
-      Array<int> v2cut_1(4); 
-      Array<int> v2cut_2(4); 
+      Array<int> v2cut_1(4);
+      Array<int> v2cut_2(4);
       v2cut_1 = -1;
       v2cut_2 = -1;
 
@@ -998,7 +999,7 @@ namespace xintegration
                                {1, 2},
                                {1, 3},
                                {2, 3}};
-              
+
       double vvals[4];
       bool zero[4];
 
@@ -1006,7 +1007,7 @@ namespace xintegration
       // cout << "\n\n\n vvals = \n";
       // for (int l = 0; l < 4; ++l)
       //   cout << l << ":" << (*numint.lset)(*(s.p[l])) << endl;
-              
+
       timer1.Start();
       for (int j = 0; j < 4; ++j)
       {
@@ -1077,11 +1078,11 @@ namespace xintegration
         static Timer timer ("CutSimplex<3>::cutpoints.Size=3");
         RegionTimer reg3 (timer);
 
-        Array< const Vec<SD> *> & minorgroup ( nnegpoints > npospoints ? 
+        Array< const Vec<SD> *> & minorgroup ( nnegpoints > npospoints ?
                                                pospoints : negpoints);
         int & nminorgroup ( nnegpoints > npospoints ? npospoints : nnegpoints);
         DOMAIN_TYPE dt_minor = nnegpoints > npospoints ? POS : NEG;
-        Array< const Vec<SD> *> & majorgroup ( nnegpoints <= npospoints ? 
+        Array< const Vec<SD> *> & majorgroup ( nnegpoints <= npospoints ?
                                                pospoints : negpoints);
         int & nmajorgroup ( nnegpoints <= npospoints ? npospoints : nnegpoints);
         DOMAIN_TYPE dt_major = nnegpoints <= npospoints ? POS : NEG;
@@ -1091,8 +1092,8 @@ namespace xintegration
         for (int k = 0; k < 3; ++k)
           minorgroup[nminorgroup++] = cutpoints[k];
         // minorgroup is a simplex of type dt_minor
-        FillSimplexWithRule<SD>(minorgroup, 
-                                numint.compquadrule.GetRule(dt_minor), 
+        FillSimplexWithRule<SD>(minorgroup,
+                                numint.compquadrule.GetRule(dt_minor),
                                 numint.GetIntegrationOrderMax());
 
         Array< Simplex<SD> * > innersimplices(0);
@@ -1104,15 +1105,15 @@ namespace xintegration
         DecomposePrismIntoSimplices<SD>(majorgroup, innersimplices, numint.pc, numint.lh);
         for (int l = 0; l < innersimplices.Size(); ++l)
         {
-          FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                  numint.compquadrule.GetRule(dt_major), 
+          FillSimplexWithRule<SD>(innersimplices[l]->p,
+                                  numint.compquadrule.GetRule(dt_major),
                                   numint.GetIntegrationOrderMax());
           delete innersimplices[l];
         }
-                
+
         // and the interface:
         FillSimplexCoDim1WithRule<SD> ( cutpoints, *pospoints[0],
-                                        numint.compquadrule.GetInterfaceRule(), 
+                                        numint.compquadrule.GetInterfaceRule(),
                                         numint.GetIntegrationOrderMax());
 
 
@@ -1155,7 +1156,7 @@ namespace xintegration
           // cout << " pospoints vertices: " << endl;
           // for (int l = 0; l < 2; ++l)
           //   cout << *pospoints[l] << endl;
-                  
+
           // cout << " posprism vertices: " << endl;
           // for (int l = 0; l < 6; ++l)
           //   cout << *posprism[l] << endl;
@@ -1166,8 +1167,8 @@ namespace xintegration
           for (int l = 0; l < innersimplices.Size(); ++l)
           {
             // std::cout << " *innersimplices[l] = " << *innersimplices[l] << std::endl;
-            FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                    numint.compquadrule.GetRule(POS), 
+            FillSimplexWithRule<SD>(innersimplices[l]->p,
+                                    numint.compquadrule.GetRule(POS),
                                     numint.GetIntegrationOrderMax());
             delete innersimplices[l];
           }
@@ -1205,8 +1206,8 @@ namespace xintegration
           DecomposePrismIntoSimplices<SD>(negprism, innersimplices, numint.pc, numint.lh);
           for (int l = 0; l < innersimplices.Size(); ++l)
           {
-            FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                    numint.compquadrule.GetRule(NEG), 
+            FillSimplexWithRule<SD>(innersimplices[l]->p,
+                                    numint.compquadrule.GetRule(NEG),
                                     numint.GetIntegrationOrderMax());
             delete innersimplices[l];
           }
@@ -1241,20 +1242,20 @@ namespace xintegration
           Array< const Vec<SD> * > trig1(3);
           Array< const Vec<SD> * > trig2(3);
 
-          trig1[0] = cutpoints[diag1]; 
-          trig1[1] = cutpoints[ndiag1]; 
-          trig1[2] = cutpoints[diag2]; 
+          trig1[0] = cutpoints[diag1];
+          trig1[1] = cutpoints[ndiag1];
+          trig1[2] = cutpoints[diag2];
 
-          trig2[0] = cutpoints[diag2]; 
-          trig2[1] = cutpoints[ndiag2]; 
-          trig2[2] = cutpoints[diag1]; 
-                  
+          trig2[0] = cutpoints[diag2];
+          trig2[1] = cutpoints[ndiag2];
+          trig2[2] = cutpoints[diag1];
+
           timer4.Start();
           FillSimplexCoDim1WithRule<SD> ( trig1, *pospoints[0],
-                                          numint.compquadrule.GetInterfaceRule(), 
+                                          numint.compquadrule.GetInterfaceRule(),
                                           numint.GetIntegrationOrderMax());
           FillSimplexCoDim1WithRule<SD> ( trig2, *pospoints[0],
-                                          numint.compquadrule.GetInterfaceRule(), 
+                                          numint.compquadrule.GetInterfaceRule(),
                                           numint.GetIntegrationOrderMax());
           timer4.Stop();
         }
@@ -1268,9 +1269,9 @@ namespace xintegration
     }
 
     template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-    void CutSimplex<2,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <2> & s, 
+    void CutSimplex<2,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <2> & s,
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
-    { 
+    {
       enum { SD = 2};
 
       static Timer timer ("CutSimplex<2>::MakeQuad");
@@ -1287,18 +1288,18 @@ namespace xintegration
 
       // vertex idx connected to cut idx (just in case of 4 cut positions)
       // connectivity information of cuts
-      Array<int> v2cut_1(4); 
-      Array<int> v2cut_2(4); 
+      Array<int> v2cut_1(4);
+      Array<int> v2cut_2(4);
       v2cut_1 = -1;
       v2cut_2 = -1;
 
       const int edge[3][2] = { {0, 1},
                                {0, 2},
                                {1, 2}};
-              
+
       double vvals[3];
       bool zero[3];
-              
+
       for (int j = 0; j < 3; ++j)
       {
         zero[j] = false;
@@ -1364,10 +1365,10 @@ namespace xintegration
       if (cutpoints.Size() == 2) // three intersections: prism + tetra
       {
 
-        Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ? 
+        Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ?
                                                pospoints : negpoints);
         DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? POS : NEG;
-        Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ? 
+        Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ?
                                                pospoints : negpoints);
         DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? POS : NEG;
 
@@ -1376,8 +1377,8 @@ namespace xintegration
         for (int k = 0; k < 2; ++k)
           minorgroup.Append(cutpoints[k]);
         // minorgroup is a simplex of type dt_minor
-        FillSimplexWithRule<SD>(minorgroup, 
-                                numint.compquadrule.GetRule(dt_minor), 
+        FillSimplexWithRule<SD>(minorgroup,
+                                numint.compquadrule.GetRule(dt_minor),
                                 numint.GetIntegrationOrderMax());
 
         // for result visualization
@@ -1396,8 +1397,8 @@ namespace xintegration
         DecomposePrismIntoSimplices<SD>(majorgroup, innersimplices, numint.pc, numint.lh);
         for (int l = 0; l < innersimplices.Size(); ++l)
         {
-          FillSimplexWithRule<SD>(innersimplices[l]->p, 
-                                  numint.compquadrule.GetRule(dt_major), 
+          FillSimplexWithRule<SD>(innersimplices[l]->p,
+                                  numint.compquadrule.GetRule(dt_major),
                                   numint.GetIntegrationOrderMax());
 
           // for result visualization
@@ -1408,13 +1409,13 @@ namespace xintegration
 
           delete innersimplices[l];
         }
-                
+
         // and the interface:
         FillSimplexCoDim1WithRule<SD> ( cutpoints, *pospoints[0],
-                                        numint.compquadrule.GetInterfaceRule(), 
+                                        numint.compquadrule.GetInterfaceRule(),
                                         numint.GetIntegrationOrderMax());
 
-        
+
       }
       else
       {
@@ -1428,9 +1429,9 @@ namespace xintegration
 
 
     template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-    void CutSimplex<1,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <1> & s, 
+    void CutSimplex<1,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <1> & s,
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
-    { 
+    {
       enum { SD = 1};
 
       static Timer timer ("CutSimplex<1>::MakeQuad");
@@ -1438,7 +1439,7 @@ namespace xintegration
 
       const Vec<1> & left = *(s.p[0]);
       const Vec<1> & right = *(s.p[1]);
-      
+
       double valleft = (*numint.lset)(left);
       double valright = (*numint.lset)(right);
 
@@ -1469,14 +1470,14 @@ namespace xintegration
       }
 
 
-      FillSimplexWithRule<SD>(leftsimplex, 
-                              numint.compquadrule.GetRule(dt_left), 
+      FillSimplexWithRule<SD>(leftsimplex,
+                              numint.compquadrule.GetRule(dt_left),
                               numint.GetIntegrationOrderMax());
 
-      FillSimplexWithRule<SD>(rightsimplex, 
-                              numint.compquadrule.GetRule(dt_right), 
+      FillSimplexWithRule<SD>(rightsimplex,
+                              numint.compquadrule.GetRule(dt_right),
                               numint.GetIntegrationOrderMax());
-                
+
     }
 
 
@@ -1485,7 +1486,7 @@ namespace xintegration
 
 
   template <int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
-  void MakeQuadRuleOnCutSimplex(const Simplex <D> & s, 
+  void MakeQuadRuleOnCutSimplex(const Simplex <D> & s,
                                 const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
   {
     static Timer timer ("MakeQuadRuleOnCutSimplex");
@@ -1506,13 +1507,14 @@ namespace xintegration
   }
 
 
-
+  // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
+  // correct weight on the "physical" domain (note that this is not a natural choicefor interface integrals)
   const IntegrationRule * CutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
                                              const ElementTransformation & trafo,
                                              DOMAIN_TYPE dt,
                                              int intorder,
                                              int subdivlvl,
-                                             LocalHeap & lh) 
+                                             LocalHeap & lh)
   {
     static Timer t ("CutIntegrationRule");
     static Timer timercutgeom ("CutIntegrationRule::MakeQuadRule");
@@ -1526,7 +1528,7 @@ namespace xintegration
     timercutgeom.Start();
 
     auto et = trafo.GetElementType();
-    
+
     shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
 
     CompositeQuadratureRule<2> cquad2d;
@@ -1565,7 +1567,7 @@ namespace xintegration
             double len = L2Norm(normal);
             const double weight = interface_quad.weights[i] * len;
 
-            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len);
+            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
             ir = &ir_interface;
           }
         }
@@ -1586,7 +1588,7 @@ namespace xintegration
             double len = L2Norm(normal);
             const double weight = interface_quad.weights[i] * len;
 
-            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len);
+            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
             ir = &ir_interface;
           }
         }
@@ -1617,10 +1619,10 @@ namespace xintegration
         return nullptr;
       ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
     }
-    
+
     return ir;
   }
-  
-  
+
+
 
 } // end of namespace
