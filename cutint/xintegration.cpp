@@ -1553,7 +1553,7 @@ namespace xintegration
         if (DIM == 2)
         {
           const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
-          IntegrationRule ir_interface (interface_quad.Size(),lh);
+          IntegrationRule * ir_interface  = new (lh) IntegrationRule(interface_quad.Size(),lh);
           for (int i = 0; i < interface_quad.Size(); ++i)
           {
             IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
@@ -1567,14 +1567,14 @@ namespace xintegration
             double len = L2Norm(normal);
             const double weight = interface_quad.weights[i] * len;
 
-            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
-            ir = &ir_interface;
+            (*ir_interface)[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
+            ir = ir_interface;
           }
         }
         else
         {
           const QuadratureRuleCoDim1<3> & interface_quad(cquad3d.GetInterfaceRule());
-          IntegrationRule ir_interface (interface_quad.Size(),lh);
+          IntegrationRule * ir_interface  = new (lh) IntegrationRule(interface_quad.Size(),lh);
           for (int i = 0; i < interface_quad.Size(); ++i)
           {
             IntegrationPoint ip(&interface_quad.points[i](0),interface_quad.weights[i]);
@@ -1588,8 +1588,8 @@ namespace xintegration
             double len = L2Norm(normal);
             const double weight = interface_quad.weights[i] * len;
 
-            ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
-            ir = &ir_interface;
+            (*ir_interface)[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
+            ir = ir_interface;
           }
         }
       }
@@ -1598,18 +1598,18 @@ namespace xintegration
         if (DIM == 2)
         {
           const QuadratureRule<2> & domain_quad = cquad2d.GetRule(dt);
-          IntegrationRule ir_domain(domain_quad.Size(),lh);
-          for (int i = 0; i < ir_domain.Size(); ++i)
-            ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
-          ir = &ir_domain;
+          auto ir_domain = new (lh) IntegrationRule (domain_quad.Size(),lh);
+          for (int i = 0; i < ir_domain->Size(); ++i)
+            (*ir_domain)[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+          ir = ir_domain;
         }
         else
         {
           const QuadratureRule<3> & domain_quad = cquad3d.GetRule(dt);
-          IntegrationRule ir_domain (domain_quad.Size(),lh);
-          for (int i = 0; i < ir_domain.Size(); ++i)
-            ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
-          ir = &ir_domain;
+          auto ir_domain = new (lh) IntegrationRule (domain_quad.Size(),lh);
+          for (int i = 0; i < ir_domain->Size(); ++i)
+            (*ir_domain)[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+          ir = ir_domain;
         }
       }
     }
@@ -1622,7 +1622,5 @@ namespace xintegration
 
     return ir;
   }
-
-
 
 } // end of namespace
