@@ -11,6 +11,8 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../utils/error.hpp"
 
+#include "../cutint/straightcutrule.hpp"
+
 //using namespace ngcomp;
 
 void ExportNgsx() 
@@ -581,6 +583,57 @@ void ExportNgsx()
   // std::string nested_name = "comp";
   // if( bp::scope() )
   //   nested_name = bp::extract<std::string>(bp::scope().attr("__name__") + ".comp");
+
+
+  // new implementation: only straight cuts - start with triangles only for a start!
+
+  bp::def("NewIntegrateX",
+          FunctionPointer([](PyCF lset,
+                             shared_ptr<MeshAccess> ma, 
+                             PyCF cf,
+                             int order, DOMAIN_TYPE dt, int heapsize)
+                          {
+                            static Timer timer ("NewIntegrateX");
+                            static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
+                            static Timer timerevalcoef ("NewIntegrateX::EvalCoef");
+
+                            RegionTimer reg (timer);
+                            LocalHeap lh(heapsize, "lh-New-Integrate");
+
+                            double sum = 0.0;
+                            int DIM = ma->GetDimension();
+                            ma->IterateElements
+                              (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
+                               {
+                                 auto & trafo = ma->GetTrafo (el, lh);
+
+                                 timercutgeom.Start();
+                                 const IntegrationRule * ir = StraightCutIntegrationRule(lset.Get(), trafo, dt, order, lh);
+                                 timercutgeom.Stop();
+
+                                 if (ir != nullptr)
+                                 {
+                                   BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+                                   FlatMatrix<> val(mir.Size(), 1, lh);
+
+                                   timerevalcoef.Start();
+                                   cf -> Evaluate (mir, val);
+                                   timerevalcoef.Stop();
+
+                                   double lsum = 0.0;
+                                   for (int i = 0; i < mir.Size(); i++)
+                                     lsum += mir[i].GetWeight()*val(i,0);
+
+                                   AsAtomic(sum) += lsum;
+                                 }
+                               });
+
+                            return sum;
+                          }),
+          (bp::arg("lset"), bp::arg("mesh"), 
+           bp::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)), 
+           bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000));
+
 }
 
 BOOST_PYTHON_MODULE(libngsxfem_py) 
