@@ -140,7 +140,35 @@ namespace ngfem
                          FlatMatrix<double> elmat,
                          LocalHeap & lh) const;
   };
-  
+
+
+  template <int D, int ORDER>
+  class DiffOpDuDnk : public DiffOp<DiffOpDuDnk<D,ORDER> >
+  {
+
+  public:
+    enum { DIM = 1 };          // just one copy of the spaces
+    enum { DIM_SPACE = D };    // D-dim space
+    enum { DIM_ELEMENT = D };  // D-dim elements (in contrast to boundary elements)
+    enum { DIM_DMAT = 1 };     // D-matrix
+    enum { DIFFORDER = ORDER };    // minimal differential order (to determine integration order)
+
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & sip,
+                                MAT & mat, LocalHeap & lh);
+  };
+
+
+#ifndef FILE_GHOSTPENALTY_CPP
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,1>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,2>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,3>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,4>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,1>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,2>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,3>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,4>>;
+#endif
 
 }
 

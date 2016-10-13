@@ -1,4 +1,6 @@
+#define FILE_GHOSTPENALTY_CPP
 #include "ghostpenalty.hpp"
+#include <diffop_impl.hpp>
 
 namespace ngfem
 {
@@ -599,6 +601,131 @@ namespace ngfem
 
   static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<2>> init_stab2_2d ("normallaplacetrace", 2, 2);
   static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<3>> init_stab2_3d ("normallaplacetrace", 3, 2);
-  
-  
+
+  // off-diagonal values:
+  int GetStencilWidth(int order)
+  {
+    switch (order)
+      {
+      case 0: return 0; break;
+      case 1: return 1; break;
+      case 2: return 1; break; 
+      case 3: return 2; break; 
+      default: throw Exception("order not yet implemented"); break;
+      };
+  }
+
+  FlatVector<> GetCentralDifferenceCoeffs(int order, double eps, LocalHeap& lh)
+  {
+    FlatVector<> coeffs(2*GetStencilWidth(order)+1,lh);
+
+    switch (order)
+    {
+    case 0:
+      coeffs(0) = 1.0;
+      break;
+    case 1:
+      coeffs(0) = -0.5/eps; coeffs(1) = 0.0; coeffs(2) = 0.5/eps;
+      break;
+    case 2:
+      coeffs(0) = coeffs(2) = 1.0/(eps*eps); coeffs(1) = -2.0/(eps*eps);
+      break;
+    case 3:
+      coeffs(0) = -0.5/(eps*eps*eps); coeffs(1) = 1.0/(eps*eps*eps); coeffs(3) = -1.0/(eps*eps*eps); coeffs(4) = 0.5/(eps*eps*eps); 
+      break;
+    default: throw Exception("order not yet implemented"); break;
+    };
+
+    return coeffs;
+  }
+
+  double GetEps(int order)
+  {
+    switch (order)
+      {
+      case 0: return 1.0; break;
+      case 1: return 1e-3; break;
+      case 2: return 1e-3; break; 
+      case 3: return 1e-3; break; 
+      default: throw Exception("order not yet implemented"); break;
+      };
+  }
+
+
+  template <int D, int ORDER>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpDuDnk<D,ORDER>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                             MAT & mat, LocalHeap & lh)
+  {
+    // mat.Row(0) = 0.0;
+    // return;
+    // FlatVector<> center(3,lh);
+    // SetRefBaryCenter(bfel.ElementType(),center);
+    // IntegrationPoint centerip (center(0),center(1),center(2),0.0);
+    // MappedIntegrationPoint<D,D> mipc(centerip,mip.GetTransformation());
+      
+    // cout << mipc.GetPoint() << endl;
+
+    const ScalarFiniteElement<D> & scafe =
+      dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
+    const int ndof = scafe.GetNDof();
+
+    Vec<D> normal = static_cast<const DimMappedIntegrationPoint<D>&>(mip).GetNV();
+
+    // cout << "normal: " << normal << endl;
+    // Vec<D> normal; normal(0) = -1.0; normal(1) = 1.0;
+    // normal /= L2Norm(normal);
+
+    Vec<D> invjac_normal = mip.GetJacobianInverse() * normal;
+
+    const int stencilwidth = GetStencilWidth(ORDER-1);
+    const int stencilpoints = 2*stencilwidth+1;
+    FlatMatrix<> dshapedn  (ndof, stencilpoints, lh);
+    FlatVector<> dshapednk (ndof, lh);
+
+    const double norminvjacn = L2Norm(invjac_normal);
+    Vec<D> normal_dir_wrt_ref = (1.0/norminvjacn)  * invjac_normal;
+
+    const double eps = GetEps(ORDER-1);
+
+    for (int i = 0; i < stencilpoints; ++i)
+    {
+      IntegrationPoint ip(mip.IP());
+      for (int d = 0; d < D; ++d)
+        ip(d) += (i-stencilwidth) * eps * normal_dir_wrt_ref(d);
+      dshapedn.Col(i) = scafe.GetDShape (ip, lh) * invjac_normal;
+    }
+
+    dshapednk = dshapedn * GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh);
+
+    mat.Row(0) = dshapednk;
+
+    const int feorder = scafe.Order();
+    if (false && feorder > 1)
+    {
+      cout << "ORDER = " << ORDER << endl;
+      cout << mip.GetPoint() << endl;
+      cout << "dshapedn" << endl;
+      cout << dshapedn << endl;
+      cout << "coeffs" << endl;
+      cout << GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh) << endl;
+      cout << "dshapednk" << endl;
+      cout << dshapednk << endl;
+      getchar();
+    }
+
+    // VERSION 2 (fix points on phys. domain + transform points(!) back)
+
+
+  }// generate matrix
+
+  template class T_DifferentialOperator<DiffOpDuDnk<2,1>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,2>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,3>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,4>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,1>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,2>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,3>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,4>>;
+
 }

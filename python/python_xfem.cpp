@@ -4,6 +4,7 @@
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
+#include "../xfem/ghostpenalty.hpp"
 #include "../stokes/xstokesspace.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
@@ -564,7 +565,43 @@ void ExportNgsx()
            bp::args("skeleton")=false,
            bp::arg("definedon")=bp::object())
           );
-  
+
+  typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
+  bp::def("dn", FunctionPointer
+       ([] (const PyProxyFunction self, int order) -> bp::object 
+        {
+          shared_ptr<DifferentialOperator> diffopdudnk;
+          switch (order)
+          {
+          case 1: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
+          case 2: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,2>>> (); break;
+          case 3: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,3>>> (); break;
+          case 4: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
+          default: throw Exception("no order higher than 4 implemented yet");
+          }
+
+          auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                                       diffopdudnk, nullptr, nullptr, nullptr);
+          if (self.Get()->IsOther())
+            adddiffop->SetIsOther(true);
+          return bp::object(PyProxyFunction(adddiffop));
+        }));
+    
+  bp::def("dn", FunctionPointer
+       ([](PyGF self, int order) -> bp::object // shared_ptr<CoefficientFunction>
+        {
+          shared_ptr<DifferentialOperator> diffopdudnk;
+          switch (order)
+          {
+          case 1: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
+          case 2: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,2>>> (); break;
+          case 3: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,3>>> (); break;
+          case 4: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
+          default: throw Exception("no order higher than 4 implemented yet");
+          }
+          PyCF coef(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
+          return bp::object(coef);
+        }));
   
   // bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
 
