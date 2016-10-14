@@ -409,11 +409,8 @@ namespace xintegration
 
     verts_space.SetSize(nv);
     for (int i = 0; i < nv; ++i)
-    {
-      Vec<D> newvert;
       for (int d = 0; d < D; ++d)
         verts_space[i][d] = verts[i][d];
-    }
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
