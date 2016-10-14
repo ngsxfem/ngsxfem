@@ -6,17 +6,19 @@ from ngsolve import *
 # basic xfem functionality
 from xfem.basics import *
 
+NAveraging = 100
 
-def PrintTimers(substring="HDG"):            
+def PrintTimers(substring):
     ### print hdg-intergrator timers
     hdgtimers = [a for a in Timers() if substring in a["name"]]
+    #hdgtimers = sorted(hdgtimers, key=lambda k: k["name"], reverse=False)
     hdgtimers = sorted(hdgtimers, key=lambda k: k["time"], reverse=True)
     for timer in hdgtimers:
         print("{:<45}: {:6} cts, {:.8f} s, {:.6e} s(avg.)"
               .format(timer["name"],timer["counts"],timer["time"],timer["time"]/(max(1.0,timer["counts"]))))
 
 #square domain [-1,1]x[-1,1]
-def Make2DProblem(maxh=2):
+def Make2DProblem(maxh):
     from netgen.geom2d import SplineGeometry
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1],bc=1)
@@ -27,9 +29,9 @@ def Make2DProblem(maxh=2):
 levelset = sqrt(x*x+y*y)-0.5
 referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
-mesh = Make2DProblem(maxh=0.01)
+mesh = Make2DProblem(maxh=0.1)
 
-# domains = [NEG,POS,IF]
+#domains = [NEG,POS,IF]
 domains = [IF]
 
 errors = dict()
@@ -40,7 +42,7 @@ for key in domains:
     eoc[key] = []
 
 #now: repetitions to average performance (later convergence..)
-for reflevel in range(10):
+for reflevel in range(NAveraging):
 
     # if(reflevel > 0):
     #     mesh.Refine()
