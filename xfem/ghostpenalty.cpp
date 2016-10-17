@@ -609,7 +609,8 @@ namespace ngfem
       {
       case 0: return 0; break;
       case 1: return 1; break;
-      case 2: return 1; break; 
+      // case 2: return 1; break; 
+      case 2: return 2; break; 
       case 3: return 2; break; 
       default: throw Exception("order not yet implemented"); break;
       };
@@ -628,7 +629,8 @@ namespace ngfem
       coeffs(0) = -0.5/eps; coeffs(1) = 0.0; coeffs(2) = 0.5/eps;
       break;
     case 2:
-      coeffs(0) = coeffs(2) = 1.0/(eps*eps); coeffs(1) = -2.0/(eps*eps);
+      // coeffs(0) = coeffs(2) = 1.0/(eps*eps); coeffs(1) = -2.0/(eps*eps);
+      coeffs(0) = coeffs(4) = -1.0/(12.0*eps*eps); coeffs(1) = coeffs(3) = 4.0/(3.0*eps*eps); coeffs(2) = -2.5/(eps*eps);
       break;
     case 3:
       coeffs(0) = -0.5/(eps*eps*eps); coeffs(1) = 1.0/(eps*eps*eps); coeffs(3) = -1.0/(eps*eps*eps); coeffs(4) = 0.5/(eps*eps*eps); 
@@ -645,7 +647,7 @@ namespace ngfem
       {
       case 0: return 1.0; break;
       case 1: return 1e-3; break;
-      case 2: return 1e-3; break; 
+      case 2: return 4e-3; break; 
       case 3: return 1e-3; break; 
       default: throw Exception("order not yet implemented"); break;
       };
@@ -657,6 +659,7 @@ namespace ngfem
   void DiffOpDuDnk<D,ORDER>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
+    int version = 2;
     // mat.Row(0) = 0.0;
     // return;
     // FlatVector<> center(3,lh);
@@ -666,55 +669,128 @@ namespace ngfem
       
     // cout << mipc.GetPoint() << endl;
 
-    const ScalarFiniteElement<D> & scafe =
-      dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
-    const int ndof = scafe.GetNDof();
-
-    Vec<D> normal = static_cast<const DimMappedIntegrationPoint<D>&>(mip).GetNV();
-
-    // cout << "normal: " << normal << endl;
-    // Vec<D> normal; normal(0) = -1.0; normal(1) = 1.0;
-    // normal /= L2Norm(normal);
-
-    Vec<D> invjac_normal = mip.GetJacobianInverse() * normal;
-
-    const int stencilwidth = GetStencilWidth(ORDER-1);
-    const int stencilpoints = 2*stencilwidth+1;
-    FlatMatrix<> dshapedn  (ndof, stencilpoints, lh);
-    FlatVector<> dshapednk (ndof, lh);
-
-    const double norminvjacn = L2Norm(invjac_normal);
-    Vec<D> normal_dir_wrt_ref = (1.0/norminvjacn)  * invjac_normal;
-
-    const double eps = GetEps(ORDER-1);
-
-    for (int i = 0; i < stencilpoints; ++i)
+    if (version == 1)
     {
-      IntegrationPoint ip(mip.IP());
-      for (int d = 0; d < D; ++d)
-        ip(d) += (i-stencilwidth) * eps * normal_dir_wrt_ref(d);
-      dshapedn.Col(i) = scafe.GetDShape (ip, lh) * invjac_normal;
+      const ScalarFiniteElement<D> & scafe =
+        dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
+      const int ndof = scafe.GetNDof();
+
+      Vec<D> normal = static_cast<const DimMappedIntegrationPoint<D>&>(mip).GetNV();
+
+      // cout << "normal: " << normal << endl;
+      // Vec<D> normal; normal(0) = -1.0; normal(1) = 1.0;
+      // normal /= L2Norm(normal);
+
+      Vec<D> invjac_normal = mip.GetJacobianInverse() * normal;
+
+      const int stencilwidth = GetStencilWidth(ORDER-1);
+      const int stencilpoints = 2*stencilwidth+1;
+      FlatMatrix<> dshapedn  (ndof, stencilpoints, lh);
+      FlatVector<> dshapednk (ndof, lh);
+
+      const double norminvjacn = L2Norm(invjac_normal);
+      Vec<D> normal_dir_wrt_ref = (1.0/norminvjacn)  * invjac_normal;
+
+      const double eps = GetEps(ORDER-1);
+
+      for (int i = 0; i < stencilpoints; ++i)
+      {
+        IntegrationPoint ip(mip.IP());
+        for (int d = 0; d < D; ++d)
+          ip(d) += (i-stencilwidth) * eps * normal_dir_wrt_ref(d);
+        dshapedn.Col(i) = scafe.GetDShape (ip, lh) * invjac_normal;
+      }
+
+      dshapednk = dshapedn * GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh);
+
+      mat.Row(0) = dshapednk;
+
+      const int feorder = scafe.Order();
+      if (false && feorder > 1)
+      {
+        cout << "ORDER = " << ORDER << endl;
+        cout << mip.GetPoint() << endl;
+        cout << "dshapedn" << endl;
+        cout << dshapedn << endl;
+        cout << "coeffs" << endl;
+        cout << GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh) << endl;
+        cout << "dshapednk" << endl;
+        cout << dshapednk << endl;
+        getchar();
+      }
     }
+		else
+		{
+			// VERSION 2 (fix points on phys. domain + transform points(!) back)
+      const ScalarFiniteElement<D> & scafe =
+        dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
+      const int ndof = scafe.GetNDof();
 
-    dshapednk = dshapedn * GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh);
+      Vec<D> normal = static_cast<const DimMappedIntegrationPoint<D>&>(mip).GetNV();
 
-    mat.Row(0) = dshapednk;
+      // cout << "normal: " << normal << endl;
+      // Vec<D> normal; normal(0) = -1.0; normal(1) = 1.0;
+      // normal /= L2Norm(normal);
 
-    const int feorder = scafe.Order();
-    if (false && feorder > 1)
-    {
-      cout << "ORDER = " << ORDER << endl;
-      cout << mip.GetPoint() << endl;
-      cout << "dshapedn" << endl;
-      cout << dshapedn << endl;
-      cout << "coeffs" << endl;
-      cout << GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh) << endl;
-      cout << "dshapednk" << endl;
-      cout << dshapednk << endl;
-      getchar();
-    }
+      Vec<D> invjac_normal = mip.GetJacobianInverse() * normal;
 
-    // VERSION 2 (fix points on phys. domain + transform points(!) back)
+      const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
+
+      const int stencilwidth = GetStencilWidth(ORDER);
+      const int stencilpoints = 2*stencilwidth+1;
+
+      FlatMatrix<> shape  (ndof, stencilpoints, lh);
+      FlatVector<> dshapednk (ndof, lh);
+
+      Vec<D> normal_dir_wrt_ref = invjac_normal;
+
+      const double eps = h * GetEps(ORDER);
+
+      for (int i = 0; i < stencilpoints; ++i)
+      {
+        Vec<D> vec = mip.GetPoint();
+        vec += (i-stencilwidth) * eps * normal;
+
+        IntegrationPoint ip_x0(mip.IP());
+        for (int d = 0; d < D; ++d)
+          ip_x0(d) += (i-stencilwidth) * eps * normal_dir_wrt_ref(d);
+        MappedIntegrationPoint<D,D> mip_x0(ip_x0,mip.GetTransformation());
+
+        Vec<D> diff = vec - mip_x0.GetPoint();
+        Vec<D> update = 0;
+        while (L2Norm(diff) > 1e-8*h)
+        {
+          MappedIntegrationPoint<D,D> mip_x0(ip_x0,mip.GetTransformation());
+          diff = vec - mip_x0.GetPoint();
+          // cout << "mip_x0.GetPoint()" << mip_x0.GetPoint() << endl;
+          // cout << "diff" << diff << endl;
+          update = mip_x0.GetJacobianInverse() * diff;
+          for (int d = 0; d < D; ++d)
+            ip_x0(d) += update(d);
+          // getchar();
+        }
+        shape.Col(i) = scafe.GetShape (ip_x0, lh);
+      }
+
+      dshapednk = shape * GetCentralDifferenceCoeffs(ORDER,eps,lh);
+
+      mat.Row(0) = dshapednk;
+
+      const int feorder = scafe.Order();
+      if (false && feorder > 1)
+      {
+        cout << "ORDER = " << ORDER << endl;
+        cout << mip.GetPoint() << endl;
+        cout << "dshapedn" << endl;
+        cout << shape << endl;
+        cout << "coeffs" << endl;
+        cout << GetCentralDifferenceCoeffs(ORDER,eps,lh) << endl;
+        cout << "dshapednk" << endl;
+        cout << dshapednk << endl;
+        getchar();
+      }
+			
+		}
 
 
   }// generate matrix

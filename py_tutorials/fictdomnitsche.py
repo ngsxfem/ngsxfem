@@ -12,12 +12,12 @@ from xfem.lsetcurv import *
 
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.125, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
 
-sol=y*y
-
+sol=y*y*y
+mlapsol=-6*y
 levelset = sqrt(x*x+y*y) - 0.7
-order = 2
+order = 3
 
 lset_approx = GridFunction(H1(mesh,order=1))
 InterpolateToP1(levelset,lset_approx)
@@ -92,18 +92,19 @@ def dnjump(u,order):
         return dn(u,order) + dn(u.Other(),order)
 
 factors = [1.0/h, h, h*h*h, h*h*h*h*h, h*h*h*h*h*h*h]
-# a += SymbolicBFI( u * v ) 
+a += SymbolicBFI( grad(u) * grad(v)) 
 
-for i in range(1,order+1):
+for i in range(1, order+1):
     a += SymbolicBFI( factors[i] * dnjump(u,i) * dnjump(v,i), skeleton=True )
 
 deformation = lsetmeshadap.CalcDeformation(levelset)
-# mesh.SetDeformation(deformation)
+#deformation.vec.FV().NumPy()[:] *= 0.01
+mesh.SetDeformation(deformation)
 
 a.Assemble()
 
 f = LinearForm(Vh)
-# f += SymbolicLFI(sol*v)
+f += SymbolicLFI(mlapsol*v)
 f.Assemble();
 
 gfu.Set(sol, boundary=True)
