@@ -69,5 +69,6 @@ Draw(levelset,mesh,"levelset")
 
 PrintTimers("IntegrateX")
 
-PrintTimers("CutIntegrationRule")
-PrintTimers("StraightCut")
+PrintTimers("StraightCutIntegrationRule")
+PrintTimers("StraightCutDomain")
+#PrintTimers("MakeQuadRule")

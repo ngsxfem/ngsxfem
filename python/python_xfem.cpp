@@ -596,35 +596,48 @@ void ExportNgsx()
                             static Timer timer ("NewIntegrateX");
                             static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
                             static Timer timerevalcoef ("NewIntegrateX::EvalCoef");
+                            static Timer timeradding("NewIntegrateX::Adding");
+                            static Timer timermapir("NewIntegrateX::MapingIntergrRule");
 
                             RegionTimer reg (timer);
                             LocalHeap lh(heapsize, "lh-New-Integrate");
 
                             double sum = 0.0;
                             int DIM = ma->GetDimension();
+
+                            int nv = ma->GetNV();
+                            cout << "Number of vertices: " << nv << endl;
+                            vector<int> sign_of_lset_at_vertex(nv);
+                            for(int i=0; i<sign_of_lset_at_vertex.size(); i++) sign_of_lset_at_vertex[i] = -10;
+
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
                                  auto & trafo = ma->GetTrafo (el, lh);
 
                                  timercutgeom.Start();
-                                 const IntegrationRule * ir = StraightCutIntegrationRule(lset.Get(), trafo, dt, order, lh);
+                                 vector<int> my_vert_idx(3); for(int i=0; i<3; i++) my_vert_idx[i] = el.Vertices()[i];
+                                 const IntegrationRule * ir = StraightCutIntegrationRule(lset.Get(), trafo, dt, order, lh, sign_of_lset_at_vertex, my_vert_idx);
                                  timercutgeom.Stop();
 
                                  if (ir != nullptr)
                                  {
+                                   timermapir.Start();
                                    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
                                    FlatMatrix<> val(mir.Size(), 1, lh);
+                                   timermapir.Stop();
 
                                    timerevalcoef.Start();
                                    cf -> Evaluate (mir, val);
                                    timerevalcoef.Stop();
 
+                                   timeradding.Start();
                                    double lsum = 0.0;
                                    for (int i = 0; i < mir.Size(); i++)
                                      lsum += mir[i].GetWeight()*val(i,0);
 
                                    AsAtomic(sum) += lsum;
+                                   timeradding.Stop();
                                  }
                                });
 

@@ -6,26 +6,43 @@ namespace xintegration
   // a poor mans try to speed things up (only gave a factor of 2) - can be optimized further...
   DOMAIN_TYPE StraightCutDomain(shared_ptr<CoefficientFunction> cf_lset,
                                 const ElementTransformation & trafo,
-                                LocalHeap & lh)
+                                LocalHeap & lh, vector<int>& sign_of_lset_at_vertex, vector<int>& my_vert_idx)
   { // determine interface_normal_ref
-    static Timer timera ("HasStraightCut");
+    static Timer timera ("StraightCutDomain");
     RegionTimer reg (timera);
+    static Timer timerb ("StraightCutDomain::GettingVertices");
+    static Timer timerc ("StraightCutDomain::GetMip");
+    static Timer timerd ("StraightCutDomain::CfEval");
 
     bool haspos = false;
     bool hasneg = false;
 
+    timerb.Start();
     const POINT3D * verts = ElementTopology::GetVertices(trafo.GetElementType());
     const int nv =  ElementTopology::GetNVertices(trafo.GetElementType());
+    timerb.Stop();
 
     for (int v = 0; v < nv; ++v)
     {
-      IntegrationPoint vip(&verts[v][0],0);
-      MappedIntegrationPoint<2,2> mip(vip,trafo);
-      const double tmp = cf_lset->Evaluate(mip);
-      if (tmp >= 0.0)
-        haspos = true;
-      else
-        hasneg = true;
+      if(sign_of_lset_at_vertex[my_vert_idx[v]] == -10){
+        timerc.Start();
+        IntegrationPoint vip(&verts[v][0],0);
+        MappedIntegrationPoint<2,2> mip(vip,trafo);
+        timerc.Stop();
+        timerd.Start();
+        const double tmp = cf_lset->Evaluate(mip);//cf_lset->Evaluate()
+        timerd.Stop();
+        sign_of_lset_at_vertex[my_vert_idx[v]] = (tmp >= 0.0);
+        if (tmp >= 0.0)
+            haspos = true;
+        else
+            hasneg = true;
+      }
+      else {
+          if(sign_of_lset_at_vertex[my_vert_idx[v]] == 1) haspos = true;
+          else if(sign_of_lset_at_vertex[my_vert_idx[v]] == 0) hasneg = true;
+          else cout << "!! - Encountered bad sign_of_lset_at_vertey-Flag!" << endl;
+      }
       if(haspos && hasneg) break;
     }
     if (hasneg && haspos)
@@ -42,10 +59,11 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
-                                                     LocalHeap & lh)
+                                                     LocalHeap & lh, vector<int>& sign_of_lset_at_vertex,
+                                                     vector<int>& my_vert_idx)
   {
-    static Timer t ("StraightCutRule");
-    static Timer timercutgeom ("StraightCutRule::MakeQuadRule");
+    static Timer t ("StraightCutIntegrationRule");
+    static Timer timercutgeom ("StraightCutIntegrationRule::MakeQuadRule");
 
     int subdivlvl = 0;
 
@@ -66,7 +84,8 @@ namespace xintegration
     CompositeQuadratureRule<2> cquad2d;
     CompositeQuadratureRule<3> cquad3d;
 
-    auto element_domain = StraightCutDomain(cf_lset,trafo,lh);
+
+    auto element_domain = StraightCutDomain(cf_lset,trafo,lh,sign_of_lset_at_vertex, my_vert_idx);
 
     if (element_domain == IF)
     {
@@ -78,10 +97,10 @@ namespace xintegration
         xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                   *lset_eval, cquad3d, lh,
                                                   intorder, 0, subdivlvl, 0);
-      // DOMAIN_TYPE element_domain =
       xgeom->MakeQuadRule();
     }
     timercutgeom.Stop();
+
 
     const IntegrationRule* ir = nullptr;
 
