@@ -607,30 +607,26 @@ void ExportNgsx()
                             cout << "lset is a gf of type :" << gf_lset->GetFESpace()->GetName() << endl;
                             cout << "lset is a gf of order:" << gf_lset->GetFESpace()->GetOrder() << endl;
 
-                            //Array<int> dnums;
-                            //gf_lset->GetFESpace()->GetDofNrs(elnr,dnums);
-                            //FlatVector<> elvec(dnums.Size(),lh);
-                            //gf_lset->GetVector().GetIndirect(dnums,elvec);
-
                             RegionTimer reg (timer);
                             LocalHeap lh(heapsize, "lh-New-Integrate");
 
                             double sum = 0.0;
                             int DIM = ma->GetDimension();
 
-                            int nv = ma->GetNV();
-                            cout << "Number of vertices: " << nv << endl;
-                            vector<int> sign_of_lset_at_vertex(nv);
-                            for(int i=0; i<sign_of_lset_at_vertex.size(); i++) sign_of_lset_at_vertex[i] = -10;
-
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
                                  auto & trafo = ma->GetTrafo (el, lh);
-                                 //el.Nr()
+
+                                 Array<int> dnums;
+                                 gf_lset->GetFESpace()->GetDofNrs(el.Nr(),dnums);
+                                 FlatVector<> elvec(dnums.Size(),lh);
+                                 gf_lset->GetVector().GetIndirect(dnums,elvec);
+
+                                 cout << "elvec: " << elvec << endl;
+
                                  timercutgeom.Start();
-                                 vector<int> my_vert_idx(3); for(int i=0; i<3; i++) my_vert_idx[i] = el.Vertices()[i];
-                                 const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, trafo, dt, order, lh, sign_of_lset_at_vertex, my_vert_idx);
+                                 const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, trafo, dt, order, lh);
                                  timercutgeom.Stop();
 
                                  if (ir != nullptr)

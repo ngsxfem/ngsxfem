@@ -6,7 +6,7 @@ namespace xintegration
   // a poor mans try to speed things up (only gave a factor of 2) - can be optimized further...
   DOMAIN_TYPE StraightCutDomain(shared_ptr<CoefficientFunction> cf_lset,
                                 const ElementTransformation & trafo,
-                                LocalHeap & lh, vector<int>& sign_of_lset_at_vertex, vector<int>& my_vert_idx)
+                                LocalHeap & lh)
   { // determine interface_normal_ref
     static Timer timera ("StraightCutDomain");
     RegionTimer reg (timera);
@@ -24,27 +24,23 @@ namespace xintegration
 
     for (int v = 0; v < nv; ++v)
     {
-      if(sign_of_lset_at_vertex[my_vert_idx[v]] == -10){
-        timerc.Start();
-        IntegrationPoint vip(&verts[v][0],0);
-        MappedIntegrationPoint<2,2> mip(vip,trafo);
-        timerc.Stop();
-        timerd.Start();
-        const double tmp = cf_lset->Evaluate(mip);//cf_lset->Evaluate()
-        timerd.Stop();
-        sign_of_lset_at_vertex[my_vert_idx[v]] = (tmp >= 0.0);
-        if (tmp >= 0.0)
-            haspos = true;
-        else
-            hasneg = true;
-      }
-      else {
-          if(sign_of_lset_at_vertex[my_vert_idx[v]] == 1) haspos = true;
-          else if(sign_of_lset_at_vertex[my_vert_idx[v]] == 0) hasneg = true;
-          else cout << "!! - Encountered bad sign_of_lset_at_vertey-Flag!" << endl;
-      }
+      timerc.Start();
+      IntegrationPoint vip(&verts[v][0],0);
+      MappedIntegrationPoint<2,2> mip(vip,trafo);
+      timerc.Stop();
+      timerd.Start();
+      const double tmp = cf_lset->Evaluate(mip);
+      cout << tmp << "\t";
+      timerd.Stop();
+
+      if (tmp >= 0.0)
+        haspos = true;
+      else
+        hasneg = true;
       if(haspos && hasneg) break;
     }
+    cout << endl;
+
     if (hasneg && haspos)
       return IF;
     else if (hasneg)
@@ -59,8 +55,7 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
-                                                     LocalHeap & lh, vector<int>& sign_of_lset_at_vertex,
-                                                     vector<int>& my_vert_idx)
+                                                     LocalHeap & lh)
   {
     static Timer t ("StraightCutIntegrationRule");
     static Timer timercutgeom ("StraightCutIntegrationRule::MakeQuadRule");
@@ -72,7 +67,6 @@ namespace xintegration
     int DIM = trafo.SpaceDim();
     auto lset_eval
       = ScalarFieldEvaluator::Create(DIM,*cf_lset,trafo,lh);
-      // tstart.Stop();
     timercutgeom.Start();
 
     auto et = trafo.GetElementType();
@@ -85,7 +79,7 @@ namespace xintegration
     CompositeQuadratureRule<3> cquad3d;
 
 
-    auto element_domain = StraightCutDomain(cf_lset,trafo,lh,sign_of_lset_at_vertex, my_vert_idx);
+    auto element_domain = StraightCutDomain(cf_lset,trafo,lh);
 
     if (element_domain == IF)
     {
