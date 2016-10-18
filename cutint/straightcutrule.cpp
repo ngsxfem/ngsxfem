@@ -49,16 +49,36 @@ namespace xintegration
       return POS;
   }
 
+  DOMAIN_TYPE StraightCutDomainFast(const FlatVector<> & cf_lset_at_element){
+    bool haspos = false;
+    bool hasneg = false;
+
+    for(int v=0; v<cf_lset_at_element.Size(); v++){
+        haspos = haspos || (cf_lset_at_element[v] >= 0.0);
+        hasneg = hasneg || (cf_lset_at_element[v] <= 0.0);
+        if(haspos && hasneg) break;
+    }
+
+    if (hasneg && haspos)
+      return IF;
+    else if (hasneg)
+      return NEG;
+    else
+      return POS;
+  }
+
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
+                                                     const FlatVector<> & cf_lset_at_element,
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
                                                      LocalHeap & lh)
   {
     static Timer t ("StraightCutIntegrationRule");
-    static Timer timercutgeom ("StraightCutIntegrationRule::MakeQuadRule");
+    static Timer timercutgeom ("StraightCutIntegrationRule::StraightCutDomain[Fast]");
+    static Timer timermakequadrule("StraightCutIntegrationRule::MakeQuadRule");
 
     int subdivlvl = 0;
 
@@ -79,10 +99,13 @@ namespace xintegration
     CompositeQuadratureRule<3> cquad3d;
 
 
-    auto element_domain = StraightCutDomain(cf_lset,trafo,lh);
+    //auto element_domain = StraightCutDomain(cf_lset,trafo,lh);
+    auto element_domain = StraightCutDomainFast(cf_lset_at_element);
+    timercutgeom.Stop();
 
     if (element_domain == IF)
     {
+      timermakequadrule.Start();
       if (DIM == 2)
         xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                   *lset_eval, cquad2d, lh,
@@ -92,9 +115,8 @@ namespace xintegration
                                                   *lset_eval, cquad3d, lh,
                                                   intorder, 0, subdivlvl, 0);
       xgeom->MakeQuadRule();
+      timermakequadrule.Stop();
     }
-    timercutgeom.Stop();
-
 
     const IntegrationRule* ir = nullptr;
 

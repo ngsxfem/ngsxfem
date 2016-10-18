@@ -6,7 +6,7 @@ from ngsolve import *
 # basic xfem functionality
 from xfem.basics import *
 
-NAveraging = 1
+NAveraging = 100
 
 def PrintTimers(substring):
     ### print hdg-intergrator timers
@@ -56,7 +56,7 @@ for reflevel in range(NAveraging):
     f = CoefficientFunction (1.0)
 
     for key in domains:
-        integral_old = Integrate(levelset_domain={"levelset" : levelset, "domain_type" : key}, cf=f, mesh=mesh, order=0)
+        integral_old = Integrate(levelset_domain={"levelset" : lset_approx, "domain_type" : key}, cf=f, mesh=mesh, order=0)
         integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
 
         if abs(integral_old - integral) > 1e-14:
@@ -76,5 +76,5 @@ Draw(levelset,mesh,"levelset")
 PrintTimers("IntegrateX")
 
 PrintTimers("StraightCutIntegrationRule")
-PrintTimers("StraightCutDomain")
+#PrintTimers("StraightCutDomain")
 #PrintTimers("MakeQuadRule")

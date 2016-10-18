@@ -599,13 +599,10 @@ void ExportNgsx()
                             static Timer timeradding("NewIntegrateX::Adding");
                             static Timer timermapir("NewIntegrateX::MapingIntergrRule");
 
-                            cout << "before problems ?" << endl;
                             bp::extract<PyGF> bpgf(lset);
                             if (!bpgf.check())
                               throw Exception("cast failed... need new candidates..");
                             shared_ptr<GridFunction> gf_lset = bpgf().Get();
-                            cout << "lset is a gf of type :" << gf_lset->GetFESpace()->GetName() << endl;
-                            cout << "lset is a gf of order:" << gf_lset->GetFESpace()->GetOrder() << endl;
 
                             RegionTimer reg (timer);
                             LocalHeap lh(heapsize, "lh-New-Integrate");
@@ -623,10 +620,8 @@ void ExportNgsx()
                                  FlatVector<> elvec(dnums.Size(),lh);
                                  gf_lset->GetVector().GetIndirect(dnums,elvec);
 
-                                 cout << "elvec: " << elvec << endl;
-
                                  timercutgeom.Start();
-                                 const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, trafo, dt, order, lh);
+                                 const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
                                  timercutgeom.Stop();
 
                                  if (ir != nullptr)
