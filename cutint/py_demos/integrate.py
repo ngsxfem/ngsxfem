@@ -6,7 +6,7 @@ from ngsolve import *
 # basic xfem functionality
 from xfem.basics import *
 
-NAveraging = 100
+NAveraging = 1
 
 def PrintTimers(substring):
     ### print hdg-intergrator timers
@@ -26,10 +26,16 @@ def Make2DProblem(maxh):
     return mesh;
 
 # circle with radius 0.5
-levelset = sqrt(x*x+y*y)-0.5
+levelset = (sqrt(x*x+y*y)-0.5) #.Compile()
+
 referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
 mesh = Make2DProblem(maxh=0.1)
+
+V = H1(mesh,order=1)
+lset_approx = GridFunction(V)
+#InterpolateToP1(levelset,lset_approx)
+lset_approx.Set(levelset)
 
 #domains = [NEG,POS,IF]
 domains = [IF]
@@ -51,7 +57,7 @@ for reflevel in range(NAveraging):
 
     for key in domains:
         integral_old = Integrate(levelset_domain={"levelset" : levelset, "domain_type" : key}, cf=f, mesh=mesh, order=0)
-        integral = NewIntegrateX(lset=levelset,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
+        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
 
         if abs(integral_old - integral) > 1e-14:
             print("accuracy not sufficient...")
