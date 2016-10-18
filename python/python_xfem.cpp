@@ -588,7 +588,7 @@ void ExportNgsx()
   // new implementation: only straight cuts - start with triangles only for a start!
 
   bp::def("NewIntegrateX",
-          FunctionPointer([](PyCF lset,
+          FunctionPointer([](bp::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
                              int order, DOMAIN_TYPE dt, int heapsize)
@@ -598,6 +598,19 @@ void ExportNgsx()
                             static Timer timerevalcoef ("NewIntegrateX::EvalCoef");
                             static Timer timeradding("NewIntegrateX::Adding");
                             static Timer timermapir("NewIntegrateX::MapingIntergrRule");
+
+                            cout << "before problems ?" << endl;
+                            bp::extract<PyGF> bpgf(lset);
+                            if (!bpgf.check())
+                              throw Exception("cast failed... need new candidates..");
+                            shared_ptr<GridFunction> gf_lset = bpgf().Get();
+                            cout << "lset is a gf of type :" << gf_lset->GetFESpace()->GetName() << endl;
+                            cout << "lset is a gf of order:" << gf_lset->GetFESpace()->GetOrder() << endl;
+
+                            //Array<int> dnums;
+                            //gf_lset->GetFESpace()->GetDofNrs(elnr,dnums);
+                            //FlatVector<> elvec(dnums.Size(),lh);
+                            //gf_lset->GetVector().GetIndirect(dnums,elvec);
 
                             RegionTimer reg (timer);
                             LocalHeap lh(heapsize, "lh-New-Integrate");
@@ -614,10 +627,10 @@ void ExportNgsx()
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
                                  auto & trafo = ma->GetTrafo (el, lh);
-
+                                 //el.Nr()
                                  timercutgeom.Start();
                                  vector<int> my_vert_idx(3); for(int i=0; i<3; i++) my_vert_idx[i] = el.Vertices()[i];
-                                 const IntegrationRule * ir = StraightCutIntegrationRule(lset.Get(), trafo, dt, order, lh, sign_of_lset_at_vertex, my_vert_idx);
+                                 const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, trafo, dt, order, lh, sign_of_lset_at_vertex, my_vert_idx);
                                  timercutgeom.Stop();
 
                                  if (ir != nullptr)
