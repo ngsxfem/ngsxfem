@@ -34,8 +34,8 @@ mesh = Make2DProblem(maxh=0.1)
 
 V = H1(mesh,order=1)
 lset_approx = GridFunction(V)
-#InterpolateToP1(levelset,lset_approx)
-lset_approx.Set(levelset)
+InterpolateToP1(levelset,lset_approx)
+#lset_approx.Set(levelset)
 
 #domains = [NEG,POS,IF]
 domains = [IF]
@@ -56,7 +56,7 @@ for reflevel in range(NAveraging):
     f = CoefficientFunction (1.0)
 
     for key in domains:
-        integral_old = Integrate(levelset_domain={"levelset" : lset_approx, "domain_type" : key}, cf=f, mesh=mesh, order=0)
+        integral_old = Integrate(levelset_domain={"levelset" : levelset, "domain_type" : key}, cf=f, mesh=mesh, order=0)
         integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
 
         if abs(integral_old - integral) > 1e-14:
