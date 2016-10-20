@@ -49,24 +49,6 @@ namespace xintegration
       return POS;
   }
 
-  DOMAIN_TYPE StraightCutDomainFast(const FlatVector<> & cf_lset_at_element){
-    bool haspos = false;
-    bool hasneg = false;
-
-    for(int v=0; v<cf_lset_at_element.Size(); v++){
-        haspos = haspos || (cf_lset_at_element[v] >= 0.0);
-        hasneg = hasneg || (cf_lset_at_element[v] <= 0.0);
-        if(haspos && hasneg) break;
-    }
-
-    if (hasneg && haspos)
-      return IF;
-    else if (hasneg)
-      return NEG;
-    else
-      return POS;
-  }
-
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
@@ -80,7 +62,7 @@ namespace xintegration
     static Timer timercutgeom ("StraightCutIntegrationRule::StraightCutDomain[Fast]");
     static Timer timermakequadrule("StraightCutIntegrationRule::MakeQuadRule");
 
-    int subdivlvl = 0;
+    int subdivlvl = 1;
 
     RegionTimer reg(t);
 
@@ -98,7 +80,6 @@ namespace xintegration
     CompositeQuadratureRule<2> cquad2d;
     CompositeQuadratureRule<3> cquad3d;
 
-
     //auto element_domain = StraightCutDomain(cf_lset,trafo,lh);
     auto element_domain = StraightCutDomainFast(cf_lset_at_element);
     timercutgeom.Stop();
@@ -115,7 +96,7 @@ namespace xintegration
                                                    intorder, 0, subdivlvl, 0);
       timermakequadrule.Start();
       //xgeom->MakeQuadRule();
-      xgeom->MakeQuadRuleFast(element_domain);
+      xgeom->MakeQuadRuleFast(cf_lset_at_element);
       timermakequadrule.Stop();
     }
 

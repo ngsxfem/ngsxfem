@@ -227,7 +227,7 @@ namespace xintegration
     return IF;
   }
 
-  void XLocalGeometryInformation::MakeQuadRuleFast(DOMAIN_TYPE dt_self) const
+  void XLocalGeometryInformation::MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const
   {
     throw Exception("base class member function XLocalGeometryInformation::MakeQuadRuleFast called!");
   }
@@ -542,6 +542,7 @@ namespace xintegration
           }
           const ngfem::ScalarFieldEvaluator & eval (*lset);
           const double lsetval = eval(position);
+          cout << "Result of lset_val in CheckIfCut(): " << lsetval << endl;
 
           if (lsetval > distance_threshold)
             return POS;
@@ -922,9 +923,27 @@ namespace xintegration
     }
   }
 
+  DOMAIN_TYPE StraightCutDomainFast(const FlatVector<> & cf_lset_at_element) {
+    bool haspos = false;
+    bool hasneg = false;
+
+    for(int v=0; v<cf_lset_at_element.Size(); v++){
+        haspos = haspos || (cf_lset_at_element[v] >= 0.0);
+        hasneg = hasneg || (cf_lset_at_element[v] <= 0.0);
+        if(haspos && hasneg) break;
+    }
+
+    if (hasneg && haspos)
+      return IF;
+    else if (hasneg)
+      return NEG;
+    else
+      return POS;
+  }
+
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
-  :: MakeQuadRuleFast(DOMAIN_TYPE dt_self) const
+  :: MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const
   {
 
     enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
@@ -935,6 +954,8 @@ namespace xintegration
         throw Exception("ET_TIME not yet implemented.");
     }
     //cout << "Spatial Dimension: " << D << ", Total Dimension: " << SD << endl;
+
+    DOMAIN_TYPE dt_self = StraightCutDomainFast(cf_lset_at_element);
 
     if (dt_self == IF)
     {
@@ -975,6 +996,7 @@ namespace xintegration
               numint_i.SetDistanceThreshold(0.5*distance_threshold);
             else
               numint_i.SetDistanceThreshold(distance_threshold);
+            cout << "Calling MakeQuadRule for refined triag nr. " << i << endl;
             numint_i.MakeQuadRule(); // recursive call!
           }
 

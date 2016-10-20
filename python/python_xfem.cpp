@@ -613,12 +613,15 @@ void ExportNgsx()
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
+                                 cout << endl << "NewIntegrateX() loop: Element Nr. " << el.Nr() << endl;
                                  auto & trafo = ma->GetTrafo (el, lh);
 
                                  Array<int> dnums;
                                  gf_lset->GetFESpace()->GetDofNrs(el.Nr(),dnums);
                                  FlatVector<> elvec(dnums.Size(),lh);
                                  gf_lset->GetVector().GetIndirect(dnums,elvec);
+
+                                 cout << "elvec: " << elvec[0] << "\t" << elvec[1] << "\t" << elvec[2] << endl;
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
