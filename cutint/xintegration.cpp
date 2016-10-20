@@ -227,6 +227,11 @@ namespace xintegration
     return IF;
   }
 
+  void XLocalGeometryInformation::MakeQuadRuleFast(DOMAIN_TYPE dt_self) const
+  {
+    throw Exception("base class member function XLocalGeometryInformation::MakeQuadRuleFast called!");
+  }
+
 
   shared_ptr<XLocalGeometryInformation> XLocalGeometryInformation::Create(ELEMENT_TYPE ET_SPACE,
                                                                           ELEMENT_TYPE ET_TIME,
@@ -914,6 +919,313 @@ namespace xintegration
       }
       quaded = true;
       return dt_self;
+    }
+  }
+
+  template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
+  :: MakeQuadRuleFast(DOMAIN_TYPE dt_self) const
+  {
+
+    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
+    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
+
+    if (dt_self == IF)
+    {
+      // cout << " cut " << endl;
+
+      bool refine_time = ET_TIME == ET_SEGM && ref_level_time > 0;
+      bool refine_space = ref_level_space > 0;
+
+      // only refinement in space or time for the recursive call
+      // decide which refinement should come first here:
+      if (refine_time && refine_space)
+      {
+        if (false && ref_level_time >= ref_level_space) //better suited for high (relative) velocities...
+        {
+          refine_time = true;
+          refine_space = false;
+        }
+        else //better suited for slow (relative) velocities...
+        {
+          refine_time = false;
+          refine_space = true;
+        }
+      }
+
+      // divide space-time prism into upper and lower half
+      if (refine_time)
+      {
+        NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_upper (*this, 0, 1);
+        numint_upper.SetVerticesSpace(verts_space);
+        numint_upper.SetVerticesTimeFromUpperHalf(verts_time);
+        numint_upper.SetDistanceThreshold(distance_threshold);
+        numint_upper.MakeQuadRule();  // recursive call!
+
+        NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_lower (*this, 0, 1);
+        numint_lower.SetVerticesSpace(verts_space);
+        numint_lower.SetVerticesTimeFromLowerHalf(verts_time);
+        numint_lower.SetDistanceThreshold(distance_threshold);
+        numint_lower.MakeQuadRule();  // recursive call!
+      }
+
+      // divide space-time prism into 4/8 prism of same height
+      if (refine_space)
+      {
+        if ( ET_SPACE == ET_TRIG)
+        {
+          // barycentric coordinates for new points
+          const double baryc[6][3] = { { 0.0, 0.0, 1.0},
+                                        { 0.5, 0.0, 0.5},
+                                        { 1.0, 0.0, 0.0},
+                                        { 0.0, 0.5, 0.5},
+                                        { 0.5, 0.5, 0.0},
+                                        { 0.0, 1.0, 0.0}};
+
+          // new triangles as connectivity information of the vertices baryc above
+          const int trigs[4][3] = { { 0, 1, 3},
+                                     { 1, 2, 4},
+                                     { 1, 3, 4},
+                                     { 3, 4, 5}};
+
+          for (int i = 0; i < 4; ++i) // triangles
+          {
+            NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
+            numint_i.SetVerticesTime(verts_time);
+            Array< Vec<D> > newverts(3);
+            for (int j = 0; j < 3; ++j) //vertices
+            {
+              newverts[j] = Vec<D>(0.0);
+              for (int d = 0; d < 3; ++d)
+                newverts[j] += baryc[trigs[i][j]][d] * verts_space[d];
+            }
+            numint_i.SetVerticesSpace(newverts);
+            if (ET_TIME == ET_POINT)
+              numint_i.SetDistanceThreshold(0.5*distance_threshold);
+            else
+              numint_i.SetDistanceThreshold(distance_threshold);
+            numint_i.MakeQuadRule(); // recursive call!
+          }
+
+        }
+        else if ( ET_SPACE == ET_SEGM)
+        {
+            // barycentric coordinates for new points
+            const double baryc[3][2] = { { 0.0, 1.0},
+                                         { 0.5, 0.5},
+                                         { 1.0, 0.0}};
+
+            // new segms as connectivity information of the vertices baryc above
+            const int segm[2][2] = { { 0, 1},
+                                     { 1, 2}};
+
+            for (int i = 0; i < 2; ++i) // segms
+            {
+              NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
+              numint_i.SetVerticesTime(verts_time);
+              Array< Vec<D> > newverts(2);
+              for (int j = 0; j < 2; ++j) //vertices
+              {
+                newverts[j] = Vec<D>(0.0);
+                for (int d = 0; d < 2; ++d)
+                  newverts[j] += baryc[segm[i][j]][d] * verts_space[d];
+              }
+              numint_i.SetVerticesSpace(newverts);
+              numint_i.SetDistanceThreshold(0.5*distance_threshold);
+              numint_i.MakeQuadRule(); // recursive call!
+            }
+        }
+        else if ( ET_SPACE == ET_TET)
+        {
+          const double baryc[10][4] = { { 0.0, 0.0, 0.0, 1.0},
+                                        { 0.5, 0.0, 0.0, 0.5},
+                                        { 1.0, 0.0, 0.0, 0.0},
+                                        { 0.0, 0.5, 0.0, 0.5},
+                                        { 0.5, 0.5, 0.0, 0.0},
+                                        { 0.0, 1.0, 0.0, 0.0},
+                                        { 0.0, 0.0, 0.5, 0.5},
+                                        { 0.5, 0.0, 0.5, 0.0},
+                                        { 0.0, 0.5, 0.5, 0.0},
+                                        { 0.0, 0.0, 1.0, 0.0}};
+
+          // new triangles as connectivity information of the vertices baryc above
+          const int tets[8][4] = { { 1, 2, 4, 7},  //corner x
+                                   { 3, 4, 5, 8},  //corner y
+                                   { 6, 7, 8, 9},  //corner z
+                                   { 3, 4, 8, 6},  //prism part 1
+                                   { 3, 4, 1, 6},  //prism part 2
+                                   { 0, 1, 3, 6},  //prism part 3
+                                   { 8, 6, 1, 7},  //pyramid part 1
+                                   { 8, 4, 1, 7}}; //pyramid part 1
+
+          for (int i = 0; i < 8; ++i) // tets
+          {
+            NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
+            numint_i.SetVerticesTime(verts_time);
+            Array< Vec<D> > newverts(4);
+            for (int j = 0; j < 4; ++j) //vertices
+            {
+              newverts[j] = Vec<D>(0.0);
+              for (int d = 0; d < 4; ++d)
+                newverts[j] += baryc[tets[i][j]][d] * verts_space[d];
+            }
+            numint_i.SetVerticesSpace(newverts);
+            if (ET_TIME == ET_POINT)
+              numint_i.SetDistanceThreshold(0.5*distance_threshold);
+            else
+              numint_i.SetDistanceThreshold(distance_threshold);
+            numint_i.MakeQuadRule(); // recursive call!
+          }
+
+        }
+        else
+            throw Exception(" refine_space in 3D in NumInt::MakeQuad not yet implemented");
+      }
+
+      if (!refine_space && !refine_time) // already on finest level: deal with cut situation
+      {
+        static Timer timer ("MakeQuadRuleFast::DecomposeAndFillCutSimplex");
+        RegionTimer reg (timer);
+        // Generate list of vertices corresponding to simplex/prism
+        Array<Simplex<SD> *> simplices;
+        const int nvt = ET_TIME == ET_SEGM ? 2 : 1;
+        const int nvs = verts_space.Size();
+        Array<const Vec<SD> * > verts(nvs * nvt);
+        for (int K = 0; K < nvt; ++K)
+          for (int i = 0; i < nvs; ++i)
+          {
+            Vec<SD> newpoint;
+            for (int j = 0; j < D; ++j)
+            {
+              newpoint[j] = verts_space[i][j];
+              if (ET_TIME == ET_SEGM)
+                newpoint[D] = K == 0 ? verts_time[0] : verts_time[verts_time.Size()-1];
+            }
+            verts[i+K*nvs] = pc(newpoint);
+            // cout << "verts["<<i+K*nvs<<"]:" << newpoint << endl;
+          }
+
+        // spacetime: prism to simplices
+        // only space: set simplix
+        // in both cases we have a list of SD-dimensional simplices
+        if (ET_TIME==ET_POINT)
+        {
+          simplices.SetSize(1);
+          simplices[0] = new Simplex<SD>(verts);
+        }
+        else
+        {
+          DecomposePrismIntoSimplices<SD>(verts, simplices, pc, lh);
+        }
+
+        // cout << "simplices:\n";
+        // for (int i = 0; i < simplices.Size(); ++i)
+        // {
+        //   cout << *simplices[i] << endl;
+        // }
+
+        const ScalarFieldEvaluator & eval (*lset);
+
+        for (int i = 0; i < simplices.Size(); ++i)
+        {
+          // Check for each simplex if it is cut.
+          // If yes call decomposition strategy for according dimension
+          // If no  direction fill the composition rule accordingly
+          DOMAIN_TYPE dt_simplex = simplices[i]->CheckIfCut(eval);
+          if (dt_simplex == IF)
+          {
+            MakeQuadRuleOnCutSimplex<SD>(*simplices[i], *this);
+          }
+          else
+          {
+            FillSimplexWithRule<SD>(*simplices[i],
+                                    compquadrule.GetRule(dt_simplex),
+                                    GetIntegrationOrderMax());
+            if (SD==2 && simplex_array_neg)
+            {
+              if (dt_simplex == NEG)
+                simplex_array_neg->Append(new Simplex<SD> (*simplices[i]));
+              else
+                simplex_array_pos->Append(new Simplex<SD> (*simplices[i]));
+            }
+          }
+          delete simplices[i];
+        }
+      }
+      quaded = true;
+      //return IF;
+    }
+    else // no cut
+    {
+      static Timer timer ("MakeQuadRuleFast::FillUnCutSimplex");
+      RegionTimer reg (timer);
+
+      double trafofac = 1.0;
+      if (D==2)
+      {
+        Vec<D> a = verts_space[1] - verts_space[0];
+        Vec<D> b = verts_space[2] - verts_space[0];
+        trafofac = abs(a(0) * b(1) - a(1) * b(0));
+        if (SD==2 && simplex_array_neg)
+        {
+          Array<const Vec<SD> *> simpl_verts(3);
+          simpl_verts[0] = pc(verts_space[0]);
+          simpl_verts[1] = pc(verts_space[1]);
+          simpl_verts[2] = pc(verts_space[2]);
+          if (dt_self == NEG)
+            simplex_array_neg->Append(new Simplex<SD> (simpl_verts));
+          else
+            simplex_array_pos->Append(new Simplex<SD> (simpl_verts));
+        }
+      }
+      else if (D==3)
+      {
+        Vec<D> a = verts_space[1] - verts_space[0];
+        Vec<D> b = verts_space[2] - verts_space[0];
+        Vec<D> c = verts_space[3] - verts_space[0];
+        trafofac = abs(Determinant(a,b,c));
+      }
+      else // D==1
+      {
+        Vec<D> a = verts_space[1] - verts_space[0];
+        trafofac = abs(a(0));
+      }
+
+      const double dt = verts_time[verts_time.Size()-1] - verts_time[0];
+      const double t0 = verts_time[0];
+
+
+      const IntegrationRule & ir_time = SelectIntegrationRule (ET_TIME, int_order_time);
+      const IntegrationRule & ir_space = SelectIntegrationRule (ET_SPACE, int_order_space);
+
+
+      for (int l = 0; l < ir_time.GetNIP(); l++)
+      {
+        double current = t0 + ir_time[l](0) * dt;
+        for (int k = 0; k < ir_space.GetNIP(); k++)
+        {
+          Vec<D> point(0.0);
+          double originweight = 1.0;
+          for (int m = 0; m < D ;++m)
+            originweight -= ir_space[k](m);
+          point = originweight * verts_space[0];
+          for (int m = 0; m < D ;++m)
+            point += ir_space[k](m) * verts_space[m+1];
+          const double weight = ir_time[l].Weight() * dt * ir_space[k].Weight() * trafofac;
+          Vec<SD> ipoint(0.0);
+
+          for (int m = 0; m < D ;++m)
+            ipoint(m) = point(m);
+          if (ET_trait<ET_TIME>::DIM > 0)
+            ipoint(SD-1) = current;
+
+          compquadrule.GetRule(dt_self).points.Append(ipoint);
+          compquadrule.GetRule(dt_self).weights.Append(weight);
+
+        }
+      }
+      quaded = true;
+      //return dt_self;
     }
   }
 

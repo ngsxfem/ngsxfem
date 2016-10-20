@@ -105,7 +105,6 @@ namespace xintegration
 
     if (element_domain == IF)
     {
-      timermakequadrule.Start();
       if (DIM == 2)
         xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                   *lset_eval, cquad2d, lh,
@@ -113,8 +112,10 @@ namespace xintegration
       else
         xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                   *lset_eval, cquad3d, lh,
-                                                  intorder, 0, subdivlvl, 0);
-      xgeom->MakeQuadRule();
+                                                   intorder, 0, subdivlvl, 0);
+      timermakequadrule.Start();
+      //xgeom->MakeQuadRule();
+      xgeom->MakeQuadRuleFast(element_domain);
       timermakequadrule.Stop();
     }
 

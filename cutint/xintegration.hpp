@@ -296,6 +296,7 @@ namespace xintegration
     virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
+    virtual void MakeQuadRuleFast(DOMAIN_TYPE dt_self) const ;
 
     virtual int Dimension()const { return -1; }
 
@@ -747,6 +748,7 @@ namespace xintegration
     /// adaptive strategy to generate composite quadrature rule on tensor product geometry
     /// ...
     virtual DOMAIN_TYPE MakeQuadRule() const;
+    virtual void MakeQuadRuleFast(DOMAIN_TYPE dt_self) const;
     
   };
 
