@@ -542,7 +542,7 @@ namespace xintegration
           }
           const ngfem::ScalarFieldEvaluator & eval (*lset);
           const double lsetval = eval(position);
-          cout << "Result of lset_val in CheckIfCut(): " << lsetval << endl;
+          //cout << "Result of lset_val in CheckIfCut(): " << lsetval << endl;
 
           if (lsetval > distance_threshold)
             return POS;
@@ -985,19 +985,23 @@ namespace xintegration
             NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
             numint_i.SetVerticesTime(verts_time);
             Array< Vec<D> > newverts(3);
+            FlatVector<> cf_lset_at_subelement(cf_lset_at_element.Size(), lh);
             for (int j = 0; j < 3; ++j) //vertices
             {
               newverts[j] = Vec<D>(0.0);
-              for (int d = 0; d < 3; ++d)
+              cf_lset_at_subelement[j] = 0;
+              for (int d = 0; d < 3; ++d) {
                 newverts[j] += baryc[trigs[i][j]][d] * verts_space[d];
+                cf_lset_at_subelement[j] += baryc[trigs[i][j]][d]*cf_lset_at_element[d];
+              }
             }
             numint_i.SetVerticesSpace(newverts);
-            if (ET_TIME == ET_POINT)
-              numint_i.SetDistanceThreshold(0.5*distance_threshold);
-            else
-              numint_i.SetDistanceThreshold(distance_threshold);
-            cout << "Calling MakeQuadRule for refined triag nr. " << i << endl;
-            numint_i.MakeQuadRule(); // recursive call!
+
+            numint_i.SetDistanceThreshold(0.5*distance_threshold);
+
+            //cout << "Calling MakeQuadRule for refined triag nr. " << i << endl;
+            //cout << "The correspondig cf_lset value vector is: " << cf_lset_at_subelement[0] << ", " << cf_lset_at_subelement[1] << ", " << cf_lset_at_subelement[2] << endl;
+            numint_i.MakeQuadRuleFast(cf_lset_at_subelement); // recursive call!
           }
 
         }

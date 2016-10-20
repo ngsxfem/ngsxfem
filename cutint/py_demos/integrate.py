@@ -6,7 +6,7 @@ from ngsolve import *
 # basic xfem functionality
 from xfem.basics import *
 
-NAveraging = 1
+NAveraging = 100
 
 def PrintTimers(substring):
     ### print hdg-intergrator timers
@@ -30,7 +30,7 @@ levelset = (sqrt(x*x+y*y)-0.5) #.Compile()
 
 referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
-mesh = Make2DProblem(maxh=0.3)
+mesh = Make2DProblem(maxh=0.1)
 
 V = H1(mesh,order=1)
 lset_approx = GridFunction(V)
