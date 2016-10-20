@@ -540,8 +540,11 @@ namespace xintegration
             position[ET_trait<ET_SPACE>::DIM] = verts_time[i];
             // cout << position[ET_trait<ET_SPACE>::DIM] << ",\t";
           }
+          static Timer timera("NumIntStrategy::CheckifCut::lset eval");
+          timera.Start();
           const ngfem::ScalarFieldEvaluator & eval (*lset);
           const double lsetval = eval(position);
+          timera.Stop();
           //cout << "Result of lset_val in CheckIfCut(): " << lsetval << endl;
 
           if (lsetval > distance_threshold)
@@ -1017,6 +1020,9 @@ namespace xintegration
         Array<Simplex<SD> *> simplices;
         const int nvt = ET_TIME == ET_SEGM ? 2 : 1;
         const int nvs = verts_space.Size();
+        //cout << "nvs: " << nvs << endl;
+        //cout << "verts_space: " << endl << verts_space << endl;
+
         Array<const Vec<SD> * > verts(nvs * nvt);
         for (int K = 0; K < nvt; ++K)
           for (int i = 0; i < nvs; ++i)
@@ -1029,7 +1035,7 @@ namespace xintegration
                 newpoint[D] = K == 0 ? verts_time[0] : verts_time[verts_time.Size()-1];
             }
             verts[i+K*nvs] = pc(newpoint);
-            // cout << "verts["<<i+K*nvs<<"]:" << newpoint << endl;
+            //cout << "verts["<<i+K*nvs<<"]:" << newpoint << endl;
           }
 
         // spacetime: prism to simplices
@@ -1038,20 +1044,17 @@ namespace xintegration
         simplices.SetSize(1);
         simplices[0] = new Simplex<SD>(verts);
 
-        // cout << "simplices:\n";
-        // for (int i = 0; i < simplices.Size(); ++i)
-        // {
-        //   cout << *simplices[i] << endl;
-        // }
+        //cout << "simplices:\n";
+        //for (int i = 0; i < simplices.Size(); ++i) cout << *simplices[i] << endl;
 
-        const ScalarFieldEvaluator & eval (*lset);
+        if(simplices.Size() > 1) throw Exception ("This length of simplices array is not implemented yet.");
 
         for (int i = 0; i < simplices.Size(); ++i)
         {
           // Check for each simplex if it is cut.
           // If yes call decomposition strategy for according dimension
           // If no  direction fill the composition rule accordingly
-          DOMAIN_TYPE dt_simplex = simplices[i]->CheckIfCut(eval);
+          DOMAIN_TYPE dt_simplex = dt_self; //simplices[i]->CheckIfCut(eval);
           if (dt_simplex == IF)
           {
             MakeQuadRuleOnCutSimplex<SD>(*simplices[i], *this);

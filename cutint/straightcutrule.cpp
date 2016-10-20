@@ -62,7 +62,7 @@ namespace xintegration
     static Timer timercutgeom ("StraightCutIntegrationRule::StraightCutDomain[Fast]");
     static Timer timermakequadrule("StraightCutIntegrationRule::MakeQuadRule");
 
-    int subdivlvl = 1;
+    int subdivlvl = 0;
 
     RegionTimer reg(t);
 

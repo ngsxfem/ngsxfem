@@ -77,4 +77,4 @@ PrintTimers("IntegrateX")
 
 PrintTimers("StraightCutIntegrationRule")
 #PrintTimers("StraightCutDomain")
-#PrintTimers("MakeQuadRule")
+PrintTimers("MakeQuadRuleFast")
