@@ -31,7 +31,6 @@ namespace xintegration
     typedef bool result_type;
   };
 
-
   /// Container set constitutes a collection of Vec<D> 
   /// main feature: the operator()(const PointXDCL & p)
   /// The points in the container are owned and later 
@@ -419,7 +418,7 @@ namespace xintegration
     FlatXLocalGeometryInformation * pasttracegeom = 0;
     FlatXLocalGeometryInformation * futuretracegeom = 0;
   public:
-    double kappa[2];
+    double kappa[2]; //Sum of weights of the POS/NEG part divided by total sum of weights
 
     const ScalarFieldEvaluator * lset;
 

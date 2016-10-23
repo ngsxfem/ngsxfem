@@ -22,11 +22,7 @@ namespace xintegration
 
     typename SetOfPoints::iterator it;
     it = pset.find(p);
-    if (it == pset.end())
-    {
-      pset.insert(p);
-      return &(*pset.find(p));
-    }
+    if (it == pset.end()) return &(*pset.insert(p).first);
     else
     {
 #ifdef DEBUG
@@ -126,7 +122,7 @@ namespace xintegration
 
     for (int k = 0; k < ir.GetNIP(); k++)
     {
-      Vec<2> point = ir[k](0) * (*s.p[1]) + (1.0 - ir[k](0)) * (*s.p[0]);
+      Vec<2> point = ir[k](0) * (*s.p[1]) + (1.0 - ir[k](0)) * (*s.p[0]); //Dimension mismatch? ... s.p[i] is of dim 1
       const double weight = ir[k].Weight() * trafofac;
       quaddom.points.Append(point);
       quaddom.weights.Append(weight);
