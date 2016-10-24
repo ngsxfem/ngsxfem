@@ -60,6 +60,9 @@ for reflevel in range(NAveraging):
         #print("\n\n ----- NOW STARTING WITH THE NEWINTEGRATEX-FUNCTION -----\n\n")
         integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
 
+        #integral = integral_old
+        #integral_old = integral
+
         if abs(integral_old - integral) > 1e-14:
             print("accuracy not sufficient...")
             input("press enter to continue...")

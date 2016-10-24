@@ -1676,7 +1676,7 @@ namespace xintegration
       for (int j = 0; j < 3; ++j)
       {
         zero[j] = false;
-        vvals[j] = (*numint.lset)(*(s.p[j]));
+        vvals[j] = (*numint.cf_lset_at_element)[j]; //(*numint.lset)(*(s.p[j]));
         if (vvals[j] > 0)
         {
           pospoints.Append(numint.pc(*(s.p[j])));
@@ -1695,9 +1695,11 @@ namespace xintegration
         }
       }
 
-      // cout << " Avvals = \n";
-      // for (int i = 0; i < 3; ++i)
-      //   cout << i << ":" << vvals[i] << endl;
+      /*
+      cout << " Avvals = \n";
+      for (int i = 0; i < 3; ++i)
+        cout << i << ":" << vvals[i] << endl;
+      */
 
       int cntcuts = 0;
       for (int j = 0; j < 3; ++j) //edges
@@ -1889,7 +1891,7 @@ namespace xintegration
   {
     static Timer timer ("MakeQuadRuleOnCutSimplexFast");
     RegionTimer reg (timer);
-    DecompositionRules::CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(s,numint);
+    DecompositionRules::CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuadFast(s,numint);
   }
 
 
