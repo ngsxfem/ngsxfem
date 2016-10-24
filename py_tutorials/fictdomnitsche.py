@@ -43,9 +43,6 @@ mesh = Mesh (square.GenerateMesh(maxh=2, quad_dominated=False))
 mesh.Refine()
 mesh.Refine()
 mesh.Refine()
-# mesh.Refine()
-# mesh.Refine()
-# mesh.Refine()
 
 r = sqrt(x*x+y*y)
 
@@ -59,10 +56,7 @@ sol=cos(2*pi*r*r)
 mlapsol=8*pi*(2*pi*r*r*cos(2*pi*r*r)+sin(2*pi*r*r))
 levelset_ex = r - 0.5
 
-order = 1
-
-# levelset = GridFunction(H1(mesh,order=order+2))
-# levelset.Set(levelset_ex)
+order = 3
 
 lset_approx = GridFunction(H1(mesh,order=1))
 InterpolateToP1(levelset_ex,lset_approx)
@@ -75,7 +69,6 @@ gfu = GridFunction(Vh)
 # coefficients / parameters:
 
 n = 1.0/sqrt(InnerProduct(grad(lset_approx),grad(lset_approx))) * grad(lset_approx)
-# n = 1.0/sqrt(InnerProduct(grad(levelset),grad(levelset))) * grad(levelset)
 h = specialcf.mesh_size
 
 u = Vh.TrialFunction()
@@ -96,31 +89,16 @@ Draw(facet_cut,mesh,"facet_cut")
 
 lset_if  = { "levelset"       : lset_approx,
              "domain_type"    :          IF,
-             "subdivlvl"      :           0,
-             "force_intorder" :     2*order}
+             "subdivlvl"      :           0}
 lset_neg = { "levelset"       : lset_approx,
              "domain_type"    :         NEG,
-             "subdivlvl"      :           0,
-             "force_intorder" :     2*order}
+             "subdivlvl"      :           0}
 
 a = BilinearForm(Vh, symmetric = False, flags = { })
 a += SymbolicBFI(levelset_domain = lset_neg, form = grad(u) * grad(v))
 
-# a += SymbolicBFI(levelset_domain =  lset_neg,
-#                  form = grad(u) * grad(v))
-# a += SymbolicBFI(levelset_domain =  lset_if,
-#                  form = grad(u) * grad(v))
-
-# a += SymbolicBFI(levelset_domain =  lset_if,
-#                  form = - (grad(u) * n) * v)
-a += SymbolicBFI(levelset_domain =  lset_if, form = - (grad(u) * n) * v)
-a += SymbolicBFI(levelset_domain =  lset_if, form = - (grad(v) * n) * u)
-a += SymbolicBFI(levelset_domain =  lset_if, form = stab * u * v)
-# a += SymbolicBFI(levelset_domain =  lset_if,
-#                  form = - (grad(u) * n) * v - u * (grad(v) * n)) # + stab * u * v)
-#                  # form = (grad(u)*n) * (grad(v)*n))
-#                  #form = - (grad(u) * n) * v + stab * u * v)
-#                  # form = stab * u * v)
+a += SymbolicBFI(levelset_domain =  lset_if,
+                 form = - (grad(u) * n) * v - u * (grad(v) * n) + stab * u * v)
 
 
 f = LinearForm(Vh)
@@ -154,20 +132,17 @@ def Do(first=False):
         # Vh.Update()
         gfu.Update()
         lsetmeshadap.CalcDeformation(levelset_ex)
+
     mesh.SetDeformation(deformation)
-
-    a.Assemble()
-
     gfu.Set(CoefficientFunction(1.0))
-    f.Assemble();
-    f.vec.data = a.mat * gfu.vec
-    print("Asdf : ", InnerProduct(f.vec,gfu.vec))
+    a.Assemble()
     f.Assemble();
     gfu.vec.data = a.mat.Inverse(Vh.FreeDofs()) * f.vec
-
     Redraw()
-
-    l2error = sqrt(Integrate(levelset_domain = lset_neg,cf = (sol-gfu)*(sol-gfu),mesh = mesh,order=order))
+    l2error = sqrt(Integrate(levelset_domain = lset_neg,
+                             cf = (sol-gfu)*(sol-gfu),
+                             mesh = mesh,
+                             order=order))
     print("L2-Error = ", l2error)
     mesh.UnsetDeformation()
     return l2error
@@ -176,7 +151,9 @@ l2errors = []
 
 first = True
 
-for i in range(4):
+for i in range(5):
     l2errors.append(Do(first))
     first = False
 print(l2errors)
+eoc = [ log(l2errors[i-1]/l2errors[i])/log(2) for i in range(1,len(l2errors))]
+print(eoc)
