@@ -57,6 +57,7 @@ for reflevel in range(NAveraging):
 
     for key in domains:
         integral_old = Integrate(levelset_domain={"levelset" : levelset, "domain_type" : key}, cf=f, mesh=mesh, order=0)
+        #print("\n\n ----- NOW STARTING WITH THE NEWINTEGRATEX-FUNCTION -----\n\n")
         integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
 
         if abs(integral_old - integral) > 1e-14:
@@ -80,3 +81,5 @@ PrintTimers("StraightCutIntegrationRule")
 PrintTimers("MakeQuadRuleFast")
 PrintTimers("Simplex::CheckifCut")
 PrintTimers("PointContainer")
+PrintTimers("CutSimplex<2>::MakeQuad")
+PrintTimers("MakeQuadRuleOnCutSimplex")

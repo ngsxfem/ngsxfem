@@ -290,9 +290,9 @@ namespace xintegration
     /// Levelset function through the evaluator
     // const ScalarFEEvaluator<D> & lset;
     const ScalarFieldEvaluator * lset;
-    const FlatVector<double> * cf_lset_at_element;
+    shared_ptr<FlatVector<double> > cf_lset_at_element;
 
-    XLocalGeometryInformation(const ScalarFieldEvaluator * a_lset): lset(a_lset) {;}
+    XLocalGeometryInformation(const ScalarFieldEvaluator * a_lset, shared_ptr<FlatVector<double>> a_cf_lset_at_element = nullptr): lset(a_lset), cf_lset_at_element(a_cf_lset_at_element) {;}
     virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
@@ -787,6 +787,8 @@ namespace xintegration
     {
         static void MakeQuad(const Simplex <D> & s, 
                              const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+        static void MakeQuadFast(const Simplex <D> & s,
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
     };
 
     //partial specialization
@@ -794,6 +796,8 @@ namespace xintegration
     struct CutSimplex<1,ET_SPACE,ET_TIME>
     {
         static void MakeQuad(const Simplex <1> & s, 
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+        static void MakeQuadFast(const Simplex <1> & s,
                              const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
     };
 
@@ -803,6 +807,8 @@ namespace xintegration
     {
         static void MakeQuad(const Simplex <2> & s, 
                              const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+        static void MakeQuadFast(const Simplex <2> & s,
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
     };
 
     //partial specialization
@@ -810,6 +816,8 @@ namespace xintegration
     struct CutSimplex<3,ET_SPACE,ET_TIME>
     {
         static void MakeQuad(const Simplex <3> & s, 
+                             const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
+        static void MakeQuadFast(const Simplex <3> & s,
                              const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
     };
 
@@ -819,6 +827,9 @@ namespace xintegration
   void MakeQuadRuleOnCutSimplex(const Simplex <D> & s, 
                                 const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
 
+  template <int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  void MakeQuadRuleOnCutSimplexFast(const Simplex <D> & s,
+                                const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint);
 
   const IntegrationRule * CutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
                                              const ElementTransformation & trafo,

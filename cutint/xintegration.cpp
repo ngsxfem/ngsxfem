@@ -994,7 +994,7 @@ namespace xintegration
             numint_i.SetVerticesSpace(newverts);
 
             numint_i.SetDistanceThreshold(0.5*distance_threshold);
-            numint_i.cf_lset_at_element = &cf_lset_at_subelement;
+            numint_i.cf_lset_at_element = make_shared<FlatVector<>>(cf_lset_at_subelement);
 
             //cout << "Calling MakeQuadRule for refined triag nr. " << i << endl;
             //cout << "The correspondig cf_lset value vector is: " << cf_lset_at_subelement[0] << ", " << cf_lset_at_subelement[1] << ", " << cf_lset_at_subelement[2] << endl;
@@ -1026,7 +1026,7 @@ namespace xintegration
         DOMAIN_TYPE dt_simplex = dt_self;
         if (dt_simplex == IF)
         {
-          MakeQuadRuleOnCutSimplex<SD>(*simplices[0], *this);
+          MakeQuadRuleOnCutSimplexFast<SD>(*simplices[0], *this);
         }
         else
         {
@@ -1134,6 +1134,14 @@ namespace xintegration
     {
       cout << " ET_SPACE = " << ET_SPACE << ", ET_TIME = " << ET_TIME << endl;
       throw Exception("CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad --- no implementation for these Element Types");
+    }
+
+    template<int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    void CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuadFast(const Simplex <D> & s,
+                                                  const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+    {
+      cout << " ET_SPACE = " << ET_SPACE << ", ET_TIME = " << ET_TIME << endl;
+      throw Exception("CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuadFast --- no implementation for these Element Types");
     }
 
 
@@ -1466,6 +1474,14 @@ namespace xintegration
       }
     }
 
+
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    void CutSimplex<3,ET_SPACE,ET_TIME>::MakeQuadFast(const Simplex <3> & s,
+                                                  const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+    {
+        throw Exception ("CutSimplex<3,..,...>::MakeQuadFast not yet implemented!");
+    }
+
     template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
     void CutSimplex<2,ET_SPACE,ET_TIME>::MakeQuad(const Simplex <2> & s,
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
@@ -1473,6 +1489,165 @@ namespace xintegration
       enum { SD = 2};
 
       static Timer timer ("CutSimplex<2>::MakeQuad");
+      RegionTimer reg (timer);
+
+      // cout << " simplex = " << s << endl;
+
+      Array< const Vec<SD> * > cutpoints(0);
+      Array< const Vec<SD> * > pospoints(0);
+      Array< const Vec<SD> * > negpoints(0);
+
+      Array<int> posvidx(0);
+      Array<int> negvidx(0);
+
+      // vertex idx connected to cut idx (just in case of 4 cut positions)
+      // connectivity information of cuts
+      Array<int> v2cut_1(4);
+      Array<int> v2cut_2(4);
+      v2cut_1 = -1;
+      v2cut_2 = -1;
+
+      const int edge[3][2] = { {0, 1},
+                               {0, 2},
+                               {1, 2}};
+
+      double vvals[3];
+      bool zero[3];
+
+      for (int j = 0; j < 3; ++j)
+      {
+        zero[j] = false;
+        vvals[j] = (*numint.lset)(*(s.p[j]));
+        if (vvals[j] > 0)
+        {
+          pospoints.Append(numint.pc(*(s.p[j])));
+          posvidx.Append(j);
+        }
+        else if (vvals[j] < 0)
+        {
+          negpoints.Append(numint.pc(*(s.p[j])));
+          negvidx.Append(j);
+        }
+        else // (vvals[j] == 0.0)
+        {
+          pospoints.Append(numint.pc(*(s.p[j])));
+          posvidx.Append(j);
+          zero[j] = true;
+        }
+      }
+
+      // cout << " Avvals = \n";
+      // for (int i = 0; i < 3; ++i)
+      //   cout << i << ":" << vvals[i] << endl;
+
+      int cntcuts = 0;
+      for (int j = 0; j < 3; ++j) //edges
+      {
+        const int lv = edge[j][0];
+        const int rv = edge[j][1];
+        const double valleft = vvals[lv];
+        const double valright = vvals[rv];
+        bool hascut = (valleft * valright < 0);
+        if (zero[lv] && valright < 0)
+          hascut = true;
+
+        if (zero[rv] && valleft < 0)
+          hascut = true;
+
+        if (hascut)
+        {
+          const double cutpos = valleft / (valleft - valright);
+          // std::cout << " cutpos = " << cutpos << std::endl;
+          Vec<SD> p = (1-cutpos) * *(s.p[lv]) + cutpos * *(s.p[rv]) ;
+          cutpoints.Append(numint.pc(p));
+          // collect connectivity of cut and vertices
+          if (v2cut_1[lv] == -1)
+            v2cut_1[lv] = cntcuts;
+          else
+            v2cut_2[lv] = cntcuts;
+          if (v2cut_1[rv] == -1)
+            v2cut_1[rv] = cntcuts;
+          else
+            v2cut_2[rv] = cntcuts;
+          cntcuts ++;
+        }
+      }
+
+      // std::cout << " cutpoints[0] = " << *cutpoints[0] << std::endl;
+      // std::cout << " cutpoints[1] = " << *cutpoints[1] << std::endl;
+
+      if (cutpoints.Size() == 2) // three intersections: prism + tetra
+      {
+
+        Array< const Vec<SD> *> & minorgroup ( negpoints.Size() > pospoints.Size() ?
+                                               pospoints : negpoints);
+        DOMAIN_TYPE dt_minor = negpoints.Size() > pospoints.Size() ? POS : NEG;
+        Array< const Vec<SD> *> & majorgroup ( negpoints.Size() <= pospoints.Size() ?
+                                               pospoints : negpoints);
+        DOMAIN_TYPE dt_major = negpoints.Size() <= pospoints.Size() ? POS : NEG;
+
+        Array<int> & majvidx( negvidx.Size() > posvidx.Size() ? negvidx : posvidx);
+
+        for (int k = 0; k < 2; ++k)
+          minorgroup.Append(cutpoints[k]);
+        // minorgroup is a simplex of type dt_minor
+        FillSimplexWithRule<SD>(minorgroup,
+                                numint.compquadrule.GetRule(dt_minor),
+                                numint.GetIntegrationOrderMax());
+
+        // for result visualization
+        if (numint.simplex_array_neg && (dt_minor == NEG))
+            numint.simplex_array_neg->Append(new Simplex<SD> (minorgroup));
+        if (numint.simplex_array_pos && (dt_minor == POS))
+            numint.simplex_array_pos->Append(new Simplex<SD> (minorgroup));
+
+        Array< Simplex<SD> * > innersimplices(0);
+        for (int k = 0; k < 2; ++k)
+        {
+          int corresponding_cut = v2cut_1[majvidx[k]];
+          majorgroup.Append(cutpoints[corresponding_cut]);
+        }
+
+        DecomposePrismIntoSimplices<SD>(majorgroup, innersimplices, numint.pc, numint.lh);
+        for (int l = 0; l < innersimplices.Size(); ++l)
+        {
+          FillSimplexWithRule<SD>(innersimplices[l]->p,
+                                  numint.compquadrule.GetRule(dt_major),
+                                  numint.GetIntegrationOrderMax());
+
+          // for result visualization
+          if (numint.simplex_array_neg && (dt_minor == POS))
+            numint.simplex_array_neg->Append(new Simplex<SD> (innersimplices[l]->p));
+          if (numint.simplex_array_pos && (dt_minor == NEG))
+            numint.simplex_array_pos->Append(new Simplex<SD> (innersimplices[l]->p));
+
+          delete innersimplices[l];
+        }
+
+        // and the interface:
+        FillSimplexCoDim1WithRule<SD> ( cutpoints, *pospoints[0],
+                                        numint.compquadrule.GetInterfaceRule(),
+                                        numint.GetIntegrationOrderMax());
+
+
+      }
+      else
+      {
+        cout << "cutpoints.Size() = " << cutpoints.Size() << endl;
+        cout << " Avvals = \n";
+        for (int i = 0; i < 3; ++i)
+          cout << i << ":" << vvals[i] << endl;
+        throw Exception(" did not expect this.. -2-");
+      }
+    }
+
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    void CutSimplex<2,ET_SPACE,ET_TIME>::MakeQuadFast(const Simplex <2> & s,
+                                                  const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+    {
+      enum { SD = 2};
+
+      static Timer timer ("CutSimplex<2>::MakeQuadFast");
       RegionTimer reg (timer);
 
       // cout << " simplex = " << s << endl;
@@ -1678,10 +1853,14 @@ namespace xintegration
 
     }
 
+    template<ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+    void CutSimplex<1,ET_SPACE,ET_TIME>::MakeQuadFast(const Simplex <1> & s,
+                                                  const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+    {
+        throw Exception ("CutSimplex<1,..,...>::MakeQuadFast not yet implemented!");
+    }
 
   } // end of namespace DecompositionRules
-
-
 
   template <int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   void MakeQuadRuleOnCutSimplex(const Simplex <D> & s,
@@ -1701,6 +1880,15 @@ namespace xintegration
     //   for (int j = 0; j < D+1; ++j)
     //     std::cout << " (*numint.lset)(*(s.p[" << j << "])) = " << (*numint.lset)(*(s.p[j])) << std::endl;
     // }
+    DecompositionRules::CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(s,numint);
+  }
+
+  template <int D, ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
+  void MakeQuadRuleOnCutSimplexFast(const Simplex <D> & s,
+                                const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
+  {
+    static Timer timer ("MakeQuadRuleOnCutSimplexFast");
+    RegionTimer reg (timer);
     DecompositionRules::CutSimplex<D,ET_SPACE,ET_TIME>::MakeQuad(s,numint);
   }
 
