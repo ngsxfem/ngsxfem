@@ -199,7 +199,7 @@ namespace xintegration
 
     for (int k = 0; k < ir.GetNIP(); k++)
     {
-      Vec<3> point(0.0);
+      Vec<3> point(0.0); //Dimension mismatch!
       point = (1.0-ir[k](0)) * (*s[0]);
       point += ir[k](0) * (*s[1]);
       const double weight = ir[k].Weight() * trafofac;

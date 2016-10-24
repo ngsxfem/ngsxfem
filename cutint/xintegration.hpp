@@ -112,7 +112,7 @@ namespace xintegration
     Array < Vec<SD> > points;
     /// the quadrature weights
     Array < double > weights;
-    /// the quadrature weights
+    /// the quadrature normal vectors
     Array < Vec<SD> > normals;
     /// return number of integration points 
     int Size() const { return points.Size(); }
@@ -128,7 +128,7 @@ namespace xintegration
     FlatMatrixFixWidth<SD> points;
     /// the quadrature weights
     FlatVector<double> weights;
-    /// the quadrature weights
+    /// the quadrature normal vectors
     FlatMatrixFixWidth<SD> normals;
     /// return number of integration points 
     int Size() const { return points.Height(); }
