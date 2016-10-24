@@ -290,12 +290,13 @@ namespace xintegration
     /// Levelset function through the evaluator
     // const ScalarFEEvaluator<D> & lset;
     const ScalarFieldEvaluator * lset;
+    const FlatVector<double> * cf_lset_at_element;
 
     XLocalGeometryInformation(const ScalarFieldEvaluator * a_lset): lset(a_lset) {;}
     virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;
-    virtual void MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const ;
+    virtual void MakeQuadRuleFast() const ;
 
     virtual int Dimension()const { return -1; }
 
@@ -747,7 +748,7 @@ namespace xintegration
     /// adaptive strategy to generate composite quadrature rule on tensor product geometry
     /// ...
     virtual DOMAIN_TYPE MakeQuadRule() const;
-    virtual void MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const;
+    virtual void MakeQuadRuleFast() const;
     
   };
   DOMAIN_TYPE CheckIfCutFast(const FlatVector<> & cf_lset_at_element);

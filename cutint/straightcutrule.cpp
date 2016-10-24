@@ -59,7 +59,7 @@ namespace xintegration
                                                      LocalHeap & lh)
   {
     static Timer t ("StraightCutIntegrationRule");
-    static Timer timercutgeom ("StraightCutIntegrationRule::StraightCutDomain[Fast]");
+    static Timer timercutgeom ("StraightCutIntegrationRule::CheckIfCutFast");
     static Timer timermakequadrule("StraightCutIntegrationRule::MakeQuadRule");
 
     int subdivlvl = 0;
@@ -94,9 +94,11 @@ namespace xintegration
         xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                   *lset_eval, cquad3d, lh,
                                                    intorder, 0, subdivlvl, 0);
+      xgeom->cf_lset_at_element = &cf_lset_at_element;
+
       timermakequadrule.Start();
       //xgeom->MakeQuadRule();
-      xgeom->MakeQuadRuleFast(cf_lset_at_element);
+      xgeom->MakeQuadRuleFast();
       timermakequadrule.Stop();
     }
 

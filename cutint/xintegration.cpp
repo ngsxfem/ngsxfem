@@ -223,7 +223,7 @@ namespace xintegration
     return IF;
   }
 
-  void XLocalGeometryInformation::MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const
+  void XLocalGeometryInformation::MakeQuadRuleFast() const
   {
     throw Exception("base class member function XLocalGeometryInformation::MakeQuadRuleFast called!");
   }
@@ -942,7 +942,7 @@ namespace xintegration
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
-  :: MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const
+  :: MakeQuadRuleFast() const
   {
 
     if(ET_TIME != ET_POINT) {
@@ -951,7 +951,7 @@ namespace xintegration
     }
     //cout << "Spatial Dimension: " << D << ", Total Dimension: " << SD << endl;
 
-    DOMAIN_TYPE dt_self = CheckIfCutFast(cf_lset_at_element);
+    DOMAIN_TYPE dt_self = CheckIfCutFast(*cf_lset_at_element);
 
     if (dt_self == IF)
     {
@@ -981,25 +981,25 @@ namespace xintegration
             NumericalIntegrationStrategy<ET_SPACE,ET_TIME> numint_i (*this, 1, 0);
             numint_i.SetVerticesTime(verts_time);
             Array< Vec<D> > newverts(3);
-            FlatVector<> cf_lset_at_subelement(cf_lset_at_element.Size(), lh);
+            FlatVector<> cf_lset_at_subelement(cf_lset_at_element->Size(), lh);
             for (int j = 0; j < 3; ++j) //vertices
             {
               newverts[j] = Vec<D>(0.0);
               cf_lset_at_subelement[j] = 0;
               for (int d = 0; d < 3; ++d) {
                 newverts[j] += baryc[trigs[i][j]][d] * verts_space[d];
-                cf_lset_at_subelement[j] += baryc[trigs[i][j]][d]*cf_lset_at_element[d];
+                cf_lset_at_subelement[j] += baryc[trigs[i][j]][d]*(*cf_lset_at_element)[d];
               }
             }
             numint_i.SetVerticesSpace(newverts);
 
             numint_i.SetDistanceThreshold(0.5*distance_threshold);
+            numint_i.cf_lset_at_element = &cf_lset_at_subelement;
 
             //cout << "Calling MakeQuadRule for refined triag nr. " << i << endl;
             //cout << "The correspondig cf_lset value vector is: " << cf_lset_at_subelement[0] << ", " << cf_lset_at_subelement[1] << ", " << cf_lset_at_subelement[2] << endl;
-            numint_i.MakeQuadRuleFast(cf_lset_at_subelement); // recursive call!
+            numint_i.MakeQuadRuleFast(); // recursive call!
           }
-
         }
         else
             throw Exception(" refine_space for ET_SPACE !=ET_TRIG in NumInt::MakeQuadFast not yet implemented");
@@ -1011,61 +1011,36 @@ namespace xintegration
         RegionTimer reg (timer);
         // Generate list of vertices corresponding to simplex/prism
         Array<Simplex<SD> *> simplices;
-        const int nvt = ET_TIME == ET_SEGM ? 2 : 1;
         const int nvs = verts_space.Size();
-        //cout << "nvs: " << nvs << endl;
-        //cout << "verts_space: " << endl << verts_space << endl;
 
-        Array<const Vec<SD> * > verts(nvs * nvt);
-        for (int K = 0; K < nvt; ++K)
-          for (int i = 0; i < nvs; ++i)
-          {
-            Vec<SD> newpoint;
-            for (int j = 0; j < D; ++j)
-            {
-              newpoint[j] = verts_space[i][j];
-              if (ET_TIME == ET_SEGM)
-                newpoint[D] = K == 0 ? verts_time[0] : verts_time[verts_time.Size()-1];
-            }
-            verts[i+K*nvs] = pc(newpoint);
-            //cout << "verts["<<i+K*nvs<<"]:" << newpoint << endl;
-          }
+        Array<const Vec<SD> * > verts(nvs);
+        for (int i = 0; i < nvs; ++i) verts[i] = pc(verts_space[i]);
 
-        // spacetime: prism to simplices
         // only space: set simplix
         // in both cases we have a list of SD-dimensional simplices
         simplices.SetSize(1);
         simplices[0] = new Simplex<SD>(verts);
 
-        //cout << "simplices:\n";
-        //for (int i = 0; i < simplices.Size(); ++i) cout << *simplices[i] << endl;
-
         if(simplices.Size() > 1) throw Exception ("This length of simplices array is not implemented yet.");
 
-        for (int i = 0; i < simplices.Size(); ++i)
+        DOMAIN_TYPE dt_simplex = dt_self;
+        if (dt_simplex == IF)
         {
-          // Check for each simplex if it is cut.
-          // If yes call decomposition strategy for according dimension
-          // If no  direction fill the composition rule accordingly
-          DOMAIN_TYPE dt_simplex = dt_self; //simplices[i]->CheckIfCut(eval);
-          if (dt_simplex == IF)
+          MakeQuadRuleOnCutSimplex<SD>(*simplices[0], *this);
+        }
+        else
+        {
+          FillSimplexWithRule<SD>(*simplices[0],
+                                  compquadrule.GetRule(dt_simplex),
+                                  GetIntegrationOrderMax());
+          if (SD==2 && simplex_array_neg)
           {
-            MakeQuadRuleOnCutSimplex<SD>(*simplices[i], *this);
+            if (dt_simplex == NEG)
+              simplex_array_neg->Append(new Simplex<SD> (*simplices[0]));
+            else
+              simplex_array_pos->Append(new Simplex<SD> (*simplices[0]));
           }
-          else
-          {
-            FillSimplexWithRule<SD>(*simplices[i],
-                                    compquadrule.GetRule(dt_simplex),
-                                    GetIntegrationOrderMax());
-            if (SD==2 && simplex_array_neg)
-            {
-              if (dt_simplex == NEG)
-                simplex_array_neg->Append(new Simplex<SD> (*simplices[i]));
-              else
-                simplex_array_pos->Append(new Simplex<SD> (*simplices[i]));
-            }
-          }
-          delete simplices[i];
+          delete simplices[0];
         }
       }
       quaded = true;
