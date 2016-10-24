@@ -81,7 +81,7 @@ namespace xintegration
     CompositeQuadratureRule<3> cquad3d;
 
     //auto element_domain = StraightCutDomain(cf_lset,trafo,lh);
-    auto element_domain = StraightCutDomainFast(cf_lset_at_element);
+    auto element_domain = CheckIfCutFast(cf_lset_at_element);
     timercutgeom.Stop();
 
     if (element_domain == IF)

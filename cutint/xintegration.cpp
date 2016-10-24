@@ -475,8 +475,8 @@ namespace xintegration
   DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: CheckIfCut() const
   {
-    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
-    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
+    //enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
+    //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
     RegionTimer reg (timer);
@@ -616,8 +616,8 @@ namespace xintegration
   :: MakeQuadRule() const
   {
 
-    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
-    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
+    //enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
+    //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     // check with the help of regularly distributed points if current
     // space(-time) geometry is cut (has different sign in lset-value)
@@ -922,7 +922,7 @@ namespace xintegration
     }
   }
 
-  DOMAIN_TYPE StraightCutDomainFast(const FlatVector<> & cf_lset_at_element) {
+  DOMAIN_TYPE CheckIfCutFast (const FlatVector<> & cf_lset_at_element) {
     bool haspos = false;
     bool hasneg = false;
 
@@ -945,16 +945,13 @@ namespace xintegration
   :: MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const
   {
 
-    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
-    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
-
     if(ET_TIME != ET_POINT) {
         cout << "ET_TIME != ET_POINT, but = " << ET_TIME << endl;
         throw Exception("ET_TIME not yet implemented.");
     }
     //cout << "Spatial Dimension: " << D << ", Total Dimension: " << SD << endl;
 
-    DOMAIN_TYPE dt_self = StraightCutDomainFast(cf_lset_at_element);
+    DOMAIN_TYPE dt_self = CheckIfCutFast(cf_lset_at_element);
 
     if (dt_self == IF)
     {

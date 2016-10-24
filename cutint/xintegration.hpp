@@ -750,7 +750,7 @@ namespace xintegration
     virtual void MakeQuadRuleFast(const FlatVector<> & cf_lset_at_element) const;
     
   };
-
+  DOMAIN_TYPE CheckIfCutFast(const FlatVector<> & cf_lset_at_element);
 
   /// Different Decomposition for different dimensions 
 
@@ -826,7 +826,6 @@ namespace xintegration
                                              int subdivlvl,
                                              LocalHeap & lh);
 
-  DOMAIN_TYPE StraightCutDomainFast(const FlatVector<> & cf_lset_at_element);
 }
 
 #endif
