@@ -290,9 +290,9 @@ namespace xintegration
     /// Levelset function through the evaluator
     // const ScalarFEEvaluator<D> & lset;
     const ScalarFieldEvaluator * lset;
-    shared_ptr<FlatVector<double> > cf_lset_at_element;
+    FlatVector<double> cf_lset_at_element;
 
-    XLocalGeometryInformation(const ScalarFieldEvaluator * a_lset, shared_ptr<FlatVector<double>> a_cf_lset_at_element = nullptr): lset(a_lset), cf_lset_at_element(a_cf_lset_at_element) {;}
+    XLocalGeometryInformation(const ScalarFieldEvaluator * a_lset): lset(a_lset) {;}
     virtual ~XLocalGeometryInformation() {;}
     virtual double EvaluateLsetAtPoint( const IntegrationPoint & ip, double time = 0) const;
     virtual DOMAIN_TYPE MakeQuadRule() const ;

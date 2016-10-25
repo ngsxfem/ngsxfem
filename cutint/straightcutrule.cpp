@@ -94,7 +94,7 @@ namespace xintegration
         xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                   *lset_eval, cquad3d, lh,
                                                    intorder, 0, subdivlvl, 0);
-      xgeom->cf_lset_at_element = make_shared<FlatVector<>>(cf_lset_at_element);
+      xgeom->cf_lset_at_element.AssignMemory(cf_lset_at_element.Size(), cf_lset_at_element.Data());
 
       timermakequadrule.Start();
       //xgeom->MakeQuadRule();
