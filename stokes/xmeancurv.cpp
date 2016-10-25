@@ -74,7 +74,7 @@ namespace ngfem
     const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
     const FlatQuadratureRuleCoDim1<D> & fquad(fcompr.GetInterfaceRule());
 
-    FlatMatrixFixWidth<D*D> bmat(ndof_total,lh);
+    FlatMatrix<> bmat(ndof_total,D*D,lh);
     FlatMatrixFixWidth<D*D> bmat_P(ndof_total,lh);
     FlatMatrixFixWidth<D> dshape(ndofuv_total,lh);
     
