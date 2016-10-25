@@ -123,7 +123,7 @@ namespace ngfem
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
-
+    bool symmetric_so_far = true;
     /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
 
     int k1 = 0;
@@ -272,7 +272,8 @@ namespace ngfem
                     // elmat.Rows(r2).Cols(r1) += bbmat2.Rows(r2) * Trans(bdbmat1.Rows(r1));
                     // AddABt (bbmat2.Rows(r2), bdbmat1.Rows(r1), elmat.Rows(r2).Cols(r1));
 
-                    if (samediffop && is_diagonal)
+                    symmetric_so_far &= samediffop && is_diagonal;
+                    if (symmetric_so_far)
                       AddABtSym (bbmat2.Rows(r2), bdbmat1.Rows(r1), part_elmat);
                     else
                       AddABt (bbmat2.Rows(r2), bdbmat1.Rows(r1), part_elmat);
@@ -281,7 +282,7 @@ namespace ngfem
                     // tlapack.AddFlops (r2.Size()*r1.Size()*bdbmat1.Width());
                   }
 
-                if (samediffop && is_diagonal)
+                if (symmetric_so_far)
                   for (int i = 0; i < part_elmat.Height(); i++)
                     for (int j = i+1; j < part_elmat.Width(); j++)
                       part_elmat(i,j) = part_elmat(j,i);
