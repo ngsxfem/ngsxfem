@@ -122,7 +122,7 @@ namespace xintegration
 
     for (int k = 0; k < ir.GetNIP(); k++)
     {
-      Vec<2> point = ir[k](0) * (*s.p[1]) + (1.0 - ir[k](0)) * (*s.p[0]); //Dimension mismatch? ... s.p[i] is of dim 1
+      Vec<1> point = ir[k](0) * (*s.p[1]) + (1.0 - ir[k](0)) * (*s.p[0]);
       const double weight = ir[k].Weight() * trafofac;
       quaddom.points.Append(point);
       quaddom.weights.Append(weight);
@@ -199,7 +199,7 @@ namespace xintegration
 
     for (int k = 0; k < ir.GetNIP(); k++)
     {
-      Vec<3> point(0.0); //Dimension mismatch!
+      Vec<2> point(0.0);
       point = (1.0-ir[k](0)) * (*s[0]);
       point += ir[k](0) * (*s[1]);
       const double weight = ir[k].Weight() * trafofac;
