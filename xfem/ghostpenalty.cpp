@@ -603,15 +603,29 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<3>> init_stab2_3d ("normallaplacetrace", 3, 2);
 
   // off-diagonal values:
+  int GetStencilAccuracy(int order)
+  {
+    switch (order)
+    {
+    case 0: return 4; break;
+    case 1: return 4; break;
+    case 2: return 4; break; 
+    case 3: return 4; break; 
+    case 4: return 4; break; 
+    default: throw Exception("order not yet implemented"); break;
+    };
+  }
+
+  // off-diagonal values:
   int GetStencilWidth(int order)
   {
     switch (order)
       {
       case 0: return 0; break;
-      case 1: return 1; break;
-      // case 2: return 1; break; 
+      case 1: return 2; break;
       case 2: return 2; break; 
-      case 3: return 2; break; 
+      case 3: return 3; break; 
+      case 4: return 3; break; 
       default: throw Exception("order not yet implemented"); break;
       };
   }
@@ -626,14 +640,31 @@ namespace ngfem
       coeffs(0) = 1.0;
       break;
     case 1:
-      coeffs(0) = -0.5/eps; coeffs(1) = 0.0; coeffs(2) = 0.5/eps;
+      coeffs(0) = 1.0/(12.0*eps);
+      coeffs(1) = -2.0/(3.0*eps);
+      coeffs(2) = 0.0;
+      coeffs(3) = 2.0/(3.0*eps);
+      coeffs(4) = -1.0/(12.0*eps);
       break;
     case 2:
-      // coeffs(0) = coeffs(2) = 1.0/(eps*eps); coeffs(1) = -2.0/(eps*eps);
-      coeffs(0) = coeffs(4) = -1.0/(12.0*eps*eps); coeffs(1) = coeffs(3) = 4.0/(3.0*eps*eps); coeffs(2) = -2.5/(eps*eps);
+      coeffs(0) = coeffs(4) = -1.0/(12.0*eps*eps);
+      coeffs(1) = coeffs(3) = 4.0/(3.0*eps*eps);
+      coeffs(2) = -2.5/(eps*eps);
       break;
     case 3:
-      coeffs(0) = -0.5/(eps*eps*eps); coeffs(1) = 1.0/(eps*eps*eps); coeffs(3) = -1.0/(eps*eps*eps); coeffs(4) = 0.5/(eps*eps*eps); 
+      coeffs(0) = 0.125/(eps*eps*eps);
+      coeffs(1) = -1.0/(eps*eps*eps);
+      coeffs(2) = 1.625/(eps*eps*eps);
+      coeffs(3) = 0.0;
+      coeffs(4) = -1.625/(eps*eps*eps);
+      coeffs(5) = 1.0/(eps*eps*eps);
+      coeffs(6) = -0.125/(eps*eps*eps);
+      break;
+    case 4:
+      coeffs(0) = coeffs(6) = -1.0/6.0/(eps*eps*eps*eps);
+      coeffs(1) = coeffs(5) = 2.0/(eps*eps*eps*eps);
+      coeffs(2) = coeffs(4) = -6.5/(eps*eps*eps*eps);
+      coeffs(3) = 28.0/3.0/(eps*eps*eps*eps);
       break;
     default: throw Exception("order not yet implemented"); break;
     };
@@ -643,13 +674,19 @@ namespace ngfem
 
   double GetEps(int order)
   {
+    const double EPS = std::numeric_limits<double>::epsilon();
     switch (order)
       {
       case 0: return 1.0; break;
-      case 1: return 1e-3; break;
-      case 2: return 4e-3; break; 
-      case 3: return 1e-3; break; 
-      default: throw Exception("order not yet implemented"); break;
+      // case 0: return 1.0; break;
+      // case 1: return 1e-3; break;
+      // case 2: return 4e-3; break;
+      // case 3: return 1e-3; break;
+      default: // equilibration of accuracy and round-off stability:
+        // cout << "order = " << order << ", eps = " << std::pow((2 * GetStencilWidth(order) + 1)*EPS,1.0/(GetStencilAccuracy(order) + order)) << endl;
+        // getchar();
+        return std::pow((2 * GetStencilWidth(order) + 1)*EPS,1.0/(GetStencilAccuracy(order) + order)) + 0.25;
+        break;
       };
   }
 
