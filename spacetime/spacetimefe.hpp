@@ -38,7 +38,7 @@ typedef std::pair<double,double> TimeInterval;
     virtual void GetDiagMassMatrix (FlatVector<> mass) const { mass(0) = 0.75; mass(1) = 0.25; };
 
     virtual void CalcShape (const IntegrationPoint & ip, 
-                            SliceVector<> shape) const;
+                            BareSliceVector<> shape) const;
     
     virtual void CalcDShape (const IntegrationPoint & ip, 
                              SliceMatrix<> dshape) const;

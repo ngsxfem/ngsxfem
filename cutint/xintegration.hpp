@@ -446,7 +446,7 @@ namespace xintegration
       {
       case 1:
         compquadrule1 = new (lh) FlatCompositeQuadratureRule<1>(*xgeom.GetCompositeRule<1>(),lh);
-        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        for (DOMAIN_TYPE dt : {POS, NEG})
         {
           FlatQuadratureRule<1> qr (compquadrule1->GetRule(dt));
           for (int i = 0; i < qr.Size(); ++i)
@@ -455,7 +455,7 @@ namespace xintegration
         break;
       case 2:
         compquadrule2 = new (lh) FlatCompositeQuadratureRule<2>(*xgeom.GetCompositeRule<2>(),lh);
-        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        for (DOMAIN_TYPE dt : {POS, NEG})
         {
           FlatQuadratureRule<2> qr (compquadrule2->GetRule(dt));
           for (int i = 0; i < qr.Size(); ++i)
@@ -464,7 +464,7 @@ namespace xintegration
         break;
       case 3:
         compquadrule3 = new (lh) FlatCompositeQuadratureRule<3>(*xgeom.GetCompositeRule<3>(),lh);
-        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        for (DOMAIN_TYPE dt : {POS, NEG})
         {
           FlatQuadratureRule<3> qr (compquadrule3->GetRule(dt));
           for (int i = 0; i < qr.Size(); ++i)
@@ -473,7 +473,7 @@ namespace xintegration
         break;
       case 4:
         compquadrule4 = new (lh) FlatCompositeQuadratureRule<4>(*xgeom.GetCompositeRule<4>(),lh);
-        for (DOMAIN_TYPE dt = POS; dt < IF; dt=(DOMAIN_TYPE)((int)dt+1))
+        for (DOMAIN_TYPE dt : {POS, NEG})
         {
           FlatQuadratureRule<4> qr (compquadrule4->GetRule(dt));
           for (int i = 0; i < qr.Size(); ++i)
