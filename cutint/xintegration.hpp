@@ -46,6 +46,7 @@ namespace xintegration
 #endif
   public: 
     PointContainer();
+
     
     /// Access operator to points
     /// Either point is already in the Container, 
@@ -751,7 +752,9 @@ namespace xintegration
     virtual void MakeQuadRuleFast() const;
     
   };
-  DOMAIN_TYPE CheckIfCutFast(const FlatVector<> & cf_lset_at_element);
+
+  //On the long run this should be deleted (-> Function moved to straightcutrule.h)
+  DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element);
 
   /// Different Decomposition for different dimensions 
 

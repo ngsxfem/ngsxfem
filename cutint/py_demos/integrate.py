@@ -6,7 +6,7 @@ from ngsolve import *
 # basic xfem functionality
 from xfem.basics import *
 
-NAveraging = 100
+NAveraging = 200
 
 def PrintTimers(substring):
     ### print hdg-intergrator timers
@@ -37,8 +37,8 @@ lset_approx = GridFunction(V)
 InterpolateToP1(levelset,lset_approx)
 #lset_approx.Set(levelset)
 
-#domains = [NEG,POS,IF]
-domains = [IF]
+domains = [NEG,POS,IF]
+#domains = [NEG]
 
 errors = dict()
 eoc = dict()
@@ -57,8 +57,9 @@ for reflevel in range(NAveraging):
 
     for key in domains:
         integral_old = Integrate(levelset_domain={"levelset" : levelset, "domain_type" : key}, cf=f, mesh=mesh, order=0)
+        #integral_old = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000, int_old=True)
         #print("\n\n ----- NOW STARTING WITH THE NEWINTEGRATEX-FUNCTION -----\n\n")
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
+        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000, int_old=False)
 
         #integral = integral_old
         #integral_old = integral
@@ -81,8 +82,10 @@ PrintTimers("IntegrateX")
 
 PrintTimers("StraightCutIntegrationRule")
 #PrintTimers("StraightCutDomain")
-PrintTimers("MakeQuadRuleFast")
-PrintTimers("Simplex::CheckifCut")
-PrintTimers("PointContainer")
-PrintTimers("CutSimplex<2>::MakeQuad")
-PrintTimers("MakeQuadRuleOnCutSimplex")
+#PrintTimers("MakeQuadRuleFast")
+#PrintTimers("Simplex::CheckifCut")
+#PrintTimers("PointContainer")
+#PrintTimers("CutSimplex<2>::MakeQuad")
+#PrintTimers("MakeQuadRuleOnCutSimplex")
+#PrintTimers("StraightCutElementGeometry")
+#PrintTimers("CheckIfCutFast")

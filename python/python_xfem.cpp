@@ -591,13 +591,14 @@ void ExportNgsx()
           FunctionPointer([](bp::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
-                             int order, DOMAIN_TYPE dt, int heapsize)
+                             int order, DOMAIN_TYPE dt, int heapsize, bool int_old)
                           {
                             static Timer timer ("NewIntegrateX");
                             static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
-                            static Timer timerevalcoef ("NewIntegrateX::EvalCoef");
+                            static Timer timerevalintrule ("NewIntegrateX::EvaluateIntRule");
                             static Timer timeradding("NewIntegrateX::Adding");
                             static Timer timermapir("NewIntegrateX::MapingIntergrRule");
+                            static Timer timergetdnums("NewIntegrateX::GetDNums");
 
                             bp::extract<PyGF> bpgf(lset);
                             if (!bpgf.check())
@@ -609,6 +610,10 @@ void ExportNgsx()
 
                             double sum = 0.0;
                             int DIM = ma->GetDimension();
+                            FlatVector<> elvec(3,lh);
+                            Array<int> dnums(3);
+
+                            auto FESpace = gf_lset->GetFESpace();
 
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
@@ -616,17 +621,20 @@ void ExportNgsx()
                                  //cout << endl << "NewIntegrateX() loop: Element Nr. " << el.Nr() << endl;
                                  auto & trafo = ma->GetTrafo (el, lh);
 
-                                 Array<int> dnums;
-                                 gf_lset->GetFESpace()->GetDofNrs(el.Nr(),dnums);
-                                 FlatVector<> elvec(dnums.Size(),lh);
+                                 timergetdnums.Start();
+                                 FESpace->GetDofNrs(el.Nr(),dnums);
                                  gf_lset->GetVector().GetIndirect(dnums,elvec);
+                                 timergetdnums.Stop();
+
 
                                  //cout << "elvec: " << elvec[0] << "\t" << elvec[1] << "\t" << elvec[2] << endl;
 
                                  timercutgeom.Start();
-                                 const IntegrationRule * ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
+                                 const IntegrationRule * ir;
+                                 if(int_old) ir = StraightCutIntegrationRuleOld(gf_lset, elvec, trafo, dt, order, lh);
+                                 else ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
                                  timercutgeom.Stop();
-
+                                 timerevalintrule.Start();
                                  if (ir != nullptr)
                                  {
                                    timermapir.Start();
@@ -634,9 +642,8 @@ void ExportNgsx()
                                    FlatMatrix<> val(mir.Size(), 1, lh);
                                    timermapir.Stop();
 
-                                   timerevalcoef.Start();
+
                                    cf -> Evaluate (mir, val);
-                                   timerevalcoef.Stop();
 
                                    timeradding.Start();
                                    double lsum = 0.0;
@@ -646,13 +653,14 @@ void ExportNgsx()
                                    AsAtomic(sum) += lsum;
                                    timeradding.Stop();
                                  }
+                                 timerevalintrule.Stop();
                                });
 
                             return sum;
                           }),
           (bp::arg("lset"), bp::arg("mesh"), 
            bp::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)), 
-           bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000));
+           bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000, bp::arg("int_old")=true));
 
 }
 

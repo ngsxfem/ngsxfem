@@ -180,6 +180,7 @@ namespace xintegration
   void FillSimplexCoDim1WithRule<2> (const Array< const Vec<2> *> & s, const Vec<2> & pospoint,
                                      QuadratureRuleCoDim1<2> & quaddom, int intorder)
   {
+     //cout << "FillSimplexCoDim1WithRule: Order " << intorder << endl;
     Vec<2> a = *s[1] - *s[0];
     Vec<2> n(-a(1),a(0));
     const double trafofac = L2Norm(a);
@@ -203,6 +204,7 @@ namespace xintegration
       point = (1.0-ir[k](0)) * (*s[0]);
       point += ir[k](0) * (*s[1]);
       const double weight = ir[k].Weight() * trafofac;
+      //cout << point << "\t W: " << weight << endl;
       quaddom.points.Append(point);
       quaddom.weights.Append(weight);
       quaddom.normals.Append(n);
@@ -922,24 +924,6 @@ namespace xintegration
     }
   }
 
-  DOMAIN_TYPE CheckIfCutFast (const FlatVector<> & cf_lset_at_element) {
-    bool haspos = false;
-    bool hasneg = false;
-
-    for(int v=0; v<cf_lset_at_element.Size(); v++){
-        haspos = haspos || (cf_lset_at_element[v] >= 0.0);
-        hasneg = hasneg || (cf_lset_at_element[v] <= 0.0);
-        if(haspos && hasneg) break;
-    }
-
-    if (hasneg && haspos)
-      return IF;
-    else if (hasneg)
-      return NEG;
-    else
-      return POS;
-  }
-
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
   void NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: MakeQuadRuleFast() const
@@ -951,7 +935,7 @@ namespace xintegration
     }
     //cout << "Spatial Dimension: " << D << ", Total Dimension: " << SD << endl;
 
-    DOMAIN_TYPE dt_self = CheckIfCutFast(cf_lset_at_element);
+    DOMAIN_TYPE dt_self = CheckIfStraightCut(cf_lset_at_element);
 
     if (dt_self == IF)
     {
@@ -1573,8 +1557,8 @@ namespace xintegration
         }
       }
 
-      // std::cout << " cutpoints[0] = " << *cutpoints[0] << std::endl;
-      // std::cout << " cutpoints[1] = " << *cutpoints[1] << std::endl;
+       //std::cout << " cutpoints[0] = " << *cutpoints[0] << std::endl;
+       //std::cout << " cutpoints[1] = " << *cutpoints[1] << std::endl;
 
       if (cutpoints.Size() == 2) // three intersections: prism + tetra
       {
