@@ -13,13 +13,12 @@ namespace xintegration
   class StraightCutElementGeometry {      
   private:
       int D;
-      double MeasureSimplVol(SimpleX &s);
-      SimpleX Cut(SimpleX &s);
-      void AppendIntegrationRuleOnSimpl(SimpleX &s, int order, IntegrationRule &intrule);
-      void CalcNormal(SimpleX &s_cut);
+      double MeasureSimplVol(const SimpleX &s);
+      SimpleX Cut(const SimpleX &s);
+      void CalcNormal(const SimpleX &s_cut);
   public:
-      vector<Vec<3>> svs; //Simplex Vertices
-      vector<SimpleX> simplices;
+      Array<Vec<3>> svs; //Simplex Vertices
+      Array<SimpleX> simplices;
       FlatVector<> lset;
       ELEMENT_TYPE et;
       LocalHeap & lh;

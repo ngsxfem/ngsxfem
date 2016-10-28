@@ -17,13 +17,13 @@ namespace xintegration
     else return POS;
   }
 
-  SimpleX StraightCutElementGeometry::Cut(SimpleX & s){
+  SimpleX StraightCutElementGeometry::Cut(const SimpleX &s){
     /*cout << "Cut was called for a Simplex with " << s.size() << " Elements: ";
     for(auto t:s) cout << t << "\t";
     cout << endl;*/
     if(s.Size() == 2){
-        svs.push_back(svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]));
-        return {{svs.size()-1}};
+        svs.Append(svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]));
+        return {{svs.Size()-1}};
     }
     else if(s.Size() >= 3){
         Array<int> cut_points;
@@ -49,48 +49,31 @@ namespace xintegration
     }
   }
 
-  double StraightCutElementGeometry::MeasureSimplVol(SimpleX & s){
+  double StraightCutElementGeometry::MeasureSimplVol(const SimpleX &s){
       if(s.Size()==2) return L2Norm(Vec<3>(svs[s[1]]-svs[s[0]]));
       else if(s.Size()==3) return L2Norm(Cross(Vec<3>(svs[s[2]]-svs[s[0]]), Vec<3>(svs[s[1]]-svs[s[0]])));
       else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(svs[s[3]]-svs[s[0]]), Vec<3>(svs[s[2]]-svs[s[0]]), Vec<3>(svs[s[1]]-svs[s[0]])));
       else throw Exception("Calc the Volume of this type of Simplex not implemented!");
   }
 
-  void StraightCutElementGeometry::AppendIntegrationRuleOnSimpl(SimpleX & s, int order, IntegrationRule& intrule){
-      double trafofac = MeasureSimplVol(s);
-
-      IntegrationRule ir_ngs;
-      if(s.Size() == 2) ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-      else if(s.Size() == 3) ir_ngs = SelectIntegrationRule(ET_TRIG, order);
-      else if(s.Size() == 4) ir_ngs = SelectIntegrationRule (ET_TET, order);
-
-      for (auto ip : ir_ngs) {
-        Vec<3> point(0.0); double originweight = 1.0;
-        for (int m = 0; m < s.Size()-1 ;++m) originweight -= ip(m);
-        point = originweight * (svs[s[0]]);
-        for (int m = 0; m < s.Size()-1 ;++m)
-          point += ip(m) * (svs[s[m+1]]);
-        double weight = ip.Weight() * trafofac;
-        intrule.AddIntegrationPoint(IntegrationPoint(point, weight));
-        //cout << point << "\t W: " << weight << endl;
-      }
+  void StraightCutElementGeometry::AppendIntegrationRuleOnSimpl(int Simplex_index, int order, IntegrationRule &intrule){
   }
 
   void StraightCutElementGeometry::LoadBaseSimplexFromElementTopology() {
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
       for(int i=0; i<ElementTopology::GetNVertices(et); i++)
-          svs.push_back({verts[i][0], verts[i][1], verts[i][2]});
+          svs.Append({verts[i][0], verts[i][1], verts[i][2]});
 
       if(et == ET_TRIG) { // || et == ET_TET){ -- To be added after the cutting form ET_TET is finished
           Array<int> BaseSimplex(D+1);
           for(int i=0; i<BaseSimplex.Size(); i++) BaseSimplex[i] = i;
-          simplices.push_back(BaseSimplex);
+          simplices.Append(BaseSimplex);
       }
       else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
-  void StraightCutElementGeometry::CalcNormal(SimpleX &s_cut){
+  void StraightCutElementGeometry::CalcNormal(const SimpleX &s_cut){
       if(D == 2) normal = {Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[1], - Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[0], 0}; //Cross(Vec<3>(svs[s_cut[1]]-svs[s_cut[0]]), Vec<3>(0,0,1));
       else if(D == 3) normal = Cross(Vec<3>(svs[s_cut[2]] - svs[s_cut[0]]), Vec<3>(svs[s_cut[1]] - svs[s_cut[0]]));
       normal /= L2Norm(normal);
@@ -102,9 +85,9 @@ namespace xintegration
   void StraightCutElementGeometry::CutBaseSimplex(DOMAIN_TYPE dt){
       SimpleX s_cut = Cut(simplices[0]);
 
-      simplices.clear();
+      simplices.DeleteAll();
       if(dt == IF) {
-          simplices.push_back(s_cut);
+          simplices.Append(s_cut);
           CalcNormal(s_cut);
       }
       else {
@@ -115,13 +98,13 @@ namespace xintegration
           if(relevant_base_simplex_vertices.Size() == 1){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
               SimpleX s(s_cut);
               s.Append(relevant_base_simplex_vertices[0]);
-              simplices.push_back(s);
+              simplices.Append(s);
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (D==2)){ //Triangle is cut to a quad
               Array<int> s1, s2; s1 = relevant_base_simplex_vertices; s2 = s_cut;
               s1.Append(s_cut[1]); s2.Append(relevant_base_simplex_vertices[1]); //The right indices follow from the cutting order
-              simplices.push_back(s1);
-              simplices.push_back(s2);
+              simplices.Append(s1);
+              simplices.Append(s2);
           }
           else {
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
@@ -129,8 +112,32 @@ namespace xintegration
       }
   }
 
-  void StraightCutElementGeometry::GetIntegrationRule(int order, IntegrationRule& intrule){
-      for(int i=0; i<simplices.size(); i++) AppendIntegrationRuleOnSimpl(simplices[i], order, intrule);
+  void StraightCutElementGeometry::GetIntegrationRule(int order, IntegrationRule &intrule){
+      int ref_ir_ngs_size; int j =0;
+      for(int i=0; i<simplices.Size(); i++) {
+        double trafofac = MeasureSimplVol(simplices[i]);
+
+        IntegrationRule ir_ngs;
+        if(simplices[i].Size() == 2) ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+        else if(simplices[i].Size() == 3) ir_ngs = SelectIntegrationRule(ET_TRIG, order);
+        else if(simplices[i].Size() == 4) ir_ngs = SelectIntegrationRule (ET_TET, order);
+
+        if(i == 0){
+            intrule.SetSize(simplices.Size()*ir_ngs.Size());
+            ref_ir_ngs_size = ir_ngs.Size();
+        }
+        else if (ir_ngs.Size() != ref_ir_ngs_size) throw Exception("Different sizes for ir_ngs are not supported!");
+
+       for (auto ip : ir_ngs) {
+          Vec<3> point(0.0); double originweight = 1.0;
+          for (int m = 0; m < simplices[i].Size()-1 ;++m) originweight -= ip(m);
+            point = originweight * (svs[simplices[i][0]]);
+          for (int m = 0; m < simplices[i].Size()-1 ;++m)
+            point += ip(m) * (svs[simplices[i][m+1]]);
+          intrule[j] = IntegrationPoint(point, ip.Weight() * trafofac);
+          j++;
+        }
+      }
   }
 
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
@@ -175,17 +182,17 @@ namespace xintegration
 
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);
+    IntegrationRule quad_untrafo;
 
     if (element_domain == IF)
     {
       static Timer timer1("StraightCutElementGeometry::Load+Cut"); timer1.Start();
       geom.LoadBaseSimplexFromElementTopology();
       geom.CutBaseSimplex(dt);
+      geom.GetIntegrationRule(intorder, quad_untrafo);
       timer1.Stop();
     }
 
-    IntegrationRule quad_untrafo;
-    geom.GetIntegrationRule(intorder, quad_untrafo);
     const IntegrationRule* ir = nullptr;
 
     timermakequadrule.Stop();
