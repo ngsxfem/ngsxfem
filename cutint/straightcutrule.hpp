@@ -15,7 +15,7 @@ namespace xintegration
       int D;
       double MeasureSimplVol(const SimpleX &s);
       SimpleX Cut(const SimpleX &s);
-      void CalcNormal(const SimpleX &s_cut);
+      void CalcNormal();
   public:
       Array<Vec<3>> svs; //Simplex Vertices
       Array<SimpleX> simplices;

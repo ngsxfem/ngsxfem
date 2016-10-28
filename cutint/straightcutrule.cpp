@@ -56,9 +56,6 @@ namespace xintegration
       else throw Exception("Calc the Volume of this type of Simplex not implemented!");
   }
 
-  void StraightCutElementGeometry::AppendIntegrationRuleOnSimpl(int Simplex_index, int order, IntegrationRule &intrule){
-  }
-
   void StraightCutElementGeometry::LoadBaseSimplexFromElementTopology() {
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
@@ -73,6 +70,7 @@ namespace xintegration
       else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
+  /*
   void StraightCutElementGeometry::CalcNormal(const SimpleX &s_cut){
       if(D == 2) normal = {Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[1], - Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[0], 0}; //Cross(Vec<3>(svs[s_cut[1]]-svs[s_cut[0]]), Vec<3>(0,0,1));
       else if(D == 3) normal = Cross(Vec<3>(svs[s_cut[2]] - svs[s_cut[0]]), Vec<3>(svs[s_cut[1]] - svs[s_cut[0]]));
@@ -80,6 +78,25 @@ namespace xintegration
       if ((InnerProduct(Vec<3>(svs[0]-svs[s_cut[0]]),normal) < 0)^(lset[0] > 0))
           normal *= -1.;
       //cout << "normal: " << normal << endl;
+  }*/
+
+  void StraightCutElementGeometry::CalcNormal(){
+      Vec<3> delta_vec;
+      double delta_f;
+      Vec<3> grad_f; grad_f = 0;
+      for(int i=0; i<D; i++) {
+          delta_vec = svs[i]-svs[D];
+          delta_f = lset[i]-lset[D];
+
+          for(int j=0; j<3; j++) {
+              if (abs(delta_vec[j]) > 1e-10){
+                  if(abs(L2Norm(delta_vec) - abs(delta_vec[j]))> 1e-10) throw Exception("Situation to complicated for this type of Grad calculation!");
+                  grad_f[j] = delta_f/(delta_vec[j]);
+              }
+          }
+      }
+      grad_f /= L2Norm(grad_f);
+      normal = grad_f;
   }
 
   void StraightCutElementGeometry::CutBaseSimplex(DOMAIN_TYPE dt){
@@ -88,7 +105,7 @@ namespace xintegration
       simplices.DeleteAll();
       if(dt == IF) {
           simplices.Append(s_cut);
-          CalcNormal(s_cut);
+          CalcNormal();
       }
       else {
           Array<int> relevant_base_simplex_vertices;
@@ -128,7 +145,7 @@ namespace xintegration
         }
         else if (ir_ngs.Size() != ref_ir_ngs_size) throw Exception("Different sizes for ir_ngs are not supported!");
 
-       for (auto ip : ir_ngs) {
+        for (auto ip : ir_ngs) {
           Vec<3> point(0.0); double originweight = 1.0;
           for (int m = 0; m < simplices[i].Size()-1 ;++m) originweight -= ip(m);
             point = originweight * (svs[simplices[i][0]]);
