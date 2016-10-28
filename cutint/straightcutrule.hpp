@@ -8,15 +8,15 @@ namespace xintegration
 {
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element);
 
-  typedef vector<int> SimpleX;
+  typedef Array<int> SimpleX;
 
   class StraightCutElementGeometry {      
   private:
       int D;
-      double MeasureSimplVol(SimpleX s);
-      SimpleX Cut(SimpleX s);
-      void AppendIntegrationRuleOnSimpl(SimpleX s, int order, IntegrationRule &intrule);
-      void CalcNormal(SimpleX s_cut);
+      double MeasureSimplVol(SimpleX &s);
+      SimpleX Cut(SimpleX &s);
+      void AppendIntegrationRuleOnSimpl(SimpleX &s, int order, IntegrationRule &intrule);
+      void CalcNormal(SimpleX &s_cut);
   public:
       vector<Vec<3>> svs; //Simplex Vertices
       vector<SimpleX> simplices;
