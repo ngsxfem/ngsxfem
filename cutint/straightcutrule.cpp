@@ -17,7 +17,7 @@ namespace xintegration
     else return POS;
   }
 
-  SimpleX StraightCutElementGeometry::Cut(const SimpleX &s){
+  Polytope StraightCutElementGeometry::CalcCutPolytopeUsingLset(const Polytope &s){
     /*cout << "Cut was called for a Simplex with " << s.size() << " Elements: ";
     for(auto t:s) cout << t << "\t";
     cout << endl;*/
@@ -34,12 +34,12 @@ namespace xintegration
     else if(s.Size() >= 3){
         Array<int> cut_points;
         for(int i_remove =0; i_remove<s.Size(); i_remove++){
-            SimpleX red(s);
+            Polytope red(s);
             red.DeleteElement(i_remove);
             FlatVector<> lset_red(red.Size(), lh);
             for(int i=0; i<red.Size(); i++) lset_red[i] = lset[red[i]];
             if (CheckIfStraightCut(lset_red) == IF){
-                SimpleX s_i = Cut(red);
+                Polytope s_i = CalcCutPolytopeUsingLset(red);
                 for(int t: s_i)
                     if(!cut_points.Contains(t)) cut_points.Append(t);
                 //cut_points.insert(cut_points.begin(), s_i.begin(), s_i.end());
@@ -56,7 +56,7 @@ namespace xintegration
     }
   }
 
-  double StraightCutElementGeometry::MeasureSimplVol(const SimpleX &s){
+  double StraightCutElementGeometry::MeasureSimplVol(const Polytope &s){
       if(s.Size()==2) return L2Norm(Vec<3>(svs[s[1]]-svs[s[0]]));
       else if(s.Size()==3) return L2Norm(Cross(Vec<3>(svs[s[2]]-svs[s[0]]), Vec<3>(svs[s[1]]-svs[s[0]])));
       else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(svs[s[3]]-svs[s[0]]), Vec<3>(svs[s[2]]-svs[s[0]]), Vec<3>(svs[s[1]]-svs[s[0]])));
@@ -108,7 +108,7 @@ namespace xintegration
   }
 
   void StraightCutElementGeometry::CutBaseSimplex(DOMAIN_TYPE dt){
-      SimpleX s_cut = Cut(simplices[0]);
+      Polytope s_cut = CalcCutPolytopeUsingLset(simplices[0]);
 
       simplices.DeleteAll();
       if(dt == IF) {
@@ -120,17 +120,17 @@ namespace xintegration
           CalcNormal();
       }
       else {
-          Array<int> relevant_base_simplex_vertices;
+          Polytope relevant_base_simplex_vertices;
           for(int i=0; i<D+1; i++)
               if( ((dt == POS) &&(lset[i] > 0)) || ((dt == NEG) &&(lset[i] < 0)))
                   relevant_base_simplex_vertices.Append(i);
           if((relevant_base_simplex_vertices.Size() == 1)&&(D==2)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
-              SimpleX s(s_cut);
+              Polytope s(s_cut);
               s.Append(relevant_base_simplex_vertices[0]);
               simplices.Append(s);
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (D==2)){ //Triangle is cut to a quad
-              Array<int> s1, s2; s1 = relevant_base_simplex_vertices; s2 = s_cut;
+              Polytope s1, s2; s1 = relevant_base_simplex_vertices; s2 = s_cut;
               s1.Append(s_cut[1]); s2.Append(relevant_base_simplex_vertices[1]); //The right indices follow from the cutting order
               simplices.Append(s1);
               simplices.Append(s2);
@@ -209,7 +209,7 @@ namespace xintegration
         StraightCutElementGeometry geom(lset, et, lh);
         geom.svs = {{0,0,0}, {1,0,0}, {0,1,0},{0,0,1}}; geom.simplices = {{0,1,2,3}};
         cout << "geom.lset: " << geom.lset << endl;
-        geom.Cut(geom.simplices[0]);
+        geom.CalcCutPolytopeUsingLset(geom.simplices[0]);
         cout << "End of debugging stuff!" << endl;
     }
 

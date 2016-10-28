@@ -8,16 +8,36 @@ namespace xintegration
 {
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element);
 
-  typedef Array<int> SimpleX;
+  class Polytope {
+  public:
+      Array<int> ia;
+      Polytope(Array<int> & a_ia) : ia(a_ia) {;}
+      Polytope(initializer_list<int> a_ia_l) : ia(a_ia_l) {;}
+      Polytope(){};
+
+      auto begin() {return ia.begin(); }
+      auto end() {return ia.end();}
+      auto begin() const {return ia.begin(); }
+      auto end() const {return ia.end();}
+
+      void Append(auto v){ ia.Append(v); }
+
+      auto operator[](int j) const { return ia[j]; }
+      auto operator[](int j) { return ia[j]; }
+      auto Size() const { return ia.Size(); }
+      void DeleteElement(auto i){ ia.DeleteElement(i); }
+  };
+
+  //typedef Array<int> SimpleX;
 
   class StraightCutElementGeometry {      
   public:      int D;
-      double MeasureSimplVol(const SimpleX &s);
-      SimpleX Cut(const SimpleX &s);
+      double MeasureSimplVol(const Polytope &s);
+      Polytope CalcCutPolytopeUsingLset(const Polytope &s);
       void CalcNormal();
   public:
-      Array<Vec<3>> svs; //Simplex Vertices
-      Array<SimpleX> simplices;
+      Array<Vec<3>> svs;
+      Array<Polytope> simplices;
       FlatVector<> lset;
       ELEMENT_TYPE et;
       LocalHeap & lh;
