@@ -602,93 +602,87 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<2>> init_stab2_2d ("normallaplacetrace", 2, 2);
   static RegisterBilinearFormIntegrator<NormalLaplaceTraceIntegrator<3>> init_stab2_3d ("normallaplacetrace", 3, 2);
 
-  // off-diagonal values:
-  int GetStencilAccuracy(int order)
+  class CentralFDStencils
   {
-    switch (order)
+    static const int max_accuracy_half = 8; // order 2,4,6,8,..,16
+    static const int max_order = 10; // order 1,2,3,4,..,10
+    Table<double> * stencils;
+  public:
+    static CentralFDStencils & Instance()
     {
-    case 0: return 4; break;
-    case 1: return 4; break;
-    case 2: return 4; break; 
-    case 3: return 4; break; 
-    case 4: return 4; break; 
-    default: throw Exception("order not yet implemented"); break;
-    };
-  }
-
-  // off-diagonal values:
-  int GetStencilWidth(int order)
-  {
-    switch (order)
-      {
-      case 0: return 0; break;
-      case 1: return 2; break;
-      case 2: return 2; break; 
-      case 3: return 3; break; 
-      case 4: return 3; break; 
-      default: throw Exception("order not yet implemented"); break;
-      };
-  }
-
-  FlatVector<> GetCentralDifferenceCoeffs(int order, double eps, LocalHeap& lh)
-  {
-    FlatVector<> coeffs(2*GetStencilWidth(order)+1,lh);
-
-    switch (order)
+      static CentralFDStencils myInstance;
+      return myInstance;
+    }
+    static const FlatVector<> Get(int order, int accuracy)
     {
-    case 0:
-      coeffs(0) = 1.0;
-      break;
-    case 1:
-      coeffs(0) = 1.0/(12.0*eps);
-      coeffs(1) = -2.0/(3.0*eps);
-      coeffs(2) = 0.0;
-      coeffs(3) = 2.0/(3.0*eps);
-      coeffs(4) = -1.0/(12.0*eps);
-      break;
-    case 2:
-      coeffs(0) = coeffs(4) = -1.0/(12.0*eps*eps);
-      coeffs(1) = coeffs(3) = 4.0/(3.0*eps*eps);
-      coeffs(2) = -2.5/(eps*eps);
-      break;
-    case 3:
-      coeffs(0) = 0.125/(eps*eps*eps);
-      coeffs(1) = -1.0/(eps*eps*eps);
-      coeffs(2) = 1.625/(eps*eps*eps);
-      coeffs(3) = 0.0;
-      coeffs(4) = -1.625/(eps*eps*eps);
-      coeffs(5) = 1.0/(eps*eps*eps);
-      coeffs(6) = -0.125/(eps*eps*eps);
-      break;
-    case 4:
-      coeffs(0) = coeffs(6) = -1.0/6.0/(eps*eps*eps*eps);
-      coeffs(1) = coeffs(5) = 2.0/(eps*eps*eps*eps);
-      coeffs(2) = coeffs(4) = -6.5/(eps*eps*eps*eps);
-      coeffs(3) = 28.0/3.0/(eps*eps*eps*eps);
-      break;
-    default: throw Exception("order not yet implemented"); break;
-    };
+      CentralFDStencils & instance = Instance();
+      const FlatArray<double> fa ((*(instance.stencils))[(order-1)*max_accuracy_half+(accuracy-1)/2]);
+      FlatVector<> coeffs(fa.Size(),&fa[0]);
+      return coeffs;
+    }
+    static double GetOptimalEps(int order, int accuracy)
+    {
+      const double EPS = std::numeric_limits<double>::epsilon();
+      const int stencil_width = order == 0 ? 1 : (accuracy+1)/2 + int(order-0.5)/2;
+      return std::pow((2 * stencil_width + 1)*EPS,1.0/(accuracy + order)) + 0.25;
+    }
 
-    return coeffs;
-  }
+  protected:
+    CentralFDStencils()
+    {
+      const int rows = max_accuracy_half*max_order+1;
 
-  double GetEps(int order)
-  {
-    const double EPS = std::numeric_limits<double>::epsilon();
-    switch (order)
-      {
-      case 0: return 1.0; break;
-      // case 0: return 1.0; break;
-      // case 1: return 1e-3; break;
-      // case 2: return 4e-3; break;
-      // case 3: return 1e-3; break;
-      default: // equilibration of accuracy and round-off stability:
-        // cout << "order = " << order << ", eps = " << std::pow((2 * GetStencilWidth(order) + 1)*EPS,1.0/(GetStencilAccuracy(order) + order)) << endl;
-        // getchar();
-        return std::pow((2 * GetStencilWidth(order) + 1)*EPS,1.0/(GetStencilAccuracy(order) + order)) + 0.25;
-        break;
-      };
-  }
+      Array<int> cnt(rows);
+
+      cnt[0] = 1;
+      for (int i = 0; i < max_order; ++i)
+        for (int j = 0; j < max_accuracy_half; ++j)
+        {
+          const int row = i * max_accuracy_half + j + 1;
+          const int order = i+1;
+          // const int accuracy = 2*(j+1);
+          const int stencil_width = j+1 + int(order-0.5)/2;
+          cnt[row] = 2 * stencil_width +1; 
+        }
+
+      stencils = new Table<double>(cnt);
+
+      (*stencils)[0][0] = 1.0;
+      for (int i = 0; i < max_order; ++i)
+        for (int j = 0; j < max_accuracy_half; ++j)
+        {
+          const int row = i * max_accuracy_half + j + 1;
+          const int order = i+1;
+          // const int accuracy = 2*(j+1);
+          const int stencil_width = j+1 + int(order-0.5)/2;
+          const int size = 2 * stencil_width + 1;
+
+          Vector<> stencil(size);
+          {
+            Matrix<> A(size);
+            Vector<> f(size);
+            double inv_factorial=1.0;
+            for (int k = 0; k < size; k++)
+            {
+              if (k>0)
+                inv_factorial/=k;
+              for (int l = 0; l < size; l++)
+                A(k,l) = std::pow(l-stencil_width,k) * inv_factorial;
+              f(k) = k==order ? 1.0 : 0;
+            }
+            stencil = Inv(A) * f;
+          }
+
+          for (int col = 0; col < size; ++col)
+            (*stencils)[row][col] = stencil(col);
+        }
+    }
+
+    ~CentralFDStencils()
+    {
+      delete stencils;
+    }
+  };
 
 
   template <int D, int ORDER>
@@ -696,6 +690,7 @@ namespace ngfem
   void DiffOpDuDnk<D,ORDER>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
+    const int FD_ACCURACY = 4;
     int version = 2;
     // mat.Row(0) = 0.0;
     // return;
@@ -707,6 +702,8 @@ namespace ngfem
     // cout << mipc.GetPoint() << endl;
 
     if (version == 1)
+      // not higher order accurate on curved meshes (!),
+      // but more stable and efficient (one derivate less to evaluate by FD)
     {
       const ScalarFiniteElement<D> & scafe =
         dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
@@ -720,15 +717,16 @@ namespace ngfem
 
       Vec<D> invjac_normal = mip.GetJacobianInverse() * normal;
 
-      const int stencilwidth = GetStencilWidth(ORDER-1);
-      const int stencilpoints = 2*stencilwidth+1;
+      FlatVector<> fdstencil (CentralFDStencils::Get(ORDER-1,FD_ACCURACY));
+      const double eps = CentralFDStencils::GetOptimalEps(ORDER-1,FD_ACCURACY);
+      const int stencilpoints = fdstencil.Size();
+      const int stencilwidth = (stencilpoints-1)/2;
       FlatMatrix<> dshapedn  (ndof, stencilpoints, lh);
       FlatVector<> dshapednk (ndof, lh);
 
       const double norminvjacn = L2Norm(invjac_normal);
       Vec<D> normal_dir_wrt_ref = (1.0/norminvjacn)  * invjac_normal;
 
-      const double eps = GetEps(ORDER-1);
 
       for (int i = 0; i < stencilpoints; ++i)
       {
@@ -737,10 +735,9 @@ namespace ngfem
           ip(d) += (i-stencilwidth) * eps * normal_dir_wrt_ref(d);
         dshapedn.Col(i) = scafe.GetDShape (ip, lh) * invjac_normal;
       }
-
-      dshapednk = dshapedn * GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh);
-
-      mat.Row(0) = dshapednk;
+      dshapednk = dshapedn * fdstencil;
+      const double eps_fac = std::pow(norminvjacn/eps,ORDER-1);
+      mat.Row(0) = eps_fac * dshapednk;
 
       const int feorder = scafe.Order();
       if (false && feorder > 1)
@@ -750,7 +747,7 @@ namespace ngfem
         cout << "dshapedn" << endl;
         cout << dshapedn << endl;
         cout << "coeffs" << endl;
-        cout << GetCentralDifferenceCoeffs(ORDER-1,eps / norminvjacn,lh) << endl;
+        cout << fdstencil << endl;
         cout << "dshapednk" << endl;
         cout << dshapednk << endl;
         getchar();
@@ -759,6 +756,8 @@ namespace ngfem
 		else
 		{
 			// VERSION 2 (fix points on phys. domain + transform points(!) back)
+      // higher order accurate also on curved meshes (!),
+      // but takes all derivatives by FD
       const ScalarFiniteElement<D> & scafe =
         dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
       const int ndof = scafe.GetNDof();
@@ -773,15 +772,16 @@ namespace ngfem
 
       const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
 
-      const int stencilwidth = GetStencilWidth(ORDER);
-      const int stencilpoints = 2*stencilwidth+1;
+      FlatVector<> fdstencil (CentralFDStencils::Get(ORDER,FD_ACCURACY));
+      const double eps = h * CentralFDStencils::GetOptimalEps(ORDER,FD_ACCURACY);
+
+      const int stencilpoints = fdstencil.Size();
+      const int stencilwidth = (stencilpoints-1)/2;
 
       FlatMatrix<> shape  (ndof, stencilpoints, lh);
       FlatVector<> dshapednk (ndof, lh);
 
       Vec<D> normal_dir_wrt_ref = invjac_normal;
-
-      const double eps = h * GetEps(ORDER);
 
       for (int i = 0; i < stencilpoints; ++i)
       {
@@ -795,7 +795,8 @@ namespace ngfem
 
         Vec<D> diff = vec - mip_x0.GetPoint();
         Vec<D> update = 0;
-        while (L2Norm(diff) > 1e-8*h)
+        int its = 0;
+        while (L2Norm(diff) > 1e-8*h && its < 20)
         {
           MappedIntegrationPoint<D,D> mip_x0(ip_x0,mip.GetTransformation());
           diff = vec - mip_x0.GetPoint();
@@ -805,13 +806,16 @@ namespace ngfem
           for (int d = 0; d < D; ++d)
             ip_x0(d) += update(d);
           // getchar();
+          its++;
         }
+        if (its >= 20)
+          cerr << "its >= 20 " << endl;
         shape.Col(i) = scafe.GetShape (ip_x0, lh);
       }
 
-      dshapednk = shape * GetCentralDifferenceCoeffs(ORDER,eps,lh);
-
-      mat.Row(0) = dshapednk;
+      dshapednk = shape * fdstencil;
+      const double eps_fac = std::pow(1.0/eps,ORDER);
+      mat.Row(0) = eps_fac * dshapednk;
 
       const int feorder = scafe.Order();
       if (false && feorder > 1)
@@ -821,11 +825,14 @@ namespace ngfem
         cout << "dshapedn" << endl;
         cout << shape << endl;
         cout << "coeffs" << endl;
-        cout << GetCentralDifferenceCoeffs(ORDER,eps,lh) << endl;
+        cout << fdstencil << endl;
         cout << "dshapednk" << endl;
         cout << dshapednk << endl;
         getchar();
       }
+      // TODO: Add version 3:
+      // VERSION 3 (fix points on phys. domain + transform points(!) back)
+      // take du/dn (n the path-adjusted) normal direction and take FD from this.
 			
 		}
 
@@ -836,9 +843,17 @@ namespace ngfem
   template class T_DifferentialOperator<DiffOpDuDnk<2,2>>;
   template class T_DifferentialOperator<DiffOpDuDnk<2,3>>;
   template class T_DifferentialOperator<DiffOpDuDnk<2,4>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,5>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,6>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,7>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<2,8>>;
   template class T_DifferentialOperator<DiffOpDuDnk<3,1>>;
   template class T_DifferentialOperator<DiffOpDuDnk<3,2>>;
   template class T_DifferentialOperator<DiffOpDuDnk<3,3>>;
   template class T_DifferentialOperator<DiffOpDuDnk<3,4>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,5>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,6>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,7>>;
+  template class T_DifferentialOperator<DiffOpDuDnk<3,8>>;
 
 }

@@ -73,7 +73,7 @@ sol=cos(2*pi*r*r)
 mlapsol=8*pi*(2*pi*r*r*cos(2*pi*r*r)+sin(2*pi*r*r))
 levelset_ex = r - 0.5
 
-order = 2
+order = 4
 
 lset_approx = GridFunction(H1(mesh,order=1))
 InterpolateToP1(levelset_ex,lset_approx)
@@ -126,7 +126,7 @@ def dnjump(u,order):
         return dn(u,order) - dn(u.Other(),order)
     else:
         return dn(u,order) + dn(u.Other(),order)
-factors = [1.0/h,  h, h*h*h/4.0, h*h*h*h*h/9.0, h*h*h*h*h*h*h/16.0, h*h*h*h*h*h*h*h*h/25.0]
+factors = [1.0/h,  h, h*h*h/4.0, h*h*h*h*h/9.0, h*h*h*h*h*h*h/16.0, h*h*h*h*h*h*h*h*h/25.0, h*h*h*h*h*h*h*h*h*h*h/36.0]
 for i in range(1, order+1):
     a += SymbolicBFI( 0.2 * facet_cut * factors[i] * dnjump(u,i) * dnjump(v,i),
                       skeleton=True )
@@ -197,7 +197,7 @@ itcnts = []
 first = True
 
 for i in range(7):
-    with TaskManager():
+    # with TaskManager():
         l2error, itcnt = Do(first)
         l2errors.append(l2error)
         itcnts.append(itcnt)

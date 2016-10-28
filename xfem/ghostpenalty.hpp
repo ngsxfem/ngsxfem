@@ -164,10 +164,18 @@ namespace ngfem
   extern template class T_DifferentialOperator<DiffOpDuDnk<2,2>>;
   extern template class T_DifferentialOperator<DiffOpDuDnk<2,3>>;
   extern template class T_DifferentialOperator<DiffOpDuDnk<2,4>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,5>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,6>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,7>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<2,8>>;
   extern template class T_DifferentialOperator<DiffOpDuDnk<3,1>>;
   extern template class T_DifferentialOperator<DiffOpDuDnk<3,2>>;
   extern template class T_DifferentialOperator<DiffOpDuDnk<3,3>>;
   extern template class T_DifferentialOperator<DiffOpDuDnk<3,4>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,5>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,6>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,7>>;
+  extern template class T_DifferentialOperator<DiffOpDuDnk<3,8>>;
 #endif
 
 }
