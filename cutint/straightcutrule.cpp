@@ -22,8 +22,14 @@ namespace xintegration
     for(auto t:s) cout << t << "\t";
     cout << endl;*/
     if(s.Size() == 2){
-        svs.Append(svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]));
-        return {{svs.Size()-1}};
+        Vec<3> p = svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]);
+        bool p_in_svs = false; int idx_p_in_svs = 0;
+        for(int i=0; i<svs.Size(); i++) if(L2Norm(p- svs[i])<1e-10) {p_in_svs = true; idx_p_in_svs = i; }
+        if(p_in_svs) return {idx_p_in_svs};
+        else{
+            svs.Append(p);
+            return {svs.Size()-1};
+        }
     }
     else if(s.Size() >= 3){
         Array<int> cut_points;
@@ -34,15 +40,16 @@ namespace xintegration
             for(int i=0; i<red.Size(); i++) lset_red[i] = lset[red[i]];
             if (CheckIfStraightCut(lset_red) == IF){
                 SimpleX s_i = Cut(red);
-                for(int t: s_i) cut_points.Append(t);
+                for(int t: s_i)
+                    if(!cut_points.Contains(t)) cut_points.Append(t);
                 //cut_points.insert(cut_points.begin(), s_i.begin(), s_i.end());
                 /*cout << "Inserted the following SimpleX: ";
                 for(auto t: s_i) cout << t << " ";
                 cout << endl;*/
             }
         }
-        /*if(s.size() > 3) RemoveDuplicates(cut_points);
-        cout << "The Vector cut_points: " << endl;
+        //if(s.size() > 3) RemoveDuplicates(cut_points);
+        /*cout << "The Vector cut_points: " << endl;
         for(auto p : cut_points) cout << p << "\t [ = " << svs[p] << "]" << endl;
         cout << endl << endl;*/
         return cut_points;
@@ -62,7 +69,7 @@ namespace xintegration
       for(int i=0; i<ElementTopology::GetNVertices(et); i++)
           svs.Append({verts[i][0], verts[i][1], verts[i][2]});
 
-      if(et == ET_TRIG) { // || et == ET_TET){ -- To be added after the cutting form ET_TET is finished
+      if((et == ET_TRIG) || (et == ET_TET)){// -- To be added after the cutting form ET_TET is finished
           Array<int> BaseSimplex(D+1);
           for(int i=0; i<BaseSimplex.Size(); i++) BaseSimplex[i] = i;
           simplices.Append(BaseSimplex);
@@ -87,6 +94,7 @@ namespace xintegration
       for(int i=0; i<D; i++) {
           delta_vec = svs[i]-svs[D];
           delta_f = lset[i]-lset[D];
+          //cout << "delta_vec: " << delta_vec << endl;
 
           for(int j=0; j<3; j++) {
               if (abs(delta_vec[j]) > 1e-10){
@@ -104,7 +112,11 @@ namespace xintegration
 
       simplices.DeleteAll();
       if(dt == IF) {
-          simplices.Append(s_cut);
+          if(s_cut.Size() == D) simplices.Append(s_cut);
+          else if((s_cut.Size() == D+1)&&(D==3)){
+              simplices.Append({s_cut[1],s_cut[2],s_cut[0]});
+              simplices.Append({s_cut[1],s_cut[0],s_cut[3]});
+          }
           CalcNormal();
       }
       else {
@@ -112,7 +124,7 @@ namespace xintegration
           for(int i=0; i<D+1; i++)
               if( ((dt == POS) &&(lset[i] > 0)) || ((dt == NEG) &&(lset[i] < 0)))
                   relevant_base_simplex_vertices.Append(i);
-          if(relevant_base_simplex_vertices.Size() == 1){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
+          if((relevant_base_simplex_vertices.Size() == 1)&&(D==2)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
               SimpleX s(s_cut);
               s.Append(relevant_base_simplex_vertices[0]);
               simplices.Append(s);
@@ -123,6 +135,10 @@ namespace xintegration
               simplices.Append(s1);
               simplices.Append(s2);
           }
+          /*
+          else if((relevant_base_simplex_vertices.Size() == 2) && (D==3)) { //Tetraeder is cut to several tetraeder
+
+          }*/
           else {
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
           }
@@ -138,6 +154,8 @@ namespace xintegration
         if(simplices[i].Size() == 2) ir_ngs = SelectIntegrationRule(ET_SEGM, order);
         else if(simplices[i].Size() == 3) ir_ngs = SelectIntegrationRule(ET_TRIG, order);
         else if(simplices[i].Size() == 4) ir_ngs = SelectIntegrationRule (ET_TET, order);
+
+        //cout << "Size of Simplices nr. " << i << ": " << simplices[i].Size() << endl;
 
         if(i == 0){
             intrule.SetSize(simplices.Size()*ir_ngs.Size());
@@ -176,8 +194,8 @@ namespace xintegration
 
     auto et = trafo.GetElementType();
 
-    if (et != ET_TRIG)
-      throw Exception("only trigs for now");
+    //if (et != ET_TRIG)
+    //  throw Exception("only trigs for now");
 
     timercutgeom.Start();
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
@@ -185,17 +203,15 @@ namespace xintegration
 
     //cout << "We are at Element Nr. " << trafo.GetElementNr() << endl;
 
-    /*
-    if(trafo.GetElementNr() == 907) {
+    if(trafo.GetElementNr() == 1371) {
         cout << "Last Element!! Debugging stuff:" << endl << endl;
         FlatVector<> lset(4,lh); lset = Vec<4>{-1,-1,-1,1};
         StraightCutElementGeometry geom(lset, et, lh);
-        Simpl s {{0,0,0}, {1,0,0}, {0,1,0},{0,0,1}};
-        geom.svs = s; geom.simplices = {{0,1,2,3}};
+        geom.svs = {{0,0,0}, {1,0,0}, {0,1,0},{0,0,1}}; geom.simplices = {{0,1,2,3}};
         cout << "geom.lset: " << geom.lset << endl;
-        geom.Cut(geom.simplices[0], lh);
+        geom.Cut(geom.simplices[0]);
         cout << "End of debugging stuff!" << endl;
-    }*/
+    }
 
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);

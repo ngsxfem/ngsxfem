@@ -11,8 +11,7 @@ namespace xintegration
   typedef Array<int> SimpleX;
 
   class StraightCutElementGeometry {      
-  private:
-      int D;
+  public:      int D;
       double MeasureSimplVol(const SimpleX &s);
       SimpleX Cut(const SimpleX &s);
       void CalcNormal();
