@@ -59,10 +59,4 @@ namespace xintegration
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
                                                      LocalHeap & lh);
-  const IntegrationRule * StraightCutIntegrationRuleOld(shared_ptr<CoefficientFunction> cf_lset,
-                                                       const FlatVector<> & cf_lset_at_element,
-                                                       const ElementTransformation & trafo,
-                                                       DOMAIN_TYPE dt,
-                                                       int intorder,
-                                                       LocalHeap & lh);
 }

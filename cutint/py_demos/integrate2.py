@@ -60,9 +60,8 @@ for reflevel in range(NAveraging):
     for key in domains:
         integral_old = Integrate(levelset_domain={"levelset" : levelset, "domain_type" : key}, cf=f, mesh=mesh, order=0)
         #integral_old = IntegrateX(lset=levelset,mesh=mesh,cf_neg=f, cf_pos=f, cf_interface=f,order=0,subdivlvl = 0,domains=interface_and_volume_domains)["interface"]
-        #integral_old = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000, int_old=True)
         #print("\n\n ----- NOW STARTING WITH THE NEWINTEGRATEX-FUNCTION -----\n\n")
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000, int_old=False)
+        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
 
         #integral = integral_old
         #integral_old = integral

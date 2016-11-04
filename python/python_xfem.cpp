@@ -592,7 +592,7 @@ void ExportNgsx()
           FunctionPointer([](bp::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
-                             int order, DOMAIN_TYPE dt, int heapsize, bool int_old)
+                             int order, DOMAIN_TYPE dt, int heapsize)
                           {
                             static Timer timer ("NewIntegrateX");
                             static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
@@ -629,8 +629,7 @@ void ExportNgsx()
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
-                                 if(int_old) ir = StraightCutIntegrationRuleOld(gf_lset, elvec, trafo, dt, order, lh);
-                                 else ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
+                                 ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
                                  timercutgeom.Stop();
                                  timerevalintrule.Start();
                                  if (ir != nullptr)
@@ -658,7 +657,7 @@ void ExportNgsx()
                           }),
           (bp::arg("lset"), bp::arg("mesh"), 
            bp::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)), 
-           bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000, bp::arg("int_old")=true));
+           bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000));
 
 }
 
