@@ -117,7 +117,7 @@ namespace xintegration
           for(int i=0; i<D+1; i++)
               if( ((dt == POS) &&(lset[i] > 1e-10)) || ((dt == NEG) &&(lset[i] < -1e-10)))
                   relevant_base_simplex_vertices.Append(i);
-          if((relevant_base_simplex_vertices.Size() == 1)&&(D==2)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
+          if((relevant_base_simplex_vertices.Size() == 1)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
               Polytope s(s_cut);
               s.Append(relevant_base_simplex_vertices[0]);
               simplices.Append(s);
@@ -128,10 +128,22 @@ namespace xintegration
               simplices.Append(s1);
               simplices.Append(s2);
           }
-          /*
           else if((relevant_base_simplex_vertices.Size() == 2) && (D==3)) { //Tetraeder is cut to several tetraeder
-
-          }*/
+              Polytope s1, s2, s3; s1 = s_cut; s1.ia[0] = relevant_base_simplex_vertices[1];
+              s2 = relevant_base_simplex_vertices; s2.Append(s_cut[1]); s2.Append(s_cut[2]);
+              s3 = s_cut; s3.ia[3] = relevant_base_simplex_vertices[0];
+              simplices.Append(s1);
+              simplices.Append(s2);
+              simplices.Append(s3);
+          }
+          else if((relevant_base_simplex_vertices.Size() == 3) && (D == 3)){
+              Polytope s1, s2, s3; s1 = s_cut; s1.Append(relevant_base_simplex_vertices[2]);
+              s2 = relevant_base_simplex_vertices; s2.Append(s_cut[1]);
+              s3 = s_cut; s3.ia[2] = relevant_base_simplex_vertices[0]; s3.Append(relevant_base_simplex_vertices[2]);
+              simplices.Append(s1);
+              simplices.Append(s2);
+              simplices.Append(s3);
+          }
           else {
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
           }

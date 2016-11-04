@@ -7,7 +7,7 @@ from ngsolve import *
 from xfem.basics import *
 
 
-NAveraging = 50
+NAveraging = 20
 
 def PrintTimers(substring):
     ### print hdg-intergrator timers
@@ -39,8 +39,8 @@ V = H1(mesh,order=1)
 lset_approx = GridFunction(V)
 InterpolateToP1(levelset,lset_approx)
 
-#domains = [NEG,POS,IF]
-domains = [IF]
+domains = [NEG,POS,IF]
+#domains = [IF]
 
 errors = dict()
 eoc = dict()

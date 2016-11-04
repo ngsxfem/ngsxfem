@@ -24,7 +24,6 @@ namespace xintegration
       void Append(auto v){ ia.Append(v); }
 
       auto operator[](int j) const { return ia[j]; }
-      auto operator[](int j) { return ia[j]; }
       auto Size() const { return ia.Size(); }
       void DeleteElement(auto i){ ia.DeleteElement(i); }
   };
