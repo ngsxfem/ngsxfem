@@ -67,16 +67,6 @@ namespace xintegration
       else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
-  /*
-  void StraightCutElementGeometry::CalcNormal(const Polytope &s_cut){
-      if(D == 2) normal = {Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[1], - Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[0], 0}; //Cross(Vec<3>(svs[s_cut[1]]-svs[s_cut[0]]), Vec<3>(0,0,1));
-      else if(D == 3) normal = Cross(Vec<3>(svs[s_cut[2]] - svs[s_cut[0]]), Vec<3>(svs[s_cut[1]] - svs[s_cut[0]]));
-      normal /= L2Norm(normal);
-      if ((InnerProduct(Vec<3>(svs[0]-svs[s_cut[0]]),normal) < 0)^(lset[0] > 0))
-          normal *= -1.;
-      //cout << "normal: " << normal << endl;
-  }*/
-
   void StraightCutElementGeometry::CalcNormal(){
       Vec<3> delta_vec;
       double delta_f;
@@ -150,7 +140,10 @@ namespace xintegration
       }
   }
 
-  void StraightCutElementGeometry::GetIntegrationRule(int order, IntegrationRule &intrule){
+  void StraightCutElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
+      LoadBaseSimplexFromElementTopology();
+      CutBaseSimplex(dt);
+
       int ref_ir_ngs_size; int j =0;
       for(int i=0; i<simplices.Size(); i++) {
         double trafofac = MeasureSimplVol(simplices[i]);
@@ -206,31 +199,15 @@ namespace xintegration
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
     timercutgeom.Stop();
 
-    //cout << "We are at Element Nr. " << trafo.GetElementNr() << endl;
-
-    /*
-    if(trafo.GetElementNr() == 1371) {
-        cout << "Last Element!! Debugging stuff:" << endl << endl;
-        FlatVector<> lset(4,lh); lset = Vec<4>{-1,-1,1,1};
-        StraightCutElementGeometry geom(lset, ET_TET, lh);
-        geom.svs = {{1,0,0}, {0,1,0}, {0,0,1}, {0,0,0}}; geom.simplices = {Polytope({0,1,2,3},3)};
-        cout << "geom.lset: " << geom.lset << endl;
-        //geom.CalcCutPolytopeUsingLset(geom.simplices[0]);
-        geom.CutBaseSimplex(IF);
-
-        cout << "End of debugging stuff!" << endl;
-    }*/
-
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);
     IntegrationRule quad_untrafo;
 
     if (element_domain == IF)
     {
-      static Timer timer1("StraightCutElementGeometry::Load+Cut"); timer1.Start();
-      geom.LoadBaseSimplexFromElementTopology();
-      geom.CutBaseSimplex(dt);
-      geom.GetIntegrationRule(intorder, quad_untrafo);
+      static Timer timer1("StraightCutElementGeometry::Load+Cut");
+      timer1.Start();
+      geom.GetIntegrationRule(intorder, dt, quad_untrafo);
       timer1.Stop();
     }
 

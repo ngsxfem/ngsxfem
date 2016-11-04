@@ -29,17 +29,20 @@ namespace xintegration
   };
 
   class StraightCutElementGeometry {      
-  public:      int D;
-      double MeasureSimplVol(const Polytope &s);
-      Polytope CalcCutPolytopeUsingLset(const Polytope &s);
-      Polytope CalcCutPointLineUsingLset(const Polytope &s);
-      //void CalcNormal();
-      void CalcNormal();
-  public:
+  private:
+      int D;
       Array<Vec<3>> svs;
       Array<Polytope> simplices;
       FlatVector<> lset;
       ELEMENT_TYPE et;
+      double MeasureSimplVol(const Polytope &s);
+      Polytope CalcCutPolytopeUsingLset(const Polytope &s);
+      Polytope CalcCutPointLineUsingLset(const Polytope &s);
+      void CalcNormal();
+      void LoadBaseSimplexFromElementTopology();
+      void CutBaseSimplex(DOMAIN_TYPE dt);
+
+  public:
       LocalHeap & lh;
       Vec<3> normal;
 
@@ -47,9 +50,7 @@ namespace xintegration
           D = Dim(et);
       }
 
-      void LoadBaseSimplexFromElementTopology();
-      void CutBaseSimplex(DOMAIN_TYPE dt);
-      void GetIntegrationRule(int order, IntegrationRule &intrule);
+      void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
