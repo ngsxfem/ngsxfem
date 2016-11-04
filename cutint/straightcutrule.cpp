@@ -173,6 +173,21 @@ namespace xintegration
       }
   }
 
+  template<unsigned int D>
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const StraightCutElementGeometry & geom, IntegrationRule * ir_interface){
+      for (int i = 0; i < quad_untrafo.Size(); ++i)
+      {
+          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
+          Mat<D,D> Finv = mip.GetJacobianInverse();
+
+          Vec<3> normal = Trans(Finv) * geom.normal ;
+          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+
+          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+      }
+  }
+
+
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
@@ -219,36 +234,10 @@ namespace xintegration
     {
       if (dt == IF)
       {
-        if (DIM == 2)
-        {
-          IntegrationRule * ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-          for (int i = 0; i < quad_untrafo.Size(); ++i)
-          {
-            MappedIntegrationPoint<2,2> mip(quad_untrafo[i],trafo);
-            Mat<2,2> Finv = mip.GetJacobianInverse();
-
-            Vec<3> normal = Trans(Finv) * geom.normal ;
-            const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
-
-            (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
-          }
-          ir = ir_interface;
-        }
-        else
-        {
-          IntegrationRule * ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-          for (int i = 0; i < quad_untrafo.Size(); ++i)
-          {
-            MappedIntegrationPoint<3,3> mip(quad_untrafo[i],trafo);
-            Mat<3,3> Finv = mip.GetJacobianInverse();
-
-            Vec<3> normal = Trans(Finv) * geom.normal;
-            const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
-
-            (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
-          }
-          ir = ir_interface;
-        }
+        auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
+        if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
+        else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom, ir_interface);
+        ir = ir_interface;
       }
       else {
         auto ir_domain = new (lh) IntegrationRule (quad_untrafo.Size(),lh);
