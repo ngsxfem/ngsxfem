@@ -10,10 +10,11 @@ namespace xintegration
 
   class Polytope {
   public:
-      Array<int> ia;
-      Polytope(Array<int> & a_ia) : ia(a_ia) {;}
-      Polytope(initializer_list<int> a_ia_l) : ia(a_ia_l) {;}
-      Polytope(){};
+      Array<int> ia; //the points
+      int D; //Dimension
+      Polytope(Array<int> & a_ia, int a_D) : ia(a_ia), D(a_D) {;}
+      Polytope(initializer_list<int> a_ia_l, int a_D) : ia(a_ia_l), D(a_D) {;}
+      Polytope(){D = -1; }
 
       auto begin() {return ia.begin(); }
       auto end() {return ia.end();}
@@ -28,12 +29,12 @@ namespace xintegration
       void DeleteElement(auto i){ ia.DeleteElement(i); }
   };
 
-  //typedef Array<int> SimpleX;
-
   class StraightCutElementGeometry {      
   public:      int D;
       double MeasureSimplVol(const Polytope &s);
       Polytope CalcCutPolytopeUsingLset(const Polytope &s);
+      Polytope CalcCutPointLineUsingLset(const Polytope &s);
+      //void CalcNormal();
       void CalcNormal();
   public:
       Array<Vec<3>> svs;

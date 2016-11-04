@@ -7,8 +7,8 @@ namespace xintegration
     bool hasneg = false;
 
     for (auto v : cf_lset_at_element) {
-        if (!haspos && (v >= 0)) haspos = true;
-        if (!hasneg && (v <= 0)) hasneg = true;
+        if (!haspos && (v > 1e-10)) haspos = true;
+        if (!hasneg && (v < -1e-10)) hasneg = true;
         if(haspos && hasneg) break;
     }
 
@@ -17,43 +17,33 @@ namespace xintegration
     else return POS;
   }
 
+  Polytope StraightCutElementGeometry::CalcCutPointLineUsingLset(const Polytope &s){
+      if((s.D != 1) ||(s.Size() != 2)) throw Exception("You called the cut-a-line function with a Polytope which is not a line!");
+
+      Vec<3> p = svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]);
+      svs.Append(p);
+      return Polytope({svs.Size()-1}, 0);
+  }
+
   Polytope StraightCutElementGeometry::CalcCutPolytopeUsingLset(const Polytope &s){
-    /*cout << "Cut was called for a Simplex with " << s.size() << " Elements: ";
-    for(auto t:s) cout << t << "\t";
-    cout << endl;*/
-    if(s.Size() == 2){
-        Vec<3> p = svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]);
-        bool p_in_svs = false; int idx_p_in_svs = 0;
-        for(int i=0; i<svs.Size(); i++) if(L2Norm(p- svs[i])<1e-10) {p_in_svs = true; idx_p_in_svs = i; }
-        if(p_in_svs) return {idx_p_in_svs};
-        else{
-            svs.Append(p);
-            return {svs.Size()-1};
-        }
-    }
-    else if(s.Size() >= 3){
-        Array<int> cut_points;
-        for(int i_remove =0; i_remove<s.Size(); i_remove++){
-            Polytope red(s);
-            red.DeleteElement(i_remove);
-            FlatVector<> lset_red(red.Size(), lh);
-            for(int i=0; i<red.Size(); i++) lset_red[i] = lset[red[i]];
-            if (CheckIfStraightCut(lset_red) == IF){
-                Polytope s_i = CalcCutPolytopeUsingLset(red);
-                for(int t: s_i)
-                    if(!cut_points.Contains(t)) cut_points.Append(t);
-                //cut_points.insert(cut_points.begin(), s_i.begin(), s_i.end());
-                /*cout << "Inserted the following SimpleX: ";
-                for(auto t: s_i) cout << t << " ";
-                cout << endl;*/
+      Array<int> cut_points;
+      if(((s.Size() == 3)&&(s.D == 2))||((s.Size() == 4)&&(s.D == 3))){
+        for(int i:s) {
+            for(int j:s){
+                if(i < j) {
+                    if(lset[i]*lset[j] < -1e-10){
+                        Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1));
+                        cut_points.Append(p[0]);
+                    }
+                }
             }
         }
-        //if(s.size() > 3) RemoveDuplicates(cut_points);
-        /*cout << "The Vector cut_points: " << endl;
-        for(auto p : cut_points) cout << p << "\t [ = " << svs[p] << "]" << endl;
-        cout << endl << endl;*/
-        return cut_points;
     }
+    else {
+        throw Exception("You tried to cut a Polytope which is not a simplex.");
+        return Polytope();
+    }
+    return Polytope(cut_points, s.D-1);
   }
 
   double StraightCutElementGeometry::MeasureSimplVol(const Polytope &s){
@@ -69,16 +59,16 @@ namespace xintegration
       for(int i=0; i<ElementTopology::GetNVertices(et); i++)
           svs.Append({verts[i][0], verts[i][1], verts[i][2]});
 
-      if((et == ET_TRIG) || (et == ET_TET)){// -- To be added after the cutting form ET_TET is finished
+      if((et == ET_TRIG) || (et == ET_TET)){
           Array<int> BaseSimplex(D+1);
           for(int i=0; i<BaseSimplex.Size(); i++) BaseSimplex[i] = i;
-          simplices.Append(BaseSimplex);
+          simplices.Append(Polytope(BaseSimplex, D));
       }
       else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
   /*
-  void StraightCutElementGeometry::CalcNormal(const SimpleX &s_cut){
+  void StraightCutElementGeometry::CalcNormal(const Polytope &s_cut){
       if(D == 2) normal = {Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[1], - Vec<3>(svs[s_cut[1]]-svs[s_cut[0]])[0], 0}; //Cross(Vec<3>(svs[s_cut[1]]-svs[s_cut[0]]), Vec<3>(0,0,1));
       else if(D == 3) normal = Cross(Vec<3>(svs[s_cut[2]] - svs[s_cut[0]]), Vec<3>(svs[s_cut[1]] - svs[s_cut[0]]));
       normal /= L2Norm(normal);
@@ -94,7 +84,6 @@ namespace xintegration
       for(int i=0; i<D; i++) {
           delta_vec = svs[i]-svs[D];
           delta_f = lset[i]-lset[D];
-          //cout << "delta_vec: " << delta_vec << endl;
 
           for(int j=0; j<3; j++) {
               if (abs(delta_vec[j]) > 1e-10){
@@ -113,16 +102,20 @@ namespace xintegration
       simplices.DeleteAll();
       if(dt == IF) {
           if(s_cut.Size() == D) simplices.Append(s_cut);
-          else if((s_cut.Size() == D+1)&&(D==3)){
-              simplices.Append({s_cut[1],s_cut[2],s_cut[0]});
-              simplices.Append({s_cut[1],s_cut[0],s_cut[3]});
+          else if((s_cut.Size() == 4)&&(D==3)){
+              simplices.Append(Polytope({s_cut[0],s_cut[1],s_cut[3]},2));
+              simplices.Append(Polytope({s_cut[0],s_cut[2],s_cut[3]},2));
+          }
+          else {
+              cout << "s_cut: " << s_cut.ia << endl;
+              throw Exception("Bad length of s_cut!");
           }
           CalcNormal();
       }
       else {
           Polytope relevant_base_simplex_vertices;
           for(int i=0; i<D+1; i++)
-              if( ((dt == POS) &&(lset[i] > 0)) || ((dt == NEG) &&(lset[i] < 0)))
+              if( ((dt == POS) &&(lset[i] > 1e-10)) || ((dt == NEG) &&(lset[i] < -1e-10)))
                   relevant_base_simplex_vertices.Append(i);
           if((relevant_base_simplex_vertices.Size() == 1)&&(D==2)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
               Polytope s(s_cut);
@@ -131,7 +124,7 @@ namespace xintegration
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (D==2)){ //Triangle is cut to a quad
               Polytope s1, s2; s1 = relevant_base_simplex_vertices; s2 = s_cut;
-              s1.Append(s_cut[1]); s2.Append(relevant_base_simplex_vertices[1]); //The right indices follow from the cutting order
+              s1.Append(s_cut[1]); s2.Append(relevant_base_simplex_vertices[0]); //The right indices follow from the cutting order
               simplices.Append(s1);
               simplices.Append(s2);
           }
@@ -194,8 +187,8 @@ namespace xintegration
 
     auto et = trafo.GetElementType();
 
-    //if (et != ET_TRIG)
-    //  throw Exception("only trigs for now");
+    if ((et != ET_TRIG)&&(et != ET_TET))
+      throw Exception("only trigs and tets for now");
 
     timercutgeom.Start();
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
@@ -203,15 +196,18 @@ namespace xintegration
 
     //cout << "We are at Element Nr. " << trafo.GetElementNr() << endl;
 
+    /*
     if(trafo.GetElementNr() == 1371) {
         cout << "Last Element!! Debugging stuff:" << endl << endl;
-        FlatVector<> lset(4,lh); lset = Vec<4>{-1,-1,-1,1};
-        StraightCutElementGeometry geom(lset, et, lh);
-        geom.svs = {{0,0,0}, {1,0,0}, {0,1,0},{0,0,1}}; geom.simplices = {{0,1,2,3}};
+        FlatVector<> lset(4,lh); lset = Vec<4>{-1,-1,1,1};
+        StraightCutElementGeometry geom(lset, ET_TET, lh);
+        geom.svs = {{1,0,0}, {0,1,0}, {0,0,1}, {0,0,0}}; geom.simplices = {Polytope({0,1,2,3},3)};
         cout << "geom.lset: " << geom.lset << endl;
-        geom.CalcCutPolytopeUsingLset(geom.simplices[0]);
+        //geom.CalcCutPolytopeUsingLset(geom.simplices[0]);
+        geom.CutBaseSimplex(IF);
+
         cout << "End of debugging stuff!" << endl;
-    }
+    }*/
 
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);
@@ -240,18 +236,14 @@ namespace xintegration
           for (int i = 0; i < quad_untrafo.Size(); ++i)
           {
             MappedIntegrationPoint<2,2> mip(quad_untrafo[i],trafo);
-
             Mat<2,2> Finv = mip.GetJacobianInverse();
-            const double absdet = mip.GetMeasure();
 
-            Vec<2> nref = geom.normal;
-            Vec<2> normal = absdet * Trans(Finv) * nref ;
-            double len = L2Norm(normal);
-            const double weight = quad_untrafo[i].Weight() * len;
+            Vec<3> normal = Trans(Finv) * geom.normal ;
+            const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
-            (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight/ mip.GetMeasure());
-            ir = ir_interface;
+            (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
           }
+          ir = ir_interface;
         }
         else
         {
@@ -259,18 +251,14 @@ namespace xintegration
           for (int i = 0; i < quad_untrafo.Size(); ++i)
           {
             MappedIntegrationPoint<3,3> mip(quad_untrafo[i],trafo);
-
             Mat<3,3> Finv = mip.GetJacobianInverse();
-            const double absdet = mip.GetMeasure();
 
-            Vec<3> nref = geom.normal;
-            Vec<3> normal = absdet * Trans(Finv) * nref ;
-            double len = L2Norm(normal);
-            const double weight = quad_untrafo[i].Weight() * len;
+            Vec<3> normal = Trans(Finv) * geom.normal;
+            const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
-            (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(),weight * len / mip.GetMeasure());
-            ir = ir_interface;
+            (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
           }
+          ir = ir_interface;
         }
       }
       else {

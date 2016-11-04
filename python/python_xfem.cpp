@@ -254,6 +254,7 @@ void ExportNgsx()
                             static Timer timerevalcoef ("IntegrateX::EvalCoef");
                             RegionTimer reg (timer);
                             LocalHeap lh(heapsize, "lh-Integrate");
+                            //cout << "IntegrateX called!!!!!" << endl;
                             
                             Flags flags = bp::extract<Flags> (domains)();
                             
@@ -397,7 +398,7 @@ void ExportNgsx()
                                        timerevalcoef.Start();
                                        cf[int(IF)] -> Evaluate (mir_interface, values);
                                        timerevalcoef.Stop();
-                                       
+
                                        for (int i = 0; i < interface_quad.Size(); ++i)
                                        {
                                          MappedIntegrationPoint<3,3> & mip(mir_interface[i]);
@@ -610,8 +611,6 @@ void ExportNgsx()
 
                             double sum = 0.0;
                             int DIM = ma->GetDimension();
-                            FlatVector<> elvec(3,lh);
-                            Array<int> dnums(3);
 
                             auto FESpace = gf_lset->GetFESpace();
 
@@ -622,12 +621,11 @@ void ExportNgsx()
                                  auto & trafo = ma->GetTrafo (el, lh);
 
                                  timergetdnums.Start();
+                                 Array<int> dnums;
                                  FESpace->GetDofNrs(el.Nr(),dnums);
+                                 FlatVector<> elvec(dnums.Size(),lh);
                                  gf_lset->GetVector().GetIndirect(dnums,elvec);
                                  timergetdnums.Stop();
-
-
-                                 //cout << "elvec: " << elvec[0] << "\t" << elvec[1] << "\t" << elvec[2] << endl;
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
