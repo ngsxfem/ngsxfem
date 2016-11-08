@@ -88,8 +88,8 @@ namespace ngfem
 
     Mat<D> mat = 0;
 
-    FlatMatrixFixWidth<D> bmat(ndof_total,lh);
-    FlatMatrixFixWidth<D> bmatjump(ndof_total,lh);
+    FlatMatrix<> bmat(ndof_total,D,lh);
+    FlatMatrix<> bmatjump(ndof_total,D,lh);
 
     bmat = 0.0;
     bmatjump = 0.0;
@@ -469,7 +469,7 @@ namespace ngfem
     FlatMatrixFixWidth<D> dshapeuv_total(ndofuv_total,lh);
     FlatMatrixFixWidth<D> dshapeuv(ndofuv,&dshapeuv_total(0,0));
     FlatMatrixFixWidth<D> dshapeuvx(ndofuv,&dshapeuv_total(ndofuv,0));
-    FlatMatrixFixWidth<D*D> bmat(D*ndofuv_total,lh);
+    FlatMatrix<> bmat(D*ndofuv_total,D*D,lh);
     FlatMatrixFixWidth<D*D> bmat_P(D*ndofuv_total,lh);
     FlatVector<> P2_bmat_P(D*ndofuv_total,lh);
     

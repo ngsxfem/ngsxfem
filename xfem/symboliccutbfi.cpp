@@ -92,13 +92,17 @@ namespace ngfem
 
     RegionTimer reg(t);
 
+    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+
     int trial_difforder = 99, test_difforder = 99;
     for (auto proxy : trial_proxies)
-      trial_difforder = min2(trial_difforder, proxy->Evaluator()->DiffOrder());
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
     for (auto proxy : test_proxies)
-      test_difforder = min2(test_difforder, proxy->Evaluator()->DiffOrder());
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
 
-    int intorder = 2*fel.Order();
+    int intorder = fel_trial.Order()+fel_test.Order();
 
     auto et = trafo.GetElementType();
     if (et == ET_TRIG || et == ET_TET)
@@ -215,8 +219,8 @@ namespace ngfem
                         diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *=
                           static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*(*ir)[i].Weight();
                   }
-                IntRange r1 = proxy1->Evaluator()->UsedDofs(fel);
-                IntRange r2 = proxy2->Evaluator()->UsedDofs(fel);
+                IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
+                IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
                 SliceMatrix<SCAL> part_elmat = elmat.Rows(r2).Cols(r1);
                 FlatMatrix<SCAL_SHAPES,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
                 FlatMatrix<SCAL_SHAPES,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);
@@ -226,7 +230,7 @@ namespace ngfem
                 for (int i = 0; i < mir.Size(); i+=BS)
                   {
                     HeapReset hr(lh);
-                    int bs = min2(int(BS), mir.Size()-i);
+                    int bs = min(int(BS), int(mir.Size())-i);
 
                     AFlatMatrix<SCAL_SHAPES> bbmat1(elmat.Width(), bs*proxy1->Dimension(), lh);
                     AFlatMatrix<SCAL> bdbmat1(elmat.Width(), bs*proxy2->Dimension(), lh);
@@ -235,10 +239,10 @@ namespace ngfem
 
                     // tb.Start();
                     BaseMappedIntegrationRule & bmir = mir.Range(i, i+bs, lh);
-                    proxy1->Evaluator()->CalcMatrix(fel, bmir, Trans(bbmat1), lh);
+                    proxy1->Evaluator()->CalcMatrix(fel_trial, bmir, Trans(bbmat1), lh);
 
                     if (!samediffop)
-                      proxy2->Evaluator()->CalcMatrix(fel, bmir, Trans(bbmat2), lh);
+                      proxy2->Evaluator()->CalcMatrix(fel_test, bmir, Trans(bbmat2), lh);
                     // tb.Stop();
 
                     // tdb.Start();

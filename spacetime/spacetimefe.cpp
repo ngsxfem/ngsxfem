@@ -6,7 +6,7 @@ namespace ngfem
 {
 
   void GR2PFiniteElement::CalcShape (const IntegrationPoint & ip, 
-                                    SliceVector<> shape) const
+                                    BareSliceVector<> shape) const
   {
     // std::cout << " GetNDof() = " << GetNDof() << std::endl;
     // std::cout << " ip = " << ip << std::flush << std::endl;
