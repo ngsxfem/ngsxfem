@@ -21,7 +21,7 @@ namespace xintegration
       if((s.D != 1) ||(s.Size() != 2)) throw Exception("You called the cut-a-line function with a Polytope which is not a line!");
 
       Vec<3> p = s.GetPoint(0) +(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(s.GetPoint(1)-s.GetPoint(0));
-      s.svs_ptr->Append(p);
+      s.svs_ptr->Append(make_tuple(p,0));
       return Polytope({s.svs_ptr->Size()-1}, 0, s.svs_ptr);
   }
 
@@ -56,7 +56,7 @@ namespace xintegration
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
       for(int i=0; i<ElementTopology::GetNVertices(et); i++)
-          svs_ptr->Append({verts[i][0], verts[i][1], verts[i][2]});
+          svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
 
       if((et == ET_TRIG) || (et == ET_TET)){
           Array<int> BaseSimplex(D+1);
@@ -71,7 +71,7 @@ namespace xintegration
       double delta_f;
       Vec<3> grad_f; grad_f = 0;
       for(int i=0; i<D; i++) {
-          delta_vec = (*svs_ptr)[i]-(*svs_ptr)[D];
+          delta_vec = get<0>((*svs_ptr)[i])-get<0>((*svs_ptr)[D]);
           delta_f = lset[i]-lset[D];
 
           for(int j=0; j<3; j++) {

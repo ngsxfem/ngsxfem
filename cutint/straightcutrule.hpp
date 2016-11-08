@@ -6,15 +6,16 @@
 using namespace ngfem;
 namespace xintegration
 {
+  typedef Array<tuple<Vec<3>, double>> PointCnt;
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element);
 
   class Polytope {
   public:
       Array<int> ia; //the points
       int D; //Dimension
-      shared_ptr<Array<Vec<3>>> svs_ptr;
-      Polytope(Array<int> & a_ia, int a_D, shared_ptr<Array<Vec<3>>> a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
-      Polytope(initializer_list<int> a_ia_l, int a_D, shared_ptr<Array<Vec<3>>> a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
+      shared_ptr<PointCnt> svs_ptr;
+      Polytope(Array<int> & a_ia, int a_D, auto a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
+      Polytope(initializer_list<int> a_ia_l, int a_D, auto a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
       Polytope(){D = -1; svs_ptr = nullptr; }
 
       auto begin() {return ia.begin(); }
@@ -29,14 +30,14 @@ namespace xintegration
       void DeleteElement(auto i){ ia.DeleteElement(i);}
 
       Vec<3> GetPoint(int j) const {
-          return (*svs_ptr)[ia[j]];
+          return get<0>((*svs_ptr)[ia[j]]);
       }
   };
 
   class StraightCutElementGeometry {      
   private:
       int D;
-      shared_ptr<Array<Vec<3>>> svs_ptr;
+      shared_ptr<PointCnt> svs_ptr;
       Array<Polytope> simplices;
       FlatVector<> lset;
       ELEMENT_TYPE et;
@@ -53,7 +54,7 @@ namespace xintegration
 
       StraightCutElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
           D = Dim(et);
-          svs_ptr = make_shared<Array<Vec<3>>>();
+          svs_ptr = make_shared<PointCnt>();
       }
 
       void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
