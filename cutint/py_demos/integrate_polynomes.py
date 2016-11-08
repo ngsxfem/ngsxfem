@@ -4,8 +4,12 @@ from ngsolve import *
 # basic xfem functionality
 from xfem.basics import *
 
-def pow(a,b):
-    return exp(log(a)*b)
+def power(a,b):
+    # print(a)
+    if (b==0):
+        return CoefficientFunction(1.0)
+    else:
+        return exp(log(a)*b)
 
 def Make2DProblem(maxh):
     from netgen.geom2d import SplineGeometry
@@ -32,9 +36,9 @@ x_bnd = 0.5363452
 
 levelset = x- x_bnd
 
-referencevals = { POS : lambda a,b: 1./((1+a)*(1+b))*(1 - pow(x_bnd, a+1)), NEG : lambda a,b: 1./((1+a)*(1+b))*pow(x_bnd, a+1), IF : lambda a,b: pow(x_bnd, a) }
+referencevals = { POS : lambda a,b: 1./((1+a)*(1+b))*(1 - pow(x_bnd, a+1)), NEG : lambda a,b: 1./((1+a)*(1+b))*pow(x_bnd, a+1), IF : lambda a,b: pow(x_bnd, a)/(b+1) }
 
-mesh = MakeProblem(D=2, maxh=0.22)
+mesh = MakeProblem(D=3, maxh=0.22)
 
 V = H1(mesh,order=1)
 lset_approx = GridFunction(V)
@@ -49,15 +53,16 @@ for key in domains:
     errors[key] = []
     eoc[key] = []
 
-exponents = [(0,0)] #[(0,1),(1,0),(2,1),(3,3),(6,2)]
+# exponents = [(0,0)] #[(0,1),(1,0),(2,1),(3,3),(6,2)]
+exponents = [(0,1),(1,0),(2,1),(3,3),(6,2)]
 
 for (a,b) in exponents:
     #f = CoefficientFunction(1)
-    #f = pow(x,a)*pow(y,b)
-    f = 0*x+0*y+1
+    f = power(x,a)*power(y,b)
+    # f = 0*x+0*y+1
     
     for key in domains:
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=0,domain_type=key,heapsize=1000000)
+        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=a+b,domain_type=key,heapsize=1000000)
         errors[key].append(abs(integral - referencevals[key](a,b)))
 
 print("errors:  \n{}\n".format(  errors))

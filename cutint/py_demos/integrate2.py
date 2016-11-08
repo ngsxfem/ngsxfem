@@ -7,7 +7,7 @@ from ngsolve import *
 from xfem.basics import *
 
 
-NAveraging = 20
+NAveraging = 400
 
 def PrintTimers(substring):
     ### print hdg-intergrator timers
@@ -36,9 +36,6 @@ referencevals = { POS : 8.0-pi/6.0, NEG : pi/6.0, IF : pi }
 
 mesh = Make3DProblem(maxh=0.22)
 
-V = H1(mesh,order=1)
-lset_approx = GridFunction(V)
-InterpolateToP1(levelset,lset_approx)
 
 domains = [NEG,POS,IF]
 #domains = [IF]
@@ -49,6 +46,10 @@ eoc = dict()
 for key in domains:
     errors[key] = []
     eoc[key] = []
+
+V = H1(mesh,order=1)
+lset_approx = GridFunction(V)
+InterpolateToP1(levelset,lset_approx)
 
 #now: repetitions to average performance (later convergence..)
 for reflevel in range(NAveraging):

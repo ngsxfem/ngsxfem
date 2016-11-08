@@ -599,7 +599,8 @@ void ExportNgsx()
                             static Timer timerevalintrule ("NewIntegrateX::EvaluateIntRule");
                             static Timer timeradding("NewIntegrateX::Adding");
                             static Timer timermapir("NewIntegrateX::MapingIntergrRule");
-                            static Timer timergetdnums("NewIntegrateX::GetDNums");
+                            static Timer timergetdnums1("NewIntegrateX::GetDNums1");
+                            static Timer timergetdnums2("NewIntegrateX::GetDNums2");
 
                             bp::extract<PyGF> bpgf(lset);
                             if (!bpgf.check())
@@ -614,18 +615,20 @@ void ExportNgsx()
 
                             auto FESpace = gf_lset->GetFESpace();
 
+                            ArrayMem<int,10> dnums;
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
                                  //cout << endl << "NewIntegrateX() loop: Element Nr. " << el.Nr() << endl;
                                  auto & trafo = ma->GetTrafo (el, lh);
 
-                                 timergetdnums.Start();
-                                 Array<int> dnums;
+                                 timergetdnums1.Start();
                                  FESpace->GetDofNrs(el.Nr(),dnums);
                                  FlatVector<> elvec(dnums.Size(),lh);
+                                 timergetdnums1.Stop();
+                                 timergetdnums2.Start();
                                  gf_lset->GetVector().GetIndirect(dnums,elvec);
-                                 timergetdnums.Stop();
+                                 timergetdnums2.Stop();
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
