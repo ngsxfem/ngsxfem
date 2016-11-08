@@ -98,9 +98,9 @@ namespace ngfem
 
     int trial_difforder = 99, test_difforder = 99;
     for (auto proxy : trial_proxies)
-      trial_difforder = min2(trial_difforder, proxy->Evaluator()->DiffOrder());
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
     for (auto proxy : test_proxies)
-      test_difforder = min2(test_difforder, proxy->Evaluator()->DiffOrder());
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
 
     int intorder = fel_trial.Order()+fel_test.Order();
 
@@ -230,7 +230,7 @@ namespace ngfem
                 for (int i = 0; i < mir.Size(); i+=BS)
                   {
                     HeapReset hr(lh);
-                    int bs = min2(int(BS), mir.Size()-i);
+                    int bs = min(int(BS), int(mir.Size())-i);
 
                     AFlatMatrix<SCAL_SHAPES> bbmat1(elmat.Width(), bs*proxy1->Dimension(), lh);
                     AFlatMatrix<SCAL> bdbmat1(elmat.Width(), bs*proxy2->Dimension(), lh);
