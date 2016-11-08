@@ -30,6 +30,7 @@ def Make3DProblem(maxh):
 # sphere with radius 0.5
 levelset = (sqrt(x*x+y*y+z*z)-0.5) #.Compile()
 #levelset = x
+print("Levelset created")
 
 referencevals = { POS : 8.0-pi/6.0, NEG : pi/6.0, IF : pi }
 
