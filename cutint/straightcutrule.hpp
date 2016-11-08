@@ -29,10 +29,13 @@ namespace xintegration
       auto Size() const { return ia.Size(); }
       void DeleteElement(auto i){ ia.DeleteElement(i);}
 
-      Vec<3> GetPoint(int j) const {
-          return get<0>((*svs_ptr)[ia[j]]);
-      }
+      Vec<3> GetPoint(int j) const { return get<0>((*svs_ptr)[ia[j]]); }
+      double GetLset(int j) const{ return get<1>((*svs_ptr)[ia[j]]); }
   };
+
+  double MeasureSimplVol(const Polytope &s);
+  Polytope CalcCutPolytopeUsingLset(const Polytope &s);
+  Polytope CalcCutPointLineUsingLset(const Polytope &s);
 
   class StraightCutElementGeometry {      
   private:
@@ -41,10 +44,7 @@ namespace xintegration
       Array<Polytope> simplices;
       FlatVector<> lset;
       ELEMENT_TYPE et;
-      double MeasureSimplVol(const Polytope &s);
-      Polytope CalcCutPolytopeUsingLset(const Polytope &s);
-      Polytope CalcCutPointLineUsingLset(const Polytope &s);
-      void CalcNormal();
+      void CalcNormal(const Polytope &base_simplex);
       void LoadBaseSimplexFromElementTopology();
       void CutBaseSimplex(DOMAIN_TYPE dt);
 

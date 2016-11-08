@@ -17,24 +17,22 @@ namespace xintegration
     else return POS;
   }
 
-  Polytope StraightCutElementGeometry::CalcCutPointLineUsingLset(const Polytope &s){
+  Polytope CalcCutPointLineUsingLset(const Polytope &s){
       if((s.D != 1) ||(s.Size() != 2)) throw Exception("You called the cut-a-line function with a Polytope which is not a line!");
 
-      Vec<3> p = s.GetPoint(0) +(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(s.GetPoint(1)-s.GetPoint(0));
+      Vec<3> p = s.GetPoint(0) +(s.GetLset(0)/(s.GetLset(0)-s.GetLset(1)))*(s.GetPoint(1)-s.GetPoint(0));
       s.svs_ptr->Append(make_tuple(p,0));
       return Polytope({s.svs_ptr->Size()-1}, 0, s.svs_ptr);
   }
 
-  Polytope StraightCutElementGeometry::CalcCutPolytopeUsingLset(const Polytope &s){
+  Polytope CalcCutPolytopeUsingLset(const Polytope &s){
       Array<int> cut_points;
       if(((s.Size() == 3)&&(s.D == 2))||((s.Size() == 4)&&(s.D == 3))){
-        for(int i:s) {
-            for(int j:s){
-                if(i < j) {
-                    if(lset[i]*lset[j] < -1e-10){
-                        Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1, s.svs_ptr));
-                        cut_points.Append(p[0]);
-                    }
+        for(int ii = 0; ii<s.Size(); ii++) { int i = s[ii];
+            for(int ij= ii+1; ij<s.Size(); ij++){ int j = s[ij];
+                if(s.GetLset(ii)*s.GetLset(ij) < -1e-10){
+                    Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1, s.svs_ptr));
+                    cut_points.Append(p[0]);
                 }
             }
         }
@@ -45,7 +43,7 @@ namespace xintegration
     return Polytope(cut_points, s.D-1, s.svs_ptr);
   }
 
-  double StraightCutElementGeometry::MeasureSimplVol(const Polytope &s){
+  double MeasureSimplVol(const Polytope &s){
       if(s.Size()==2) return L2Norm(Vec<3>(s.GetPoint(1)-s.GetPoint(0)));
       else if(s.Size()==3) return L2Norm(Cross(Vec<3>(s.GetPoint(2) - s.GetPoint(0)), Vec<3>(s.GetPoint(1) - s.GetPoint(0))));
       else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(s.GetPoint(3)-s.GetPoint(0)), Vec<3>(s.GetPoint(2)-s.GetPoint(0)), Vec<3>(s.GetPoint(1)-s.GetPoint(0))));
@@ -66,13 +64,13 @@ namespace xintegration
       else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
-  void StraightCutElementGeometry::CalcNormal(){
+  void StraightCutElementGeometry::CalcNormal(const Polytope &base_simplex){
       Vec<3> delta_vec;
       double delta_f;
       Vec<3> grad_f; grad_f = 0;
       for(int i=0; i<D; i++) {
-          delta_vec = get<0>((*svs_ptr)[i])-get<0>((*svs_ptr)[D]);
-          delta_f = lset[i]-lset[D];
+          delta_vec = base_simplex.GetPoint(i)-base_simplex.GetPoint(D);
+          delta_f = base_simplex.GetLset(i)-base_simplex.GetLset(D);
 
           for(int j=0; j<3; j++) {
               if (abs(delta_vec[j]) > 1e-10){
@@ -88,6 +86,7 @@ namespace xintegration
   void StraightCutElementGeometry::CutBaseSimplex(DOMAIN_TYPE dt){
       Polytope s_cut = CalcCutPolytopeUsingLset(simplices[0]);
 
+      if(dt == IF) CalcNormal(simplices[0]);
       simplices.DeleteAll();
       if(dt == IF) {
           if(s_cut.Size() == D) simplices.Append(s_cut);
@@ -99,7 +98,6 @@ namespace xintegration
               cout << "s_cut: " << s_cut.ia << endl;
               throw Exception("Bad length of s_cut!");
           }
-          CalcNormal();
       }
       else {
           Polytope relevant_base_simplex_vertices({}, D, svs_ptr);
