@@ -20,9 +20,9 @@ namespace xintegration
   Polytope StraightCutElementGeometry::CalcCutPointLineUsingLset(const Polytope &s){
       if((s.D != 1) ||(s.Size() != 2)) throw Exception("You called the cut-a-line function with a Polytope which is not a line!");
 
-      Vec<3> p = svs[s[0]]+(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(svs[s[1]]-svs[s[0]]);
-      svs.Append(p);
-      return Polytope({svs.Size()-1}, 0);
+      Vec<3> p = s.GetPoint(0) +(lset[s[0]]/(lset[s[0]]-lset[s[1]]))*(s.GetPoint(1)-s.GetPoint(0));
+      s.svs_ptr->Append(p);
+      return Polytope({s.svs_ptr->Size()-1}, 0, s.svs_ptr);
   }
 
   Polytope StraightCutElementGeometry::CalcCutPolytopeUsingLset(const Polytope &s){
@@ -32,7 +32,7 @@ namespace xintegration
             for(int j:s){
                 if(i < j) {
                     if(lset[i]*lset[j] < -1e-10){
-                        Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1));
+                        Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1, s.svs_ptr));
                         cut_points.Append(p[0]);
                     }
                 }
@@ -41,15 +41,14 @@ namespace xintegration
     }
     else {
         throw Exception("You tried to cut a Polytope which is not a simplex.");
-        return Polytope();
     }
-    return Polytope(cut_points, s.D-1);
+    return Polytope(cut_points, s.D-1, s.svs_ptr);
   }
 
   double StraightCutElementGeometry::MeasureSimplVol(const Polytope &s){
-      if(s.Size()==2) return L2Norm(Vec<3>(svs[s[1]]-svs[s[0]]));
-      else if(s.Size()==3) return L2Norm(Cross(Vec<3>(svs[s[2]]-svs[s[0]]), Vec<3>(svs[s[1]]-svs[s[0]])));
-      else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(svs[s[3]]-svs[s[0]]), Vec<3>(svs[s[2]]-svs[s[0]]), Vec<3>(svs[s[1]]-svs[s[0]])));
+      if(s.Size()==2) return L2Norm(Vec<3>(s.GetPoint(1)-s.GetPoint(0)));
+      else if(s.Size()==3) return L2Norm(Cross(Vec<3>(s.GetPoint(2) - s.GetPoint(0)), Vec<3>(s.GetPoint(1) - s.GetPoint(0))));
+      else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(s.GetPoint(3)-s.GetPoint(0)), Vec<3>(s.GetPoint(2)-s.GetPoint(0)), Vec<3>(s.GetPoint(1)-s.GetPoint(0))));
       else throw Exception("Calc the Volume of this type of Simplex not implemented!");
   }
 
@@ -57,12 +56,12 @@ namespace xintegration
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
       for(int i=0; i<ElementTopology::GetNVertices(et); i++)
-          svs.Append({verts[i][0], verts[i][1], verts[i][2]});
+          svs_ptr->Append({verts[i][0], verts[i][1], verts[i][2]});
 
       if((et == ET_TRIG) || (et == ET_TET)){
           Array<int> BaseSimplex(D+1);
           for(int i=0; i<BaseSimplex.Size(); i++) BaseSimplex[i] = i;
-          simplices.Append(Polytope(BaseSimplex, D));
+          simplices.Append(Polytope(BaseSimplex, D, svs_ptr));
       }
       else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
@@ -72,7 +71,7 @@ namespace xintegration
       double delta_f;
       Vec<3> grad_f; grad_f = 0;
       for(int i=0; i<D; i++) {
-          delta_vec = svs[i]-svs[D];
+          delta_vec = (*svs_ptr)[i]-(*svs_ptr)[D];
           delta_f = lset[i]-lset[D];
 
           for(int j=0; j<3; j++) {
@@ -93,8 +92,8 @@ namespace xintegration
       if(dt == IF) {
           if(s_cut.Size() == D) simplices.Append(s_cut);
           else if((s_cut.Size() == 4)&&(D==3)){
-              simplices.Append(Polytope({s_cut[0],s_cut[1],s_cut[3]},2));
-              simplices.Append(Polytope({s_cut[0],s_cut[2],s_cut[3]},2));
+              simplices.Append(Polytope({s_cut[0],s_cut[1],s_cut[3]},2, svs_ptr));
+              simplices.Append(Polytope({s_cut[0],s_cut[2],s_cut[3]},2, svs_ptr));
           }
           else {
               cout << "s_cut: " << s_cut.ia << endl;
@@ -103,7 +102,7 @@ namespace xintegration
           CalcNormal();
       }
       else {
-          Polytope relevant_base_simplex_vertices;
+          Polytope relevant_base_simplex_vertices({}, D, svs_ptr);
           for(int i=0; i<D+1; i++)
               if( ((dt == POS) &&(lset[i] > 1e-10)) || ((dt == NEG) &&(lset[i] < -1e-10)))
                   relevant_base_simplex_vertices.Append(i);
@@ -113,23 +112,23 @@ namespace xintegration
               simplices.Append(s);
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (D==2)){ //Triangle is cut to a quad
-              Polytope s1, s2; s1 = relevant_base_simplex_vertices; s2 = s_cut;
+              Polytope s1(relevant_base_simplex_vertices), s2(s_cut);// s1 = ; s2 = ;
               s1.Append(s_cut[1]); s2.Append(relevant_base_simplex_vertices[0]); //The right indices follow from the cutting order
               simplices.Append(s1);
               simplices.Append(s2);
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (D==3)) { //Tetraeder is cut to several tetraeder
-              Polytope s1, s2, s3; s1 = s_cut; s1.ia[0] = relevant_base_simplex_vertices[1];
-              s2 = relevant_base_simplex_vertices; s2.Append(s_cut[1]); s2.Append(s_cut[2]);
-              s3 = s_cut; s3.ia[3] = relevant_base_simplex_vertices[0];
+              Polytope s1(s_cut); s1.ia[0] = relevant_base_simplex_vertices[1];
+              Polytope s2(relevant_base_simplex_vertices); s2.Append(s_cut[1]); s2.Append(s_cut[2]);
+              Polytope s3(s_cut); s3.ia[3] = relevant_base_simplex_vertices[0];
               simplices.Append(s1);
               simplices.Append(s2);
               simplices.Append(s3);
           }
           else if((relevant_base_simplex_vertices.Size() == 3) && (D == 3)){
-              Polytope s1, s2, s3; s1 = s_cut; s1.Append(relevant_base_simplex_vertices[2]);
-              s2 = relevant_base_simplex_vertices; s2.Append(s_cut[1]);
-              s3 = s_cut; s3.ia[2] = relevant_base_simplex_vertices[0]; s3.Append(relevant_base_simplex_vertices[2]);
+              Polytope s1(s_cut); s1.Append(relevant_base_simplex_vertices[2]);
+              Polytope s2(relevant_base_simplex_vertices); s2.Append(s_cut[1]);
+              Polytope s3(s_cut); s3.ia[2] = relevant_base_simplex_vertices[0]; s3.Append(relevant_base_simplex_vertices[2]);
               simplices.Append(s1);
               simplices.Append(s2);
               simplices.Append(s3);
@@ -164,9 +163,9 @@ namespace xintegration
         for (auto ip : ir_ngs) {
           Vec<3> point(0.0); double originweight = 1.0;
           for (int m = 0; m < simplices[i].Size()-1 ;++m) originweight -= ip(m);
-            point = originweight * (svs[simplices[i][0]]);
+            point = originweight * (simplices[i].GetPoint(0));
           for (int m = 0; m < simplices[i].Size()-1 ;++m)
-            point += ip(m) * (svs[simplices[i][m+1]]);
+            point += ip(m) * (simplices[i].GetPoint(m+1));
           intrule[j] = IntegrationPoint(point, ip.Weight() * trafofac);
           j++;
         }
