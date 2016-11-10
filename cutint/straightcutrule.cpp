@@ -229,7 +229,7 @@ namespace xintegration
       cout << "Integration rule for cutted quad!" << endl;
       LoadBaseSimplexFromElementTopology(lset);
       //Ansatz: levelset = a*x+b*y+c*x*y+d
-      double d = lset[0];
+      d = lset[0];
       a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
 
       segments_x.Append(Polytope({0,1},1,svs_ptr));
