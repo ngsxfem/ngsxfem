@@ -486,14 +486,18 @@ void ExportNgsx()
                                    if (dynamic_cast<ProxyFunction&> (cf).IsOther())
                                      has_other = true;
                                });
-               
-             
-             if (has_other || element_boundary || skeleton)
+             if (has_other && !element_boundary && !skeleton)
+               throw Exception("DG-facet terms need either skeleton=True or element_boundary=True");
+             if (element_boundary)
                throw Exception("No Facet BFI with Symbolic cuts..");
-             
-             shared_ptr<BilinearFormIntegrator> bfi
-               = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
-             
+
+             shared_ptr<BilinearFormIntegrator> bfi;
+             if (!has_other && !skeleton)
+               bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+             else
+               bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+
+
              if (bp::extract<bp::list> (definedon).check())
                bfi -> SetDefinedOn (makeCArray<int> (definedon));
 
