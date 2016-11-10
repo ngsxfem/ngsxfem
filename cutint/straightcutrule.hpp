@@ -4,6 +4,14 @@
 #include <numeric>
 
 using namespace ngfem;
+
+namespace ngbla {
+bool operator==(const Vec<3> a, const Vec<3> b){
+    return L2Norm(a - b)<1e-12;
+}
+}
+
+
 namespace xintegration
 {
   typedef Array<tuple<Vec<3>, double>> PointCnt;
@@ -16,6 +24,18 @@ namespace xintegration
       shared_ptr<PointCnt> svs_ptr;
       Polytope(Array<int> & a_ia, int a_D, auto a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
       Polytope(initializer_list<int> a_ia_l, int a_D, auto a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
+      Polytope(initializer_list<tuple<Vec<3>, double>> a_points, int a_D, auto a_svs_ptr) : D(a_D), svs_ptr(a_svs_ptr){
+          for(auto p : a_points){
+              if(svs_ptr->Contains(p)){
+                  ia.Append(svs_ptr->Pos(p));
+              }
+              else {
+                  svs_ptr->Append(p);
+                  ia.Append(svs_ptr->Size() - 1);
+              }
+          }
+      }
+
       Polytope(){D = -1; svs_ptr = nullptr; }
 
       auto begin() {return ia.begin(); }
@@ -64,7 +84,19 @@ namespace xintegration
   public:
       int D;
       ELEMENT_TYPE et;
+      shared_ptr<PointCnt> svs_ptr;
       Polytope base_quad;
+      Array<Polytope> segments_x;
+      Array<Polytope> segments_y;
+      double a,b,c,d;
+
+      void PartitionSegmentsX(double x_cut, double lset_on_x_cut);
+      void PartitionSegmentsY(double y_cut, double lset_on_y_cut);
+
+      StraightCutQuadElementGeometry(ELEMENT_TYPE a_et) : et(a_et) {D = Dim(et); svs_ptr = make_shared<PointCnt>();}
+
+      void LoadBaseSimplexFromElementTopology(FlatVector<> lset); //TODO:Rename
+      void GetIntegrationRule(FlatVector<> lset, int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,

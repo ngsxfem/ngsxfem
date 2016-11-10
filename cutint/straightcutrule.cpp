@@ -17,6 +17,22 @@ namespace xintegration
     else return POS;
   }
 
+  DOMAIN_TYPE CheckIfStraightCut(const Polytope &s){
+      bool haspos = false;
+      bool hasneg = false;
+
+      for (int j=0; j<s.Size(); j++) {
+          double v = s.GetLset(j);
+          if (!haspos && (v > 1e-10)) haspos = true;
+          if (!hasneg && (v < -1e-10)) hasneg = true;
+          if(haspos && hasneg) break;
+      }
+
+      if (hasneg && haspos) return IF;
+      else if (hasneg) return NEG;
+      else return POS;
+  }
+
   Polytope CalcCutPointLineUsingLset(const Polytope &s){
       if((s.D != 1) ||(s.Size() != 2)) throw Exception("You called the cut-a-line function with a Polytope which is not a line!");
 
@@ -100,7 +116,8 @@ namespace xintegration
           }
       }
       else {
-          Polytope relevant_base_simplex_vertices({}, D, svs_ptr);
+          Array<int> nothing;
+          Polytope relevant_base_simplex_vertices(nothing, D, svs_ptr);
           for(int i=0; i<D+1; i++)
               if( ((dt == POS) &&(lset[i] > 1e-10)) || ((dt == NEG) &&(lset[i] < -1e-10)))
                   relevant_base_simplex_vertices.Append(i);
@@ -170,6 +187,124 @@ namespace xintegration
       }
   }
 
+  void StraightCutQuadElementGeometry::LoadBaseSimplexFromElementTopology(FlatVector<> lset) {
+      const POINT3D * verts = ElementTopology::GetVertices(et);
+
+      for(int i=0; i<ElementTopology::GetNVertices(et); i++){
+          svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
+          cout << "Point " << i << ": " << verts[i][0] << ", " << verts[i][1] << ", " << verts[i][2] << endl;
+      }
+
+      if(et == ET_QUAD) base_quad = Polytope({0,1,2,3}, D, svs_ptr);
+      else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
+  }
+
+  void StraightCutQuadElementGeometry::PartitionSegmentsX(double x_cut, double lset_on_x_cut){
+      for(int i=0; i<segments_x.Size(); i++){
+          if((segments_x[i].GetPoint(0)[0]<x_cut)&&(x_cut<segments_x[i].GetPoint(1)[0])){
+              Vec<3> p = segments_x[i].GetPoint(0); p[0] = x_cut;
+              svs_ptr->Append(make_tuple(p, lset_on_x_cut));
+              segments_x.Append(Polytope({segments_x[i][0], svs_ptr->Size()-1}, 1, svs_ptr));
+              segments_x.Append(Polytope({svs_ptr->Size()-1, segments_x[i][1]}, 1, svs_ptr));
+              segments_x.DeleteElement(i);
+              break;
+          }
+      }
+  }
+
+  void StraightCutQuadElementGeometry::PartitionSegmentsY(double y_cut, double lset_on_y_cut){
+      for(int i=0; i<segments_y.Size(); i++){
+          if((segments_y[i].GetPoint(0)[1]<y_cut)&&(y_cut<segments_y[i].GetPoint(1)[1])){
+              Vec<3> p = segments_y[i].GetPoint(0); p[1] = y_cut;
+              svs_ptr->Append(make_tuple(p, lset_on_y_cut));
+              segments_y.Append(Polytope({segments_y[i][0], svs_ptr->Size()-1}, 1, svs_ptr));
+              segments_y.Append(Polytope({svs_ptr->Size()-1, segments_y[i][1]}, 1, svs_ptr));
+              segments_y.DeleteElement(i);
+              break;
+          }
+      }
+  }
+
+  void StraightCutQuadElementGeometry::GetIntegrationRule(FlatVector<> lset, int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
+      cout << "Integration rule for cutted quad!" << endl;
+      LoadBaseSimplexFromElementTopology(lset);
+      //Ansatz: levelset = a*x+b*y+c*x*y+d
+      double d = lset[0];
+      a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
+
+      segments_x.Append(Polytope({0,1},1,svs_ptr));
+      segments_y.Append(Polytope({0,3},1,svs_ptr));
+
+      for(tuple<int, int> edge:{make_tuple(0,1),make_tuple(3,2)}){
+          if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
+              Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
+              cout << "New Cut point x: " << p.GetPoint(0) << endl;
+              PartitionSegmentsX(p.GetPoint(0)[0], a*p.GetPoint(0)[0]+d);
+          }
+      }
+      for(tuple<int, int> edge:{make_tuple(1,2),make_tuple(0,3)}){
+          if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
+              Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
+              cout << "New Cut point y: " << p.GetPoint(0) << endl;
+              PartitionSegmentsY(p.GetPoint(0)[1], b*p.GetPoint(0)[1]+d);
+          }
+      }
+      cout << "New x Segments due to segments_x: " << endl;
+      for(auto p: segments_x){
+          cout << p.GetPoint(0) << "\t" << p.GetPoint(1) << endl;
+      }
+
+      cout << "New y Segments due to segments_y: " << endl;
+      for(auto p: segments_y){
+          cout << p.GetPoint(0) << "\t" << p.GetPoint(1) << endl;
+      }
+
+      Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
+      for(auto p:segments_x){
+          for(auto q:segments_y){
+              cout << "Checking subquad" << p.GetPoint(0) << ", " << p.GetPoint(1) << ", " << q.GetPoint(0) << ", " << q.GetPoint(1) << endl;
+              double x1 = p.GetPoint(0)[0], y1 = q.GetPoint(0)[1];
+              double x2 = p.GetPoint(1)[0], y2 = q.GetPoint(1)[1];
+              Polytope poly({make_tuple(Vec<3>(x1, y1, 0), c*x1*y1+a*x1+b*y1+d),
+                             make_tuple(Vec<3>(x2, y1, 0), c*x2*y1+a*x2+b*y1+d),
+                             make_tuple(Vec<3>(x2, y2, 0), c*x2*y2+a*x2+b*y2+d),
+                             make_tuple(Vec<3>(x1, y2, 0), c*x1*y2+a*x1+b*y2+d) }, 2, svs_ptr);
+              DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
+              cout << "Interface type is " << dt_poly << endl;
+              if(dt_poly == IF) {
+                  Cut_quads.Append(poly);
+              }
+              else if(dt_poly == dt){
+                  Volume_quads.Append(poly);
+              }
+          }
+      }
+      if(dt == IF){
+          for(auto poly: Cut_quads){
+              cout << "The Cut Polytope: " << endl;
+              for(int pnt=0; pnt< poly.Size(); pnt++){
+                  cout << poly[pnt] << "\t" << poly.GetPoint(pnt) << "\t" << poly.GetLset(pnt) << endl;
+              }
+              double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
+              cout << "x0 = " << x0 << ", x1 = " << x1 << endl;
+              IntegrationRule ir_ngs;
+              ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+
+              for (auto ip : ir_ngs) {
+                Vec<3> point(0.0); double xi = ip.Point()[0];
+                cout << "xi = " << xi << endl; cout << "Weight: " << ip.Weight() << endl;
+                point[0] = x0+xi*(x1-x0); double u = a*point[0]+d, v = c*point[0]+b; point[1] = -u/v;
+                cout << "gamma(xi) = " << point << endl;
+                Vec<3> grad_gamma(0.0); grad_gamma[0] = x1-x0;
+                grad_gamma[1] = -(x1-x0)*(a*v - c*u)/(pow(v,2));
+                cout << "Grad_gamma = " << grad_gamma << endl;
+                cout << "Final weight: " << ip.Weight() * L2Norm(grad_gamma) << endl;
+                intrule.Append(IntegrationPoint(point, ip.Weight() * L2Norm(grad_gamma)));
+              }
+          }
+      }
+  }
+
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const StraightCutElementGeometry & geom, IntegrationRule * ir_interface){
       for (int i = 0; i < quad_untrafo.Size(); ++i)
@@ -180,6 +315,25 @@ namespace xintegration
           Vec<3> normal = Trans(Finv) * geom.normal ;
           const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
+          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+      }
+  }
+
+  template<unsigned int D>
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const StraightCutQuadElementGeometry & geom, IntegrationRule * ir_interface){
+      for (int i = 0; i < quad_untrafo.Size(); ++i)
+      {
+          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
+          Mat<D,D> Finv = mip.GetJacobianInverse();
+
+          Vec<3> geom_normal(0.);
+          geom_normal[0] = geom.a+geom.c*quad_untrafo[i].Point()[1];
+          geom_normal[1] = geom.b+geom.c*quad_untrafo[i].Point()[0];
+          geom_normal /= L2Norm(geom_normal);
+          cout << "geom_normal: " << geom_normal << endl;
+          Vec<3> normal = Trans(Finv) * geom_normal ;
+          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+          cout << "New weight after Normal correction: " << weight << endl;
           (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
       }
   }
@@ -204,8 +358,8 @@ namespace xintegration
 
     auto et = trafo.GetElementType();
 
-    if ((et != ET_TRIG)&&(et != ET_TET))
-      throw Exception("only trigs and tets for now");
+    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_QUAD))
+      throw Exception("only trigs, tets and quads for now");
 
     timercutgeom.Start();
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
@@ -213,13 +367,15 @@ namespace xintegration
 
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);
+    StraightCutQuadElementGeometry geom_quad(et);
     IntegrationRule quad_untrafo;
 
     if (element_domain == IF)
     {
       static Timer timer1("StraightCutElementGeometry::Load+Cut");
       timer1.Start();
-      geom.GetIntegrationRule(intorder, dt, quad_untrafo);
+      if(et == ET_QUAD) geom_quad.GetIntegrationRule(cf_lset_at_element, intorder, dt, quad_untrafo);
+      else geom.GetIntegrationRule(intorder, dt, quad_untrafo);
       timer1.Stop();
     }
 
@@ -232,7 +388,10 @@ namespace xintegration
       if (dt == IF)
       {
         auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-        if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
+        if (DIM == 2){
+            if(et == ET_QUAD) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
+            else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
+        }
         else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom, ir_interface);
         ir = ir_interface;
       }
