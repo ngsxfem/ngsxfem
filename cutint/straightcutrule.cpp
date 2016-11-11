@@ -187,27 +187,13 @@ namespace xintegration
       }
   }
 
-  void StraightCutQuadElementGeometry::LoadBaseQuadFromElementTopology(FlatVector<> lset) {
+  void StraightCutQuadElementGeometry::LoadBaseQuadFromElementTopology() {
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
       for(int i=0; i<ElementTopology::GetNVertices(et); i++)
           svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
 
       if(et != ET_QUAD) throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
-  }
-
-  void AppendIntRuleOnScaledQuad(const Polytope & quad, IntegrationRule &intrule, int order){
-      Mat<2,2> A(0.0);
-      A(0,0) = quad.GetPoint(1)[0] - quad.GetPoint(0)[0];
-      A(1,0) = quad.GetPoint(1)[1] - quad.GetPoint(0)[1];
-      A(0,1) = quad.GetPoint(3)[0] - quad.GetPoint(0)[0];
-      A(1,1) = quad.GetPoint(3)[1] - quad.GetPoint(0)[1];
-      IntegrationRule ir_ngs = SelectIntegrationRule(ET_QUAD, order);
-      double trafofac = abs(Det(A));
-      for(auto ip : ir_ngs){
-          Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
-          intrule.Append(IntegrationPoint(p, ip.Weight()*trafofac));
-      }
   }
 
   Vec<3> StraightCutQuadElementGeometry::GetNormal(const Vec<3>& p) const{
@@ -218,12 +204,8 @@ namespace xintegration
       return geom_normal;
   }
 
-
-  void StraightCutQuadElementGeometry::GetIntegrationRule(FlatVector<> lset, int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
-      LoadBaseQuadFromElementTopology(lset);
-      //Ansatz: levelset = a*x+b*y+c*x*y+d
-      d = lset[0]; a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
-      function<double(Vec<3>)> levelset = [this] (Vec<3> p) {return a*p[0]+b*p[1]+c*p[0]*p[1]+d;};
+  void StraightCutQuadElementGeometry::FindVolumeAndCutQuads(DOMAIN_TYPE dt){
+      function<double(Vec<3>)> levelset = [this] (const Vec<3>& p) {return a*p[0]+b*p[1]+c*p[0]*p[1]+d;};
 
       Vec<2, vector<double>> cut_points;
       for (int dim:{0,1}) { cut_points[dim].push_back(0); cut_points[dim].push_back(1);}
@@ -239,7 +221,6 @@ namespace xintegration
           sort(cut_points[dim].begin(), cut_points[dim].end());
       }
 
-      Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
       for(int i=0; i<cut_points[0].size()-1; i++){
           if(cut_points[0][i+1] -cut_points[0][i] > 1e-10){
               for(int j=0; j<cut_points[1].size()-1; j++){
@@ -260,45 +241,74 @@ namespace xintegration
           }
           else throw Exception("Orthogonal cut x!!");
       }
+  }
 
-      if(dt == IF){
-          for(auto poly: Cut_quads){
-              double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
-              IntegrationRule ir_ngs;
-              ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+  void StraightCutQuadElementGeometry::IntegrateCutQuads(int order, IntegrationRule &intrule) {
+      for(auto poly: Cut_quads){
+          double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
+          IntegrationRule ir_ngs;
+          ir_ngs = SelectIntegrationRule(ET_SEGM, order);
 
-              for (auto ip : ir_ngs) {
-                Vec<3> point(0.0);
-                point[0] = x0+ip.Point()[0]*(x1-x0);
-                double u = a*point[0]+d, v = c*point[0]+b; point[1] = -u/v;
-                Vec<3> grad_gamma(0.0); grad_gamma[0] = x1-x0;
-                grad_gamma[1] = -(x1-x0)*(a*v - c*u)/(pow(v,2));
-                intrule.Append(IntegrationPoint(point, ip.Weight() * L2Norm(grad_gamma)));
+          for (auto ip : ir_ngs) {
+            Vec<3> point(0.0);
+            point[0] = x0+ip.Point()[0]*(x1-x0);
+            double u = a*point[0]+d, v = c*point[0]+b; point[1] = -u/v;
+            Vec<3> grad_gamma(0.0); grad_gamma[0] = x1-x0;
+            grad_gamma[1] = -(x1-x0)*(a*v - c*u)/(pow(v,2));
+            intrule.Append(IntegrationPoint(point, ip.Weight() * L2Norm(grad_gamma)));
+          }
+      }
+  }
+
+  void StraightCutQuadElementGeometry::IntegrateVolumeQuads(int order, IntegrationRule &intrule){
+      for(auto quad : Volume_quads) {
+          Mat<2,2> A(0.0);
+          A(0,0) = quad.GetPoint(1)[0] - quad.GetPoint(0)[0];
+          A(1,0) = quad.GetPoint(1)[1] - quad.GetPoint(0)[1];
+          A(0,1) = quad.GetPoint(3)[0] - quad.GetPoint(0)[0];
+          A(1,1) = quad.GetPoint(3)[1] - quad.GetPoint(0)[1];
+          IntegrationRule ir_ngs = SelectIntegrationRule(ET_QUAD, order);
+          double trafofac = abs(Det(A));
+          for(auto ip : ir_ngs){
+              Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
+              intrule.Append(IntegrationPoint(p, ip.Weight()*trafofac));
+          }
+      }
+  }
+
+  void StraightCutQuadElementGeometry::IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
+      for(auto poly : Cut_quads){
+          double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
+          function<double(double)> y_ast = [this](double x) -> double {return -(a*x+d)/(c*x+b);};
+          auto y0 = y_ast, y1 = y_ast;
+          if(((dt == POS)&&(poly.GetLset(0) > 1e-12))||((dt == NEG)&&(poly.GetLset(0) < -1e-12)))
+              y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
+          else
+              y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
+
+          IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+          Vec<2> scale_f; scale_f[0] = x1-x0;
+          for(auto p1: ir_ngs){
+              for(auto p2 : ir_ngs){
+                  Vec<3> p(0.); p[0] = x0+p1.Point()[0]*scale_f[0];
+                  scale_f[1] = y1(p[0]) - y0(p[0]);
+                  p[1] = y0(p[0]) + p2.Point()[0]*scale_f[1];
+                  intrule.Append(IntegrationPoint(p, p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1]));
               }
           }
       }
-      else {
-          for(auto poly : Volume_quads) AppendIntRuleOnScaledQuad(poly, intrule, order);
-          for(auto poly : Cut_quads){
-              double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
-              function<double(double)> y_ast = [this](double x) -> double {return -(a*x+d)/(c*x+b);};
-              auto y0 = y_ast, y1 = y_ast;
-              if(((dt == POS)&&(poly.GetLset(0) > 1e-12))||((dt == NEG)&&(poly.GetLset(0) < -1e-12)))
-                  y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
-              else
-                  y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
+  }
 
-              IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-              Vec<2> scale_f; scale_f[0] = x1-x0;
-              for(auto p1: ir_ngs){
-                  for(auto p2 : ir_ngs){
-                      Vec<3> p(0.); p[0] = x0+p1.Point()[0]*scale_f[0];
-                      scale_f[1] = y1(p[0]) - y0(p[0]);
-                      p[1] = y0(p[0]) + p2.Point()[0]*scale_f[1];
-                      intrule.Append(IntegrationPoint(p, p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1]));
-                  }
-              }
-          }
+  void StraightCutQuadElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
+      LoadBaseQuadFromElementTopology();
+      //Ansatz: levelset = a*x+b*y+c*x*y+d
+      d = lset[0]; a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
+      FindVolumeAndCutQuads(dt);
+
+      if(dt == IF) IntegrateCutQuads(order, intrule);
+      else {
+          IntegrateVolumeQuads(order, intrule);
+          IntegrateVolumeOfCutQuads(dt, order, intrule);
       }
   }
 
@@ -344,14 +354,14 @@ namespace xintegration
 
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);
-    StraightCutQuadElementGeometry geom_quad(et);
+    StraightCutQuadElementGeometry geom_quad(cf_lset_at_element, et);
     IntegrationRule quad_untrafo;
 
     if (element_domain == IF)
     {
       static Timer timer1("StraightCutElementGeometry::Load+Cut");
       timer1.Start();
-      if(et == ET_QUAD) geom_quad.GetIntegrationRule(cf_lset_at_element, intorder, dt, quad_untrafo);
+      if(et == ET_QUAD) geom_quad.GetIntegrationRule(intorder, dt, quad_untrafo);
       else geom.GetIntegrationRule(intorder, dt, quad_untrafo);
       timer1.Stop();
     }

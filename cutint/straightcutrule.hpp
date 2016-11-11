@@ -94,13 +94,19 @@ namespace xintegration
       shared_ptr<PointCnt> svs_ptr;
       Vec<2, Array<Polytope>> segments;
       double a,b,c,d;
+      Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
+      FlatVector<> lset;
 
-      void LoadBaseQuadFromElementTopology(FlatVector<> lset);
+      void IntegrateCutQuads(int order, IntegrationRule &intrule);
+      void IntegrateVolumeQuads(int order, IntegrationRule &intrule);
+      void IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule);
+      void FindVolumeAndCutQuads(DOMAIN_TYPE dt);
+      void LoadBaseQuadFromElementTopology();
   public:
       Vec<3> GetNormal(const Vec<3>& p) const;
-      StraightCutQuadElementGeometry(ELEMENT_TYPE a_et) : et(a_et) {D = Dim(et); svs_ptr = make_shared<PointCnt>();}
+      StraightCutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et) : lset(a_lset), et(a_et) {D = Dim(et); svs_ptr = make_shared<PointCnt>();}
 
-      void GetIntegrationRule(FlatVector<> lset, int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
+      void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
