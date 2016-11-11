@@ -223,6 +223,7 @@ namespace xintegration
       LoadBaseQuadFromElementTopology(lset);
       //Ansatz: levelset = a*x+b*y+c*x*y+d
       d = lset[0]; a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
+      function<double(Vec<3>)> levelset = [this] (Vec<3> p) {return a*p[0]+b*p[1]+c*p[0]*p[1]+d;};
 
       Vec<2, vector<double>> cut_points;
       for (int dim:{0,1}) { cut_points[dim].push_back(0); cut_points[dim].push_back(1);}
@@ -241,14 +242,15 @@ namespace xintegration
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
       for(int i=0; i<cut_points[0].size()-1; i++){
           if(cut_points[0][i+1] -cut_points[0][i] > 1e-10){
-              double x1 = cut_points[0][i], x2 = cut_points[0][i+1];
               for(int j=0; j<cut_points[1].size()-1; j++){
                   if(cut_points[1][j+1] - cut_points[1][j] > 1e-10){
-                      double y1 = cut_points[1][j], y2 = cut_points[1][j+1];
-                      Polytope poly({make_tuple(Vec<3>(x1, y1, 0), c*x1*y1+a*x1+b*y1+d),
-                                     make_tuple(Vec<3>(x2, y1, 0), c*x2*y1+a*x2+b*y1+d),
-                                     make_tuple(Vec<3>(x2, y2, 0), c*x2*y2+a*x2+b*y2+d),
-                                     make_tuple(Vec<3>(x1, y2, 0), c*x1*y2+a*x1+b*y2+d) }, 2, svs_ptr);
+                      Vec<4, tuple<Vec<3>, double>> quad_points;
+                      get<0>(quad_points[0]) = {cut_points[0][i], cut_points[1][j], 0};
+                      get<0>(quad_points[1]) = {cut_points[0][i+1], cut_points[1][j], 0};
+                      get<0>(quad_points[2]) = {cut_points[0][i+1], cut_points[1][j+1], 0};
+                      get<0>(quad_points[3]) = {cut_points[0][i], cut_points[1][j+1], 0};
+                      for(int k=0; k<quad_points.Size(); k++) get<1>(quad_points[k]) = levelset(get<0>(quad_points[k]));
+                      Polytope poly(quad_points, 2, svs_ptr);
                       DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
                       if(dt_poly == IF) Cut_quads.Append(poly);
                       else if(dt_poly == dt) Volume_quads.Append(poly);

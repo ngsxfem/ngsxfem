@@ -25,8 +25,10 @@ namespace xintegration
       shared_ptr<PointCnt> svs_ptr;
       Polytope(Array<int> & a_ia, int a_D, auto a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
       Polytope(initializer_list<int> a_ia_l, int a_D, auto a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
-      Polytope(initializer_list<tuple<Vec<3>, double>> a_points, int a_D, auto a_svs_ptr) : D(a_D), svs_ptr(a_svs_ptr){
-          for(auto p : a_points){
+      template<int D>
+      Polytope(Vec<D, tuple<Vec<3>, double>> a_points, int a_D, auto a_svs_ptr) : D(a_D), svs_ptr(a_svs_ptr){
+          for(int i=0; i<D; i++){
+              auto p = a_points[i];
               if(svs_ptr->Contains(p)){
                   ia.Append(svs_ptr->Pos(p));
               }
