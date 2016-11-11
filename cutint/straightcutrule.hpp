@@ -1,5 +1,6 @@
 #pragma once
 #include "xintegration.hpp"
+#include <algorithm>
 #include <memory>
 #include <numeric>
 
@@ -92,7 +93,6 @@ namespace xintegration
       Vec<2, Array<Polytope>> segments;
       double a,b,c,d;
 
-      void PartitionSegments(double cut, double lset_on_cut, int dim);
       void LoadBaseQuadFromElementTopology(FlatVector<> lset);
   public:
       Vec<3> GetNormal(const Vec<3>& p) const;

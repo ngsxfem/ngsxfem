@@ -196,19 +196,6 @@ namespace xintegration
       if(et != ET_QUAD) throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
-  void StraightCutQuadElementGeometry::PartitionSegments(double cut, double lset_on_cut, int dim){
-      for(int i=0; i<segments[dim].Size(); i++){
-          if((segments[dim][i].GetPoint(0)[dim]<cut)&&(cut<segments[dim][i].GetPoint(1)[dim])){
-              Vec<3> p = segments[dim][i].GetPoint(0); p[dim] = cut;
-              svs_ptr->Append(make_tuple(p, lset_on_cut));
-              segments[dim].Append(Polytope({segments[dim][i][0], svs_ptr->Size()-1}, 1, svs_ptr));
-              segments[dim].Append(Polytope({svs_ptr->Size()-1, segments[dim][i][1]}, 1, svs_ptr));
-              segments[dim].DeleteElement(i);
-              break;
-          }
-      }
-  }
-
   void AppendIntRuleOnScaledQuad(const Polytope & quad, IntegrationRule &intrule, int order){
       Mat<2,2> A(0.0);
       A(0,0) = quad.GetPoint(1)[0] - quad.GetPoint(0)[0];
@@ -237,43 +224,41 @@ namespace xintegration
       //Ansatz: levelset = a*x+b*y+c*x*y+d
       d = lset[0]; a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
 
-      segments[0].Append(Polytope({0,1},1,svs_ptr));
-      segments[1].Append(Polytope({0,3},1,svs_ptr));
+      Vec<2, vector<double>> cut_points;
+      for (int dim:{0,1}) { cut_points[dim].push_back(0); cut_points[dim].push_back(1);}
 
       vector<vector<tuple<int,int>>> EdgesOfDim{{make_tuple(0,1),make_tuple(3,2)}, {make_tuple(1,2),make_tuple(0,3)}};
       for(int dim:{0,1}){
           for(tuple<int, int> edge:EdgesOfDim[dim]){
               if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
                   Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
-                  PartitionSegments(p.GetPoint(0)[dim], (lset[2*dim+1] -d)*p.GetPoint(0)[dim]+d, dim);
+                  cut_points[dim].push_back(p.GetPoint(0)[dim]);
               }
           }
+          sort(cut_points[dim].begin(), cut_points[dim].end());
       }
-      /*
-      cout << "New x Segments due to segments[0]: " << endl;
-      for(auto p: segments[0]){
-          cout << p.GetPoint(0) << "\t" << p.GetPoint(1) << endl;
-      }
-
-      cout << "New y Segments due to segments[1]: " << endl;
-      for(auto p: segments[1]){
-          cout << p.GetPoint(0) << "\t" << p.GetPoint(1) << endl;
-      }*/
 
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
-      for(auto p:segments[0]){
-          for(auto q:segments[1]){
-              double x1 = p.GetPoint(0)[0], y1 = q.GetPoint(0)[1];
-              double x2 = p.GetPoint(1)[0], y2 = q.GetPoint(1)[1];
-              Polytope poly({make_tuple(Vec<3>(x1, y1, 0), c*x1*y1+a*x1+b*y1+d),
-                             make_tuple(Vec<3>(x2, y1, 0), c*x2*y1+a*x2+b*y1+d),
-                             make_tuple(Vec<3>(x2, y2, 0), c*x2*y2+a*x2+b*y2+d),
-                             make_tuple(Vec<3>(x1, y2, 0), c*x1*y2+a*x1+b*y2+d) }, 2, svs_ptr);
-              DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
-              if(dt_poly == IF) Cut_quads.Append(poly);
-              else if(dt_poly == dt) Volume_quads.Append(poly);
+      for(int i=0; i<cut_points[0].size()-1; i++){
+          if(cut_points[0][i+1] -cut_points[0][i] > 1e-10){
+              double x1 = cut_points[0][i], x2 = cut_points[0][i+1];
+              for(int j=0; j<cut_points[1].size()-1; j++){
+                  if(cut_points[1][j+1] - cut_points[1][j] > 1e-10){
+                      double y1 = cut_points[1][j], y2 = cut_points[1][j+1];
+                      Polytope poly({make_tuple(Vec<3>(x1, y1, 0), c*x1*y1+a*x1+b*y1+d),
+                                     make_tuple(Vec<3>(x2, y1, 0), c*x2*y1+a*x2+b*y1+d),
+                                     make_tuple(Vec<3>(x2, y2, 0), c*x2*y2+a*x2+b*y2+d),
+                                     make_tuple(Vec<3>(x1, y2, 0), c*x1*y2+a*x1+b*y2+d) }, 2, svs_ptr);
+                      DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
+                      if(dt_poly == IF) Cut_quads.Append(poly);
+                      else if(dt_poly == dt) Volume_quads.Append(poly);
+                  }
+                  else throw Exception("Orthogonal cut y!!");
+              }
           }
+          else throw Exception("Orthogonal cut x!!");
       }
+
       if(dt == IF){
           for(auto poly: Cut_quads){
               double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
