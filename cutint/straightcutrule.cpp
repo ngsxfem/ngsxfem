@@ -187,82 +187,82 @@ namespace xintegration
       }
   }
 
-  void StraightCutQuadElementGeometry::LoadBaseSimplexFromElementTopology(FlatVector<> lset) {
+  void StraightCutQuadElementGeometry::LoadBaseQuadFromElementTopology(FlatVector<> lset) {
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
-      for(int i=0; i<ElementTopology::GetNVertices(et); i++){
+      for(int i=0; i<ElementTopology::GetNVertices(et); i++)
           svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
-          cout << "Point " << i << ": " << verts[i][0] << ", " << verts[i][1] << ", " << verts[i][2] << endl;
-      }
 
-      if(et == ET_QUAD) base_quad = Polytope({0,1,2,3}, D, svs_ptr);
-      else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
+      if(et != ET_QUAD) throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
   }
 
-  void StraightCutQuadElementGeometry::PartitionSegmentsX(double x_cut, double lset_on_x_cut){
-      for(int i=0; i<segments_x.Size(); i++){
-          if((segments_x[i].GetPoint(0)[0]<x_cut)&&(x_cut<segments_x[i].GetPoint(1)[0])){
-              Vec<3> p = segments_x[i].GetPoint(0); p[0] = x_cut;
-              svs_ptr->Append(make_tuple(p, lset_on_x_cut));
-              segments_x.Append(Polytope({segments_x[i][0], svs_ptr->Size()-1}, 1, svs_ptr));
-              segments_x.Append(Polytope({svs_ptr->Size()-1, segments_x[i][1]}, 1, svs_ptr));
-              segments_x.DeleteElement(i);
+  void StraightCutQuadElementGeometry::PartitionSegments(double cut, double lset_on_cut, int dim){
+      for(int i=0; i<segments[dim].Size(); i++){
+          if((segments[dim][i].GetPoint(0)[dim]<cut)&&(cut<segments[dim][i].GetPoint(1)[dim])){
+              Vec<3> p = segments[dim][i].GetPoint(0); p[dim] = cut;
+              svs_ptr->Append(make_tuple(p, lset_on_cut));
+              segments[dim].Append(Polytope({segments[dim][i][0], svs_ptr->Size()-1}, 1, svs_ptr));
+              segments[dim].Append(Polytope({svs_ptr->Size()-1, segments[dim][i][1]}, 1, svs_ptr));
+              segments[dim].DeleteElement(i);
               break;
           }
       }
   }
 
-  void StraightCutQuadElementGeometry::PartitionSegmentsY(double y_cut, double lset_on_y_cut){
-      for(int i=0; i<segments_y.Size(); i++){
-          if((segments_y[i].GetPoint(0)[1]<y_cut)&&(y_cut<segments_y[i].GetPoint(1)[1])){
-              Vec<3> p = segments_y[i].GetPoint(0); p[1] = y_cut;
-              svs_ptr->Append(make_tuple(p, lset_on_y_cut));
-              segments_y.Append(Polytope({segments_y[i][0], svs_ptr->Size()-1}, 1, svs_ptr));
-              segments_y.Append(Polytope({svs_ptr->Size()-1, segments_y[i][1]}, 1, svs_ptr));
-              segments_y.DeleteElement(i);
-              break;
-          }
+  void AppendIntRuleOnScaledQuad(const Polytope & quad, IntegrationRule &intrule, int order){
+      Mat<2,2> A(0.0);
+      A(0,0) = quad.GetPoint(1)[0] - quad.GetPoint(0)[0];
+      A(1,0) = quad.GetPoint(1)[1] - quad.GetPoint(0)[1];
+      A(0,1) = quad.GetPoint(3)[0] - quad.GetPoint(0)[0];
+      A(1,1) = quad.GetPoint(3)[1] - quad.GetPoint(0)[1];
+      IntegrationRule ir_ngs = SelectIntegrationRule(ET_QUAD, order);
+      double trafofac = abs(Det(A));
+      for(auto ip : ir_ngs){
+          Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
+          intrule.Append(IntegrationPoint(p, ip.Weight()*trafofac));
       }
   }
+
+  Vec<3> StraightCutQuadElementGeometry::GetNormal(const Vec<3>& p) const{
+      Vec<3> geom_normal(0.);
+      geom_normal[0] = a+c*p[1];
+      geom_normal[1] = b+c*p[0];
+      geom_normal /= L2Norm(geom_normal);
+      return geom_normal;
+  }
+
 
   void StraightCutQuadElementGeometry::GetIntegrationRule(FlatVector<> lset, int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
-      cout << "Integration rule for cutted quad!" << endl;
-      LoadBaseSimplexFromElementTopology(lset);
+      LoadBaseQuadFromElementTopology(lset);
       //Ansatz: levelset = a*x+b*y+c*x*y+d
-      d = lset[0];
-      a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
+      d = lset[0]; a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;
 
-      segments_x.Append(Polytope({0,1},1,svs_ptr));
-      segments_y.Append(Polytope({0,3},1,svs_ptr));
+      segments[0].Append(Polytope({0,1},1,svs_ptr));
+      segments[1].Append(Polytope({0,3},1,svs_ptr));
 
-      for(tuple<int, int> edge:{make_tuple(0,1),make_tuple(3,2)}){
-          if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
-              Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
-              cout << "New Cut point x: " << p.GetPoint(0) << endl;
-              PartitionSegmentsX(p.GetPoint(0)[0], a*p.GetPoint(0)[0]+d);
+      vector<vector<tuple<int,int>>> EdgesOfDim{{make_tuple(0,1),make_tuple(3,2)}, {make_tuple(1,2),make_tuple(0,3)}};
+      for(int dim:{0,1}){
+          for(tuple<int, int> edge:EdgesOfDim[dim]){
+              if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
+                  Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
+                  PartitionSegments(p.GetPoint(0)[dim], (lset[2*dim+1] -d)*p.GetPoint(0)[dim]+d, dim);
+              }
           }
       }
-      for(tuple<int, int> edge:{make_tuple(1,2),make_tuple(0,3)}){
-          if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
-              Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
-              cout << "New Cut point y: " << p.GetPoint(0) << endl;
-              PartitionSegmentsY(p.GetPoint(0)[1], b*p.GetPoint(0)[1]+d);
-          }
-      }
-      cout << "New x Segments due to segments_x: " << endl;
-      for(auto p: segments_x){
+      /*
+      cout << "New x Segments due to segments[0]: " << endl;
+      for(auto p: segments[0]){
           cout << p.GetPoint(0) << "\t" << p.GetPoint(1) << endl;
       }
 
-      cout << "New y Segments due to segments_y: " << endl;
-      for(auto p: segments_y){
+      cout << "New y Segments due to segments[1]: " << endl;
+      for(auto p: segments[1]){
           cout << p.GetPoint(0) << "\t" << p.GetPoint(1) << endl;
-      }
+      }*/
 
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
-      for(auto p:segments_x){
-          for(auto q:segments_y){
-              cout << "Checking subquad" << p.GetPoint(0) << ", " << p.GetPoint(1) << ", " << q.GetPoint(0) << ", " << q.GetPoint(1) << endl;
+      for(auto p:segments[0]){
+          for(auto q:segments[1]){
               double x1 = p.GetPoint(0)[0], y1 = q.GetPoint(0)[1];
               double x2 = p.GetPoint(1)[0], y2 = q.GetPoint(1)[1];
               Polytope poly({make_tuple(Vec<3>(x1, y1, 0), c*x1*y1+a*x1+b*y1+d),
@@ -270,74 +270,64 @@ namespace xintegration
                              make_tuple(Vec<3>(x2, y2, 0), c*x2*y2+a*x2+b*y2+d),
                              make_tuple(Vec<3>(x1, y2, 0), c*x1*y2+a*x1+b*y2+d) }, 2, svs_ptr);
               DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
-              cout << "Interface type is " << dt_poly << endl;
-              if(dt_poly == IF) {
-                  Cut_quads.Append(poly);
-              }
-              else if(dt_poly == dt){
-                  Volume_quads.Append(poly);
-              }
+              if(dt_poly == IF) Cut_quads.Append(poly);
+              else if(dt_poly == dt) Volume_quads.Append(poly);
           }
       }
       if(dt == IF){
           for(auto poly: Cut_quads){
-              cout << "The Cut Polytope: " << endl;
-              for(int pnt=0; pnt< poly.Size(); pnt++){
-                  cout << poly[pnt] << "\t" << poly.GetPoint(pnt) << "\t" << poly.GetLset(pnt) << endl;
-              }
               double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
-              cout << "x0 = " << x0 << ", x1 = " << x1 << endl;
               IntegrationRule ir_ngs;
               ir_ngs = SelectIntegrationRule(ET_SEGM, order);
 
               for (auto ip : ir_ngs) {
-                Vec<3> point(0.0); double xi = ip.Point()[0];
-                cout << "xi = " << xi << endl; cout << "Weight: " << ip.Weight() << endl;
-                point[0] = x0+xi*(x1-x0); double u = a*point[0]+d, v = c*point[0]+b; point[1] = -u/v;
-                cout << "gamma(xi) = " << point << endl;
+                Vec<3> point(0.0);
+                point[0] = x0+ip.Point()[0]*(x1-x0);
+                double u = a*point[0]+d, v = c*point[0]+b; point[1] = -u/v;
                 Vec<3> grad_gamma(0.0); grad_gamma[0] = x1-x0;
                 grad_gamma[1] = -(x1-x0)*(a*v - c*u)/(pow(v,2));
-                cout << "Grad_gamma = " << grad_gamma << endl;
-                cout << "Final weight: " << ip.Weight() * L2Norm(grad_gamma) << endl;
                 intrule.Append(IntegrationPoint(point, ip.Weight() * L2Norm(grad_gamma)));
+              }
+          }
+      }
+      else {
+          for(auto poly : Volume_quads) AppendIntRuleOnScaledQuad(poly, intrule, order);
+          for(auto poly : Cut_quads){
+              double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
+              function<double(double)> y_ast = [this](double x) -> double {return -(a*x+d)/(c*x+b);};
+              auto y0 = y_ast, y1 = y_ast;
+              if(((dt == POS)&&(poly.GetLset(0) > 1e-12))||((dt == NEG)&&(poly.GetLset(0) < -1e-12)))
+                  y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
+              else
+                  y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
+
+              IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+              Vec<2> scale_f; scale_f[0] = x1-x0;
+              for(auto p1: ir_ngs){
+                  for(auto p2 : ir_ngs){
+                      Vec<3> p(0.); p[0] = x0+p1.Point()[0]*scale_f[0];
+                      scale_f[1] = y1(p[0]) - y0(p[0]);
+                      p[1] = y0(p[0]) + p2.Point()[0]*scale_f[1];
+                      intrule.Append(IntegrationPoint(p, p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1]));
+                  }
               }
           }
       }
   }
 
-  template<unsigned int D>
-  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const StraightCutElementGeometry & geom, IntegrationRule * ir_interface){
+  template<unsigned int D, typename T>
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const T & geom, IntegrationRule * ir_interface){
       for (int i = 0; i < quad_untrafo.Size(); ++i)
       {
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
           Mat<D,D> Finv = mip.GetJacobianInverse();
 
-          Vec<3> normal = Trans(Finv) * geom.normal ;
+          Vec<3> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point()) ;
           const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
           (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
       }
   }
-
-  template<unsigned int D>
-  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const StraightCutQuadElementGeometry & geom, IntegrationRule * ir_interface){
-      for (int i = 0; i < quad_untrafo.Size(); ++i)
-      {
-          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
-          Mat<D,D> Finv = mip.GetJacobianInverse();
-
-          Vec<3> geom_normal(0.);
-          geom_normal[0] = geom.a+geom.c*quad_untrafo[i].Point()[1];
-          geom_normal[1] = geom.b+geom.c*quad_untrafo[i].Point()[0];
-          geom_normal /= L2Norm(geom_normal);
-          cout << "geom_normal: " << geom_normal << endl;
-          Vec<3> normal = Trans(Finv) * geom_normal ;
-          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
-          cout << "New weight after Normal correction: " << weight << endl;
-          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
-      }
-  }
-
 
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)

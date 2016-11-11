@@ -67,10 +67,14 @@ namespace xintegration
       void CalcNormal(const Polytope &base_simplex);
       void LoadBaseSimplexFromElementTopology();
       void CutBaseSimplex(DOMAIN_TYPE dt);
+      Vec<3> normal;
 
   public:
       LocalHeap & lh;
-      Vec<3> normal;
+
+      Vec<3> GetNormal(const Vec<3>& p) const{
+          return normal;
+      }
 
       StraightCutElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
           D = Dim(et);
@@ -81,21 +85,19 @@ namespace xintegration
   };
 
   class StraightCutQuadElementGeometry {
-  public:
+  private:
       int D;
       ELEMENT_TYPE et;
       shared_ptr<PointCnt> svs_ptr;
-      Polytope base_quad;
-      Array<Polytope> segments_x;
-      Array<Polytope> segments_y;
+      Vec<2, Array<Polytope>> segments;
       double a,b,c,d;
 
-      void PartitionSegmentsX(double x_cut, double lset_on_x_cut);
-      void PartitionSegmentsY(double y_cut, double lset_on_y_cut);
-
+      void PartitionSegments(double cut, double lset_on_cut, int dim);
+      void LoadBaseQuadFromElementTopology(FlatVector<> lset);
+  public:
+      Vec<3> GetNormal(const Vec<3>& p) const;
       StraightCutQuadElementGeometry(ELEMENT_TYPE a_et) : et(a_et) {D = Dim(et); svs_ptr = make_shared<PointCnt>();}
 
-      void LoadBaseSimplexFromElementTopology(FlatVector<> lset); //TODO:Rename
       void GetIntegrationRule(FlatVector<> lset, int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 

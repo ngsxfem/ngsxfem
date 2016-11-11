@@ -16,10 +16,19 @@ mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
 r=0.6
 
+domains = [NEG,POS,IF]
+
 levelset = sqrt(x*x+y*y)-r
+referencevals = { POS : 1-pi*r*r/4, NEG : pi*r*r/4, IF : r*pi/2}
+
 n_ref = 7
 order = 1
-errors = []
+errors = dict()
+eoc = dict()
+
+for key in domains:
+    errors[key] = []
+    eoc[key] = []
 
 for i in range(n_ref):
   V = H1(mesh,order=1)
@@ -28,14 +37,17 @@ for i in range(n_ref):
   Draw(lset_approx)
 
   f = CoefficientFunction(1)
-
-  integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=IF,heapsize=1000000)
-  print("Result of Integration Reflevel ",i,": ", integral)
-  errors.append(abs(integral - r*pi/2))
+  for key in domains:
+    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000)
+    print("Result of Integration Reflevel ",i,", Key ",key," : ", integral)
+    errors[key].append(abs(integral - referencevals[key]))
 
   if i < n_ref - 1:
     mesh.Refine()
 
+for key in domains:
+  eoc[key] = [log(errors[key][i+1]/errors[key][i])/log(0.5) for i in range(n_ref-1)]
+
 print("L2-errors:", errors)
-l2_eoc = [log(errors[i+1]/errors[i])/log(0.5) for i in range(n_ref-1)]
-print("experimental order of convergence (L2):", l2_eoc)
+#l2_eoc = [log(errors[i+1]/errors[i])/log(0.5) for i in range(n_ref-1)]
+print("experimental order of convergence (L2):", eoc)
