@@ -94,17 +94,29 @@ namespace xintegration
       shared_ptr<PointCnt> svs_ptr;
       Vec<2, Array<Polytope>> segments;
       double a,b,c,d;
+      Vec<2, Vec<2, Vec<2, double>>> lc; //Levelset Coefficients (3D only yet)
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
       FlatVector<> lset;
 
       void IntegrateCutQuads(int order, IntegrationRule &intrule);
+      void IntegrateCutQuads3D(int order, IntegrationRule &intrule);
       void IntegrateVolumeQuads(int order, IntegrationRule &intrule);
+      void IntegrateVolumeQuads3D(int order, IntegrationRule &intrule);
       void IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule);
+      void IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule);
       void FindVolumeAndCutQuads(DOMAIN_TYPE dt);
+      void FindVolumeAndCutQuads3D(DOMAIN_TYPE dt);
+  public:
       void LoadBaseQuadFromElementTopology();
   public:
       Vec<3> GetNormal(const Vec<3>& p) const;
-      StraightCutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et) : lset(a_lset), et(a_et) {D = Dim(et); svs_ptr = make_shared<PointCnt>();}
+      StraightCutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et) : lset(a_lset), et(a_et) {
+          D = Dim(et); svs_ptr = make_shared<PointCnt>();
+          if(D == 3){//Why is this required?!!
+              vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
+              for(int i=0; i<lset.Size(); i++) lset[i] = lset_s[lset.Size()-1-i];
+          }
+      }
 
       void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
