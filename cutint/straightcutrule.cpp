@@ -202,8 +202,8 @@ namespace xintegration
   Vec<3> StraightCutQuadElementGeometry::GetNormal(const Vec<3>& p) const{
       Vec<3> geom_normal(0.);
       if(D==2){
-        geom_normal[0] = a+c*p[1];
-        geom_normal[1] = b+c*p[0];
+        geom_normal[0] = lc[1][0][0]+lc[1][1][0]*p[1];
+        geom_normal[1] = lc[0][1][0]+lc[1][1][0]*p[0];
       }
       else{
           geom_normal[0] = lc[1][0][0]+lc[1][1][0]*p[1]+lc[1][0][1]*p[2]+lc[1][1][1]*p[1]*p[2];
@@ -215,7 +215,7 @@ namespace xintegration
   }
 
   void StraightCutQuadElementGeometry::FindVolumeAndCutQuads(DOMAIN_TYPE dt){
-      function<double(Vec<3>)> levelset = [this] (const Vec<3>& p) {return a*p[0]+b*p[1]+c*p[0]*p[1]+d;};
+      function<double(Vec<3>)> levelset = [this] (const Vec<3>& p) {return lc[1][0][0]*p[0]+lc[0][1][0]*p[1]+lc[1][1][0]*p[0]*p[1]+lc[0][0][0];};
 
       Vec<2, vector<double>> cut_points;
       for (int dim:{0,1}) { cut_points[dim].push_back(0); cut_points[dim].push_back(1);}
@@ -316,9 +316,9 @@ namespace xintegration
           for (auto ip : ir_ngs) {
             Vec<3> point(0.0);
             point[0] = x0+ip.Point()[0]*(x1-x0);
-            double u = a*point[0]+d, v = c*point[0]+b; point[1] = -u/v;
+            double u = lc[1][0][0]*point[0]+lc[0][0][0], v = lc[1][1][0]*point[0]+lc[0][1][0]; point[1] = -u/v;
             Vec<3> grad_gamma(0.0); grad_gamma[0] = x1-x0;
-            grad_gamma[1] = -(x1-x0)*(a*v - c*u)/(pow(v,2));
+            grad_gamma[1] = -(x1-x0)*(lc[1][0][0]*v - lc[1][1][0]*u)/(pow(v,2));
             intrule.Append(IntegrationPoint(point, ip.Weight() * L2Norm(grad_gamma)));
           }
       }
@@ -451,7 +451,7 @@ namespace xintegration
   void StraightCutQuadElementGeometry::IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
       for(auto poly : Cut_quads){
           double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
-          function<double(double)> y_ast = [this](double x) -> double {return -(a*x+d)/(c*x+b);};
+          function<double(double)> y_ast = [this](double x) -> double {return -(lc[1][0][0]*x+lc[0][0][0])/(lc[1][1][0]*x+lc[0][1][0]);};
           auto y0 = y_ast, y1 = y_ast;
           if(((dt == POS)&&(poly.GetLset(0) > 1e-12))||((dt == NEG)&&(poly.GetLset(0) < -1e-12)))
               y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
@@ -474,7 +474,10 @@ namespace xintegration
   void StraightCutQuadElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
       LoadBaseQuadFromElementTopology();
       //Ansatz: levelset = a*x+b*y+c*x*y+d
-      if(D == 2){ d = lset[0]; a = lset[1]-d, b = lset[3] - d, c = lset[2] - a- b- d;}
+      if(D == 2){
+          lc[0][0][0] = lset[0]; lc[1][0][0] = lset[1]-lc[0][0][0], lc[0][1][0] = lset[3] - lc[0][0][0], lc[1][1][0] = lset[2] - lc[1][0][0]- lc[0][1][0]- lc[0][0][0];
+          for(int i1=0; i1<D; i1++) for(int i2=0; i2<D; i2++) lc[i1][i2][1] = 0.;
+      }
       else{
           cout << "Levelset: " << lset << endl;
           lc[0][0][0] = lset[0]; lc[1][0][0] = lset[1]-lset[0]; lc[0][1][0] = lset[3] - lset[0]; lc[0][0][1] = lset[4] - lset[0];

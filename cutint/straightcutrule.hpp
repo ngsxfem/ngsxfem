@@ -93,8 +93,7 @@ namespace xintegration
       ELEMENT_TYPE et;
       shared_ptr<PointCnt> svs_ptr;
       Vec<2, Array<Polytope>> segments;
-      double a,b,c,d;
-      Vec<2, Vec<2, Vec<2, double>>> lc; //Levelset Coefficients (3D only yet)
+      Vec<2, Vec<2, Vec<2, double>>> lc;
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
       FlatVector<> lset;
 
