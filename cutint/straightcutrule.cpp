@@ -192,8 +192,8 @@ namespace xintegration
 
       for(int i=0; i<ElementTopology::GetNVertices(et); i++){
           svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
-          cout << "Point Nr. " << i << endl;
-          cout << verts[i][0] << "\t" << verts[i][1] << "\t" << verts[i][2] << endl;
+          //cout << "Point Nr. " << i << endl;
+          //cout << verts[i][0] << "\t" << verts[i][1] << "\t" << verts[i][2] << endl;
       }
 
       if((et != ET_QUAD)&&(et != ET_HEX)) throw Exception("Error in LoadBaseQuadFromElementTopology() - ET_TYPE not supported yet!");
@@ -273,9 +273,9 @@ namespace xintegration
         }
         sort(cut_points[dim].begin(), cut_points[dim].end());
     }
-    cout << "Length of Cut Points x: " << cut_points[0].size() << endl;
-    cout << "Length of Cut Points y: " << cut_points[1].size() << endl;
-    cout << "Length of Cut Points z: " << cut_points[2].size() << endl;
+    //cout << "Length of Cut Points x: " << cut_points[0].size() << endl;
+    //cout << "Length of Cut Points y: " << cut_points[1].size() << endl;
+    //cout << "Length of Cut Points z: " << cut_points[2].size() << endl;
 
     for(int i=0; i<cut_points[0].size()-1; i++){
         if(cut_points[0][i+1] -cut_points[0][i] > 1e-10){
@@ -362,7 +362,7 @@ namespace xintegration
                 del_gamma_eta[2] = -scale_f[1]*((lc[0][1][0] + lc[1][1][0]*p[0])*v - (lc[0][1][1]+lc[1][1][1]*p[0])*u)/(pow(v,2));
                 double trafocfac =L2Norm(Cross(del_gamma_xi, del_gamma_eta));
                 intrule.Append(IntegrationPoint(p, ip1.Weight() * ip2.Weight()* trafocfac));
-                cout << "Appending the Weight " << ip1.Weight() * ip2.Weight()* trafocfac << " on IF int 3D" << endl;
+                //cout << "Appending the Weight " << ip1.Weight() * ip2.Weight()* trafocfac << " on IF int 3D" << endl;
             }
           }
       }
@@ -402,11 +402,11 @@ namespace xintegration
           for(auto ip : ir_ngs){
               Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
               intrule.Append(IntegrationPoint(p, ip.Weight()*trafofac));
-              cout << "Adding the weight " << ip.Weight()*trafofac << " from Volume 3D" << endl;
+              //cout << "Adding the weight " << ip.Weight()*trafofac << " from Volume 3D" << endl;
           }
       }
   }
-
+  /*
   void StraightCutQuadElementGeometry::IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
       for(auto poly : Cut_quads){
           double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
@@ -446,6 +446,28 @@ namespace xintegration
               }
           }
       }
+  }*/
+
+  void StraightCutQuadElementGeometry::IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
+      for(auto poly : Cut_quads){
+          double V_poly = 1; for(int i=0; i<3; i++) V_poly *= poly.GetPoint(6)[i]-poly.GetPoint(0)[i];
+          IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+          for(auto p1: ir_ngs){
+              FlatVector<> lset_proj(4, lh); double xi = p1.Point()[0];
+              for(int i=0; i<4; i++) lset_proj[i] = poly.GetLset(i)*xi+poly.GetLset(i+4)*(1-xi);
+              //cout << "The levelset Projection: " << lset_proj << endl;
+              StraightCutQuadElementGeometry CoDim1Projection(lset_proj, ET_QUAD, lh);
+              IntegrationRule ir_tmp;
+              CoDim1Projection.GetIntegrationRule(order, dt, ir_tmp);
+              for(auto p2: ir_tmp){
+                  Vec<3> p(0.);
+                  for(int i=0; i<2; i++) p[i] = poly.GetPoint(0)[i]+ p2.Point()[i]*(poly.GetPoint(6)[i]-poly.GetPoint(0)[i]);
+                  p[2] = poly.GetPoint(0)[2]+ xi*(poly.GetPoint(6)[2]-poly.GetPoint(0)[2]);
+                  intrule.Append(IntegrationPoint(p , p1.Weight()* p2.Weight()* V_poly));
+                  //cout << "Appended the weight " << p1.Weight()* p2.Weight()*V_poly << " from VolumeOfCut3D." << endl;
+              }
+          }
+      }
   }
 
   void StraightCutQuadElementGeometry::IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
@@ -466,6 +488,7 @@ namespace xintegration
                   scale_f[1] = y1(p[0]) - y0(p[0]);
                   p[1] = y0(p[0]) + p2.Point()[0]*scale_f[1];
                   intrule.Append(IntegrationPoint(p, p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1]));
+                  //cout << "Appended the weight " << p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1] << "from Volume of Cut 2D." << endl;
               }
           }
       }
@@ -473,19 +496,18 @@ namespace xintegration
 
   void StraightCutQuadElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
       LoadBaseQuadFromElementTopology();
-      //Ansatz: levelset = a*x+b*y+c*x*y+d
       if(D == 2){
           lc[0][0][0] = lset[0]; lc[1][0][0] = lset[1]-lc[0][0][0], lc[0][1][0] = lset[3] - lc[0][0][0], lc[1][1][0] = lset[2] - lc[1][0][0]- lc[0][1][0]- lc[0][0][0];
           for(int i1=0; i1<D; i1++) for(int i2=0; i2<D; i2++) lc[i1][i2][1] = 0.;
       }
       else{
-          cout << "Levelset: " << lset << endl;
+          //cout << "Levelset: " << lset << endl;
           lc[0][0][0] = lset[0]; lc[1][0][0] = lset[1]-lset[0]; lc[0][1][0] = lset[3] - lset[0]; lc[0][0][1] = lset[4] - lset[0];
           lc[1][1][0] = lset[2] - lc[1][0][0] - lc[0][1][0] - lc[0][0][0];
           lc[1][0][1] = lset[5] - lc[1][0][0] - lc[0][0][1] - lc[0][0][0];
           lc[0][1][1] = lset[7] - lc[0][1][0] - lc[0][0][1] - lc[0][0][0];
           lc[1][1][1] = lset[6] - lc[1][1][0] - lc[1][0][1] - lc[0][1][1] - lc[1][0][0] - lc[0][1][0] - lc[0][0][1] - lc[0][0][0];
-          cout << "Lc: " << lc << endl;
+          //cout << "Lc: " << lc << endl;
       }
       if(D==2) FindVolumeAndCutQuads(dt);
       else FindVolumeAndCutQuads3D(dt);
@@ -550,7 +572,7 @@ namespace xintegration
 
     timermakequadrule.Start();
     StraightCutElementGeometry geom(cf_lset_at_element, et, lh);
-    StraightCutQuadElementGeometry geom_quad(cf_lset_at_element, et);
+    StraightCutQuadElementGeometry geom_quad(cf_lset_at_element, et, lh);
     IntegrationRule quad_untrafo;
 
     if (element_domain == IF)

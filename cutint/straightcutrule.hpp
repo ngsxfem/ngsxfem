@@ -107,9 +107,10 @@ namespace xintegration
       void FindVolumeAndCutQuads3D(DOMAIN_TYPE dt);
   public:
       void LoadBaseQuadFromElementTopology();
+      LocalHeap & lh;
   public:
       Vec<3> GetNormal(const Vec<3>& p) const;
-      StraightCutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et) : lset(a_lset), et(a_et) {
+      StraightCutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
           D = Dim(et); svs_ptr = make_shared<PointCnt>();
           if(D == 3){//Why is this required?!!
               vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
