@@ -475,7 +475,7 @@ namespace xintegration
           double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
           function<double(double)> y_ast = [this](double x) -> double {return -(lc[1][0][0]*x+lc[0][0][0])/(lc[1][1][0]*x+lc[0][1][0]);};
           auto y0 = y_ast, y1 = y_ast;
-          if(((dt == POS)&&(poly.GetLset(0) > 1e-12))||((dt == NEG)&&(poly.GetLset(0) < -1e-12)))
+          if(((dt == POS)&&(poly.GetLset(0)+poly.GetLset(1) > 1e-12))||((dt == NEG)&&(poly.GetLset(0)+poly.GetLset(1) < -1e-12)))
               y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
           else
               y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
