@@ -624,7 +624,45 @@ namespace ngfem
     {
       const double EPS = std::numeric_limits<double>::epsilon();
       const int stencil_width = order == 0 ? 1 : (accuracy+1)/2 + int(order-0.5)/2;
-      return std::pow((2 * stencil_width + 1)*EPS,1.0/(accuracy + order)) + 0.25;
+      const double eps = std::pow((2 * stencil_width + 1)*EPS,1.0/(accuracy + order)); // + 0.25;
+      static bool first1 = true;
+      if (first1 && order==1)
+      {
+
+        cout << " order, eps = " << order << ", " << eps << endl;
+        first1 = false;
+        // getchar();
+      }
+      static bool first2 = true;
+      if (first2 && order==2)
+      {
+        cout << " order, eps = " << order << ", " << eps << endl;
+        first2 = false;
+        // getchar();
+      }
+      static bool first3 = true;
+      if (first3 && order==3)
+      {
+        cout << " order, eps = " << order << ", " << eps << endl;
+        first3 = false;
+        // getchar();
+      }
+      static bool first4 = true;
+      if (first4 && order==4)
+      {
+        cout << " order, eps = " << order << ", " << eps << endl;
+        first4 = false;
+        // getchar();
+      }
+      static bool first5 = true;
+      if (first5 && order==5)
+      {
+        cout << " order, eps = " << order << ", " << eps << endl;
+        first5 = false;
+        // getchar();
+      }
+      return eps;
+
     }
 
   protected:
@@ -808,8 +846,8 @@ namespace ngfem
           // getchar();
           its++;
         }
-        if (its >= 20)
-          cerr << "its >= 20 " << endl;
+        if (its >= 50)
+          cerr << "its >= 50 " << endl;
         shape.Col(i) = scafe.GetShape (ip_x0, lh);
       }
 
