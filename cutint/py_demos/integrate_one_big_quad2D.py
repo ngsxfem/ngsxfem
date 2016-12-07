@@ -10,7 +10,7 @@ from sympy import *
 def get_levelset(lsetvals):
     return lsetvals[0] +(lsetvals[1] - lsetvals[0])*x + (lsetvals[3] - lsetvals[0])*y + (lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0])*x*y
 
-def get_referencevals(lsetvals, f):
+def get_referencevals(lsetvals, f, IF_INT = False):
     d = lsetvals[0]
     c = lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0]
     if abs(c) < 1e-12:
@@ -37,7 +37,8 @@ def get_referencevals(lsetvals, f):
     referencevals = {}
     referencevals[POS] = 0
     referencevals[NEG] = 0
-    referencevals[IF] = 0
+    if IF_INT:
+        referencevals[IF] = 0
 
     def add_integration_on_interval(x0,x1):
         #print("Integrating on interval: ",x0,x1)
@@ -71,10 +72,12 @@ def get_referencevals(lsetvals, f):
             else:
                 referencevals[POS] += I2
                 referencevals[NEG] += I1
-            ts = Symbol('ts')
-            C = Curve([ts, -(a*ts+d)/(b+c*ts)], (ts, x0, x1))
-            print(C)
-            referencevals[IF] += line_integrate(f_py, C, [xs,ys])
+
+            if IF_INT:
+                ts = Symbol('ts')
+                C = Curve([ts, -(a*ts+d)/(b+c*ts)], (ts, x0, x1))
+                print(C)
+                referencevals[IF] += line_integrate(f_py, C, [xs,ys])
 
     for i in range(0,len(part)-1):
         add_integration_on_interval(part[i], part[i+1])
@@ -99,7 +102,7 @@ if __name__ == "__main__":
 
     for lsetvals in lsetvals_list:
         print("Case lsetvals = ", lsetvals)
-        referencevals = get_referencevals(lsetvals, f)
+        referencevals = get_referencevals(lsetvals, f, True)
         levelset =get_levelset(lsetvals)
 
         InterpolateToP1(levelset,lset_approx)
