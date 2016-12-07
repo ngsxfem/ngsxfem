@@ -13,7 +13,19 @@ geom.Add (cube)
 ngmesh = geom.GenerateMesh(maxh=1, quad_dominated=True)
 mesh = Mesh(ngmesh)
 
-levelset = 1-2*x-2*y-2*z #(sqrt(x*x+y*y+z*z)-0.5)
+def binary_pow(x,a):
+    if a == 0:
+        return 0*x+1
+    elif a == 1:
+        return x
+    else:
+        print("Invalid argument a")
+
+#levelset coefficients
+c = [ [ [ 1, -2 ], [-2, 0 ] ] , [[-2, 0], [0,0]] ]
+
+#levelset = 1-2*x-2*y-2*z #(sqrt(x*x+y*y+z*z)-0.5)
+levelset = sum( [c[alpha][beta][gamma]*binary_pow(x,alpha)*binary_pow(y,beta)*binary_pow(z,gamma) for alpha in [0,1] for beta in [0,1] for gamma in [0,1]] )
 referencevals = { POS : 1./48, NEG : 47./48, IF : sqrt(3)/8 }
 
 V = H1(mesh,order=1)
