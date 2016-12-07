@@ -7,15 +7,6 @@ from ngsolve import *
 from xfem.basics import *
 from sympy import *
 
-from netgen.geom2d import SplineGeometry
-
-square = SplineGeometry()
-square.AddRectangle([0,0],[1,1],bc=1)
-#mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
-mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
-
-lsetvals_list = [ [-0.5832,-1.2,1.234521,0.89427], [-0.18687,0.765764,0.324987,0.48983], [0.765764,0.324987,0.48983, -0.18687], [1,-1,1/3,-1], [1,2/3,-1,-2/3]]
-
 def get_levelset(lsetvals):
     return lsetvals[0] +(lsetvals[1] - lsetvals[0])*x + (lsetvals[3] - lsetvals[0])*y + (lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0])*x*y
 
@@ -46,6 +37,7 @@ def get_referencevals(lsetvals, f):
     referencevals = {}
     referencevals[POS] = 0
     referencevals[NEG] = 0
+    referencevals[IF] = 0
 
     def add_integration_on_interval(x0,x1):
         #print("Integrating on interval: ",x0,x1)
@@ -79,37 +71,51 @@ def get_referencevals(lsetvals, f):
             else:
                 referencevals[POS] += I2
                 referencevals[NEG] += I1
+            ts = Symbol('ts')
+            C = Curve([ts, -(a*ts+d)/(b+c*ts)], (ts, x0, x1))
+            print(C)
+            referencevals[IF] += line_integrate(f_py, C, [xs,ys])
 
     for i in range(0,len(part)-1):
         add_integration_on_interval(part[i], part[i+1])
     return referencevals
 
-f = lambda x,y: 1*x+0*y
-f_ngs = f(x,y)
-V = H1(mesh,order=1)
-lset_approx = GridFunction(V)
+if __name__ == "__main__":
+    from netgen.geom2d import SplineGeometry
+    square = SplineGeometry()
+    square.AddRectangle([0,0],[1,1],bc=1)
+    #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
+    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-domains = [NEG,POS]
+    #lsetvals_list = [ [-0.5832,-1.2,1.234521,0.89427], [-0.18687,0.765764,0.324987,0.48983], [0.765764,0.324987,0.48983, -0.18687], [1,-1,1/3,-1], [1,2/3,-1,-2/3]]
+    lsetvals_list = [[1,2/3,-1,-2/3]]
 
-for lsetvals in lsetvals_list:
-    print("Case lsetvals = ", lsetvals)
-    referencevals = get_referencevals(lsetvals, f)
-    levelset =get_levelset(lsetvals)
+    f = lambda x,y: 1+0*x+0*y
+    f_ngs = f(x,y)
+    V = H1(mesh,order=1)
+    lset_approx = GridFunction(V)
 
-    InterpolateToP1(levelset,lset_approx)
+    domains = [NEG,POS, IF]
 
-    errors = dict()
+    for lsetvals in lsetvals_list:
+        print("Case lsetvals = ", lsetvals)
+        referencevals = get_referencevals(lsetvals, f)
+        levelset =get_levelset(lsetvals)
 
-    for key in domains:
-        errors[key] = []
-    inte = dict()
+        InterpolateToP1(levelset,lset_approx)
 
-    for order in range(16):
+        errors = dict()
+
         for key in domains:
-            integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000)
-            inte[key] = integral
-            #print("Integral on Domain ", key, " : ",integral)
-            errors[key].append(abs(integral - referencevals[key]))
-        #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
-    print("L2 Errors:", errors)
-    Draw(levelset, mesh, "lset")
+            errors[key] = []
+        inte = dict()
+
+        for order in range(16):
+            for key in domains:
+                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000)
+                inte[key] = integral
+                #print("Integral on Domain ", key, " : ",integral)
+                errors[key].append(abs(integral - referencevals[key]))
+            #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
+        print("L2 Errors:", errors)
+        Draw(levelset, mesh, "lset")
