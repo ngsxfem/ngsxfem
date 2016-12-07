@@ -14,66 +14,102 @@ square.AddRectangle([0,0],[1,1],bc=1)
 #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
 mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-#levelset values on the 4 vertices of the quad
-lsetvals = [-0.5832,-1.2,1.234521,0.89427] #case b)
-#lsetvals = [-0.18687,0.765764,0.324987,0.48983]
-#lsetvals = [0.765764,0.324987,0.48983, -0.18687]
-#lsetvals = [1,2/3,-1,-2/3] #case c)
-#lsetvals = [1,-1,1/3,-1] #case d)
-d = lsetvals[0]
-c = lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0]
-a = lsetvals[1] - lsetvals[0]
-b = lsetvals[3] - lsetvals[0]
-#a = -2
-#b = -2
-#c = 0.4
-#d = 1
-levelset = d+a*x + b*y + c*x*y
-f = x+0*y
+lsetvals_list = [ [-0.5832,-1.2,1.234521,0.89427], [-0.18687,0.765764,0.324987,0.48983], [0.765764,0.324987,0.48983, -0.18687], [1,-1,1/3,-1], [1,2/3,-1,-2/3]]
 
-xs = Symbol('xs')
-ys = Symbol('ys')
-levelset_py = d+a*xs +b*ys + c*xs*ys
-f_py = 1*xs+0*ys
+def get_levelset(lsetvals):
+    return lsetvals[0] +(lsetvals[1] - lsetvals[0])*x + (lsetvals[3] - lsetvals[0])*y + (lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0])*x*y
 
-referencevals = {} #{ POS : 1./8, NEG : 7./8, IF : 1./sqrt(2)}
+def get_referencevals(lsetvals, f):
+    d = lsetvals[0]
+    c = lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0]
+    if abs(c) < 1e-12:
+        c = 0
+    a = lsetvals[1] - lsetvals[0]
+    b = lsetvals[3] - lsetvals[0]
+    #print("a,b,c,d: ",a,b,c,d)
+    xs = Symbol('xs')
+    ys = Symbol('ys')
+    levelset_py = d+a*xs +b*ys + c*xs*ys
+    f_py = f(xs,ys)
+    levelset_pyl = lambda x,y: levelset_py.subs(ys,y).subs(xs,x)
 
-y_ast = -(a*xs+d)/(b+c*xs)
-I1 = integrate(integrate(f_py, (ys, 0, y_ast)), (xs,0,1))
-I2 = integrate(integrate(f_py, (ys, y_ast, 1)), (xs,0,1))
-print("I1:", I1)
-print("I2:", I2)
+    root1 = solve(levelset_py.subs(ys,0), xs)
+    root2 = solve(levelset_py.subs(ys,1), xs)
+    #print(root1, root2)
+    part = [0,1]
+    for r in [root1[0],root2[0]]:
+        if r > 0 and r < 1:
+            part.append(r)
+    part.sort()
+    #print("Partitioning of [0,1]: ", part)
 
-print("Sum of I1 and I2:", I1+I2)
+    referencevals = {}
+    referencevals[POS] = 0
+    referencevals[NEG] = 0
 
-if(lsetvals[0] > 0):
-    referencevals[POS] = I1
-    referencevals[NEG] = I2
-else:
-    referencevals[POS] = I2
-    referencevals[NEG] = I1
+    def add_integration_on_interval(x0,x1):
+        #print("Integrating on interval: ",x0,x1)
+        y_ast = -(a*xs+d)/(b+c*xs)
+        cut_left = levelset_pyl(x0,0)*levelset_pyl(x0,1) <0
+        cut_right = levelset_pyl(x1,0)*levelset_pyl(x1,1) <0
+        #print("Lset vals y = 0: ", levelset_pyl(x0,0), levelset_pyl(x1,0))
+        #print("Lset vals y = 1: ", levelset_pyl(x0,1), levelset_pyl(x1,1))
+        #print("Cuts: ", cut_left, cut_right)
+        if (not cut_left) and (not cut_right):
+            I = integrate(integrate(f_py, (ys, 0, 1)), (xs,x0,x1))
+            if levelset_pyl(x0,0)+levelset_pyl(x1,0) > 0:
+                print("Adding ",I," to Part POS")
+                referencevals[POS] += I
+            else:
+                print("Adding ",I," to Part NEG")
+                referencevals[NEG] += I
+        else:
+            I1 = integrate(integrate(f_py, (ys, 0, y_ast)), (xs,x0,x1))
+            I2 = integrate(integrate(f_py, (ys, y_ast, 1)), (xs,x0,x1))
+            Ia = integrate(f_py, (ys, 0, y_ast))
+            #print("I1:", I1)
+            #print("I2:", I2)
 
+            #print("Interval length: ", x1-x0)
+            #print("Sum of I1 and I2:", I1+I2)
+
+            if(levelset_pyl(x0,0)+levelset_pyl(x1,0) > 0):
+                referencevals[POS] += I1
+                referencevals[NEG] += I2
+            else:
+                referencevals[POS] += I2
+                referencevals[NEG] += I1
+
+    for i in range(0,len(part)-1):
+        add_integration_on_interval(part[i], part[i+1])
+    return referencevals
+
+f = lambda x,y: 1*x+0*y
+f_ngs = f(x,y)
 V = H1(mesh,order=1)
 lset_approx = GridFunction(V)
-InterpolateToP1(levelset,lset_approx)
 
 domains = [NEG,POS]
 
-errors = dict()
-eoc = dict()
+for lsetvals in lsetvals_list:
+    print("Case lsetvals = ", lsetvals)
+    referencevals = get_referencevals(lsetvals, f)
+    levelset =get_levelset(lsetvals)
 
-for key in domains:
-    errors[key] = []
-    eoc[key] = []
-inte = dict()
+    InterpolateToP1(levelset,lset_approx)
 
-for order in range(16):
+    errors = dict()
+
     for key in domains:
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000)
-        inte[key] = integral
-        print("Integral on Domain ", key, " : ",integral)
-        errors[key].append(abs(integral - referencevals[key]))
-    print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
+        errors[key] = []
+    inte = dict()
 
-Draw(levelset, mesh, "lset")
-print("L2 Errors:", errors)
+    for order in range(16):
+        for key in domains:
+            integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000)
+            inte[key] = integral
+            #print("Integral on Domain ", key, " : ",integral)
+            errors[key].append(abs(integral - referencevals[key]))
+        #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
+    print("L2 Errors:", errors)
+    Draw(levelset, mesh, "lset")
