@@ -1000,7 +1000,7 @@ namespace ngcomp
 
 
   ///SmoothingBlocks for good preconditioned iterative solvers
-  Table<int> * XStdFESpace::CreateSmoothingBlocks (const Flags & precflags) const
+  shared_ptr<Table<int>> XStdFESpace::CreateSmoothingBlocks (const Flags & precflags) const
   {
     Table<int> * it;
 
@@ -1285,7 +1285,7 @@ namespace ngcomp
       // it = creator.GetTable();
     }
     *testout << "smoothingblocks: " << endl << *it << endl;
-    return it;
+    return shared_ptr<Table<int>> (it);
   }
 
 

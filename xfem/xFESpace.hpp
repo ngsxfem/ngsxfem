@@ -345,7 +345,7 @@ namespace ngcomp
       CompoundFESpace::FinalizeUpdate (lh);
     }
     
-    Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
+    shared_ptr<Table<int>> CreateSmoothingBlocks (const Flags & precflags) const;
     Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
     bool IsSpaceTime() const { return spacetime;}
     virtual string GetClassName () const { return "XStdFESpace"; }
