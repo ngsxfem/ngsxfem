@@ -93,8 +93,7 @@ namespace ngcomp
     virtual size_t GetNDof () const { return ndof; }
     virtual int GetNVertexDof () const { return nvertdofs; }
 
-    virtual void GetDofNrs (int elnr, Array<int> & dnums) const;
-    virtual void GetSDofNrs (int selnr, Array<int> & dnums) const;
+    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const;
 
     DOMAIN_TYPE GetDomainOfDof (int dof) const { return domofdof[dof]; }
     void GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const;
@@ -254,8 +253,7 @@ namespace ngcomp
 
     virtual size_t GetNDof () const { return 0; }
 
-    virtual void GetDofNrs (int elnr, Array<int> & dnums) const { dnums.SetSize(0); }
-    virtual void GetSDofNrs (int selnr, Array<int> & dnums) const { dnums.SetSize(0); }
+    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const { dnums.SetSize(0); }
 
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const 
     { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }

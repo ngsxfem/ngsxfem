@@ -33,14 +33,24 @@ namespace ngcomp
 
   
 
-  void XFESpace :: GetDofNrs (int elnr, Array<int> & dnums) const
+  void XFESpace :: GetDofNrs (ElementId ei, Array<int> & dnums) const
   {
-    if (activeelem.Size() > 0 && activeelem.Test(elnr) && !empty)
-      dnums = (*el2dofs)[elnr];
+    if (ei.VB() == VOL)
+    {
+      if (activeelem.Size() > 0 && activeelem.Test(ei.Nr()) && !empty)
+        dnums = (*el2dofs)[ei.Nr()];
+      else
+        dnums.SetSize(0);
+    }
     else
-      dnums.SetSize(0);
+    {
+      if (activeselem.Size() > 0 && activeselem.Test(ei.Nr()) && !empty)
+        dnums = (*sel2dofs)[ei.Nr()];
+      else
+        dnums.SetSize(0);
+    }
   }
-  
+
   void XFESpace :: GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const
   {
     if (activeelem.Test(elnr) && !empty)
@@ -119,15 +129,6 @@ namespace ngcomp
     // cout << "XFESpace, ctofdof = " << endl << ctofdof << endl;
     // getchar();
 
-  }
-
-
-  void XFESpace :: GetSDofNrs (int selnr, Array<int> & dnums) const
-  {
-    if (activeselem.Size() > 0 && activeselem.Test(selnr) && !empty)
-      dnums = (*sel2dofs)[selnr];
-    else
-      dnums.SetSize(0);
   }
 
 
@@ -360,7 +361,7 @@ namespace ngcomp
           {
             activeelem.Set(elnr);
             Array<int> basednums;
-            basefes->GetDofNrs(elnr,basednums);
+            basefes->GetDofNrs(ElementId(VOL,elnr),basednums);
             for (int k = 0; k < basednums.Size(); ++k)
             {
               activedofs.Set(basednums[k]);

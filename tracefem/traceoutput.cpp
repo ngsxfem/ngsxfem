@@ -257,7 +257,7 @@ namespace ngcomp
           if (!xfes.IsElementCut(i)) continue;
           HeapReset hr(lh);
 
-          ElementTransformation & eltrans = gfu->GetMeshAccess()->GetTrafo (i, 0, lh);
+          ElementTransformation & eltrans = gfu->GetMeshAccess()->GetTrafo (ElementId(VOL,i), lh);
           const FiniteElement & fel = xfes.GetFE (i, lh);
           const XFiniteElement & xfe =
             dynamic_cast<const XFiniteElement &> (fel);

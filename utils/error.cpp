@@ -161,9 +161,9 @@ namespace ngfem
       }
 
 
-      ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
+      ElementTransformation & eltrans = ma->GetTrafo(elnr,VOL,lh);
 
-      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(elnr,lh);
+      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(ElementId(VOL,elnr),lh);
 
       const CompoundFiniteElement & cfel = 
         dynamic_cast<const CompoundFiniteElement&> (base_fel);
