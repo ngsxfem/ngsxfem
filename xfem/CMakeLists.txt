@@ -7,7 +7,6 @@ add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   xfemNitsche.cpp
   xfemVisInts.cpp
   xfiniteelement.cpp
-  python_xfem.cpp
   symboliccutbfi.cpp
   symboliccutlfi.cpp
   )

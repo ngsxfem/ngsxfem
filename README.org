@@ -1,23 +1,24 @@
-## Linux Build Steps
-This assumes available Netgen/NGSolve and Boost-libraries
+** Linux Build Steps
+This assumes available Netgen/NGSolve
 
 ```
 git clone https://gitlab.asc.tuwien.ac.at/jschoeberl/xfem.git
-cd amg
+cd xfem
 mkdir build
 cd build
-cmake ../ && make && make install
+cmake ../ -DINSTALL_DIR=INSTLOCATION && make && make install
 ```
 
-To build without tests in the last step use: `cmake -DINSTALL_DIR=../xfem-inst ../xfem-src`
+for the INSTLOCATION please choose the Netgen/NGSolve location. 
+Otherwise make sure that the installed xfem-libraries will be found by python
 
-## Examples
+** Examples
 To run the python examples be sure to follow the build steps above.
 Then navigate into the `py_tutorials` or `stokes/py_demos` or `tracefem/py_demos` and run
 `netgen example.py`
 where `example.py` stands for any of the available python files.
 
-## Testing
+** Testing
 Tests are enabled by default.
 To run the test navigate to the build directory and run `make test`
 or `ctest`.
