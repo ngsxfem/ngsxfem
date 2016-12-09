@@ -2,7 +2,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 # For Stokes-FESpace and Stokes-Integrators (convenience)

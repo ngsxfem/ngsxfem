@@ -2,7 +2,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 
 from netgen.geom2d import SplineGeometry
 
@@ -84,7 +84,7 @@ f = LinearForm(VhG)
 f += SymbolicLFI(levelset_domain = lset_neg, form = 10 * v_neg)
 f.Assemble();
 
-gfu.components[0].Set(CoefficientFunction(0), boundary=True)
+gfu.components[0].Set(CoefficientFunction(0),BND)
 
 res = f.vec.CreateVector()
 res.data = f.vec - a.mat * gfu.vec.data

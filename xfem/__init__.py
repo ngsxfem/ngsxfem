@@ -1,7 +1,7 @@
 from ngsolve.comp import *
 from ngsolve.fem import *
 from ngsolve.utils import L2
-from libngsxfem_py.xfem import *
+from libngsxfem_py import *
 
 def XStdFESpace(mesh,levelset=None,flags={},basetype=None,empty=None,order=1,dirichlet=[],ref_space=None):
     """

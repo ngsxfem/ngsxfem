@@ -37,7 +37,7 @@ install( FILES
 
 if(USE_PYTHON)
     install (FILES
-            basics.py 
+            __init__.py 
             DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
             COMPONENT xfem
             )

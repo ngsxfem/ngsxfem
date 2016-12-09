@@ -3,7 +3,7 @@ from ngsolve.comp import *
 from ngsolve.solve import *
 from ngsolve.la import *
 
-from xfem.basics import *
+from xfem import *
 
 class LevelSetMeshAdaptation:
     """

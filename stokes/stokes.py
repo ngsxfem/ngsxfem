@@ -1,7 +1,4 @@
-from ngsolve.comp import *
-from ngsolve.fem import *
-from libngsxfem_py.xfem import *
-
+from xfem import *
 import libngsxfem_xstokes
 
 def XStokesFESpace(mesh, order=1, levelset=None, dgjumps=False, empty_vel = False, dirichlet =[], ref_space=0 ):
@@ -26,3 +23,4 @@ def NitscheStokesIntegrators ( muneg, mupos, lamb=10, gammaf=0 ):
     return (BFI("xstokesnitsche", coef=[muneg,mupos,lamb]), LFI("xstokesnitscherhs", coef=gammaf))
 
 
+__all__ =   ["XStokesFESpace", "TwoDomainStokesIntegrator", "NitscheStokesBLFIntegrator", "NitscheStokesLFIntegrator", "NitscheStokesIntegrators"]

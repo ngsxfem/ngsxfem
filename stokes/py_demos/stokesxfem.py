@@ -10,11 +10,12 @@ import sys
 # for making a directory (if it doesn't exist)
 import os
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 # For Stokes-FESpace and Stokes-Integrators (convenience)
 from xfem.stokes import *
+
 
 h = specialcf.mesh_size
 
@@ -112,8 +113,8 @@ def SolveProblem():
     print("XStokesFESpace NDof:", Vh.ndof)
     uvp.Update()
 
-    uvp.components[0].components[0].Set(problemdata["SolutionOuterVelX"], boundary=True, definedon=mesh.Boundaries("dirbound"))
-    uvp.components[1].components[0].Set(problemdata["SolutionOuterVelY"], boundary=True, definedon=mesh.Boundaries("dirbound"))
+    uvp.components[0].components[0].Set(problemdata["SolutionOuterVelX"], BND, definedon=mesh.Boundaries("dirbound"))
+    uvp.components[1].components[0].Set(problemdata["SolutionOuterVelY"], BND, definedon=mesh.Boundaries("dirbound"))
     
     a.Assemble();
     f.Assemble();

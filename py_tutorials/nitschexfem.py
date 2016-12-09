@@ -2,7 +2,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 
@@ -56,7 +56,7 @@ c = Preconditioner(a, type="local", flags= { "test" : True })
 
 u = GridFunction(VhG)
 
-u.components[0].Set(solution[1], boundary = True)
+u.components[0].Set(solution[1], BND)
 
 mesh.SetDeformation(deformation)
 
@@ -72,8 +72,8 @@ update.data = solvea * rhs;
 u.vec.data += update
 
 
-global last_num_its
-last_num_its = solvea.GetSteps()
+#global last_num_its
+#last_num_its = solvea.GetSteps()
 mesh.UnsetDeformation()
 
 
