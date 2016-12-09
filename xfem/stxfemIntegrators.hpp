@@ -36,7 +36,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix
@@ -74,7 +74,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix
@@ -121,7 +121,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return false; }
 
 
@@ -153,7 +153,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return false; }
 
     // Calculates the element matrix
@@ -180,7 +180,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix
@@ -228,7 +228,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
 
     virtual void SetTimeInterval (const TimeInterval & ti)
     { t0 = ti.first; t1=ti.second; tau = t1-t0; }
@@ -272,7 +272,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
 
 
     // Calculates the element vector
@@ -328,7 +328,7 @@ namespace ngfem
     virtual int DimElement () const { return D-1; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return true; }
+    virtual VorB VB () const { return BND; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix
@@ -401,7 +401,7 @@ namespace ngfem
     virtual int DimElement () const { return D-1; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return true; }
+    virtual VorB VB () const { return BND; }
 
     virtual void SetTimeInterval (const TimeInterval & ti)
     { t0 = ti.first; t1=ti.second; tau = t1-t0; }

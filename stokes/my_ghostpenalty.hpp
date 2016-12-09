@@ -27,8 +27,7 @@ namespace ngfem
 
     virtual ~MyGhostPenaltyIntegrator () { ; }
     
-    virtual bool BoundaryForm () const 
-    { return 0; }
+    virtual VorB VB () const { return VOL; }
 
     virtual bool IsSymmetric () const 
     { return true; }

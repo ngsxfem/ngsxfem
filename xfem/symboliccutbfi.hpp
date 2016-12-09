@@ -28,7 +28,7 @@ namespace ngfem
                                        int aforce_intorder = -1,
                                        int asubdivlvl = 0);
 
-    virtual bool BoundaryForm() const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
@@ -103,9 +103,6 @@ namespace ngfem
     }
 
   };
-
-
-
   class SymbolicCutFacetBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
@@ -120,7 +117,7 @@ namespace ngfem
                                             int aforce_intorder,
                                             int asubdivlvl);
 
-    virtual bool BoundaryForm() const { return vb == BND; }
+    virtual VorB VB () const { return vb; }
     virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
@@ -167,6 +164,5 @@ namespace ngfem
     }
 
   };
-
 
 }

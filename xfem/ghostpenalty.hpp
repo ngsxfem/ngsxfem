@@ -43,8 +43,7 @@ namespace ngfem
 
     virtual ~GhostPenaltyIntegrator () { ; }
     
-    virtual bool BoundaryForm () const 
-    { return 0; }
+    virtual VorB VB () const { return VOL; }
 
     virtual bool IsSymmetric () const 
     { return true; }
@@ -90,8 +89,7 @@ namespace ngfem
 
     virtual ~TraceGhostPenaltyIntegrator () { ; }
     
-    virtual bool BoundaryForm () const 
-    { return 0; }
+    virtual VorB VB () const { return VOL; }
 
     virtual bool IsSymmetric () const 
     { return true; }
@@ -132,7 +130,7 @@ namespace ngfem
     virtual string Name () const { return "NormalLaplaceTraceIntegrator"; }
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,

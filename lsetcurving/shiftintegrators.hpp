@@ -23,7 +23,8 @@ namespace ngfem
     virtual string Name () const { return "ShiftIntegrator"; }
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
-    virtual bool BoundaryForm () const { return false; }
+    // virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual void CalcElementVector (const FiniteElement & fel,
                                     const ElementTransformation & eltrans,
                                     FlatVector<double> elvec,
@@ -52,7 +53,7 @@ namespace ngfem
     virtual string Name () const { return "RestrictedMassIntegrator"; }
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
     virtual void CalcElementMatrix (const FiniteElement & fel,
                                     const ElementTransformation & eltrans,
