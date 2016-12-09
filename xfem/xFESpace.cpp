@@ -213,13 +213,13 @@ namespace ngcomp
     if (flags.GetDefineFlag("trace"))
     {
       trace = true;
-      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
-      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
+      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
+      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
     }
     else
     {
-      evaluator = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
-      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
+      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
+      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
     }
   }
 
@@ -984,16 +984,16 @@ namespace ngcomp
     shared_ptr<ConstantCoefficientFunction> one = make_shared<ConstantCoefficientFunction>(1);
     if (ma->GetDimension() == 2)
     {
-      integrator = make_shared<XVisIntegrator<2> > (one);
-      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
-      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradX<2>>>();
+      integrator[VOL] = make_shared<XVisIntegrator<2> > (one);
+      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
+      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<2>>>();
       // boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
-      integrator = make_shared<XVisIntegrator<3> >(one);
-      evaluator = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
-      flux_evaluator = make_shared<T_DifferentialOperator<DiffOpGradX<3>>>();
+      integrator[VOL] = make_shared<XVisIntegrator<3> >(one);
+      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
+      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<3>>>();
       // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
     }
   }
