@@ -9,7 +9,7 @@
 /// from ngxfem
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
-#include "../spacetime/spacetimefespace.hpp"
+// #include "../spacetime/spacetimefespace.hpp"
 
 using namespace ngsolve;
 // using namespace cutinfo;
@@ -305,11 +305,12 @@ namespace ngcomp
       Array<shared_ptr<FESpace> > spaces(2);
       if (spacetime)
       {
-        shared_ptr<FESpaceClasses::FESpaceInfo> info;
-        string fet_space = flags.GetStringFlag("type_std","h1ho");
-        Flags fespaceflags(flags);
-        fespaceflags.SetFlag("type_space",fet_space);
-        spaces[0] = make_shared<SpaceTimeFESpace> (ma, fespaceflags);    
+        throw Exception("no space time supported right now");
+        // shared_ptr<FESpaceClasses::FESpaceInfo> info;
+        // string fet_space = flags.GetStringFlag("type_std","h1ho");
+        // Flags fespaceflags(flags);
+        // fespaceflags.SetFlag("type_space",fet_space);
+        // spaces[0] = make_shared<SpaceTimeFESpace> (ma, fespaceflags);    
       }
       else
       {

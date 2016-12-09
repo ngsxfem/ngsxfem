@@ -5,7 +5,7 @@
 #include <comp.hpp>
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <ngstd.hpp> // for Array
-#include "../spacetime/spacetimefe.hpp"
+// #include "../spacetime/spacetimefe.hpp"
 
 // #include <solve.hpp>
 // using namespace ngsolve;
@@ -13,6 +13,8 @@ using namespace ngcomp;
 
 namespace ngfem
 {
+  typedef std::pair<double,double> TimeInterval;
+  
   class ScalarFieldEvaluator
   {
   public:
@@ -52,7 +54,7 @@ namespace ngfem
   class ScalarFEEvaluator : public ScalarFieldEvaluator
   {
   protected:
-    const ScalarSpaceTimeFiniteElement<D> * st_fe;
+    // const ScalarSpaceTimeFiniteElement<D> * st_fe;
     const ScalarFiniteElement<D> * s_fe;
     FlatVector<> linvec;
     mutable IntegrationPoint ip;
@@ -64,10 +66,11 @@ namespace ngfem
       : linvec(a_linvec), 
         lh(a_lh)
     {
-      st_fe = dynamic_cast< const ScalarSpaceTimeFiniteElement<D> * >(&a_fe);
+      // st_fe = dynamic_cast< const ScalarSpaceTimeFiniteElement<D> * >(&a_fe);
       s_fe = dynamic_cast< const ScalarFiniteElement<D> * >(&a_fe);
 
-      if (st_fe == NULL && s_fe == NULL)
+      // if (st_fe == NULL && s_fe == NULL)
+      if (s_fe == NULL)
       {
         cout << " D = " << D << endl;
         throw Exception("ScalarFEEvaluator - constructor: cast failed...");
@@ -171,7 +174,7 @@ namespace ngfem
     }
 
   };
-
+/*
   template <int D> // D : resulting space dimension..
   class SpaceTimeEvalFunctionEvaluator : public ScalarFieldEvaluator
   {
@@ -217,7 +220,7 @@ namespace ngfem
     }
 
   };
-
+*/
   template <int D> // D : resulting space dimension..
   class CoefficientFunctionEvaluator : public ScalarFieldEvaluator
   {

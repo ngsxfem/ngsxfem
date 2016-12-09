@@ -7,7 +7,7 @@
 
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
-#include "../spacetime/spacetimeintegrators.hpp"
+// #include "../spacetime/spacetimeintegrators.hpp"
 #include "../utils/stcoeff.hpp"
 
 namespace ngfem

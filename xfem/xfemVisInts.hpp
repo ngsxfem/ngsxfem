@@ -7,7 +7,7 @@
 
 // #include "../cuttriang/geom.hpp"
 #include "xfiniteelement.hpp"
-#include "../spacetime/spacetimeintegrators.hpp"
+// #include "../spacetime/spacetimeintegrators.hpp"
 
 namespace ngfem
 {
@@ -79,7 +79,7 @@ namespace ngfem
     virtual string Name () const { return "XVisIntegrator"; }
   };
 
-
+/*
   template <int D, TIME t>
   class DiffOpEvalSTX : public DiffOp<DiffOpEvalSTX<D,t> >
   {
@@ -147,7 +147,7 @@ namespace ngfem
     virtual string Name () const { return "STNegPosVisIntegrator"; }
   };
 
-
+*/
 
 
 
@@ -167,6 +167,7 @@ namespace ngfem
                                 MAT & mat, LocalHeap & lh);
   };
 
+/*
   template <int D, TIME t>
   class DiffOpEvalSpaceTimeSigned : public DiffOp<DiffOpEvalSpaceTimeSigned<D,t> >
   {
@@ -182,7 +183,7 @@ namespace ngfem
     static void GenerateMatrix (const FEL & bfel, const MIP & sip,
                                 MAT & mat, LocalHeap & lh);
   };
-
+*/
 
   /// diagonal tensor, one on first diag entry if lvlset-value is positive, 
   /// one on second diag entry otherwise
@@ -217,6 +218,7 @@ namespace ngfem
     virtual string Name () const { return "SignedXMassIntegrator"; }
   };
 
+/*
   ///
   template <int D, TIME t >
   class SignedSpaceTimeXMassIntegrator 
@@ -232,7 +234,7 @@ namespace ngfem
     ///
     virtual string Name () const { return "SignedSpaceTimeXMassIntegrator"; }
   };
-
+*/
 
 
   template <int D>

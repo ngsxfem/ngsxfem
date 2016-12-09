@@ -281,7 +281,8 @@ namespace ngcomp
     order_space = basefes->GetOrder();
 
     if (spacetime)
-      order_time = dynamic_pointer_cast<SpaceTimeFESpace>(basefes)->OrderTime();
+      throw Exception("no spacetime supported right now");
+      // order_time = dynamic_pointer_cast<SpaceTimeFESpace>(basefes)->OrderTime();
     
     FESpace::Update(lh);
 
@@ -876,7 +877,8 @@ namespace ngcomp
 
     int mD = apde->GetMeshAccess()->GetDimension();
 
-    shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast<SpaceTimeFESpace>(basefes);
+    // shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast<SpaceTimeFESpace>(basefes);
+    void * fes_st = NULL;
     int mSD = fes_st == NULL ? mD : mD + 1;
 
     if (mD == 2)

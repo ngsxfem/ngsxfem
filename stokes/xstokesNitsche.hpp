@@ -8,7 +8,7 @@
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
 #include "../xfem/xfemIntegrators.hpp"
-#include "../xfem/stxfemIntegrators.hpp"
+// #include "../xfem/stxfemIntegrators.hpp"
 
 namespace ngfem
 {

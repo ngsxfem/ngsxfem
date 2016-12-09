@@ -8,7 +8,7 @@
 #include "../cutint/xintegration.hpp"
 #include "xfiniteelement.hpp"
 #include "xfemIntegrators.hpp"
-#include "stxfemIntegrators.hpp"
+// #include "stxfemIntegrators.hpp"
 
 namespace ngfem
 {
@@ -175,7 +175,7 @@ namespace ngfem
 
   };
 
-
+/*
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class SpaceTimeXNitscheIntegrator : public BilinearFormIntegrator
   {
@@ -253,7 +253,7 @@ namespace ngfem
     virtual void SetTimeInterval (const TimeInterval & ti)
     { t0 = ti.first; t1=ti.second; tau = t1-t0; }
   };
-
+*/
 
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class FictXNitscheIntegrator : public BilinearFormIntegrator
