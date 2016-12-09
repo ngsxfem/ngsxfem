@@ -90,7 +90,7 @@ namespace ngcomp
       FESpace::FinalizeUpdate (lh);
     }
 
-    virtual int GetNDof () const { return ndof; }
+    virtual size_t GetNDof () const { return ndof; }
     virtual int GetNVertexDof () const { return nvertdofs; }
 
     virtual void GetDofNrs (int elnr, Array<int> & dnums) const;
@@ -252,7 +252,7 @@ namespace ngcomp
     virtual void Update(LocalHeap & lh) { ; }
     virtual void UpdateCouplingDofArray() { ; }
 
-    virtual int GetNDof () const { return 0; }
+    virtual size_t GetNDof () const { return 0; }
 
     virtual void GetDofNrs (int elnr, Array<int> & dnums) const { dnums.SetSize(0); }
     virtual void GetSDofNrs (int selnr, Array<int> & dnums) const { dnums.SetSize(0); }
