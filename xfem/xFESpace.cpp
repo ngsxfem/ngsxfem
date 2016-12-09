@@ -665,9 +665,9 @@ namespace ngcomp
               dirichlet_dofs.Set (dof);
     }
     
-    free_dofs.SetSize (GetNDof());
-    free_dofs = dirichlet_dofs;
-    free_dofs.Invert();
+    free_dofs->SetSize (GetNDof());
+    *free_dofs = dirichlet_dofs;
+    free_dofs->Invert();
 
     *testout << "ndof = " << ndof << endl;
     *testout << "basedof2xdof = " << basedof2xdof << endl;
@@ -676,9 +676,10 @@ namespace ngcomp
     *testout << "domain of dofs = " << domofdof << endl;
 
     *testout << " basefes = " << basefes << endl;
-    *testout << "basefes -> free_dofs = " << *(basefes->GetFreeDofs()) << endl;
-
-    *testout << "free_dofs = " << free_dofs << endl;
+    *testout << "basefes -> free_dofs = " << basefes->GetFreeDofs() << endl;
+    if (basefes->GetFreeDofs())
+      *testout << "*(basefes -> free_dofs) = " << *(basefes->GetFreeDofs()) << endl;
+    *testout << "free_dofs = " << *free_dofs << endl;
   }
 
   template <int D, int SD>
