@@ -99,6 +99,12 @@ namespace ngcomp
     void GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const;
     void GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const;
 
+    virtual int GetRelOrder() const
+    { 
+      // cout << "virtual GetRelOrder called for FiniteElementSpace, not available ! " << endl; 
+      return 0; 
+    } 
+
     virtual void GetVertexDofNrs (int vnr, Array<int> & dnums) const
     {
       dnums.SetSize(0);
@@ -162,9 +168,9 @@ namespace ngcomp
       if (activeelem.Size() == 0) return false;
 
       if (id.IsBoundary())
-        return activeselem.Test(int(id));
+        return activeselem.Test(id.Nr());
       else
-        return activeelem.Test(int(id));
+        return activeelem.Test(id.Nr());
     }
     DOMAIN_TYPE GetDomainOfElement(int elnr) const {return domofel[elnr];}
 
@@ -406,7 +412,7 @@ namespace ngcomp
       if (id.IsBoundary())
         return false;
       else
-        return activeelem.Test(int(id));
+        return activeelem.Test(id.Nr());
     }
 
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
