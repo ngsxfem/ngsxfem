@@ -90,7 +90,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config.h DESTINATION include)
 # add_definitions(-DHAVE_CONFIG_H)
 
 add_subdirectory(cutint)
-add_subdirectory(meancurvflow)
+#add_subdirectory(meancurvflow)
 add_subdirectory(levelset)
 add_subdirectory(python)
 add_subdirectory(stokes)
