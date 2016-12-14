@@ -598,11 +598,10 @@ void ExportNgsx(py::module &m)
              ret->FinalizeUpdate(lh);
              return ret;
            }));
-}
 
   // new implementation: only straight cuts - start with triangles only for a start!
 
-  bp::def("NewIntegrateX",
+  m.def("NewIntegrateX",
           FunctionPointer([](bp::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
@@ -675,7 +674,7 @@ void ExportNgsx(py::module &m)
           (bp::arg("lset"), bp::arg("mesh"), 
            bp::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)), 
            bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000));
-
+}
 }
 
 PYBIND11_PLUGIN(libngsxfem_py) 
