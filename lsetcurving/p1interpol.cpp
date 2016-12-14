@@ -70,7 +70,8 @@ namespace ngcomp
       else
       {
         Array<int> dof;
-        gf->GetFESpace()->GetVertexDofNrs(vnr, dof);
+        // gf->GetFESpace()->GetVertexDofNrs(vnr, dof);
+        gf->GetFESpace()->GetDofNrs(NodeId(NT_VERTEX,vnr), dof); //vnr, dof);
         FlatVector<> fval(1,&val_lset);
         gf->GetVector().GetIndirect(dof,fval);
       }

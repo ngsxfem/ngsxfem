@@ -2,7 +2,7 @@ from time import sleep
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 
 from netgen.geom2d import SplineGeometry
 square = SplineGeometry()

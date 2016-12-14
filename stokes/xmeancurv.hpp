@@ -7,7 +7,7 @@
 
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
-#include "../spacetime/spacetimeintegrators.hpp"
+// #include "../spacetime/spacetimeintegrators.hpp"
 #include "../utils/stcoeff.hpp"
 
 namespace ngfem
@@ -30,7 +30,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
 
     // Calculates the element matrix
     virtual void

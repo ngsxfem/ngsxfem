@@ -161,9 +161,9 @@ namespace ngfem
       }
 
 
-      ElementTransformation & eltrans = ma->GetTrafo(elnr,false,lh);
+      ElementTransformation & eltrans = ma->GetTrafo(elnr,VOL,lh);
 
-      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(elnr,lh);
+      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(ElementId(VOL,elnr),lh);
 
       const CompoundFiniteElement & cfel = 
         dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -171,7 +171,8 @@ namespace ngfem
       const XFiniteElement * xfe = NULL;
       const XDummyFE * dummfe = NULL;
       const ScalarFiniteElement<D> * scafe = NULL;
-      const ScalarSpaceTimeFiniteElement<D> * scastfe = NULL;
+      // const ScalarSpaceTimeFiniteElement<D> * scastfe = NULL;
+      void * scastfe = NULL;
 
       for (int j = 0; j < cfel.GetNComponents(); ++j)
       {
@@ -181,14 +182,15 @@ namespace ngfem
           dummfe = dynamic_cast<const XDummyFE* >(&cfel[j]);
         if (scafe==NULL)
           scafe = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel[j]);
-        if (scastfe==NULL)
-          scastfe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[j]);
+        // if (scastfe==NULL)
+        //   scastfe = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel[j]);
       }
 
       const XFiniteElement * xfe2 = NULL;
       const XDummyFE * dummfe2 = NULL;
       const ScalarFiniteElement<D> * scafe2 = NULL;
-      const ScalarSpaceTimeFiniteElement<D> * scastfe2 = NULL;
+      // const ScalarSpaceTimeFiniteElement<D> * scastfe2 = NULL;
+      void * scastfe2 = NULL;
 
 
       if (gfu2)
@@ -205,15 +207,16 @@ namespace ngfem
             dummfe2 = dynamic_cast<const XDummyFE* >(&cfel2[j]);
           if (scafe2==NULL)
             scafe2 = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel2[j]);
-          if (scastfe2==NULL)
-            scastfe2 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel2[j]);
+          // if (scastfe2==NULL)
+          //   scastfe2 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel2[j]);
         }
       }
 
       bool spacetime = scastfe != NULL;
 
       int ndof_x = xfe!=NULL ? xfe->GetNDof() : 0;
-      int ndof = spacetime ? scastfe->GetNDof() : scafe->GetNDof();
+      // int ndof = spacetime ? scastfe->GetNDof() : scafe->GetNDof();
+      int ndof = scafe->GetNDof();
       int ndof_total = ndof+ndof_x;
       FlatVector<> shape_total(ndof_total,lh);
       FlatVector<> shape(ndof,&shape_total(0));
@@ -228,7 +231,8 @@ namespace ngfem
       FlatVector<> dshapenx(ndof_x,&dshapen_total(ndof));
 
       int ndof_x2 = xfe2!=NULL ? xfe2->GetNDof() : 0;
-      int ndof2 = gfu2 == NULL ? 0 : (spacetime ? scastfe2->GetNDof() : scafe2->GetNDof());
+      // int ndof2 = gfu2 == NULL ? 0 : (spacetime ? scastfe2->GetNDof() : scafe2->GetNDof());
+      int ndof2 = gfu2 == NULL ? 0 : scafe2->GetNDof();
       int ndof_total2 = gfu2 == NULL ? 0 : (ndof2+ndof_x2);
       FlatVector<> shape_total2(ndof_total2,lh);
       FlatVector<> shape2(ndof2,&shape_total2(0));
@@ -244,9 +248,10 @@ namespace ngfem
         DOMAIN_TYPE dt = POS;
         for (dt=POS; dt<IF; dt=(DOMAIN_TYPE)((int)dt+1))
         {
-          const FlatXLocalGeometryInformation & xgeom( spacetime ? 
-                                                       xfe->GetFlatLocalGeometryUpTrace() : 
-                                                       xfe->GetFlatLocalGeometry());
+          // const FlatXLocalGeometryInformation & xgeom( spacetime ? 
+          //                                              xfe->GetFlatLocalGeometryUpTrace() : 
+          //                                              xfe->GetFlatLocalGeometry());
+          const FlatXLocalGeometryInformation & xgeom( xfe->GetFlatLocalGeometry());
           const FlatCompositeQuadratureRule<D> & fcompr(xgeom.GetCompositeRule<D>());
           const FlatQuadratureRule<D> & fquad(fcompr.GetRule(dt));
           for (int i = 0; i < fquad.Size(); ++i)
@@ -269,13 +274,14 @@ namespace ngfem
             }
             else
             {
-              scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
-              scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
-              if (gfu2)
-              {
-                scastfe2->CalcShapeSpaceTime(mip.IP(), 1.0, shape2, lh);
-                scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
-              }
+              throw Exception("no spacetime anymore");
+              // scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
+              // scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
+              // if (gfu2)
+              // {
+              //   scastfe2->CalcShapeSpaceTime(mip.IP(), 1.0, shape2, lh);
+              //   scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
+              // }
             }
 
             shapex = shape;
@@ -444,9 +450,10 @@ namespace ngfem
             }
             else
             {
-              scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
-              if (gfu2)
-                scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
+              throw Exception("no space time");
+              // scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
+              // if (gfu2)
+              //   scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
             }
 
             dshapex = dshape;
@@ -582,8 +589,9 @@ namespace ngfem
             }
             else
             {
-              scastfe2->CalcShapeSpaceTime(mip.IP(), 1.0, shape2, lh);
-              scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
+              throw Exception("no spacetime");
+              // scastfe2->CalcShapeSpaceTime(mip.IP(), 1.0, shape2, lh);
+              // scastfe2->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape2, lh);
             }
 
             solval = InnerProduct(shape_total2,elvec2);
@@ -616,8 +624,9 @@ namespace ngfem
           }
           else
           {
-            scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
-            scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
+            throw Exception("no spacetime");
+            // scastfe->CalcShapeSpaceTime(mip.IP(), 1.0, shape, lh);
+            // scastfe->CalcMappedDxShapeSpaceTime(mip, 1.0, dshape, lh);
           }
 
           double discval = InnerProduct(shape,elvec);

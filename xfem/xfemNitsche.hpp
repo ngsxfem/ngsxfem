@@ -8,7 +8,7 @@
 #include "../cutint/xintegration.hpp"
 #include "xfiniteelement.hpp"
 #include "xfemIntegrators.hpp"
-#include "stxfemIntegrators.hpp"
+// #include "stxfemIntegrators.hpp"
 
 namespace ngfem
 {
@@ -72,7 +72,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix
@@ -107,7 +107,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
 
 
     // Calculates the element matrix
@@ -163,7 +163,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
 
 
     // Calculates the element matrix
@@ -175,7 +175,7 @@ namespace ngfem
 
   };
 
-
+/*
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class SpaceTimeXNitscheIntegrator : public BilinearFormIntegrator
   {
@@ -240,7 +240,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix
@@ -253,7 +253,7 @@ namespace ngfem
     virtual void SetTimeInterval (const TimeInterval & ti)
     { t0 = ti.first; t1=ti.second; tau = t1-t0; }
   };
-
+*/
 
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   class FictXNitscheIntegrator : public BilinearFormIntegrator
@@ -297,7 +297,7 @@ namespace ngfem
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
     // it is not a boundary integral (but a domain integral)
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
 
     // Calculates the element matrix

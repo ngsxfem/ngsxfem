@@ -32,8 +32,8 @@ public:
 
     shared_ptr<XFESpace> xfes = dynamic_pointer_cast<XFESpace>((*dynamic_pointer_cast<CompoundFESpace>(fes))[1]);
 
-    BitArray innerdofs (fes->GetNDof());
-    innerdofs.Clear();
+    shared_ptr<BitArray> innerdofs = make_shared<BitArray>(fes->GetNDof());
+    innerdofs->Clear();
 
     shared_ptr<MeshAccess> ma = bfinner->GetMeshAccess();
     int ne = ma->GetNE();
@@ -45,20 +45,20 @@ public:
       {
         fes->GetDofNrs(i, dnums);
         for (int k : dnums)
-          innerdofs.Set(k);
+          innerdofs->Set(k);
       }
     }
-    
-    BitArray outerdofs (innerdofs);
-    outerdofs.Invert();
+
+    shared_ptr<BitArray> outerdofs = make_shared<BitArray>(*innerdofs);
+    outerdofs->Invert();
     if ( fes-> GetFreeDofs())
     {
-      innerdofs.And(*fes->GetFreeDofs());
-      outerdofs.And(*fes->GetFreeDofs());
+      innerdofs->And(*fes->GetFreeDofs());
+      outerdofs->And(*fes->GetFreeDofs());
     }
     
-    cout << " innerdofs = \n" << innerdofs << endl;
-    cout << " outdofs = \n" << outerdofs << endl;
+    cout << " innerdofs = \n" << *innerdofs << endl;
+    cout << " outdofs = \n" << *outerdofs << endl;
     
     BaseVector & vecu = gfu->GetVector();
     const BaseVector & vecf = lff->GetVector();
@@ -68,14 +68,14 @@ public:
     BaseMatrix& matinner = bfinner->GetMatrix();
     BaseMatrix& matouter = bfouter->GetMatrix();
 
-    shared_ptr<BaseMatrix> solveinner = matinner.InverseMatrix(&innerdofs);
+    shared_ptr<BaseMatrix> solveinner = matinner.InverseMatrix(innerdofs);
 
     vecu = *solveinner * vecf;
 
 
 
 
-    shared_ptr<BaseMatrix> solveouter = matouter.InverseMatrix(&outerdofs);
+    shared_ptr<BaseMatrix> solveouter = matouter.InverseMatrix(outerdofs);
 
     *w = -1.0 *  matouter * vecu;
     

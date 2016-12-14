@@ -749,7 +749,7 @@ namespace ngfem
 
   }
 
-
+/*
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   void SpaceTimeXNitscheIntegrator<D, kappa_choice> ::
   CalcElementMatrix (const FiniteElement & base_fel,
@@ -976,7 +976,7 @@ namespace ngfem
 
       L = Lsys.Cols(0,ndof).Rows(0,ndof) * Trans(Nc);
 
-      elmat = Nc + Trans(Nc) + 1.0 * /*lam*(p+1)**/ ps/h * Ns; 
+      elmat = Nc + Trans(Nc) + 1.0 * ps/h * Ns; 
 
       elmat += 1.5 * Trans(L) * A * L;
     }
@@ -984,7 +984,7 @@ namespace ngfem
       elmat = Nc + Trans(Nc) + lam * (ps+1)*ps/h * Ns; 
 
   }
-
+*/
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_1 ("xnitsche_halfhalf", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_2 ("xnitsche_hansbo", 2, 5);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche2d_3 ("xnitsche_heaviside", 2, 5);
@@ -1022,25 +1022,25 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initx_min_stab_nitsche3d_3 ("xnitsche_minstab_heaviside", 3, 4);
   static RegisterBilinearFormIntegrator<XNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initx_min_stab_nitsche3d_2b ("xnitsche_minstab", 3, 4);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_st_1 ("stx_nitsche_halfhalf", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2 ("stx_nitsche_hansbo", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche2d_st_3 ("stx_nitsche_heaviside", 2, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2b ("stx_nitsche", 2, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > initxnitsche2d_st_1 ("stx_nitsche_halfhalf", 2, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2 ("stx_nitsche_hansbo", 2, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche2d_st_3 ("stx_nitsche_heaviside", 2, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > initxnitsche2d_st_2b ("stx_nitsche", 2, 7);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_st_1 ("stx_nitsche_halfhalf", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2 ("stx_nitsche_hansbo", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche3d_st_3 ("stx_nitsche_heaviside", 3, 7);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2b ("stx_nitsche", 3, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > initxnitsche3d_st_1 ("stx_nitsche_halfhalf", 3, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2 ("stx_nitsche_hansbo", 3, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > initxnitsche3d_st_3 ("stx_nitsche_heaviside", 3, 7);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > initxnitsche3d_st_2b ("stx_nitsche", 3, 7);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > init_min_stab_xnitsche2d_st_1 ("stx_nitsche_min_stab_halfhalf", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche2d_st_2 ("stx_nitsche_min_stab_hansbo", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > init_min_stab_xnitsche2d_st_3 ("stx_nitsche_min_stab_heaviside", 2, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche2d_st_2b ("stx_nitsche_min_stab", 2, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HALFHALF> > init_min_stab_xnitsche2d_st_1 ("stx_nitsche_min_stab_halfhalf", 2, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche2d_st_2 ("stx_nitsche_min_stab_hansbo", 2, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HEAVISIDE> > init_min_stab_xnitsche2d_st_3 ("stx_nitsche_min_stab_heaviside", 2, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<2,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche2d_st_2b ("stx_nitsche_min_stab", 2, 6);
 
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > init_min_stab_xnitsche3d_st_1 ("stx_nitsche_min_stab_halfhalf", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche3d_st_2 ("stx_nitsche_min_stab_hansbo", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > init_min_stab_xnitsche3d_st_3 ("stx_nitsche_min_stab_heaviside", 3, 6);
-  static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche3d_st_2b ("stx_nitsche_min_stab", 3, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HALFHALF> > init_min_stab_xnitsche3d_st_1 ("stx_nitsche_min_stab_halfhalf", 3, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche3d_st_2 ("stx_nitsche_min_stab_hansbo", 3, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HEAVISIDE> > init_min_stab_xnitsche3d_st_3 ("stx_nitsche_min_stab_heaviside", 3, 6);
+  // static RegisterBilinearFormIntegrator<SpaceTimeXNitscheIntegrator<3,NITSCHE_VARIANTS::HANSBO> > init_min_stab_xnitsche3d_st_2b ("stx_nitsche_min_stab", 3, 6);
 
   template <int D, NITSCHE_VARIANTS::KAPPA_CHOICE kappa_choice>
   void FictXNitscheIntegrator<D, kappa_choice> ::

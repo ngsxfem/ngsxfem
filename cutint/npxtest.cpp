@@ -10,7 +10,7 @@
 
 #include <solve.hpp>
 #include "xintegration.hpp"
-#include "../spacetime/spacetimefespace.hpp"
+// #include "../spacetime/spacetimefespace.hpp"
 #include "../utils/fieldeval.hpp"
 
 using namespace ngsolve;
@@ -135,11 +135,12 @@ public:
           shared_ptr<FESpace> fes = gf_lset->GetFESpace();
           if (isspacetime)
           {
-            shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast< SpaceTimeFESpace > (gf_lset->GetFESpace());
-            if (order_space == -1)
-              order_space = 2*fes_st->OrderSpace();
-            if (order_time == -1)
-              order_time = 2*fes_st->OrderTime();
+            // shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast< SpaceTimeFESpace > (gf_lset->GetFESpace());
+            // if (order_space == -1)
+            //   order_space = 2*fes_st->OrderSpace();
+            // if (order_time == -1)
+            //   order_time = 2*fes_st->OrderTime();
+            throw Exception("removed space-time");
           }
           else
           {
@@ -221,14 +222,15 @@ public:
 
                   if (isspacetime)
                   {
-                    const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_2d
-                      = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
-                    const ScalarSpaceTimeFiniteElement<3> *  scal_st_fel_3d
-                      = dynamic_cast<const ScalarSpaceTimeFiniteElement<3> * >(&fel);
-                    if (scal_st_fel_2d != NULL)
-                      dynamic_cast<ScalarFEEvaluator<2> *>(lset_eval_p)->FixTime(0.0);
-                    if (scal_st_fel_3d != NULL)
-                      dynamic_cast<ScalarFEEvaluator<3> *>(lset_eval_p)->FixTime(0.0);
+                    throw Exception("no spacetime");
+                    // const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_2d
+                    //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
+                    // const ScalarSpaceTimeFiniteElement<3> *  scal_st_fel_3d
+                    //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<3> * >(&fel);
+                    // if (scal_st_fel_2d != NULL)
+                    //   dynamic_cast<ScalarFEEvaluator<2> *>(lset_eval_p)->FixTime(0.0);
+                    // if (scal_st_fel_3d != NULL)
+                    //   dynamic_cast<ScalarFEEvaluator<3> *>(lset_eval_p)->FixTime(0.0);
                   }
                 }
                 else
@@ -507,14 +509,15 @@ public:
 
                   if (!isspacetime)
                   {
-                    const ScalarSpaceTimeFiniteElement<1> *  scal_st_fel_2d
-                      = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> * >(&fel);
-                    const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_3d
-                      = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
-                    if (scal_st_fel_2d != NULL)
-                      dynamic_cast<ScalarFEEvaluator<1> *>(lset_eval_p)->FixTime(0.0);
-                    if (scal_st_fel_3d != NULL)
-                      dynamic_cast<ScalarFEEvaluator<2> *>(lset_eval_p)->FixTime(0.0);
+                    throw Exception("no spacetime");
+                    // const ScalarSpaceTimeFiniteElement<1> *  scal_st_fel_2d
+                    //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<1> * >(&fel);
+                    // const ScalarSpaceTimeFiniteElement<2> *  scal_st_fel_3d
+                    //   = dynamic_cast<const ScalarSpaceTimeFiniteElement<2> * >(&fel);
+                    // if (scal_st_fel_2d != NULL)
+                    //   dynamic_cast<ScalarFEEvaluator<1> *>(lset_eval_p)->FixTime(0.0);
+                    // if (scal_st_fel_3d != NULL)
+                    //   dynamic_cast<ScalarFEEvaluator<2> *>(lset_eval_p)->FixTime(0.0);
                   }
                 }
                 else
@@ -522,14 +525,16 @@ public:
                   if (coef_lset)
                   {
                     if (!isspacetime)
-                      lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
+                      throw Exception("no spacetime");
+                      // lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
                     else
                       lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,ti,lh);
                   }
                   else
                   {
                     if (!isspacetime)
-                      lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
+                      throw Exception("no spacetime");
+                      // lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,lh);
                     else
                       lset_eval_p = ScalarFieldEvaluator::Create(D,*eval_lset,seltrans,ti,lh);
                   }

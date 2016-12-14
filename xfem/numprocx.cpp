@@ -10,9 +10,9 @@
 
 #include <solve.hpp>
 // #include "xintegration.hpp"
-#include "../spacetime/spacetimefespace.hpp"
+// #include "../spacetime/spacetimefespace.hpp"
 #include "xfemIntegrators.hpp"
-#include "stxfemIntegrators.hpp"
+// #include "stxfemIntegrators.hpp"
 #include "setvaluesx.hpp"
 #include "../utils/error.hpp"
 #include "../utils/output.hpp"
@@ -68,7 +68,8 @@ namespace ngcomp
     LinearFormIntegrator * lfi = NULL;
 
     shared_ptr<CompoundFESpace> cfes = dynamic_pointer_cast<CompoundFESpace>(fes);
-    shared_ptr<SpaceTimeFESpace> stfes = dynamic_pointer_cast<SpaceTimeFESpace>((*cfes)[0]);
+    // shared_ptr<SpaceTimeFESpace> stfes = dynamic_pointer_cast<SpaceTimeFESpace>((*cfes)[0]);
+    void * stfes = NULL;
     
     Array<shared_ptr<CoefficientFunction>> coefs(acoefs);
     Array<shared_ptr<CoefficientFunction>> coefs_one(2);
@@ -81,12 +82,13 @@ namespace ngcomp
 
     if (stfes != NULL)
     {
-      coefs.Append(told);
-      coefs.Append(tnew);
-      lfi = new (clh) SpaceTimeXNeumannIntegrator<D>(coefs);
-      coefs_one.Append(told);
-      coefs_one.Append(tnew);
-      bfi = new (clh) SpaceTimeXRobinIntegrator<D>(coefs_one);
+      throw Exception("Space time deactivated");
+      // coefs.Append(told);
+      // coefs.Append(tnew);
+      // lfi = new (clh) SpaceTimeXNeumannIntegrator<D>(coefs);
+      // coefs_one.Append(told);
+      // coefs_one.Append(tnew);
+      // bfi = new (clh) SpaceTimeXRobinIntegrator<D>(coefs_one);
     }
     else
     {

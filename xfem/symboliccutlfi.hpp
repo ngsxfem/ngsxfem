@@ -25,7 +25,7 @@ namespace ngfem
                                      int aforce_intorder = -1,
                                      int asubdivlvl = 0);
 
-    virtual bool BoundaryForm() const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual string Name () const { return string ("Symbolic Cut LFI"); }
 
 

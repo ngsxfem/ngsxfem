@@ -7,7 +7,7 @@ add_library(ngsxfem_osmosis ${NGS_LIB_TYPE}
 set_target_properties(ngsxfem_osmosis PROPERTIES SUFFIX ".so")
 
 if(NOT WIN32)
-    target_link_libraries(ngsxfem_osmosis ngsxfem_spacetime ngsxfem_utils ngsxfem_cutint ngsxfem_xfem ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
+    target_link_libraries(ngsxfem_osmosis ngsxfem_utils ngsxfem_cutint ngsxfem_xfem ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
     install( TARGETS ngsxfem_osmosis ${ngs_install_dir})
 endif(NOT WIN32)
 

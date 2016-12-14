@@ -1,7 +1,7 @@
 # ngsolve stuff
 from ngsolve import *
 # For Integration on Interface
-from xfem.basics import *
+from xfem import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 # For TraceFEM-Integrators (convenience)

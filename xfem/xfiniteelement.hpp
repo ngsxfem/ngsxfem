@@ -119,6 +119,34 @@ namespace ngfem
 
   };
 
+  /**
+     surrounds a FiniteElement and adds information about signs of dofs and local geometry
+   */
+  class SFiniteElement : public ScalarFiniteElement<2>
+  {
+  protected:
+    Mat<2> cuts;
+    BaseScalarFiniteElement * basefe;
+  public:
+    SFiniteElement(Mat<2> acuts, int order, LocalHeap & lh);
+    virtual ~SFiniteElement();
+    /// the name
+    virtual string ClassName(void) const;
+
+    virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
+
+    /// compute shape, row is shape nr, col is ip nr
+    virtual void CalcShape (const IntegrationPoint & ip,
+                            BareSliceVector<> shape) const;
+
+    virtual void CalcDShape (const IntegrationPoint & ip, 
+                             SliceMatrix<> dshape) const
+    {
+      throw Exception("noenoe, ich soll nich");
+    }
+
+  };
+
 } // end of namespace
 
 #endif

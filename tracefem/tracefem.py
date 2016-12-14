@@ -1,16 +1,16 @@
 from ngsolve.comp import *
 from ngsolve.fem import *
-from libngsxfem_py.xfem import *
 import libngsxfem_tracefem
+from xfem import *
 
 def TraceFESpace(mesh, stdfes=None, levelset=None, dgjumps=False, ref_space=0, postpone_update = False ):
     fes = FESpace ("xfespace", mesh=mesh, flags = {"trace" : True, "dgjumps" : dgjumps, "ref_space" : ref_space})
     Vh_tr = CastToXFESpace (fes)
-    if (stdfes!=None):
+    if (stdfes):
         Vh_tr.SetBaseFESpace(stdfes)
-    if (levelset!=None):
+    if (levelset):
         Vh_tr.SetLevelSet(levelset)
-    if (postpone_update or levelset==None or stdfes==None):
+    if (postpone_update or not levelset or not stdfes):
         print ("TraceFESpace-Update: postponed")
     else:
         Vh_tr.Update()
@@ -38,5 +38,6 @@ def NormalLaplaceStabilization (param,normalfield):
 def MakeVectorToConstantFunction(fes,vec,constant=1.0):
     fesx = CastToXFESpace (fes)
     nvx = fesx.GetNVertexDofs()
-    vec[:][0:nvx] = 1.0
-    vec[:][nvx:] = 0.0
+    print(type(vec))
+    vec[0:nvx] = 1.0
+    vec[nvx:] = 0.0

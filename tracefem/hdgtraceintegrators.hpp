@@ -7,7 +7,7 @@
 
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
-#include "../spacetime/spacetimeintegrators.hpp"
+// #include "../spacetime/spacetimeintegrators.hpp"
 #include "../utils/stcoeff.hpp"
 
 namespace ngfem
@@ -33,7 +33,7 @@ namespace ngfem
     virtual string Name () const { return "HDGTraceLaplaceBeltramiIntegrator"; }
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
-    virtual bool BoundaryForm () const { return false; }
+    virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric () const { return true; }
     virtual void
     CalcElementMatrix (const FiniteElement & fel,

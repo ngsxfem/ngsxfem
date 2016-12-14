@@ -29,7 +29,7 @@ public:
   
   virtual string Name () const { return "LevelsetCorrection"; }
 
-  virtual bool BoundaryForm () const { return false; }
+  virtual VorB VB () const { return VOL; }
   
   // compute the Hesse Vector at point elveclin
   virtual void

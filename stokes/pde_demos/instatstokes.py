@@ -10,7 +10,7 @@ from math import sqrt
 
 from time import sleep
 
-from xfem.basics import *
+from xfem import *
 from libngsxfem_xfem import *
 from libngsxfem_xstokes import *
 #from libngsxfem_levelset import *

@@ -9,7 +9,7 @@
 /// from ngxfem
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
-#include "../spacetime/spacetimefespace.hpp"
+// #include "../spacetime/spacetimefespace.hpp"
 
 using namespace ngsolve;
 // using namespace cutinfo;
@@ -90,15 +90,20 @@ namespace ngcomp
       FESpace::FinalizeUpdate (lh);
     }
 
-    virtual int GetNDof () const { return ndof; }
+    virtual size_t GetNDof () const { return ndof; }
     virtual int GetNVertexDof () const { return nvertdofs; }
 
-    virtual void GetDofNrs (int elnr, Array<int> & dnums) const;
-    virtual void GetSDofNrs (int selnr, Array<int> & dnums) const;
+    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const;
 
     DOMAIN_TYPE GetDomainOfDof (int dof) const { return domofdof[dof]; }
     void GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const;
     void GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const;
+
+    virtual int GetRelOrder() const
+    { 
+      // cout << "virtual GetRelOrder called for FiniteElementSpace, not available ! " << endl; 
+      return 0; 
+    } 
 
     virtual void GetVertexDofNrs (int vnr, Array<int> & dnums) const
     {
@@ -163,9 +168,9 @@ namespace ngcomp
       if (activeelem.Size() == 0) return false;
 
       if (id.IsBoundary())
-        return activeselem.Test(int(id));
+        return activeselem.Test(id.Nr());
       else
-        return activeelem.Test(int(id));
+        return activeelem.Test(id.Nr());
     }
     DOMAIN_TYPE GetDomainOfElement(int elnr) const {return domofel[elnr];}
 
@@ -252,10 +257,9 @@ namespace ngcomp
     virtual void Update(LocalHeap & lh) { ; }
     virtual void UpdateCouplingDofArray() { ; }
 
-    virtual int GetNDof () const { return 0; }
+    virtual size_t GetNDof () const { return 0; }
 
-    virtual void GetDofNrs (int elnr, Array<int> & dnums) const { dnums.SetSize(0); }
-    virtual void GetSDofNrs (int selnr, Array<int> & dnums) const { dnums.SetSize(0); }
+    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const { dnums.SetSize(0); }
 
     virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const 
     { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
@@ -305,11 +309,12 @@ namespace ngcomp
       Array<shared_ptr<FESpace> > spaces(2);
       if (spacetime)
       {
-        shared_ptr<FESpaceClasses::FESpaceInfo> info;
-        string fet_space = flags.GetStringFlag("type_std","h1ho");
-        Flags fespaceflags(flags);
-        fespaceflags.SetFlag("type_space",fet_space);
-        spaces[0] = make_shared<SpaceTimeFESpace> (ma, fespaceflags);    
+        throw Exception("no space time supported right now");
+        // shared_ptr<FESpaceClasses::FESpaceInfo> info;
+        // string fet_space = flags.GetStringFlag("type_std","h1ho");
+        // Flags fespaceflags(flags);
+        // fespaceflags.SetFlag("type_space",fet_space);
+        // spaces[0] = make_shared<SpaceTimeFESpace> (ma, fespaceflags);    
       }
       else
       {
@@ -346,7 +351,7 @@ namespace ngcomp
       CompoundFESpace::FinalizeUpdate (lh);
     }
     
-    Table<int> * CreateSmoothingBlocks (const Flags & precflags) const;
+    shared_ptr<Table<int>> CreateSmoothingBlocks (const Flags & precflags) const;
     Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
     bool IsSpaceTime() const { return spacetime;}
     virtual string GetClassName () const { return "XStdFESpace"; }
@@ -361,6 +366,65 @@ namespace ngcomp
     
   };
   
-}    
+
+  class SFESpace : public FESpace
+  {
+  protected:  
+    int ndof=0;
+    int order;
+    BitArray activeelem;
+    shared_ptr<CoefficientFunction> coef_lset = NULL;
+    Array<int> firstdof_of_el;
+    Array<Mat<2>> cuts_on_el;
+  public:
+    SFESpace (shared_ptr<MeshAccess> ama,
+              shared_ptr<CoefficientFunction> a_coef_lset,
+              int aorder,
+              const Flags & flags);
+    
+    virtual ~SFESpace(){};
+
+    // a name for our new fe-space
+    virtual string GetClassName () const
+    {
+      return "SFESpace ( experimental and 2D )";
+    }
+
+    /// update element coloring
+    virtual void FinalizeUpdate(LocalHeap & lh)
+    {
+      if ( coef_lset == NULL )
+      {
+        cout << " no lset, FinalizeUpdate postponed " << endl;
+        return;
+      }
+      FESpace::FinalizeUpdate (lh);
+    }
+
+    virtual size_t GetNDof () const { return ndof; }
+
+    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const;
+    // virtual void UpdateCouplingDofArray();
+    virtual bool DefinedOn (ElementId id) const
+    {
+      if (activeelem.Size() == 0)
+        return false;
+      if (id.IsBoundary())
+        return false;
+      else
+        return activeelem.Test(id.Nr());
+    }
+
+    bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
+    const BitArray & CutElements() const { return activeelem; }
+
+    virtual void Update(LocalHeap & lh);
+
+    virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
+    virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
+
+  };
+
+}
 
 #endif

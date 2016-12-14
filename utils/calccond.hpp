@@ -1,6 +1,6 @@
 template<bool inv>
 inline void ApplyA(BaseMatrix & A, const BaseVector & v, BaseVector & w, 
-              const BitArray * freedofs, FlatVector<double> fvdiaga)
+                   shared_ptr<BitArray> freedofs, FlatVector<double> fvdiaga)
 {
   FlatVector<double> fvw = w.FVDouble();
   fvw = 0.0;
@@ -17,7 +17,7 @@ inline void ApplyA(BaseMatrix & A, const BaseVector & v, BaseVector & w,
 }
 
 inline void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, 
-              const BitArray * freedofs, FlatVector<double> fvdiaga)
+                     shared_ptr<BitArray> freedofs, FlatVector<double> fvdiaga)
 {
   AutoVector c = A.CreateVector();
   FlatVector<double> fvc = c.FVDouble();
@@ -59,7 +59,7 @@ inline void ApplyATA(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, Base
 }
 
 inline void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, BaseVector & w, 
-              const BitArray * freedofs, FlatVector<double> fvdiaga)
+                     shared_ptr<BitArray> freedofs, FlatVector<double> fvdiaga)
 {
   AutoVector c = A.CreateVector();
   FlatVector<double> fvc = c.FVDouble();
@@ -95,7 +95,7 @@ inline void ApplyAAT(BaseMatrix & A, BaseMatrix * AT, const BaseVector & v, Base
 }
 
 template <bool symm>
-inline double PowerIteration(BaseMatrix & A, const BitArray * freedofs, FlatVector<double> fvdiaga, Array<BaseVector*> & evs, bool printmuch = false)
+inline double PowerIteration(BaseMatrix & A, shared_ptr<BitArray> freedofs, FlatVector<double> fvdiaga, Array<BaseVector*> & evs, bool printmuch = false)
 {
   const int max_its = 100000;
   const double rel_acc = 1e-6;
@@ -238,7 +238,7 @@ inline double InversePowerIteration(BaseMatrix & A, BaseMatrix & invA, const Bit
 
 
 
-inline void CalcCond(BaseMatrix & A, BaseMatrix & Id, const BitArray * freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, shared_ptr<GridFunction> gfu = NULL)
+inline void CalcCond(BaseMatrix & A, BaseMatrix & Id, shared_ptr<BitArray> freedofs, bool printmuch = true, bool jacobiprec = false, ofstream * outs = NULL, bool symmetric = false, shared_ptr<GridFunction> gfu = NULL)
 {
   Array<BaseVector*> evs(0);
   Array<BaseVector*> invevs(0);

@@ -30,7 +30,7 @@ public:
   
   virtual string Name () const { return "MeanCurvMass"; }
 
-  virtual bool BoundaryForm () const { return 0; }
+  virtual VorB VB () const { return VOL; }
   virtual bool IsSymmetric () const { return true; }
   
   virtual void
@@ -92,7 +92,7 @@ public:
   
   virtual string Name () const { return "MeanCurvStiff"; }
 
-  virtual bool BoundaryForm () const { return 0; }
+  virtual VorB VB () const { return VOL; }
   virtual bool IsSymmetric () const { return true; }
   
   virtual void

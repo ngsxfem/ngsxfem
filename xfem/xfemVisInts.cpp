@@ -8,7 +8,7 @@ namespace ngfem
 
 
   
-  
+/*  
   template <int D, TIME t>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpEvalSTX<D,t>::GenerateMatrix (const FEL & bfel, const MIP & mip,
@@ -132,7 +132,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<2,FUTURE> > initnegposxwmass0f ("st_np_vis_future", 2, 1);
   static RegisterBilinearFormIntegrator<STNegPosVisIntegrator<3,FUTURE> > initnegposxwmass1f ("st_np_vis_future", 3, 1);
 
-
+*/
 
   template <int D, DIFFOPX DOX>
   template <typename FEL, typename MIP, typename MAT>
@@ -345,6 +345,7 @@ namespace ngfem
   }
 
 
+  /*
   template <int D, TIME t>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpEvalSpaceTimeSigned<D,t>::GenerateMatrix (const FEL & bfel, const MIP & mip,
@@ -387,7 +388,7 @@ namespace ngfem
     } 
   }
 
-
+  */
 
   template <typename FEL, typename MIP, typename MAT>
   void XHeavisideDMat::GenerateMatrix (const FEL & fel, const MIP & mip,
@@ -418,7 +419,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<SignedXMassIntegrator<3> > initxvmass1 ("xvis_sign", 3, 1);
 
   template <int D>  SignedXMassIntegrator<D> :: ~SignedXMassIntegrator () { ; }
-
+/*
   template <int D, TIME t>  SignedSpaceTimeXMassIntegrator<D,t> :: 
   SignedSpaceTimeXMassIntegrator (shared_ptr<CoefficientFunction> coeff)
     : T_BDBIntegrator<DiffOpEvalSpaceTimeSigned<D,t>, XHeavisideDMat, CompoundFiniteElement > (XHeavisideDMat (coeff))
@@ -440,7 +441,7 @@ namespace ngfem
   static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,PAST> > initxv_stp_mass1 ("xvis_st_past", 3, 1);
   static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<2,FUTURE> > initxv_stf_mass0 ("xvis_st_future", 2, 1);
   static RegisterBilinearFormIntegrator<SignedSpaceTimeXMassIntegrator<3,FUTURE> > initxv_stf_mass1 ("xvis_st_future", 3, 1);
-
+*/
 
 
 
