@@ -598,11 +598,10 @@ void ExportNgsx(py::module &m)
              ret->FinalizeUpdate(lh);
              return ret;
            }));
-
   // new implementation: only straight cuts - start with triangles only for a start!
 
   m.def("NewIntegrateX",
-          FunctionPointer([](bp::object lset,
+          FunctionPointer([](py::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
                              int order, DOMAIN_TYPE dt, int heapsize)
@@ -615,10 +614,10 @@ void ExportNgsx(py::module &m)
                             static Timer timergetdnums1("NewIntegrateX::GetDNums1");
                             static Timer timergetdnums2("NewIntegrateX::GetDNums2");
 
-                            bp::extract<PyGF> bpgf(lset);
-                            if (!bpgf.check())
+                            py::extract<PyGF> pygf(lset);
+                            if (!pygf.check())
                               throw Exception("cast failed... need new candidates..");
-                            shared_ptr<GridFunction> gf_lset = bpgf().Get();
+                            shared_ptr<GridFunction> gf_lset = pygf().Get();
 
                             RegionTimer reg (timer);
                             LocalHeap lh(heapsize, "lh-New-Integrate");
@@ -671,10 +670,9 @@ void ExportNgsx(py::module &m)
 
                             return sum;
                           }),
-          (bp::arg("lset"), bp::arg("mesh"), 
-           bp::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)), 
-           bp::arg("order")=5, bp::arg("domain_type")=IF, bp::arg("heapsize")=1000000));
-}
+          (py::arg("lset"), py::arg("mesh"),
+           py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+           py::arg("order")=5, py::arg("domain_type")=IF, py::arg("heapsize")=1000000));
 }
 
 PYBIND11_PLUGIN(libngsxfem_py) 
@@ -683,4 +681,5 @@ PYBIND11_PLUGIN(libngsxfem_py)
   ExportNgsx(m);
   return m.ptr();
 }
+
 #endif // NGSX_PYTHON
