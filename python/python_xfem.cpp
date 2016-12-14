@@ -604,7 +604,9 @@ void ExportNgsx(py::module &m)
           FunctionPointer([](py::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
-                             int order, DOMAIN_TYPE dt, int heapsize)
+                             int order,
+                             DOMAIN_TYPE dt,
+                             int heapsize)
                           {
                             static Timer timer ("NewIntegrateX");
                             static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
@@ -670,9 +672,12 @@ void ExportNgsx(py::module &m)
 
                             return sum;
                           }),
-          (py::arg("lset"), py::arg("mesh"),
+          py::arg("lset"),
+           py::arg("mesh"),
            py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
-           py::arg("order")=5, py::arg("domain_type")=IF, py::arg("heapsize")=1000000));
+           py::arg("order")=5,
+           py::arg("domain_type")=IF,
+           py::arg("heapsize")=1000000);
 }
 
 PYBIND11_PLUGIN(libngsxfem_py) 
