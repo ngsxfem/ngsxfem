@@ -79,7 +79,7 @@ set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DEST
 include_directories ("${PROJECT_SOURCE_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/../ngsolve/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../netgen/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../libsrc/netgen/include")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake_modules")
 
