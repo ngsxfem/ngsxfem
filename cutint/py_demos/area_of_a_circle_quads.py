@@ -1,6 +1,6 @@
 from math import pi
 from ngsolve import *
-from xfem.basics import *
+from xfem import *
 from netgen.geom2d import SplineGeometry
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *

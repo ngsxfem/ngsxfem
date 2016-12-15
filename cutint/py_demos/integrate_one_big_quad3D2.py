@@ -4,7 +4,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 from netgen.geom2d import SplineGeometry
 
 from netgen.csg import CSGeometry, OrthoBrick, Pnt

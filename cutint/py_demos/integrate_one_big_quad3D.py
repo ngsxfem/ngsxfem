@@ -4,7 +4,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)

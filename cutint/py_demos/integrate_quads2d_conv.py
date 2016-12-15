@@ -2,7 +2,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 from sympy import *
 
 from integrate_one_big_quad2D import get_levelset, get_referencevals
