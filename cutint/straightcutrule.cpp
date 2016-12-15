@@ -658,24 +658,29 @@ namespace xintegration
   template double eval_surface_integrand<2>(MultiLinearFunction, int, double, double, Vec<1>, function<double(Vec<2>)>); // explicit instantiation.
 
   template<int Dv>
-  Vec<2> MultiLinearFunction::get_extremal_values_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
+  double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
       if(Dv != D) throw Exception ("Dimension mismatch!");
       vector<double> vals((1<<Dv));
       for(int h=0; h<vals.size(); h++) {
           Vec<Dv> p;
           for(int i=0; i<D; i++) if(! MultiLinearFunction::get_bool_i(h,D,i)) p[i] = xL[i]; else p[i] = xU[i];
-          vals[h] = operator ()(p);
+          vals[h] = abs(operator ()(p));
       }
-      auto res = minmax_element(vals.begin(), vals.end());
-      return {*res.first, *res.second};
+      auto res = max_element(vals.begin(), vals.end());
+      return *res;
   }
 
-  template Vec<2> MultiLinearFunction::get_extremal_values_on_hyperrect(Vec<2>, Vec<2>);
+  template double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<2>, Vec<2>);
 
   template<int D>
   double integrate_saye(Array<MultiLinearFunction> psi, Array<int> s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
     if(D == 1) return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
+    for(int i=psi.size()-1; i>=0; i--){
+        auto psi_c = psi[i]; psi_c.c[0] -= psi[i](xc);
+        auto delta = psi_c.get_largest_abs_on_hyperrect(xL, xU);
+
+    }
   }
 
   template<unsigned int D, typename T>

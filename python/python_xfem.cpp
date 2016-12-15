@@ -608,7 +608,7 @@ void ExportNgsx(py::module &m)
                                          //phi[{1,1}] = -1./3;
                                          std::function<double(Vec<2>)> f = [](Vec<2> x) -> double {return 1;};
 
-                                         cout << phi.get_extremal_values_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
+                                         cout << phi.get_largest_abs_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
 
                                          //return eval_surface_integrand<2>(phi, 0, 0.,1., Vec<1>{0.25}, f);
                                          return eval_integrand<2>({phi}, {-1}, 0, 0.,1., Vec<1>{0.25}, f, 1);

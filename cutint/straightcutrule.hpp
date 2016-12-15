@@ -166,7 +166,7 @@ namespace xintegration
       void output();
 
       template<int Dv>
-      Vec<2> get_extremal_values_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
+      double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
   };
 
   template<int D>
