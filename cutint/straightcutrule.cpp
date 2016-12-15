@@ -528,95 +528,83 @@ namespace xintegration
       }
   }
 
-  class MultiLinearFunction {
-  public:
-      int D;
-      vector<double> c;
-
-      MultiLinearFunction(int a_D) : D(a_D) {
-          c.resize(1<<D);
-          for(int i=0; i<c.size(); i++) c[i] = 0;
+  template<int Dv>
+  double MultiLinearFunction::operator()(Vec<Dv> x) {
+      if(D != Dv) {
+          throw Exception ("x has not the right dim to be parameter of the multilinear function!");
       }
-      static bool get_bool_i(int h, int a_D, int i) { return (h&(1<<(a_D - i -1))) > 0;}
-
-      static vector<bool> get_bools(int h, int a_D){
-          vector<bool> idx(a_D);
-          for(int i=0; i<a_D; i++) idx[i] = get_bool_i(h, a_D, i);
-          return idx;
-      }
-
-      static int get_int(vector<bool> idx) {
-          int h=0;
-          for(int i=0; i<idx.size(); i++) h += (1<<(idx.size() - i -1))*idx[i];
-          return h;
-      }
-
-      double& operator[](vector<bool> idx){ return c[get_int(idx)]; }
-
-      template<int Dv>
-      double operator()(Vec<Dv> x) {
-          if(D != Dv) {
-              throw Exception ("x has not the right dim to be parameter of the multilinear function!");
+      else {
+          double s = 0;
+          for(int h=0; h<(1<<D); h++){
+              double prod = 1;
+              for(int i=0; i<D; i++) prod *= pow(x[i],get_bool_i(h,D,i));
+              s += prod*c[h];
           }
-          else {
-              double s = 0;
-              for(int h=0; h<(1<<D); h++){
-                  double prod = 1;
-                  for(int i=0; i<D; i++) prod *= pow(x[i],get_bool_i(h,D,i));
-                  s += prod*c[h];
-              }
-              return s;
+          return s;
+      }
+  }
+
+  vector<double> MultiLinearFunction::find_root_1D(double x1, double x2){
+      if(D != 1) return {}; //Exception!
+      else if(c[1] == 0) return{};
+      else {
+          double r = -c[0]/c[1];
+          if ((x1<r)&&(r<x2)) return {r};
+          else return {};
+      }
+  }
+
+  MultiLinearFunction MultiLinearFunction::get_del_k(int k){
+      MultiLinearFunction del_k(D);
+      for(int h=0; h<c.size(); h++){
+          if(get_bool_i(h,D, k)){
+              auto vb = get_bools(h, D);
+              vb[k] = false;
+              del_k[vb] = c[h];
           }
       }
+      return del_k;
+  }
 
-      vector<double> find_root_1D(double x1, double x2){
-          if(D != 1) return {}; //Exception!
-          else if(c[1] == 0) return{};
-          else {
-              double r = -c[0]/c[1];
-              if ((x1<r)&&(r<x2)) return {r};
-              else return {};
+  void MultiLinearFunction::output() {
+      bool firstoutput = true;
+      for(int h=0; h<c.size(); h++){
+          if(abs(c[h]) > 1e-12){
+              if(!firstoutput) cout << " + ";
+              else firstoutput = false;
+              cout << c[h];
+              for(int i=0; i<D; i++) if (get_bool_i(h,D, i)) cout << "*x"<<i ;
           }
       }
+      cout << endl;
+  }
 
-      MultiLinearFunction get_del_k(int k){
-          MultiLinearFunction del_k(D);
-          for(int h=0; h<c.size(); h++){
-              if(get_bool_i(h,D, k)){
-                  auto vb = get_bools(h, D);
-                  vb[k] = false;
-                  del_k[vb] = c[h];
-              }
-          }
-          return del_k;
+  template<int Dv>
+  Vec<Dv> MultiLinearFunction::get_grad(Vec<Dv> x){
+      if(D != Dv) {
+          throw Exception ("x has not the right dim to be parameter of the multilinear function!");
       }
 
-      void output() {
-          bool firstoutput = true;
-          for(int h=0; h<c.size(); h++){
-              if(abs(c[h]) > 1e-12){
-                  if(!firstoutput) cout << " + ";
-                  else firstoutput = false;
-                  cout << c[h];
-                  for(int i=0; i<D; i++) if (get_bool_i(h,D, i)) cout << "*x"<<i ;
-              }
-          }
-          cout << endl;
+      Vec<Dv> grad;
+      for(int k=0; k<D; k++) {
+          grad[k] = get_del_k(k)(x);
       }
-  };
+      return grad;
+  }
 
   template<int D>
-  double eval_integrand(Array<MultiLinearFunction> psi, Array<int> s, int k, double x1, double x2, Vec<D-1> x, function<double(const Vec<D>&)> f, int order) {
+  double eval_integrand(Array<MultiLinearFunction> psi, Array<int> s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
       vector<double> R{x1,x2};
       for(auto psi_i : psi){
           MultiLinearFunction psi_i_new(1);
           for(int h=0; h<psi_i.c.size(); h++) {
-              vector<bool> idx = MultiLinearFunction::get_bools(h,psi_i.D);
+              vector<bool> idx = MultiLinearFunction::get_bools(h,D);
               double prod = 1;
               for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
-              for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j]);
+              for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
               psi_i_new.c[idx[k]] += psi_i[idx]*prod;
           }
+          cout << "psi_i_new: " << endl; psi_i_new.output();
           auto rv = psi_i_new.find_root_1D(x1,x2);
           R.insert(R.begin(), rv.begin(), rv.end());
       }
@@ -641,17 +629,21 @@ namespace xintegration
       return I;
   }
 
+  template double eval_integrand<2>(Array<MultiLinearFunction>, Array<int>, int, double, double, Vec<1>, function<double(Vec<2>)>, int);
+
   template<int D>
-  double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(const Vec<D>&)> f) {
+  double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f) {
       MultiLinearFunction psi_new(1);
       for(int h=0; h<phi.c.size(); h++) {
           vector<bool> idx = MultiLinearFunction::get_bools(h, D);
-          for(int j=0; j<D; j++) idx[j] = idx[j];
+          //for(int j=0; j<D; j++) idx[j] = idx[j];
           double prod = 1;
           for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
           for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
           psi_new.c[idx[k]] += phi[idx]*prod;
       }
+      cout << "Psi new eval_surface_integrand: " << endl;
+      psi_new.output();
       auto rv = psi_new.find_root_1D(x1,x2);
       if(rv.size() == 0) return 0;
       else {
@@ -659,8 +651,29 @@ namespace xintegration
           for(int i=0; i<k; i++) p[i] = x[i];
           p[k] = rv[0];
           for(int i=k+1; i<D; i++) p[i] = x[i-1];
-          return f(p);
+          return f(p)*L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p));
       }
+  }
+
+  template double eval_surface_integrand<2>(MultiLinearFunction, int, double, double, Vec<1>, function<double(Vec<2>)>); // explicit instantiation.
+
+  template<int Dv>
+  Vec<2> MultiLinearFunction::get_extremal_values_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
+      if(Dv != D) throw Exception ("Dimension mismatch!");
+      Vec<(1<<Dv)> vals;
+      for(int h=0; h<vals.Size(); h++) {
+          Vec<Dv> p;
+          for(int i=0; i<D; i++) if(! MultiLinearFunction::get_bool_i(h,D,i)) p[i] = xL[i]; else p[i] = xU[i];
+          vals[h] = operator ()(p);
+      }
+      auto res = minmax_element(vals.begin(), vals.end());
+      return {res.first, res.second};
+  }
+
+  template<int D>
+  double integrate_saye(Array<MultiLinearFunction> psi, Array<int> s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
+    if(D == 1) return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
+    Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
   }
 
   template<unsigned int D, typename T>
