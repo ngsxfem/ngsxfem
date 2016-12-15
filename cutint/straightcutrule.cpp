@@ -660,15 +660,17 @@ namespace xintegration
   template<int Dv>
   Vec<2> MultiLinearFunction::get_extremal_values_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
       if(Dv != D) throw Exception ("Dimension mismatch!");
-      Vec<(1<<Dv)> vals;
-      for(int h=0; h<vals.Size(); h++) {
+      vector<double> vals((1<<Dv));
+      for(int h=0; h<vals.size(); h++) {
           Vec<Dv> p;
           for(int i=0; i<D; i++) if(! MultiLinearFunction::get_bool_i(h,D,i)) p[i] = xL[i]; else p[i] = xU[i];
           vals[h] = operator ()(p);
       }
       auto res = minmax_element(vals.begin(), vals.end());
-      return {res.first, res.second};
+      return {*res.first, *res.second};
   }
+
+  template Vec<2> MultiLinearFunction::get_extremal_values_on_hyperrect(Vec<2>, Vec<2>);
 
   template<int D>
   double integrate_saye(Array<MultiLinearFunction> psi, Array<int> s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
