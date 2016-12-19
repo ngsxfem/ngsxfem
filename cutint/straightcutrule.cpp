@@ -672,6 +672,23 @@ namespace xintegration
       return (exponent == 0) ? 1 : (base * pow(base, exponent-1));
   }
 
+  template<int D>
+  void Get_Tensor_Product_IR(int order, Vec<D> xL, Vec<D> xU, IntegrationRule& result){
+      IntegrationRule ir_ngs;
+      ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+      int q = ir_ngs.Size();
+      for(int h=0; h<pow(q, D); h++){
+          //for(int i=0; i<D; i++) cout << (h%pow(q,i+1))/pow(q,i);
+          //cout << endl;
+          double w = 1; Vec<D> point;
+          for(int i=0; i<D; i++){
+              auto ip = ir_ngs[(h%pow(q,i+1))/pow(q,i)];
+              w *= ip.Weight();
+              point[i] = xL[i] + (xU[i]-xL[i])*ip.Point()[0];
+          }
+          result.Append(IntegrationPoint(point, w));
+      }
+  }
 
   template<int D>
   double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
