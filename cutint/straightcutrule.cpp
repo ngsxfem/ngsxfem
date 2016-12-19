@@ -666,6 +666,12 @@ namespace xintegration
       return *res;
   }
 
+  template<class T>
+  inline constexpr T pow(const T base, unsigned const exponent)
+  {
+      return (exponent == 0) ? 1 : (base * pow(base, exponent-1));
+  }
+
 
   template<int D>
   double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
