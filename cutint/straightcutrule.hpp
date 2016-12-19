@@ -175,4 +175,5 @@ namespace xintegration
   template<int D>
   double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f);
 
+  double DebugSaye();
 }

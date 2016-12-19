@@ -600,19 +600,7 @@ void ExportNgsx(py::module &m)
            }));
   // new implementation: only straight cuts - start with triangles only for a start!
 
-  m.def("DebugSaye", FunctionPointer([]() -> double {
-                                         MultiLinearFunction phi(2);
-                                         phi[{0,0}] = 1;
-                                         phi[{0,1}] = -2;
-                                         phi[{1,0}] = -2;
-                                         //phi[{1,1}] = -1./3;
-                                         std::function<double(Vec<2>)> f = [](Vec<2> x) -> double {return 1;};
-
-                                         cout << phi.get_largest_abs_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
-
-                                         //return eval_surface_integrand<2>(phi, 0, 0.,1., Vec<1>{0.25}, f);
-                                         return eval_integrand<2>({phi}, {-1}, 0, 0.,1., Vec<1>{0.25}, f, 1);
-                                     }));
+  m.def("DebugSaye", FunctionPointer([]() -> double {return DebugSaye();}));
 
   m.def("NewIntegrateX",
           FunctionPointer([](py::object lset,
