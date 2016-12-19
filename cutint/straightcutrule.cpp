@@ -675,6 +675,11 @@ namespace xintegration
         auto delta = psi_c.get_largest_abs_on_hyperrect(xL, xU);
 
     }
+  template<>
+  double integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, function<double(Vec<1>)> f, bool S, int order) {
+    return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
+  }
+
   double DebugSaye(){
     MultiLinearFunction phi(2);
     phi[{0,0}] = 1;
