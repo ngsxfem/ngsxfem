@@ -593,7 +593,7 @@ namespace xintegration
   }
 
   template<int D>
-  double eval_integrand(Array<MultiLinearFunction> psi, Array<int> s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
+  double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
       vector<double> R{x1,x2};
       for(auto psi_i : psi){
           MultiLinearFunction psi_i_new(1);
@@ -668,8 +668,7 @@ namespace xintegration
 
 
   template<int D>
-  double integrate_saye(Array<MultiLinearFunction> psi, Array<int> s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
-    if(D == 1) return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
+  double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
     for(int i=psi.size()-1; i>=0; i--){
         auto psi_c = psi[i]; psi_c.c[0] -= psi[i](xc);
