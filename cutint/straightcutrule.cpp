@@ -690,6 +690,14 @@ namespace xintegration
       }
   }
 
+  int sgn(int m, int s, bool S, int sigma){
+      if( (m == sigma*s) || S) return sigma*m;
+      else return 0;
+  }
+
+  auto sgn_L(int m, int s, bool S) {return sgn(m,s,S,-1);}
+  auto sgn_U(int m, int s, bool S) {return sgn(m,s,S,+1);}
+
   template<int D>
   double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
