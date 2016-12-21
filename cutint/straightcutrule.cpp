@@ -691,6 +691,30 @@ namespace xintegration
       }
   }
 
+  template<int D>
+  IntegrationRule eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x) {
+      MultiLinearFunction psi_new(1);
+      for(int h=0; h<phi.c.size(); h++) {
+          vector<bool> idx = MultiLinearFunction::get_bools(h, D);
+          double prod = 1;
+          for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
+          for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
+          psi_new.c[idx[k]] += phi[idx]*prod;
+      }
+      psi_new.output();
+      auto rv = psi_new.find_root_1D(x1,x2);
+      if(rv.size() == 0) return IntegrationRule();
+      else {
+          Vec<D> p;
+          for(int i=0; i<k; i++) p[i] = x[i];
+          p[k] = rv[0];
+          for(int i=k+1; i<D; i++) p[i] = x[i-1];
+          IntegrationRule ir;
+          ir.Append(IntegrationPoint(p, L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p))));
+          return ir;
+      }
+  }
+
   template<int Dv>
   double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
       if(Dv != D) throw Exception ("Dimension mismatch!");
