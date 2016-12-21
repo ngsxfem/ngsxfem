@@ -630,6 +630,44 @@ namespace xintegration
   }
 
   template<int D>
+  IntegrationRule eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order) {
+      vector<double> R{x1,x2};
+      for(auto psi_i : psi){
+          MultiLinearFunction psi_i_new(1);
+          for(int h=0; h<psi_i.c.size(); h++) {
+              vector<bool> idx = MultiLinearFunction::get_bools(h,D);
+              double prod = 1;
+              for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
+              for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
+              psi_i_new.c[idx[k]] += psi_i[idx]*prod;
+          }
+          cout << "psi_i_new: " << endl; psi_i_new.output();
+          auto rv = psi_i_new.find_root_1D(x1,x2);
+          R.insert(R.begin(), rv.begin(), rv.end());
+      }
+      sort(R.begin(), R.end());
+      IntegrationRule ir;
+      for(int j=0; j<R.size()-1; j++){
+          double L = R[j+1]-R[j]; Vec<D> xc;
+          for(int i=0; i<k; i++) xc[i] = x[i];
+          xc[k] = 0.5*(R[j+1]+R[j]);
+          for(int i=k+1; i<D; i++) xc[i] = x[i-1];
+          bool cond = true;
+          for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
+          if(cond){
+              IntegrationRule ir_ngs;
+              ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+              for(auto ip: ir_ngs){
+                  Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
+                  IntegrationPoint ip_new(p, L*ip.Weight());
+                  ir.Append(ip_new);
+              }
+          }
+      }
+      return ir;
+  }
+
+  template<int D>
   double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f) {
       MultiLinearFunction psi_new(1);
       for(int h=0; h<phi.c.size(); h++) {
