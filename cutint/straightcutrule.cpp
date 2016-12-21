@@ -833,6 +833,87 @@ namespace xintegration
     return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
   }
 
+  template<int D>
+  IntegrationRule integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, bool S, int order) {
+    Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
+    Array<MultiLinearFunction> psi_pruned; Array<int> s_pruned;
+    for(int i=psi.Size()-1; i>=0; i--){
+        auto psi_c = psi[i]; psi_c.c[0] -= psi[i](xc);
+        auto delta = psi_c.get_largest_abs_on_hyperrect(xL, xU);
+        if(abs(psi[i](xc)) >= delta){
+            if(s[i]*psi[i](xc) < 0) return IntegrationRule();
+        }
+        else {
+            psi_pruned.Append(psi[i]); s_pruned.Append(s[i]);
+        }
+    }
+    if(psi_pruned.Size() == 0){
+        double vol_U = 1;
+        for(int i=0; i<D; i++) vol_U *= (xU[i] - xL[i]);
+        IntegrationRule ir;
+        Get_Tensor_Product_IR(order, xL, xU, ir);
+        for(auto ip:ir) ip.SetWeight(ip.Weight()*vol_U);
+        return ir;
+    }
+    vector<double> partial_derivs(D);
+    for(int i=0; i<D; i++) partial_derivs[i] = abs(psi_pruned[0].get_del_k(i)(xc));
+    int k = distance( max_element(partial_derivs.begin(), partial_derivs.end()), partial_derivs.begin());
+    Array<MultiLinearFunction> psitilde; Array<int> stilde;
+    for(int i=0; i<psi_pruned.Size(); i++){
+        auto psi_i = psi_pruned[i];
+        Vec<D> g = psi_i.get_grad(xc);
+        Vec<D> delta;
+        for(int j=0; j<D; j++){
+            auto psi_c = psi_i.get_del_k(j); psi_c.c[0] -= g[j];
+            delta[j] = psi_c.get_largest_abs_on_hyperrect(xL,xU);
+        }
+        double s=0; for(int j=0; j<D; j++) s += pow(g[j]+delta[j],2);
+        if( (abs(g[k]) > delta[k]) && (s / pow(g[k]-delta[k],2) < 20.)){
+            MultiLinearFunction psi_i_L(D-1), psi_i_U(D-1);
+            for(int h = 0; h<psi_i_L.c.size(); h++){
+                auto bools = MultiLinearFunction::get_bools(h, D-1);
+                bools.insert(bools.begin()+k, 0);
+                psi_i_L.c[h] += psi_i[bools]; psi_i_U.c[h] += psi_i[bools];
+                bools = MultiLinearFunction::get_bools(h, D-1);
+                bools.insert(bools.begin()+k, 1);
+                psi_i_L.c[h] += psi_i[bools]*xL[k]; psi_i_U.c[h] += psi_i[bools]*xU[k];
+            }
+            psitilde.Append(psi_i_L); psitilde.Append(psi_i_U);
+            int sign_gk = 0;
+            if(g[k] < 0) sign_gk = -1;
+            else if(g[k] > 0) sign_gk = 1;
+            stilde.Append(sgn_L(sign_gk, s_pruned[i], S)); stilde.Append(sgn_U(sign_gk, s_pruned[i], S));
+        }
+        else {
+            throw Exception ("Line 23 not yet implemented!");
+        }
+    }
+    function<IntegrationRule(Vec<D-1>)> ftilde;
+    if(S) ftilde = [&] (Vec<D-1> x) {return eval_surface_integrand<D>(psi_pruned[0],k, xL[k], xU[k], x); };
+    else  ftilde = [&] (Vec<D-1> x) {return eval_integrand<D>(psi_pruned, s_pruned, k, xL[k], xU[k], x, order); };
+
+    Vec<D-1> xLtilde, xUtilde;
+    for(int i=0; i<D; i++){
+        if(i < k) { xLtilde[i] = xL[i]; xUtilde[i] = xU[i]; }
+        else if (i > k) { xLtilde[i-1] = xL[i]; xUtilde[i-1] = xU[i]; };
+    }
+
+    IntegrationRule ir_new;
+    auto ir = integrate_saye<D-1>(psitilde, stilde, xLtilde, xUtilde, false, order);
+    for(auto ip: ir){
+        auto ir_l = ftilde(ip.Point());
+        for(auto ip2: ir_l) {
+            ir_new.Append(IntegrationPoint(ip2.Point(), ip.Weight()*ip2.Weight()));
+        }
+    }
+    return ir_new;
+  }
+
+  template<>
+  IntegrationRule integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, bool S, int order) {
+    return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, order);
+  }
+
   double DebugSaye(){
     MultiLinearFunction phi(2);
     phi[{0,0}] = 1;
