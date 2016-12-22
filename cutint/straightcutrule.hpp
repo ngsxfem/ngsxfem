@@ -100,7 +100,7 @@ namespace xintegration
   private:
       shared_ptr<PointCnt> svs_ptr;
       Vec<2, Array<Polytope>> segments;
-      Vec<2, Vec<2, Vec<2, double>>> lc;
+      Vec<2, Vec<2, Vec<2, double>>> lc; //TODO: Replace with MultilinearFunction
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
       FlatVector<> lset;
 
