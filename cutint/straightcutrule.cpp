@@ -946,8 +946,8 @@ namespace xintegration
     }
   }
 
-  template<unsigned int D, typename T>
-  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const T & geom, IntegrationRule * ir_interface){
+  template<unsigned int D>
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface){
       for (int i = 0; i < quad_untrafo.Size(); ++i)
       {
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
