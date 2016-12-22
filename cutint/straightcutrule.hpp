@@ -134,7 +134,7 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
-                                                     LocalHeap & lh);
+                                                     LocalHeap & lh, bool use_saye);
 
   class MultiLinearFunction {
   public:

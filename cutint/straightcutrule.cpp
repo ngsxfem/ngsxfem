@@ -1007,7 +1007,7 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
-                                                     LocalHeap & lh)
+                                                     LocalHeap & lh, bool use_saye)
   {
     static Timer t ("NewStraightCutIntegrationRule");
     static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
@@ -1031,13 +1031,17 @@ namespace xintegration
     timermakequadrule.Start();
     CutSimplexElementGeometry geom(cf_lset_at_element, et, lh);
     CutQuadElementGeometry geom_quad(cf_lset_at_element, et, lh);
+    SayeCutElementGeometry geom_quad_saye(cf_lset_at_element, et, lh);
     IntegrationRule quad_untrafo;
 
     if (element_domain == IF)
     {
       static Timer timer1("StraightCutElementGeometry::Load+Cut");
       timer1.Start();
-      if((et == ET_QUAD)||(et == ET_HEX)) geom_quad.GetIntegrationRule(intorder, dt, quad_untrafo);
+      if((et == ET_QUAD)||(et == ET_HEX)) {
+          if(!use_saye) geom_quad.GetIntegrationRule(intorder, dt, quad_untrafo);
+          else geom_quad_saye.GetIntegrationRule(intorder, dt, quad_untrafo);
+      }
       else geom.GetIntegrationRule(intorder, dt, quad_untrafo);
       timer1.Stop();
     }
@@ -1052,11 +1056,17 @@ namespace xintegration
       {
         auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
         if (DIM == 2){
-            if(et == ET_QUAD) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
+            if(et == ET_QUAD){
+                if(!use_saye) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
+                else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad_saye, ir_interface);
+            }
             else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
         }
         else{
-            if(et == ET_HEX) TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad, ir_interface);
+            if(et == ET_HEX){
+                if(!use_saye) TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad, ir_interface);
+                else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad_saye, ir_interface);
+            }
             else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom, ir_interface);
         }
         ir = ir_interface;

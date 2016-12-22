@@ -608,7 +608,7 @@ void ExportNgsx(py::module &m)
                              PyCF cf,
                              int order,
                              DOMAIN_TYPE dt,
-                             int heapsize)
+                             int heapsize, bool use_saye)
                           {
                             static Timer timer ("NewIntegrateX");
                             static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
@@ -648,7 +648,7 @@ void ExportNgsx(py::module &m)
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
-                                 ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh);
+                                 ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh, use_saye);
                                  timercutgeom.Stop();
                                  timerevalintrule.Start();
                                  if (ir != nullptr)
@@ -679,7 +679,7 @@ void ExportNgsx(py::module &m)
            py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
            py::arg("order")=5,
            py::arg("domain_type")=IF,
-           py::arg("heapsize")=1000000);
+           py::arg("heapsize")=1000000, py::arg("use_saye")=false);
 }
 
 PYBIND11_PLUGIN(libngsxfem_py) 
