@@ -946,6 +946,22 @@ namespace xintegration
     }
   }
 
+  void MultiLinearFunction::FromLsetVals(FlatVector<> lsetvals){
+      if(D == 2){
+          operator[]({0,0}) = lsetvals[0]; operator[]({1,0}) = lsetvals[1]-operator[]({0,0}), operator[]({0,1}) = lsetvals[3] - operator[]({0,0}), operator[]({1,1}) = lsetvals[2] - operator[]({0,0}) - operator[]({1,0}) - operator[]({0,1});
+      }
+      else{
+          operator[]({0,0,0}) = lsetvals[0];
+          operator[]({1,0,0}) = lsetvals[1]-lsetvals[0];
+          operator[]({0,1,0}) = lsetvals[3] - lsetvals[0];
+          operator[]({0,0,1}) = lsetvals[4] - lsetvals[0];
+          operator[]({1,1,0}) = lsetvals[2] - operator[]({1,0,0}) - operator[]({0,1,0}) - operator[]({0,0,0});
+          operator[]({1,0,1}) = lsetvals[5] - operator[]({1,0,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
+          operator[]({0,1,1}) = lsetvals[7] - operator[]({0,1,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
+          operator[]({1,1,1}) = lsetvals[6] - operator[]({1,1,0}) - operator[]({1,0,1}) - operator[]({0,1,1}) - operator[]({1,0,0}) - operator[]({0,1,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
+      }
+  }
+
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface){
       for (int i = 0; i < quad_untrafo.Size(); ++i)

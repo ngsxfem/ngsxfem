@@ -172,6 +172,7 @@ namespace xintegration
       Vec<Dv> get_grad(Vec<Dv> x) const;
 
       void output();
+      void FromLsetVals(FlatVector<> lsetvals);
 
       template<int Dv>
       double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
