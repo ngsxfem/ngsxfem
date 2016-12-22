@@ -60,7 +60,13 @@ namespace xintegration
   Polytope CalcCutPolytopeUsingLset(const Polytope &s);
   Polytope CalcCutPointLineUsingLset(const Polytope &s);
 
-  class StraightCutElementGeometry {      
+  class CutElementGeometry {
+  public:
+      virtual Vec<3> GetNormal(const Vec<3>& p) const = 0;
+      virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule) = 0;
+  };
+
+  class CutSimplexElementGeometry : public CutElementGeometry {
   private:
       int D;
       shared_ptr<PointCnt> svs_ptr;
@@ -75,19 +81,19 @@ namespace xintegration
   public:
       LocalHeap & lh;
 
-      Vec<3> GetNormal(const Vec<3>& p) const{
-          return normal;
-      }
-
-      StraightCutElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
+      CutSimplexElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
           D = Dim(et);
           svs_ptr = make_shared<PointCnt>();
       }
 
-      void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
+      virtual Vec<3> GetNormal(const Vec<3>& p) const{
+          return normal;
+      }
+
+      virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
-  class StraightCutQuadElementGeometry {
+  class CutQuadElementGeometry : public CutElementGeometry {
   private:
       int D;
       ELEMENT_TYPE et;
@@ -108,9 +114,9 @@ namespace xintegration
   public:
       void LoadBaseQuadFromElementTopology();
       LocalHeap & lh;
-  public:
-      Vec<3> GetNormal(const Vec<3>& p) const;
-      StraightCutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
+
+      virtual Vec<3> GetNormal(const Vec<3>& p) const;
+      CutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
           D = Dim(et); svs_ptr = make_shared<PointCnt>();
           if(D == 3){//Why is this required?!!
               vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
@@ -118,7 +124,7 @@ namespace xintegration
           }
       }
 
-      void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
+      virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
   const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
