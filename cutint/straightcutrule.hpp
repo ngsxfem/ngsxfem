@@ -61,6 +61,9 @@ namespace xintegration
   Polytope CalcCutPointLineUsingLset(const Polytope &s);
 
   class CutElementGeometry {
+  protected:
+      ELEMENT_TYPE et;
+      int D;
   public:
       virtual Vec<3> GetNormal(const Vec<3>& p) const = 0;
       virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule) = 0;
@@ -68,11 +71,10 @@ namespace xintegration
 
   class CutSimplexElementGeometry : public CutElementGeometry {
   private:
-      int D;
       shared_ptr<PointCnt> svs_ptr;
       Array<Polytope> simplices;
       FlatVector<> lset;
-      ELEMENT_TYPE et;
+
       void CalcNormal(const Polytope &base_simplex);
       void LoadBaseSimplexFromElementTopology();
       void CutBaseSimplex(DOMAIN_TYPE dt);
@@ -81,7 +83,8 @@ namespace xintegration
   public:
       LocalHeap & lh;
 
-      CutSimplexElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
+      CutSimplexElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
+          et = a_et;
           D = Dim(et);
           svs_ptr = make_shared<PointCnt>();
       }
@@ -95,8 +98,6 @@ namespace xintegration
 
   class CutQuadElementGeometry : public CutElementGeometry {
   private:
-      int D;
-      ELEMENT_TYPE et;
       shared_ptr<PointCnt> svs_ptr;
       Vec<2, Array<Polytope>> segments;
       Vec<2, Vec<2, Vec<2, double>>> lc;
@@ -116,7 +117,8 @@ namespace xintegration
       LocalHeap & lh;
 
       virtual Vec<3> GetNormal(const Vec<3>& p) const;
-      CutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), et(a_et), lh(a_lh) {
+      CutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
+          et = a_et;
           D = Dim(et); svs_ptr = make_shared<PointCnt>();
           if(D == 3){//Why is this required?!!
               vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
