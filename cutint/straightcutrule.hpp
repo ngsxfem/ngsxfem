@@ -166,10 +166,10 @@ namespace xintegration
 
       vector<double> find_root_1D(double x1, double x2);
 
-      MultiLinearFunction get_del_k(int k);
+      MultiLinearFunction get_del_k(int k) const;
 
       template<int Dv>
-      Vec<Dv> get_grad(Vec<Dv> x);
+      Vec<Dv> get_grad(Vec<Dv> x) const;
 
       void output();
 

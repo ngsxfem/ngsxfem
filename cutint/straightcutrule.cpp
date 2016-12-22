@@ -554,7 +554,7 @@ namespace xintegration
       }
   }
 
-  MultiLinearFunction MultiLinearFunction::get_del_k(int k){
+  MultiLinearFunction MultiLinearFunction::get_del_k(int k) const {
       MultiLinearFunction del_k(D);
       for(int h=0; h<c.size(); h++){
           if(get_bool_i(h,D, k)){
@@ -580,7 +580,7 @@ namespace xintegration
   }
 
   template<int Dv>
-  Vec<Dv> MultiLinearFunction::get_grad(Vec<Dv> x){
+  Vec<Dv> MultiLinearFunction::get_grad(Vec<Dv> x) const{
       if(D != Dv) {
           throw Exception ("x has not the right dim to be parameter of the multilinear function!");
       }
