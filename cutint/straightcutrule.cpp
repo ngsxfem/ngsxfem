@@ -962,6 +962,30 @@ namespace xintegration
       }
   }
 
+  void SayeCutElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
+      levelset = MultiLinearFunction(D);
+      levelset.FromLsetVals(lset);
+
+      Array<MultiLinearFunction> phis{levelset}; Array<int> sis{0}; bool S = true;
+      if(dt == POS) { sis[0] = 1; S = false; }
+      else if(dt == NEG) { sis[0] = -1; S = false; }
+
+      if(D == 2){
+          intrule = integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, S, 1);
+      }
+      else if (D == 3) {
+          intrule = integrate_saye(phis, sis, Vec<3>{0.,0.,0.}, Vec<3>{1.,1.,1.}, S, 1);
+      }
+      else {
+          throw Exception( "This Dim is not supported yet in SayeCutElementGeometry");
+      }
+  }
+  Vec<3> SayeCutElementGeometry::GetNormal(const Vec<3>& p) const{
+      Vec<3> n = levelset.get_grad(p);
+      n /= L2Norm(n);
+      return n;
+  }
+
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface){
       for (int i = 0; i < quad_untrafo.Size(); ++i)
