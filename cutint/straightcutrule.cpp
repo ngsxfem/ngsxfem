@@ -630,7 +630,7 @@ namespace xintegration
   }
 
   template<int D>
-  IntegrationRule eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order) {
+  void eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order, IntegrationRule& result) {
       vector<double> R{x1,x2};
       for(auto psi_i : psi){
           MultiLinearFunction psi_i_new(1);
@@ -646,7 +646,6 @@ namespace xintegration
           R.insert(R.begin(), rv.begin(), rv.end());
       }
       sort(R.begin(), R.end());
-      IntegrationRule ir;
       for(int j=0; j<R.size()-1; j++){
           double L = R[j+1]-R[j]; Vec<D> xc;
           for(int i=0; i<k; i++) xc[i] = x[i];
@@ -660,11 +659,10 @@ namespace xintegration
               for(auto ip: ir_ngs){
                   Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
                   IntegrationPoint ip_new(p, L*ip.Weight());
-                  ir.Append(ip_new);
+                  result.Append(ip_new);
               }
           }
       }
-      return ir;
   }
 
   template<int D>
@@ -692,7 +690,7 @@ namespace xintegration
   }
 
   template<int D>
-  IntegrationRule eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x) {
+  void eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, IntegrationRule& result) {
       MultiLinearFunction psi_new(1);
       for(int h=0; h<phi.c.size(); h++) {
           vector<bool> idx = MultiLinearFunction::get_bools(h, D);
@@ -703,15 +701,13 @@ namespace xintegration
       }
       psi_new.output();
       auto rv = psi_new.find_root_1D(x1,x2);
-      if(rv.size() == 0) return IntegrationRule();
+      if(rv.size() == 0) result = IntegrationRule();
       else {
           Vec<D> p;
           for(int i=0; i<k; i++) p[i] = x[i];
           p[k] = rv[0];
           for(int i=k+1; i<D; i++) p[i] = x[i-1];
-          IntegrationRule ir;
-          ir.Append(IntegrationPoint(p, L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p))));
-          return ir;
+          result.Append(IntegrationPoint(p, L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p))));
       }
   }
 
@@ -834,14 +830,14 @@ namespace xintegration
   }
 
   template<int D>
-  IntegrationRule integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, bool S, int order) {
+  void integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, bool S, int order, IntegrationRule& result) {
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
     Array<MultiLinearFunction> psi_pruned; Array<int> s_pruned;
     for(int i=psi.Size()-1; i>=0; i--){
         auto psi_c = psi[i]; psi_c.c[0] -= psi[i](xc);
         auto delta = psi_c.get_largest_abs_on_hyperrect(xL, xU);
         if(abs(psi[i](xc)) >= delta){
-            if(s[i]*psi[i](xc) < 0) return IntegrationRule();
+            if(s[i]*psi[i](xc) < 0) result = IntegrationRule();
         }
         else {
             psi_pruned.Append(psi[i]); s_pruned.Append(s[i]);
@@ -852,8 +848,7 @@ namespace xintegration
         for(int i=0; i<D; i++) vol_U *= (xU[i] - xL[i]);
         IntegrationRule ir;
         Get_Tensor_Product_IR(order, xL, xU, ir);
-        for(auto ip:ir) ip.SetWeight(ip.Weight()*vol_U);
-        return ir;
+        for(auto ip:ir) result.Append(IntegrationPoint(ip.Point(), ip.Weight()*vol_U));
     }
     vector<double> partial_derivs(D);
     for(int i=0; i<D; i++) partial_derivs[i] = abs(psi_pruned[0].get_del_k(i)(xc));
@@ -889,8 +884,8 @@ namespace xintegration
         }
     }
     function<IntegrationRule(Vec<D-1>)> ftilde;
-    if(S) ftilde = [&] (Vec<D-1> x) {return eval_surface_integrand<D>(psi_pruned[0],k, xL[k], xU[k], x); };
-    else  ftilde = [&] (Vec<D-1> x) {return eval_integrand<D>(psi_pruned, s_pruned, k, xL[k], xU[k], x, order); };
+    if(S) ftilde = [&] (Vec<D-1> x) {IntegrationRule ir_r; eval_surface_integrand<D>(psi_pruned[0],k, xL[k], xU[k], x, ir_r); return ir_r; };
+    else  ftilde = [&] (Vec<D-1> x) {IntegrationRule ir_r; eval_integrand<D>(psi_pruned, s_pruned, k, xL[k], xU[k], x, order, ir_r); return ir_r; };
 
     Vec<D-1> xLtilde, xUtilde;
     for(int i=0; i<D; i++){
@@ -898,20 +893,21 @@ namespace xintegration
         else if (i > k) { xLtilde[i-1] = xL[i]; xUtilde[i-1] = xU[i]; };
     }
 
-    IntegrationRule ir_new;
-    auto ir = integrate_saye<D-1>(psitilde, stilde, xLtilde, xUtilde, false, order);
+    IntegrationRule ir;
+    integrate_saye<D-1>(psitilde, stilde, xLtilde, xUtilde, false, order, ir);
     for(auto ip: ir){
         auto ir_l = ftilde(ip.Point());
         for(auto ip2: ir_l) {
-            ir_new.Append(IntegrationPoint(ip2.Point(), ip.Weight()*ip2.Weight()));
+            result.Append(IntegrationPoint(ip2.Point(), ip.Weight()*ip2.Weight()));
         }
     }
-    return ir_new;
+    cout << "The Intrule in the integrate_saye function" << endl;
+    cout << result << endl;
   }
 
   template<>
-  IntegrationRule integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, bool S, int order) {
-    return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, order);
+  void integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, bool S, int order, IntegrationRule& result) {
+    eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, order, result);
   }
 
   double DebugSaye(){
@@ -935,9 +931,10 @@ namespace xintegration
     bool IR_mode = true;
     if (IR_mode){
         double I = 0;
-        IntegrationRule ir = integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, false, 1);
+        IntegrationRule ir; integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, false, 1, ir);
         for(auto ip:ir) {
             I += ip.Weight()*f(ip.Point());
+            cout << ip << endl;
         }
         return I;
     }
@@ -971,14 +968,15 @@ namespace xintegration
       else if(dt == NEG) { sis[0] = -1; S = false; }
 
       if(D == 2){
-          intrule = integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, S, 1);
+          integrate_saye<2>(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, S, order, intrule);
       }
       else if (D == 3) {
-          intrule = integrate_saye(phis, sis, Vec<3>{0.,0.,0.}, Vec<3>{1.,1.,1.}, S, 1);
+          integrate_saye<3>(phis, sis, Vec<3>{0.,0.,0.}, Vec<3>{1.,1.,1.}, S, order, intrule);
       }
       else {
           throw Exception( "This Dim is not supported yet in SayeCutElementGeometry");
       }
+      cout << "The Intrule: " << endl << intrule << endl;
   }
   Vec<3> SayeCutElementGeometry::GetNormal(const Vec<3>& p) const{
       Vec<3> n = levelset.get_grad(p);
