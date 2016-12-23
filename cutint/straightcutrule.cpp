@@ -1002,8 +1002,7 @@ namespace xintegration
 
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)
-  const IntegrationRule * StraightCutIntegrationRule(shared_ptr<CoefficientFunction> cf_lset,
-                                                     const FlatVector<> & cf_lset_at_element,
+  const IntegrationRule * StraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,

@@ -648,7 +648,7 @@ void ExportNgsx(py::module &m)
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
-                                 ir = StraightCutIntegrationRule(gf_lset, elvec, trafo, dt, order, lh, use_saye);
+                                 ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye);
                                  timercutgeom.Stop();
                                  timerevalintrule.Start();
                                  if (ir != nullptr)
