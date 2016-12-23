@@ -866,10 +866,13 @@ namespace xintegration
         Vec<D> g = psi_i.get_grad(xc);
         Vec<D> delta;
         for(int j=0; j<D; j++){
-            auto psi_c = psi_i.get_del_k(j); psi_c.c[0] -= g[j];
+            MultiLinearFunction psi_c(D); psi_c = psi_i.get_del_k(j); psi_c.c[0] -= g[j];
             delta[j] = psi_c.get_largest_abs_on_hyperrect(xL,xU);
         }
+        //cout << "Delta: " << delta << endl; cout << "g: " << g << endl;
         double s=0; for(int j=0; j<D; j++) s += pow(g[j]+delta[j],2);
+        //cout << "s: " << s << endl;
+        //cout << " s / pow(g[k]-delta[k],2) " << s / pow(g[k]-delta[k],2.) << endl;
         if( (abs(g[k]) > delta[k]) && (s / pow(g[k]-delta[k],2) < 20.)){
             MultiLinearFunction psi_i_L(D-1), psi_i_U(D-1);
             for(int h = 0; h<psi_i_L.c.size(); h++){
