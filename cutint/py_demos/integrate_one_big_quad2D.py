@@ -90,19 +90,23 @@ if __name__ == "__main__":
     #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-    #lsetvals_list = [ [-0.5832,-1.2,1.234521,0.89427], [-0.18687,0.765764,0.324987,0.48983], [0.765764,0.324987,0.48983, -0.18687], [1,-1,1/3,-1], [1,2/3,-1,-2/3]]
-    lsetvals_list = [[1,2/3,-1,-2/3]]
-
+    lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
+    #lsetvals_list = [[1.,-2.,-2.,-2.]]
+    #lsetvals_list = [[1,-1,-4,-2]]
+    #lsetvals_list.append([3,-1,1,-1])
+    
     f = lambda x,y: 1+0*x+0*y
     f_ngs = f(x,y)
     V = H1(mesh,order=1)
     lset_approx = GridFunction(V)
 
-    domains = [NEG,POS, IF]
-
+    #domains = [NEG,POS, IF]
+    domains = [NEG,POS]
+    
     for lsetvals in lsetvals_list:
         print("Case lsetvals = ", lsetvals)
-        referencevals = get_referencevals(lsetvals, f, True)
+        referencevals = get_referencevals(lsetvals, f, False)
+        print("referencevals: ", referencevals)
         levelset =get_levelset(lsetvals)
 
         InterpolateToP1(levelset,lset_approx)
@@ -113,12 +117,12 @@ if __name__ == "__main__":
             errors[key] = []
         inte = dict()
 
-        for order in range(16):
+        for order in range(8):
             for key in domains:
-                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000)
+                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000,use_saye = True)
                 inte[key] = integral
                 #print("Integral on Domain ", key, " : ",integral)
                 errors[key].append(abs(integral - referencevals[key]))
             #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
         print("L2 Errors:", errors)
-        Draw(levelset, mesh, "lset")
+        #Draw(levelset, mesh, "lset")
