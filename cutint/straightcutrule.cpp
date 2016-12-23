@@ -714,10 +714,13 @@ namespace xintegration
   template<int Dv>
   double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
       if(Dv != D) throw Exception ("Dimension mismatch!");
-      vector<double> vals((1<<Dv));
+      vector<double> vals(1<<Dv);
       for(int h=0; h<vals.size(); h++) {
           Vec<Dv> p;
-          for(int i=0; i<D; i++) if(! MultiLinearFunction::get_bool_i(h,D,i)) p[i] = xL[i]; else p[i] = xU[i];
+          for(int i=0; i<D; i++){
+              if(MultiLinearFunction::get_bool_i(h,Dv,i)) p[i] = xU[i];
+              else p[i] = xL[i];
+          }
           vals[h] = abs(operator ()(p));
       }
       auto res = max_element(vals.begin(), vals.end());
