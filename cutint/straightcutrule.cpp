@@ -911,8 +911,8 @@ namespace xintegration
             result.Append(IntegrationPoint(ip2.Point(), ip.Weight()*ip2.Weight()));
         }
     }
-    cout << "The Intrule in the integrate_saye function" << endl;
-    cout << result << endl;
+    //cout << "The Intrule in the integrate_saye function" << endl;
+    //cout << result << endl;
   }
 
   template<>
@@ -986,7 +986,7 @@ namespace xintegration
       else {
           throw Exception( "This Dim is not supported yet in SayeCutElementGeometry");
       }
-      cout << "The Intrule: " << endl << intrule << endl;
+      //cout << "The Intrule: " << endl << intrule << endl;
   }
   Vec<3> SayeCutElementGeometry::GetNormal(const Vec<3>& p) const{
       Vec<3> n = levelset.get_grad(p);
