@@ -784,7 +784,7 @@ namespace xintegration
     }
     vector<double> partial_derivs(D);
     for(int i=0; i<D; i++) partial_derivs[i] = abs(psi_pruned[0].get_del_k(i)(xc));
-    int k = distance( max_element(partial_derivs.begin(), partial_derivs.end()), partial_derivs.begin());
+    int k = distance(partial_derivs.begin(), max_element(partial_derivs.begin(), partial_derivs.end()));
     Array<MultiLinearFunction> psitilde; Array<int> stilde;
     for(int i=0; i<psi_pruned.Size(); i++){
         auto psi_i = psi_pruned[i];
