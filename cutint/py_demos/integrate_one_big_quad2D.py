@@ -93,7 +93,7 @@ if __name__ == "__main__":
     lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
     #lsetvals_list = [[1.,-2.,-2.,-2.]]
     #lsetvals_list = [[1,-1,-4,-2]]
-    #lsetvals_list.append([3,-1,1,-1])
+    lsetvals_list.append([3,-1,1,-1.023123])
     
     f = lambda x,y: 1+0*x+0*y
     f_ngs = f(x,y)
@@ -117,11 +117,11 @@ if __name__ == "__main__":
             errors[key] = []
         inte = dict()
 
-        for order in range(8):
+        for order in range(1):
             for key in domains:
                 integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000,use_saye = True)
                 inte[key] = integral
-                #print("Integral on Domain ", key, " : ",integral)
+                print("PP: Integral on Domain ", key, " : ",integral)
                 errors[key].append(abs(integral - referencevals[key]))
             #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
         print("L2 Errors:", errors)

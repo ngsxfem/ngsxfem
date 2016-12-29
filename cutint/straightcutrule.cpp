@@ -846,9 +846,9 @@ namespace xintegration
             psi_pruned.Append(psi[i]); s_pruned.Append(s[i]);
         }
     }
+    double vol_U = 1;
+    for(int i=0; i<D; i++) vol_U *= (xU[i] - xL[i]);
     if(psi_pruned.Size() == 0){
-        double vol_U = 1;
-        for(int i=0; i<D; i++) vol_U *= (xU[i] - xL[i]);
         IntegrationRule ir;
         Get_Tensor_Product_IR(order, xL, xU, ir);
         for(auto ip:ir) result.Append(IntegrationPoint(ip.Point(), ip.Weight()*vol_U));
@@ -860,7 +860,7 @@ namespace xintegration
         //cout << "Partial Deriv " << i << " : " << partial_derivs[i] << endl;
     }
     int k = distance(partial_derivs.begin(), max_element(partial_derivs.begin(), partial_derivs.end()));
-    //cout << "k: " << k << endl;
+    cout << "k: " << k << endl;
     Array<MultiLinearFunction> psitilde; Array<int> stilde;
     for(int i=0; i<psi_pruned.Size(); i++){
         auto psi_i = psi_pruned[i];
@@ -873,7 +873,7 @@ namespace xintegration
         cout << "Delta: " << delta << endl; cout << "g: " << g << endl;
         double sum=0; for(int j=0; j<D; j++) sum += pow(g[j]+delta[j],2);
         //cout << "sum: " << sum << endl;
-        //cout << " s / pow(g[k]-delta[k],2) " << s / pow(g[k]-delta[k],2.) << endl;
+        //cout << " sum / pow(g[k]-delta[k],2) " << sum / pow(g[k]-delta[k],2.) << endl;
         if( (abs(g[k]) > delta[k]) && (sum / pow(g[k]-delta[k],2) < 20.)){
             MultiLinearFunction psi_i_L(D-1), psi_i_U(D-1);
             for(int h = 0; h<psi_i_L.c.size(); h++){
