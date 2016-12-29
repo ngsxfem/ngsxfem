@@ -701,8 +701,7 @@ namespace xintegration
       }
       psi_new.output();
       auto rv = psi_new.find_root_1D(x1,x2);
-      if(rv.size() == 0) result = IntegrationRule();
-      else {
+      if(rv.size() > 0){
           Vec<D> p;
           for(int i=0; i<k; i++) p[i] = x[i];
           p[k] = rv[0];
@@ -841,7 +840,7 @@ namespace xintegration
         auto psi_c = psi[i]; psi_c.c[0] -= psi[i](xc);
         auto delta = psi_c.get_largest_abs_on_hyperrect(xL, xU);
         if(abs(psi[i](xc)) >= delta){
-            if(s[i]*psi[i](xc) < 0) result = IntegrationRule();
+            if(s[i]*psi[i](xc) < 0) return;
         }
         else {
             psi_pruned.Append(psi[i]); s_pruned.Append(s[i]);
@@ -853,6 +852,7 @@ namespace xintegration
         IntegrationRule ir;
         Get_Tensor_Product_IR(order, xL, xU, ir);
         for(auto ip:ir) result.Append(IntegrationPoint(ip.Point(), ip.Weight()*vol_U));
+        return;
     }
     vector<double> partial_derivs(D);
     for(int i=0; i<D; i++) {
