@@ -177,12 +177,6 @@ namespace xintegration
       double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
   };
 
-  template<int D>
-  double eval_integrand(Array<MultiLinearFunction>& psi, Array<int>& s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order);
-
-  template<int D>
-  double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f);
-
   double DebugSaye();
 
   class SayeCutElementGeometry : public CutElementGeometry {
