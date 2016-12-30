@@ -102,6 +102,7 @@ if __name__ == "__main__":
 
     #domains = [NEG,POS, IF]
     domains = [NEG,POS]
+    error_list = []
     
     for lsetvals in lsetvals_list:
         print("Case lsetvals = ", lsetvals)
@@ -117,7 +118,7 @@ if __name__ == "__main__":
             errors[key] = []
         inte = dict()
 
-        for order in range(1):
+        for order in range(8):
             for key in domains:
                 integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000,use_saye = True)
                 inte[key] = integral
@@ -125,4 +126,6 @@ if __name__ == "__main__":
                 errors[key].append(abs(integral - referencevals[key]))
             #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
         print("L2 Errors:", errors)
+        error_list.append(errors)
         #Draw(levelset, mesh, "lset")
+print("All L2 Errors", error_list)
