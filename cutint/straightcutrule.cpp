@@ -958,10 +958,11 @@ namespace xintegration
 
   double DebugSaye(int s_dt, bool IR_mode){
     MultiLinearFunction phi(2);
-    phi[{0,0}] = 1;
-    phi[{0,1}] = -2;
-    phi[{1,0}] = -2;
+    //phi[{0,0}] = 1;
+    //phi[{0,1}] = -2;
+    //phi[{1,0}] = -2;
     //phi[{1,1}] = -1./3;
+    phi.FromLsetVals(Vec<4>{3,-1,1,-1.023123});
     std::function<double(Vec<2>)> f = [](Vec<2> x) -> double {return 1;};
 
     cout << phi.get_largest_abs_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
