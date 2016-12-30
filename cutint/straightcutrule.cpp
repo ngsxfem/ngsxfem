@@ -759,7 +759,7 @@ namespace xintegration
   auto sgn_U(int m, int s, bool S) {return sgn(m,s,S,+1);}
 
   template<int D>
-  double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order) {
+  double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order, int subdivlevel = 0) {
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
     Array<MultiLinearFunction> psi_pruned; Array<int> s_pruned;
     for(int i=psi.Size()-1; i>=0; i--){
@@ -811,7 +811,24 @@ namespace xintegration
             stilde.Append(sgn_L(sign_gk, s_pruned[i], S)); stilde.Append(sgn_U(sign_gk, s_pruned[i], S));
         }
         else {
-            throw Exception ("Line 23 not yet implemented!");
+            if(subdivlevel >= 10) throw Exception ("Saye asked for Subdivlevel 11!");
+            vector<double> d(D);
+            for(int j=0; j<D; j++) d[j] = abs(xU[j] - xL[j]);
+            int k = distance(d.begin(), max_element(d.begin(), d.end()));
+            cout << "Dimension for subdivision: " << k << endl;
+            Vec<D> xL1, xL2, xU1, xU2;
+            for(int j=0; j<D; j++){
+                if(j == k){
+                    xL1[j] = xL[j]; xU1[j] = 0.5*(xL[j] + xU[j]);
+                    xL2[j] = xU1[j]; xU2[j] = xU[j];
+                }
+                else{
+                    xL1[j] = xL[j]; xL2[j] = xL[j];
+                    xU1[j] = xU[j]; xU2[j] = xU[j];
+                }
+            }
+            cout << "xL1: " << xL1 << endl << "xU1: " << xU1 << endl << "xL2: " << xL2 << endl << "xU2: " << xU2 << endl;
+            return integrate_saye(psi_pruned, s_pruned, xL1, xU1, f, S, order, subdivlevel+1) + integrate_saye(psi_pruned, s_pruned, xL2, xU2, f, S, order, subdivlevel+1);
         }
     }
     function<double(Vec<D-1>)> ftilde;
@@ -827,7 +844,7 @@ namespace xintegration
     return integrate_saye<D-1>(psitilde, stilde, xLtilde, xUtilde, ftilde, false, order);
   }
   template<>
-  double integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, function<double(Vec<1>)> f, bool S, int order) {
+  double integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, function<double(Vec<1>)> f, bool S, int order, int subdivlevel) {
     return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
   }
 
