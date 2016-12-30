@@ -927,6 +927,7 @@ namespace xintegration
             cout << "xL1: " << xL1 << endl << "xU1: " << xU1 << endl << "xL2: " << xL2 << endl << "xU2: " << xU2 << endl;
             integrate_saye(psi_pruned, s_pruned, xL1, xU1, S, order, result, subdivlevel+1);
             integrate_saye(psi_pruned, s_pruned, xL2, xU2, S, order, result, subdivlevel+1);
+            return;
         }
     }
     function<IntegrationRule(Vec<D-1>)> ftilde;
