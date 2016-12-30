@@ -3,10 +3,12 @@ from ngsolve import *
 # basic xfem functionality
 from xfem import *
 
-I = DebugSaye()
+print("PR: \t",DebugSaye(-1, True))
+print("PR: \t",DebugSaye(+1, True))
+print("PR: \t",DebugSaye(-1, False))
+print("PR: \t",DebugSaye(+1, False))
 
-print(I)
-
+exit() #referencevals:  {DOMAIN_TYPE.POS: 0.817400277201530, DOMAIN_TYPE.NEG: 0.182599722798470}
 print("\n\n----Second method-----\n\n")
 
 from netgen.geom2d import SplineGeometry

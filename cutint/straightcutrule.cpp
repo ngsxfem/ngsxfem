@@ -939,7 +939,7 @@ namespace xintegration
     eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, order, result);
   }
 
-  double DebugSaye(){
+  double DebugSaye(int s_dt, bool IR_mode){
     MultiLinearFunction phi(2);
     phi[{0,0}] = 1;
     phi[{0,1}] = -2;
@@ -956,8 +956,8 @@ namespace xintegration
     //return eval_surface_integrand<2>(phi, 0, 0.,1., Vec<1>{0.25}, f);
     //return eval_integrand<2>({phi}, {-1}, 0, 0.,1., Vec<1>{0.25}, f, 1);
 
-    Array<MultiLinearFunction> phis{phi}; Array<int> sis{-1};
-    bool IR_mode = true;
+    Array<MultiLinearFunction> phis{phi}; Array<int> sis{s_dt};
+    //bool IR_mode = true;
     if (IR_mode){
         double I = 0;
         IntegrationRule ir; integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, false, 1, ir);

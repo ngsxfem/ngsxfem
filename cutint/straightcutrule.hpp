@@ -177,7 +177,7 @@ namespace xintegration
       double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
   };
 
-  double DebugSaye();
+  double DebugSaye(int s_dt, bool IR_mode);
 
   class SayeCutElementGeometry : public CutElementGeometry {
   private:
