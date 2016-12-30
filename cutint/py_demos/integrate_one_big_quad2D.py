@@ -135,4 +135,4 @@ if __name__ == "__main__":
         error_list.append(errors)
         f1.write("\n\n")
         #Draw(levelset, mesh, "lset")
-print("All L2 Errors", error_list)
+    print("All L2 Errors", error_list)

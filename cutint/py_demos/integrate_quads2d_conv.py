@@ -13,9 +13,13 @@ if __name__ == "__main__":
     square.AddRectangle([0,0],[1,1],bc=1)
     #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-    lsetvals_list = [ [-0.5832,-1.2,1.234521,0.89427], [-0.18687,0.765764,0.324987,0.48983], [0.765764,0.324987,0.48983, -0.18687], [1,-1,1/3,-1], [1,2/3,-1,-2/3]]
+    lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
+    #lsetvals_list = [[1.,-2.,-2.,-2.]]
+    #lsetvals_list = [[1,-1,-4,-2]]
+    lsetvals_list.append([3,-1,1,-1.023123])
+    
     n_ref = 8
-    order = 2
+    order = 3
     f = lambda x,y: 1+0*x+0*y
     f_ngs = f(x,y)
 
@@ -39,7 +43,7 @@ if __name__ == "__main__":
             InterpolateToP1(levelset,lset_approx)
 
             for key in domains:
-                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000)
+                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000, use_saye=True)
                 errors[key].append(abs(integral - referencevals[key]))
             mesh.Refine()
         for key in domains:
@@ -47,4 +51,4 @@ if __name__ == "__main__":
         print("L2 Errors:", errors)
         print("experimental order of convergence (L2):", eoc)
 
-        Draw(levelset, mesh, "lset")
+        #Draw(levelset, mesh, "lset")
