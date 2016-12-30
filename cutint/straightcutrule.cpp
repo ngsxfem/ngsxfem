@@ -793,8 +793,8 @@ namespace xintegration
             auto psi_c = psi_i.get_del_k(j); psi_c.c[0] -= g[j];
             delta[j] = psi_c.get_largest_abs_on_hyperrect(xL,xU);
         }
-        double s=0; for(int j=0; j<D; j++) s += pow(g[j]+delta[j],2);
-        if( (abs(g[k]) > delta[k]) && (s / pow(g[k]-delta[k],2) < 20.)){
+        double sum=0; for(int j=0; j<D; j++) sum += pow(g[j]+delta[j],2);
+        if( (abs(g[k]) > delta[k]) && (sum / pow(g[k]-delta[k],2) < 20.)){
             MultiLinearFunction psi_i_L(D-1), psi_i_U(D-1);
             for(int h = 0; h<psi_i_L.c.size(); h++){
                 auto bools = MultiLinearFunction::get_bools(h, D-1);
