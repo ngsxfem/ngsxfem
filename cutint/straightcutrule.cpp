@@ -531,6 +531,7 @@ namespace xintegration
   template<int Dv>
   double MultiLinearFunction::operator()(Vec<Dv> x) {
       if(D != Dv) {
+          cout << D << " = D != Dv = " << Dv << endl;
           throw Exception ("x has not the right dim to be parameter of the multilinear function!");
       }
       else {
@@ -582,6 +583,7 @@ namespace xintegration
   template<int Dv>
   Vec<Dv> MultiLinearFunction::get_grad(Vec<Dv> x) const{
       if(D != Dv) {
+          cout << "Get grad: " << D << " = D != Dv = " << Dv << endl;
           throw Exception ("x has not the right dim to be parameter of the multilinear function!");
       }
 
@@ -641,7 +643,7 @@ namespace xintegration
               for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
               psi_i_new.c[idx[k]] += psi_i[idx]*prod;
           }
-          cout << "psi_i_new: " << endl; psi_i_new.output();
+          cout << "eval_integrand psi_i_new: " << endl; psi_i_new.output();
           auto rv = psi_i_new.find_root_1D(x1,x2);
           R.insert(R.begin(), rv.begin(), rv.end());
       }
@@ -699,6 +701,7 @@ namespace xintegration
           for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
           psi_new.c[idx[k]] += phi[idx]*prod;
       }
+      cout << "eval_surface_integrand psi_new: " << endl;
       psi_new.output();
       auto rv = psi_new.find_root_1D(x1,x2);
       if(rv.size() > 0){
