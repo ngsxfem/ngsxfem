@@ -1,5 +1,11 @@
 #include "straightcutrule.hpp"
 
+namespace ngbla {
+bool operator==(const Vec<3> a, const Vec<3> b){
+    return L2Norm(a - b)<1e-12;
+}
+}
+
 namespace xintegration
 {
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element) {
