@@ -1030,7 +1030,17 @@ namespace xintegration
       //cout << "The Intrule: " << endl << intrule << endl;
   }
   Vec<3> SayeCutElementGeometry::GetNormal(const Vec<3>& p) const{
-      Vec<3> n = levelset.get_grad(p);
+      Vec<3> n;
+      if (D == 3){
+          n = levelset.get_grad(p);
+      }
+      else if(D == 2){
+          Vec<2> n_red = levelset.get_grad(Vec<2>{p[0], p[1]});
+          n[0] = n_red[0]; n[1] = n_red[1]; n[2] = n_red[2];
+      }
+      else {
+          throw Exception("Unsupported Dim in SayeCutElementGeometry::GetNormal");
+      }
       n /= L2Norm(n);
       return n;
   }
