@@ -84,7 +84,7 @@ gfu.components[1].Set(CoefficientFunction(0),BND)
 
 res = f.vec.CreateVector()
 res.data = f.vec - a.mat * gfu.vec.data
-gfu.vec.data += a.mat.Inverse(VhG.FreeDofs()) * res
+gfu.vec.data += a.mat.Inverse(VhG.FreeDofs(),  inverse="sparsecholesky") * res
 
 
 u = IfPos(lset_approx, gfu.components[1], gfu.components[0])
