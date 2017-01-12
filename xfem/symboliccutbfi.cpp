@@ -11,6 +11,8 @@
 #include <fem.hpp>
 #include "../xfem/symboliccutbfi.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../cutint/straightcutrule.hpp"
+
 namespace ngfem
 {
 
@@ -108,8 +110,8 @@ namespace ngfem
     if (et == ET_TRIG || et == ET_TET)
       intorder -= test_difforder+trial_difforder;
 
-    if (! (et == ET_TRIG || et == ET_TET))
-      throw Exception("SymbolicCutBFI can only treat simplices right now");
+    if (! (et == ET_TRIG || et == ET_TET || et == ET_QUAD))
+      throw Exception("SymbolicCutBFI can only treat simplices and quads right now");
 
     if (force_intorder >= 0)
       intorder = force_intorder;
@@ -120,7 +122,17 @@ namespace ngfem
 
     elmat = 0;
 
-    const IntegrationRule * ir = CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
+    const IntegrationRule * ir;
+    if(et != ET_QUAD) ir = CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
+    else {
+        FlatVector<> cf_lset_at_element(4, lh);
+        cf_lset_at_element[0] = cf_lset->Evaluate(trafo(IntegrationPoint(0.,0.,0., 1.), lh));
+        cf_lset_at_element[1] = cf_lset->Evaluate(trafo(IntegrationPoint(0.,1.,0., 1.), lh));
+        cf_lset_at_element[2] = cf_lset->Evaluate(trafo(IntegrationPoint(1.,1.,0., 1.), lh));
+        cf_lset_at_element[3] = cf_lset->Evaluate(trafo(IntegrationPoint(1.,0.,0., 1.), lh));
+
+        ir = StraightCutIntegrationRule(cf_lset_at_element, trafo, dt, intorder, lh, false);
+    }
     if (ir == nullptr)
       return;
     ///
