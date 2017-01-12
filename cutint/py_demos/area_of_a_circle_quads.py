@@ -9,23 +9,15 @@ square = SplineGeometry()
 square.AddRectangle([0,0],[1,1],bc=1)
 #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
 mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
-
-#levelset values on the 4 vertices of the quad
-#lsetvals = [1,0.9999,-1,-1] #case b)
-#lsetvals = [1,2/3,-1,-2/3] #case c)
-#lsetvals = [1,-1,1/3,-1] #case d)
-#levelset = lsetvals[0]+(lsetvals[1] - lsetvals[0])*x +(lsetvals[3] - lsetvals[0])*y + (lsetvals[2]-lsetvals[1]-lsetvals[3]+lsetvals[0])*x*y
-
-
-
 r=0.6
 
-domains = [NEG,POS,IF]
+#domains = [NEG,POS,IF]
+domains = [NEG, POS, IF]
 
 levelset = sqrt(x*x+y*y)-r
 referencevals = { POS : 1-pi*r*r/4, NEG : pi*r*r/4, IF : r*pi/2}
 
-n_ref = 10
+n_ref = 8
 order = 2
 errors = dict()
 eoc = dict()
@@ -50,7 +42,7 @@ for i in range(n_ref):
   Draw(deformation,mesh,"deformation")
 
   for key in domains:
-    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000)
+    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000, use_saye = True)
     print("Result of Integration Reflevel ",i,", Key ",key," : ", integral)
     errors[key].append(abs(integral - referencevals[key]))
 
