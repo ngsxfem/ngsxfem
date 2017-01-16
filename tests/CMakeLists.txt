@@ -1,7 +1,7 @@
 include(CTest)
 
 if(USE_PYTHON)
-  set(test_driver python3 ${CMAKE_CURRENT_SOURCE_DIR}/pde_tester.py)
+  set(test_driver ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/pde_tester.py)
 else()
   set(test_driver "${CMAKE_INSTALL_PREFIX}/bin/pde_tester")
 endif()
@@ -31,25 +31,25 @@ add_test(NAME "pde_d7_stokes" COMMAND ${test_driver}
 add_test(NAME "pde_d8_stokes3D" COMMAND ${test_driver}
   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
 
-add_test(NAME py_tracefem COMMAND python3 
+add_test(NAME py_tracefem COMMAND ${PYTHON_EXECUTABLE}
   "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_tracefem.py")
 
-add_test(NAME py_hdgtracefem COMMAND python3 
+add_test(NAME py_hdgtracefem COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_hdgtracefem.py")
 
-add_test(NAME py_nxfem COMMAND python3 
+add_test(NAME py_nxfem COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/nitschexfem.py")
 
-add_test(NAME py_stokes_buoyancy COMMAND python3 
+add_test(NAME py_stokes_buoyancy COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/stokes/py_demos/buoyancy.py")
 
-add_test(NAME py_symbcutints1 COMMAND python3 
+add_test(NAME py_symbcutints1 COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/symboliccut.py")
 
-add_test(NAME py_symbcutints2 COMMAND python3 
+add_test(NAME py_symbcutints2 COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/symboliccut2.py")
 
-add_test(NAME py_symbcutints3 COMMAND python3 
+add_test(NAME py_symbcutints3 COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/symbolic_tracefem.py")
 
 # cmake_minimum_required(VERSION 2.8)
