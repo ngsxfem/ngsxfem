@@ -168,20 +168,20 @@ namespace xintegration
       for(int i=0; i<simplices.Size(); i++) {
         double trafofac = MeasureSimplVol(simplices[i]);
 
-        IntegrationRule ir_ngs;
-        if(simplices[i].Size() == 2) ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-        else if(simplices[i].Size() == 3) ir_ngs = SelectIntegrationRule(ET_TRIG, order);
-        else if(simplices[i].Size() == 4) ir_ngs = SelectIntegrationRule (ET_TET, order);
+        const IntegrationRule * ir_ngs;
+        if(simplices[i].Size() == 2) ir_ngs = & SelectIntegrationRule(ET_SEGM, order);
+        else if(simplices[i].Size() == 3) ir_ngs = & SelectIntegrationRule(ET_TRIG, order);
+        else if(simplices[i].Size() == 4) ir_ngs = & SelectIntegrationRule (ET_TET, order);
 
         //cout << "Size of Simplices nr. " << i << ": " << simplices[i].Size() << endl;
 
         if(i == 0){
-            intrule.SetSize(simplices.Size()*ir_ngs.Size());
-            ref_ir_ngs_size = ir_ngs.Size();
+            intrule.SetSize(simplices.Size()*ir_ngs->Size());
+            ref_ir_ngs_size = ir_ngs->Size();
         }
-        else if (ir_ngs.Size() != ref_ir_ngs_size) throw Exception("Different sizes for ir_ngs are not supported!");
+        else if (ir_ngs->Size() != ref_ir_ngs_size) throw Exception("Different sizes for ir_ngs are not supported!");
 
-        for (auto ip : ir_ngs) {
+        for (auto ip : *ir_ngs) {
           Vec<3> point(0.0); double originweight = 1.0;
           for (int m = 0; m < simplices[i].Size()-1 ;++m) originweight -= ip(m);
             point = originweight * (simplices[i].GetPoint(0));
@@ -316,8 +316,7 @@ namespace xintegration
   void CutQuadElementGeometry::IntegrateCutQuads(int order, IntegrationRule &intrule) {
       for(auto poly: Cut_quads){
           double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
-          IntegrationRule ir_ngs;
-          ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+          const IntegrationRule &  ir_ngs = SelectIntegrationRule(ET_SEGM, order);
 
           for (auto ip : ir_ngs) {
             Vec<3> point(0.0);
@@ -346,8 +345,7 @@ namespace xintegration
               Dy1 = [] (double x) -> double {return 0;};
           }
 
-          IntegrationRule ir_ngs;
-          ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
 
           Vec<2> scale_f; scale_f[0] = x1-x0;
           for (auto ip1 : ir_ngs) {
@@ -382,7 +380,7 @@ namespace xintegration
           A(1,0) = quad.GetPoint(1)[1] - quad.GetPoint(0)[1];
           A(0,1) = quad.GetPoint(3)[0] - quad.GetPoint(0)[0];
           A(1,1) = quad.GetPoint(3)[1] - quad.GetPoint(0)[1];
-          IntegrationRule ir_ngs = SelectIntegrationRule(ET_QUAD, order);
+          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_QUAD, order);
           double trafofac = abs(Det(A));
           for(auto ip : ir_ngs){
               Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
@@ -403,7 +401,7 @@ namespace xintegration
           A(0,2) = quad.GetPoint(4)[0] - quad.GetPoint(0)[0];
           A(1,2) = quad.GetPoint(4)[1] - quad.GetPoint(0)[1];
           A(2,2) = quad.GetPoint(4)[2] - quad.GetPoint(0)[2];
-          IntegrationRule ir_ngs = SelectIntegrationRule(ET_HEX, order);
+          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_HEX, order);
           double trafofac = abs(Det(A));
           for(auto ip : ir_ngs){
               Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
@@ -457,7 +455,7 @@ namespace xintegration
   void CutQuadElementGeometry::IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
       for(auto poly : Cut_quads){
           double V_poly = 1; for(int i=0; i<3; i++) V_poly *= poly.GetPoint(6)[i]-poly.GetPoint(0)[i];
-          IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
           for(auto p1: ir_ngs){
               FlatVector<> lset_proj(4, lh); double xi = p1.Point()[0];
               for(int i=0; i<4; i++) lset_proj[i] = poly.GetLset(i)*xi+poly.GetLset(i+4)*(1-xi);
@@ -486,7 +484,7 @@ namespace xintegration
           else
               y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
 
-          IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
           Vec<2> scale_f; scale_f[0] = x1-x0;
           for(auto p1: ir_ngs){
               for(auto p2 : ir_ngs){
@@ -626,8 +624,7 @@ namespace xintegration
           bool cond = true;
           for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
           if(cond){
-              IntegrationRule ir_ngs;
-              ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+              const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
               for(auto ip: ir_ngs){
                   Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
                   I += L*ip.Weight()*f(p);
@@ -662,8 +659,7 @@ namespace xintegration
           bool cond = true;
           for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
           if(cond){
-              IntegrationRule ir_ngs;
-              ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+              const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
               for(auto ip: ir_ngs){
                   Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
                   IntegrationPoint ip_new(p, L*ip.Weight());
@@ -743,8 +739,7 @@ namespace xintegration
 
   template<int D>
   void Get_Tensor_Product_IR(int order, Vec<D> xL, Vec<D> xU, IntegrationRule& result){
-      IntegrationRule ir_ngs;
-      ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+      const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
       int q = ir_ngs.Size();
       for(int h=0; h<pow(q, D); h++){
           //for(int i=0; i<D; i++) cout << (h%pow(q,i+1))/pow(q,i);
