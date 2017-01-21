@@ -1042,15 +1042,16 @@ namespace xintegration
       Vec<3> n;
       if (D == 3){
           n = levelset.get_grad(p);
+          n /= L2Norm(n);
       }
       else if(D == 2){
           Vec<2> n_red = levelset.get_grad(Vec<2>{p[0], p[1]});
+          n_red /= L2Norm(n_red);
           n[0] = n_red[0]; n[1] = n_red[1]; n[2] = n_red[2];
       }
       else {
           throw Exception("Unsupported Dim in SayeCutElementGeometry::GetNormal");
       }
-      n /= L2Norm(n);
       return n;
   }
 
