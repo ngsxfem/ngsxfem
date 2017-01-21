@@ -781,6 +781,21 @@ namespace xintegration
       p.c.push_back(make_tuple(vector<int>{9,1} , 0.15));
 
       cout << "c(0.3,0.4): " << p(Vec<2>{0.3,0.4}) << endl;
+
+      PolynomeFunction p2(1);
+      p2.c.push_back(make_tuple(vector<int>{0}, -2.));
+      p2.c.push_back(make_tuple(vector<int>{2}, +1.));
+      cout << "sqrt(2) = ";
+      auto sqrt2 = p2.find_root_1D(0,2);
+      for (auto d: sqrt2) cout << d << endl;
+
+      PolynomeFunction p3(1);
+      p3.c.push_back(make_tuple(vector<int>{0}, -20.));
+      p3.c.push_back(make_tuple(vector<int>{3}, -30.));
+      p3.c.push_back(make_tuple(vector<int>{4}, 5.));
+      cout << "roots of 5*x^4 - 30*x^3 - 20: ";
+      auto roots = p3.find_root_1D(-10,10);
+      for (auto d: roots) cout << d << endl;
   }
 
   template<class T>
