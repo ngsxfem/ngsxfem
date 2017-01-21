@@ -182,7 +182,7 @@ namespace xintegration
       template<int Dv>
       double operator()(Vec<Dv> x);
 
-      vector<double> find_root_1D(double x1, double x2);
+      vector<double> find_root_1D(double x1, double x2, int subdivs, int bisection_iterations);
 
       PolynomeFunction get_del_k(int k) const;
 

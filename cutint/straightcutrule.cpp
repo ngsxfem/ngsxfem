@@ -746,6 +746,35 @@ namespace xintegration
       return val;
   }
 
+  vector<double> PolynomeFunction::find_root_1D(double x1, double x2, int subdivs=50, int bisection_iterations = 40){
+      vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
+      vector<double> roots; double delta_x =  (x2 - x1)/subdivs;
+      for(int i=0; i<subdivs; i++){
+          double xi = x1 + delta_x*i;
+          vals[i] = operator()(Vec<1>{xi});
+          if(vals[i] == 0) roots.push_back(xi);
+          if(i >= 1) if(vals[i-1] * vals[i] < 0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
+      }
+      for(auto interval : sign_change_intervals){
+          double a = get<0>(interval), b = get<1>(interval); double x_mid;
+          double aval = operator()(Vec<1>{a}), bval = operator()(Vec<1>{b});;
+          for(int j=0; j<bisection_iterations; j++){
+              x_mid = 0.5*(a+b);
+              double val = operator() (Vec<1>{x_mid});
+              if(val == 0) break;
+              if(val * aval < 0) {
+                  b = x_mid; bval = val;
+              }
+              else if(val * bval < 0){
+                  a = x_mid; aval = val;
+              }
+              else throw Exception("Strange sign structure during bisection!");
+          }
+          roots.push_back(0.5*(a+b));
+      }
+      return roots;
+  }
+
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c.push_back(make_tuple(vector<int>{0,0} , 0.53));
