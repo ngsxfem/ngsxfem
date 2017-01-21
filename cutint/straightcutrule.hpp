@@ -128,8 +128,9 @@ namespace xintegration
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
                                                      LocalHeap & lh, bool use_saye);
+  class SayeBaseFunction { };
 
-  class MultiLinearFunction {
+  class MultiLinearFunction : public SayeBaseFunction {
   public:
       int D;
       vector<double> c;
