@@ -33,13 +33,13 @@ for i in range(n_ref):
   V = H1(mesh,order=1)
   lset_approx = GridFunction(V)
   InterpolateToP1(levelset,lset_approx)
-  Draw(lset_approx,mesh,"lset_p1")
+  #Draw(lset_approx,mesh,"lset_p1")
 
   f = CoefficientFunction(1)
 
   deformation = lsetmeshadap.CalcDeformation(levelset)
-  mesh.SetDeformation(deformation)
-  Draw(deformation,mesh,"deformation")
+  #mesh.SetDeformation(deformation)
+  #Draw(deformation,mesh,"deformation")
 
   for key in domains:
     integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000, use_saye = True)
