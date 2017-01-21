@@ -789,6 +789,20 @@ namespace xintegration
       return del_k;
   }
 
+  void PolynomeFunction::output(){
+      bool firstoutput = true;
+      for(auto c_tuple : c){
+          if(!firstoutput) cout << " + ";
+          else firstoutput = false;
+
+          auto exponents = get<0>(c_tuple);
+          double coeff = get<1>(c_tuple);
+          cout << coeff;
+          for(int i=0; i<exponents.size(); i++) cout << "*x" << i << "^" << exponents[i];
+      }
+      cout << endl;
+  }
+
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c.push_back(make_tuple(vector<int>{0,0} , 0.53));
@@ -810,6 +824,9 @@ namespace xintegration
       cout << "roots of 5*x^4 - 30*x^3 - 20: ";
       auto roots = p3.find_root_1D(-10,10);
       for (auto d: roots) cout << d << endl;
+
+      cout << "p3: "; p3.output();
+      cout << "p3 ': "; p3.get_del_k(0).output();
   }
 
   template<class T>
