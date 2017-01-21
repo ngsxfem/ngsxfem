@@ -746,6 +746,14 @@ namespace xintegration
       return val;
   }
 
+  void DebugPolynomeClass(){
+      PolynomeFunction p(2);
+      p.c.push_back(make_tuple(vector<int>{0,0} , 0.53));
+      p.c.push_back(make_tuple(vector<int>{9,1} , 0.15));
+
+      cout << "c(0.3,0.4): " << p(Vec<2>{0.3,0.4}) << endl;
+  }
+
   template<class T>
   inline constexpr T pow(const T base, unsigned const exponent)
   {

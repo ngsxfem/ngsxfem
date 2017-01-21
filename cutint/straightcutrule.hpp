@@ -196,6 +196,7 @@ namespace xintegration
   };
 
   double DebugSaye(int s_dt, bool IR_mode);
+  void DebugPolynomeClass();
 
   class SayeCutElementGeometry : public CutElementGeometry {
   private:
