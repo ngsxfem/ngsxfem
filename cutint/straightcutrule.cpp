@@ -775,6 +775,20 @@ namespace xintegration
       return roots;
   }
 
+  PolynomeFunction PolynomeFunction::get_del_k(int k) const{
+      PolynomeFunction del_k(D);
+      for(auto c_tuple : c){
+          auto exponents = get<0>(c_tuple);
+          double coeff = get<1>(c_tuple);
+
+          if(exponents[k] >= 1){
+              exponents[k] -= 1;
+              del_k.c.push_back(make_tuple(exponents , coeff*(exponents[k] +1)));
+          }
+      }
+      return del_k;
+  }
+
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c.push_back(make_tuple(vector<int>{0,0} , 0.53));
