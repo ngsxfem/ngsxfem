@@ -172,6 +172,29 @@ namespace xintegration
       double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
   };
 
+  class PolynomeFunction : public SayeBaseFunction {
+  public:
+      int D;
+      vector<tuple<vector<int>, double> > c;
+
+      PolynomeFunction(int a_D=0) : D(a_D) {}
+
+      template<int Dv>
+      double operator()(Vec<Dv> x);
+
+      vector<double> find_root_1D(double x1, double x2);
+
+      PolynomeFunction get_del_k(int k) const;
+
+      template<int Dv>
+      Vec<Dv> get_grad(Vec<Dv> x) const;
+
+      void output();
+
+      template<int Dv>
+      double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
+  };
+
   double DebugSaye(int s_dt, bool IR_mode);
 
   class SayeCutElementGeometry : public CutElementGeometry {
