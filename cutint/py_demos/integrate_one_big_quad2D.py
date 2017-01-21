@@ -90,10 +90,10 @@ if __name__ == "__main__":
     #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-    #lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
-    lsetvals_list = [[1.,-1.,-3.,-1.]]
+    lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
+    #lsetvals_list = [[1.,-1.,-3.,-1.]]
     #lsetvals_list = [[1,-1,-4,-2]]
-    #lsetvals_list.append([3,-1,1,-1.023123])
+    lsetvals_list.append([3,-1,1,-1.023123])
     
     f = lambda x,y: 1+0*x+0*y
     f_ngs = f(x,y)
@@ -101,11 +101,11 @@ if __name__ == "__main__":
     lset_approx = GridFunction(V)
 
     #domains = [NEG,POS, IF]
-    #domains = [NEG,POS]
-    domains = [IF]
+    domains = [NEG,POS]
+    #domains = [IF]
     error_list = []
     
-    max_order = 6
+    max_order = 10
     #f1 = open("errors.dat","w")
     
     for lsetvals in lsetvals_list:
