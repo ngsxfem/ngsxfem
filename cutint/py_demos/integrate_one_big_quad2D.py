@@ -90,10 +90,10 @@ if __name__ == "__main__":
     #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-    lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
-    #lsetvals_list = [[1.,-2.,-2.,-2.]]
+    #lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
+    lsetvals_list = [[1.,-1.,-3.,-1.]]
     #lsetvals_list = [[1,-1,-4,-2]]
-    lsetvals_list.append([3,-1,1,-1.023123])
+    #lsetvals_list.append([3,-1,1,-1.023123])
     
     f = lambda x,y: 1+0*x+0*y
     f_ngs = f(x,y)
@@ -101,15 +101,16 @@ if __name__ == "__main__":
     lset_approx = GridFunction(V)
 
     #domains = [NEG,POS, IF]
-    domains = [NEG,POS]
+    #domains = [NEG,POS]
+    domains = [IF]
     error_list = []
     
-    max_order = 15    
-    f1 = open("errors.dat","w")
+    max_order = 6
+    #f1 = open("errors.dat","w")
     
     for lsetvals in lsetvals_list:
         print("Case lsetvals = ", lsetvals)
-        referencevals = get_referencevals(lsetvals, f, False)
+        referencevals = get_referencevals(lsetvals, f, IF in domains)
         print("referencevals: ", referencevals)
         levelset =get_levelset(lsetvals)
 
@@ -124,15 +125,15 @@ if __name__ == "__main__":
         for order in range(max_order+1):
             errs = dict()
             for key in domains:
-                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000,use_saye = False)
+                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000,use_saye = True)
                 inte[key] = integral
                 print("PP: Integral on Domain ", key, " : ",integral)
                 errors[key].append(abs(integral - referencevals[key]))
                 errs[key] = abs(integral - referencevals[key])
-            f1.write(str(order)+"\t"+str(sqrt(pow(errs[POS],2.) + pow(errs[NEG],2.)))+"\n")
+            #f1.write(str(order)+"\t"+str(sqrt(pow(errs[POS],2.) + pow(errs[NEG],2.)))+"\n")
             #print("Sum of Part NEG, POS: ", inte[NEG]+inte[POS])
         print("L2 Errors:", errors)
         error_list.append(errors)
-        f1.write("\n\n")
+        #f1.write("\n\n")
         #Draw(levelset, mesh, "lset")
     print("All L2 Errors", error_list)
