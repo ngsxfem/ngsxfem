@@ -967,10 +967,10 @@ namespace xintegration
     //phi[{0,1}] = -2;
     //phi[{1,0}] = -2;
     //phi[{1,1}] = -1./3;
-    phi.FromLsetVals(Vec<4>{3,-1,1,-1.023123});
+    phi.FromLsetVals(Vec<4>{1,-1,-3,-1});
     std::function<double(Vec<2>)> f = [](Vec<2> x) -> double {return 1;};
 
-    cout << phi.get_largest_abs_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
+    //cout << phi.get_largest_abs_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
 
     /*cout << "Get_Tensor_Product_IR testing: " << endl;
     IntegrationRule ir;
@@ -981,7 +981,11 @@ namespace xintegration
 
     Array<MultiLinearFunction> phis{phi}; Array<int> sis{s_dt};
     //bool IR_mode = true;
+    Array<int> sis2{0};
+
     if (IR_mode){
+        IntegrationRule irIF; integrate_saye(phis ,sis2, Vec<2>{0.,0.}, Vec<2>{1.,1.}, true, 1, irIF);
+        cout << "Getting the IF integration rule: " << irIF << endl;
         double I = 0;
         IntegrationRule ir; integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, false, 1, ir);
         for(auto ip:ir) {
@@ -991,6 +995,10 @@ namespace xintegration
         return I;
     }
     else {
+        double II = integrate_saye(phis, sis2, Vec<2>{0.,0.}, Vec<2>{1.,1.}, f, true, 1);
+        cout << "Interface integration: " << endl;
+        cout << II << endl;
+
         return integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, f, false, 1);
     }
   }
