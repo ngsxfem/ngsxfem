@@ -731,6 +731,21 @@ namespace xintegration
       return *res;
   }
 
+  template<int Dv>
+  double PolynomeFunction::operator()(Vec<Dv> x){
+      if (Dv != D) throw Exception("Dimension mismatch!");
+      double val = 0;
+      for(auto c_tuple: c){
+          auto exponents = get<0>(c_tuple);
+          double coeff = get<1>(c_tuple);
+
+          double prod = 1;
+          for(int i=0; i<D; i++) prod *= pow( x[i], exponents[i]);
+          val += coeff * prod;
+      }
+      return val;
+  }
+
   template<class T>
   inline constexpr T pow(const T base, unsigned const exponent)
   {
