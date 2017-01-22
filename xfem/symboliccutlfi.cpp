@@ -101,10 +101,12 @@ namespace ngfem
     if(et != ET_QUAD) ir = CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
     else {
         FlatVector<> cf_lset_at_element(4, lh);
-        cf_lset_at_element[0] = cf_lset->Evaluate(trafo(IntegrationPoint(0.,0.,0., 0.), lh));
-        cf_lset_at_element[1] = cf_lset->Evaluate(trafo(IntegrationPoint(0.,1.,0., 0.), lh));
-        cf_lset_at_element[2] = cf_lset->Evaluate(trafo(IntegrationPoint(1.,1.,0., 0.), lh));
-        cf_lset_at_element[3] = cf_lset->Evaluate(trafo(IntegrationPoint(1.,0.,0., 0.), lh));
+        cf_lset_at_element[0] = cf_lset->Evaluate(trafo(IntegrationPoint(0.,0.,0., 1.), lh));
+        cf_lset_at_element[1] = cf_lset->Evaluate(trafo(IntegrationPoint(1.,0.,0., 1.), lh));
+        cf_lset_at_element[2] = cf_lset->Evaluate(trafo(IntegrationPoint(1.,1.,0., 1.), lh));
+        cf_lset_at_element[3] = cf_lset->Evaluate(trafo(IntegrationPoint(0.,1.,0., 1.), lh));
+
+        //cout << "The levelset values (LFI): " << cf_lset_at_element << endl;
 
         ir = StraightCutIntegrationRule(cf_lset_at_element, trafo, dt, intorder, lh, false);
     }
