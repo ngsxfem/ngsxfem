@@ -803,6 +803,17 @@ namespace xintegration
       cout << endl;
   }
 
+  template<int Dv>
+  Vec<Dv> PolynomeFunction::get_grad(Vec<Dv> x) const {
+      if(D != Dv) throw Exception ("x has not the right dim to be parameter of the multilinear function!");
+
+      Vec<Dv> grad;
+      for(int k=0; k<D; k++) {
+          grad[k] = get_del_k(k)(x);
+      }
+      return grad;
+  }
+
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c.push_back(make_tuple(vector<int>{0,0} , 0.53));
