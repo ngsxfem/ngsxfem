@@ -267,11 +267,13 @@ namespace ngcomp
     if ( basefes == NULL )
     {
       cout << " T_XFESpace<" <<  D << "," << SD << "> no basefes, Update postponed " << endl;
+      ndof = 0.0;
       return;
     }
     if ( coef_lset == NULL )
     {
       cout << " T_XFESpace<" <<  D << "," << SD << "> no lset, Update postponed " << endl;
+      ndof = 0.0;
       return;
     }
     CleanUp();
