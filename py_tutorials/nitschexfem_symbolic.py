@@ -131,7 +131,7 @@ def get_l2error(order, n_ref, deform):
 
     # err_sqr_coefs = [x,y]
     # l2error = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=err_sqr_coefs[0],order=order,domain_type=NEG,heapsize=1000000, use_saye=False)
-    l2error = sqrt(NewIntegrateX(lset=lset_approx,mesh=mesh,cf=err_sqr_coefs[0],order=order,domain_type=NEG,heapsize=1000000, use_saye=False)**2 + NewIntegrateX(lset=lset_approx,mesh=mesh,cf=err_sqr_coefs[1],order=order,domain_type=POS,heapsize=1000000, use_saye=False)**2 )
+    l2error = sqrt(NewIntegrateX(lset=lset_approx,mesh=mesh,cf=err_sqr_coefs[0],order=order,domain_type=NEG,heapsize=1000000, use_saye=False) + NewIntegrateX(lset=lset_approx,mesh=mesh,cf=err_sqr_coefs[1],order=order,domain_type=POS,heapsize=1000000, use_saye=False))
 
     print("L2 error : ",l2error)
 
