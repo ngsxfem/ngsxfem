@@ -10,7 +10,10 @@ from xfem.lsetcurv import *
 from netgen.geom2d import SplineGeometry
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.1, quad_dominated=True))
+mesh = Mesh (square.GenerateMesh(maxh=10, quad_dominated=False))
+
+for i in range(6):
+    mesh.Refine()
 
 r44 = (x*x*x*x+y*y*y*y)
 r41 = sqrt(sqrt(x*x*x*x+y*y*y*y))

@@ -11,7 +11,7 @@ from netgen.geom2d import SplineGeometry
 def get_l2error(order, n_ref, deform):
     square = SplineGeometry()
     square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=10.1, quad_dominated=True))
+    mesh = Mesh (square.GenerateMesh(maxh=10, quad_dominated=False))
 
     for i in range(n_ref):
         mesh.Refine()
@@ -162,8 +162,8 @@ def get_l2error(order, n_ref, deform):
 # Draw(gfu.components[1],mesh,"u_pos")
 # Draw(u,mesh,"u")
 
-order = 3
-n_ref = 8
+order = 2
+n_ref = 6
 
 l2errors = []
 
