@@ -52,7 +52,7 @@ h = specialcf.mesh_size
 
 kappa_neg, kappa_pos = kappa(mesh,lsetp1)
 
-stab = 10*(alpha[1]+alpha[0])*order*order/h
+stab = 20*(alpha[1]+alpha[0])/2.0*(order+1)*order/h
 
 # expressions of test and trial functions:
 
@@ -65,8 +65,8 @@ gradu_neg = grad(u_neg)
 gradv_pos = grad(v_pos)
 gradv_neg = grad(v_neg)
 
-jump_u = u_pos - u_neg
-jump_v = v_pos - v_neg
+jump_u = -u_pos + u_neg
+jump_v = -v_pos + v_neg
 
 average_flux_u = - kappa_pos * alpha[1] * gradu_pos * n - kappa_neg * alpha[0] * gradu_neg * n
 average_flux_v = - kappa_pos * alpha[1] * gradv_pos * n - kappa_neg * alpha[0] * gradv_neg * n
@@ -117,7 +117,6 @@ u.vec.data += update
 
 #global last_num_its
 #last_num_its = solvea.GetSteps()
-mesh.UnsetDeformation()
 
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
@@ -132,6 +131,7 @@ err_sqr_coefs = [ (u.components[i] - solution[i])*(u.components[i] - solution[i]
 
 l2error = sqrt(NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[0],order=2*order,domain_type=NEG,heapsize=1000000, use_saye=False) + NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[1],order=2*order,domain_type=POS,heapsize=1000000, use_saye=False))
 
+mesh.UnsetDeformation()
 print("L2 error : ",l2error)
 
 
