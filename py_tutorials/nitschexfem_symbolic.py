@@ -9,13 +9,16 @@ from xfem.lsetcurv import *
 
 from netgen.geom2d import SplineGeometry
 
+order = 2
+threshold = 0.04 # curvate/resolution driven refinements (for trigs)
+quad = True
+
 #def get_l2error(order, n_ref, deform):
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=10, quad_dominated=False))
-
-for i in range(6):
-    mesh.Refine()
+mesh = Mesh (square.GenerateMesh(maxh=10, quad_dominated=quad))
+mesh.Refine()
+mesh.Refine()
 
 r44 = (x*x*x*x+y*y*y*y)
 r41 = sqrt(sqrt(x*x*x*x+y*y*y*y))
@@ -27,14 +30,24 @@ r21 = sqrt(r22)
 
 levelset = (sqrt(sqrt(x*x*x*x+y*y*y*y)) - 1.0)
 
+if not quad:
+    for i in range(8):
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=threshold, discontinuous_qn=True)
+        lsetmeshadap.CalcDeformation(levelset)
+        # not working for quads:
+        lsetmeshadap.MarkForRefinement(levelset,refine_threshold=threshold,absolute=False)
+        mesh.Refine()
+
+for i in range(3):
+    mesh.Refine()
+
+
 solution = [1.0+pi/2.0-sqrt(2.0)*cos(pi/4.0*r44),pi/2.0*r41]
 alpha = [1.0,2.0]
 coef_f = [ (-1.0*sqrt(2.0)*pi*(pi*cos(pi/4*(r44))*(r66)+3*sin(pi/4*(r44))*(r22))),
           (-2.0*pi*3/2*(r4m3)*(-(r66)/(r44)+(r22))) ]
 
-order = 2
-
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=threshold, discontinuous_qn=True)
 deformation = lsetmeshadap.CalcDeformation(levelset)
 lsetp1 = lsetmeshadap.lset_p1
 
@@ -123,9 +136,9 @@ sol_coef = IfPos(lsetp1,solution[1],solution[0])
 u_coef = IfPos(lsetp1,u.components[1],u.components[0])
 
 Draw(lsetp1,mesh,"lsetp1")
-# Draw(lsetmeshadap.deform,mesh,"deformation")
+Draw(lsetmeshadap.deform,mesh,"deformation")
 Draw(u_coef,mesh,"u")
-# Draw(u-sol_coef,mesh,"err")
+Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"evelation_u",sd=4)
 
 err_sqr_coefs = [ (u.components[i] - solution[i])*(u.components[i] - solution[i]) for i in [0,1] ]
 
@@ -134,41 +147,3 @@ l2error = sqrt(NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[0],order=2*o
 mesh.UnsetDeformation()
 print("L2 error : ",l2error)
 
-
-    #return l2error
-
-#print(" CL : Method seems to be unstable ( always for order > 1, sometimes also for order = 1) (also without mesh deformation) - Oscillations at two corners - this is strange as due to symmetry one would expect the oscillations at either all or no corners... ")
-
-# # mesh.SetDeformation(deformation)
-# a.Assemble()
-
-# f = LinearForm(VhG)
-# f += SymbolicLFI(levelset_domain = lset_neg, form = 10 * v_neg)
-# f.Assemble();
-
-# gfu.components[0].Set(CoefficientFunction(0),BND)
-# gfu.components[1].Set(CoefficientFunction(0),BND)
-
-# res = f.vec.CreateVector()
-# res.data = f.vec - a.mat * gfu.vec.data
-# gfu.vec.data += a.mat.Inverse(VhG.FreeDofs(),  inverse="pardiso") * res
-
-
-# u = IfPos(lsetp1, gfu.components[1], gfu.components[0])
-
-# Draw(gfu.components[0],mesh,"u_neg")
-# Draw(gfu.components[1],mesh,"u_pos")
-# Draw(u,mesh,"u")
-
-#order = 2
-#n_ref = 6
-
-#l2errors = []
-
-#for i in range(1, n_ref):
-#    l2errors.append(get_l2error(order,i, True))
-
-#eoc = [log(l2errors[i+1]/l2errors[i])/log(0.5) for i in range(0, n_ref-2)]
-
-#print("L2-errors:", l2errors)
-#print("experimental order of convergence (L2):", eoc)
