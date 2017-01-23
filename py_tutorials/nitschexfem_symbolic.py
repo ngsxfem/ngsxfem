@@ -116,6 +116,7 @@ u.vec.data += update
 
 #global last_num_its
 #last_num_its = solvea.GetSteps()
+mesh.UnsetDeformation()
 
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
@@ -132,7 +133,6 @@ l2error = sqrt(NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[0],order=2*o
 
 print("L2 error : ",l2error)
 
-mesh.UnsetDeformation()
 
     #return l2error
 
