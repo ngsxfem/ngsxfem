@@ -93,6 +93,7 @@ f = LinearForm(VhG)
 f += SymbolicLFI(levelset_domain = lset_neg, form = coef_f[0] * v_neg)
 f += SymbolicLFI(levelset_domain = lset_pos, form = coef_f[1] * v_pos)
 
+#c = Preconditioner(a, type="local", flags= { "test" : True })
 c = Preconditioner(a, type="direct", flags= { "inverse" : "pardiso" })
 
 u = GridFunction(VhG)
