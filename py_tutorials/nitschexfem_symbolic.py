@@ -95,7 +95,6 @@ f += SymbolicLFI(levelset_domain = lset_pos, form = coef_f[1] * v_pos)
 
 c = Preconditioner(a, type="direct", flags= { "inverse" : "pardiso" })
 
-
 u = GridFunction(VhG)
 
 u.components[1].Set(solution[1], BND)
@@ -122,18 +121,13 @@ u.vec.data += update
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
 u_coef = IfPos(lsetp1,u.components[1],u.components[0])
 
-#Draw(lsetp1,mesh,"lsetp1")
-# # Draw(lsetmeshadap.deform,mesh,"deformation")
-#Draw(u.components[0],mesh,"u_neg")
-#Draw(u.components[1],mesh,"u_pos")
-#Draw(u_coef,mesh,"u")
-#Draw(deformation,mesh,"deformation")
+Draw(lsetp1,mesh,"lsetp1")
+# Draw(lsetmeshadap.deform,mesh,"deformation")
+Draw(u_coef,mesh,"u")
 # Draw(u-sol_coef,mesh,"err")
 
 err_sqr_coefs = [ (u.components[i] - solution[i])*(u.components[i] - solution[i]) for i in [0,1] ]
 
-# err_sqr_coefs = [x,y]
-# l2error = NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[0],order=order,domain_type=NEG,heapsize=1000000, use_saye=False)
 l2error = sqrt(NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[0],order=2*order,domain_type=NEG,heapsize=1000000, use_saye=False) + NewIntegrateX(lset=lsetp1,mesh=mesh,cf=err_sqr_coefs[1],order=2*order,domain_type=POS,heapsize=1000000, use_saye=False))
 
 print("L2 error : ",l2error)
