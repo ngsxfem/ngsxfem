@@ -175,7 +175,8 @@ namespace xintegration
   class PolynomeFunction : public SayeBaseFunction {
   public:
       int D;
-      vector<tuple<vector<int>, double> > c;
+      //vector<tuple<vector<int>, double> > c;
+      map<vector<int>, double> c;
 
       PolynomeFunction(int a_D=0) : D(a_D) {}
 

@@ -778,12 +778,12 @@ namespace xintegration
   PolynomeFunction PolynomeFunction::get_del_k(int k) const{
       PolynomeFunction del_k(D);
       for(auto c_tuple : c){
-          auto exponents = get<0>(c_tuple);
-          double coeff = get<1>(c_tuple);
+          auto exponents = c_tuple.first;
+          double coeff = c_tuple.second;
 
           if(exponents[k] >= 1){
               exponents[k] -= 1;
-              del_k.c.push_back(make_tuple(exponents , coeff*(exponents[k] +1)));
+              del_k.c[exponents] = coeff*(exponents[k] +1); //.insert(make_tuple( , ));
           }
       }
       return del_k;
@@ -795,8 +795,8 @@ namespace xintegration
           if(!firstoutput) cout << " + ";
           else firstoutput = false;
 
-          auto exponents = get<0>(c_tuple);
-          double coeff = get<1>(c_tuple);
+          auto exponents = c_tuple.first;
+          double coeff = c_tuple.second;
           cout << coeff;
           for(int i=0; i<exponents.size(); i++) cout << "*x" << i << "^" << exponents[i];
       }
@@ -816,22 +816,22 @@ namespace xintegration
 
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
-      p.c.push_back(make_tuple(vector<int>{0,0} , 0.53));
-      p.c.push_back(make_tuple(vector<int>{9,1} , 0.15));
+      p.c[vector<int>{0,0}] = 0.53;
+      p.c[vector<int>{9,1}] = 0.15;
 
       cout << "c(0.3,0.4): " << p(Vec<2>{0.3,0.4}) << endl;
 
       PolynomeFunction p2(1);
-      p2.c.push_back(make_tuple(vector<int>{0}, -2.));
-      p2.c.push_back(make_tuple(vector<int>{2}, +1.));
+      p2.c[vector<int>{0}] = -2.;
+      p2.c[vector<int>{2}] = +1.;
       cout << "sqrt(2) = ";
       auto sqrt2 = p2.find_root_1D(0,2);
       for (auto d: sqrt2) cout << d << endl;
 
       PolynomeFunction p3(1);
-      p3.c.push_back(make_tuple(vector<int>{0}, -20.));
-      p3.c.push_back(make_tuple(vector<int>{3}, -30.));
-      p3.c.push_back(make_tuple(vector<int>{4}, 5.));
+      p3.c[vector<int>{0}] = -20.;
+      p3.c[vector<int>{3}] = -30.;
+      p3.c[vector<int>{4}] = 5.;
       cout << "roots of 5*x^4 - 30*x^3 - 20: ";
       auto roots = p3.find_root_1D(-10,10);
       for (auto d: roots) cout << d << endl;
