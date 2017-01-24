@@ -814,6 +814,33 @@ namespace xintegration
       return grad;
   }
 
+  class Linearization {
+  public:
+      double alpha, epsilon;
+      vector<double> beta; //TODO: Replace with Vec<D> and introduce D as template argument of Linearization
+      vector<double> delta;
+
+      Linearization(double a_alpha, vector<double> a_beta, double a_epsilon, vector<double> a_delta) : alpha(a_alpha), beta(a_beta), epsilon(a_epsilon), delta(a_delta) { };
+  };
+
+  Linearization operator+(Linearization a, Linearization b){
+      if(a.delta != b.delta ) throw Exception("You tried to add Linearizations with different deltas!");
+      vector<double> beta_new(a.beta.size());
+      for(int i=0; i<a.beta.size(); i++) beta_new[i] = a.beta[i] + b.beta[i];
+      return Linearization(a.alpha + b.alpha, beta_new, a.epsilon + b.epsilon, a.delta);
+  }
+
+  Linearization operator*(Linearization a, Linearization b){
+      if(a.delta != b.delta ) throw Exception("You tried to multiply Linearizations with different deltas!");
+      double l1, l2;
+      for(int j=0; j<a.beta.size(); j++){
+          l1 += abs(a.beta[j])*a.delta[j];
+          l2 += abs(b.beta[j])*a.delta[j];
+      }
+      vector<double> beta_new(a.beta.size());
+      for(int i=0; i<a.beta.size(); i++) beta_new[i] = a.alpha*b.beta[i] + b.alpha*a.beta[i];
+      return Linearization(a.alpha*b.alpha, beta_new, l1*l2+(abs(a.alpha) * l1)*b.epsilon + (abs(b.alpha) * l2)*a.epsilon + a.epsilon*b.epsilon, a.delta);
+  }
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c[vector<int>{0,0}] = 0.53;
