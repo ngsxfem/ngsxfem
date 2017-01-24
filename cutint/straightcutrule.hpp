@@ -194,6 +194,8 @@ namespace xintegration
 
       template<int Dv>
       double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
+
+      void FromNGSGridFunction(shared_ptr<GridFunction> g);
   };
 
   double DebugSaye(int s_dt, bool IR_mode);
