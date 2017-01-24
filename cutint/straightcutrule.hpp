@@ -193,7 +193,7 @@ namespace xintegration
       void output();
 
       template<int Dv>
-      double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
+      double get_largest_res_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
 
       void FromNGSGridFunction(shared_ptr<GridFunction> g);
   };

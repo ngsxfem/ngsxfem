@@ -841,6 +841,33 @@ namespace xintegration
       for(int i=0; i<a.beta.size(); i++) beta_new[i] = a.alpha*b.beta[i] + b.alpha*a.beta[i];
       return Linearization(a.alpha*b.alpha, beta_new, l1*l2+(abs(a.alpha) * l1)*b.epsilon + (abs(b.alpha) * l2)*a.epsilon + a.epsilon*b.epsilon, a.delta);
   }
+
+  template<int Dv>
+  double PolynomeFunction::get_largest_res_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
+      if(Dv != D) throw Exception("Dimensional mismatch in PolynomeFunction::get_largest_res_on_hyperrect.");
+      vector<double> delta(Dv); for(int i=0; i<Dv; i++) delta[i] = 0.5*(xU[i] - xL[i]);
+      vector<double> zero(Dv);  for(int i=0; i<Dv; i++) zero[i] = 0.0;
+
+      vector<Linearization> summands;
+      for(auto c_tuple : c){
+          vector<Linearization> factors;
+          factors.push_back(Linearization(c_tuple.second, zero, 0., delta));
+          auto exponents = c_tuple.first;
+          for(int i=0; i<D; i++) for(int j=0; j<exponents[i]; j++) {
+              vector<double> delta_i = zero; delta_i [i] = 1.;
+              factors.push_back(Linearization(0.5*(xU[i] + xL[i]), delta_i ,0.,delta));
+          }
+          auto f1 = factors[0];
+          for(int i=1; i<factors.size(); i++) f1 = f1*factors[i];
+          summands.push_back(f1);
+      }
+      auto s1 = summands[0];
+      for(int i=1; i<summands.size(); i++) s1 = s1+summands[i];
+      double l = 0;
+      for(int j=0; j<D; j++) l += abs(s1.beta[j]) * delta[j];
+      return l + s1.epsilon;
+  }
+
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c[{0,0}] = 0.53;
@@ -865,6 +892,10 @@ namespace xintegration
 
       cout << "p3: "; p3.output();
       cout << "p3 ': "; p3.get_del_k(0).output();
+
+      PolynomeFunction p4(1);
+      p4.c[{2}] = 1.;
+      cout << "Largest res of f(x) = x**2 on [-10,10]: " << p4.get_largest_res_on_hyperrect(Vec<1>{-10.}, Vec<1>{10.}) << endl;
   }
 
   template<class T>
