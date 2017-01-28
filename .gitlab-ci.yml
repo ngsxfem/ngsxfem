@@ -1,0 +1,18 @@
+deploy:
+  script:
+  - echo " deploy "
+
+before_script:
+  - echo " before script "
+
+test1:
+  script:
+    - echo " test1 "
+
+test2:
+  script:
+    - echo " test2 "
+
+testgcc:
+  script:
+    - gcc --version
