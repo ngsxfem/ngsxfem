@@ -1,3 +1,8 @@
+stages:
+  - build
+  - test1
+  - cleanup
+
 deploy:
   script:
   - echo " deploy "
@@ -9,9 +14,17 @@ test1:
   script:
     - echo " test1 "
 
-test2:
+build:
   script:
-    - echo " test2 "
+    - echo " testenvironment "
+    - uname -a
+    - ls -al
+    - pwd
+
+cleanup:
+  script:
+    - echo " cleanup "
+    - pwd
 
 testgcc:
   script:
