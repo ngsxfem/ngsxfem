@@ -1,5 +1,4 @@
-before_script:
-  stage: before_script
+beforescript:
   script:
     - echo " before script "
 
@@ -16,7 +15,7 @@ build:
     - make
 
 test1:
-  stage: test1
+  stage: test
   script:
     - echo " test1 "
 
@@ -26,7 +25,6 @@ deploy:
   - echo " deploy "
 
 cleanup:
-  stage: cleanup
   script:
     - echo " cleanup "
     - pwd
