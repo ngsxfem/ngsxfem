@@ -632,8 +632,13 @@ void ExportNgsx(py::module &m)
 
                             auto FESpace = gf_lset->GetFESpace();
                             cout << "I found a FESpace of order " << FESpace->GetOrder() << " in IntegrateX" << endl;
-                            bool lset_multilinear = FESpace->GetOrder() <= 1;
-                            if(! lset_multilinear) {
+                            bool lset_h1_multilinear = (FESpace->GetOrder() <= 1) && (FESpace->GetClassName() == "H1HighOrderFESpace");
+                            if(! lset_h1_multilinear) {
+                                Array<int> dnums;
+                                FESpace->GetDofNrs(0, dnums);
+                                FlatVector<> elvec(dnums.Size(), lh);
+                                gf_lset->GetVector().GetIndirect(dnums, elvec);
+                                cout << "Lset Vector on Element 0: \n" << elvec << endl;
                                 throw Exception("Higher Order Polynomials as Lset Functions are not implemented yet!");
                             }
 
@@ -654,7 +659,7 @@ void ExportNgsx(py::module &m)
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
-                                 if(lset_multilinear) ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye);
+                                 if(lset_h1_multilinear) ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye);
                                  else ir = nullptr; //TODO
 
                                  timercutgeom.Stop();
