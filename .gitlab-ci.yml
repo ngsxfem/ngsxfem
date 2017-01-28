@@ -1,18 +1,12 @@
 stages:
+  - before_script
   - build
   - test1
+  - deploy
   - cleanup
-
-deploy:
-  script:
-  - echo " deploy "
 
 before_script:
   - echo " before script "
-
-test1:
-  script:
-    - echo " test1 "
 
 build:
   script:
@@ -20,12 +14,20 @@ build:
     - uname -a
     - ls -al
     - pwd
+    - gcc --version
+    - mkdir build
+    - cmake ../.
+    - make
+
+test1:
+  script:
+    - echo " test1 "
+
+deploy:
+  script:
+  - echo " deploy "
 
 cleanup:
   script:
     - echo " cleanup "
     - pwd
-
-testgcc:
-  script:
-    - gcc --version
