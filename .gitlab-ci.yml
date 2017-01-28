@@ -6,7 +6,8 @@ stages:
   - cleanup
 
 before_script:
-  - echo " before script "
+  script:
+    - echo " before script "
 
 build:
   script:
