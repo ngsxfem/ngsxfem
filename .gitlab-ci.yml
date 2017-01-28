@@ -6,10 +6,12 @@ stages:
   - cleanup
 
 before_script:
+  stage: before_script
   script:
     - echo " before script "
 
 build:
+  stage: build
   script:
     - echo " testenvironment "
     - uname -a
@@ -21,14 +23,17 @@ build:
     - make
 
 test1:
+  stage: test1
   script:
     - echo " test1 "
 
 deploy:
+  stage: deploy
   script:
   - echo " deploy "
 
 cleanup:
+  stage: cleanup
   script:
     - echo " cleanup "
     - pwd
