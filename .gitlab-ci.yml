@@ -1,10 +1,3 @@
-stages:
-  - before_script
-  - build
-  - test1
-  - deploy
-  - cleanup
-
 before_script:
   stage: before_script
   script:
