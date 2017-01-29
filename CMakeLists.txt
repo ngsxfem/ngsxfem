@@ -165,7 +165,7 @@ endif(NOT WIN32)
 
 
 # SET(CMAKE_CXX_FLAGS "" CACHE STRING "" FORCE) 
-SET(CMAKE_CXX_FLAGS "-O3 -DNDEBUG  -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG  -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 
 function(message)
     _MESSAGE("${BoldBlue}${ARGV}${ColorReset}")
@@ -186,6 +186,9 @@ message("
 
   Compiler:
     CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}
+    
+  Compiler Flags:
+    CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}
 
 ------------------------------------------------------------------------
 ")
