@@ -868,6 +868,32 @@ namespace xintegration
       return l + s1.epsilon;
   }
 
+  PolynomeFunction PolynomeFunction::GetLegendre1D(int order){
+     PolynomeFunction p(1);
+      if(order == 0){
+         p.c[{0}] = 1;
+     }
+     else if(order == 1){
+         //p.c[{1}] = 1;
+          p.c[{1}] = -2; p.c[{0}] = 1;
+     }
+     else{
+          PolynomeFunction p_orderm1(1); p_orderm1 = GetLegendre1D(order-1);
+          PolynomeFunction p_orderm2(1); p_orderm2 = GetLegendre1D(order-2);
+          for(auto c_tuple: p_orderm1.c){
+              int exponent = c_tuple.first[0];
+              double coeff = c_tuple.second;
+              p.c[{exponent+1}] += coeff*(2.*order - 1.)/order;
+          }
+          for(auto c_tuple: p_orderm2.c){
+              int exponent = c_tuple.first[0];
+              double coeff = c_tuple.second;
+              p.c[{exponent}] += -coeff*(order - 1.)/order;
+          }
+      }
+     return p;
+  }
+
   void PolynomeFunction::FromNGSGridFunction(FlatVector<> l2_tp_coeffs){
       int order = floor( pow(l2_tp_coeffs.Size(), 1./D) + 0.5);
   }
@@ -900,6 +926,9 @@ namespace xintegration
       PolynomeFunction p4(1);
       p4.c[{2}] = 1.;
       cout << "Largest res of f(x) = x**2 on [-10,10]: " << p4.get_largest_res_on_hyperrect(Vec<1>{-10.}, Vec<1>{10.}) << endl;
+
+      cout << "The 5th Legendre Polynomial:" << endl;
+      PolynomeFunction::GetLegendre1D(5).output();
   }
 
   template<class T>
