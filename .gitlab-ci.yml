@@ -2,11 +2,15 @@ beforescript:
   stage: build
   script:
     - echo " before script "
+    - use-netgen " which ngscxx "
+    - export TEST_ENV_VAR="testtesttest"
+    - export | grep TEST_ENV_VAR
 
 build:
   stage: build
   script:
     - echo " testenvironment "
+    - export | grep TEST_ENV_VAR
     - uname -a
     - ls -al
     - pwd
