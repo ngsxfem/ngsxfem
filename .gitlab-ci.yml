@@ -20,6 +20,7 @@ build:
     - cd build
     #- NGSCXX=`use-netgen --run "which ngscxx"`
     - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse --run "cmake ../."
+    - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse --run "make"
 
 test1:
   stage: test
