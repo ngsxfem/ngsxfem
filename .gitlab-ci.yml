@@ -18,8 +18,9 @@ build:
     - gcc --version
     - mkdir build
     - cd build
+    - NGSCXX=`use-netgen --run "which ngscxx"`
     - use-netgen --run "gcc --version"
-    - use-netgen --run "cmake ../."
+    - use-netgen --run "cmake -DCMAKE_CXX_COMPILER=${NGSCXX} ../."
     - use-netgen --run "make"
 
 test1:
