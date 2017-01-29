@@ -25,6 +25,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/e
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngstd")
 
 #######################################################################
 # find netgen
