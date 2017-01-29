@@ -883,7 +883,8 @@ namespace xintegration
           for(auto c_tuple: p_orderm1.c){
               int exponent = c_tuple.first[0];
               double coeff = c_tuple.second;
-              p.c[{exponent+1}] += coeff*(2.*order - 1.)/order;
+              p.c[{exponent+1}] += -2*coeff*(2.*order - 1.)/order;
+              p.c[{exponent}] += coeff*(2.*order - 1.)/order;
           }
           for(auto c_tuple: p_orderm2.c){
               int exponent = c_tuple.first[0];
