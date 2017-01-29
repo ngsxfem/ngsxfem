@@ -20,7 +20,7 @@ build:
     - mkdir inst
     - cd build
     #- NGSCXX=`use-netgen --run "which ngscxx"`
-    - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "cmake -DINSTALL_DIR=`pwd`/../inst -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON ../."
+    - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "cmake -DINSTALL_DIR=`pwd`/../inst -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DUSE_GUI=OFF ../."
     - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make"
 
 test1:
