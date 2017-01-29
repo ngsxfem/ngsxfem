@@ -8,6 +8,8 @@ set(BUILD_NETGEN ON)
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
 set(CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14")
+set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14")
 
 include_directories("/usr/include/tcl8.5/tk-private/generic/")
 include_directories("/usr/include/tcl8.5/tk-private/unix/")
@@ -21,11 +23,11 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/i
 
 #######################################################################
 # find netgen
-if(NOT NETGENDIR)
-    set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
-else(NOT NETGENDIR)
-    set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
-endif(NOT NETGENDIR)
+#if(NOT NETGENDIR)
+#    set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
+#else(NOT NETGENDIR)
+#    set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
+#endif(NOT NETGENDIR)
 get_filename_component(NETGEN_BASEDIR ${NETGENDIR} PATH)
 if(NOT INSTALL_DIR)
   set(INSTALL_DIR ${NETGEN_BASEDIR} CACHE PATH "Path to install dir")
@@ -33,7 +35,7 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-#SET(CMAKE_CXX_COMPILER "${NETGENDIR}/ngscxx" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_COMPILER "ccache g++")
 
 project(xfem)
 set(NGSXFEM_VERSION_MAJOR 0)
@@ -164,10 +166,6 @@ if(NOT WIN32)
     set(ColorReset "${Esc}[m")
     set(BoldBlue  "${Esc}[1;34m")
 endif(NOT WIN32)
-
-
-# SET(CMAKE_CXX_FLAGS "" CACHE STRING "" FORCE) 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14")
 
 function(message)
     _MESSAGE("${BoldBlue}${ARGV}${ColorReset}")
