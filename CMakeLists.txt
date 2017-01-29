@@ -8,8 +8,8 @@ set(BUILD_NETGEN ON)
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
 set(CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14")
-set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
+set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 
 include_directories("/usr/include/tcl8.5/tk-private/generic/")
 include_directories("/usr/include/tcl8.5/tk-private/unix/")
