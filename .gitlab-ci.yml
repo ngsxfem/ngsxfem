@@ -28,7 +28,8 @@ test1:
   stage: test
   script:
     - echo " test1 "
-    - pwd
+    - ls
+    - export PYTHONPATH="${PYTHONPATH}:inst/lib/python35/site-packages"
     - cd py_tutorials
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 nitschexfem.py"
 
