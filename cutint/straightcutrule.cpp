@@ -868,6 +868,10 @@ namespace xintegration
       return l + s1.epsilon;
   }
 
+  void PolynomeFunction::FromNGSGridFunction(FlatVector<> l2_tp_coeffs){
+      int order = floor( pow(l2_tp_coeffs.Size(), 1./D) + 0.5);
+  }
+
   void DebugPolynomeClass(){
       PolynomeFunction p(2);
       p.c[{0,0}] = 0.53;
