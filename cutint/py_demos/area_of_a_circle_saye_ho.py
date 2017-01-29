@@ -11,13 +11,14 @@ r=0.6
 
 domains = [NEG, POS, IF]
 
-order = 3
+order = 1
 
 levelset = sqrt(x*x+y*y)-r
 referencevals = { POS : 1-pi*r*r/4, NEG : pi*r*r/4, IF : r*pi/2}
 
 V = L2(mesh,order=order)
 lset_approx = GridFunction(V)
+#InterpolateToP1(levelset,lset_approx)
 lset_approx.Set(levelset)
 Draw(lset_approx,mesh,"lset_approx")
 

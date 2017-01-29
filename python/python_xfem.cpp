@@ -634,11 +634,15 @@ void ExportNgsx(py::module &m)
                             cout << "I found a FESpace of order " << FESpace->GetOrder() << " in IntegrateX" << endl;
                             bool lset_h1_multilinear = (FESpace->GetOrder() <= 1) && (FESpace->GetClassName() == "H1HighOrderFESpace");
                             if(! lset_h1_multilinear) {
+                                cout << "LSet Function class" << gf_lset->GetClassName() << endl;
                                 Array<int> dnums;
                                 FESpace->GetDofNrs(0, dnums);
                                 FlatVector<> elvec(dnums.Size(), lh);
                                 gf_lset->GetVector().GetIndirect(dnums, elvec);
                                 cout << "Lset Vector on Element 0: \n" << elvec << endl;
+
+                                gf_lset->Evaluate(ma->GetTrafo(0, lh)(IntegrationPoint(0.,0.,0., 1.), lh));
+
                                 throw Exception("Higher Order Polynomials as Lset Functions are not implemented yet!");
                             }
 
