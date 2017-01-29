@@ -11,7 +11,8 @@ set(NETGEN_INTERNAL_INCLUDE_DIR
 "${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/netgen/libsrc/visualization"
 )
 
-set(NETGENDIR "${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/netgen")
+#set(NETGENDIR "${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/netgen")
+set(NETGENDIR "${INSTALL_DIR}/bin")
 
 add_subdirectory(external_dependencies/ngsolve)
 
@@ -142,7 +143,7 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
-add_custom_target(uninstall
+add_custom_target(uninstall_xfem
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 ##############################################################################
