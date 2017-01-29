@@ -15,6 +15,7 @@ set(NETGEN_INTERNAL_INCLUDE_DIR
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
 include_directories("/usr/include/tcl8.5/tk-private/generic/")
+include_directories("/usr/include/tcl8.5/tk-private/unix/")
 
 add_subdirectory(external_dependencies/ngsolve)
 
