@@ -115,6 +115,8 @@ add_subdirectory(lsetcurving)
 add_subdirectory(osmosis)
 add_subdirectory(tests)
 
+add_dependencies(xfem check_submodules_start)
+
 # get_directory_property( DirDefs COMPILE_DEFINITIONS )
 
 install (PROGRAMS DESTINATION bin)
