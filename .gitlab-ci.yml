@@ -10,6 +10,7 @@ build:
   stage: build
   script:
     - echo " testenvironment "
+    - export TEST_ENV_VAR="testtesttest_build"
     - export | grep TEST_ENV_VAR
     - uname -a
     - ls -al
