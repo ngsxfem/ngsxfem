@@ -13,7 +13,7 @@ set(NETGEN_INTERNAL_INCLUDE_DIR
 
 set(NETGENDIR "${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/netgen")
 
-add_subdirectory(external_dependencies)
+add_subdirectory(external_dependencies/ngsolve)
 
 #######################################################################
 # find netgen
