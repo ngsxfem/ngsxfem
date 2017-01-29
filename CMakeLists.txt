@@ -171,6 +171,9 @@ function(message)
     _MESSAGE("${BoldBlue}${ARGV}${ColorReset}")
 endfunction()
 
+string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" name)
+set(flags "${${name}} ${CMAKE_CXX_FLAGS}")
+
 message("
 ------------------------------------------------------------------------
   ${PROJECT_NAME} ${PACKAGE_VERSION}:  Automatic configuration OK.
@@ -188,7 +191,7 @@ message("
     CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}
     
   Compiler Flags:
-    CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}
+    flags = ${flags}
 
 ------------------------------------------------------------------------
 ")
