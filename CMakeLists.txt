@@ -59,7 +59,7 @@ add_definitions(-DNGSX_PYTHON)
 
 
 set(NGS_LIB_TYPE SHARED)
-#set(NETGEN_LIBS "-L${NETGEN_BASEDIR}/lib -lngsolve -lngcomp -lngfem -lngstd -lngbla")
+set(NETGEN_LIBS "-L${NETGEN_BASEDIR}/lib -lngsolve -lngcomp -lngfem -lngstd -lngbla")
 #set(NETGEN_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve -lngsolve")
 #set(NETGEN_LIBS "${NETGEN_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp -lngcomp")
 #set(NETGEN_LIBS "${NETGEN_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem -lngfem")
