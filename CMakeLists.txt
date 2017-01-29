@@ -15,6 +15,11 @@ include_directories("/usr/include/tcl8.5/tk-private/generic/")
 include_directories("/usr/include/tcl8.5/tk-private/unix/")
 
 add_subdirectory(external_dependencies/ngsolve)
+link_directories ("external_dependencies/ngsolve/solve")
+link_directories ("external_dependencies/ngsolve/comp")
+link_directories ("external_dependencies/ngsolve/fem")
+link_directories ("external_dependencies/ngsolve/ngstd")
+link_directories ("external_dependencies/ngsolve/basiclinalg")
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
