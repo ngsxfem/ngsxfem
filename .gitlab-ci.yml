@@ -28,6 +28,9 @@ test1:
   stage: test
   script:
     - echo " test1 "
+    - pwd
+    - cd py_tutorials
+    - python3 nitschexfem.py
 
 deploy:
   stage: deploy
