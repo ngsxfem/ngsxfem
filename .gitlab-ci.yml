@@ -1,20 +1,27 @@
 beforescript:
+  stage: build
   script:
     - echo " before script "
+    - use-netgen --run "which ngscxx"
+    - export TEST_ENV_VAR="testtesttest"
+    - export | grep TEST_ENV_VAR
 
 build:
   stage: build
   script:
     - echo " testenvironment "
+    - export TEST_ENV_VAR="testtesttest_build"
+    - export | grep TEST_ENV_VAR
     - uname -a
     - ls -al
     - pwd
     - gcc --version
     - mkdir build
     - cd build
-    - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse --run "gcc --version"
-    # - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse --run "cmake ../."
-    # - nix-shell -p gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse --run "make"
+    - NGSCXX=`use-netgen --run "which ngscxx"`
+    - use-netgen --run "gcc --version"
+    - use-netgen --run "cmake -DCMAKE_CXX_COMPILER=${NGSCXX} ../."
+    - use-netgen --run "make"
 
 test1:
   stage: test
@@ -27,6 +34,7 @@ deploy:
   - echo " deploy "
 
 cleanup:
+  stage: deploy
   script:
     - echo " cleanup "
     - pwd
