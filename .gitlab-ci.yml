@@ -1,4 +1,5 @@
 beforescript:
+  stage: build
   script:
     - echo " before script "
 
@@ -27,6 +28,7 @@ deploy:
   - echo " deploy "
 
 cleanup:
+  stage: deploy
   script:
     - echo " cleanup "
     - pwd
