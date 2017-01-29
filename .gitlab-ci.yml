@@ -30,7 +30,7 @@ test1:
     - echo " test1 "
     - pwd
     - cd py_tutorials
-    - python3 nitschexfem.py
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 nitschexfem.py"
 
 deploy:
   stage: deploy
