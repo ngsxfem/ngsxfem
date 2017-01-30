@@ -6,8 +6,8 @@ beforescript:
 
 build:
   stage: build
-  key: "$CI_BUILD_ID"
   cache:
+    key: "$CI_BUILD_ID"
     paths:
       - build/
   script:
@@ -19,8 +19,8 @@ build:
 
 cmake-tests:
   stage: test
-  key: "$CI_BUILD_ID"
   cache:
+    key: "$CI_BUILD_ID"
     paths:
       - build/
   script:
