@@ -2,33 +2,32 @@ beforescript:
   stage: build
   script:
     - echo " before script "
-    - use-netgen --run "which ngscxx"
-    - export TEST_ENV_VAR="testtesttest"
-    - export | grep TEST_ENV_VAR
     - mkdir -p /home/gitlab-runner/inst/netgen
 
 build:
   stage: build
   script:
-    - echo " testenvironment "
-    - export TEST_ENV_VAR="testtesttest_build"
-    - export | grep TEST_ENV_VAR
-    - uname -a
-    - ls -al
-    - pwd
-    - gcc --version
-    - mkdir build
-    - mkdir inst
+    - mkdir -p build
     - cd build
-    #- NGSCXX=`use-netgen --run "which ngscxx"`
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DUSE_GUI=ON ../."
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make"
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make install"
 
-test1:
+cmake-tests:
   stage: test
   script:
-    - echo " test1 "
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest"
+
+further-tests:
+  stage: test
+  script:
+    - echo "further tests"
     - ls
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
