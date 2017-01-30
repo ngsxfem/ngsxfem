@@ -15,6 +15,9 @@ build:
 
 cmake-tests:
   stage: test
+  cache:
+    paths:
+      - build/
   script:
     - echo "cmake-tests"
     - cd build
