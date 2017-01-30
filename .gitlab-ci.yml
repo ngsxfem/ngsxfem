@@ -7,7 +7,7 @@ beforescript:
 build:
   stage: build
   cache:
-    key: "$CI_BUILD_ID"
+    key: "$CI_PIPELINE_ID"
     paths:
       - build/
   script:
@@ -20,11 +20,12 @@ build:
 cmake-tests:
   stage: test
   cache:
-    key: "$CI_BUILD_ID"
+    key: "$CI_PIPELINE_ID"
     paths:
       - build/
   script:
     - echo "cmake-tests"
+    - ls -al
     - cd build
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
