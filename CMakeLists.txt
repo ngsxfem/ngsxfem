@@ -14,7 +14,9 @@ set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOF
 include_directories("/usr/include/tcl8.5/tk-private/generic/")
 include_directories("/usr/include/tcl8.5/tk-private/unix/")
 
+set(EVENT__DISABLE_TESTS ON)
 add_subdirectory(external_dependencies/ngsolve)
+set(EVENT__DISABLE_TESTS OFF)
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")

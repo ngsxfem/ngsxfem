@@ -25,7 +25,6 @@ cmake-tests:
       - build/
   script:
     - echo "cmake-tests"
-    - ls -al
     - cd build
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
