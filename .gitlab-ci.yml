@@ -6,6 +6,10 @@ beforescript:
 
 build:
   stage: build
+  key: "cmake_${CI_BUILD_REF_NAME}"
+  cache:
+    paths:
+      - build/
   script:
     - mkdir -p build
     - cd build
@@ -15,6 +19,7 @@ build:
 
 cmake-tests:
   stage: test
+  key: "cmake_${CI_BUILD_REF_NAME}"
   cache:
     paths:
       - build/
