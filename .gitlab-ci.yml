@@ -6,7 +6,7 @@ beforescript:
 
 build:
   stage: build
-  key: "cmake_${CI_BUILD_REF_NAME}"
+  key: "${CI_BUILD_REF_NAME}"
   cache:
     paths:
       - build/
@@ -19,7 +19,7 @@ build:
 
 cmake-tests:
   stage: test
-  key: "cmake_${CI_BUILD_REF_NAME}"
+  key: "${CI_BUILD_REF_NAME}"
   cache:
     paths:
       - build/
@@ -31,6 +31,8 @@ cmake-tests:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest"
+  when: always
+  allow_failure: true
 
 further-tests:
   stage: test
