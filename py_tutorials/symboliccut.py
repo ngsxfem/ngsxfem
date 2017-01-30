@@ -23,7 +23,11 @@ InterpolateToP1(levelset,lset_approx)
 
 # extended FESpace 
 
-VhG = XStdFESpace(mesh, lset_approx, order=order, basetype="h1ho", dirichlet=[1,2,3,4])
+# VhG = XStdFESpace(mesh, lset_approx, order=order, basetype="h1ho", dirichlet=[1,2,3,4])
+Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+Vhx = XFESpace(Vh, mesh, lset_approx)
+VhG = FESpace([Vh,Vhx])
+
 gfu = GridFunction(VhG)
 
 # coefficients / parameters: 
