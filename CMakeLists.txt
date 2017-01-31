@@ -2,10 +2,20 @@ cmake_minimum_required(VERSION 2.8)
 
 message(STATUS "Use Netgen from submodule, updating modules...")
 execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(USE_UMFPACK ON)
 add_custom_target(check_submodules_start_xfem ALL cmake -P cmake_modules/check_submodules.cmake WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set(BUILD_NETGEN ON)
 set(NETGENDIR "${INSTALL_DIR}/bin")
+
+
+if(USE_UMFPACK)
+  find_package(SuiteSparse NO_MODULE HINTS ${UMFPACK_DIR})
+  include(${USE_SuiteSparse})
+  include_directories(${SuiteSparse_INCLUDE_DIRS})
+  set(UMFPACK_LIBRARIES ${SuiteSparse_LIBRARIES} CACHE STRING "List of UMFPACK libraries")
+  add_definitions(-DUSE_UMFPACK)
+endif(USE_UMFPACK)
 
 set(CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
@@ -13,6 +23,15 @@ set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOF
 
 include_directories("/usr/include/tcl8.5/tk-private/generic/")
 include_directories("/usr/include/tcl8.5/tk-private/unix/")
+
+if(USE_UMFPACK)
+  find_package(SuiteSparse NO_MODULE HINTS ${UMFPACK_DIR})
+  include(${USE_SuiteSparse})
+  include_directories(${SuiteSparse_INCLUDE_DIRS})
+  set(UMFPACK_LIBRARIES ${SuiteSparse_LIBRARIES} CACHE STRING "List of UMFPACK libraries")
+  add_definitions(-DUSE_UMFPACK)
+endif(USE_UMFPACK)
+
 
 add_subdirectory(external_dependencies/ngsolve)
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve")
