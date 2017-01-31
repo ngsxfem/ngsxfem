@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 message(STATUS "Use Netgen from submodule, updating modules...")
 execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set(USE_UMFPACK ON)
+include(ExternalProject)
 if(USE_UMFPACK)
   set(UMFPACK_DIR ${CMAKE_CURRENT_BINARY_DIR}/umfpack/install CACHE PATH "Temporary directory to build UMFPACK")
   ExternalProject_Add(
