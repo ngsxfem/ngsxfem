@@ -20,6 +20,7 @@ link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngstd")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/basiclinalg")
+link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/linalg")
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
