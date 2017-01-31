@@ -17,7 +17,7 @@ if(USE_UMFPACK)
     LOG_INSTALL 1
     )
   list(APPEND DEPENDENCIES suitesparse)
-  set_vars( NGSOLVE_CMAKE_ARGS UMFPACK_DIR )
+  # set_vars( NGSOLVE_CMAKE_ARGS UMFPACK_DIR )
 endif(USE_UMFPACK)
 
 add_custom_target(check_submodules_start_xfem ALL cmake -P cmake_modules/check_submodules.cmake WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
