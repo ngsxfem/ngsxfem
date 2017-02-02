@@ -432,7 +432,9 @@ def IsCut(mesh,lset_approx, subdivlvl=0):
         else:
             return 0.0
     kappa1, dummycf = kappa(mesh,lset_approx,subdivlvl)
-    from numpy import vectorize
-    cut = vectorize(cut)
-    kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
+    for i in range(len(kappa1.vec)):
+        kappa1.vec[i] = cut(kappa1.vec[i])
+    # from numpy import vectorize
+    # cut = vectorize(cut)
+    # kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
     return kappa1
