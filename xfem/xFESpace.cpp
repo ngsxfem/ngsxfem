@@ -687,7 +687,7 @@ namespace ngcomp
   template <int D, int SD>
   FiniteElement & T_XFESpace<D,SD> :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    LocalHeap lh("XFESpace::GetFE",100000);
+    LocalHeap lh(10000000,"XFESpace::GetFE");
     if (ei.VB() == VOL)
     {
       int elnr = ei.Nr();
@@ -1442,7 +1442,7 @@ namespace ngcomp
 
   FiniteElement & SFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    LocalHeap lh("XFESpace::GetFE",100000);
+    LocalHeap lh(10000000,"SFESpace::GetFE");
     if (ei.VB() == VOL)
     {
       int elnr = ei.Nr();
