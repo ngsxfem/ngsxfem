@@ -3,22 +3,6 @@ cmake_minimum_required(VERSION 2.8)
 message(STATUS "Use Netgen from submodule, updating modules...")
 execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set(USE_UMFPACK ON)
-include(ExternalProject)
-if(USE_UMFPACK)
-  set(UMFPACK_DIR ${CMAKE_CURRENT_BINARY_DIR}/umfpack/install CACHE PATH "Temporary directory to build UMFPACK")
-  ExternalProject_Add(
-    suitesparse
-    DEPENDS ${LAPACK_PROJECTS}
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/umfpack
-    GIT_REPOSITORY https://github.com/jlblancoc/suitesparse-metis-for-windows.git
-    CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DSUITESPARSE_USE_CUSTOM_BLAS_LAPACK_LIBS=ON -DSHARED=OFF -DBUILD_METIS=OFF -DCMAKE_INSTALL_PREFIX=${UMFPACK_DIR} -DSUITESPARSE_INSTALL_PREFIX=${UMFPACK_DIR} -DSUITESPARSE_CUSTOM_LAPACK_LIB=${LAPACK_LIBRARIES} -DSUITESPARSE_CUSTOM_BLAS_LIB=${LAPACK_LIBRARIES}
-    LOG_DOWNLOAD 1
-    LOG_BUILD 1
-    LOG_INSTALL 1
-    )
-  list(APPEND DEPENDENCIES suitesparse)
-  # set_vars( NGSOLVE_CMAKE_ARGS UMFPACK_DIR )
-endif(USE_UMFPACK)
 
 add_custom_target(check_submodules_start_xfem ALL cmake -P cmake_modules/check_submodules.cmake WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 
