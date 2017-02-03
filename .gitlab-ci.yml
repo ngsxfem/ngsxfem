@@ -2,6 +2,7 @@ beforescript:
   stage: build
   script:
     - echo " before script "
+    - rm -rf /home/gitlab-runner/inst/netgen
     - mkdir -p /home/gitlab-runner/inst/netgen
 
 build:
@@ -55,5 +56,4 @@ cleanup:
   stage: deploy
   script:
     - echo " cleanup "
-    - rm -rf /home/gitlab-runner/inst/netgen
     - pwd
