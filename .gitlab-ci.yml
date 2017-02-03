@@ -55,4 +55,5 @@ cleanup:
   stage: deploy
   script:
     - echo " cleanup "
+    - rm -rf /home/gitlab-runner/inst/netgen
     - pwd
