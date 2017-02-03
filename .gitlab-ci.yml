@@ -7,10 +7,10 @@ beforescript:
 
 build:
   stage: build
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-      - build/
+#  cache:
+#    key: "$CI_PIPELINE_ID"
+#    paths:
+#      - build/
   script:
     - mkdir -p build
     - cd build
