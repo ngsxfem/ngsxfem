@@ -13,10 +13,6 @@ set(CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 
-include_directories("/usr/include/tcl8.5/tk-private/generic/")
-include_directories("/usr/include/tcl8.5/tk-private/unix/")
-
-
 add_subdirectory(external_dependencies/ngsolve)
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp")
@@ -25,6 +21,8 @@ link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngst
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/basiclinalg")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/linalg")
 
+include_directories("/usr/include/tcl8.5/tk-private/generic/")
+include_directories("/usr/include/tcl8.5/tk-private/unix/")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/include")
