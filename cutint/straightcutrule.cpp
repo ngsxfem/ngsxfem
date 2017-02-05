@@ -896,7 +896,38 @@ namespace xintegration
   }
 
   void PolynomeFunction::FromNGSGridFunction(FlatVector<> l2_tp_coeffs){
-      int order = floor( pow(l2_tp_coeffs.Size(), 1./D) + 0.5);
+      cout << "l2_tp_coeffs.Size(): " << l2_tp_coeffs.Size() << endl;
+      cout << "D: " << D << endl;
+
+      if((D <2) || (D>3)) throw Exception ("PolynomeFunction::FromNGSGridFunction not implemented for this dim!");
+      int order = floor( pow((double)l2_tp_coeffs.Size(), 1./(double)D) + 0.5) - 1;
+      cout << "Order: " << order << endl;
+      vector<PolynomeFunction> Legendres(order+1);
+      for(int i=0; i<order+1; i++) Legendres[i] = PolynomeFunction::GetLegendre1D(i);
+      cout << "Legendre calc finished" << endl;
+      for(int h=0; h<l2_tp_coeffs.Size(); h++) {
+          vector<int> Legendre_numbers(D);
+          for(int i=0; i<D; i++) {
+              int j = (int)((h%(int)pow(order+1,i+1))/(pow(order+1,i)));
+              Legendre_numbers[i] = j;
+          }
+          if(D == 2){
+              for(auto c_tp1 : Legendres[Legendre_numbers[0]].c) {
+                  for(auto c_tp2 : Legendres[Legendre_numbers[1]].c){
+                      c[{c_tp1.first[0], c_tp2.first[0]}] += l2_tp_coeffs[h]*c_tp1.second*c_tp2.second;
+                  }
+              }
+          }
+          else if(D == 3) {
+              for(auto c_tp1 : Legendres[Legendre_numbers[0]].c) {
+                  for(auto c_tp2 : Legendres[Legendre_numbers[1]].c){
+                      for(auto c_tp3 : Legendres[Legendre_numbers[2]].c){
+                          c[{c_tp1.first[0], c_tp2.first[0], c_tp3.first[0]}] += l2_tp_coeffs[h]*c_tp1.second*c_tp2.second*c_tp3.second;
+                      }
+                  }
+              }
+          }
+      }
   }
 
   void DebugPolynomeClass(){

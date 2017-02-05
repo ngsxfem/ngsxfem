@@ -11,7 +11,7 @@ r=0.6
 
 domains = [NEG, POS, IF]
 
-order = 1
+order = 3
 
 levelset = sqrt(x*x+y*y)-r
 referencevals = { POS : 1-pi*r*r/4, NEG : pi*r*r/4, IF : r*pi/2}

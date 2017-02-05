@@ -641,7 +641,9 @@ void ExportNgsx(py::module &m)
                                 gf_lset->GetVector().GetIndirect(dnums, elvec);
                                 cout << "Lset Vector on Element 0: \n" << elvec << endl;
 
-                                gf_lset->Evaluate(ma->GetTrafo(0, lh)(IntegrationPoint(0.,0.,0., 1.), lh));
+                                PolynomeFunction p(DIM);
+                                p.FromNGSGridFunction(elvec);
+                                cout << "The Polynomial reconstructed:"; p.output();
 
                                 throw Exception("Higher Order Polynomials as Lset Functions are not implemented yet!");
                             }
