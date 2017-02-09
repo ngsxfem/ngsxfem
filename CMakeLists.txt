@@ -4,7 +4,7 @@ message(STATUS "Use Netgen from submodule, updating modules...")
 execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 #set(USE_UMFPACK ON)
 
-add_custom_target(check_submodules_start_xfem ALL cmake -P cmake_modules/check_submodules.cmake WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+#add_custom_target(check_submodules_start_xfem ALL cmake -P cmake_modules/check_submodules.cmake WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set(BUILD_NETGEN ON)
 set(NETGENDIR "${INSTALL_DIR}/bin")
@@ -16,7 +16,10 @@ set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOF
 include_directories("/usr/include/tcl8.5/tk-private/generic/")
 include_directories("/usr/include/tcl8.5/tk-private/unix/")
 
-add_subdirectory(external_dependencies/ngsolve)
+#add_subdirectory(external_dependencies/ngsolve)
+execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DUSE_CCACHE=${USE_CCACHE} ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/)
+execute_process(COMMAND make install WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/)
+
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp")
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")
