@@ -17,12 +17,16 @@ set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOF
 execute_process(COMMAND mkdir -p ngsolve)
 execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
 #execute_process(COMMAND make WORKING_DIRECTORY ngsolve)
-execute_process(COMMAND make install -j2 WORKING_DIRECTORY ngsolve)
+execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
 
 set(BUILD_NETGEN ON)
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
-link_directories("${INSTALL_DIR}/lib/")
+set(CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
+set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
+
+#link_directories("${INSTALL_DIR}/lib/")
 #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve")
 #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp")
 #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")
@@ -30,7 +34,7 @@ link_directories("${INSTALL_DIR}/lib/")
 #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/basiclinalg")
 #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/linalg")
 
-include_directories("${INSTALL_DIR}/include/")
+#include_directories("${INSTALL_DIR}/include/")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/include")
