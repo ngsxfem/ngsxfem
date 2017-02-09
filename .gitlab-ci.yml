@@ -4,8 +4,6 @@ beforescript:
     - echo " before script "
     - rm -rf /home/gitlab-runner/inst/netgen
     - mkdir -p /home/gitlab-runner/inst/netgen
-    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
-    - cat `which ngscxx`
 
 build:
   stage: build
@@ -27,6 +25,8 @@ cmake-tests:
     paths:
       - build/
   script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
     - echo "cmake-tests"
     - cd build
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
