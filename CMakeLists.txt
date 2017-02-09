@@ -57,8 +57,8 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
-SET(CXX "${INSTALL_DIR}/bin/ngscxx")
+SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
+#SET(CXX "${INSTALL_DIR}/bin/ngscxx")
 #SET(CMAKE_CXX_COMPILER "ccache g++")
 #if(USE_CCACHE)
 #  find_program(CCACHE_FOUND ccache)
@@ -77,8 +77,8 @@ set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 add_definitions(-DNGSX_PYTHON)
 
-SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
-SET(CXX "${INSTALL_DIR}/bin/ngscxx")
+#SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
+#SET(CXX "${INSTALL_DIR}/bin/ngscxx")
 
 
 set(NGS_LIB_TYPE SHARED)
@@ -112,7 +112,7 @@ SET(USE_PYTHON TRUE)
 if (USE_PYTHON)
     set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake_modules/python")
     set(PYTHON_VERSION "3" CACHE STRING "Python version (only Python >= 3.0 supported)")
-    set(Python_ADDITIONAL_VERSIONS 3.5)
+    set(Python_ADDITIONAL_VERSIONS 3.5 3.6)
     if( PYTHON_VERSION VERSION_LESS 3 )
         message(FATAL_ERROR "NGSolve/ngsxfem supports only Python 3")
     endif( PYTHON_VERSION VERSION_LESS 3 )
