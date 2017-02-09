@@ -18,7 +18,7 @@ include_directories("/usr/include/tcl8.5/tk-private/unix/")
 
 #add_subdirectory(external_dependencies/ngsolve)
 execute_process(COMMAND mkdir -p ngsolve)
-execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
+execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DINCLUDE_DIRECTORIES=/usr/include/tcl8.5/tk-private/generic/ -DINCLUDE_DIRECTORIES=/usr/include/tcl8.5/tk-private/unix/  ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
 execute_process(COMMAND make WORKING_DIRECTORY ngsolve)
 execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
 
