@@ -15,8 +15,8 @@ build:
     - mkdir -p build
     - cd build
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON ../."
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make install"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make -j2"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make install -j2"
 
 cmake-tests:
   stage: test
