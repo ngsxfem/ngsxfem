@@ -58,9 +58,10 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-#SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
+SET(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
 #SET(CXX "${INSTALL_DIR}/bin/ngscxx")
-SET(CMAKE_CXX_COMPILER "ccache g++ ${CMAKE_CXX_FLAGS}")
+#SET(CMAKE_CXX_COMPILER "ccache g++ ${CMAKE_CXX_FLAGS}")
 #if(USE_CCACHE)
 #  find_program(CCACHE_FOUND ccache)
 #  if(CCACHE_FOUND)
