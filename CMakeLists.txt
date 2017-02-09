@@ -2,40 +2,19 @@ cmake_minimum_required(VERSION 2.8)
 
 message(STATUS "Use Ngsolve from submodule, updating modules...")
 execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-#set(USE_UMFPACK ON)
-
-#add_custom_target(check_submodules_start_xfem ALL cmake -P cmake_modules/check_submodules.cmake WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
-
-#include_directories("/usr/include/tcl8.5/tk-private/generic/")
-#include_directories("/usr/include/tcl8.5/tk-private/unix/")
+set(USE_UMFPACK ON)
 
 set(CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 
-#add_subdirectory(external_dependencies/ngsolve)
 execute_process(COMMAND mkdir -p ngsolve)
 execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
-#execute_process(COMMAND make WORKING_DIRECTORY ngsolve)
 execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
 
 set(BUILD_NETGEN ON)
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
-set(CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
-set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
-
-link_directories("${INSTALL_DIR}/lib/")
-SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -rpath ${INSTALL_DIR}/lib/" )
-#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve")
-#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp")
-#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")
-#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngstd")
-#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/basiclinalg")
-#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/linalg")
-
-#include_directories("${INSTALL_DIR}/include/")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/include")
@@ -58,17 +37,7 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-SET(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
-#SET(CXX "${INSTALL_DIR}/bin/ngscxx")
-#SET(CMAKE_CXX_COMPILER "ccache g++ ${CMAKE_CXX_FLAGS}")
-#if(USE_CCACHE)
-#  find_program(CCACHE_FOUND ccache)
-#  if(CCACHE_FOUND)
-#    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-#    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-#  endif(CCACHE_FOUND)
-#endif(USE_CCACHE)
 
 project(xfem)
 set(NGSXFEM_VERSION_MAJOR 0)
@@ -79,17 +48,12 @@ set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 add_definitions(-DNGSX_PYTHON)
 
-#SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
-#SET(CXX "${INSTALL_DIR}/bin/ngscxx")
-
-
 set(NGS_LIB_TYPE SHARED)
 set(NETGEN_LIBS "-L${NETGEN_BASEDIR}/lib -lngsolve -lngcomp -lngfem -lngstd -lngbla")
-#set(NETGEN_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/solve -lngsolve")
-#set(NETGEN_LIBS "${NETGEN_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/comp -lngcomp")
-#set(NETGEN_LIBS "${NETGEN_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem -lngfem")
-#set(NETGEN_LIBS "${NETGEN_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngstd -lngstd")
-#set(NETGEN_LIBS "${NETGEN_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/basiclinalg -lngbla")
+
+link_directories("${INSTALL_DIR}/lib/")
+link_directories("/usr/lib/libblas")
+SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${NETGEN_BASEDIR}/lib -rpath ${NETGEN_BASEDIR}/lib" )
 
 if (ADDITIONAL_PATHS)
     list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
@@ -209,14 +173,8 @@ function(message)
     _MESSAGE("${BoldBlue}${ARGV}${ColorReset}")
 endfunction()
 
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
-#set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
-
 string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" name)
 set(flags "${${name}} ${CMAKE_CXX_FLAGS}")
-
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
-set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -std=c++14 -fPIC  -DHAVE_CONFIG_H -DUSE_TIMEOFDAY -DTCL -DUSE_MKL -DUSE_PARDISO -DLAPACK -DNGS_PYTHON -DUSE_UMFPACK")
 
 message("
 ------------------------------------------------------------------------
