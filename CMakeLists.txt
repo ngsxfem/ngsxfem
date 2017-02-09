@@ -57,6 +57,8 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
+SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
+SET(CXX "${INSTALL_DIR}/bin/ngscxx")
 #SET(CMAKE_CXX_COMPILER "ccache g++")
 #if(USE_CCACHE)
 #  find_program(CCACHE_FOUND ccache)
@@ -75,8 +77,8 @@ set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 add_definitions(-DNGSX_PYTHON)
 
-SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
-SET(CXX "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
+SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
+SET(CXX "${INSTALL_DIR}/bin/ngscxx")
 
 
 set(NGS_LIB_TYPE SHARED)
