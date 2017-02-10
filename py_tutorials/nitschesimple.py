@@ -65,6 +65,6 @@ rhs = u.vec.CreateVector()
 rhs.data = f.vec - a.mat * u.vec
 u.vec.data += a.mat.Inverse(VhG.FreeDofs()) * rhs
 
-Draw(lset_approx,mesh,"lset_approx")
-Draw(lsetmeshadap.deform,mesh,"deformation")
-Draw(u,mesh,"u")
+#Draw(lset_approx,mesh,"lset_approx")
+#Draw(lsetmeshadap.deform,mesh,"deformation")
+#Draw(u,mesh,"u")
