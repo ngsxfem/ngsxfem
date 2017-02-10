@@ -5,7 +5,8 @@ execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTOR
 set(USE_UMFPACK ON)
 
 execute_process(COMMAND mkdir -p ngsolve)
-execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
+execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DUSE_UMFPACK=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
+execute_process(COMMAND make -j4 WORKING_DIRECTORY ngsolve)
 execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
 
 set(BUILD_NETGEN ON)
@@ -33,6 +34,7 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
+set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
 
 project(xfem)
