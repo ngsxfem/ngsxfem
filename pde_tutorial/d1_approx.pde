@@ -50,7 +50,7 @@ define bilinearform a -fespace=fescomp -symmetric -linearform=f
 xmass 1.0 1.0
 
 #define preconditioner c -type=local -bilinearform=a -test #-block           
-define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test 
+define preconditioner c -type=direct -bilinearform=a -inverse=umfpack #-test 
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6
 

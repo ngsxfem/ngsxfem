@@ -1,0 +1,61 @@
+beforescript:
+  stage: build
+  script:
+    - echo " before script "
+    - rm -rf /home/gitlab-runner/inst/netgen
+    - mkdir -p /home/gitlab-runner/inst/netgen
+
+build:
+  stage: build
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - mkdir -p build
+    - cd build
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON ../."
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make -j4"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "make install"
+
+cmake-tests:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest -V -I 27,,"
+  when: always
+  allow_failure: true
+
+further-tests:
+  stage: test
+  script:
+    - echo "further tests"
+    - ls
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - cd py_tutorials
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 nitschexfem.py"
+
+deploy:
+  stage: deploy
+  script:
+  - echo " deploy "
+
+cleanup:
+  stage: deploy
+  script:
+    - echo " cleanup "
+    - pwd

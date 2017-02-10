@@ -73,7 +73,7 @@ xnitsche_hansbo aneg apos bneg bpos lambda
 numproc setvaluesx npsvx -gridfunction=u -coefficient_neg=bndneg -coefficient_pos=bndpos -boundary
 
 #define preconditioner c -type=local -bilinearform=a -test #-block
-define preconditioner c -type=direct -bilinearform=a -inverse=pardiso #-test
+define preconditioner c -type=direct -bilinearform=a -inverse=umfpack #-test
 
 numproc bvp npbvp -gridfunction=u -bilinearform=a -linearform=f -solver=cg -preconditioner=c -maxsteps=1000 -prec=1e-6 
 

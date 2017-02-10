@@ -685,163 +685,169 @@ namespace ngcomp
   }
 
   template <int D, int SD>
-  const FiniteElement & T_XFESpace<D,SD> :: GetFE (int elnr, LocalHeap & lh) const
+  FiniteElement & T_XFESpace<D,SD> :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    static Timer timer ("XFESpace::GetFE");
-    RegionTimer reg (timer);
-
-    Ngs_Element ngel = ma->GetElement(elnr);
-    ELEMENT_TYPE eltype = ngel.GetType();
-    if (!activeelem.Test(elnr))
+    LocalHeap lh(10000000,"XFESpace::GetFE");
+    if (ei.VB() == VOL)
     {
-      DOMAIN_TYPE dt = domofel[elnr];
-      return *(new (lh) XDummyFE(dt,eltype));
-    }
-    else
-    {
-      Array<DOMAIN_TYPE> domnrs;
-      GetDomainNrs(elnr,domnrs);  
+      int elnr = ei.Nr();
+      static Timer timer ("XFESpace::GetFE");
+      RegionTimer reg (timer);
 
       Ngs_Element ngel = ma->GetElement(elnr);
       ELEMENT_TYPE eltype = ngel.GetType();
-
-      ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
-        
-      ScalarFieldEvaluator * lset_eval_p = nullptr;
-      if (spacetime)
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
-      else
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
-
-      auto cquad = new CompositeQuadratureRule<SD>() ;
-
-      ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
-
-      auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                            *cquad, lh, 
-                                                                            2*order_space+2, 2*order_time, 
-                                                                            ref_lvl_space, ref_lvl_time);
-      // DOMAIN_TYPE dt;
-      if(! fenocut)
+      if (!activeelem.Test(elnr))
       {
-        static Timer timer ("XFESpace::GetFE::MakeQuadRule");
-        RegionTimer regq (timer);
-        // dt = 
-        xgeom->MakeQuadRule();
+        DOMAIN_TYPE dt = domofel[elnr];
+        return *(new (alloc) XDummyFE(dt,eltype));
       }
-      XFiniteElement * retfel = NULL;
-
-      if (spacetime)
+      else
       {
-        bool also_future_trace = true;
+        Array<DOMAIN_TYPE> domnrs;
+        GetDomainNrs(elnr,domnrs);  
 
-        ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.first,lh);
-        CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
-        auto xgeom_past = 
-          XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
-                                            *cquadp, lh, 
-                                            2*order_space+2, 2*order_time, 
-                                            ref_lvl_space, ref_lvl_time);
+        Ngs_Element ngel = ma->GetElement(elnr);
+        ELEMENT_TYPE eltype = ngel.GetType();
+
+        ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+        
+        ScalarFieldEvaluator * lset_eval_p = nullptr;
+        if (spacetime)
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
+        else
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
+
+        auto cquad = new CompositeQuadratureRule<SD>() ;
+
+        ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
+
+        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                       *cquad, lh, 
+                                                       2*order_space+2, 2*order_time, 
+                                                       ref_lvl_space, ref_lvl_time);
+        // DOMAIN_TYPE dt;
+        if(! fenocut)
         {
-          static Timer timer ("XFESpace::GetFE::PastMakeQuadRule");
+          static Timer timer ("XFESpace::GetFE::MakeQuadRule");
           RegionTimer regq (timer);
-          xgeom_past->MakeQuadRule();
+          // dt = 
+          xgeom->MakeQuadRule();
         }
+        XFiniteElement * retfel = NULL;
 
-        if (also_future_trace)
+        if (spacetime)
         {
-          CompositeQuadratureRule<D> * cquadf = NULL;
-          ScalarFieldEvaluator * lset_eval_future_p = NULL;
-          lset_eval_future_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.second,lh);
-          cquadf = new CompositeQuadratureRule<D>() ;
-          auto xgeom_future = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
-                                                           *cquadf, lh, 
-                                                           2*order_space+2, 2*order_time, 
-                                                           ref_lvl_space, ref_lvl_time);
-          {
-            static Timer timer ("XFESpace::GetFE::FutureMakeQuadRule");
-            RegionTimer regq (timer);
-            xgeom_future->MakeQuadRule();
-          }
-          retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
+          bool also_future_trace = true;
 
-          delete cquadf;
+          ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.first,lh);
+          CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
+          auto xgeom_past = 
+            XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
+                                              *cquadp, lh, 
+                                              2*order_space+2, 2*order_time, 
+                                              ref_lvl_space, ref_lvl_time);
+          {
+            static Timer timer ("XFESpace::GetFE::PastMakeQuadRule");
+            RegionTimer regq (timer);
+            xgeom_past->MakeQuadRule();
+          }
+
+          if (also_future_trace)
+          {
+            CompositeQuadratureRule<D> * cquadf = NULL;
+            ScalarFieldEvaluator * lset_eval_future_p = NULL;
+            lset_eval_future_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.second,lh);
+            cquadf = new CompositeQuadratureRule<D>() ;
+            auto xgeom_future = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
+                                                                  *cquadf, lh, 
+                                                                  2*order_space+2, 2*order_time, 
+                                                                  ref_lvl_space, ref_lvl_time);
+            {
+              static Timer timer ("XFESpace::GetFE::FutureMakeQuadRule");
+              RegionTimer regq (timer);
+              xgeom_future->MakeQuadRule();
+            }
+            retfel = new (alloc) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
+
+            delete cquadf;
+          }
+          else
+            retfel = new (alloc) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past, lh);
+
+          delete cquadp;
+
         }
         else
-          retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past, lh);
+        {
+          retfel = new (alloc) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom, lh);
+        }
+        delete cquad;
 
-        delete cquadp;
-
-      }
-      else
-      {
-        retfel = new (lh) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom, lh);
-      }
-      delete cquad;
-
-      if (empty)
+        if (empty)
           retfel->SetEmpty();
       
-      return *retfel;
-    }
-  }
-
-
-  template <int D, int SD>
-  const FiniteElement & T_XFESpace<D,SD> :: GetSFE (int selnr, LocalHeap & lh) const
-  {
-    static Timer timer ("XFESpace::GetSFE");
-    RegionTimer reg (timer);
-
-    Ngs_Element ngsel = ma->GetSElement(selnr);
-    ELEMENT_TYPE eltype = ngsel.GetType();
-    if (!activeselem.Test(selnr))
-    {
-      DOMAIN_TYPE dt = domofsel[selnr];
-      return *(new (lh) XDummyFE(dt,eltype));
-    }
-    else
-    {
-      Array<DOMAIN_TYPE> domnrs;
-      GetSurfaceDomainNrs(selnr,domnrs);  
-
-      Ngs_Element ngel = ma->GetSElement(selnr);
-      ELEMENT_TYPE eltype = ngel.GetType();
-
-      ElementTransformation & eltrans = ma->GetTrafo (selnr, BND, lh);
-        
-      ScalarFieldEvaluator * lset_eval_p = NULL;
-      if (spacetime)
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
-      else
-        lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
-
-      CompositeQuadratureRule<SD-1> * cquad = new CompositeQuadratureRule<SD-1>() ;
-
-      ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
-
-      auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                                            *cquad, lh, 
-                                                                            2*order_space+2, 2*order_time, 
-                                                                            ref_lvl_space, ref_lvl_time);
-      if(! fenocut)
-      {
-        static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
-        RegionTimer regq (timer);
-        xgeom->MakeQuadRule();
+        return *retfel;
       }
+    }
+    else if (ei.VB() == BND)
+    {
+      int selnr = ei.Nr();
+      static Timer timer ("XFESpace::GetSFE");
+      RegionTimer reg (timer);
 
-      FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
+      Ngs_Element ngsel = ma->GetSElement(selnr);
+      ELEMENT_TYPE eltype = ngsel.GetType();
+      if (!activeselem.Test(selnr))
+      {
+        DOMAIN_TYPE dt = domofsel[selnr];
+        return *(new (alloc) XDummyFE(dt,eltype));
+      }
+      else
+      {
+        Array<DOMAIN_TYPE> domnrs;
+        GetSurfaceDomainNrs(selnr,domnrs);  
 
-      auto retfel = new (lh) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh);
+        Ngs_Element ngel = ma->GetSElement(selnr);
+        ELEMENT_TYPE eltype = ngel.GetType();
 
-      delete cquad;
+        ElementTransformation & eltrans = ma->GetTrafo (selnr, BND, lh);
+        
+        ScalarFieldEvaluator * lset_eval_p = NULL;
+        if (spacetime)
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
+        else
+          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
 
-      if (empty)
+        CompositeQuadratureRule<SD-1> * cquad = new CompositeQuadratureRule<SD-1>() ;
+
+        ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
+
+        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+                                                       *cquad, lh, 
+                                                       2*order_space+2, 2*order_time, 
+                                                       ref_lvl_space, ref_lvl_time);
+        if(! fenocut)
+        {
+          static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
+          RegionTimer regq (timer);
+          xgeom->MakeQuadRule();
+        }
+
+        FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
+
+        auto retfel = new (alloc) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh);
+
+        delete cquad;
+
+        if (empty)
           retfel->SetEmpty();
 
-      return *retfel;
+        return *retfel;
+      }
+      
     }
+    else
+      throw Exception("GetFE for VB != BND and VB != VOL not implemented");
   }
 
   template class T_XFESpace<2,2>;
@@ -1434,24 +1440,29 @@ namespace ngcomp
   }
 
 
-  const FiniteElement & SFESpace :: GetFE (int elnr, LocalHeap & lh) const
+  FiniteElement & SFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    Ngs_Element ngel = ma->GetElement(elnr);
-    ELEMENT_TYPE eltype = ngel.GetType();
-    if (eltype != ET_TRIG)
-      throw Exception("can only work with trigs...");
-    if (activeelem.Test(elnr))
+    LocalHeap lh(10000000,"SFESpace::GetFE");
+    if (ei.VB() == VOL)
     {
-      return *(new (lh) SFiniteElement(cuts_on_el[elnr],order,lh));
+      int elnr = ei.Nr();
+      Ngs_Element ngel = ma->GetElement(elnr);
+      ELEMENT_TYPE eltype = ngel.GetType();
+      if (eltype != ET_TRIG)
+        throw Exception("can only work with trigs...");
+      if (activeelem.Test(elnr))
+      {
+        return *(new (lh) SFiniteElement(cuts_on_el[elnr],order,lh));
+      }
+      else
+        return *(new (lh) DummyFE<ET_TRIG>());
+    }
+    else if (ei.VB() == BND)
+    {
+      return *(new (lh) DummyFE<ET_SEGM>());
     }
     else
-      return *(new (lh) DummyFE<ET_TRIG>());
-  }
-
-  const FiniteElement & SFESpace :: GetSFE (int selnr, LocalHeap & lh) const
-  {
-    // throw Exception("can't work on the boundary...");
-    return *(new (lh) DummyFE<ET_SEGM>());
+      throw Exception("only VB == VOL and VB == BND implemented");
   }
 
   SFESpace::SFESpace (shared_ptr<MeshAccess> ama,

@@ -52,7 +52,7 @@ if nitsche_fluxjumpint != None:
 
 u = GridFunction(VhG)
 
-u.components[0].Set(sin(pi*(x+y)), boundary = True)
+u.components[0].Set(sin(pi*(x+y)), BND)
 
 mesh.SetDeformation(deformation)
 

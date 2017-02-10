@@ -232,9 +232,7 @@ namespace ngcomp
 
     virtual void Update(LocalHeap & lh);
 
-    virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
-    virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
-
+    virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 
     SymbolTable<shared_ptr<DifferentialOperator>> GetAdditionalEvaluators () const;
     
@@ -261,10 +259,8 @@ namespace ngcomp
 
     virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const { dnums.SetSize(0); }
 
-    virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const 
-    { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
-    virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const 
-    { return *new (lh) LevelsetContainerFE(coef_lset,told,tnew); }
+    FiniteElement & GetFE (ElementId ei, Allocator & alloc) const
+    { return *new (alloc) LevelsetContainerFE(coef_lset,told,tnew); }
 
     void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset)
     { coef_lset = _coef_lset;}
@@ -420,8 +416,8 @@ namespace ngcomp
 
     virtual void Update(LocalHeap & lh);
 
-    virtual const FiniteElement & GetFE (int elnr, LocalHeap & lh) const;
-    virtual const FiniteElement & GetSFE (int selnr, LocalHeap & lh) const;
+
+    virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 
   };
 

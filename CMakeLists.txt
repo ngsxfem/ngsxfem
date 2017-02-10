@@ -1,12 +1,32 @@
 cmake_minimum_required(VERSION 2.8)
 
+message(STATUS "Use Ngsolve from submodule, updating modules...")
+execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(USE_UMFPACK ON)
+
+execute_process(COMMAND mkdir -p ngsolve)
+execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DUSE_UMFPACK=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
+execute_process(COMMAND make -j4 WORKING_DIRECTORY ngsolve)
+execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
+
+set(BUILD_NETGEN ON)
+set(NETGENDIR "${INSTALL_DIR}/bin")
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngstd")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/external_dependencies/pybind11/include/")
+
 #######################################################################
 # find netgen
-if(NOT NETGENDIR)
-    set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
-else(NOT NETGENDIR)
-    set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
-endif(NOT NETGENDIR)
+#if(NOT NETGENDIR)
+#    set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
+#else(NOT NETGENDIR)
+#    set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
+#endif(NOT NETGENDIR)
 get_filename_component(NETGEN_BASEDIR ${NETGENDIR} PATH)
 if(NOT INSTALL_DIR)
   set(INSTALL_DIR ${NETGEN_BASEDIR} CACHE PATH "Path to install dir")
@@ -14,7 +34,8 @@ endif(NOT INSTALL_DIR)
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-SET(CMAKE_CXX_COMPILER "${NETGENDIR}/ngscxx" CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
 
 project(xfem)
 set(NGSXFEM_VERSION_MAJOR 0)
@@ -25,12 +46,13 @@ set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 add_definitions(-DNGSX_PYTHON)
 
-# SET(CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
-# SET(CXX "${INSTALL_DIR}/bin/ngscxx" CACHE STRING "" FORCE)
-
-
 set(NGS_LIB_TYPE SHARED)
 set(NETGEN_LIBS "-L${NETGEN_BASEDIR}/lib -lngsolve -lngcomp -lngfem -lngstd -lngbla")
+
+link_directories("${INSTALL_DIR}/lib/")
+link_directories("/usr/lib/libblas")
+SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${NETGEN_BASEDIR}/lib -rpath ${NETGEN_BASEDIR}/lib" )
+SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/lib/libblas -rpath /usr/lib/libblas" )
 
 if (ADDITIONAL_PATHS)
     list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
@@ -55,7 +77,7 @@ SET(USE_PYTHON TRUE)
 if (USE_PYTHON)
     set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake_modules/python")
     set(PYTHON_VERSION "3" CACHE STRING "Python version (only Python >= 3.0 supported)")
-    set(Python_ADDITIONAL_VERSIONS 3.5)
+    set(Python_ADDITIONAL_VERSIONS 3.5 3.6)
     if( PYTHON_VERSION VERSION_LESS 3 )
         message(FATAL_ERROR "NGSolve/ngsxfem supports only Python 3")
     endif( PYTHON_VERSION VERSION_LESS 3 )
@@ -129,7 +151,7 @@ configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
-add_custom_target(uninstall
+add_custom_target(uninstall_xfem
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 ##############################################################################
@@ -148,13 +170,12 @@ if(NOT WIN32)
     set(BoldBlue  "${Esc}[1;34m")
 endif(NOT WIN32)
 
-
-# SET(CMAKE_CXX_FLAGS "" CACHE STRING "" FORCE) 
-# SET(CMAKE_CXX_FLAGS "")
-
 function(message)
     _MESSAGE("${BoldBlue}${ARGV}${ColorReset}")
 endfunction()
+
+string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" name)
+set(flags "${${name}} ${CMAKE_CXX_FLAGS}")
 
 message("
 ------------------------------------------------------------------------
@@ -171,6 +192,12 @@ message("
 
   Compiler:
     CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}
+    
+  Compiler Flags:
+    flags = ${flags}
+  
+  Build Type:
+    type = ${CMAKE_BUILD_TYPE}
 
 ------------------------------------------------------------------------
 ")
