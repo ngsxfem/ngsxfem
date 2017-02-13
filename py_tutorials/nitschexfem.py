@@ -79,10 +79,10 @@ mesh.UnsetDeformation()
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
 
-Draw(lsetp1,mesh,"lsetp1")
-# Draw(lsetmeshadap.deform,mesh,"deformation")
-Draw(u,mesh,"u")
-Draw(u-sol_coef,mesh,"err")
+# Draw(lsetp1,mesh,"lsetp1")
+# # Draw(lsetmeshadap.deform,mesh,"deformation")
+# Draw(u,mesh,"u")
+# Draw(u-sol_coef,mesh,"err")
 
 err_sqr_coefs = [ (u - solution[i])*(u - solution[i]) for i in [0,1] ]
 
