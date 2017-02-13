@@ -27,7 +27,6 @@ InterpolateToP1(levelset,lset_approx)
 Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
 Vhx = XFESpace(Vh, mesh, lset_approx)
 VhG = FESpace([Vh,Vhx])
-
 gfu = GridFunction(VhG)
 
 # coefficients / parameters: 
@@ -97,9 +96,9 @@ gfu.vec.data += a.mat.Inverse(VhG.FreeDofs()) * res
 
 u = gfu.components[0] + IfPos(lset_approx, pos(gfu.components[1]), neg(gfu.components[1]))
 
-Draw(gfu.components[0],mesh,"u_std")
-Draw(extend(gfu.components[1]),mesh,"u_x")
-Draw(u,mesh,"u")
+#Draw(gfu.components[0],mesh,"u_std")
+#Draw(extend(gfu.components[1]),mesh,"u_x")
+#Draw(u,mesh,"u")
 
 # Draw(IsCut(mesh,lset_approx),mesh,"iscut")
 # Draw(kappa_neg,mesh,"kappa-")

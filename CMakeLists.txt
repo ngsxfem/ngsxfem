@@ -1,45 +1,48 @@
 cmake_minimum_required(VERSION 2.8)
 
-message(STATUS "Use Ngsolve from submodule, updating modules...")
-execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-set(USE_UMFPACK ON)
-
-execute_process(COMMAND mkdir -p ngsolve)
-execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCXX_STANDARD=${CXX_STANDARD} -DUSE_CCACHE=${USE_CCACHE} -DUSE_UMFPACK=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
-execute_process(COMMAND make -j4 WORKING_DIRECTORY ngsolve)
-execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
-
-set(BUILD_NETGEN ON)
-set(NETGENDIR "${INSTALL_DIR}/bin")
-
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/visualization")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/general")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/libsrc/include")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/include")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ngstd")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/fem")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/external_dependencies/netgen/external_dependencies/pybind11/include/")
-
-#######################################################################
-# find netgen
-#if(NOT NETGENDIR)
-#    set(NETGENDIR $ENV{NETGENDIR} CACHE PATH "Path to netgen binary")
-#else(NOT NETGENDIR)
-#    set(NETGENDIR ${INSTALL_DIR}/bin CACHE PATH "Path to netgen binary")
-#endif(NOT NETGENDIR)
-get_filename_component(NETGEN_BASEDIR ${NETGENDIR} PATH)
 if(NOT INSTALL_DIR)
-  set(INSTALL_DIR ${NETGEN_BASEDIR} CACHE PATH "Path to install dir")
+  message( FATAL_ERROR "Please provide an INSTALL_DIR, CMake will exit." )
 endif(NOT INSTALL_DIR)
+
+set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
+set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
+set(USE_CCACHE OFF CACHE BOOL "use ccache")
+
+if(BUILD_NGSOLVE)
+  message(STATUS "Use NGSolve from submodule, updating modules...")
+  execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
+  set(USE_UMFPACK ON CACHE BOOL "use umfpack library")
+  set(TCL_INCLUDE_PATH "/usr/include" CACHE STRING "tcl include path")
+
+  execute_process(COMMAND mkdir -p ngsolve)
+  execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DUSE_CCACHE=${USE_CCACHE}
+    -DUSE_UMFPACK=${USE_UMFPACK}
+    -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/
+    -GNinja
+    ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
+
+  # LINUX ONLY:
+  execute_process(COMMAND ninja -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
+  execute_process(COMMAND ninja install WORKING_DIRECTORY ngsolve)
+endif(BUILD_NGSOLVE)
+
+set(NETGENDIR "${INSTALL_DIR}/bin")
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
-SET(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
+if(USE_CCACHE)
+  set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+endif(USE_CCACHE)
+
+set(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
 
 project(xfem)
 set(NGSXFEM_VERSION_MAJOR 0)
-set(NGSXFEM_VERSION_MINOR 6.0)
+set(NGSXFEM_VERSION_MINOR 7.0)
 set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
@@ -47,12 +50,9 @@ set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 add_definitions(-DNGSX_PYTHON)
 
 set(NGS_LIB_TYPE SHARED)
-set(NETGEN_LIBS "-L${NETGEN_BASEDIR}/lib -lngsolve -lngcomp -lngfem -lngstd -lngbla")
+set(NETGEN_LIBS "-lngsolve -lngcomp -lngfem -lngstd -lngbla")
 
 link_directories("${INSTALL_DIR}/lib/")
-link_directories("/usr/lib/libblas")
-SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${NETGEN_BASEDIR}/lib -rpath ${NETGEN_BASEDIR}/lib" )
-SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/lib/libblas -rpath /usr/lib/libblas" )
 
 if (ADDITIONAL_PATHS)
     list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
@@ -100,8 +100,6 @@ set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DEST
 
 include_directories ("${PROJECT_SOURCE_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}/../ngsolve/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../libsrc/netgen/include")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake_modules")
 
@@ -121,6 +119,7 @@ add_subdirectory(stokes)
 add_subdirectory(utils)
 add_subdirectory(xfem)
 add_subdirectory(pde_tutorial)
+add_subdirectory(py_tutorials)
 add_subdirectory(tracefem)
 add_subdirectory(lsetcurving)
 add_subdirectory(osmosis)
@@ -131,7 +130,7 @@ add_subdirectory(tests)
 install (PROGRAMS DESTINATION bin)
 
 set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION 0.6.1-dev)
+set(CPACK_PACKAGE_VERSION ${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev)
 
 set(CPACK_PACKAGE_NAME xfem)
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --print-architecture
@@ -139,7 +138,7 @@ set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --pr
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER Christoph Lehrenfeld <christoph.lehrenfeld@gmail.com>)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of xfem)
 set(CPACK_PACKAGE_DESCRIPTION Long description of xfem)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.0)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.1)")
 # TODO (use dpkg -s <packagename> to retrieve version)
 
 set(CPACK_DEBIAN_PACKAGE_SECTION Science)
@@ -157,12 +156,6 @@ add_custom_target(uninstall_xfem
 ##############################################################################
 # Unhandled Makefile.am settings
 ##############################################################################
-
-# echo "creating compiler wrapper ngscxx"
-# file(WRITE ngscxx "${CMAKE_CXX_COMPILER}  -I. -I${netgendir}/../include ${CMAKE_CXX_FLAGS} -L${netgendir}/../lib -fpic  \$*  -Wl,--rpath=${NETGENDIR}/../lib\n") # $LAPACK_INCLUDES $TCL_INCLUDES $MUMPS_INCLUDES $PARDISO_INCLUDES, $LAPACK_LIBS 
-# install(PROGRAMS "ngscxx" DESTINATION bin)
-# echo "$CXX -I. $GOLD_INCLUDE $CXXFLAGS -L$netgendir/lib -fpic $LAPACK_INCLUDES $TCL_INCLUDES $MUMPS_INCLUDES $PARDISO_INCLUDES \$*  $LAPACK_LIBS -Wl,--rpath=$netgendir/lib" > ngscxx
-# chmod a+x ngscxx
 
 if(NOT WIN32)
     string(ASCII 27 Esc)
@@ -187,6 +180,9 @@ message("
 
     Type 'make install' to install ${PROJECT_NAME}.
 
+  Build NGSolve from scratch: ${BUILD_NGSOLVE}
+  Build NGSolve/xfem with ccache: ${USE_CCACHE}
+
   Install directory:
     ${CMAKE_INSTALL_PREFIX}
 
@@ -201,6 +197,5 @@ message("
 
 ------------------------------------------------------------------------
 ")
-#TODO:   Example programs will be built but not installed.
 
 

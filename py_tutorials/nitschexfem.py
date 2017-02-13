@@ -10,10 +10,7 @@ from xfem.lsetcurv import *
 from netgen.geom2d import SplineGeometry
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=10, quad_dominated=False))
-
-for i in range(6):
-    mesh.Refine()
+mesh = Mesh (square.GenerateMesh(maxh=0.1, quad_dominated=False))
 
 r44 = (x*x*x*x+y*y*y*y)
 r41 = sqrt(sqrt(x*x*x*x+y*y*y*y))
@@ -77,19 +74,18 @@ u.vec.data += update
 
 #global last_num_its
 #last_num_its = solvea.GetSteps()
+mesh.UnsetDeformation()
 
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
 
-#Draw(lsetp1,mesh,"lsetp1")
-# Draw(lsetmeshadap.deform,mesh,"deformation")
-#Draw(u,mesh,"u")
-#Draw(u-sol_coef,mesh,"err")
+# Draw(lsetp1,mesh,"lsetp1")
+# # Draw(lsetmeshadap.deform,mesh,"deformation")
+# Draw(u,mesh,"u")
+# Draw(u-sol_coef,mesh,"err")
 
 err_sqr_coefs = [ (u - solution[i])*(u - solution[i]) for i in [0,1] ]
 
 l2error = sqrt(IntegrateOnWholeDomain(lsetp1, mesh, order=2*order,
                                       cf_neg = err_sqr_coefs[0], cf_pos = err_sqr_coefs[1]))
 print("L2 error : ",l2error)
-
-mesh.UnsetDeformation()
