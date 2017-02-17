@@ -109,7 +109,7 @@ namespace ngcomp
          // if (bound && !fes->IsDirichletBoundary(ma->GetSElIndex(ei.Nr())))
          //   return;
 
-         if (bound && !((*cfes)[0]->IsDirichletBoundary(ma->GetSElIndex(ei.Nr()))))
+         if (bound && !((*cfes)[0]->IsDirichletBoundary(ma->GetElIndex(ei))))
            return;
 
          const FiniteElement & bfel = fes->GetFE (ei, lh);
@@ -132,8 +132,8 @@ namespace ngcomp
          // for (int i = 0; i < elmat.Width(); ++i)
          //   elmat(i,i) += 1e-8;
 
-         fes->TransformMat (ei.Nr(), bound, elmat, TRANSFORM_MAT_LEFT_RIGHT);
-         fes->TransformVec (ei.Nr(), bound, elvec, TRANSFORM_RHS);
+         fes->TransformMat (ei, elmat, TRANSFORM_MAT_LEFT_RIGHT);
+         fes->TransformVec (ei, elvec, TRANSFORM_RHS);
 
          bool regularize = false;
          for (int i = 0; i < dnums.Size(); ++i)

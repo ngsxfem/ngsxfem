@@ -212,9 +212,9 @@ public:
                 if (gf_lset)
                 {
                   shared_ptr<FESpace> fes = gf_lset->GetFESpace();
-                  const FiniteElement & fel = fes->GetFE(elnr, lh);
+                  const FiniteElement & fel = fes->GetFE(ElementId(VOL,elnr), lh);
                   Array<int> dnums;
-                  fes->GetDofNrs(elnr,dnums);
+                  fes->GetDofNrs(ElementId(VOL,elnr),dnums);
             
                   FlatVector<> linvec(dnums.Size(),lh);
                   gf_lset->GetVector().GetIndirect(dnums,linvec);
@@ -475,7 +475,7 @@ public:
                 // Ngs_Element ngel = ma->GetElement(selnr);
                 HeapReset hr(lh);
 
-                ElementTransformation & seltrans = ma->GetTrafo (selnr, BND, lh);
+                ElementTransformation & seltrans = ma->GetTrafo (ElementId(BND,selnr), lh);
                 ELEMENT_TYPE et_space = seltrans.GetElementType();
                 ELEMENT_TYPE et_time = isspacetime ? ET_SEGM : ET_POINT;
             
@@ -494,9 +494,9 @@ public:
                 if (gf_lset)
                 {
                   shared_ptr<FESpace> fes = gf_lset->GetFESpace();
-                  const FiniteElement & fel = fes->GetSFE(selnr, lh);
+                  const FiniteElement & fel = fes->GetFE(ElementId(BND,selnr), lh);
                   Array<int> dnums;
-                  fes->GetSDofNrs(selnr,dnums);
+                  fes->GetDofNrs(ElementId(BND,selnr),dnums);
             
                   FlatVector<> linvec(dnums.Size(),lh);
                   gf_lset->GetVector().GetIndirect(dnums,linvec);

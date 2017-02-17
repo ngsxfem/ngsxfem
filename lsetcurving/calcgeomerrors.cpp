@@ -83,7 +83,7 @@ namespace ngcomp
          Ngs_Element ngel = ma->GetElement(elnr);
          ELEMENT_TYPE eltype = ngel.GetType();
          Array<int> dofs;
-         gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
+         gf_lset_p1->GetFESpace()->GetDofNrs(el,dofs);
          FlatVector<> lset_vals_p1(dofs.Size(),lh);
          gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
 
@@ -93,12 +93,12 @@ namespace ngcomp
 #pragma omp critical(deform)
          {
            ma->SetDeformation(deform);
-           eltrans_curved = &ma->GetTrafo (ElementId(VOL,elnr), lh);
+           eltrans_curved = &ma->GetTrafo (el, lh);
          }
 #pragma omp critical(deform)
          {
            ma->SetDeformation(nullptr);
-           eltrans = &ma->GetTrafo (ElementId(VOL,elnr), lh);
+           eltrans = &ma->GetTrafo (el, lh);
          }
          IntegrationPoint ipzero(0.0,0.0,0.0);
          MappedIntegrationPoint<D,D> mx0(ipzero,*eltrans);
@@ -229,7 +229,7 @@ namespace ngcomp
          Ngs_Element ngel = ma->GetElement(elnr);
          ELEMENT_TYPE eltype = ngel.GetType();
          Array<int> dofs;
-         gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dofs);
+         gf_lset_p1->GetFESpace()->GetDofNrs(el,dofs);
          FlatVector<> lset_vals_p1(dofs.Size(),lh);
          gf_lset_p1->GetVector().GetIndirect(dofs,lset_vals_p1);
 
@@ -248,7 +248,7 @@ namespace ngcomp
            FlatMatrixFixWidth<D> elvec(scafe.GetNDof(),lh);
            FlatVector<> elvec_as_vec(D*scafe.GetNDof(),&elvec(0,0));
            Array<int> dnums;
-           deform->GetFESpace()->GetDofNrs(elnr,dnums);
+           deform->GetFESpace()->GetDofNrs(el,dnums);
            deform->GetVector().GetIndirect(dnums,elvec_as_vec);
         
            IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
@@ -378,8 +378,8 @@ namespace ngcomp
       ma->GetElVertices (el1, vnums1);
       ma->GetElVertices (el2, vnums2);
 
-      ELEMENT_TYPE eltype1 = deform->GetFESpace()->GetFE(el1,lh).ElementType();
-      ELEMENT_TYPE eltype2 = deform->GetFESpace()->GetFE(el2,lh).ElementType();
+      ELEMENT_TYPE eltype1 = deform->GetFESpace()->GetFE(ElementId(VOL,el1),lh).ElementType();
+      ELEMENT_TYPE eltype2 = deform->GetFESpace()->GetFE(ElementId(VOL,el2),lh).ElementType();
       
       Facet2ElementTrafo transform1(eltype1,vnums1); 
       const NORMAL * normals1 = ElementTopology::GetNormals(eltype1);

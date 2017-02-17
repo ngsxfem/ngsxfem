@@ -43,7 +43,7 @@ public:
     {
       if (xfes->GetDomainOfElement(i) != POS)
       {
-        fes->GetDofNrs(i, dnums);
+        fes->GetDofNrs(ElementId(VOL,i), dnums);
         for (int k : dnums)
           innerdofs->Set(k);
       }
