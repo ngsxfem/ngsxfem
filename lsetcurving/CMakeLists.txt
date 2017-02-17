@@ -13,7 +13,7 @@ install( FILES
   )
 
 if(NOT WIN32)
-    target_link_libraries(ngsxfem_lsetcurving ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
+    target_link_libraries(ngsxfem_lsetcurving ngsxfem_xfem ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
   install( TARGETS ngsxfem_lsetcurving ${ngs_install_dir})
 endif(NOT WIN32)
 
