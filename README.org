@@ -1,20 +1,38 @@
 ** Linux Build Steps
-This assumes available Netgen/NGSolve
-
+You require Netgen/NGSolve to run the xfem module. You can either install it before hand 
+(default option) or let Netgen/NGSolve be installed as an external dependency. 
 #+BEGIN_SRC shell
 git clone https://gitlab.asc.tuwien.ac.at/jschoeberl/xfem.git
 cd xfem
 mkdir build
 cd build
-cmake ../ -DINSTALL_DIR=INSTLOCATION && make && make install
 #+END_SRC
 
-for the INSTLOCATION please choose the Netgen/NGSolve location. 
-Otherwise make sure that the installed xfem-libraries will be found by python
+
+*** Building xfem with pre-installed NGSolve 
+You have Netgen/NGSolve installed? Perfect. Then let INSTLOCATION be the location 
+Netgen/NGSolve is already installed to. To install xfem make sure that you have 
+write access to that same directory. Then build ngs-xfem with 
+#+BEGIN_SRC shell
+cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=OFF
+make
+make install
+#+END_SRC
+
+*** Building the NGS-Suite and ngs-xfem together 
+If you do not have Netgen/NGSolve installed, you may just call
+#+BEGIN_SRC shell
+cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=ON
+make
+make install
+#+END_SRC
+For INSTLOCATION you choose a nice installation location of your choice.
+Afterwards make sure the installed NGS/xfem-libraries and executable will be found 
+by PATH and python.
 
 ** Examples
 To run the python examples be sure to follow the build steps above.
-Then navigate into the =py_tutorials= or =stokes/py_demos= or =tracefem/py_demos= and run
+Then navigate into the =py_tutorials= and run
 #+BEGIN_SRC shell
 netgen example.py
 #+END_SRC
