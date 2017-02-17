@@ -205,7 +205,7 @@ namespace ngcomp
     }
     
 
-    virtual void Do (LocalHeap & lh)
+    virtual void Do (LocalHeap & clh)
     {
       static int refinements = 0;
       static int time = 0;
@@ -252,46 +252,50 @@ namespace ngcomp
 
         XFESpace & xfes = * dynamic_pointer_cast<XFESpace>(gfu->GetFESpace());
         int ne = gfu->GetMeshAccess()->GetNE();
-        for ( int i : Range(ne))
+
+        IterateElements 
+        (xfes, VOL, clh, 
+        [&] (FESpace::Element el, LocalHeap & lh)
         {
-          if (!xfes.IsElementCut(i)) continue;
           HeapReset hr(lh);
-
-          ElementTransformation & eltrans = gfu->GetMeshAccess()->GetTrafo (ElementId(VOL,i), lh);
-          const FiniteElement & fel = xfes.GetFE (i, lh);
-          const XFiniteElement & xfe =
-            dynamic_cast<const XFiniteElement &> (fel);
-          const ScalarFiniteElement<3> & scafe =
-            dynamic_cast<const ScalarFiniteElement<3> & > (xfe.GetBaseFE());
-
-          int ndof = scafe.GetNDof();
-          FlatVector<> shape(ndof,lh);
-
-          Array<int> dnums (ndof, lh);
-          xfes.GetDofNrs (i, dnums);
-          FlatVector<> elvec(ndof,lh);
-          gfu->GetVector().GetIndirect (dnums, elvec);
-
-          int offset = points.Size();
-          for ( auto ip : ref_vertices)
+          int i = el.Nr();
+          if (xfes.IsElementCut(i))
           {
-            MappedIntegrationPoint<3,3> mip(ip, eltrans);
-            points.Append(mip.GetPoint());
-            values_lset.Append(coef_lset->Evaluate(mip));
+            ElementTransformation & eltrans = gfu->GetMeshAccess()->GetTrafo (el, lh);
+            const FiniteElement & fel = xfes.GetFE(el, lh);
+            const XFiniteElement & xfe =
+              dynamic_cast<const XFiniteElement &> (fel);
+            const ScalarFiniteElement<3> & scafe =
+              dynamic_cast<const ScalarFiniteElement<3> & > (xfe.GetBaseFE());
 
-            scafe.CalcShape (mip.IP(),shape);
-            values_tracesol.Append(InnerProduct(shape,elvec));
+            int ndof = scafe.GetNDof();
+            FlatVector<> shape(ndof,lh);
+
+            Array<int> dnums (ndof, lh);
+            xfes.GetDofNrs (el, dnums);
+            FlatVector<> elvec(ndof,lh);
+            gfu->GetVector().GetIndirect (dnums, elvec);
+
+            int offset = points.Size();
+            for ( auto ip : ref_vertices)
+            {
+              MappedIntegrationPoint<3,3> mip(ip, eltrans);
+              points.Append(mip.GetPoint());
+              values_lset.Append(coef_lset->Evaluate(mip));
+
+              scafe.CalcShape (mip.IP(),shape);
+              values_tracesol.Append(InnerProduct(shape,elvec));
+            }
+
+            for ( auto tet : ref_tets)
+            {
+              INT<4> new_tet = tet;
+              for (int i = 0; i < 4; ++i)
+                new_tet[i] += offset;
+              cells.Append(new_tet);
+            }
           }
-
-          for ( auto tet : ref_tets)
-          {
-            INT<4> new_tet = tet;
-            for (int i = 0; i < 4; ++i)
-              new_tet[i] += offset;
-            cells.Append(new_tet);
-          }
-
-        }
+        });
         PrintPoints();
         PrintCells();
         PrintCellTypes();
