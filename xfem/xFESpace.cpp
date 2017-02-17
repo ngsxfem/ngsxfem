@@ -51,34 +51,38 @@ namespace ngcomp
     }
   }
 
-  void XFESpace :: GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const
+  void XFESpace :: GetDomainNrs (ElementId ei, Array<DOMAIN_TYPE> & domnums) const
   {
-    if (activeelem.Test(elnr) && !empty)
+    if (ei.VB() == VOL)
     {
-      FlatArray<int> dofs = (*el2dofs)[elnr];
-      domnums.SetSize(dofs.Size());
-      for (int i = 0; i < dofs.Size(); ++i)
+      if (activeelem.Test(ei.Nr()) && !empty)
       {
-        domnums[i] = domofdof[dofs[i]];
+        FlatArray<int> dofs = (*el2dofs)[ei.Nr()];
+        domnums.SetSize(dofs.Size());
+        for (int i = 0; i < dofs.Size(); ++i)
+        {
+          domnums[i] = domofdof[dofs[i]];
+        }
       }
+      else
+        domnums.SetSize(0);
+    }
+    else if (ei.VB() == BND)
+    {
+      if (activeselem.Test(ei.Nr()) && !empty)
+      {
+        FlatArray<int> dofs = (*sel2dofs)[ei.Nr()];
+        domnums.SetSize(dofs.Size());
+        for (int i = 0; i < dofs.Size(); ++i)
+        {
+          domnums[i] = domofdof[dofs[i]];
+        }
+      }
+      else
+        domnums.SetSize(0);
     }
     else
-      domnums.SetSize(0);
-  }
-
-  void XFESpace :: GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const
-  {
-    if (activeselem.Test(selnr) && !empty)
-    {
-      FlatArray<int> dofs = (*sel2dofs)[selnr];
-      domnums.SetSize(dofs.Size());
-      for (int i = 0; i < dofs.Size(); ++i)
-      {
-        domnums[i] = domofdof[dofs[i]];
-      }
-    }
-    else
-      domnums.SetSize(0);
+      throw Exception("can only handle VOL and BND");
   }
 
   void XFESpace :: UpdateCouplingDofArray()
@@ -382,11 +386,11 @@ namespace ngcomp
       for (int selnr = 0; selnr < nse; ++selnr)
       {
         HeapReset hr(lh);
-
-        Ngs_Element ngel = ma->GetSElement(selnr);
+        ElementId ei(BND,selnr);
+        Ngs_Element ngel = ma->GetElement(ei);
         ELEMENT_TYPE eltype = ngel.GetType();
 
-        ElementTransformation & seltrans = ma->GetTrafo (selnr, BND, lh);
+        ElementTransformation & seltrans = ma->GetTrafo (ei, lh);
 
         ScalarFieldEvaluator * lset_eval_p = NULL;
         if (spacetime)
@@ -408,7 +412,7 @@ namespace ngcomp
         if (dt == IF) // IsFacetCut(ed)
         {
           Array<int> basednums;
-          basefes->GetSDofNrs(selnr,basednums);
+          basefes->GetDofNrs(ei,basednums);
           if (basednums.Size())
             activeselem.Set(selnr);
           for (int k = 0; k < basednums.Size(); ++k)
@@ -619,9 +623,10 @@ namespace ngcomp
     if (!empty)
     for (int selnr = 0; selnr < nse; ++selnr)
     {
+        ElementId ei(BND,selnr);
         DOMAIN_TYPE dt = domofsel[selnr];
         Array<int> dnums;
-        basefes->GetSDofNrs(selnr, dnums);
+        basefes->GetDofNrs(ei, dnums);
 
         for (int i = 0; i < dnums.Size(); ++i)
         {
@@ -640,11 +645,12 @@ namespace ngcomp
     if (!empty)
     for (int selnr = 0; selnr < nse; ++selnr)
     {
+        ElementId ei(BND,selnr);
         DOMAIN_TYPE dt = domofsel[selnr];
         if (dt!=IF) continue;
 
         Array<int> dnums;
-        GetSDofNrs(selnr, dnums);
+        GetDofNrs(ei, dnums);
 
         for (int i = 0; i < dnums.Size(); ++i)
         {
@@ -694,7 +700,7 @@ namespace ngcomp
       static Timer timer ("XFESpace::GetFE");
       RegionTimer reg (timer);
 
-      Ngs_Element ngel = ma->GetElement(elnr);
+      Ngs_Element ngel = ma->GetElement(ei);
       ELEMENT_TYPE eltype = ngel.GetType();
       if (!activeelem.Test(elnr))
       {
@@ -706,7 +712,7 @@ namespace ngcomp
         Array<DOMAIN_TYPE> domnrs;
         GetDomainNrs(elnr,domnrs);  
 
-        Ngs_Element ngel = ma->GetElement(elnr);
+        Ngs_Element ngel = ma->GetElement(ei);
         ELEMENT_TYPE eltype = ngel.GetType();
 
         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
@@ -767,19 +773,19 @@ namespace ngcomp
               RegionTimer regq (timer);
               xgeom_future->MakeQuadRule();
             }
-            retfel = new (alloc) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
+            retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
 
             delete cquadf;
           }
           else
-            retfel = new (alloc) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom,xgeom_past, lh);
+            retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom,xgeom_past, lh);
 
           delete cquadp;
 
         }
         else
         {
-          retfel = new (alloc) XFiniteElement(basefes->GetFE(elnr,lh),domnrs,xgeom, lh);
+          retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom, lh);
         }
         delete cquad;
 
@@ -791,26 +797,25 @@ namespace ngcomp
     }
     else if (ei.VB() == BND)
     {
-      int selnr = ei.Nr();
       static Timer timer ("XFESpace::GetSFE");
       RegionTimer reg (timer);
 
-      Ngs_Element ngsel = ma->GetSElement(selnr);
+      Ngs_Element ngsel = ma->GetElement(ei);
       ELEMENT_TYPE eltype = ngsel.GetType();
-      if (!activeselem.Test(selnr))
+      if (!activeselem.Test(ei.Nr()))
       {
-        DOMAIN_TYPE dt = domofsel[selnr];
+        DOMAIN_TYPE dt = domofsel[ei.Nr()];
         return *(new (alloc) XDummyFE(dt,eltype));
       }
       else
       {
         Array<DOMAIN_TYPE> domnrs;
-        GetSurfaceDomainNrs(selnr,domnrs);  
+        GetDomainNrs(ei,domnrs);  
 
-        Ngs_Element ngel = ma->GetSElement(selnr);
+        Ngs_Element ngel = ma->GetElement(ei);
         ELEMENT_TYPE eltype = ngel.GetType();
 
-        ElementTransformation & eltrans = ma->GetTrafo (selnr, BND, lh);
+        ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
         
         ScalarFieldEvaluator * lset_eval_p = NULL;
         if (spacetime)
@@ -835,7 +840,7 @@ namespace ngcomp
 
         FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
 
-        auto retfel = new (alloc) XFiniteElement(basefes->GetSFE(selnr,lh),domnrs,xgeom,lh);
+        auto retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom,lh);
 
         delete cquad;
 

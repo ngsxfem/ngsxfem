@@ -96,8 +96,7 @@ namespace ngcomp
     virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const;
 
     DOMAIN_TYPE GetDomainOfDof (int dof) const { return domofdof[dof]; }
-    void GetDomainNrs (int elnr, Array<DOMAIN_TYPE> & domnums) const;
-    void GetSurfaceDomainNrs (int selnr, Array<DOMAIN_TYPE> & domnums) const;
+    void GetDomainNrs (ElementId ei, Array<DOMAIN_TYPE> & domnums) const;
 
     virtual int GetRelOrder() const
     { 
