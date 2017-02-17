@@ -6,56 +6,17 @@ namespace ngfem
 
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans,  LocalHeap & a_lh)
   {
-    switch (dim)
-    {
-    case 1:
-      throw Exception(" dimension 1 does not make sense ... ");
-      // return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans);
-    case 2:
-      return new (a_lh) EvalFunctionEvaluator<2>(evalf, eltrans);
-    case 3:
-      return new (a_lh) EvalFunctionEvaluator<3>(evalf, eltrans);
-    default:
-      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
-      break;
-    }
+    throw Exception(" No evalfunction-evaluator anymore");
   }
 
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans, double t, LocalHeap & a_lh)
   {
-    switch (dim)
-    {
-    case 1:
-      throw Exception(" dimension 1 does not make sense ... ");
-      // return new (a_lh) EvalFunctionEvaluator<1>(evalf, eltrans, t);
-    case 2:
-      return new (a_lh) EvalFunctionEvaluator<2>(evalf, eltrans, t);
-    case 3:
-      cout << " ScalarFieldEvaluator::Create - eval functions only evaluate in 3 dimensions" 
-           << " - prescribing the 4th dimension does not make sense" << endl;
-      return new (a_lh) EvalFunctionEvaluator<3>(evalf, eltrans, t);
-    default:
-      throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
-      break;
-    }
+    throw Exception(" No evalfunction-evaluator anymore");
   }
 
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const EvalFunction & evalf, const ElementTransformation & eltrans, const TimeInterval & ti, LocalHeap & a_lh)
   {
     throw Exception(" No spacetime for now ");
-    // switch (dim)
-    // {
-    // case 1:
-    //   throw Exception(" dimension 1 does not make sense ... ");
-    //   // return new (a_lh) SpaceTimeEvalFunctionEvaluator<1>(evalf, eltrans, ti);
-    // case 2:
-    //   return new (a_lh) SpaceTimeEvalFunctionEvaluator<2>(evalf, eltrans, ti);
-    // case 3:
-    //   return new (a_lh) SpaceTimeEvalFunctionEvaluator<3>(evalf, eltrans, ti);
-    // default:
-    //   throw Exception(" ScalarFieldEvaluator::Create - Dimension > 3");
-    //   break;
-    // }
   }
 
   ScalarFieldEvaluator* ScalarFieldEvaluator::Create(int dim, const CoefficientFunction & evalf, const ElementTransformation & eltrans,  LocalHeap & a_lh)
