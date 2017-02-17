@@ -16,18 +16,29 @@ if(BUILD_NGSOLVE)
   set(USE_UMFPACK ON CACHE BOOL "use umfpack library")
   set(TCL_INCLUDE_PATH "/usr/include" CACHE STRING "tcl include path")
 
+  if(CMAKE_GENERATOR STREQUAL "Ninja")
+    set(ADDNINJA "-GNinja")
+  else(CMAKE_GENERATOR STREQUAL "Ninja")         
+    set(ADDNINJA "")
+  endif(CMAKE_GENERATOR STREQUAL "Ninja")
+
+
   execute_process(COMMAND mkdir -p ngsolve)
   execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DUSE_CCACHE=${USE_CCACHE}
     -DUSE_UMFPACK=${USE_UMFPACK}
-    -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/
-    -GNinja
+    -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${ADDNINJA}
     ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
 
   # LINUX ONLY:
-  execute_process(COMMAND ninja -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
-  execute_process(COMMAND ninja install WORKING_DIRECTORY ngsolve)
+  if(CMAKE_GENERATOR STREQUAL "Ninja")
+    execute_process(COMMAND ninja -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
+    execute_process(COMMAND ninja install WORKING_DIRECTORY ngsolve)
+  else(CMAKE_GENERATOR STREQUAL "Ninja")         
+    execute_process(COMMAND make -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
+    execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
+  endif(CMAKE_GENERATOR STREQUAL "Ninja")
 endif(BUILD_NGSOLVE)
 
 set(NETGENDIR "${INSTALL_DIR}/bin")
@@ -191,7 +202,10 @@ message("
     
   Compiler Flags:
     flags = ${flags}
-  
+
+  Generator:
+    ${CMAKE_GENERATOR}
+
   Build Type:
     type = ${CMAKE_BUILD_TYPE}
 
