@@ -41,13 +41,17 @@ if(BUILD_NGSOLVE)
   endif(CMAKE_GENERATOR STREQUAL "Ninja")
 endif(BUILD_NGSOLVE)
 
+if(USE_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+  endif(CCACHE_FOUND)
+endif(USE_CCACHE)
+
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
-
-if(USE_CCACHE)
-  set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
-endif(USE_CCACHE)
 
 set(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
 
