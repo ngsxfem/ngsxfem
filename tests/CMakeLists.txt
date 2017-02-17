@@ -25,23 +25,8 @@ add_test(NAME "pde_d1_xnitsche" COMMAND ${test_driver}
 add_test(NAME "pde_d2_xnitsche" COMMAND ${test_driver}
   "${PROJECT_SOURCE_DIR}/pde_tutorial/d2_xnitsche.pde")
 
-add_test(NAME "pde_d7_stokes" COMMAND ${test_driver}
-  "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d7_stokes.pde")
-
-# add_test(NAME "pde_d8_stokes3D" COMMAND ${test_driver}
-#   "${PROJECT_SOURCE_DIR}/stokes/pde_demos/d8_stokes3D.pde")
-
-add_test(NAME py_tracefem COMMAND ${PYTHON_EXECUTABLE}
-  "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_tracefem.py")
-
-# add_test(NAME py_hdgtracefem COMMAND ${PYTHON_EXECUTABLE} 
-#   "${PROJECT_SOURCE_DIR}/tracefem/py_demos/test_hdgtracefem.py")
-
 add_test(NAME py_nxfem COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/nitschexfem.py")
-
-add_test(NAME py_stokes_buoyancy COMMAND ${PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/stokes/py_demos/buoyancy.py")
 
 add_test(NAME py_symbcutints1 COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/symboliccut.py")
