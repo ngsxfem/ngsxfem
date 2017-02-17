@@ -8,7 +8,7 @@
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
-#include "../utils/error.hpp"
+// #include "../utils/error.hpp"
 
 //using namespace ngcomp;
 
@@ -187,19 +187,6 @@ void ExportNgsx(py::module &m)
            py::arg("lset_p1")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
     ;
 
-
-  m.def("CalcTraceDiff", FunctionPointer( [] (PyGF gf, PyCF coef, int intorder, int heapsize)
-                                              {
-                                                Array<double> errors;
-                                                LocalHeap lh (heapsize, "CalcTraceDiff-Heap");
-                                                if (gf.Get()->GetMeshAccess()->GetDimension() == 2)
-                                                  CalcTraceDiff<2>(gf.Get(),coef.Get(),intorder,errors,lh);
-                                                else 
-                                                  CalcTraceDiff<3>(gf.Get(),coef.Get(),intorder,errors,lh);
-                                                return errors;
-                                              } ),
-           py::arg("gf"),py::arg("coef"),py::arg("intorder")=6,py::arg("heapsize")=1000000)
-    ;
 
 
   m.def("RefineAtLevelSet", FunctionPointer( [] (PyGF gf, double lower_lset_bound, double upper_lset_bound, int heapsize)

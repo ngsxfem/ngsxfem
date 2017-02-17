@@ -1,6 +1,5 @@
 add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   ghostpenalty.cpp
-  numprocx.cpp
   sdxfemIntegrators.cpp
   xFESpace.cpp
   xfemIntegrators.cpp
@@ -22,7 +21,7 @@ endif(NOT WIN32)
 
 install( FILES
   ghostpenalty.hpp
-  setvaluesx.hpp
+  # setvaluesx.hpp
   xFESpace.hpp
   xfemIntegrators.hpp
   xfemNitsche.hpp
@@ -43,15 +42,5 @@ if(USE_PYTHON)
             )
 endif(USE_PYTHON)
 
-
-# install (FILES ngfemcf.py DESTINATION python)
-
-
-##############################################################################
-# Unhandled Makefile.am settings
-##############################################################################
-
-# libngfem_la_LIBADD = $(top_builddir)/ngstd/libngstd.la \
-# 	$(top_builddir)/basiclinalg/libngbla.la $(LAPACK_LIBS)
 
 

@@ -1,6 +1,8 @@
 add_library(ngsxfem_utils ${NGS_LIB_TYPE}
-  fieldeval.cpp fieldeval.hpp error.cpp error.hpp output.cpp output.hpp
+  fieldeval.cpp fieldeval.hpp
+  output.cpp output.hpp
   )
+#  error.cpp error.hpp
 
 set_target_properties(ngsxfem_utils PROPERTIES SUFFIX ".so")
 
@@ -20,18 +22,5 @@ if(USE_PYTHON)
 endif(USE_PYTHON)
 
 
-# install( FILES
-#         DESTINATION include
-#        )
-
-# install (FILES ngfemcf.py DESTINATION python)
-
-
-##############################################################################
-# Unhandled Makefile.am settings
-##############################################################################
-
-# libngfem_la_LIBADD = $(top_builddir)/ngstd/libngstd.la \
-# 	$(top_builddir)/basiclinalg/libngbla.la $(LAPACK_LIBS)
 
 
