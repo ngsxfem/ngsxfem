@@ -139,7 +139,7 @@ namespace ngfem
          Array<int> dnums;
          Array<int> dnums2;
          
-      gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
+      gfu -> GetFESpace()->GetDofNrs (ei, dnums);
       const int size = dnums.Size();
 
       FlatVector<double> elvec (size, lh);
@@ -149,7 +149,7 @@ namespace ngfem
 
       if (gfu2)
       {
-        gfu2 -> GetFESpace()->GetDofNrs (elnr, dnums2);
+        gfu2 -> GetFESpace()->GetDofNrs (ei, dnums2);
         size2 = dnums2.Size();
       }
 
@@ -161,9 +161,9 @@ namespace ngfem
       }
 
 
-      ElementTransformation & eltrans = ma->GetTrafo(elnr,VOL,lh);
+      ElementTransformation & eltrans = ma->GetTrafo(ei,lh);
 
-      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(ElementId(VOL,elnr),lh);
+      const FiniteElement & base_fel = gfu -> GetFESpace()->GetFE(ei,lh);
 
       const CompoundFiniteElement & cfel = 
         dynamic_cast<const CompoundFiniteElement&> (base_fel);
@@ -195,7 +195,7 @@ namespace ngfem
 
       if (gfu2)
       {
-        const FiniteElement & base_fel2 = gfu2 -> GetFESpace()->GetFE(elnr,lh);
+        const FiniteElement & base_fel2 = gfu2 -> GetFESpace()->GetFE(ei,lh);
 
         const CompoundFiniteElement & cfel2 = 
           dynamic_cast<const CompoundFiniteElement&> (base_fel2);
@@ -854,7 +854,7 @@ namespace ngfem
          HeapReset hr(lh);
 
          Array<int> dnums;
-         gfu -> GetFESpace()->GetDofNrs (elnr, dnums);
+         gfu -> GetFESpace()->GetDofNrs (ei, dnums);
          const int ndof = dnums.Size();
          FlatVector<double> elvec (ndof, lh);
          gfu -> GetVector().GetIndirect (dnums, elvec);   
@@ -862,7 +862,7 @@ namespace ngfem
          ElementTransformation & eltrans = ma->GetTrafo(ei,lh);
 
          const XFiniteElement * xfe
-           = dynamic_cast<const XFiniteElement* >(&(gfu->GetFESpace()->GetFE(elnr,lh)) );
+           = dynamic_cast<const XFiniteElement* >(&(gfu->GetFESpace()->GetFE(ei,lh)) );
 
          if (xfe)
          {
