@@ -4,7 +4,6 @@
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
-#include "../stokes/xstokesspace.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
@@ -35,11 +34,9 @@ void ExportNgsx(py::module &m)
   
   typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
   typedef PyWrapperDerived<XStdFESpace, FESpace> PyXStdFES;
-  typedef PyWrapperDerived<XStokesFESpace, FESpace> PyXStokesFES;
 
   m.def("CastToXFESpace", FunctionPointer( [] (PyFES fes) -> PyXFES { return PyXFES(dynamic_pointer_cast<XFESpace>(fes.Get())); } ) );
   m.def("CastToXStdFESpace", FunctionPointer( [] (PyFES fes) -> PyXStdFES { return PyXStdFES(dynamic_pointer_cast<XStdFESpace>(fes.Get())); } ) );
-  m.def("CastToXStokesFESpace", FunctionPointer( [] (PyFES fes) -> PyXStokesFES { return PyXStokesFES(dynamic_pointer_cast<XStokesFESpace>(fes.Get())); } ) );
   
   m.def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) { XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get()); } ) );
 
@@ -92,16 +89,6 @@ void ExportNgsx(py::module &m)
                                                  { return PyFES((*self.Get())[0]); }
                     ),
          "return 'standard' FESpace part of XStdFESpace")
-    ;
-
-  py::class_<PyXStokesFES, PyFES>
-    (m, "XStokesFESpace")
-    .def("SetLevelSet", FunctionPointer ([](PyXStokesFES & self, PyCF cf) 
-                                         { self.Get()->SetLevelSet(cf.Get()); }),
-         "Update information on level set function")
-    .def("SetLevelSet", FunctionPointer ([](PyXStokesFES & self, PyGF gf) 
-                                         { self.Get()->SetLevelSet(gf.Get()); }),
-         "Update information on level set function")
     ;
 
   m.def("InterpolateToP1", FunctionPointer( [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
