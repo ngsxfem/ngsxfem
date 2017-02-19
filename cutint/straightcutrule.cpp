@@ -884,6 +884,19 @@ namespace xintegration
       return psi_new;
   }
 
+  PolynomeFunction PolynomeFunction::reduce_toDm1Dfunction(int k, double xk){
+      PolynomeFunction psi_new(D-1);
+      for(auto c_tuple : c) {
+          auto exponents = c_tuple.first;
+          double coeff = c_tuple.second;
+          auto coeff_new = coeff*pow(xk, exponents[k]);
+
+          exponents.erase(exponents.begin()+k);
+          psi_new.c[exponents] += coeff_new;
+      }
+      return psi_new;
+  }
+
   /*
   template<int D>
   double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
@@ -1272,14 +1285,18 @@ namespace xintegration
       cout << "The 5th Legendre Polynomial:" << endl;
       PolynomeFunction::GetLegendre1D(5).output();
 
-      PolynomeFunction p5(2);
-      p5.c[{0,0}] = 10;
-      p5.c[{1,0}] = 0.1;
-      p5.c[{0,1}] = 0.3;
-      p5.c[{1,1}] = 0.001;
+      PolynomeFunction p5(3);
+      p5.c[{0,0,0}] = 10;
+      p5.c[{1,0,0}] = 0.1;
+      p5.c[{0,1,0}] = 0.3;
+      p5.c[{1,1,0}] = 0.001;
+      p5.c[{1,1,1}] = 0.333;
 
-      cout << "The function "; p5.output(); cout << " restricted to x=0.2: ";
-      p5.reduce_to_1Dfunction(0, Vec<1>{0.2}).output();
+      cout << "The function "; p5.output(); cout << " restricted to y,z=0.2,1: ";
+      p5.reduce_to_1Dfunction(0, Vec<2>{0.2,1}).output();
+
+      cout << "The same function calculated another way: ";
+      (p5.reduce_toDm1Dfunction(2, 1)).reduce_toDm1Dfunction(1,0.2).output();
   }
 
   void SayeCutElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){

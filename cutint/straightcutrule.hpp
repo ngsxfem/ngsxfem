@@ -199,6 +199,7 @@ namespace xintegration
       template<int Dv>
       PolynomeFunction reduce_to_1Dfunction(int k, Vec<Dv> y);
 
+      PolynomeFunction reduce_toDm1Dfunction(int k, double xk);
 
       template<int Dv>
       double get_largest_res_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
