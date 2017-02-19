@@ -58,3 +58,9 @@ for key in domains:
 print("L2-errors:", errors)
 #l2_eoc = [log(errors[i+1]/errors[i])/log(0.5) for i in range(n_ref-1)]
 print("experimental order of convergence (L2):", eoc)
+
+for key in domains:
+    for i in range(2, len(eoc[key])):
+        eoc_v = eoc[key][i]
+        if eoc_v < 1.8:
+            raise RuntimeError("Order of Convergence < 1.8 detected!")
