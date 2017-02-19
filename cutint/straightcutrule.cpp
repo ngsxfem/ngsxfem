@@ -620,7 +620,7 @@ namespace xintegration
 
   template<int Dv>
   MultiLinearFunction MultiLinearFunction::reduce_to_1Dfunction(int k, Vec<Dv> y){
-      if(D != Dv) {
+      if(D-1 != Dv) {
           cout << "MultiLinearFunction::reduce_to_1Dfunction: " << D << " = D != Dv = " << Dv << endl;
           throw Exception ("y has not the right dim to be parameter of the multilinear function!");
       }
@@ -1123,8 +1123,8 @@ namespace xintegration
         Vec<D> g = psi_i.get_grad(xc);
         Vec<D> delta;
         for(int j=0; j<D; j++){
-            MultiLinearFunction psi_c(D); psi_c = psi_i.get_del_k(j); psi_c.c[0] -= g[j];
-            delta[j] = psi_c.get_largest_abs_on_hyperrect(xL,xU);
+            MultiLinearFunction psi_c(D); psi_c = psi_i.get_del_k(j); //psi_c.c[0] -= g[j];
+            delta[j] = psi_c.get_largest_res_on_hyperrect(xL,xU);
         }
         cout << "Delta: " << delta << endl; cout << "g: " << g << endl;
         double sum=0; for(int j=0; j<D; j++) sum += pow(g[j]+delta[j],2);
