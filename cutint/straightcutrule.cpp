@@ -739,7 +739,7 @@ namespace xintegration
 
   template<int Dv>
   Vec<Dv> PolynomeFunction::get_grad(Vec<Dv> x) const {
-      if(D != Dv) throw Exception ("x has not the right dim to be parameter of the multilinear function!");
+      if(D != Dv) throw Exception ("x has not the right dim to be parameter of the Polynome function!");
 
       Vec<Dv> grad;
       for(int k=0; k<D; k++) {
@@ -829,11 +829,11 @@ namespace xintegration
      return p;
   }
 
-  void PolynomeFunction::FromNGSGridFunction(FlatVector<> l2_tp_coeffs){
+  void PolynomeFunction::FromLsetVals(FlatVector<> l2_tp_coeffs){
       cout << "l2_tp_coeffs.Size(): " << l2_tp_coeffs.Size() << endl;
       cout << "D: " << D << endl;
 
-      if((D <2) || (D>3)) throw Exception ("PolynomeFunction::FromNGSGridFunction not implemented for this dim!");
+      if((D <2) || (D>3)) throw Exception ("PolynomeFunction::FromLsetVals not implemented for this dim!");
       int order = floor( pow((double)l2_tp_coeffs.Size(), 1./(double)D) + 0.5) - 1;
       cout << "Order: " << order << endl;
       vector<PolynomeFunction> Legendres(order+1);

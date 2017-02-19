@@ -204,7 +204,7 @@ namespace xintegration
       template<int Dv>
       double get_largest_res_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
 
-      void FromNGSGridFunction(FlatVector<> l2_tp_coeffs);
+      void FromLsetVals(FlatVector<> l2_tp_coeffs);
 
       static PolynomeFunction GetLegendre1D(int order);
   };
