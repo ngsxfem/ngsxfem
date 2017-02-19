@@ -631,7 +631,7 @@ void ExportNgsx(py::module &m)
                             int DIM = ma->GetDimension();
 
                             auto FESpace = gf_lset->GetFESpace();
-                            cout << "I found a FESpace of order " << FESpace->GetOrder() << " in IntegrateX" << endl;
+                            cout << "I found a FESpace of order " << FESpace->GetOrder() << " in NewIntegrateX" << endl;
                             bool lset_h1_multilinear = (FESpace->GetOrder() <= 1) && (FESpace->GetClassName() == "H1HighOrderFESpace");
                             if(! lset_h1_multilinear) {
                                 cout << "LSet Function class" << gf_lset->GetClassName() << endl;
@@ -639,16 +639,13 @@ void ExportNgsx(py::module &m)
                                 FESpace->GetDofNrs(0, dnums);
                                 FlatVector<> elvec(dnums.Size(), lh);
                                 gf_lset->GetVector().GetIndirect(dnums, elvec);
-                                cout << "Lset Vector on Element 0: \n" << elvec << endl;
 
                                 PolynomeFunction p(DIM);
-                                p.FromNGSGridFunction(elvec);
+                                p.FromLsetVals(elvec);
                                 cout << "The Polynomial reconstructed:"; p.output();
-
-                                throw Exception("Higher Order Polynomials as Lset Functions are not implemented yet!");
                             }
 
-                            ArrayMem<int,10> dnums;
+                            Array<int> dnums;
                             ma->IterateElements
                               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
                                {
@@ -665,8 +662,7 @@ void ExportNgsx(py::module &m)
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
-                                 if(lset_h1_multilinear) ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye);
-                                 else ir = nullptr; //TODO
+                                 ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye, lset_h1_multilinear);
 
                                  timercutgeom.Stop();
                                  timerevalintrule.Start();

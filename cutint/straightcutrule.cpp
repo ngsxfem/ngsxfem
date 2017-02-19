@@ -1360,7 +1360,7 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
-                                                     LocalHeap & lh, bool use_saye)
+                                                     LocalHeap & lh, bool use_saye, bool lset_h1_multilinear)
   {
     static Timer t ("NewStraightCutIntegrationRule");
     static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
@@ -1384,7 +1384,8 @@ namespace xintegration
     timermakequadrule.Start();
     CutSimplexElementGeometry geom(cf_lset_at_element, et, lh);
     CutQuadElementGeometry geom_quad(cf_lset_at_element, et, lh);
-    SayeCutElementGeometry geom_quad_saye(cf_lset_at_element, et, lh);
+    SayeCutElementGeometry<MultiLinearFunction> geom_quad_saye_l(cf_lset_at_element, et, lh);
+    SayeCutElementGeometry<PolynomeFunction> geom_quad_saye_p(cf_lset_at_element, et, lh);
     IntegrationRule quad_untrafo;
 
     if (element_domain == IF)
@@ -1393,7 +1394,10 @@ namespace xintegration
       timer1.Start();
       if((et == ET_QUAD)||(et == ET_HEX)) {
           if(!use_saye) geom_quad.GetIntegrationRule(intorder, dt, quad_untrafo);
-          else geom_quad_saye.GetIntegrationRule(intorder, dt, quad_untrafo);
+          else {
+              if(lset_h1_multilinear) geom_quad_saye_l.GetIntegrationRule(intorder, dt, quad_untrafo);
+              else geom_quad_saye_p.GetIntegrationRule(intorder, dt, quad_untrafo);
+          }
       }
       else geom.GetIntegrationRule(intorder, dt, quad_untrafo);
       timer1.Stop();
@@ -1411,14 +1415,20 @@ namespace xintegration
         if (DIM == 2){
             if(et == ET_QUAD){
                 if(!use_saye) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
-                else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad_saye, ir_interface);
+                else{
+                    if(lset_h1_multilinear) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad_saye_l, ir_interface);
+                    else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad_saye_p, ir_interface);
+                }
             }
             else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
         }
         else{
             if(et == ET_HEX){
                 if(!use_saye) TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad, ir_interface);
-                else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad_saye, ir_interface);
+                else{
+                    if(lset_h1_multilinear) TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad_saye_l, ir_interface);
+                    else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad_saye_p, ir_interface);
+                }
             }
             else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom, ir_interface);
         }

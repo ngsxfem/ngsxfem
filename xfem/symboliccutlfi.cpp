@@ -108,7 +108,7 @@ namespace ngfem
 
         //cout << "The levelset values (LFI): " << cf_lset_at_element << endl;
 
-        ir = StraightCutIntegrationRule(cf_lset_at_element, trafo, dt, intorder, lh, false);
+        ir = StraightCutIntegrationRule(cf_lset_at_element, trafo, dt, intorder, lh, false, true);
     }
     if (ir == nullptr)
       return;
