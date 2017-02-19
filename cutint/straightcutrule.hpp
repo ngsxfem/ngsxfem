@@ -165,6 +165,8 @@ namespace xintegration
       template<int Dv>
       MultiLinearFunction reduce_to_1Dfunction(int k, Vec<Dv> y);
 
+      MultiLinearFunction reduce_toDm1Dfunction(int k, double xk);
+
       template<int Dv>
       Vec<Dv> get_grad(Vec<Dv> x) const;
 

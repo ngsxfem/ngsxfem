@@ -636,6 +636,19 @@ namespace xintegration
       return psi_new;
   }
 
+  MultiLinearFunction MultiLinearFunction::reduce_toDm1Dfunction(int k, double xk){
+      MultiLinearFunction psi_i_new(D-1);
+      for(int h = 0; h<psi_i_new.c.size(); h++){
+          auto bools = MultiLinearFunction::get_bools(h, D-1);
+          bools.insert(bools.begin()+k, 0);
+          psi_i_new.c[h] += (*this)[bools];
+          bools = MultiLinearFunction::get_bools(h, D-1);
+          bools.insert(bools.begin()+k, 1);
+          psi_i_new.c[h] += (*this)[bools]*xk;
+      }
+      return psi_i_new;
+  }
+
   void MultiLinearFunction::FromLsetVals(FlatVector<> lsetvals){
       if(D == 2){
           operator[]({0,0}) = lsetvals[0]; operator[]({1,0}) = lsetvals[1]-operator[]({0,0}), operator[]({0,1}) = lsetvals[3] - operator[]({0,0}), operator[]({1,1}) = lsetvals[2] - operator[]({0,0}) - operator[]({1,0}) - operator[]({0,1});
@@ -1128,18 +1141,10 @@ namespace xintegration
         }
         cout << "Delta: " << delta << endl; cout << "g: " << g << endl;
         double sum=0; for(int j=0; j<D; j++) sum += pow(g[j]+delta[j],2);
-        //cout << "sum: " << sum << endl;
-        //cout << " sum / pow(g[k]-delta[k],2) " << sum / pow(g[k]-delta[k],2.) << endl;
         if( (abs(g[k]) > delta[k]) && (sum / pow(g[k]-delta[k],2) < 20.)){
             MultiLinearFunction psi_i_L(D-1), psi_i_U(D-1);
-            for(int h = 0; h<psi_i_L.c.size(); h++){
-                auto bools = MultiLinearFunction::get_bools(h, D-1);
-                bools.insert(bools.begin()+k, 0);
-                psi_i_L.c[h] += psi_i[bools]; psi_i_U.c[h] += psi_i[bools];
-                bools = MultiLinearFunction::get_bools(h, D-1);
-                bools.insert(bools.begin()+k, 1);
-                psi_i_L.c[h] += psi_i[bools]*xL[k]; psi_i_U.c[h] += psi_i[bools]*xU[k];
-            }
+            psi_i_L = psi_i.reduce_toDm1Dfunction(k, xL[k]);
+            psi_i_U = psi_i.reduce_toDm1Dfunction(k, xU[k]);
             psitilde.Append(psi_i_L); psitilde.Append(psi_i_U);
             int sign_gk = 0;
             if(g[k] < 0) sign_gk = -1;
