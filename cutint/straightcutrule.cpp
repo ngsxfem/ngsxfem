@@ -864,6 +864,26 @@ namespace xintegration
       }
   }
 
+  template<int Dv>
+  PolynomeFunction PolynomeFunction::reduce_to_1Dfunction(int k, Vec<Dv> y){
+      if(D-1 != Dv) {
+          cout << "PolynomeFunction::reduce_to_1Dfunction: " << D << " = D != Dv = " << Dv << endl;
+          throw Exception ("y has not the right dim to be parameter of the multilinear function!");
+      }
+
+      PolynomeFunction psi_new(1);
+      for( auto c_tuple : c) {
+          auto exponents = c_tuple.first;
+          double coeff = c_tuple.second;
+
+          double prod = 1.;
+          for(int j=0; j<k; j++) prod *= pow(y[j],exponents[j]);
+          for(int j=k; j<D-1; j++) prod *= pow(y[j],exponents[j+1]);
+          psi_new.c[{exponents[k]}] += coeff*prod;
+      }
+      return psi_new;
+  }
+
   /*
   template<int D>
   double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
@@ -1251,6 +1271,15 @@ namespace xintegration
 
       cout << "The 5th Legendre Polynomial:" << endl;
       PolynomeFunction::GetLegendre1D(5).output();
+
+      PolynomeFunction p5(2);
+      p5.c[{0,0}] = 10;
+      p5.c[{1,0}] = 0.1;
+      p5.c[{0,1}] = 0.3;
+      p5.c[{1,1}] = 0.001;
+
+      cout << "The function "; p5.output(); cout << " restricted to x=0.2: ";
+      p5.reduce_to_1Dfunction(0, Vec<1>{0.2}).output();
   }
 
   void SayeCutElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
