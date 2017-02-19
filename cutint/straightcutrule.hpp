@@ -172,7 +172,7 @@ namespace xintegration
       void FromLsetVals(FlatVector<> lsetvals);
 
       template<int Dv>
-      double get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
+      double get_largest_res_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU);
   };
 
   class PolynomeFunction : public SayeBaseFunction {

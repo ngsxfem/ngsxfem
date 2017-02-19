@@ -599,8 +599,12 @@ namespace xintegration
   }
 
   template<int Dv>
-  double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
+  double MultiLinearFunction::get_largest_res_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
       if(Dv != D) throw Exception ("Dimension mismatch!");
+      Vec<Dv> xc; for(int i=0; i<Dv; i++) xc[i] = 0.5*(xL[i] + xU[i]);
+      auto psi_c = (*this);
+      psi_c.c[0] -= (*this)(xc);
+
       vector<double> vals(1<<Dv);
       for(int h=0; h<vals.size(); h++) {
           Vec<Dv> p;
@@ -608,7 +612,7 @@ namespace xintegration
               if(MultiLinearFunction::get_bool_i(h,Dv,i)) p[i] = xU[i];
               else p[i] = xL[i];
           }
-          vals[h] = abs(operator ()(p));
+          vals[h] = abs(psi_c(p));
       }
       auto res = max_element(vals.begin(), vals.end());
       return *res;
@@ -1090,8 +1094,7 @@ namespace xintegration
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
     Array<MultiLinearFunction> psi_pruned; Array<int> s_pruned;
     for(int i=psi.Size()-1; i>=0; i--){
-        auto psi_c = psi[i]; psi_c.c[0] -= psi[i](xc);
-        auto delta = psi_c.get_largest_abs_on_hyperrect(xL, xU);
+        auto delta = psi[i].get_largest_res_on_hyperrect(xL, xU);
         if(abs(psi[i](xc)) >= delta){
             if(s[i]*psi[i](xc) < 0) return;
         }
