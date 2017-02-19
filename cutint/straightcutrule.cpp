@@ -599,6 +599,22 @@ namespace xintegration
   }
 
   template<int Dv>
+  double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
+      if(Dv != D) throw Exception ("Dimension mismatch!");
+      vector<double> vals(1<<Dv);
+      for(int h=0; h<vals.size(); h++) {
+          Vec<Dv> p;
+          for(int i=0; i<D; i++){
+              if(MultiLinearFunction::get_bool_i(h,Dv,i)) p[i] = xU[i];
+              else p[i] = xL[i];
+          }
+          vals[h] = abs(operator ()(p));
+      }
+      auto res = max_element(vals.begin(), vals.end());
+      return *res;
+  }
+
+  template<int Dv>
   MultiLinearFunction MultiLinearFunction::reduce_to_1Dfunction(int k, Vec<Dv> y){
       if(D != Dv) {
           cout << "MultiLinearFunction::reduce_to_1Dfunction: " << D << " = D != Dv = " << Dv << endl;
@@ -616,133 +632,20 @@ namespace xintegration
       return psi_new;
   }
 
-  /*
-  template<int D>
-  double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
-      vector<double> R{x1,x2};
-      for(auto psi_i : psi){
-          MultiLinearFunction psi_i_new(1);
-          for(int h=0; h<psi_i.c.size(); h++) {
-              vector<bool> idx = MultiLinearFunction::get_bools(h,D);
-              double prod = 1;
-              for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
-              for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
-              psi_i_new.c[idx[k]] += psi_i[idx]*prod;
-          }
-          cout << "psi_i_new: " << endl; psi_i_new.output();
-          auto rv = psi_i_new.find_root_1D(x1,x2);
-          R.insert(R.begin(), rv.begin(), rv.end());
+  void MultiLinearFunction::FromLsetVals(FlatVector<> lsetvals){
+      if(D == 2){
+          operator[]({0,0}) = lsetvals[0]; operator[]({1,0}) = lsetvals[1]-operator[]({0,0}), operator[]({0,1}) = lsetvals[3] - operator[]({0,0}), operator[]({1,1}) = lsetvals[2] - operator[]({0,0}) - operator[]({1,0}) - operator[]({0,1});
       }
-      sort(R.begin(), R.end());
-      double I =0;
-      for(int j=0; j<R.size()-1; j++){
-          double L = R[j+1]-R[j]; Vec<D> xc;
-          for(int i=0; i<k; i++) xc[i] = x[i];
-          xc[k] = 0.5*(R[j+1]+R[j]);
-          for(int i=k+1; i<D; i++) xc[i] = x[i-1];
-          bool cond = true;
-          for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
-          if(cond){
-              const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-              for(auto ip: ir_ngs){
-                  Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
-                  I += L*ip.Weight()*f(p);
-              }
-          }
+      else{
+          operator[]({0,0,0}) = lsetvals[0];
+          operator[]({1,0,0}) = lsetvals[1]-lsetvals[0];
+          operator[]({0,1,0}) = lsetvals[3] - lsetvals[0];
+          operator[]({0,0,1}) = lsetvals[4] - lsetvals[0];
+          operator[]({1,1,0}) = lsetvals[2] - operator[]({1,0,0}) - operator[]({0,1,0}) - operator[]({0,0,0});
+          operator[]({1,0,1}) = lsetvals[5] - operator[]({1,0,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
+          operator[]({0,1,1}) = lsetvals[7] - operator[]({0,1,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
+          operator[]({1,1,1}) = lsetvals[6] - operator[]({1,1,0}) - operator[]({1,0,1}) - operator[]({0,1,1}) - operator[]({1,0,0}) - operator[]({0,1,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
       }
-      return I;
-  }*/
-
-  template<int D>
-  void eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order, IntegrationRule& result) {
-      vector<double> R{x1,x2};
-      for(auto psi_i : psi){
-          MultiLinearFunction psi_i_new(1);
-          psi_i_new = psi_i.reduce_to_1Dfunction(k, x);
-          cout << "eval_integrand psi_i_new: " << endl; psi_i_new.output();
-          auto rv = psi_i_new.find_root_1D(x1,x2);
-          R.insert(R.begin(), rv.begin(), rv.end());
-      }
-      sort(R.begin(), R.end());
-      for(int j=0; j<R.size()-1; j++){
-          double L = R[j+1]-R[j]; Vec<D> xc;
-          for(int i=0; i<k; i++) xc[i] = x[i];
-          xc[k] = 0.5*(R[j+1]+R[j]);
-          for(int i=k+1; i<D; i++) xc[i] = x[i-1];
-          bool cond = true;
-          for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
-          if(cond){
-              const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-              for(auto ip: ir_ngs){
-                  Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
-                  IntegrationPoint ip_new(p, L*ip.Weight());
-                  result.Append(ip_new);
-              }
-          }
-      }
-  }
-
-  /*
-  template<int D>
-  double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f) {
-      MultiLinearFunction psi_new(1);
-      for(int h=0; h<phi.c.size(); h++) {
-          vector<bool> idx = MultiLinearFunction::get_bools(h, D);
-          //for(int j=0; j<D; j++) idx[j] = idx[j];
-          double prod = 1;
-          for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
-          for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
-          psi_new.c[idx[k]] += phi[idx]*prod;
-      }
-      cout << "Psi new eval_surface_integrand: " << endl;
-      psi_new.output();
-      auto rv = psi_new.find_root_1D(x1,x2);
-      if(rv.size() == 0) return 0;
-      else {
-          Vec<D> p;
-          for(int i=0; i<k; i++) p[i] = x[i];
-          p[k] = rv[0];
-          for(int i=k+1; i<D; i++) p[i] = x[i-1];
-          return f(p)*L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p));
-      }
-  }*/
-
-  template<int D>
-  void eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, IntegrationRule& result) {
-      MultiLinearFunction psi_new(1);
-      for(int h=0; h<phi.c.size(); h++) {
-          vector<bool> idx = MultiLinearFunction::get_bools(h, D);
-          double prod = 1;
-          for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
-          for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
-          psi_new.c[idx[k]] += phi[idx]*prod;
-      }
-      cout << "eval_surface_integrand psi_new: " << endl;
-      psi_new.output();
-      auto rv = psi_new.find_root_1D(x1,x2);
-      if(rv.size() > 0){
-          Vec<D> p;
-          for(int i=0; i<k; i++) p[i] = x[i];
-          p[k] = rv[0];
-          for(int i=k+1; i<D; i++) p[i] = x[i-1];
-          result.Append(IntegrationPoint(p, L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p))));
-      }
-  }
-
-  template<int Dv>
-  double MultiLinearFunction::get_largest_abs_on_hyperrect(Vec<Dv> xL, Vec<Dv> xU){
-      if(Dv != D) throw Exception ("Dimension mismatch!");
-      vector<double> vals(1<<Dv);
-      for(int h=0; h<vals.size(); h++) {
-          Vec<Dv> p;
-          for(int i=0; i<D; i++){
-              if(MultiLinearFunction::get_bool_i(h,Dv,i)) p[i] = xU[i];
-              else p[i] = xL[i];
-          }
-          vals[h] = abs(operator ()(p));
-      }
-      auto res = max_element(vals.begin(), vals.end());
-      return *res;
   }
 
   template<int Dv>
@@ -944,37 +847,119 @@ namespace xintegration
       }
   }
 
-  void DebugPolynomeClass(){
-      PolynomeFunction p(2);
-      p.c[{0,0}] = 0.53;
-      p.c[{9,1}] = 0.15;
+  /*
+  template<int D>
+  double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
+      vector<double> R{x1,x2};
+      for(auto psi_i : psi){
+          MultiLinearFunction psi_i_new(1);
+          for(int h=0; h<psi_i.c.size(); h++) {
+              vector<bool> idx = MultiLinearFunction::get_bools(h,D);
+              double prod = 1;
+              for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
+              for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
+              psi_i_new.c[idx[k]] += psi_i[idx]*prod;
+          }
+          cout << "psi_i_new: " << endl; psi_i_new.output();
+          auto rv = psi_i_new.find_root_1D(x1,x2);
+          R.insert(R.begin(), rv.begin(), rv.end());
+      }
+      sort(R.begin(), R.end());
+      double I =0;
+      for(int j=0; j<R.size()-1; j++){
+          double L = R[j+1]-R[j]; Vec<D> xc;
+          for(int i=0; i<k; i++) xc[i] = x[i];
+          xc[k] = 0.5*(R[j+1]+R[j]);
+          for(int i=k+1; i<D; i++) xc[i] = x[i-1];
+          bool cond = true;
+          for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
+          if(cond){
+              const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+              for(auto ip: ir_ngs){
+                  Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
+                  I += L*ip.Weight()*f(p);
+              }
+          }
+      }
+      return I;
+  }*/
 
-      cout << "c(0.3,0.4): " << p(Vec<2>{0.3,0.4}) << endl;
+  template<int D>
+  void eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order, IntegrationRule& result) {
+      vector<double> R{x1,x2};
+      for(auto psi_i : psi){
+          MultiLinearFunction psi_i_new(1);
+          psi_i_new = psi_i.reduce_to_1Dfunction(k, x);
+          cout << "eval_integrand psi_i_new: " << endl; psi_i_new.output();
+          auto rv = psi_i_new.find_root_1D(x1,x2);
+          R.insert(R.begin(), rv.begin(), rv.end());
+      }
+      sort(R.begin(), R.end());
+      for(int j=0; j<R.size()-1; j++){
+          double L = R[j+1]-R[j]; Vec<D> xc;
+          for(int i=0; i<k; i++) xc[i] = x[i];
+          xc[k] = 0.5*(R[j+1]+R[j]);
+          for(int i=k+1; i<D; i++) xc[i] = x[i-1];
+          bool cond = true;
+          for(int i=0; i<psi.Size(); i++) if(s[i]*psi[i](xc) < 0) cond = false;
+          if(cond){
+              const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+              for(auto ip: ir_ngs){
+                  Vec<D> p = xc; p[k] = R[j] + L*ip.Point()[0];
+                  IntegrationPoint ip_new(p, L*ip.Weight());
+                  result.Append(ip_new);
+              }
+          }
+      }
+  }
 
-      PolynomeFunction p2(1);
-      p2.c[{0}] = -2.;
-      p2.c[{2}] = +1.;
-      cout << "sqrt(2) = ";
-      auto sqrt2 = p2.find_root_1D(0,2);
-      for (auto d: sqrt2) cout << d << endl;
+  /*
+  template<int D>
+  double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f) {
+      MultiLinearFunction psi_new(1);
+      for(int h=0; h<phi.c.size(); h++) {
+          vector<bool> idx = MultiLinearFunction::get_bools(h, D);
+          //for(int j=0; j<D; j++) idx[j] = idx[j];
+          double prod = 1;
+          for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
+          for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
+          psi_new.c[idx[k]] += phi[idx]*prod;
+      }
+      cout << "Psi new eval_surface_integrand: " << endl;
+      psi_new.output();
+      auto rv = psi_new.find_root_1D(x1,x2);
+      if(rv.size() == 0) return 0;
+      else {
+          Vec<D> p;
+          for(int i=0; i<k; i++) p[i] = x[i];
+          p[k] = rv[0];
+          for(int i=k+1; i<D; i++) p[i] = x[i-1];
+          return f(p)*L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p));
+      }
+  }*/
 
-      PolynomeFunction p3(1);
-      p3.c[{0}] = -20.;
-      p3.c[{3}] = -30.;
-      p3.c[{4}] = 5.;
-      cout << "roots of 5*x^4 - 30*x^3 - 20: ";
-      auto roots = p3.find_root_1D(-10,10);
-      for (auto d: roots) cout << d << endl;
-
-      cout << "p3: "; p3.output();
-      cout << "p3 ': "; p3.get_del_k(0).output();
-
-      PolynomeFunction p4(1);
-      p4.c[{2}] = 1.;
-      cout << "Largest res of f(x) = x**2 on [-10,10]: " << p4.get_largest_res_on_hyperrect(Vec<1>{-10.}, Vec<1>{10.}) << endl;
-
-      cout << "The 5th Legendre Polynomial:" << endl;
-      PolynomeFunction::GetLegendre1D(5).output();
+  template<int D>
+  void eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, IntegrationRule& result) {
+      MultiLinearFunction psi_new(1);
+      /*
+      for(int h=0; h<phi.c.size(); h++) {
+          vector<bool> idx = MultiLinearFunction::get_bools(h, D);
+          double prod = 1;
+          for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
+          for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
+          psi_new.c[idx[k]] += phi[idx]*prod;
+      }*/
+      psi_new = phi.reduce_to_1Dfunction(k, x);
+      cout << "eval_surface_integrand psi_new: " << endl;
+      psi_new.output();
+      auto rv = psi_new.find_root_1D(x1,x2);
+      if(rv.size() > 0){
+          Vec<D> p;
+          for(int i=0; i<k; i++) p[i] = x[i];
+          p[k] = rv[0];
+          for(int i=k+1; i<D; i++) p[i] = x[i-1];
+          result.Append(IntegrationPoint(p, L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p))));
+      }
   }
 
   template<class T>
@@ -1227,20 +1212,37 @@ namespace xintegration
     return I;
   }
 
-  void MultiLinearFunction::FromLsetVals(FlatVector<> lsetvals){
-      if(D == 2){
-          operator[]({0,0}) = lsetvals[0]; operator[]({1,0}) = lsetvals[1]-operator[]({0,0}), operator[]({0,1}) = lsetvals[3] - operator[]({0,0}), operator[]({1,1}) = lsetvals[2] - operator[]({0,0}) - operator[]({1,0}) - operator[]({0,1});
-      }
-      else{
-          operator[]({0,0,0}) = lsetvals[0];
-          operator[]({1,0,0}) = lsetvals[1]-lsetvals[0];
-          operator[]({0,1,0}) = lsetvals[3] - lsetvals[0];
-          operator[]({0,0,1}) = lsetvals[4] - lsetvals[0];
-          operator[]({1,1,0}) = lsetvals[2] - operator[]({1,0,0}) - operator[]({0,1,0}) - operator[]({0,0,0});
-          operator[]({1,0,1}) = lsetvals[5] - operator[]({1,0,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
-          operator[]({0,1,1}) = lsetvals[7] - operator[]({0,1,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
-          operator[]({1,1,1}) = lsetvals[6] - operator[]({1,1,0}) - operator[]({1,0,1}) - operator[]({0,1,1}) - operator[]({1,0,0}) - operator[]({0,1,0}) - operator[]({0,0,1}) - operator[]({0,0,0});
-      }
+  void DebugPolynomeClass(){
+      PolynomeFunction p(2);
+      p.c[{0,0}] = 0.53;
+      p.c[{9,1}] = 0.15;
+
+      cout << "c(0.3,0.4): " << p(Vec<2>{0.3,0.4}) << endl;
+
+      PolynomeFunction p2(1);
+      p2.c[{0}] = -2.;
+      p2.c[{2}] = +1.;
+      cout << "sqrt(2) = ";
+      auto sqrt2 = p2.find_root_1D(0,2);
+      for (auto d: sqrt2) cout << d << endl;
+
+      PolynomeFunction p3(1);
+      p3.c[{0}] = -20.;
+      p3.c[{3}] = -30.;
+      p3.c[{4}] = 5.;
+      cout << "roots of 5*x^4 - 30*x^3 - 20: ";
+      auto roots = p3.find_root_1D(-10,10);
+      for (auto d: roots) cout << d << endl;
+
+      cout << "p3: "; p3.output();
+      cout << "p3 ': "; p3.get_del_k(0).output();
+
+      PolynomeFunction p4(1);
+      p4.c[{2}] = 1.;
+      cout << "Largest res of f(x) = x**2 on [-10,10]: " << p4.get_largest_res_on_hyperrect(Vec<1>{-10.}, Vec<1>{10.}) << endl;
+
+      cout << "The 5th Legendre Polynomial:" << endl;
+      PolynomeFunction::GetLegendre1D(5).output();
   }
 
   void SayeCutElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
@@ -1262,6 +1264,7 @@ namespace xintegration
       }
       //cout << "The Intrule: " << endl << intrule << endl;
   }
+
   Vec<3> SayeCutElementGeometry::GetNormal(const Vec<3>& p) const{
       Vec<3> n;
       if (D == 3){
