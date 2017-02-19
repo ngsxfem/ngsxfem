@@ -598,6 +598,24 @@ namespace xintegration
       return grad;
   }
 
+  template<int Dv>
+  MultiLinearFunction MultiLinearFunction::reduce_to_1Dfunction(int k, Vec<Dv> y){
+      if(D != Dv) {
+          cout << "MultiLinearFunction::reduce_to_1Dfunction: " << D << " = D != Dv = " << Dv << endl;
+          throw Exception ("y has not the right dim to be parameter of the multilinear function!");
+      }
+
+      MultiLinearFunction psi_new(1);
+      for(int h=0; h<c.size(); h++) {
+          vector<bool> idx = MultiLinearFunction::get_bools(h,D);
+          double prod = 1;
+          for(int j=0; j<k; j++) prod *= pow(y[j],idx[j]);
+          for(int j=k; j<D-1; j++) prod *= pow(y[j],idx[j+1]);
+          psi_new.c[idx[k]] += (*this)[idx]*prod;
+      }
+      return psi_new;
+  }
+
   /*
   template<int D>
   double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
@@ -640,13 +658,7 @@ namespace xintegration
       vector<double> R{x1,x2};
       for(auto psi_i : psi){
           MultiLinearFunction psi_i_new(1);
-          for(int h=0; h<psi_i.c.size(); h++) {
-              vector<bool> idx = MultiLinearFunction::get_bools(h,D);
-              double prod = 1;
-              for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
-              for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
-              psi_i_new.c[idx[k]] += psi_i[idx]*prod;
-          }
+          psi_i_new = psi_i.reduce_to_1Dfunction(k, x);
           cout << "eval_integrand psi_i_new: " << endl; psi_i_new.output();
           auto rv = psi_i_new.find_root_1D(x1,x2);
           R.insert(R.begin(), rv.begin(), rv.end());
