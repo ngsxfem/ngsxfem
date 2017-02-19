@@ -941,7 +941,7 @@ namespace xintegration
           MultiLinearFunction psi_i_new(1);
           psi_i_new = psi_i.reduce_to_1Dfunction(k, x);
           cout << "eval_integrand psi_i_new: " << endl; psi_i_new.output();
-          auto rv = psi_i_new.find_root_1D(x1,x2);
+          auto rv = psi_i_new.find_root_1D(x1,x1);
           R.insert(R.begin(), rv.begin(), rv.end());
       }
       sort(R.begin(), R.end());
