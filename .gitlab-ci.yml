@@ -38,13 +38,17 @@ cmake-tests:
   
 go4quads-tests:
   stage: test
-  
+    cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
   script:
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 cutint/py_demos/area_of_a_circle_quads.py"
+    - cd cutint/py_demos/
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 area_of_a_circle_quads.py"
   when: always
   allow_failure: false
 
