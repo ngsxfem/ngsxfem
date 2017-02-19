@@ -600,7 +600,7 @@ void ExportNgsx(py::module &m)
            }));
   // new implementation: only straight cuts - start with triangles only for a start!
 
-  m.def("DebugSaye", FunctionPointer([](int s_dt, bool IR_mode) -> double {return DebugSaye(s_dt, IR_mode);}));
+  m.def("DebugSaye", FunctionPointer([](int s_dt) -> double {return DebugSaye(s_dt);}));
   m.def("DebugPolynomeClass", FunctionPointer([](){DebugPolynomeClass();}));
 
   m.def("NewIntegrateX",
