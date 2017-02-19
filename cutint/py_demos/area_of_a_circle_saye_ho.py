@@ -9,23 +9,43 @@ square.AddRectangle([0,0],[1,1],bc=1)
 mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 r=0.6
 
-domains = [NEG, POS, IF]
+domains = [NEG, POS]
 
-order = 1
+n_ref = 5
+order = 3
+errors = dict()
+eoc = dict()
+
+for key in domains:
+    errors[key] = []
+    eoc[key] = []
 
 levelset = sqrt(x*x+y*y)-r
 referencevals = { POS : 1-pi*r*r/4, NEG : pi*r*r/4, IF : r*pi/2}
 
-#V = H1(mesh,order=order)
-V = L2(mesh,order=order)
-lset_approx = GridFunction(V)
-#InterpolateToP1(levelset,lset_approx)
-lset_approx.Set(levelset)
-Draw(lset_approx,mesh,"lset_approx")
+for i in range(n_ref):
+    #V = H1(mesh,order=order)
+    V = L2(mesh,order=order)
+    lset_approx = GridFunction(V)
+    #InterpolateToP1(levelset,lset_approx)
+    lset_approx.Set(levelset)
+    Draw(lset_approx,mesh,"lset_approx")
+    
+    f = CoefficientFunction(1)
 
-f = CoefficientFunction(1)
+    for key in domains:
+        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000, use_saye = True)
+        print("Result of Integration Key ",key," : ", integral)
+        print("\t\tError: ", abs(integral - referencevals[key]))
+        errors[key].append(abs(integral - referencevals[key]))
+    
+    if i < n_ref - 1:
+        mesh.Refine()
+    
 
 for key in domains:
-    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000, use_saye = True)
-    print("Result of Integration Key ",key," : ", integral)
-    print("\t\tError: ", abs(integral - referencevals[key]))
+  eoc[key] = [log(errors[key][i+1]/errors[key][i])/log(0.5) for i in range(n_ref-1)]
+
+print("L2-errors:", errors)
+#l2_eoc = [log(errors[i+1]/errors[i])/log(0.5) for i in range(n_ref-1)]
+print("experimental order of convergence (L2):", eoc)
