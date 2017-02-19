@@ -934,11 +934,11 @@ namespace xintegration
       return I;
   }*/
 
-  template<int D>
-  void eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order, IntegrationRule& result) {
+  template<int D, typename FunctionType>
+  void eval_integrand(Array<FunctionType> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order, IntegrationRule& result) {
       vector<double> R{x1,x2};
       for(auto psi_i : psi){
-          MultiLinearFunction psi_i_new(1);
+          FunctionType psi_i_new(1);
           psi_i_new = psi_i.reduce_to_1Dfunction(k, x);
           cout << "eval_integrand psi_i_new: " << endl; psi_i_new.output();
           auto rv = psi_i_new.find_root_1D(x1,x1);
@@ -988,17 +988,9 @@ namespace xintegration
       }
   }*/
 
-  template<int D>
-  void eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, IntegrationRule& result) {
-      MultiLinearFunction psi_new(1);
-      /*
-      for(int h=0; h<phi.c.size(); h++) {
-          vector<bool> idx = MultiLinearFunction::get_bools(h, D);
-          double prod = 1;
-          for(int j=0; j<k; j++) prod *= pow(x[j],idx[j]);
-          for(int j=k; j<D-1; j++) prod *= pow(x[j],idx[j+1]);
-          psi_new.c[idx[k]] += phi[idx]*prod;
-      }*/
+  template<int D, typename FunctionType>
+  void eval_surface_integrand(FunctionType phi, int k, double x1, double x2, Vec<D-1> x, IntegrationRule& result) {
+      FunctionType psi_new(1);
       psi_new = phi.reduce_to_1Dfunction(k, x);
       cout << "eval_surface_integrand psi_new: " << endl;
       psi_new.output();
@@ -1134,11 +1126,11 @@ namespace xintegration
     return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
   }*/
 
-  template<int D>
-  void integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, bool S, int order, IntegrationRule& result, int subdivlevel = 0) {
+  template<int D, typename FunctionType>
+  void integrate_saye(Array<FunctionType>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, bool S, int order, IntegrationRule& result, int subdivlevel = 0) {
     if(subdivlevel > 0) cout << "Starting Saye with Subdivlevel " << subdivlevel << endl;
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
-    Array<MultiLinearFunction> psi_pruned; Array<int> s_pruned;
+    Array<FunctionType> psi_pruned; Array<int> s_pruned;
     for(int i=psi.Size()-1; i>=0; i--){
         auto delta = psi[i].get_largest_res_on_hyperrect(xL, xU);
         if(abs(psi[i](xc)) >= delta){
@@ -1163,19 +1155,19 @@ namespace xintegration
     }
     int k = distance(partial_derivs.begin(), max_element(partial_derivs.begin(), partial_derivs.end()));
     cout << "k: " << k << endl;
-    Array<MultiLinearFunction> psitilde; Array<int> stilde;
+    Array<FunctionType> psitilde; Array<int> stilde;
     for(int i=0; i<psi_pruned.Size(); i++){
         auto psi_i = psi_pruned[i];
         Vec<D> g = psi_i.get_grad(xc);
         Vec<D> delta;
         for(int j=0; j<D; j++){
-            MultiLinearFunction psi_c(D); psi_c = psi_i.get_del_k(j); //psi_c.c[0] -= g[j];
+            FunctionType psi_c(D); psi_c = psi_i.get_del_k(j); //psi_c.c[0] -= g[j];
             delta[j] = psi_c.get_largest_res_on_hyperrect(xL,xU);
         }
         cout << "Delta: " << delta << endl; cout << "g: " << g << endl;
         double sum=0; for(int j=0; j<D; j++) sum += pow(g[j]+delta[j],2);
         if( (abs(g[k]) > delta[k]) && (sum / pow(g[k]-delta[k],2) < 20.)){
-            MultiLinearFunction psi_i_L(D-1), psi_i_U(D-1);
+            FunctionType psi_i_L(D-1), psi_i_U(D-1);
             psi_i_L = psi_i.reduce_toDm1Dfunction(k, xL[k]);
             psi_i_U = psi_i.reduce_toDm1Dfunction(k, xU[k]);
             psitilde.Append(psi_i_L); psitilde.Append(psi_i_U);
@@ -1230,8 +1222,8 @@ namespace xintegration
   }
 
   template<>
-  void integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, bool S, int order, IntegrationRule& result, int subdivlevel) {
-    eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, order, result);
+  void integrate_saye<1, MultiLinearFunction>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, bool S, int order, IntegrationRule& result, int subdivlevel) {
+    eval_integrand<1, MultiLinearFunction>(psi, s, 0, xL[0], xU[0], {}, order, result);
   }
 
   double DebugSaye(int s_dt){
