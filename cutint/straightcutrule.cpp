@@ -598,6 +598,7 @@ namespace xintegration
       return grad;
   }
 
+  /*
   template<int D>
   double eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f, int order) {
       vector<double> R{x1,x2};
@@ -632,7 +633,7 @@ namespace xintegration
           }
       }
       return I;
-  }
+  }*/
 
   template<int D>
   void eval_integrand(Array<MultiLinearFunction> &psi, Array<int> &s, int k, double x1, double x2, Vec<D-1> x, int order, IntegrationRule& result) {
@@ -669,6 +670,7 @@ namespace xintegration
       }
   }
 
+  /*
   template<int D>
   double eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, function<double(Vec<D>)> f) {
       MultiLinearFunction psi_new(1);
@@ -691,7 +693,7 @@ namespace xintegration
           for(int i=k+1; i<D; i++) p[i] = x[i-1];
           return f(p)*L2Norm(phi.get_grad(p))/abs(phi.get_del_k(k)(p));
       }
-  }
+  }*/
 
   template<int D>
   void eval_surface_integrand(MultiLinearFunction phi, int k, double x1, double x2, Vec<D-1> x, IntegrationRule& result) {
@@ -994,6 +996,7 @@ namespace xintegration
   auto sgn_L(int m, int s, bool S) {return sgn(m,s,S,-1);}
   auto sgn_U(int m, int s, bool S) {return sgn(m,s,S,+1);}
 
+  /*
   template<int D>
   double integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, function<double(Vec<D>)> f, bool S, int order, int subdivlevel = 0) {
     Vec<D> xc; for(int i=0; i<D; i++) xc[i] = 0.5*(xL[i]+xU[i]);
@@ -1082,7 +1085,7 @@ namespace xintegration
   template<>
   double integrate_saye<1>(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, function<double(Vec<1>)> f, bool S, int order, int subdivlevel) {
     return eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, f, order);
-  }
+  }*/
 
   template<int D>
   void integrate_saye(Array<MultiLinearFunction>& psi, Array<int>& s, Vec<D> xL, Vec<D> xU, bool S, int order, IntegrationRule& result, int subdivlevel = 0) {
@@ -1193,46 +1196,23 @@ namespace xintegration
     eval_integrand<1>(psi, s, 0, xL[0], xU[0], {}, order, result);
   }
 
-  double DebugSaye(int s_dt, bool IR_mode){
+  double DebugSaye(int s_dt){
     MultiLinearFunction phi(2);
-    //phi[{0,0}] = 1;
-    //phi[{0,1}] = -2;
-    //phi[{1,0}] = -2;
-    //phi[{1,1}] = -1./3;
     phi.FromLsetVals(Vec<4>{1,-1,-3,-1});
     std::function<double(Vec<2>)> f = [](Vec<2> x) -> double {return 1;};
 
-    //cout << phi.get_largest_abs_on_hyperrect<2>({0.,0.}, {2.,2.}) << endl;
-
-    /*cout << "Get_Tensor_Product_IR testing: " << endl;
-    IntegrationRule ir;
-    Get_Tensor_Product_IR<3>(8, Vec<3>{0,0,0}, Vec<3>{1,1,1}, ir);*/
-
-    //return eval_surface_integrand<2>(phi, 0, 0.,1., Vec<1>{0.25}, f);
-    //return eval_integrand<2>({phi}, {-1}, 0, 0.,1., Vec<1>{0.25}, f, 1);
-
     Array<MultiLinearFunction> phis{phi}; Array<int> sis{s_dt};
-    //bool IR_mode = true;
     Array<int> sis2{0};
 
-    if (IR_mode){
-        IntegrationRule irIF; integrate_saye(phis ,sis2, Vec<2>{0.,0.}, Vec<2>{1.,1.}, true, 1, irIF);
-        cout << "Getting the IF integration rule: " << irIF << endl;
-        double I = 0;
-        IntegrationRule ir; integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, false, 1, ir);
-        for(auto ip:ir) {
-            I += ip.Weight()*f(ip.Point());
-            cout << ip << endl;
-        }
-        return I;
+    IntegrationRule irIF; integrate_saye(phis ,sis2, Vec<2>{0.,0.}, Vec<2>{1.,1.}, true, 1, irIF);
+    cout << "Getting the IF integration rule: " << irIF << endl;
+    double I = 0;
+    IntegrationRule ir; integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, false, 1, ir);
+    for(auto ip:ir) {
+        I += ip.Weight()*f(ip.Point());
+        cout << ip << endl;
     }
-    else {
-        double II = integrate_saye(phis, sis2, Vec<2>{0.,0.}, Vec<2>{1.,1.}, f, true, 1);
-        cout << "Interface integration: " << endl;
-        cout << II << endl;
-
-        return integrate_saye(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, f, false, 1);
-    }
+    return I;
   }
 
   void MultiLinearFunction::FromLsetVals(FlatVector<> lsetvals){

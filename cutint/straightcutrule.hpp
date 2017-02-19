@@ -200,7 +200,7 @@ namespace xintegration
       static PolynomeFunction GetLegendre1D(int order);
   };
 
-  double DebugSaye(int s_dt, bool IR_mode);
+  double DebugSaye(int s_dt);
   void DebugPolynomeClass();
 
   class SayeCutElementGeometry : public CutElementGeometry {
