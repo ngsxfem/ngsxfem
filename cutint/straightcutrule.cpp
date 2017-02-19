@@ -637,16 +637,16 @@ namespace xintegration
   }
 
   MultiLinearFunction MultiLinearFunction::reduce_toDm1Dfunction(int k, double xk){
-      MultiLinearFunction psi_i_new(D-1);
-      for(int h = 0; h<psi_i_new.c.size(); h++){
+      MultiLinearFunction psi_new(D-1);
+      for(int h = 0; h<psi_new.c.size(); h++){
           auto bools = MultiLinearFunction::get_bools(h, D-1);
           bools.insert(bools.begin()+k, 0);
-          psi_i_new.c[h] += (*this)[bools];
+          psi_new.c[h] += (*this)[bools];
           bools = MultiLinearFunction::get_bools(h, D-1);
           bools.insert(bools.begin()+k, 1);
-          psi_i_new.c[h] += (*this)[bools]*xk;
+          psi_new.c[h] += (*this)[bools]*xk;
       }
-      return psi_i_new;
+      return psi_new;
   }
 
   void MultiLinearFunction::FromLsetVals(FlatVector<> lsetvals){
