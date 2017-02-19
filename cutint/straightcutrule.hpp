@@ -212,20 +212,17 @@ namespace xintegration
   double DebugSaye(int s_dt);
   void DebugPolynomeClass();
 
+  template<typename FunctionType>
   class SayeCutElementGeometry : public CutElementGeometry {
   private:
       FlatVector<> lset;
-      MultiLinearFunction levelset;
+      FunctionType levelset;
   public:
       LocalHeap & lh;
 
       SayeCutElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
           et = a_et;
           D = Dim(et);
-          if(D == 3){//Why is this required?!!
-              vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
-              for(int i=0; i<lset.Size(); i++) lset[i] = lset_s[lset.Size()-1-i];
-          }
       }
       virtual Vec<3> GetNormal(const Vec<3>& p) const;
       virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);

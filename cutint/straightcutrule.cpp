@@ -1226,6 +1226,11 @@ namespace xintegration
     eval_integrand<1, MultiLinearFunction>(psi, s, 0, xL[0], xU[0], {}, order, result);
   }
 
+  template<>
+  void integrate_saye<1, PolynomeFunction>(Array<PolynomeFunction>& psi, Array<int>& s, Vec<1> xL, Vec<1> xU, bool S, int order, IntegrationRule& result, int subdivlevel) {
+    eval_integrand<1, PolynomeFunction>(psi, s, 0, xL[0], xU[0], {}, order, result);
+  }
+
   double DebugSaye(int s_dt){
     MultiLinearFunction phi(2);
     phi.FromLsetVals(Vec<4>{1,-1,-3,-1});
@@ -1291,19 +1296,25 @@ namespace xintegration
       (p5.reduce_toDm1Dfunction(2, 1)).reduce_toDm1Dfunction(1,0.2).output();
   }
 
-  void SayeCutElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
-      levelset = MultiLinearFunction(D);
+  template<typename FunctionType>
+  void SayeCutElementGeometry<FunctionType>::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
+      levelset = FunctionType(D);
+      if((D == 3)&&(std::is_same<FunctionType, MultiLinearFunction>::value)){//Why is this required?!!
+          vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
+          for(int i=0; i<lset.Size(); i++) lset[i] = lset_s[lset.Size()-1-i];
+      }
       levelset.FromLsetVals(lset);
+      cout << "The levelset Function in SayeCutElementGeometry<FunctionType>::GetIntegrationRule: "; levelset.output();
 
-      Array<MultiLinearFunction> phis{levelset}; Array<int> sis{0}; bool S = true;
+      Array<FunctionType> phis{levelset}; Array<int> sis{0}; bool S = true;
       if(dt == POS) { sis[0] = 1; S = false; }
       else if(dt == NEG) { sis[0] = -1; S = false; }
 
       if(D == 2){
-          integrate_saye<2>(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, S, order, intrule);
+          integrate_saye<2, FunctionType>(phis, sis, Vec<2>{0.,0.}, Vec<2>{1.,1.}, S, order, intrule);
       }
       else if (D == 3) {
-          integrate_saye<3>(phis, sis, Vec<3>{0.,0.,0.}, Vec<3>{1.,1.,1.}, S, order, intrule);
+          integrate_saye<3, FunctionType>(phis, sis, Vec<3>{0.,0.,0.}, Vec<3>{1.,1.,1.}, S, order, intrule);
       }
       else {
           throw Exception( "This Dim is not supported yet in SayeCutElementGeometry");
@@ -1311,7 +1322,8 @@ namespace xintegration
       //cout << "The Intrule: " << endl << intrule << endl;
   }
 
-  Vec<3> SayeCutElementGeometry::GetNormal(const Vec<3>& p) const{
+  template<typename FunctionType>
+  Vec<3> SayeCutElementGeometry<FunctionType>::GetNormal(const Vec<3>& p) const{
       Vec<3> n;
       if (D == 3){
           n = levelset.get_grad(p);
