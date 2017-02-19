@@ -717,7 +717,7 @@ namespace xintegration
 
           if(exponents[k] >= 1){
               exponents[k] -= 1;
-              del_k.c[exponents] = coeff*(exponents[k] +1); //.insert(make_tuple( , ));
+              del_k.c[exponents] += coeff*(exponents[k] +1);
           }
       }
       return del_k;
@@ -877,8 +877,8 @@ namespace xintegration
           double coeff = c_tuple.second;
 
           double prod = 1.;
-          for(int j=0; j<k; j++) prod *= pow(y[j],exponents[j]);
-          for(int j=k; j<D-1; j++) prod *= pow(y[j],exponents[j+1]);
+          for(int j=0; j<k; j++) prod *= std::pow(y[j],exponents[j]);
+          for(int j=k; j<D-1; j++) prod *= std::pow(y[j],exponents[j+1]);
           psi_new.c[{exponents[k]}] += coeff*prod;
       }
       return psi_new;
@@ -889,7 +889,7 @@ namespace xintegration
       for(auto c_tuple : c) {
           auto exponents = c_tuple.first;
           double coeff = c_tuple.second;
-          auto coeff_new = coeff*pow(xk, exponents[k]);
+          auto coeff_new = coeff*std::pow(xk, exponents[k]);
 
           exponents.erase(exponents.begin()+k);
           psi_new.c[exponents] += coeff_new;
@@ -933,7 +933,7 @@ namespace xintegration
       cout << "eval_surface_integrand psi_new: " << endl;
       psi_new.output();
       auto rv = psi_new.find_root_1D(x1,x2);
-      if(rv.size() > 0){
+      if(rv.size() == 1){
           Vec<D> p;
           for(int i=0; i<k; i++) p[i] = x[i];
           p[k] = rv[0];
@@ -1175,7 +1175,7 @@ namespace xintegration
       else if(D == 2){
           Vec<2> n_red = levelset.get_grad(Vec<2>{p[0], p[1]});
           n_red /= L2Norm(n_red);
-          n[0] = n_red[0]; n[1] = n_red[1]; n[2] = n_red[2];
+          n[0] = n_red[0]; n[1] = n_red[1]; n[2] = 0.;
       }
       else {
           throw Exception("Unsupported Dim in SayeCutElementGeometry::GetNormal");
