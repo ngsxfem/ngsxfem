@@ -38,10 +38,10 @@ cmake-tests:
   
 go4quads-tests:
   stage: test
-    cache:
+  cache:
     key: "$CI_PIPELINE_ID"
     paths:
-      - build/
+    - build/
   script:
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
