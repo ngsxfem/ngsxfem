@@ -91,6 +91,7 @@ mesh.SetDeformation(deformation)
 
 a.Assemble();
 f.Assemble();
+
 rhs = gfu.vec.CreateVector()
 rhs.data = f.vec - a.mat * gfu.vec
 update = gfu.vec.CreateVector()
@@ -101,12 +102,6 @@ sol_coef = IfPos(lsetp1,solution[1],solution[0])
 u_coef = gfu.components[0] + IfPos(lsetp1, pos(gfu.components[1]), neg(gfu.components[1]))
 u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 
-Draw(lsetp1,mesh,"lsetp1")
-Draw(lsetmeshadap.deform,mesh,"deformation")
-Draw(u_coef,mesh,"u")
-Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"graph_of_u",sd=3)
-
-visoptions.deformation = 1
 
 
 err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
@@ -118,3 +113,12 @@ l2error = sqrt( Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=m
 
 mesh.UnsetDeformation()
 print("L2 error : ",l2error)
+
+Draw(lsetp1,mesh,"lsetp1")
+Draw(lsetmeshadap.deform,mesh,"deformation")
+Draw(u_coef,mesh,"u")
+Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"graph_of_u",sd=3)
+
+visoptions.deformation = 1
+
+
