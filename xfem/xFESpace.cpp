@@ -8,24 +8,12 @@ namespace ngcomp
   
   shared_ptr<FESpace> XFESpace::Create (shared_ptr<MeshAccess> ma, const Flags & flags)
   {
-    // Creator should be outside xFESpace (and translate flags to according template parameters)
-    bool spacetime = flags.GetDefineFlag("spacetime");
-    int mD = ma->GetDimension();
-    int mSD = spacetime ? mD+1 : mD;
-    if (mD == 2)
-      if (mSD == 2)
-        return make_shared<T_XFESpace<2,2> >(ma,flags);
-      else
-        return make_shared<T_XFESpace<2,3> >(ma,flags);
+    if (ma->GetDimension() == 2)
+      return make_shared<T_XFESpace<2> >(ma,flags);
     else
-      if (mSD == 2)
-        return make_shared<T_XFESpace<3,2> >(ma,flags);
-      else
-        return make_shared<T_XFESpace<3,3> >(ma,flags);
+      return make_shared<T_XFESpace<3> >(ma,flags);
   }
 
-    
-  
   void XFESpace :: CleanUp ()
   {
     //empty
@@ -178,42 +166,18 @@ namespace ngcomp
   }
 
 
-  template <int D, int SD>
-  T_XFESpace<D,SD> :: T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags)
+  template <int D>
+  T_XFESpace<D> :: T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags)
     : XFESpace (ama, flags)
   {
     // cout << "Constructor of XFESpace begin" << endl;
-    spacetime = flags.GetDefineFlag("spacetime");
     empty = flags.GetDefineFlag("empty");
     fenocut = flags.GetDefineFlag("fenocut");
-    // if (empty)
-    //     cout << " EMPTY XFESPACE active..." << endl;
-    ti.first = flags.GetNumFlag("t0",0.0);
-    ti.second = flags.GetNumFlag("t1",1.0);
 
     vmax = flags.GetNumFlag("vmax",1e99);
 
     ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
-    ref_lvl_time = (int) flags.GetNumFlag("ref_time",0);
 
-    // std::cout << " ref_lvl_space = " << ref_lvl_space << std::endl;
-    // std::cout << " ref_lvl_time = " << ref_lvl_time << std::endl;
-
-    // string eval_lset_str(flags.GetStringFlag ("levelset","lset"));
-    // eval_lset = make_shared<EvalFunction>(eval_lset_str);
-
-    /* 
-    static ConstantCoefficientFunction one(1);
-    if (spacetime)
-      integrator = new STXVisIntegrator<D,FUTURE>(&one) ;
-    else
-      integrator = new XVisIntegrator<D>(&one) ;
-    // boundary_integrator = new RobinIntegrator<2> (&one);
-    */
-
-    // cout << "Constructor of XFESpace end" << endl;
-    // static ConstantCoefficientFunction one(1);
-    // integrator = new MassIntegrator<D> (&one);
     if (flags.GetDefineFlag("trace"))
     {
       trace = true;
@@ -228,9 +192,9 @@ namespace ngcomp
   }
 
 
-  template <int D, int SD>
+  template <int D>
   SymbolTable<shared_ptr<DifferentialOperator>>
-  T_XFESpace<D,SD> :: GetAdditionalEvaluators () const
+  T_XFESpace<D> :: GetAdditionalEvaluators () const
   {
     SymbolTable<shared_ptr<DifferentialOperator>> additional;
     switch (ma->GetDimension())
@@ -258,25 +222,25 @@ namespace ngcomp
   }
 
     
-  template <int D, int SD>
-  T_XFESpace<D,SD> :: ~T_XFESpace ()
+  template <int D>
+  T_XFESpace<D> :: ~T_XFESpace ()
   {
     CleanUp();
     // if (eval_lset) delete eval_lset;
   }
   
-  template <int D, int SD>
-  void T_XFESpace<D,SD> :: Update(LocalHeap & lh)
+  template <int D>
+  void T_XFESpace<D> :: Update(LocalHeap & lh)
   {
     if ( basefes == NULL )
     {
-      cout << " T_XFESpace<" <<  D << "," << SD << "> no basefes, Update postponed " << endl;
+      cout << " T_XFESpace<" <<  D << "> no basefes, Update postponed " << endl;
       ndof = 0.0;
       return;
     }
     if ( coef_lset == NULL )
     {
-      cout << " T_XFESpace<" <<  D << "," << SD << "> no lset, Update postponed " << endl;
+      cout << " T_XFESpace<" <<  D << "> no lset, Update postponed " << endl;
       ndof = 0.0;
       return;
     }
@@ -287,10 +251,6 @@ namespace ngcomp
 
     order_space = basefes->GetOrder();
 
-    if (spacetime)
-      throw Exception("no spacetime supported right now");
-      // order_time = dynamic_pointer_cast<SpaceTimeFESpace>(basefes)->OrderTime();
-    
     FESpace::Update(lh);
 
     int ne=ma->GetNE();
@@ -309,8 +269,6 @@ namespace ngcomp
 
     domofel.SetSize(ne);
     domofsel.SetSize(nse);
-
-    ELEMENT_TYPE et_time = D == SD ? ET_POINT : ET_SEGM;
 
     static int first = -1;
     first++;
@@ -339,19 +297,15 @@ namespace ngcomp
           MappedIntegrationPoint<D,D> mip(ip,eltrans);
           const double absdet = mip.GetJacobiDet();
           const double h = D==2 ? sqrt(absdet) : cbrt(absdet);
-          ScalarFieldEvaluator * lset_eval_p = NULL;
-          if (spacetime)
-            lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,llh);
-          else
-            lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
-          CompositeQuadratureRule<SD> cquad;
-          auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                         cquad, llh, 2*order_space+2, 2*order_time, ref_lvl_space, ref_lvl_time);
-          xgeom->SetDistanceThreshold(2.0*(h+(ti.second-ti.first)*vmax));
+          ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
+          CompositeQuadratureRule<D> cquad;
+          auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
+                                                         cquad, llh, 2*order_space+2, 0, ref_lvl_space, 0);
+          xgeom->SetDistanceThreshold(2.0*(h+1.0*vmax));
           DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
-          QuadratureRule<SD> & pquad =  cquad.GetRule(POS);
-          QuadratureRule<SD> & nquad =  cquad.GetRule(NEG);
+          QuadratureRule<D> & pquad =  cquad.GetRule(POS);
+          QuadratureRule<D> & nquad =  cquad.GetRule(NEG);
           double pospart_vol = 0.0;
           double negpart_vol = 0.0;
           for (int i = 0; i < pquad.Size(); ++i)
@@ -392,15 +346,11 @@ namespace ngcomp
 
         ElementTransformation & seltrans = ma->GetTrafo (ei, lh);
 
-        ScalarFieldEvaluator * lset_eval_p = NULL;
-        if (spacetime)
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,ti,lh);
-        else
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
+        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
 
-        CompositeQuadratureRule<SD-1> cquad;
-        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
-                                                       cquad, lh, 2*order_space+2, 2*order_time, ref_lvl_space, ref_lvl_time);
+        CompositeQuadratureRule<D-1> cquad;
+        auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
+                                                       cquad, lh, 2*order_space+2, 0, ref_lvl_space, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
         Array<int> fnums;
@@ -690,8 +640,8 @@ namespace ngcomp
     *testout << "free_dofs = " << *free_dofs << endl;
   }
 
-  template <int D, int SD>
-  FiniteElement & T_XFESpace<D,SD> :: GetFE (ElementId ei, Allocator & alloc) const
+  template <int D>
+  FiniteElement & T_XFESpace<D> :: GetFE (ElementId ei, Allocator & alloc) const
   {
     LocalHeap lh(10000000,"XFESpace::GetFE");
     if (ei.VB() == VOL)
@@ -717,20 +667,14 @@ namespace ngcomp
 
         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
         
-        ScalarFieldEvaluator * lset_eval_p = nullptr;
-        if (spacetime)
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
-        else
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
+        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
 
-        auto cquad = new CompositeQuadratureRule<SD>() ;
+        auto cquad = new CompositeQuadratureRule<D>() ;
 
-        ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
-
-        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+        auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
                                                        *cquad, lh, 
-                                                       2*order_space+2, 2*order_time, 
-                                                       ref_lvl_space, ref_lvl_time);
+                                                       2*order_space+2, 0, 
+                                                       ref_lvl_space, 0);
         // DOMAIN_TYPE dt;
         if(! fenocut)
         {
@@ -739,54 +683,8 @@ namespace ngcomp
           // dt = 
           xgeom->MakeQuadRule();
         }
-        XFiniteElement * retfel = NULL;
+        XFiniteElement * retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom, lh);
 
-        if (spacetime)
-        {
-          bool also_future_trace = true;
-
-          ScalarFieldEvaluator * lset_eval_past_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.first,lh);
-          CompositeQuadratureRule<D> * cquadp = new CompositeQuadratureRule<D>() ;
-          auto xgeom_past = 
-            XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_past_p, 
-                                              *cquadp, lh, 
-                                              2*order_space+2, 2*order_time, 
-                                              ref_lvl_space, ref_lvl_time);
-          {
-            static Timer timer ("XFESpace::GetFE::PastMakeQuadRule");
-            RegionTimer regq (timer);
-            xgeom_past->MakeQuadRule();
-          }
-
-          if (also_future_trace)
-          {
-            CompositeQuadratureRule<D> * cquadf = NULL;
-            ScalarFieldEvaluator * lset_eval_future_p = NULL;
-            lset_eval_future_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti.second,lh);
-            cquadf = new CompositeQuadratureRule<D>() ;
-            auto xgeom_future = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_future_p, 
-                                                                  *cquadf, lh, 
-                                                                  2*order_space+2, 2*order_time, 
-                                                                  ref_lvl_space, ref_lvl_time);
-            {
-              static Timer timer ("XFESpace::GetFE::FutureMakeQuadRule");
-              RegionTimer regq (timer);
-              xgeom_future->MakeQuadRule();
-            }
-            retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom,xgeom_past,xgeom_future, lh);
-
-            delete cquadf;
-          }
-          else
-            retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom,xgeom_past, lh);
-
-          delete cquadp;
-
-        }
-        else
-        {
-          retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom, lh);
-        }
         delete cquad;
 
         if (empty)
@@ -817,20 +715,14 @@ namespace ngcomp
 
         ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
         
-        ScalarFieldEvaluator * lset_eval_p = NULL;
-        if (spacetime)
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,ti,lh);
-        else
-          lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
+        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
 
-        CompositeQuadratureRule<SD-1> * cquad = new CompositeQuadratureRule<SD-1>() ;
+        CompositeQuadratureRule<D-1> * cquad = new CompositeQuadratureRule<D-1>() ;
 
-        ELEMENT_TYPE et_time = spacetime ? ET_SEGM : ET_POINT;
-
-        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p, 
+        auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
                                                        *cquad, lh, 
-                                                       2*order_space+2, 2*order_time, 
-                                                       ref_lvl_space, ref_lvl_time);
+                                                       2*order_space+2, 0, 
+                                                       ref_lvl_space, 0);
         if(! fenocut)
         {
           static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
@@ -855,10 +747,8 @@ namespace ngcomp
       throw Exception("GetFE for VB != BND and VB != VOL not implemented");
   }
 
-  template class T_XFESpace<2,2>;
-  template class T_XFESpace<2,3>;
-  template class T_XFESpace<3,3>;
-  template class T_XFESpace<3,4>;
+  template class T_XFESpace<2>;
+  template class T_XFESpace<3>;
 
 
   LevelsetContainerFESpace::LevelsetContainerFESpace(shared_ptr<MeshAccess> ama, const Flags & flags)
@@ -890,67 +780,20 @@ namespace ngcomp
     shared_ptr<FESpace> fescl = apde->GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
     shared_ptr<CoefficientFunction> coef_lset = apde->GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
 
-    int mD = apde->GetMeshAccess()->GetDimension();
-
-    // shared_ptr<SpaceTimeFESpace> fes_st = dynamic_pointer_cast<SpaceTimeFESpace>(basefes);
-    void * fes_st = NULL;
-    int mSD = fes_st == NULL ? mD : mD + 1;
-
-    if (mD == 2)
+    if (apde->GetMeshAccess()->GetDimension() == 2)
     {
-      if (mSD == 2)
-      {
-        dynamic_pointer_cast<T_XFESpace<2,2> >(xfes) -> SetBaseFESpace (basefes);
-        dynamic_pointer_cast<T_XFESpace<2,2> >(xfes) -> SetLevelSet (coef_lset);
-        if (fescl)
-          dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
-      }
-      else
-      {
-        dynamic_pointer_cast<T_XFESpace<2,3> >(xfes) -> SetBaseFESpace (basefes);
-        dynamic_pointer_cast<T_XFESpace<2,3> >(xfes) -> SetLevelSet (coef_lset);
-        if (fescl)
-          dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
-      }
+      dynamic_pointer_cast<T_XFESpace<2> >(xfes) -> SetBaseFESpace (basefes);
+      dynamic_pointer_cast<T_XFESpace<2> >(xfes) -> SetLevelSet (coef_lset);
+      if (fescl)
+        dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
     }
     else
     {
-      if (mSD == 3)
-      {
-        dynamic_pointer_cast<T_XFESpace<3,3> >(xfes) -> SetBaseFESpace (basefes);
-        dynamic_pointer_cast<T_XFESpace<3,3> >(xfes) -> SetLevelSet (coef_lset);
-        if (fescl)
-          dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
-      }
-      else
-      {
-        dynamic_pointer_cast<T_XFESpace<3,4> >(xfes) -> SetBaseFESpace (basefes);
-        dynamic_pointer_cast<T_XFESpace<3,4> >(xfes) -> SetLevelSet (coef_lset);
-        if (fescl)
-          dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
-      }
+      dynamic_pointer_cast<T_XFESpace<3> >(xfes) -> SetBaseFESpace (basefes);
+      dynamic_pointer_cast<T_XFESpace<3> >(xfes) -> SetLevelSet (coef_lset);
+      if (fescl)
+        dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
     }
-    // if (xfes_ != NULL)
-    // {
-    //   xfes_->SetBaseFESpace(basefes);
-    // }
-    // else
-    // {
-    //   CompoundFESpace* cfes = dynamic_cast<CompoundFESpace*>(xfes);
-    //   if (cfes != NULL)
-    //   {
-    //     for (int i=0; i < cfes->GetNSpaces(); ++i)
-    //     {
-    //       T_XFESpace* xfes_2 = dynamic_cast<XFESpace*>((*cfes)[i]);
-    //       if (xfes_2 != NULL)
-    //       {
-    //         xfes_2->SetBaseFESpace(basefes);
-    //       }
-    //     }
-    //   }
-    //   else
-    //     throw Exception("FESpace is not compatible to x-fespaces!");
-    // }
   }
   
   NumProcInformXFESpace::~NumProcInformXFESpace(){ ; }
@@ -980,18 +823,6 @@ namespace ngcomp
   {
     name="XStdFESpace";
 
-    const int sD = ma->GetDimension();
-    if (sD == 2)
-      if (dynamic_pointer_cast<T_XFESpace<2,3> >(spaces[1]) != NULL)
-        spacetime = true;
-      else
-        spacetime = false;
-    else
-      if (dynamic_pointer_cast<T_XFESpace<3,4> >(spaces[1]) != NULL)
-        spacetime = true;
-      else
-        spacetime = false;
-
     dynamic_pointer_cast<XFESpace>(spaces[1])->SetBaseFESpace(spaces[0]);
 
     shared_ptr<ConstantCoefficientFunction> one = make_shared<ConstantCoefficientFunction>(1);
@@ -1000,14 +831,12 @@ namespace ngcomp
       integrator[VOL] = make_shared<XVisIntegrator<2> > (one);
       evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
       flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<2>>>();
-      // boundary_integrator = new RobinIntegrator<2> (&one);
     }
     else
     {
       integrator[VOL] = make_shared<XVisIntegrator<3> >(one);
       evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
       flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<3>>>();
-      // boundary_integrator = new RobinVecHDGIntegrator<3> (&one);
     }
   }
 
@@ -1162,21 +991,13 @@ namespace ngcomp
             Array<int> fnums;
             Array<int> ednums;
             Array<int> vnums;
-            shared_ptr<T_XFESpace<2,2> > xfes22 = NULL;
-            shared_ptr<T_XFESpace<2,3> > xfes23 = NULL;
-            shared_ptr<T_XFESpace<3,3> > xfes33 = NULL;
-            shared_ptr<T_XFESpace<3,4> > xfes34 = NULL;
+            shared_ptr<T_XFESpace<2> > xfes22 = NULL;
+            shared_ptr<T_XFESpace<3> > xfes33 = NULL;
             const int sD = ma->GetDimension();
             if (sD == 2)
-              if (spacetime)
-                xfes23 = dynamic_pointer_cast<T_XFESpace<2,3> >(spaces[1]);
-              else
-                xfes22 = dynamic_pointer_cast<T_XFESpace<2,2> >(spaces[1]);
+              xfes22 = dynamic_pointer_cast<T_XFESpace<2> >(spaces[1]);
             else
-              if (spacetime)
-                xfes34 = dynamic_pointer_cast<T_XFESpace<3,4> >(spaces[1]);
-              else
-                xfes33 = dynamic_pointer_cast<T_XFESpace<3,3> >(spaces[1]);
+              xfes33 = dynamic_pointer_cast<T_XFESpace<3> >(spaces[1]);
             // Array<int> elnums;
             for (int i = 0; i < nf; i++)
             {
@@ -1246,32 +1067,15 @@ namespace ngcomp
             int epcnt = 0;
             for (int elnr = 0; elnr < ne; ++elnr)
             {
-              shared_ptr<T_XFESpace<2,2> > xfes22 = NULL;
-              shared_ptr<T_XFESpace<2,3> > xfes23 = NULL;
-              shared_ptr<T_XFESpace<3,3> > xfes33 = NULL;
-              shared_ptr<T_XFESpace<3,4> > xfes34 = NULL;
+              shared_ptr<T_XFESpace<2> > xfes22 = NULL;
+              shared_ptr<T_XFESpace<3> > xfes33 = NULL;
               const int sD = ma->GetDimension();
               if (sD == 2)
-                if (spacetime)
-                  xfes23 = dynamic_pointer_cast<T_XFESpace<2,3> >(spaces[1]);
-                else
-                  xfes22 = dynamic_pointer_cast<T_XFESpace<2,2> >(spaces[1]);
+                xfes22 = dynamic_pointer_cast<T_XFESpace<2> >(spaces[1]);
               else
-                if (spacetime)
-                  xfes34 = dynamic_pointer_cast<T_XFESpace<3,4> >(spaces[1]);
-                else
-                  xfes33 = dynamic_pointer_cast<T_XFESpace<3,3> >(spaces[1]);
-              bool elcut = sD ? 
-                (spacetime ? xfes23->IsElementCut(elnr) 
-                 : xfes22->IsElementCut(elnr) )
-                :(spacetime ? xfes34->IsElementCut(elnr) 
-                  : xfes33->IsElementCut(elnr) );
-              bool isnbelcut = sD ? 
-                (spacetime ? xfes23->IsNeighborElementCut(elnr) 
-                 : xfes22->IsNeighborElementCut(elnr) )
-                :(spacetime ? xfes34->IsNeighborElementCut(elnr) 
-                  : xfes33->IsNeighborElementCut(elnr) );
-            
+                xfes33 = dynamic_pointer_cast<T_XFESpace<3> >(spaces[1]);
+              bool elcut = sD == 2 ? xfes22->IsElementCut(elnr) : xfes33->IsElementCut(elnr);
+              bool isnbelcut = sD == 2 ? xfes22->IsNeighborElementCut(elnr) : xfes33->IsNeighborElementCut(elnr);
               GetDofNrs(elnr,dnums);
               if (elcut || (dgjumps && isnbelcut))
                 for (int i = 0; i < dnums.Size(); ++i)
@@ -1349,27 +1153,15 @@ namespace ngcomp
         int epcnt = 0;
         for (int elnr = 0; elnr < ma->GetNE(); ++elnr)
         {
-          shared_ptr<T_XFESpace<2,2> > xfes22 = NULL;
-          shared_ptr<T_XFESpace<2,3> > xfes23 = NULL;
-          shared_ptr<T_XFESpace<3,3> > xfes33 = NULL;
-          shared_ptr<T_XFESpace<3,4> > xfes34 = NULL;
+          shared_ptr<T_XFESpace<2> > xfes22 = NULL;
+          shared_ptr<T_XFESpace<3> > xfes33 = NULL;
           const int sD = ma->GetDimension();
           if (sD == 2)
-            if (spacetime)
-              xfes23 = dynamic_pointer_cast<T_XFESpace<2,3> >(spaces[1]);
-            else
-              xfes22 = dynamic_pointer_cast<T_XFESpace<2,2> >(spaces[1]);
+            xfes22 = dynamic_pointer_cast<T_XFESpace<2> >(spaces[1]);
           else
-            if (spacetime)
-              xfes34 = dynamic_pointer_cast<T_XFESpace<3,4> >(spaces[1]);
-            else
-              xfes33 = dynamic_pointer_cast<T_XFESpace<3,3> >(spaces[1]);
-          bool elcut = sD ? 
-            (spacetime ? xfes23->IsElementCut(elnr) 
-             : xfes22->IsElementCut(elnr) )
-            :(spacetime ? xfes34->IsElementCut(elnr) 
-              : xfes33->IsElementCut(elnr) );
-            
+            xfes33 = dynamic_pointer_cast<T_XFESpace<3> >(spaces[1]);
+          bool elcut = sD == 2 ? xfes22->IsElementCut(elnr) : xfes33->IsElementCut(elnr);
+
           GetDofNrs(elnr,dnums);
           if (elcut)
             for (int i = 0; i < dnums.Size(); ++i)
@@ -1380,7 +1172,6 @@ namespace ngcomp
                 epcnt++;
               }
             }
-        
         }
         std::cout << " epcnt = " << epcnt << std::endl;
 
