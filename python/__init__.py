@@ -372,7 +372,7 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
     else:
         domain = positive_domain
         
-    if not "force_intorder" in levelset_domain:
+    if not "force_intorder" in levelset_domain or levelset_domain["force_intorder"] == -1:
         levelset_domain["force_intorder"] = -1
     else:
         order = levelset_domain["force_intorder"]
@@ -383,7 +383,7 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
         print("Please provide a level set function")
     if not "domain_type" in levelset_domain:
         print("Please provide a domain type (NEG,POS or IF)")
-    
+
     return IntegrateX(lset=levelset_domain["levelset"],
                       mesh=mesh, cf_neg=cf, cf_pos=cf, cf_interface=cf,
                       order=order,
