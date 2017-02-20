@@ -9,8 +9,6 @@ add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   symboliccutlfi.cpp
   )
 
-# stxfemIntegrators.cpp
-
 set_target_properties(ngsxfem_xfem PROPERTIES SUFFIX ".so")
 
 if(NOT WIN32)
@@ -29,16 +27,4 @@ install( FILES
   symboliccutlfi.hpp
   DESTINATION include
   )
-
-# stxfemIntegrators.hpp
-
-if(USE_PYTHON)
-    install (FILES
-            __init__.py 
-            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
-            COMPONENT xfem
-            )
-endif(USE_PYTHON)
-
-
 
