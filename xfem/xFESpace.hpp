@@ -229,47 +229,6 @@ namespace ngcomp
     
   };
 
-
-
-  class LevelsetContainerFESpace : public FESpace
-  {
-    shared_ptr<CoefficientFunction> coef_lset = NULL;
-    double told;
-    double tnew;
-  public:
-    LevelsetContainerFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
-    virtual ~LevelsetContainerFESpace () { ; }
-    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
-    {
-      return make_shared<LevelsetContainerFESpace>(ma,flags);
-    }
-    virtual void Update(LocalHeap & lh) { ; }
-    virtual void UpdateCouplingDofArray() { ; }
-
-    virtual size_t GetNDof () const { return 0; }
-
-    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const { dnums.SetSize(0); }
-
-    FiniteElement & GetFE (ElementId ei, Allocator & alloc) const
-    { return *new (alloc) LevelsetContainerFE(coef_lset,told,tnew); }
-
-    void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset)
-    { coef_lset = _coef_lset;}
-    void SetTime(double ta, double tb) { told=ta; tnew=tb; }
-    virtual string GetClassName () const { return "LevelsetContainerFESpace"; }
-  };  
-
-
-  class NumProcInformXFESpace : public NumProc
-  {
-    const CoefficientFunction * coef = NULL;
-  public:
-    NumProcInformXFESpace (shared_ptr<PDE> apde, const Flags & flags);
-    ~NumProcInformXFESpace();
-    virtual string GetClassName () const;
-    virtual void Do (LocalHeap & lh);
-  };
-
   class NumProcXToNegPos : public NumProc
   {
     shared_ptr<GridFunction> gfxstd = nullptr;

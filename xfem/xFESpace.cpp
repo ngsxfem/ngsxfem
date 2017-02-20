@@ -750,58 +750,6 @@ namespace ngcomp
   template class T_XFESpace<2>;
   template class T_XFESpace<3>;
 
-
-  LevelsetContainerFESpace::LevelsetContainerFESpace(shared_ptr<MeshAccess> ama, const Flags & flags)
-    : FESpace(ama,flags)
-  {
-    ;
-  }
-
-
-  NumProcInformXFESpace::NumProcInformXFESpace (shared_ptr<PDE> apde, const Flags & flags)
-    : NumProc (apde)
-  { 
-    
-    shared_ptr<FESpace> xstdfes = apde->GetFESpace(flags.GetStringFlag("xstdfespace","v"), true);
-    shared_ptr<FESpace> xfes = NULL;
-    shared_ptr<FESpace> basefes = NULL;
-
-    if (xstdfes)
-    {
-      basefes = (*dynamic_pointer_cast<CompoundFESpace>(xstdfes))[0];
-      xfes = (*dynamic_pointer_cast<CompoundFESpace>(xstdfes))[1];
-    }
-    else
-    {
-      xfes = apde->GetFESpace(flags.GetStringFlag("xfespace","vx"));
-      basefes = apde->GetFESpace(flags.GetStringFlag("fespace","v"));
-    }
-
-    shared_ptr<FESpace> fescl = apde->GetFESpace(flags.GetStringFlag("lsetcontfespace","vlc"),true);
-    shared_ptr<CoefficientFunction> coef_lset = apde->GetCoefficientFunction(flags.GetStringFlag("coef_levelset","coef_lset"));
-
-    if (apde->GetMeshAccess()->GetDimension() == 2)
-    {
-      dynamic_pointer_cast<T_XFESpace<2> >(xfes) -> SetBaseFESpace (basefes);
-      dynamic_pointer_cast<T_XFESpace<2> >(xfes) -> SetLevelSet (coef_lset);
-      if (fescl)
-        dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
-    }
-    else
-    {
-      dynamic_pointer_cast<T_XFESpace<3> >(xfes) -> SetBaseFESpace (basefes);
-      dynamic_pointer_cast<T_XFESpace<3> >(xfes) -> SetLevelSet (coef_lset);
-      if (fescl)
-        dynamic_pointer_cast<LevelsetContainerFESpace >(fescl) -> SetLevelSet (coef_lset);
-    }
-  }
-  
-  NumProcInformXFESpace::~NumProcInformXFESpace(){ ; }
-  string NumProcInformXFESpace::GetClassName () const {return "InformXFESpace";  }
-  void NumProcInformXFESpace::Do (LocalHeap & lh)  { ; }
-  
-  static RegisterNumProc<NumProcInformXFESpace> npinfoxfe("informxfem");
-
   NumProcXToNegPos::NumProcXToNegPos (shared_ptr<PDE> apde, const Flags & flags)
   {
     gfxstd = apde->GetGridFunction (flags.GetStringFlag ("xstd_gridfunction"));
@@ -1206,7 +1154,6 @@ namespace ngcomp
     Init::Init()
     {
       GetFESpaceClasses().AddFESpace ("xfespace", XFESpace::Create);
-      GetFESpaceClasses().AddFESpace ("lsetcontfespace", LevelsetContainerFESpace::Create);
       GetFESpaceClasses().AddFESpace ("xstdfespace", XStdFESpace::Create);
       GetFESpaceClasses().AddFESpace ("xh1fespace", XStdFESpace::Create); //backward compatibility
     }

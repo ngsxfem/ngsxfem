@@ -9,43 +9,6 @@ namespace ngfem
     : // FiniteElement(),
     sign(a_sign), et(a_et) { ndof = 0; order = 0; }
 
-  LevelsetContainerFE::LevelsetContainerFE(shared_ptr<CoefficientFunction> coeflset, double ta, double tb)
-    : // FiniteElement(),
-    coef_lset(coeflset), tnew(tb), told(ta) {ndof = 0; }
-
-
-  XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                 shared_ptr<XLocalGeometryInformation> a_localgeom,
-                                 shared_ptr<XLocalGeometryInformation> a_localgeom_downtrace,
-                                 shared_ptr<XLocalGeometryInformation> a_localgeom_uptrace,
-                                 LocalHeap & lh)
-    : base(a_base), 
-      localsigns(a_localsigns.Size(),lh), 
-      fxgeom(*a_localgeom,lh),
-      fxgeom_downtrace(*a_localgeom_downtrace,lh),
-      fxgeom_uptrace(*a_localgeom_uptrace,lh)
-  { 
-    ndof = base.GetNDof(); 
-    order = base.Order(); 
-    for (int l = 0; l < localsigns.Size(); ++l)
-      localsigns[l] = a_localsigns[l];
-  };
-
-  XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
-                                 shared_ptr<XLocalGeometryInformation> a_localgeom,
-                                 shared_ptr<XLocalGeometryInformation> a_localgeom_downtrace,
-                                 LocalHeap & lh)
-    : base(a_base), 
-      localsigns(a_localsigns.Size(),lh), 
-      fxgeom(*a_localgeom,lh),
-      fxgeom_downtrace(*a_localgeom_downtrace,lh)
-  { 
-    ndof = base.GetNDof(); 
-    order = base.Order(); 
-    for (int l = 0; l < localsigns.Size(); ++l)
-      localsigns[l] = a_localsigns[l];
-  };
-
   XFiniteElement::XFiniteElement(const FiniteElement & a_base, const Array<DOMAIN_TYPE>& a_localsigns, 
                                  shared_ptr<XLocalGeometryInformation> a_localgeom,
                                  LocalHeap & lh)
