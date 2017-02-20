@@ -575,6 +575,7 @@ void ExportNgsx(py::module &m)
 
 PYBIND11_PLUGIN(libngsxfem_py) 
 {
+  cout << "importing ngs-xfem" << endl;
   py::module m("xfem", "pybind xfem");
   ExportNgsx(m);
   return m.ptr();
