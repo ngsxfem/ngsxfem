@@ -1,8 +1,6 @@
 add_library(ngsxfem_utils ${NGS_LIB_TYPE}
   fieldeval.cpp fieldeval.hpp
-  output.cpp output.hpp
   )
-#  error.cpp error.hpp
 
 set_target_properties(ngsxfem_utils PROPERTIES SUFFIX ".so")
 
