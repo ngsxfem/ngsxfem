@@ -1,6 +1,5 @@
 add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   ghostpenalty.cpp
-  sdxfemIntegrators.cpp
   xFESpace.cpp
   xfemIntegrators.cpp
   xfemNitsche.cpp
@@ -21,7 +20,6 @@ endif(NOT WIN32)
 
 install( FILES
   ghostpenalty.hpp
-  # setvaluesx.hpp
   xFESpace.hpp
   xfemIntegrators.hpp
   xfemNitsche.hpp
