@@ -21,10 +21,10 @@ add_test(NAME py_tutorial_nxfem_old COMMAND ${PYTHON_EXECUTABLE}
   "${PROJECT_SOURCE_DIR}/tests/nxfem_old_style.py")
 
 add_test(NAME pytests_xfes_ndof COMMAND ${PYTHON_EXECUTABLE} -m pytest
-  "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py")
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 add_test(NAME pytests_cutint COMMAND ${PYTHON_EXECUTABLE} -m pytest
-  "${PROJECT_SOURCE_DIR}/tests/pytests/test_localgeom.py")
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_localgeom.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 install( FILES
   ngsxfem_report.py
