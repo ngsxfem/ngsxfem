@@ -32,7 +32,7 @@ ctests-allow-fail:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest -V -R py_tutorial_nxfem_lo|py_tutorial_nxfem_ho"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest -V -R 'py_tutorial_nxfem_lo|py_tutorial_nxfem_ho'"
   when: always
   allow_failure: true
 
@@ -51,7 +51,7 @@ ctests-remaining:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest -V -E py_tutorial_nxfem_lo|py_tutorial_nxfem_ho"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "ctest -V -E 'py_tutorial_nxfem_lo|py_tutorial_nxfem_ho'"
   when: always
   allow_failure: false
 
