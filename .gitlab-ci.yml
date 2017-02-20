@@ -59,9 +59,15 @@ ngsxfem-report:
   stage: deploy
   script:
     - cd /home/gitlab-runner/inst/netgen/share/ngsxfem/report
+    - mkdir -p /home/gitlab-runner/ngsxfem-reports
+    - touch /home/gitlab-runner/ngsxfem-reports/log
     - echo "" >> /home/gitlab-runner/ngsxfem-reports/log
     - echo $CI_PIPELINE_ID >> /home/gitlab-runner/ngsxfem-reports/log
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py" >> /home/gitlab-runner/ngsxfem-reports/log
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py" | grep Report -A 100000 >> /home/gitlab-runner/ngsxfem-reports/log
 
 deploy:
   stage: deploy
