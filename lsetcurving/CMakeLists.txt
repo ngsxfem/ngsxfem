@@ -17,12 +17,10 @@ if(NOT WIN32)
   install( TARGETS ngsxfem_lsetcurving ${ngs_install_dir})
 endif(NOT WIN32)
 
-install ( FILES lsetcurv.py DESTINATION python)
+# install ( FILES lsetcurv.py DESTINATION python)
 
-if(USE_PYTHON)
-    install (FILES
-            lsetcurv.py 
-            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
-            COMPONENT xfem
-            )
-endif(USE_PYTHON)
+install (FILES
+        lsetcurv.py 
+        DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+        COMPONENT xfem
+        )
