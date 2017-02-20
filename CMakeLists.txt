@@ -18,10 +18,11 @@ if(BUILD_NGSOLVE)
 
   if(CMAKE_GENERATOR STREQUAL "Ninja")
     set(ADDNINJA "-GNinja")
+    set(BUILDEXE "ninja")
   else(CMAKE_GENERATOR STREQUAL "Ninja")         
     set(ADDNINJA "")
+    set(BUILDEXE "make")
   endif(CMAKE_GENERATOR STREQUAL "Ninja")
-
 
   execute_process(COMMAND mkdir -p ngsolve)
   execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR}
@@ -162,10 +163,6 @@ configure_file(
 add_custom_target(uninstall_xfem
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-##############################################################################
-# Unhandled Makefile.am settings
-##############################################################################
-
 if(NOT WIN32)
     string(ASCII 27 Esc)
     set(ColorReset "${Esc}[m")
@@ -183,15 +180,6 @@ message("
 ------------------------------------------------------------------------
   ${PROJECT_NAME} ${PACKAGE_VERSION}:  Automatic configuration OK.
 
-  Building:
-
-    Type 'make' to compile ${PROJECT_NAME}.
-
-    Type 'make install' to install ${PROJECT_NAME}.
-
-  Build NGSolve from scratch: ${BUILD_NGSOLVE}
-  Build NGSolve/xfem with ccache: ${USE_CCACHE}
-
   Install directory:
     ${CMAKE_INSTALL_PREFIX}
 
@@ -206,6 +194,15 @@ message("
 
   Build Type:
     type = ${CMAKE_BUILD_TYPE}
+
+  Build NGSolve from scratch: ${BUILD_NGSOLVE}
+  Build xfem (and NGSolve) with ccache: ${USE_CCACHE}
+
+  Building:
+
+    Type '${BUILDEXE}' to compile ${PROJECT_NAME}.
+
+    Type '${BUILDEXE} install' to install ${PROJECT_NAME}.
 
 ------------------------------------------------------------------------
 ")
