@@ -2,8 +2,7 @@ include(CTest)
 
 add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
 
-
-add_test(NAME py_tutorial_nxfem COMMAND ${PYTHON_EXECUTABLE} 
+add_test(NAME py_tutorial_nxfem_lo COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem.py")
 
 add_test(NAME py_tutorial_nxfem_ho COMMAND ${PYTHON_EXECUTABLE} 
