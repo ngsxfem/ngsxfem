@@ -31,18 +31,15 @@ coef_f = [ (-1.0*sqrt(2.0)*pi*(pi*cos(pi/4*(r44))*(r66)+3*sin(pi/4*(r44))*(r22))
 
 order = 1
 
-# extended FESpace 
+# Cut FESpaces:
 
 Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
-Vhx = XFESpace(Vh, mesh, lsetp1)
-VhG = FESpace([Vh,Vhx])
-print("unknowns in extended FESpace:", VhG.ndof)
-
+VhG = FESpace([Vh,Vh])
+print("unknowns in CutFESpace (2 x standard unknowns): ", VhG.ndof)
 # coefficients / parameters: 
 
 n = 1.0/grad(lsetp1).Norm() * grad(lsetp1)
 h = specialcf.mesh_size
-
 
 kappa = kappa(mesh,lsetp1)
 
@@ -50,14 +47,11 @@ stab = 10*(alpha[1]+alpha[0])*(order+1)*order/h
 
 # expressions of test and trial functions:
 
-u_std, u_x = VhG.TrialFunction()
-v_std, v_x = VhG.TestFunction()
+u = VhG.TrialFunction()
+v = VhG.TestFunction()
 
-u = [u_std + op(u_x) for op in [neg,pos]]
-v = [v_std + op(v_x) for op in [neg,pos]]
-
-gradu = [grad(u_std) + op(u_x) for op in [neg_grad,pos_grad]]
-gradv = [grad(v_std) + op(v_x) for op in [neg_grad,pos_grad]]
+gradu = [grad(ui) for ui in u]
+gradv = [grad(vi) for vi in v]
 
 average_flux_u = sum([- kappa[i] * alpha[i] * gradu[i] * n for i in [0,1]])
 average_flux_v = sum([- kappa[i] * alpha[i] * gradv[i] * n for i in [0,1]])
@@ -83,7 +77,7 @@ f += SymbolicLFI(levelset_domain = lset_pos, form = coef_f[1] * v[1])
 
 gfu = GridFunction(VhG)
 
-gfu.components[0].Set(solution[1], BND)
+gfu.components[1].Set(solution[1], BND)
 
 a.Assemble();
 f.Assemble();
@@ -94,8 +88,12 @@ update.data = a.mat.Inverse(VhG.FreeDofs()) * rhs;
 gfu.vec.data += update
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
-u_coef = gfu.components[0] + IfPos(lsetp1, pos(gfu.components[1]), neg(gfu.components[1]))
-u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
+u_coef = IfPos(lsetp1, gfu.components[1], gfu.components[0])
+u = [gfu.components[i] for i in [0,1]]
+
+Draw(levelset,mesh,"levelset")
+Draw(lsetp1,mesh,"levelset_P1")
+Draw(u_coef,mesh,"u")
 
 err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
 
@@ -105,7 +103,3 @@ l2error = sqrt( Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=m
                             order=2*order, heapsize=1000000))
 
 print("L2 error : ",l2error)
-
-Draw(levelset,mesh,"levelset")
-Draw(lsetp1,mesh,"levelset_P1")
-Draw(u_coef,mesh,"u")

@@ -1,4 +1,8 @@
 install( FILES
-  nxfem.py nxfem_higher_order.py symboliccut.py symboliccut2.py symbolic_tracefem.py 
+  nxfem.py
+  cutfem.py
+  nxfem_higher_order.py
+  tracefem.py
+  xfespaces.py
   DESTINATION share/ngsxfem
 )

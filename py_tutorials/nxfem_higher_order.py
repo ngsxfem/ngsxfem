@@ -111,8 +111,9 @@ l2error = sqrt( Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=m
                 + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1], mesh=mesh,
                             order=2*order, heapsize=1000000))
 
-mesh.UnsetDeformation()
 print("L2 error : ",l2error)
+
+mesh.UnsetDeformation()
 
 Draw(lsetp1,mesh,"lsetp1")
 Draw(lsetmeshadap.deform,mesh,"deformation")
