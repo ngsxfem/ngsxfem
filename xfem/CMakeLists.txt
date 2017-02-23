@@ -1,8 +1,6 @@
 add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   ghostpenalty.cpp
   xFESpace.cpp
-  xfemIntegrators.cpp
-  xfemNitsche.cpp
   xfemdiffops.cpp
   xfiniteelement.cpp
   symboliccutbfi.cpp
@@ -19,8 +17,6 @@ endif(NOT WIN32)
 install( FILES
   ghostpenalty.hpp
   xFESpace.hpp
-  xfemIntegrators.hpp
-  xfemNitsche.hpp
   xfemdiffops.hpp
   xfiniteelement.hpp
   symboliccutbfi.hpp

@@ -172,7 +172,6 @@ namespace ngcomp
   {
     // cout << "Constructor of XFESpace begin" << endl;
     empty = flags.GetDefineFlag("empty");
-    fenocut = flags.GetDefineFlag("fenocut");
 
     vmax = flags.GetNumFlag("vmax",1e99);
 
@@ -636,108 +635,23 @@ namespace ngcomp
   template <int D>
   FiniteElement & T_XFESpace<D> :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    LocalHeap lh(10000000,"XFESpace::GetFE");
-    if (ei.VB() == VOL)
+    static Timer timer ("XFESpace::GetFE");
+    RegionTimer reg (timer);
+
+    Ngs_Element ngsel = ma->GetElement(ei);
+    ELEMENT_TYPE eltype = ngsel.GetType();
+    if ( ( ei.VB() == BND && activeselem.Test(ei.Nr()) )
+         || ( ei.VB() == VOL && activeelem.Test(ei.Nr()) ))
     {
-      int elnr = ei.Nr();
-      static Timer timer ("XFESpace::GetFE");
-      RegionTimer reg (timer);
-
-      Ngs_Element ngel = ma->GetElement(ei);
-      ELEMENT_TYPE eltype = ngel.GetType();
-      if (!activeelem.Test(elnr))
-      {
-        DOMAIN_TYPE dt = domofel[elnr];
-        return *(new (alloc) XDummyFE(dt,eltype));
-      }
-      else
-      {
-        Array<DOMAIN_TYPE> domnrs;
-        GetDomainNrs(elnr,domnrs);  
-
-        Ngs_Element ngel = ma->GetElement(ei);
-        ELEMENT_TYPE eltype = ngel.GetType();
-
-        ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
-        
-        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
-
-        auto cquad = new CompositeQuadratureRule<D>() ;
-
-        auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
-                                                       *cquad, lh, 
-                                                       2*order_space+2, 0, 
-                                                       ref_lvl_space, 0);
-        // DOMAIN_TYPE dt;
-        if(! fenocut)
-        {
-          static Timer timer ("XFESpace::GetFE::MakeQuadRule");
-          RegionTimer regq (timer);
-          // dt = 
-          xgeom->MakeQuadRule();
-        }
-        XFiniteElement * retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom, lh);
-
-        delete cquad;
-
-        if (empty)
-          retfel->SetEmpty();
-      
-        return *retfel;
-      }
-    }
-    else if (ei.VB() == BND)
-    {
-      static Timer timer ("XFESpace::GetSFE");
-      RegionTimer reg (timer);
-
-      Ngs_Element ngsel = ma->GetElement(ei);
-      ELEMENT_TYPE eltype = ngsel.GetType();
-      if (!activeselem.Test(ei.Nr()))
-      {
-        DOMAIN_TYPE dt = domofsel[ei.Nr()];
-        return *(new (alloc) XDummyFE(dt,eltype));
-      }
-      else
-      {
-        Array<DOMAIN_TYPE> domnrs;
-        GetDomainNrs(ei,domnrs);  
-
-        Ngs_Element ngel = ma->GetElement(ei);
-        ELEMENT_TYPE eltype = ngel.GetType();
-
-        ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
-        
-        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
-
-        CompositeQuadratureRule<D-1> * cquad = new CompositeQuadratureRule<D-1>() ;
-
-        auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
-                                                       *cquad, lh, 
-                                                       2*order_space+2, 0, 
-                                                       ref_lvl_space, 0);
-        if(! fenocut)
-        {
-          static Timer timer ("XFESpace::GetSFE::PastMakeQuadRule");
-          RegionTimer regq (timer);
-          xgeom->MakeQuadRule();
-        }
-
-        FlatXLocalGeometryInformation fxgeom(*xgeom, lh);
-
-        auto retfel = new (alloc) XFiniteElement(basefes->GetFE(ei,lh),domnrs,xgeom,lh);
-
-        delete cquad;
-
-        if (empty)
-          retfel->SetEmpty();
-
-        return *retfel;
-      }
-      
+      Array<DOMAIN_TYPE> domnrs;
+      GetDomainNrs(ei,domnrs);  
+      return *(new (alloc) XFiniteElement(basefes->GetFE(ei,alloc),domnrs,alloc));
     }
     else
-      throw Exception("GetFE for VB != BND and VB != VOL not implemented");
+    {
+      DOMAIN_TYPE dt = domofsel[ei.Nr()];
+      return *(new (alloc) XDummyFE(dt,eltype));
+    }
   }
 
   template class T_XFESpace<2>;
