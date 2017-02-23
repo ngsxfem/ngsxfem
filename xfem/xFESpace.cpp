@@ -233,7 +233,36 @@ namespace ngcomp
     CleanUp();
     // if (eval_lset) delete eval_lset;
   }
-  
+
+
+  void IterateRange (int ne, LocalHeap & clh, 
+                     const function<void(int,LocalHeap&)> & func)
+  {
+    if (task_manager)
+    {
+      SharedLoop2 sl(ne);
+      task_manager -> CreateJob
+        ( [&] (const TaskInfo & ti) 
+          {
+            LocalHeap lh = clh.Split(ti.thread_nr, ti.nthreads);
+            for (int elnr : sl)
+            {
+              HeapReset hr(lh);
+              func (elnr,lh);
+            }
+
+          } );
+    }
+    else
+    {
+      for (int elnr = 0; elnr < ne; elnr++)
+      {
+        HeapReset hr(clh);
+        func (elnr,clh);
+      }
+    }
+  }
+
   template <int D>
   void T_XFESpace<D> :: Update(LocalHeap & lh)
   {
@@ -282,104 +311,110 @@ namespace ngcomp
     BitArray element_most_pos(ne);
     element_most_pos.Clear();
 
+
+    IterateRange 
+      (ne, lh, 
+       [&] (int elnr, LocalHeap & lh)
+       {
+         Ngs_Element ngel = ma->GetElement(elnr);
+         ELEMENT_TYPE eltype = ngel.GetType();
+         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+         // IntegrationPoint ip(0.0);
+         // MappedIntegrationPoint<D,D> mip(ip,eltrans);
+         // const double absdet = mip.GetJacobiDet();
+         // const double h = D==2 ? sqrt(absdet) : cbrt(absdet);
+         ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,lh);
+         CompositeQuadratureRule<D> cquad;
+         auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
+                                                        cquad, lh, 0, 0, ref_lvl_space, 0);
+         // xgeom->SetDistanceThreshold(2.0*(h+1.0*vmax));
+         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
+
+         QuadratureRule<D> & pquad =  cquad.GetRule(POS);
+         QuadratureRule<D> & nquad =  cquad.GetRule(NEG);
+         double pospart_vol = 0.0;
+         double negpart_vol = 0.0;
+         for (int i = 0; i < pquad.Size(); ++i)
+           pospart_vol += pquad.weights[i];
+         for (int i = 0; i < nquad.Size(); ++i)
+           negpart_vol += nquad.weights[i];
+         if (pospart_vol > negpart_vol)
+           element_most_pos.Set(elnr);
+
+         domofel[elnr] = dt;
+
+         if (dt == IF)// IsElementCut ?
+         {
+           activeelem.Set(elnr);
+           Array<int> basednums;
+           basefes->GetDofNrs(ElementId(VOL,elnr),basednums);
+           for (int k = 0; k < basednums.Size(); ++k)
+             activedofs.Set(basednums[k]);
+         }
+       });
+
     TableCreator<int> creator;
     for ( ; !creator.Done(); creator++)
     {
-// #pragma omp parallel
+      for (int elnr = 0; elnr < ne; ++elnr)
       {
-        LocalHeap llh(lh.Split());
-// #pragma omp for schedule(static)
-        for (int elnr = 0; elnr < ne; ++elnr)
-        {
-          HeapReset hr(llh);
+        if (! activeelem[elnr]) continue;
 
-          Ngs_Element ngel = ma->GetElement(elnr);
-          ELEMENT_TYPE eltype = ngel.GetType();
-
-          ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), llh);
-        
-          IntegrationPoint ip(0.0);
-          MappedIntegrationPoint<D,D> mip(ip,eltrans);
-          const double absdet = mip.GetJacobiDet();
-          const double h = D==2 ? sqrt(absdet) : cbrt(absdet);
-          ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
-          CompositeQuadratureRule<D> cquad;
-          auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
-                                                         cquad, llh, 0, 0, ref_lvl_space, 0);
-          xgeom->SetDistanceThreshold(2.0*(h+1.0*vmax));
-          DOMAIN_TYPE dt = xgeom->MakeQuadRule();
-
-          QuadratureRule<D> & pquad =  cquad.GetRule(POS);
-          QuadratureRule<D> & nquad =  cquad.GetRule(NEG);
-          double pospart_vol = 0.0;
-          double negpart_vol = 0.0;
-          for (int i = 0; i < pquad.Size(); ++i)
-            pospart_vol += pquad.weights[i];
-          for (int i = 0; i < nquad.Size(); ++i)
-            negpart_vol += nquad.weights[i];
-          if (pospart_vol > negpart_vol)
-            element_most_pos.Set(elnr);
-
-          domofel[elnr] = dt;
-
-          if (dt == IF)// IsElementCut ?
-          {
-            activeelem.Set(elnr);
-            Array<int> basednums;
-            basefes->GetDofNrs(ElementId(VOL,elnr),basednums);
-            for (int k = 0; k < basednums.Size(); ++k)
-            {
-              activedofs.Set(basednums[k]);
-// #pragma omp critical(creatoraddel)
-              creator.Add(elnr,basednums[k]);
-            }
-          }
-        }
+        Array<int> basednums;
+        basefes->GetDofNrs(ElementId(VOL,elnr),basednums);
+        for (int k = 0; k < basednums.Size(); ++k)
+          creator.Add(elnr,basednums[k]);
       }
     }
     el2dofs = make_shared<Table<int>>(creator.MoveTable());
+
+    IterateRange 
+      (nse, lh, 
+       [&] (int selnr, LocalHeap & lh)
+       {
+         ElementId ei(BND,selnr);
+         Ngs_Element ngel = ma->GetElement(ei);
+         ELEMENT_TYPE eltype = ngel.GetType();
+
+         ElementTransformation & seltrans = ma->GetTrafo (ei, lh);
+
+         ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
+
+         CompositeQuadratureRule<D-1> cquad;
+         auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
+                                                        cquad, lh, 0, 0, ref_lvl_space, 0);
+         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
+
+         Array<int> fnums;
+         ma->GetSElFacets(selnr,fnums);
+         // int ed = fnums[0];
+
+         domofsel[selnr] = dt;
+
+         if (dt == IF) // IsFacetCut(ed)
+         {
+           Array<int> basednums;
+           basefes->GetDofNrs(ei,basednums);
+           if (basednums.Size())
+             activeselem.Set(selnr);
+           for (int k = 0; k < basednums.Size(); ++k)
+             activedofs.Set(basednums[k]); // might be twice, but who cares..
+         }
+       });
 
     TableCreator<int> creator2;
     for ( ; !creator2.Done(); creator2++)
     {
       for (int selnr = 0; selnr < nse; ++selnr)
       {
-        HeapReset hr(lh);
-        ElementId ei(BND,selnr);
-        Ngs_Element ngel = ma->GetElement(ei);
-        ELEMENT_TYPE eltype = ngel.GetType();
-
-        ElementTransformation & seltrans = ma->GetTrafo (ei, lh);
-
-        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,seltrans,lh);
-
-        CompositeQuadratureRule<D-1> cquad;
-        auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
-                                                       cquad, lh, 0, 0, ref_lvl_space, 0);
-        DOMAIN_TYPE dt = xgeom->MakeQuadRule();
-
-        Array<int> fnums;
-        ma->GetSElFacets(selnr,fnums);
-        // int ed = fnums[0];
-
-        domofsel[selnr] = dt;
-
-        if (dt == IF) // IsFacetCut(ed)
-        {
-          Array<int> basednums;
-          basefes->GetDofNrs(ei,basednums);
-          if (basednums.Size())
-            activeselem.Set(selnr);
-          for (int k = 0; k < basednums.Size(); ++k)
-          {
-            activedofs.Set(basednums[k]); // might be twice, but who cares..
-            creator2.Add(selnr,basednums[k]);
-          }
-        }
+        if (! activeselem[selnr]) continue;
+        Array<int> basednums;
+        basefes->GetDofNrs(ElementId(BND,selnr),basednums);
+        for (int k = 0; k < basednums.Size(); ++k)
+          creator2.Add(selnr,basednums[k]);
       }
     }
     sel2dofs = make_shared<Table<int>>(creator2.MoveTable());
-
 
     int nbdofs = basefes->GetNDof();
     basedof2xdof.SetSize(nbdofs);
@@ -1035,26 +1070,6 @@ namespace ngcomp
         return &clusters;
       }
     }
-  }
-
-
-  namespace xfespace_cpp
-  {
-    class Init
-    { 
-    public: 
-      Init ();
-    };
-  
-    Init::Init()
-    {
-      GetFESpaceClasses().AddFESpace ("xfespace", XFESpace::Create);
-      GetFESpaceClasses().AddFESpace ("xstdfespace", XStdFESpace::Create);
-      GetFESpaceClasses().AddFESpace ("xh1fespace", XStdFESpace::Create); //backward compatibility
-    }
-  
-    Init init;
-
   }
 
 
