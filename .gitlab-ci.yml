@@ -13,6 +13,8 @@ build:
       - build/
   script:
     - mkdir -p build
+    - mkdir -p /home/gitlab-runner/inst
+    - mkdir -p /home/gitlab-runner/inst/netgen
     - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
     - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
     - export NGS_VERSION=`git submodule | awk '{print $1;}'`
@@ -20,7 +22,7 @@ build:
     - echo NGS_VERSION is $NGS_VERSION
     - echo NGS_INSTALLED_VERSION is $NGS_INSTALLED_VERSION
     - export BUILD_NGS="ON"
-    - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && [ -d /home/gitlab-runner/ngsxfem-reports/last-inst ] && export BUILD_NGS="OFF" && cp -r /home/gitlab-runner/ngsxfem-reports/last-inst /home/gitlab-runner/inst/netgen
+    - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && [ -d /home/gitlab-runner/ngsxfem-reports/last-inst ] && export BUILD_NGS="OFF" && cp -rv /home/gitlab-runner/ngsxfem-reports/last-inst/* /home/gitlab-runner/inst/netgen/
     - test "$NGS_VERSION" != "$NGS_INSTALLED_VERSION" && echo "versions do not match"
     - cd build
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
@@ -74,7 +76,8 @@ ngsxfem-report:
     - mkdir -p /home/gitlab-runner/ngsxfem-reports
     - touch /home/gitlab-runner/ngsxfem-reports/log
     - echo "" >> /home/gitlab-runner/ngsxfem-reports/log
-    - echo $CI_PIPELINE_ID >> /home/gitlab-runner/ngsxfem-reports/log
+    - date >> /home/gitlab-runner/ngsxfem-reports/log
+    - echo pipeline-id $CI_PIPELINE_ID build $CI_BUILD_ID ($CI_BUILD_TAG $CI_BUILD_REF) >> /home/gitlab-runner/ngsxfem-reports/log
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
@@ -84,7 +87,7 @@ ngsxfem-report:
 deploy:
   stage: deploy
   script:
-  - echo " deploy oy"
+  - echo " deploy"
 
 cleanup:
   stage: deploy
