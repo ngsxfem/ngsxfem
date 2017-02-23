@@ -1,4 +1,3 @@
-#ifdef NGSX_PYTHON
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
@@ -575,9 +574,8 @@ void ExportNgsx(py::module &m)
 
 PYBIND11_PLUGIN(libngsxfem_py) 
 {
-  cout << "importing ngs-xfem" << endl;
+  cout << "importing ngs-xfem-" << NGSXFEM_VERSION << endl;
   py::module m("xfem", "pybind xfem");
   ExportNgsx(m);
   return m.ptr();
 }
-#endif // NGSX_PYTHON

@@ -62,8 +62,7 @@ set(NGSXFEM_VERSION_MINOR 0.0)
 set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
-
-add_definitions(-DNGSX_PYTHON)
+add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 
 set(NGS_LIB_TYPE SHARED)
 set(NETGEN_LIBS "-lngsolve -lngcomp -lngfem -lngstd -lngbla")
