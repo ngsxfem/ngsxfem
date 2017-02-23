@@ -3,7 +3,7 @@ add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   xFESpace.cpp
   xfemIntegrators.cpp
   xfemNitsche.cpp
-  xfemVisInts.cpp
+  xfemdiffops.cpp
   xfiniteelement.cpp
   symboliccutbfi.cpp
   symboliccutlfi.cpp
@@ -21,7 +21,7 @@ install( FILES
   xFESpace.hpp
   xfemIntegrators.hpp
   xfemNitsche.hpp
-  xfemVisInts.hpp
+  xfemdiffops.hpp
   xfiniteelement.hpp
   symboliccutbfi.hpp
   symboliccutlfi.hpp

@@ -1,5 +1,5 @@
 #include "xFESpace.hpp"
-#include "xfemVisInts.hpp"
+#include "xfemdiffops.hpp"
 using namespace ngsolve;
 using namespace ngfem;
 
@@ -179,16 +179,9 @@ namespace ngcomp
     ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
 
     if (flags.GetDefineFlag("trace"))
-    {
       trace = true;
-      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalExtTrace<D>>>();
-      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradExtTrace<D>>>();
-    }
-    else
-    {
-      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
-      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
-    }
+    evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
+    flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
   }
 
 
@@ -776,15 +769,15 @@ namespace ngcomp
     shared_ptr<ConstantCoefficientFunction> one = make_shared<ConstantCoefficientFunction>(1);
     if (ma->GetDimension() == 2)
     {
-      integrator[VOL] = make_shared<XVisIntegrator<2> > (one);
-      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
-      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<2>>>();
+      // integrator[VOL] = make_shared<XVisIntegrator<2> > (one);
+      // evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<2>>>();
+      // flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<2>>>();
     }
     else
     {
-      integrator[VOL] = make_shared<XVisIntegrator<3> >(one);
-      evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
-      flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<3>>>();
+      // integrator[VOL] = make_shared<XVisIntegrator<3> >(one);
+      // evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpEvalX<3>>>();
+      // flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradX<3>>>();
     }
   }
 

@@ -79,13 +79,15 @@ mesh.UnsetDeformation()
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])
 
-# Draw(lsetp1,mesh,"lsetp1")
-# # Draw(lsetmeshadap.deform,mesh,"deformation")
-# Draw(u,mesh,"u")
-# Draw(u-sol_coef,mesh,"err")
-
-err_sqr_coefs = [ (u - solution[i])*(u - solution[i]) for i in [0,1] ]
+coef_u = u.components[0]+ IfPos(lsetp1,pos(u.components[1]),neg(u.components[1]))
+err_sqr_coefs = [ (coef_u - solution[i])*(coef_u - solution[i]) for i in [0,1] ]
 
 l2error = sqrt(IntegrateOnWholeDomain(lsetp1, mesh, order=2*order,
                                       cf_neg = err_sqr_coefs[0], cf_pos = err_sqr_coefs[1]))
 print("L2 error : ",l2error)
+
+
+# Draw(lsetp1,mesh,"lsetp1")
+# # Draw(lsetmeshadap.deform,mesh,"deformation")
+# Draw(coef_u,mesh,"u")
+# Draw(coef_u-sol_coef,mesh,"err")
