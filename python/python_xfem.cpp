@@ -532,7 +532,7 @@ void ExportNgsx(py::module &m)
 
   typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
   m.def("dn", FunctionPointer
-       ([] (const PyProxyFunction self, int order) -> py::object 
+       ([] (const PyProxyFunction self, int order)
         {
           shared_ptr<DifferentialOperator> diffopdudnk;
           switch (order)
@@ -549,14 +549,15 @@ void ExportNgsx(py::module &m)
           }
 
           auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
-                                                       diffopdudnk, nullptr, nullptr, nullptr);
+                                                       diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
+
           if (self.Get()->IsOther())
             adddiffop->SetIsOther(true);
-          return py::object(PyProxyFunction(adddiffop));
+          return PyProxyFunction(adddiffop);
         }));
     
   m.def("dn", FunctionPointer
-       ([](PyGF self, int order) -> py::object // shared_ptr<CoefficientFunction>
+       ([](PyGF self, int order) -> PyCF
         {
           shared_ptr<DifferentialOperator> diffopdudnk;
           switch (order)
@@ -571,8 +572,7 @@ void ExportNgsx(py::module &m)
           case 8: diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
           default: throw Exception("no order higher than 8 implemented yet");
           }
-          PyCF coef(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
-          return py::object(coef);
+          return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
         }));
   
   // bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
