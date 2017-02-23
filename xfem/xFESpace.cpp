@@ -305,7 +305,7 @@ namespace ngcomp
           ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(D,*coef_lset,eltrans,llh);
           CompositeQuadratureRule<D> cquad;
           auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
-                                                         cquad, llh, 2*order_space+2, 0, ref_lvl_space, 0);
+                                                         cquad, llh, 0, 0, ref_lvl_space, 0);
           xgeom->SetDistanceThreshold(2.0*(h+1.0*vmax));
           DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
@@ -355,7 +355,7 @@ namespace ngcomp
 
         CompositeQuadratureRule<D-1> cquad;
         auto xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT, *lset_eval_p, 
-                                                       cquad, lh, 2*order_space+2, 0, ref_lvl_space, 0);
+                                                       cquad, lh, 0, 0, ref_lvl_space, 0);
         DOMAIN_TYPE dt = xgeom->MakeQuadRule();
 
         Array<int> fnums;
