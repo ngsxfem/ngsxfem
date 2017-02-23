@@ -5,6 +5,11 @@ from netgen.csg import unit_cube
 
 ngsglobals.msg_level = 1
 
+def test_fes_timing_2D(quad=False):
+    mesh = Mesh (unit_square.GenerateMesh(maxh=0.2,quad_dominated=quad))
+    Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
+    return Vh.__timing__()
+
 def test_xfes_timing_2D(quad=False):
     mesh = Mesh (unit_square.GenerateMesh(maxh=0.2,quad_dominated=quad))
     lsetp1 = GridFunction(H1(mesh,order=1))
@@ -12,6 +17,11 @@ def test_xfes_timing_2D(quad=False):
     Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
     Vhx = XFESpace(Vh, lsetp1)
     return Vhx.__timing__()
+
+def test_fes_timing_3D(quad=False):
+    mesh = Mesh (unit_cube.GenerateMesh(maxh=0.2,quad_dominated=quad))
+    Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
+    return Vh.__timing__()
 
 def test_xfes_timing_3D(quad=False):
     mesh = Mesh (unit_cube.GenerateMesh(maxh=0.2,quad_dominated=quad))
@@ -22,9 +32,13 @@ def test_xfes_timing_3D(quad=False):
     return Vhx.__timing__()
 
 print("\nCalculations: \n\n")
-timing2d = test_xfes_timing_2D()
-timing3d = test_xfes_timing_3D()
+stiming2d = test_fes_timing_2D()
+xtiming2d = test_xfes_timing_2D()
+stiming3d = test_fes_timing_3D()
+xtiming3d = test_xfes_timing_3D()
 
 print("\n\nReport:")
-print("XFES Timings 2D:\n",timing2d)
-print("XFES Timings 3D:\n",timing3d)
+print(" FES Timings 2D:\n",stiming2d)
+print("XFES Timings 2D:\n",xtiming2d)
+print(" FES Timings 3D:\n",stiming3d)
+print("XFES Timings 3D:\n",xtiming3d)
