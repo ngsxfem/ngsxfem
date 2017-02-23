@@ -84,7 +84,7 @@ ngsxfem-report:
 deploy:
   stage: deploy
   script:
-  - echo " deploy "
+  - echo " deploy oy"
 
 cleanup:
   stage: deploy
