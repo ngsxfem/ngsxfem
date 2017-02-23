@@ -552,7 +552,7 @@ void ExportNgsx(py::module &m)
                                                        diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
 
           if (self.Get()->IsOther())
-            adddiffop->SetIsOther(true);
+            adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
           return PyProxyFunction(adddiffop);
         }));
     

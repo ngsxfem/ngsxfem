@@ -2,7 +2,7 @@ from math import pi
 # ngsolve stuff
 from ngsolve import *
 # basic xfem functionality
-from xfem.basics import *
+from xfem import *
 
 from netgen.geom2d import SplineGeometry
 # For LevelSetAdaptationMachinery
@@ -151,7 +151,7 @@ def Do(first=False):
         lsetmeshadap.CalcDeformation(levelset_ex)
     pre.Update()
 
-    mesh.SetDeformation(deformation)
+    # mesh.SetDeformation(deformation)
     gfu.Set(CoefficientFunction(1.0))
     a.Assemble()
     f.Assemble();
@@ -189,6 +189,7 @@ def Do(first=False):
                              order=order))
     print("L2-Error = ", l2error)
     mesh.UnsetDeformation()
+    input("")
     return (l2error,1) #itcounter.itcnt)
 
 l2errors = []
