@@ -14,9 +14,6 @@
 void ExportNgsx(py::module &m) 
 {
   
-
-
-
   typedef PyWrapper<FESpace> PyFES;
   typedef PyWrapper<CoefficientFunction> PyCF;
   typedef GridFunction GF;
@@ -33,9 +30,6 @@ void ExportNgsx(py::module &m)
   
   typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
   typedef PyWrapperDerived<XStdFESpace, FESpace> PyXStdFES;
-
-  m.def("CastToXFESpace", FunctionPointer( [] (PyFES fes) -> PyXFES { return PyXFES(dynamic_pointer_cast<XFESpace>(fes.Get())); } ) );
-  m.def("CastToXStdFESpace", FunctionPointer( [] (PyFES fes) -> PyXStdFES { return PyXStdFES(dynamic_pointer_cast<XStdFESpace>(fes.Get())); } ) );
   
   m.def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) { XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get()); } ) );
 
@@ -43,7 +37,29 @@ void ExportNgsx(py::module &m)
 
   py::class_<PyXFES, PyFES>
     (m, "XFESpace")
-    .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyCF cf) 
+    .def("__init__", FunctionPointer( [] (PyXFES *instance,
+                                          PyFES basefes,
+                                          PyCF lset,
+                                          py::dict bpflags,
+                                          int heapsize)
+         {
+           Flags flags = py::extract<Flags> (bpflags)();
+           shared_ptr<XFESpace> ret = nullptr;
+           shared_ptr<MeshAccess> ma = basefes.Get()->GetMeshAccess();
+           if (ma->GetDimension()==2)
+             ret = make_shared<T_XFESpace<2>> (ma, basefes.Get(), lset.Get(), flags);
+           else
+             ret = make_shared<T_XFESpace<3>> (ma, basefes.Get(), lset.Get(), flags);
+           LocalHeap lh (heapsize, "XFESpace::Update-heap", true);
+           ret->Update(lh);
+           new (instance) PyFES(ret);
+         }),
+         py::arg("basefes"),
+         py::arg("lset"),
+         py::arg("flags") = py::dict(),
+         py::arg("heapsize") = 1000000)
+
+    .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyCF cf)
                                          { self.Get()->SetLevelSet(cf.Get()); }),
          "Update information on level set function")
     .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyGF gf) 
@@ -75,19 +91,6 @@ void ExportNgsx(py::module &m)
                self.Get()->GetDomainNrs( elnr, domnums );
                return domnums;
             }))
-    ;
-
-
-  py::class_<PyXStdFES, PyFES>
-    (m, "XStdFESpace")
-    .def_property_readonly("XFESpace", FunctionPointer ([](const PyXStdFES self) 
-                                               { return PyXFES(dynamic_pointer_cast<XFESpace> ((*self.Get())[1])); }
-                    ),
-         "return XFESpace part of XStdFESpace")
-    .def_property_readonly("StdFESpace", FunctionPointer ([](const PyXStdFES self) 
-                                                 { return PyFES((*self.Get())[0]); }
-                    ),
-         "return 'standard' FESpace part of XStdFESpace")
     ;
 
   m.def("InterpolateToP1", FunctionPointer( [] (PyGF gf_ho, PyGF gf_p1, int heapsize)

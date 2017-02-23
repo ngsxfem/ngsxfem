@@ -10,7 +10,7 @@ def test_xfes_timing_2D(quad=False):
     lsetp1 = GridFunction(H1(mesh,order=1))
     InterpolateToP1((sqrt(sqrt(x*x+y*y)) - 1.0),lsetp1)
     Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
-    Vhx = XFESpace(Vh, mesh, lsetp1)
+    Vhx = XFESpace(Vh, lsetp1)
     return Vhx.__timing__()
 
 def test_xfes_timing_3D(quad=False):
@@ -18,7 +18,7 @@ def test_xfes_timing_3D(quad=False):
     lsetp1 = GridFunction(H1(mesh,order=1))
     InterpolateToP1((sqrt(sqrt(x*x+y*y)) - 1.0),lsetp1)
     Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
-    Vhx = XFESpace(Vh, mesh, lsetp1)
+    Vhx = XFESpace(Vh, lsetp1)
     return Vhx.__timing__()
 
 print("\nCalculations: \n\n")

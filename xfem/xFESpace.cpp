@@ -25,14 +25,14 @@ namespace ngcomp
   {
     if (ei.VB() == VOL)
     {
-      if (activeelem.Size() > 0 && activeelem.Test(ei.Nr()) && !empty)
+      if (activeelem.Size() > 0 && activeelem.Test(ei.Nr()))
         dnums = (*el2dofs)[ei.Nr()];
       else
         dnums.SetSize(0);
     }
     else
     {
-      if (activeselem.Size() > 0 && activeselem.Test(ei.Nr()) && !empty)
+      if (activeselem.Size() > 0 && activeselem.Test(ei.Nr()))
         dnums = (*sel2dofs)[ei.Nr()];
       else
         dnums.SetSize(0);
@@ -43,7 +43,7 @@ namespace ngcomp
   {
     if (ei.VB() == VOL)
     {
-      if (activeelem.Test(ei.Nr()) && !empty)
+      if (activeelem.Test(ei.Nr()))
       {
         FlatArray<int> dofs = (*el2dofs)[ei.Nr()];
         domnums.SetSize(dofs.Size());
@@ -57,7 +57,7 @@ namespace ngcomp
     }
     else if (ei.VB() == BND)
     {
-      if (activeselem.Test(ei.Nr()) && !empty)
+      if (activeselem.Test(ei.Nr()))
       {
         FlatArray<int> dofs = (*sel2dofs)[ei.Nr()];
         domnums.SetSize(dofs.Size());
@@ -78,18 +78,17 @@ namespace ngcomp
     ctofdof.SetSize(ndof);
     ctofdof = WIREBASKET_DOF;
 
-    if (!empty)
-        for (int i = 0; i < basedof2xdof.Size(); ++i)
-        {
-            const int dof = basedof2xdof[i];
-            if (dof != -1)
-            {
-              // if (trace)
-                ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
-              // else
-              //   ctofdof[dof] = INTERFACE_DOF; //
-            }
-        }
+    for (int i = 0; i < basedof2xdof.Size(); ++i)
+    {
+      const int dof = basedof2xdof[i];
+      if (dof != -1)
+      {
+        // if (trace)
+        ctofdof[dof] = basefes->GetDofCouplingType(i); //INTERFACE_DOF; //
+        // else
+        //   ctofdof[dof] = INTERFACE_DOF; //
+      }
+    }
 
     if (trace && ma->GetDimension() == 3)
     // face bubbles on the outer part of the band will be local dofs... (for static cond.)
@@ -167,12 +166,26 @@ namespace ngcomp
 
 
   template <int D>
+  T_XFESpace<D> :: T_XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
+                               shared_ptr<CoefficientFunction> lset, const Flags & flags)
+    : XFESpace (ama, basefes, lset, flags)
+  {
+    // cout << "Constructor of XFESpace begin" << endl;
+    vmax = flags.GetNumFlag("vmax",1e99);
+
+    ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
+
+    if (flags.GetDefineFlag("trace"))
+      trace = true;
+    evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
+    flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
+  }
+
+  template <int D>
   T_XFESpace<D> :: T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags)
     : XFESpace (ama, flags)
   {
     // cout << "Constructor of XFESpace begin" << endl;
-    empty = flags.GetDefineFlag("empty");
-
     vmax = flags.GetNumFlag("vmax",1e99);
 
     ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
@@ -411,14 +424,6 @@ namespace ngcomp
    
     *testout << " x ndof : " << ndof << endl;
 
-
-    if (empty)
-    {
-      ndof = 0;
-      basedof2xdof = -1;
-      *testout << " flag empty set and thus x ndof : " << ndof << endl;
-    }
-
     // domain of dof
     domofdof.SetSize(ndof);
     domofdof = IF;
@@ -449,16 +454,13 @@ namespace ngcomp
         else
           domofface[facnr] = POS;
 
-        if (!empty)
+        Array<int> dnums;
+        basefes->GetFaceDofNrs(facnr, dnums);
+        for (int l = 0; l < dnums.Size(); ++l)
         {
-          Array<int> dnums;
-          basefes->GetFaceDofNrs(facnr, dnums);
-          for (int l = 0; l < dnums.Size(); ++l)
-          {
-            int xdof = basedof2xdof[dnums[l]];
-            if ( xdof != -1)
-              domofdof[xdof] = domofface[facnr];
-          }
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+            domofdof[xdof] = domofface[facnr];
         }
       }
     }
@@ -487,17 +489,14 @@ namespace ngcomp
       else
         domofedge[edgnr] = POS;
 
-      if (!empty)
-      {
-        Array<int> dnums;
-        basefes->GetEdgeDofNrs(edgnr, dnums);
+      Array<int> dnums;
+      basefes->GetEdgeDofNrs(edgnr, dnums);
 
-        for (int l = 0; l < dnums.Size(); ++l)
-        {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-            domofdof[xdof] = domofedge[edgnr];
-        }
+      for (int l = 0; l < dnums.Size(); ++l)
+      {
+        int xdof = basedof2xdof[dnums[l]];
+        if ( xdof != -1)
+          domofdof[xdof] = domofedge[edgnr];
       }
     }
 
@@ -526,19 +525,16 @@ namespace ngcomp
       else
         domofvertex[vnr] = POS;
 
-      if (!empty)
-      {
-        Array<int> dnums;
-        basefes->GetVertexDofNrs(vnr, dnums);
+      Array<int> dnums;
+      basefes->GetVertexDofNrs(vnr, dnums);
 
-        for (int l = 0; l < dnums.Size(); ++l)
+      for (int l = 0; l < dnums.Size(); ++l)
+      {
+        int xdof = basedof2xdof[dnums[l]];
+        if ( xdof != -1)
         {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-          {
-            domofdof[xdof] = domofvertex[vnr];
-            nvertdofs++;
-          }
+          domofdof[xdof] = domofvertex[vnr];
+          nvertdofs++;
         }
       }
     }
@@ -548,21 +544,17 @@ namespace ngcomp
     {
       DOMAIN_TYPE dt_here = element_most_pos.Test(elnr) ? POS : NEG;
       domofinner[elnr] = dt_here;
-      if (!empty)
+      Array<int> dnums;
+      basefes->GetInnerDofNrs(elnr, dnums);
+      for (int l = 0; l < dnums.Size(); ++l)
       {
-        Array<int> dnums;
-        basefes->GetInnerDofNrs(elnr, dnums);
-        for (int l = 0; l < dnums.Size(); ++l)
-          {
-            int xdof = basedof2xdof[dnums[l]];
-            if ( xdof != -1)
-              domofdof[xdof] = dt_here;
-          }
-        }
+        int xdof = basedof2xdof[dnums[l]];
+        if ( xdof != -1)
+          domofdof[xdof] = dt_here;
+      }
     }
 
     // domof dof on boundary
-    if (!empty)
     for (int selnr = 0; selnr < nse; ++selnr)
     {
         ElementId ei(BND,selnr);
@@ -584,7 +576,6 @@ namespace ngcomp
     BitArray dofs_with_cut_on_boundary(GetNDof());
     dofs_with_cut_on_boundary.Clear();
 
-    if (!empty)
     for (int selnr = 0; selnr < nse; ++selnr)
     {
         ElementId ei(BND,selnr);

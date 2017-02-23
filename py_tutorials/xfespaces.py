@@ -19,7 +19,7 @@ sleep(1)
 # make the standard space
 fes = H1(mesh, order = 1)
 # make the extended space
-xfes = XFESpace(fes,mesh,levelset)
+xfes = XFESpace(fes,levelset)
 # make a compound from these spaces
 xstdfes1 = FESpace([fes,xfes])
 

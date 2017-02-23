@@ -51,10 +51,24 @@ namespace ngcomp
     double vmax = 1e99;
 
     bool trace = false;   // xfespace is a trace fe space (special case for further optimization (CouplingDofTypes...))
-    bool empty = false;   // no d.o.f.s but finite element has cut geometry information (will become obsolete at some point, hopefully)
   public:
+    void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
+    shared_ptr<FESpace> GetBaseFESpace() const { return basefes;};
+
+    void SetLevelSet(shared_ptr<GridFunction> lset_){
+      coef_lset = make_shared<GridFunctionCoefficientFunction>(lset_);
+    };
+    void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
+    shared_ptr<CoefficientFunction> GetLevelSet() const { return coef_lset;};
+
     XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags): FESpace(ama, flags){;}
-    
+
+    XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
+              shared_ptr<CoefficientFunction> lset, const Flags & flags): FESpace(ama, flags){
+      SetBaseFESpace(basefes);
+      SetLevelSet(lset);
+    }
+
     void CleanUp();
     virtual ~XFESpace(){CleanUp();};
 
@@ -166,15 +180,6 @@ namespace ngcomp
     }
     DOMAIN_TYPE GetDomainOfElement(int elnr) const {return domofel[elnr];}
 
-    void SetBaseFESpace(shared_ptr<FESpace> basefes_){basefes = basefes_;};
-    shared_ptr<FESpace> GetBaseFESpace() const { return basefes;};
-    
-    void SetLevelSet(shared_ptr<GridFunction> lset_){ 
-      coef_lset = make_shared<GridFunctionCoefficientFunction>(lset_);
-    };
-    void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
-    shared_ptr<CoefficientFunction> GetLevelSet() const { return coef_lset;};
-    
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
     const BitArray & CutElements() const { return activeelem; }
     const BitArray & CutSurfaceElements() const { return activeselem; }
@@ -216,7 +221,10 @@ namespace ngcomp
       and the flags from the define command in the pde-file
     */
     T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
-    
+
+    T_XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
+                shared_ptr<CoefficientFunction> lset, const Flags & flags);
+
     // destructor
     virtual ~T_XFESpace ();
 
