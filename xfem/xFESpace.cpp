@@ -626,11 +626,6 @@ namespace ngcomp
   template <int D>
   FiniteElement & T_XFESpace<D> :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    static Timer timer ("XFESpace::GetFE");
-    RegionTimer reg (timer);
-
-    Ngs_Element ngsel = ma->GetElement(ei);
-    ELEMENT_TYPE eltype = ngsel.GetType();
     if ( ( ei.VB() == BND && activeselem.Test(ei.Nr()) )
          || ( ei.VB() == VOL && activeelem.Test(ei.Nr()) ))
     {
@@ -641,6 +636,8 @@ namespace ngcomp
     else
     {
       DOMAIN_TYPE dt = domofsel[ei.Nr()];
+      Ngs_Element ngsel = ma->GetElement(ei);
+      ELEMENT_TYPE eltype = ngsel.GetType();
       return *(new (alloc) XDummyFE(dt,eltype));
     }
   }
