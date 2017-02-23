@@ -52,35 +52,31 @@ namespace ngcomp
          HeapReset hr(lh);
          progress.Update();
       
-         Ngs_Element ngel = ma->GetElement(elnr);
-         // ELEMENT_TYPE eltype = ngel.GetType();
          Array<int> p1_dofs;
-         lset_p1->GetFESpace()->GetDofNrs(elnr,p1_dofs);
+         lset_p1->GetFESpace()->GetDofNrs(el,p1_dofs);
          FlatVector<> vals(p1_dofs.Size(),lh);
          lset_p1->GetVector().GetIndirect(p1_dofs,vals);
-         ElementTransformation & eltrans = ma->GetTrafo (ElementId(VOL,elnr), lh);
+         const ElementTransformation & eltrans = el.GetTrafo();
       
          if (!ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound))
            return;
 
-
-         Array<int> def_dofs;
-         deform->GetFESpace()->GetDofNrs(elnr,def_dofs);
-         const FiniteElement & fel_deform = deform->GetFESpace()->GetFE(elnr,lh);
+         int ndofs = el.GetDofs().Size();
+         const FiniteElement & fel_deform = el.GetFE();
          // FlatVector<> vals(def_dofs.Size(),lh);
          // lset_p1->GetVector().GetIndirect(def_dofs,vals);
-         FlatMatrix<> massmat (def_dofs.Size(),lh);
-         FlatVector<> elvec (D*def_dofs.Size(),lh);
-         FlatVector<> elres (D*def_dofs.Size(),lh);
+         FlatMatrix<> massmat (ndofs,lh);
+         FlatVector<> elvec (D*ndofs,lh);
+         FlatVector<> elres (D*ndofs,lh);
          mass->CalcElementMatrix(fel_deform, eltrans, massmat, lh);
          CalcInverse(massmat);
 
       
          Array<int> lset_ho_dofs;
-         lset_ho->GetFESpace()->GetDofNrs(elnr,lset_ho_dofs);
+         lset_ho->GetFESpace()->GetDofNrs(el,lset_ho_dofs);
          FlatVector<> lset_ho_vals(lset_ho_dofs.Size(),lh);
          lset_ho->GetVector().GetIndirect(lset_ho_dofs,lset_ho_vals);
-         const FiniteElement & fel_lset_ho = lset_ho->GetFESpace()->GetFE(elnr,lh);
+         const FiniteElement & fel_lset_ho = lset_ho->GetFESpace()->GetFE(el,lh);
       
          if (D==2)
          {
@@ -88,8 +84,8 @@ namespace ngcomp
            shared_ptr<LsetEvaluator<2>> lseteval = make_shared<LsetEvaluator<2>>(scafe_lset_ho,lset_ho_vals);
            shift2D->CalcElementVector(fel_deform, eltrans, elvec, lh, lseteval);
         
-           FlatMatrixFixWidth<2> elvec_vec(def_dofs.Size(),&elvec(0));
-           FlatMatrixFixWidth<2> shift_vec(def_dofs.Size(),&elres(0));
+           FlatMatrixFixWidth<2> elvec_vec(ndofs,&elvec(0));
+           FlatMatrixFixWidth<2> shift_vec(ndofs,&elres(0));
            for (int d = 0; d < D; ++d)
              shift_vec.Col(d) = massmat * elvec_vec.Col(d);
            // vertex values to zero
@@ -103,8 +99,8 @@ namespace ngcomp
         
            shift3D->CalcElementVector(fel_deform, eltrans, elvec, lh, lseteval);
         
-           FlatMatrixFixWidth<3> elvec_vec(def_dofs.Size(),&elvec(0));
-           FlatMatrixFixWidth<3> shift_vec(def_dofs.Size(),&elres(0));
+           FlatMatrixFixWidth<3> elvec_vec(ndofs,&elvec(0));
+           FlatMatrixFixWidth<3> shift_vec(ndofs,&elres(0));
            for (int d = 0; d < D; ++d)
              shift_vec.Col(d) = massmat * elvec_vec.Col(d);
            // vertex values to zero
@@ -112,17 +108,17 @@ namespace ngcomp
              shift_vec.Row(l) = 0.0;
          }
 
-         FlatVector<> def_vals(D*def_dofs.Size(),lh);
-         deform->GetVector().GetIndirect(def_dofs,def_vals);
+         FlatVector<> def_vals(D*ndofs,lh);
+         deform->GetVector().GetIndirect(el.GetDofs(),def_vals);
          def_vals += elres;
-         deform->GetVector().SetIndirect(def_dofs,def_vals);
+         deform->GetVector().SetIndirect(el.GetDofs(),def_vals);
 
          // increase dof counter
-         FlatVector<> factors(D*def_dofs.Size(),lh);
-         factor->GetIndirect(def_dofs,factors);
+         FlatVector<> factors(D*ndofs,lh);
+         factor->GetIndirect(el.GetDofs(),factors);
          for (int k = 0; k < factors.Size(); k+=D)
            factors(k) += 1.0 ;
-         factor->SetIndirect(def_dofs,factors);
+         factor->SetIndirect(el.GetDofs(),factors);
 
          
        });

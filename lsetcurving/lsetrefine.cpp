@@ -28,7 +28,7 @@ namespace ngcomp
       HeapReset hr(lh);
       // element only measure error if "at the interface"
       Array<int> dnums_lset_p1;
-      gf_lset_p1->GetFESpace()->GetDofNrs(elnr,dnums_lset_p1);
+      gf_lset_p1->GetFESpace()->GetDofNrs(ElementId(VOL,elnr),dnums_lset_p1);
       FlatVector<> lset_vals_p1(dnums_lset_p1.Size(),lh);
       gf_lset_p1->GetVector().GetIndirect(dnums_lset_p1,lset_vals_p1);
 

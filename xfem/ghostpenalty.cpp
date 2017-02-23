@@ -52,11 +52,13 @@ namespace ngfem
     const XFiniteElement * xfe1 = NULL;
     const XDummyFE * dummfe1 = NULL;
     const ScalarFiniteElement<D> * scafe1 = NULL;
-    const ScalarSpaceTimeFiniteElement<D> * stscafe1 = NULL;
+    // const ScalarSpaceTimeFiniteElement<D> * stscafe1 = NULL;
+    const void * stscafe1 = NULL;
     const XFiniteElement * xfe2 = NULL;
     const XDummyFE * dummfe2 = NULL;
     const ScalarFiniteElement<D> * scafe2 = NULL;
-    const ScalarSpaceTimeFiniteElement<D> * stscafe2 = NULL;
+    // const ScalarSpaceTimeFiniteElement<D> * stscafe2 = NULL;
+    const void * stscafe2 = NULL;
       
     for (int i = 0; i < cfel1.GetNComponents(); ++i)
     {
@@ -66,8 +68,8 @@ namespace ngfem
         dummfe1 = dynamic_cast<const XDummyFE* >(&cfel1[i]);
       if (scafe1==NULL)
         scafe1 = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel1[i]);
-      if (stscafe1==NULL)
-        stscafe1 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel1[i]);
+      // if (stscafe1==NULL)
+      //   stscafe1 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel1[i]);
     }
 
     for (int i = 0; i < cfel2.GetNComponents(); ++i)
@@ -78,8 +80,8 @@ namespace ngfem
         dummfe2 = dynamic_cast<const XDummyFE* >(&cfel2[i]);
       if (scafe2==NULL)
         scafe2 = dynamic_cast<const ScalarFiniteElement<D>* >(&cfel2[i]);
-      if (stscafe2==NULL)
-        stscafe2 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel2[i]);
+      // if (stscafe2==NULL)
+      //   stscafe2 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel2[i]);
     }
     
     const bool spacetime = (stscafe1 != NULL);
@@ -99,7 +101,8 @@ namespace ngfem
     ELEMENT_TYPE eltype1 = volumefel1.ElementType();
     int nd1 = volumefel1.GetNDof();
     int ndof_x1 = xfe1 ? xfe1->GetNDof() : 0;
-    int ndof_sca1 = spacetime ? stscafe1->GetNDof() : scafe1->GetNDof();
+    // int ndof_sca1 = spacetime ? stscafe1->GetNDof() : scafe1->GetNDof();
+    int ndof_sca1 = scafe1->GetNDof();
     FlatVector<> mat1_dudn(nd1, lh);
     FlatVector<> mat1_dudn_sca(ndof_sca1, &mat1_dudn(0));
     FlatVector<> mat1_dudn_x(ndof_x1, &mat1_dudn(ndof_sca1));
@@ -109,19 +112,21 @@ namespace ngfem
     ELEMENT_TYPE eltype2 = volumefel2.ElementType();
     int nd2 = volumefel2.GetNDof();
     int ndof_x2 = xfe2 ? xfe2->GetNDof() : 0;
-    int ndof_sca2 = spacetime ? stscafe2->GetNDof() : scafe2->GetNDof();
+    // int ndof_sca2 = spacetime ? stscafe2->GetNDof() : scafe2->GetNDof();
+    int ndof_sca2 = scafe2->GetNDof();
     FlatVector<> mat2_dudn(nd2, lh);
     FlatVector<> mat2_dudn_sca(ndof_sca2, &mat2_dudn(0));
     FlatVector<> mat2_dudn_x(ndof_x2, &mat2_dudn(ndof_sca2));
     FlatMatrixFixWidth<D> mat2_du_sca(ndof_sca2, lh);
 
-    int maxorder = spacetime ? 
-      max(stscafe1->OrderSpace(),stscafe2->OrderSpace())
-      : max(scafe1->Order(),scafe2->Order());
+    // int maxorder = spacetime ? 
+    //   max(stscafe1->OrderSpace(),stscafe2->OrderSpace())
+    //   : max(scafe1->Order(),scafe2->Order());
+    int maxorder = max(scafe1->Order(),scafe2->Order());
 
     if (maxorder==0) maxorder=1;
 
-    int maxordertime = spacetime ? max(stscafe1->OrderTime(),stscafe2->OrderTime()) : 0;
+    int maxordertime = 0; //spacetime ? max(stscafe1->OrderTime(),stscafe2->OrderTime()) : 0;
 
     FlatMatrixFixWidth<1> bmat(nd1+nd2, lh);
 
@@ -200,8 +205,9 @@ namespace ngfem
           {
             if (spacetime)
             {
-              stscafe1->CalcDxShapeSpaceTime (sip1.IP(), ir_time[k](0), mat1_du_sca, lh); 
-              mat1_dudn_sca = mat1_du_sca * invjac_normal1;
+              throw Exception("no space time supported anymore");
+              // stscafe1->CalcDxShapeSpaceTime (sip1.IP(), ir_time[k](0), mat1_du_sca, lh); 
+              // mat1_dudn_sca = mat1_du_sca * invjac_normal1;
             }
             else
               mat1_dudn_sca = scafe1->GetDShape (sip1.IP(), lh) * invjac_normal1;
@@ -260,8 +266,9 @@ namespace ngfem
           {
             if (spacetime)
             {
-              stscafe2->CalcDxShapeSpaceTime (sip2.IP(), ir_time[k](0), mat2_du_sca, lh); 
-              mat2_dudn_sca = mat2_du_sca * invjac_normal2;
+              throw Exception("no space time supported anymore");
+              // stscafe2->CalcDxShapeSpaceTime (sip2.IP(), ir_time[k](0), mat2_du_sca, lh); 
+              // mat2_dudn_sca = mat2_du_sca * invjac_normal2;
             }
             else
               mat2_dudn_sca = scafe2->GetDShape (sip2.IP(), lh) * invjac_normal2;

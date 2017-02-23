@@ -1,0 +1,70 @@
+** Linux Build Steps
+You require Netgen/NGSolve to run the xfem module (ngs-xfem). 
+You can either install it before hand (default option) 
+or let Netgen/NGSolve be installed as an external dependency. 
+#+BEGIN_SRC shell
+git clone https://gitlab.asc.tuwien.ac.at/jschoeberl/xfem.git
+cd xfem
+mkdir build
+cd build
+#+END_SRC
+
+*** Building xfem with pre-installed NGSolve 
+You have Netgen/NGSolve installed? Perfect. Then let INSTLOCATION be the location 
+Netgen/NGSolve is already installed to. To install xfem make sure that you have 
+write access to that same directory. Then build ngs-xfem with 
+#+BEGIN_SRC shell
+cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=OFF
+make
+make install
+#+END_SRC
+
+*** Building the NGS-Suite and ngs-xfem together 
+If you do not have Netgen/NGSolve installed, you may first call
+#+BEGIN_SRC shell
+git submodule update --init
+#+END_SRC
+which pulls Netgen/NGSolve as external dependencies. Then, just call
+#+BEGIN_SRC shell
+cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=ON
+make
+make install
+#+END_SRC
+For INSTLOCATION you choose a nice installation location.
+Afterwards make sure that the installed NGS/xfem-libraries and executable will be found 
+by PATH and python.
+
+** Updating ngs-xfem
+To update ngs-xfem, update the sources
+#+BEGIN_SRC shell
+git pull origin master
+#+END_SRC
+As the ngsolve-version that the updated xfem-version depends on can be updated in the mean time, 
+make sure to update NGSolve. 
+If you build NGSolve as an external dependency update the submodule NGSolve:
+#+BEGIN_SRC shell
+git submodule update --init --recursive
+#+END_SRC
+Otherwise update your NGSolve version manually. 
+As a rule we try to be compatible to the latest release of NGSolve. 
+To be sure check the version in external_dependencies/ngsolve
+
+** Examples
+To run the python examples be sure to follow the build steps above.
+Then navigate into the =py_tutorials= and run
+#+BEGIN_SRC shell
+netgen example.py
+#+END_SRC
+where =example.py= stands for any of the available python files.
+
+** Testing
+Tests are enabled by default.
+To run the test navigate to the build directory and run =make test=
+or =ctest=.
+If you need to see specific tests failing use =ctest -V=.
+To run individual tests use =ctest -R <regex>=. E.g. =ctest -R cutint= to only run cut integration tests.
+Note that we use pytest (with python version > 3). 
+
+** pde vs. py files
+From version 1.0.0 on there are no pde-files used in this project anymore. 
+Only python-files are used.

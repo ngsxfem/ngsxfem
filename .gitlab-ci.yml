@@ -1,0 +1,90 @@
+beforescript:
+  stage: build
+  script:
+    - echo " before script "
+    - rm -rf /home/gitlab-runner/inst/netgen
+    - mkdir -p /home/gitlab-runner/inst/netgen
+
+build:
+  stage: build
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - mkdir -p build
+    - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - export NGS_VERSION=`git submodule | awk '{print $1;}'`
+    - export NGS_INSTALLED_VERSION=`cat /home/gitlab-runner/ngsxfem-reports/lastngs.version | awk '{print $1;}'`
+    - echo NGS_VERSION is $NGS_VERSION
+    - echo NGS_INSTALLED_VERSION is $NGS_INSTALLED_VERSION
+    - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && export BUILD_NGS="OFF"
+    - test "$NGS_VERSION" != "$NGS_INSTALLED_VERSION" && echo "versions do not match" && export BUILD_NGS="ON"
+    - cd build
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "ninja install"
+    - echo $NGS_VERSION > /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
+
+ctests-allow-fail:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'py_tutorial'"
+  when: always
+  allow_failure: true
+
+ctests-remaining:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -E 'py_tutorial'"
+  when: always
+  allow_failure: false
+
+ngsxfem-report:
+  stage: deploy
+  script:
+    - cd /home/gitlab-runner/inst/netgen/share/ngsxfem/report
+    - mkdir -p /home/gitlab-runner/ngsxfem-reports
+    - touch /home/gitlab-runner/ngsxfem-reports/log
+    - echo "" >> /home/gitlab-runner/ngsxfem-reports/log
+    - echo $CI_PIPELINE_ID >> /home/gitlab-runner/ngsxfem-reports/log
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py" | grep Report -A 100000 >> /home/gitlab-runner/ngsxfem-reports/log
+
+deploy:
+  stage: deploy
+  script:
+  - echo " deploy "
+
+cleanup:
+  stage: deploy
+  script:
+    - echo " cleanup "
