@@ -28,6 +28,7 @@ build:
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "ninja install"
     - echo $NGS_VERSION > /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - rm -rf /home/gitlab-runner/ngsxfem-reports/last-inst
     - cp -r /home/gitlab-runner/inst/netgen /home/gitlab-runner/ngsxfem-reports/last-inst
     - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
 
@@ -77,7 +78,7 @@ ngsxfem-report:
     - touch /home/gitlab-runner/ngsxfem-reports/log
     - echo "" >> /home/gitlab-runner/ngsxfem-reports/log
     - date >> /home/gitlab-runner/ngsxfem-reports/log
-    - echo pipeline-id $CI_PIPELINE_ID build $CI_BUILD_ID ($CI_BUILD_TAG $CI_BUILD_REF) >> /home/gitlab-runner/ngsxfem-reports/log
+    - echo pipeline-id $CI_PIPELINE_ID build $CI_BUILD_ID $CI_BUILD_TAG $CI_BUILD_REF >> /home/gitlab-runner/ngsxfem-reports/log
     - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
