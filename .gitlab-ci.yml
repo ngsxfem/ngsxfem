@@ -13,9 +13,10 @@ build:
       - build/
   script:
     - mkdir -p build
-    - touch /home/gitlab-runner/inst/netgen/ngs.version
-    - export NGS_VERSION=`git submodule`
-    - export NGS_INSTALLED_VERSION=`cat /home/gitlab-runner/inst/netgen/ngs.version`
+    - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - export NGS_VERSION=`git submodule | awk '{print $1;}'`
+    - export NGS_INSTALLED_VERSION=`cat /home/gitlab-runner/ngsxfem-reports/lastngs.version | awk '{print $1;}'`
     - echo NGS_VERSION is $NGS_VERSION
     - echo NGS_INSTALLED_VERSION is $NGS_INSTALLED_VERSION
     - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && export BUILD_NGS="OFF"
@@ -23,7 +24,8 @@ build:
     - cd build
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DINSTALL_DIR=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "ninja install"
-    - echo $NGS_VERSION > /home/gitlab-runner/inst/netgen/ngs.version
+    - echo $NGS_VERSION > /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
 
 ctests-allow-fail:
   stage: test
