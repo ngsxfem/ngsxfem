@@ -7,6 +7,7 @@
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
+#include "../cutint/straightcutrule.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
