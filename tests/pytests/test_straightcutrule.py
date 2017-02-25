@@ -5,8 +5,9 @@ from netgen.geom2d import SplineGeometry
 from math import pi
 
 @pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("order", [1,2,4,8])
 
-def test_new_integrateX_via_circle_geom(quad_dominated):
+def test_new_integrateX_via_circle_geom(quad_dominated, order):
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
@@ -18,7 +19,6 @@ def test_new_integrateX_via_circle_geom(quad_dominated):
     referencevals = { POS : 1-pi*r*r/4, NEG : pi*r*r/4, IF : r*pi/2}
 
     n_ref = 8
-    order = 2
     errors = dict()
     eoc = dict()
 
