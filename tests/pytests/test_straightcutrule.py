@@ -27,7 +27,8 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
     
         f = CoefficientFunction(1)
     
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000, use_saye = True)            print("Result of Integration Reflevel ",i,", Key ",domain," : ", integral)
+        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
+        print("Result of Integration Reflevel ",i,", Key ",domain," : ", integral)
         errors.append(abs(integral - referencevals[domain]))
 
         if i < n_ref - 1:
