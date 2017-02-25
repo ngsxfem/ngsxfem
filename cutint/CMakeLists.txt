@@ -1,5 +1,8 @@
 add_library(ngsxfem_cutint ${NGS_LIB_TYPE}
-  xintegration.hpp xintegration.cpp xdecompose.cpp xdecompose.hpp straightcutrule.hpp straightcutrule.cpp
+  fieldeval.cpp fieldeval.hpp
+  xintegration.hpp xintegration.cpp
+  xdecompose.cpp xdecompose.hpp  
+  straightcutrule.hpp straightcutrule.cpp
         )
 
 set_target_properties(ngsxfem_cutint PROPERTIES SUFFIX ".so")
