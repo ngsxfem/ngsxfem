@@ -1,9 +1,12 @@
+import pytest
 from ngsolve import *
 from xfem import *
 from netgen.geom2d import SplineGeometry
 from math import pi
 
-def test_new_integrateX_via_circle_geom(quad_dominated=True):
+@pytest.mark.parametrize("quad_dominated", [True, False])
+
+def test_new_integrateX_via_circle_geom(quad_dominated):
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
@@ -46,4 +49,4 @@ def test_new_integrateX_via_circle_geom(quad_dominated=True):
 
     for key in domains:
         for i in range(2, len(eoc[key])):            
-            assert eoc[key][i] > 2.1
+            assert eoc[key][i] > 1.8
