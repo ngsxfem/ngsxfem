@@ -8,6 +8,14 @@ set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 
+if(CMAKE_GENERATOR STREQUAL "Ninja")
+  set(ADDNINJA "-GNinja")
+  set(BUILDEXE "ninja")
+else(CMAKE_GENERATOR STREQUAL "Ninja")         
+  set(ADDNINJA "")
+  set(BUILDEXE "make")
+endif(CMAKE_GENERATOR STREQUAL "Ninja")
+
 if(BUILD_NGSOLVE)
   message(STATUS "Use NGSolve from submodule, updating modules...")
   execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -21,33 +29,40 @@ if(BUILD_NGSOLVE)
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DUSE_CCACHE=${USE_CCACHE}
     -DUSE_UMFPACK=${USE_UMFPACK}
-    -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/
-    -GNinja
+    -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ ${ADDNINJA}
     ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
 
   # LINUX ONLY:
-  execute_process(COMMAND ninja -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
-  execute_process(COMMAND ninja install WORKING_DIRECTORY ngsolve)
+  if(CMAKE_GENERATOR STREQUAL "Ninja")
+    execute_process(COMMAND ninja -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
+    execute_process(COMMAND ninja install WORKING_DIRECTORY ngsolve)
+  else(CMAKE_GENERATOR STREQUAL "Ninja")         
+    execute_process(COMMAND make -j${BUILD_NGSOLVE_THREADS} WORKING_DIRECTORY ngsolve)
+    execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
+  endif(CMAKE_GENERATOR STREQUAL "Ninja")
 endif(BUILD_NGSOLVE)
+
+if(USE_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+  endif(CCACHE_FOUND)
+endif(USE_CCACHE)
 
 set(NETGENDIR "${INSTALL_DIR}/bin")
 
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
-if(USE_CCACHE)
-  set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
-endif(USE_CCACHE)
-
 set(CMAKE_CXX_COMPILER "${INSTALL_DIR}/bin/ngscxx")
 
 project(xfem)
-set(NGSXFEM_VERSION_MAJOR 0)
-set(NGSXFEM_VERSION_MINOR 7.0)
+set(NGSXFEM_VERSION_MAJOR 1)
+set(NGSXFEM_VERSION_MINOR 0.0)
 set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
-
-add_definitions(-DNGSX_PYTHON)
+add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 
 set(NGS_LIB_TYPE SHARED)
 set(NETGEN_LIBS "-lngsolve -lngcomp -lngfem -lngstd -lngbla")
@@ -112,17 +127,11 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config.h DESTINATION include)
 # add_definitions(-DHAVE_CONFIG_H)
 
 add_subdirectory(cutint)
-#add_subdirectory(meancurvflow)
-add_subdirectory(levelset)
 add_subdirectory(python)
-add_subdirectory(stokes)
 add_subdirectory(utils)
 add_subdirectory(xfem)
-add_subdirectory(pde_tutorial)
 add_subdirectory(py_tutorials)
-add_subdirectory(tracefem)
 add_subdirectory(lsetcurving)
-add_subdirectory(osmosis)
 add_subdirectory(tests)
 
 # get_directory_property( DirDefs COMPILE_DEFINITIONS )
@@ -153,10 +162,6 @@ configure_file(
 add_custom_target(uninstall_xfem
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-##############################################################################
-# Unhandled Makefile.am settings
-##############################################################################
-
 if(NOT WIN32)
     string(ASCII 27 Esc)
     set(ColorReset "${Esc}[m")
@@ -174,15 +179,6 @@ message("
 ------------------------------------------------------------------------
   ${PROJECT_NAME} ${PACKAGE_VERSION}:  Automatic configuration OK.
 
-  Building:
-
-    Type 'make' to compile ${PROJECT_NAME}.
-
-    Type 'make install' to install ${PROJECT_NAME}.
-
-  Build NGSolve from scratch: ${BUILD_NGSOLVE}
-  Build NGSolve/xfem with ccache: ${USE_CCACHE}
-
   Install directory:
     ${CMAKE_INSTALL_PREFIX}
 
@@ -191,9 +187,21 @@ message("
     
   Compiler Flags:
     flags = ${flags}
-  
+
+  Generator:
+    ${CMAKE_GENERATOR}
+
   Build Type:
     type = ${CMAKE_BUILD_TYPE}
+
+  Build NGSolve from scratch: ${BUILD_NGSOLVE}
+  Build xfem (and NGSolve) with ccache: ${USE_CCACHE}
+
+  Building:
+
+    Type '${BUILDEXE}' to compile ${PROJECT_NAME}.
+
+    Type '${BUILDEXE} install' to install ${PROJECT_NAME}.
 
 ------------------------------------------------------------------------
 ")

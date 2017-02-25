@@ -13,16 +13,14 @@ install( FILES
   )
 
 if(NOT WIN32)
-    target_link_libraries(ngsxfem_lsetcurving ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
+    target_link_libraries(ngsxfem_lsetcurving ngsxfem_xfem ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
   install( TARGETS ngsxfem_lsetcurving ${ngs_install_dir})
 endif(NOT WIN32)
 
-install ( FILES lsetcurv.py DESTINATION python)
+# install ( FILES lsetcurv.py DESTINATION python)
 
-if(USE_PYTHON)
-    install (FILES
-            lsetcurv.py 
-            DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
-            COMPONENT xfem
-            )
-endif(USE_PYTHON)
+install (FILES
+        lsetcurv.py 
+        DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+        COMPONENT xfem
+        )

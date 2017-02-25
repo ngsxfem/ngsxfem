@@ -1,17 +1,13 @@
-#ifdef NGSX_PYTHON
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
-#include "../stokes/xstokesspace.hpp"
 #include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
-#include "../utils/error.hpp"
-
-#include "../cutint/straightcutrule.hpp"
+// #include "../utils/error.hpp"
 
 //using namespace ngcomp;
 
@@ -37,11 +33,9 @@ void ExportNgsx(py::module &m)
   
   typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
   typedef PyWrapperDerived<XStdFESpace, FESpace> PyXStdFES;
-  typedef PyWrapperDerived<XStokesFESpace, FESpace> PyXStokesFES;
 
   m.def("CastToXFESpace", FunctionPointer( [] (PyFES fes) -> PyXFES { return PyXFES(dynamic_pointer_cast<XFESpace>(fes.Get())); } ) );
   m.def("CastToXStdFESpace", FunctionPointer( [] (PyFES fes) -> PyXStdFES { return PyXStdFES(dynamic_pointer_cast<XStdFESpace>(fes.Get())); } ) );
-  m.def("CastToXStokesFESpace", FunctionPointer( [] (PyFES fes) -> PyXStokesFES { return PyXStokesFES(dynamic_pointer_cast<XStokesFESpace>(fes.Get())); } ) );
   
   m.def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) { XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get()); } ) );
 
@@ -94,16 +88,6 @@ void ExportNgsx(py::module &m)
                                                  { return PyFES((*self.Get())[0]); }
                     ),
          "return 'standard' FESpace part of XStdFESpace")
-    ;
-
-  py::class_<PyXStokesFES, PyFES>
-    (m, "XStokesFESpace")
-    .def("SetLevelSet", FunctionPointer ([](PyXStokesFES & self, PyCF cf) 
-                                         { self.Get()->SetLevelSet(cf.Get()); }),
-         "Update information on level set function")
-    .def("SetLevelSet", FunctionPointer ([](PyXStokesFES & self, PyGF gf) 
-                                         { self.Get()->SetLevelSet(gf.Get()); }),
-         "Update information on level set function")
     ;
 
   m.def("InterpolateToP1", FunctionPointer( [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
@@ -202,19 +186,6 @@ void ExportNgsx(py::module &m)
            py::arg("lset_p1")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
     ;
 
-
-  m.def("CalcTraceDiff", FunctionPointer( [] (PyGF gf, PyCF coef, int intorder, int heapsize)
-                                              {
-                                                Array<double> errors;
-                                                LocalHeap lh (heapsize, "CalcTraceDiff-Heap");
-                                                if (gf.Get()->GetMeshAccess()->GetDimension() == 2)
-                                                  CalcTraceDiff<2>(gf.Get(),coef.Get(),intorder,errors,lh);
-                                                else 
-                                                  CalcTraceDiff<3>(gf.Get(),coef.Get(),intorder,errors,lh);
-                                                return errors;
-                                              } ),
-           py::arg("gf"),py::arg("coef"),py::arg("intorder")=6,py::arg("heapsize")=1000000)
-    ;
 
 
   m.def("RefineAtLevelSet", FunctionPointer( [] (PyGF gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
@@ -699,9 +670,8 @@ void ExportNgsx(py::module &m)
 
 PYBIND11_PLUGIN(libngsxfem_py) 
 {
+  cout << "importing ngs-xfem-" << NGSXFEM_VERSION << endl;
   py::module m("xfem", "pybind xfem");
   ExportNgsx(m);
   return m.ptr();
 }
-
-#endif // NGSX_PYTHON

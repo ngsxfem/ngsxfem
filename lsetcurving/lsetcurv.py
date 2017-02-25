@@ -2,6 +2,7 @@ from ngsolve.fem import *
 from ngsolve.comp import *
 from ngsolve.solve import *
 from ngsolve.la import *
+from ngsolve.utils import *
 
 from xfem import *
 
@@ -14,12 +15,6 @@ class LevelSetMeshAdaptation:
     order_qn = 2
     order_lset = 2
 
-    # lset
-    # lset_ho
-    # lset_p1
-
-    # deform
-    
     def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000):
         """
         Deformation
@@ -32,19 +27,19 @@ class LevelSetMeshAdaptation:
         self.lset_upper_bound = lset_upper_bound
         self.threshold = threshold
         
-        self.v_ho = FESpace("h1ho", mesh, order=self.order_lset)
+        self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho = GridFunction (self.v_ho, "lset_ho")
 
         if (discontinuous_qn):
-            self.v_qn = FESpace("l2ho", mesh, order=self.order_qn, flags = { "vec" : True })
+            self.v_qn = L2(mesh, order=self.order_qn, dim=mesh.dim)
         else:
-            self.v_qn = FESpace("h1ho", mesh, order=self.order_qn, flags = { "vec" : True })
+            self.v_qn = H1(mesh, order=self.order_qn, dim=mesh.dim)
         self.qn = GridFunction(self.v_qn, "qn")
     
-        self.v_p1 = FESpace("h1ho", mesh, order=1)
+        self.v_p1 = H1(mesh, order=1)
         self.lset_p1 = GridFunction (self.v_p1, "lset_p1")
 
-        self.v_def = FESpace("h1ho", mesh, order=self.order_deform, flags = { "vec" : True })
+        self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
         self.deform = GridFunction(self.v_def, "deform")
         self.heapsize = heapsize
 
