@@ -46,4 +46,4 @@ def test_new_integrateX_via_circle_geom(quad_dominated=True):
 
     for key in domains:
         for i in range(2, len(eoc[key])):            
-            assert eoc[key][i] > 1.8
+            assert eoc[key][i] > 2.1
