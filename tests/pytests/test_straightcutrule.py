@@ -42,3 +42,27 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
     mean_eoc_array = eoc[1:]
     mean_eoc = sum(mean_eoc_array)/len(mean_eoc_array)
     assert mean_eoc > 1.75
+
+@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("order", [2,4,8])
+@pytest.mark.parametrize("domain", [NEG, POS, IF])
+
+def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated):
+    square = SplineGeometry()
+    square.AddRectangle([0,0],[1,1],bc=1)
+    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    
+    levelset = 1 - 2*x - 2*y
+    
+    domains = [NEG,POS,IF]
+    referencevals = {NEG: 7/8, POS: 1/8, IF: 1/sqrt(2)}
+    
+    lset_approx = GridFunction(H1(mesh,order=1))
+    InterpolateToP1(levelset,lset_approx)
+    
+    f = CoefficientFunction(1)
+    
+    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
+    error = abs(integral - referencevals[domain])
+    
+    assert error < 5e-16*(order+1)*(order+1)
