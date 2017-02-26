@@ -74,7 +74,7 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
     geom = CSGeometry()
     geom.Add (cube)
-    ngmesh = geom.GenerateMesh(maxh=100, quad_dominated=quad_dominated)
+    ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
     mesh = Mesh(ngmesh)
     
     levelset = 1 - 2*x - 2*y - 2*z
