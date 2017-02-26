@@ -68,7 +68,7 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
     
     assert error < 5e-16*(order+1)*(order+1)
 
-@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
