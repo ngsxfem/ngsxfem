@@ -54,8 +54,6 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
     
     levelset = 1 - 2*x - 2*y
-    
-    domains = [NEG,POS,IF]
     referencevals = {NEG: 7/8, POS: 1/8, IF: 1/sqrt(2)}
     
     lset_approx = GridFunction(H1(mesh,order=1))
@@ -66,7 +64,7 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
     integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
     error = abs(integral - referencevals[domain])
     
-    assert error < 5e-16*(order+1)*(order+1)
+    assert error < 5e-15*(order+1)*(order+1)
 
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
@@ -80,8 +78,6 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     mesh = Mesh(ngmesh)
     
     levelset = 1 - 2*x - 2*y - 2*z
-    
-    domains = [NEG,POS,IF]
     referencevals = { POS : 1./48, NEG : 47./48, IF : sqrt(3)/8 }
     
     lset_approx = GridFunction(H1(mesh,order=1))
@@ -92,4 +88,4 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
     error = abs(integral - referencevals[domain])
     
-    assert error < 5e-16*(order+1)*(order+1)
+    assert error < 5e-15*(order+1)*(order+1)
