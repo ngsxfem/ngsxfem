@@ -1,5 +1,6 @@
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
+#include "../xfem/cutinfo.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
@@ -19,7 +20,7 @@ void ExportNgsx(py::module &m)
   typedef PyWrapper<CoefficientFunction> PyCF;
   typedef GridFunction GF;
   typedef PyWrapper<GF> PyGF;
-  
+
   py::enum_<DOMAIN_TYPE>(m, "DOMAIN_TYPE")
     .value("POS", POS)
     .value("NEG", NEG)
@@ -34,7 +35,45 @@ void ExportNgsx(py::module &m)
   
   m.def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) { XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get()); } ) );
 
-  
+  py::class_<CutInformation>
+    (m, "CutInfo")
+    .def("__init__", FunctionPointer( [] (CutInformation *instance,
+                                          shared_ptr<MeshAccess> ma,
+                                          py::object lset)
+                                      {
+                                        new (instance) CutInformation (ma);
+                                        if (py::extract<PyCF> (lset).check())
+                                        {
+                                          PyCF cflset = py::extract<PyCF>(lset)();
+                                          instance->Update(cflset.Get());
+                                        }
+                                      }),
+         py::arg("mesh"),
+         py::arg("lset") = DummyArgument())
+    .def("Update", FunctionPointer ([](CutInformation & self,
+                                      PyCF lset)
+                                    { self.Update(lset.Get()); }))
+    .def("GetElementsOfType", FunctionPointer ([](CutInformation & self,
+                                                  DOMAIN_TYPE dt)
+                                               { return self.GetElementsOfDomainType(dt); }),
+         py::arg("domain_type") = IF)
+    .def("GetFacetsOfType", FunctionPointer ([](CutInformation & self,
+                                                  DOMAIN_TYPE dt)
+                                               { return self.GetFacetsOfDomainType(dt); }),
+         py::arg("domain_type") = IF)
+    //      "Update information oncut position")
+    // .def("CutElements", FunctionPointer ([](PyXFES self) 
+    //                                      { return self.Get()->CutElements(); }),
+    //      "get BitArray of cut elements")
+    // .def("GetDomainOfElement", FunctionPointer ([](PyXFES self, int i) 
+    //                                      { return self.Get()->GetDomainOfElement(i); }),
+    //      "get domain_type of element")
+    // .def("GetDomainNrs",  FunctionPointer( [] (PyXFES self, int elnr) {
+    //            Array<DOMAIN_TYPE> domnums;
+    //            self.Get()->GetDomainNrs( elnr, domnums );
+    //            return domnums;
+    //         }))
+    ;
 
   py::class_<PyXFES, PyFES>
     (m, "XFESpace")

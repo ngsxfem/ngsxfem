@@ -1,4 +1,5 @@
 add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
+  cutinfo.cpp
   ghostpenalty.cpp
   xFESpace.cpp
   xfemdiffops.cpp
@@ -15,6 +16,7 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 install( FILES
+  cutinfo.hpp
   ghostpenalty.hpp
   xFESpace.hpp
   xfemdiffops.hpp
