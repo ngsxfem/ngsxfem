@@ -1524,6 +1524,9 @@ namespace xintegration
     int DIM = trafo.SpaceDim();
     auto lset_eval
       = ScalarFieldEvaluator::Create(DIM,*cf_lset,trafo,lh);
+
+    if (trafo.VB() == BND)
+      DIM--;
       // tstart.Stop();
     timercutgeom.Start();
 
@@ -1531,9 +1534,14 @@ namespace xintegration
 
     shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
 
+    CompositeQuadratureRule<1> cquad1d;
     CompositeQuadratureRule<2> cquad2d;
     CompositeQuadratureRule<3> cquad3d;
-    if (DIM == 2)
+    if (DIM == 1)
+      xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
+                                                *lset_eval, cquad1d, lh,
+                                                intorder, 0, subdivlvl, 0);
+    else if (DIM == 2)
       xgeom = XLocalGeometryInformation::Create(et, ET_POINT,
                                                 *lset_eval, cquad2d, lh,
                                                 intorder, 0, subdivlvl, 0);
@@ -1550,7 +1558,11 @@ namespace xintegration
     {
       if (dt == IF)
       {
-        if (DIM == 2)
+        if (DIM == 1)
+        {
+          throw Exception("no interface quad rule for 1D for now...");
+        }
+        else if (DIM == 2)
         {
           const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
           IntegrationRule * ir_interface  = new (lh) IntegrationRule(interface_quad.Size(),lh);
@@ -1595,7 +1607,15 @@ namespace xintegration
       }
       else
       {
-        if (DIM == 2)
+        if (DIM == 1)
+        {
+          const QuadratureRule<1> & domain_quad = cquad1d.GetRule(dt);
+          auto ir_domain = new (lh) IntegrationRule (domain_quad.Size(),lh);
+          for (int i = 0; i < ir_domain->Size(); ++i)
+            (*ir_domain)[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
+          ir = ir_domain;
+        }
+        else if (DIM == 2)
         {
           const QuadratureRule<2> & domain_quad = cquad2d.GetRule(dt);
           auto ir_domain = new (lh) IntegrationRule (domain_quad.Size(),lh);

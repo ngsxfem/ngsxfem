@@ -39,40 +39,47 @@ void ExportNgsx(py::module &m)
     (m, "CutInfo")
     .def("__init__", FunctionPointer( [] (CutInformation *instance,
                                           shared_ptr<MeshAccess> ma,
-                                          py::object lset)
+                                          py::object lset,
+                                          int heapsize)
                                       {
                                         new (instance) CutInformation (ma);
                                         if (py::extract<PyCF> (lset).check())
                                         {
                                           PyCF cflset = py::extract<PyCF>(lset)();
-                                          instance->Update(cflset.Get());
+                                          LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
+                                          instance->Update(cflset.Get(),lh);
                                         }
                                       }),
          py::arg("mesh"),
-         py::arg("lset") = DummyArgument())
+         py::arg("levelset") = DummyArgument(),
+         py::arg("heapsize") = 1000000
+      )
     .def("Update", FunctionPointer ([](CutInformation & self,
-                                      PyCF lset)
-                                    { self.Update(lset.Get()); }))
+                                       PyCF lset,
+                                       int heapsize)
+                                    {
+                                      LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
+                                      self.Update(lset.Get(),lh);
+                                    }),
+         py::arg("levelset"),
+         py::arg("heapsize") = 1000000
+      )
     .def("GetElementsOfType", FunctionPointer ([](CutInformation & self,
-                                                  DOMAIN_TYPE dt)
-                                               { return self.GetElementsOfDomainType(dt); }),
-         py::arg("domain_type") = IF)
+                                                  DOMAIN_TYPE dt,
+                                                  VorB vb)
+                                               { return self.GetElementsOfDomainType(dt,vb); }),
+         py::arg("domain_type") = IF,
+         py::arg("VOL_or_BND") = VOL
+      )
     .def("GetFacetsOfType", FunctionPointer ([](CutInformation & self,
-                                                  DOMAIN_TYPE dt)
-                                               { return self.GetFacetsOfDomainType(dt); }),
+                                                DOMAIN_TYPE dt)
+                                             { return self.GetFacetsOfDomainType(dt); }),
          py::arg("domain_type") = IF)
-    //      "Update information oncut position")
-    // .def("CutElements", FunctionPointer ([](PyXFES self) 
-    //                                      { return self.Get()->CutElements(); }),
-    //      "get BitArray of cut elements")
-    // .def("GetDomainOfElement", FunctionPointer ([](PyXFES self, int i) 
-    //                                      { return self.Get()->GetDomainOfElement(i); }),
-    //      "get domain_type of element")
-    // .def("GetDomainNrs",  FunctionPointer( [] (PyXFES self, int elnr) {
-    //            Array<DOMAIN_TYPE> domnums;
-    //            self.Get()->GetDomainNrs( elnr, domnums );
-    //            return domnums;
-    //         }))
+
+    .def("GetCutRatios", FunctionPointer ([](CutInformation & self,
+                                             VorB vb)
+                                          { return self.GetCutRatios(vb); }),
+         py::arg("VOL_or_BND") = VOL)
     ;
 
   py::class_<PyXFES, PyFES>

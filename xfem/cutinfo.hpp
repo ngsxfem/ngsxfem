@@ -20,29 +20,42 @@ namespace ngcomp
   {
   protected:
     shared_ptr<MeshAccess> ma;
-    Array<shared_ptr<VVector<double>>> cut_ratio_of_node;
+    Array<shared_ptr<VVector<double>>> cut_ratio_of_element;
     Array<shared_ptr<BitArray>> elems_of_domain_type;
+    Array<shared_ptr<BitArray>> selems_of_domain_type;
     Array<shared_ptr<BitArray>> facets_of_domain_type;
+    double subdivlvl = 0;
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
-    void Update(shared_ptr<CoefficientFunction> lset);
+    void Update(shared_ptr<CoefficientFunction> lset, LocalHeap & lh);
 
-    template <NODE_TYPE NT>
-    double GetCutRatioOfNode (int nr) const
+    shared_ptr<BaseVector> GetCutRatios (VorB vb) const
     {
-      return (*cut_ratio_of_node[NT])(nr);
+      return cut_ratio_of_element[vb];
     }
 
-    template <NODE_TYPE NT>
-    DOMAIN_TYPE GetDomainOfNode (int nr)
+    double GetCutRatioOfElement (VorB vb, int nr) const
     {
-      if (GetCutRatioOfNode<NT>(nr) > 0.0 && GetCutRatioOfNode<NT>(nr) < 1.0)
-        return IF;
+      return (*cut_ratio_of_element[vb])(nr);
+    }
+
+
+    // template <NODE_TYPE NT>
+    // DOMAIN_TYPE GetDomainOfNode (int nr)
+    // {
+    //   if (GetCutRatioOfNode<NT>(nr) > 0.0 && GetCutRatioOfNode<NT>(nr) < 1.0)
+    //     return IF;
+    //   else
+    //     return GetCutRatioOfNode<NT>(nr) == 0.0 ? NEG : POS;
+    // }
+
+    shared_ptr<BitArray> GetElementsOfDomainType(DOMAIN_TYPE dt, VorB vb) const
+    {
+      if (vb == VOL)
+        return elems_of_domain_type[dt];
       else
-        return GetCutRatioOfNode<NT>(nr) == 0.0 ? NEG : POS;
+        return selems_of_domain_type[dt];
     }
-
-    shared_ptr<BitArray> GetElementsOfDomainType(DOMAIN_TYPE dt) const { return elems_of_domain_type[dt]; }
     shared_ptr<BitArray> GetFacetsOfDomainType(DOMAIN_TYPE dt) const { return facets_of_domain_type[dt]; }
 
   };

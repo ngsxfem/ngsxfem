@@ -1,14 +1,13 @@
-# add_library(ngsxfem_utils ${NGS_LIB_TYPE}
-#   )
+add_library(ngsxfem_utils ${NGS_LIB_TYPE}
+  ngsxstd.cpp
+        )
 
-# set_target_properties(ngsxfem_utils PROPERTIES SUFFIX ".so")
+set_target_properties(ngsxfem_utils PROPERTIES SUFFIX ".so")
 
-# if(NOT WIN32)
-#     target_link_libraries(ngsxfem_utils ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
-#   install( TARGETS ngsxfem_utils ${ngs_install_dir})
-# endif(NOT WIN32)
-
-
+if(NOT WIN32)
+    target_link_libraries(ngsxfem_utils ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
+    install( TARGETS ngsxfem_utils ${ngs_install_dir})
+endif(NOT WIN32)
 
 if(USE_PYTHON)
     install (FILES

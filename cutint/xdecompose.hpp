@@ -2,6 +2,7 @@
 #define FILE_XDECOMPOSE_HPP
 
 #include "../cutint/fieldeval.hpp"
+#include "../utils/ngsxstd.hpp"
 
 #include <set>
 #include <vector>
@@ -12,9 +13,6 @@ namespace xintegration
 {
 
   template<int SD> class PointContainer;
-
-  /// domain types: two domains: POS/NEG and the diving interface IF
-  enum DOMAIN_TYPE { POS = 0, NEG = 1, IF = 2};
 
   template <int D>
   class Simplex
