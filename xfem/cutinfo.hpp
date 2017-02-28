@@ -34,12 +34,6 @@ namespace ngcomp
       return cut_ratio_of_element[vb];
     }
 
-    double GetCutRatioOfElement (VorB vb, int nr) const
-    {
-      return (*cut_ratio_of_element[vb])(nr);
-    }
-
-
     // template <NODE_TYPE NT>
     // DOMAIN_TYPE GetDomainOfNode (int nr)
     // {
@@ -56,7 +50,14 @@ namespace ngcomp
       else
         return selems_of_domain_type[dt];
     }
+
     shared_ptr<BitArray> GetFacetsOfDomainType(DOMAIN_TYPE dt) const { return facets_of_domain_type[dt]; }
 
   };
+
+  shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
+                                                  shared_ptr<BitArray> a,
+                                                  shared_ptr<BitArray> b,
+                                                  LocalHeap & lh);
+
 }

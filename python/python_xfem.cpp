@@ -82,6 +82,22 @@ void ExportNgsx(py::module &m)
          py::arg("VOL_or_BND") = VOL)
     ;
 
+
+  m.def("GetFacetsWithNeighborTypes",
+        FunctionPointer( [] (shared_ptr<MeshAccess> & ma,
+                             shared_ptr<BitArray> & a,
+                             shared_ptr<BitArray> & b,
+                             int heapsize)
+                         {
+                           LocalHeap lh (heapsize, "FacetsWithNeighborTypes-heap", true);
+                           return GetFacetsWithNeighborTypes(ma,a,b,lh);
+                         } ),
+        py::arg("mesh"),
+        py::arg("a"),
+        py::arg("b"),
+        py::arg("heapsize") = 1000000
+    );
+
   py::class_<PyXFES, PyFES>
     (m, "XFESpace")
     .def("__init__", FunctionPointer( [] (PyXFES *instance,
