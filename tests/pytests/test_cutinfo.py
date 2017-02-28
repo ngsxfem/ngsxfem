@@ -54,4 +54,17 @@ for dt in [NEG,POS,IF]:
 gpfacet = GetFacetsWithNeighborTypes(mesh,hasneg,ci.GetElementsOfType(IF,VOL))
 print(gpfacet)
 
+gf_hasneg = IndicatorFunctionFromBitArray(mesh,hasneg)
+gf_haspos = IndicatorFunctionFromBitArray(mesh,haspos)
+gf_if = IndicatorFunctionFromBitArray(mesh,ci.GetElementsOfType(IF,VOL))
+gf_neg = IndicatorFunctionFromBitArray(mesh,ci.GetElementsOfType(NEG,VOL))
+gf_pos = IndicatorFunctionFromBitArray(mesh,ci.GetElementsOfType(POS,VOL))
+gf_kappa = CutRatioGF(ci)
+
 Draw(lset,mesh,"lset")
+Draw(gf_hasneg,mesh,"hasneg")
+Draw(gf_haspos,mesh,"haspos")
+Draw(gf_if,mesh,"if")
+Draw(gf_neg,mesh,"neg")
+Draw(gf_pos,mesh,"pos")
+Draw(gf_kappa,mesh,"kappa")

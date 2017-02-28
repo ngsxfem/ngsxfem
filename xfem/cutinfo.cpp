@@ -100,8 +100,38 @@ namespace ngcomp
 
       if (elnums.Size() > 1)
       {
-        if ((a->Test(elnums[0]) && b->Test(elnums[1])) || (b->Test(elnums[0]) && a->Test(elnums[1])))
+        if (b != nullptr)
+        {
+          if ((a->Test(elnums[0]) && b->Test(elnums[1])) || (b->Test(elnums[0]) && a->Test(elnums[1])))
+            ret->Set(facnr);
+        }
+        else
+        if ( a->Test(elnums[0]) || a->Test(elnums[1]))
           ret->Set(facnr);
+      }
+    });
+    return ret;
+  }
+
+  shared_ptr<BitArray> GetElementsWithNeighborFacets(shared_ptr<MeshAccess> ma,
+                                                     shared_ptr<BitArray> a,
+                                                     LocalHeap & lh)
+  {
+    int nf = ma->GetNFacets();
+    int ne = ma->GetNE();
+    shared_ptr<BitArray> ret = make_shared<BitArray> (ne);
+    ret->Clear();
+
+    IterateRange
+      (nf, lh,
+      [&] (int facnr, LocalHeap & lh)
+    {
+      if (a->Test(facnr))
+      {
+        Array<int> elnums(0,lh);
+        ma->GetFacetElements (facnr, elnums);
+        for (auto elnr : elnums)
+          ret->Set(elnr);
       }
     });
     return ret;

@@ -192,8 +192,25 @@ def Integrate(levelset_domain=None, *args, **kwargs):
                 newargs.append(q)
             return Integrate_old(*newargs,**kwargs)
 
-        
+def IndicatorFunctionFromBitArray(mesh, ba, facets = False):
+    if facets:
+        ret = GridFunction(FacetFESpace(mesh,order=0))
+    else:
+        ret = GridFunction(L2(mesh,order=0))
+    for i in range(len(ba)):
+        if ba[i]:
+            ret.vec[i] = 1.0
+        else:
+            ret.vec[i] = 0.0
+    return ret
+
+def CutRatioGF(cutinfo):
+    ret = GridFunction(L2(cutinfo.Mesh(),order=0))
+    ret.vec.data = cutinfo.GetCutRatios(VOL)
+    return ret
+
 def kappa(mesh,lset_approx, subdivlvl=0):
+    print("kappa-function is deprecated - use CutRatioGF instead")
     kappa1 = GridFunction(L2(mesh,order=0))
     lset_neg = { "levelset" : lset_approx, "domain_type" : NEG, "subdivlvl" : subdivlvl}
     kappa_f = LinearForm(kappa1.space)
@@ -217,3 +234,4 @@ def IsCut(mesh,lset_approx, subdivlvl=0):
     # cut = vectorize(cut)
     # kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
     return kappa1
+

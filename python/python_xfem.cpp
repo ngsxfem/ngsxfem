@@ -64,6 +64,11 @@ void ExportNgsx(py::module &m)
          py::arg("levelset"),
          py::arg("heapsize") = 1000000
       )
+    .def("Mesh", FunctionPointer ([](CutInformation & self)
+                                    {
+                                      return self.GetMesh();
+                                    })
+      )
     .def("GetElementsOfType", FunctionPointer ([](CutInformation & self,
                                                   DOMAIN_TYPE dt,
                                                   VorB vb)
@@ -84,17 +89,36 @@ void ExportNgsx(py::module &m)
 
 
   m.def("GetFacetsWithNeighborTypes",
-        FunctionPointer( [] (shared_ptr<MeshAccess> & ma,
-                             shared_ptr<BitArray> & a,
-                             shared_ptr<BitArray> & b,
+        FunctionPointer( [] (shared_ptr<MeshAccess> ma,
+                             shared_ptr<BitArray> a,
+                             py::object b,
                              int heapsize)
                          {
                            LocalHeap lh (heapsize, "FacetsWithNeighborTypes-heap", true);
-                           return GetFacetsWithNeighborTypes(ma,a,b,lh);
+                           if (py::extract<shared_ptr<BitArray>> (b).check())
+                           {
+                             shared_ptr<BitArray> bb = py::extract<shared_ptr<BitArray>>(b)();
+                             return GetFacetsWithNeighborTypes(ma,a,bb,lh);
+                           }
+                           else
+                             return GetFacetsWithNeighborTypes(ma,a,nullptr,lh);
                          } ),
         py::arg("mesh"),
         py::arg("a"),
-        py::arg("b"),
+        py::arg("b") = DummyArgument(),
+        py::arg("heapsize") = 1000000
+    );
+
+  m.def("GetElementsWithNeighborFacets",
+        FunctionPointer( [] (shared_ptr<MeshAccess> ma,
+                             shared_ptr<BitArray> a,
+                             int heapsize)
+                         {
+                           LocalHeap lh (heapsize, "GetElementsWithNeighborFacets-heap", true);
+                           return GetElementsWithNeighborFacets(ma,a,lh);
+                         } ),
+        py::arg("mesh"),
+        py::arg("a"),
         py::arg("heapsize") = 1000000
     );
 

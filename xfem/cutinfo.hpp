@@ -29,6 +29,8 @@ namespace ngcomp
     CutInformation (shared_ptr<MeshAccess> ama);
     void Update(shared_ptr<CoefficientFunction> lset, LocalHeap & lh);
 
+    shared_ptr<MeshAccess> GetMesh () const { return ma; }
+
     shared_ptr<BaseVector> GetCutRatios (VorB vb) const
     {
       return cut_ratio_of_element[vb];
@@ -59,5 +61,8 @@ namespace ngcomp
                                                   shared_ptr<BitArray> a,
                                                   shared_ptr<BitArray> b,
                                                   LocalHeap & lh);
+  shared_ptr<BitArray> GetElementsWithNeighborFacets(shared_ptr<MeshAccess> ma,
+                                                     shared_ptr<BitArray> a,
+                                                     LocalHeap & lh);
 
 }
