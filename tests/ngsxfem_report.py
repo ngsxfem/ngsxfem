@@ -46,18 +46,35 @@ else:
     id = "0000"
 
 filename1 = basedir + "fes_timings"
-for dim in [2,3]:
+
+testcases = [ (2, False, 1, False),
+              (2,  True, 1, False),
+              (3, False, 1, False),
+              (3,  True, 1, False),
+              (2, False, 3, False),
+              (2,  True, 3, False),
+              (3, False, 1, True),
+              (3,  True, 1, True),
+]
+
+for dim, stdfes, order, taskmanager in testcases:
     filename2 = filename1 + "_dim" + str(dim)
-    for stdfes in [True,False]:
-        if stdfes:
-            filename3 = filename2 + "_std"
-        else:
-            filename3 = filename2 + "_x"
-        for order in [1,3]:
-            filename4 = filename3 + "_order" + str(order)
+    if stdfes:
+        filename3 = filename2 + "_std"
+    else:
+        filename3 = filename2 + "_x"
+    filename4 = filename3 + "_order" + str(order)
+    if taskmanager:
+        filename5 = filename4 + "_TM"
+    else:
+        filename5 = filename4 + "_NoTM"
+    if taskmanager:
+        with TaskManager():
             report = test_fes_timing(dimension=dim,stdfes=stdfes,order=order)
-            for key, entry in report:
-                filename = filename4 + "_" + key.replace(" ", "_")
-                f = open(filename, 'a')
-                f.write("{:8}\t{:20}\t{:.6e}\n".format(id,date,entry))
-                f.close()
+    else:
+        report = test_fes_timing(dimension=dim,stdfes=stdfes,order=order)
+    for key, entry in report:
+        filename = filename5 + "_" + key.replace(" ", "_")
+        f = open(filename, 'a')
+        f.write("{:8}\t{:20}\t{:.6e}\n".format(id,date,entry))
+        f.close()
