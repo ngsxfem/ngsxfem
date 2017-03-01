@@ -12,7 +12,6 @@ build:
     paths:
       - build/
   script:
-    - echo "$CI_BUILD_REF_NAME"
     - mkdir -p build
     - mkdir -p /home/gitlab-runner/inst
     - mkdir -p /home/gitlab-runner/inst/netgen
