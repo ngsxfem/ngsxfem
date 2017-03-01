@@ -83,8 +83,8 @@ ngsxfem-report:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py" | grep Report -A 100000 >> /home/gitlab-runner/ngsxfem-reports/log
-
+    - mkdir /home/gitlab-runner/ngsxfem-reports/tmp -p
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py /home/gitlab-runner/ngsxfem-reports/tmp/ $CI_PIPELINE_ID"
 deploy:
   stage: deploy
   script:
