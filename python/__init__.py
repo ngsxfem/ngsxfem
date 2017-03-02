@@ -192,7 +192,7 @@ def Integrate(levelset_domain=None, *args, **kwargs):
                 newargs.append(q)
             return Integrate_old(*newargs,**kwargs)
 
-def IndicatorFunctionFromBitArray(mesh, ba, facets = False):
+def IndicatorCF(mesh, ba, facets = False):
     if facets:
         ret = GridFunction(FacetFESpace(mesh,order=0))
         for i in range(len(ba)):
@@ -202,7 +202,7 @@ def IndicatorFunctionFromBitArray(mesh, ba, facets = False):
                 ret.vec[i] = 0.0
         return ret
     else:
-        return BitArrayCF(ba)
+        return BitArrayCF(BitArray(ba))
 
 def CutRatioGF(cutinfo):
     ret = GridFunction(L2(cutinfo.Mesh(),order=0))

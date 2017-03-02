@@ -60,6 +60,9 @@ namespace ngcomp
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
                                                   shared_ptr<BitArray> a,
                                                   shared_ptr<BitArray> b,
+                                                  bool bound_val_a,
+                                                  bool bound_val_b,
+                                                  bool ask_and,
                                                   LocalHeap & lh);
   shared_ptr<BitArray> GetElementsWithNeighborFacets(shared_ptr<MeshAccess> ma,
                                                      shared_ptr<BitArray> a,

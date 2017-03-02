@@ -21,6 +21,7 @@ void ExportNgsx(py::module &m)
   typedef PyWrapper<CoefficientFunction> PyCF;
   typedef GridFunction GF;
   typedef PyWrapper<GF> PyGF;
+  typedef PyWrapper<shared_ptr<BitArray>> PyBA;
 
   py::enum_<DOMAIN_TYPE>(m, "DOMAIN_TYPE")
     .value("POS", POS)
@@ -92,20 +93,25 @@ void ExportNgsx(py::module &m)
   m.def("GetFacetsWithNeighborTypes",
         FunctionPointer( [] (shared_ptr<MeshAccess> ma,
                              shared_ptr<BitArray> a,
-                             py::object b,
+                             bool bv_a,
+                             bool bv_b,
+                             bool use_and,
+                             py::object bb,
                              int heapsize)
                          {
                            LocalHeap lh (heapsize, "FacetsWithNeighborTypes-heap", true);
-                           if (py::extract<shared_ptr<BitArray>> (b).check())
-                           {
-                             shared_ptr<BitArray> bb = py::extract<shared_ptr<BitArray>>(b)();
-                             return GetFacetsWithNeighborTypes(ma,a,bb,lh);
-                           }
+                           shared_ptr<BitArray> b = nullptr;
+                           if (py::extract<PyBA> (bb).check())
+                             b = py::extract<PyBA>(bb)();
                            else
-                             return GetFacetsWithNeighborTypes(ma,a,nullptr,lh);
+                             b = a;
+                           return GetFacetsWithNeighborTypes(ma,a,b,bv_a,bv_b,use_and,lh);
                          } ),
         py::arg("mesh"),
         py::arg("a"),
+        py::arg("bnd_val_a") = true,
+        py::arg("bnd_val_b") = true,
+        py::arg("use_and") = true,
         py::arg("b") = DummyArgument(),
         py::arg("heapsize") = 1000000
     );

@@ -85,6 +85,9 @@ namespace ngcomp
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
                                                   shared_ptr<BitArray> a,
                                                   shared_ptr<BitArray> b,
+                                                  bool bound_val_a,
+                                                  bool bound_val_b,
+                                                  bool ask_and,
                                                   LocalHeap & lh)
   {
     int nf = ma->GetNFacets();
@@ -98,17 +101,23 @@ namespace ngcomp
       Array<int> elnums(0,lh);
       ma->GetFacetElements (facnr, elnums);
 
-      if (elnums.Size() > 1)
+      bool a_left = a->Test(elnums[0]);
+      bool a_right = elnums.Size() > 1 ? a->Test(elnums[1]) : bound_val_a;
+      bool b_left = b->Test(elnums[0]);
+      bool b_right = elnums.Size() > 1 ? b->Test(elnums[1]) : bound_val_b;
+
+      if (ask_and)
       {
-        if (b != nullptr)
-        {
-          if ((a->Test(elnums[0]) && b->Test(elnums[1])) || (b->Test(elnums[0]) && a->Test(elnums[1])))
-            ret->Set(facnr);
-        }
-        else
-        if ( a->Test(elnums[0]) || a->Test(elnums[1]))
+        if ((a_left && b_right) || (a_right && b_left))
           ret->Set(facnr);
       }
+      else
+      {
+        if ((a_left || b_right) || (a_right || b_left))
+          ret->Set(facnr);
+      }
+
+
     });
     return ret;
   }
