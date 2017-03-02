@@ -1,5 +1,6 @@
 //#include "../ngstd/python_ngstd.hpp"
 #include <python_ngstd.hpp>
+#include "../utils/bitarraycf.hpp"
 #include "../xfem/cutinfo.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
@@ -121,6 +122,19 @@ void ExportNgsx(py::module &m)
         py::arg("a"),
         py::arg("heapsize") = 1000000
     );
+
+
+  // Export RandomCoefficientFunction to python (name "RandomCF")
+  typedef PyWrapperDerived<BitArrayCoefficientFunction,CoefficientFunction> PyBACF;
+  py::class_<PyBACF, PyCF>
+    (m, "BitArrayCF")
+    .def("__init__",
+         [](PyBACF *instance, shared_ptr<BitArray> ba)
+         {
+           new (instance) PyBACF(make_shared<BitArrayCoefficientFunction> (ba));
+         },
+         py::arg("bitarray")
+      );
 
   py::class_<PyXFES, PyFES>
     (m, "XFESpace")
