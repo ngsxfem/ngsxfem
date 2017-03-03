@@ -754,16 +754,13 @@ void ExportNgsx(py::module &m)
   }));
   // new implementation: only straight cuts - start with triangles only for a start!
 
-  m.def("DebugSaye", FunctionPointer([](int s_dt) -> double {return DebugSaye(s_dt);}));
-  m.def("DebugPolynomeClass", FunctionPointer([](){DebugPolynomeClass();}));
-
   m.def("NewIntegrateX",
           FunctionPointer([](py::object lset,
                              shared_ptr<MeshAccess> ma, 
                              PyCF cf,
                              int order,
                              DOMAIN_TYPE dt,
-                             int heapsize, bool use_saye)
+                             int heapsize)
                           {
                             static Timer timer ("NewIntegrateX");
                             static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
@@ -786,18 +783,6 @@ void ExportNgsx(py::module &m)
 
                             auto FESpace = gf_lset->GetFESpace();
                             cout << "I found a FESpace of order " << FESpace->GetOrder() << " in NewIntegrateX" << endl;
-                            bool lset_h1_multilinear = (FESpace->GetOrder() <= 1) && (FESpace->GetClassName() == "H1HighOrderFESpace");
-                            if(! lset_h1_multilinear) {
-                                cout << "LSet Function class" << gf_lset->GetClassName() << endl;
-                                Array<int> dnums;
-                                FESpace->GetDofNrs(0, dnums);
-                                FlatVector<> elvec(dnums.Size(), lh);
-                                gf_lset->GetVector().GetIndirect(dnums, elvec);
-
-                                PolynomeFunction p(DIM);
-                                p.FromLsetVals(elvec);
-                                cout << "The Polynomial reconstructed:"; p.output();
-                            }
 
                             Array<int> dnums;
                             ma->IterateElements
@@ -816,7 +801,7 @@ void ExportNgsx(py::module &m)
 
                                  timercutgeom.Start();
                                  const IntegrationRule * ir;
-                                 ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye, lset_h1_multilinear);
+                                 ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh);
 
                                  timercutgeom.Stop();
                                  timerevalintrule.Start();
