@@ -833,7 +833,7 @@ void ExportNgsx(py::module &m)
            py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
            py::arg("order")=5,
            py::arg("domain_type")=IF,
-           py::arg("heapsize")=1000000, py::arg("use_saye")=false);
+           py::arg("heapsize")=1000000);
 }
 
 PYBIND11_PLUGIN(libngsxfem_py)
