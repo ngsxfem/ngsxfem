@@ -10,7 +10,7 @@ from netgen.geom2d import SplineGeometry
 
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
+mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
 mesh.Refine()
 mesh.Refine()
 

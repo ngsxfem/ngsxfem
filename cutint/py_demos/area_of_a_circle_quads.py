@@ -42,7 +42,7 @@ for i in range(n_ref):
   #Draw(deformation,mesh,"deformation")
 
   for key in domains:
-    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000, use_saye = True)
+    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000)
     print("Result of Integration Reflevel ",i,", Key ",key," : ", integral)
     errors[key].append(abs(integral - referencevals[key]))
 

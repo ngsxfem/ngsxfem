@@ -11,7 +11,7 @@ from netgen.geom2d import SplineGeometry
 
 order = 2
 threshold = 0.04 # curvate/resolution driven refinements (for trigs)
-quad = True
+quad = False
 
 #def get_l2error(order, n_ref, deform):
 square = SplineGeometry()
