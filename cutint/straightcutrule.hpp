@@ -127,5 +127,5 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
-                                                     LocalHeap & lh, bool use_saye, bool lset_h1_multilinear);
+                                                     LocalHeap & lh);
 }
