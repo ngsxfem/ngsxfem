@@ -113,7 +113,7 @@ namespace xintegration
     Array < Vec<SD> > points;
     /// the quadrature weights
     Array < double > weights;
-    /// the quadrature weights
+    /// the quadrature normal vectors
     Array < Vec<SD> > normals;
     /// return number of integration points 
     int Size() const { return points.Size(); }
@@ -129,7 +129,7 @@ namespace xintegration
     FlatMatrixFixWidth<SD> points;
     /// the quadrature weights
     FlatVector<double> weights;
-    /// the quadrature weights
+    /// the quadrature normal vectors
     FlatMatrixFixWidth<SD> normals;
     /// return number of integration points 
     int Size() const { return points.Height(); }
@@ -418,7 +418,7 @@ namespace xintegration
     FlatXLocalGeometryInformation * pasttracegeom = 0;
     FlatXLocalGeometryInformation * futuretracegeom = 0;
   public:
-    double kappa[2];
+    double kappa[2]; //Sum of weights of the POS/NEG part divided by total sum of weights
 
     const ScalarFieldEvaluator * lset;
 

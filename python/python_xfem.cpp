@@ -10,12 +10,16 @@
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
+#include "../cutint/straightcutrule.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
 
 void ExportNgsx(py::module &m)
 {
+  
+
+
 
   typedef PyWrapper<FESpace> PyFES;
   typedef PyWrapper<CoefficientFunction> PyCF;
@@ -438,8 +442,6 @@ void ExportNgsx(py::module &m)
             for (int i = 0; i < domain_quad.Size(); ++i)
               hsum += values(i,0) * mir_domain[i].GetWeight();
           }
-
-
           double & rsum = domain_sum(int(domtype));
           AsAtomic(rsum) += hsum;
         }
@@ -750,6 +752,103 @@ void ExportNgsx(py::module &m)
     ret->FinalizeUpdate(lh);
     return ret;
   }));
+  // new implementation: only straight cuts - start with triangles only for a start!
+
+  m.def("DebugSaye", FunctionPointer([](int s_dt) -> double {return DebugSaye(s_dt);}));
+  m.def("DebugPolynomeClass", FunctionPointer([](){DebugPolynomeClass();}));
+
+  m.def("NewIntegrateX",
+          FunctionPointer([](py::object lset,
+                             shared_ptr<MeshAccess> ma, 
+                             PyCF cf,
+                             int order,
+                             DOMAIN_TYPE dt,
+                             int heapsize, bool use_saye)
+                          {
+                            static Timer timer ("NewIntegrateX");
+                            static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
+                            static Timer timerevalintrule ("NewIntegrateX::EvaluateIntRule");
+                            static Timer timeradding("NewIntegrateX::Adding");
+                            static Timer timermapir("NewIntegrateX::MapingIntergrRule");
+                            static Timer timergetdnums1("NewIntegrateX::GetDNums1");
+                            static Timer timergetdnums2("NewIntegrateX::GetDNums2");
+
+                            py::extract<PyGF> pygf(lset);
+                            if (!pygf.check())
+                              throw Exception("cast failed... need new candidates..");
+                            shared_ptr<GridFunction> gf_lset = pygf().Get();
+
+                            RegionTimer reg (timer);
+                            LocalHeap lh(heapsize, "lh-New-Integrate");
+
+                            double sum = 0.0;
+                            int DIM = ma->GetDimension();
+
+                            auto FESpace = gf_lset->GetFESpace();
+                            cout << "I found a FESpace of order " << FESpace->GetOrder() << " in NewIntegrateX" << endl;
+                            bool lset_h1_multilinear = (FESpace->GetOrder() <= 1) && (FESpace->GetClassName() == "H1HighOrderFESpace");
+                            if(! lset_h1_multilinear) {
+                                cout << "LSet Function class" << gf_lset->GetClassName() << endl;
+                                Array<int> dnums;
+                                FESpace->GetDofNrs(0, dnums);
+                                FlatVector<> elvec(dnums.Size(), lh);
+                                gf_lset->GetVector().GetIndirect(dnums, elvec);
+
+                                PolynomeFunction p(DIM);
+                                p.FromLsetVals(elvec);
+                                cout << "The Polynomial reconstructed:"; p.output();
+                            }
+
+                            Array<int> dnums;
+                            ma->IterateElements
+                              (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
+                               {
+                                 //cout << endl << "NewIntegrateX() loop: Element Nr. " << el.Nr() << endl;
+                                 auto & trafo = ma->GetTrafo (el, lh);
+
+                                 timergetdnums1.Start();
+                                 FESpace->GetDofNrs(el.Nr(),dnums);
+                                 FlatVector<> elvec(dnums.Size(),lh);
+                                 timergetdnums1.Stop();
+                                 timergetdnums2.Start();
+                                 gf_lset->GetVector().GetIndirect(dnums,elvec);
+                                 timergetdnums2.Stop();
+
+                                 timercutgeom.Start();
+                                 const IntegrationRule * ir;
+                                 ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh, use_saye, lset_h1_multilinear);
+
+                                 timercutgeom.Stop();
+                                 timerevalintrule.Start();
+                                 if (ir != nullptr)
+                                 {
+                                   timermapir.Start();
+                                   BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+                                   FlatMatrix<> val(mir.Size(), 1, lh);
+                                   timermapir.Stop();
+
+
+                                   cf -> Evaluate (mir, val);
+
+                                   timeradding.Start();
+                                   double lsum = 0.0;
+                                   for (int i = 0; i < mir.Size(); i++)
+                                     lsum += mir[i].GetWeight()*val(i,0);
+
+                                   AsAtomic(sum) += lsum;
+                                   timeradding.Stop();
+                                 }
+                                 timerevalintrule.Stop();
+                               });
+
+                            return sum;
+                          }),
+          py::arg("lset"),
+           py::arg("mesh"),
+           py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+           py::arg("order")=5,
+           py::arg("domain_type")=IF,
+           py::arg("heapsize")=1000000, py::arg("use_saye")=false);
 }
 
 PYBIND11_PLUGIN(libngsxfem_py)
