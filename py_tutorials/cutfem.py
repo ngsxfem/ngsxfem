@@ -36,8 +36,17 @@ order = 1
 Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
 VhG = FESpace([Vh,Vh])
 print("unknowns in CutFESpace (2 x standard unknowns): ", VhG.ndof)
-# coefficients / parameters: 
 
+# overwrite freedofs of VhG to mark only dofs that are involved in the cut problem
+ci = CutInfo(mesh, lsetp1)
+hasneg = BitArray(ci.GetElementsOfType(NEG))
+hasneg |= ci.GetElementsOfType(IF)
+haspos = BitArray(ci.GetElementsOfType(POS))
+haspos |= ci.GetElementsOfType(IF)
+freedofs = VhG.FreeDofs()
+freedofs &= CompoundBitArray([GetDofsOfElements(Vh,hasneg),GetDofsOfElements(Vh,haspos)])
+
+# coefficients / parameters:
 n = 1.0/grad(lsetp1).Norm() * grad(lsetp1)
 h = specialcf.mesh_size
 
@@ -84,7 +93,7 @@ f.Assemble();
 rhs = gfu.vec.CreateVector()
 rhs.data = f.vec - a.mat * gfu.vec
 update = gfu.vec.CreateVector()
-update.data = a.mat.Inverse(VhG.FreeDofs()) * rhs;
+update.data = a.mat.Inverse(freedofs) * rhs;
 gfu.vec.data += update
 
 sol_coef = IfPos(lsetp1,solution[1],solution[0])

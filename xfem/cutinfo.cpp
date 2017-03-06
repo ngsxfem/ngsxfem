@@ -238,4 +238,30 @@ namespace ngcomp
     return ret;
   }
 
+  shared_ptr<BitArray> GetDofsOfElements(shared_ptr<FESpace> fes,
+                                         shared_ptr<BitArray> a,
+                                         LocalHeap & lh)
+  {
+    int ne = fes->GetMeshAccess()->GetNE();
+    int ndof = fes->GetNDof();
+    shared_ptr<BitArray> ret = make_shared<BitArray> (ndof);
+    ret->Clear();
+
+    IterateRange
+      (ne, lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+      ElementId elid(VOL,elnr);
+      if (a->Test(elnr))
+      {
+        Array<int> dnums(0,lh);
+        fes->GetDofNrs(elid,dnums);
+        for (auto dof : dnums)
+          ret->Set(dof);
+      }
+    });
+    return ret;
+  }
+
+
 }

@@ -141,6 +141,47 @@ void ExportNgsx(py::module &m)
         py::arg("heapsize") = 1000000
         );
 
+  m.def("GetDofsOfElements",
+        FunctionPointer( [] (PyFES fes,
+                             PyBA a,
+                             int heapsize)
+  {
+    LocalHeap lh (heapsize, "GetDofsOfElements-heap", true);
+    return GetDofsOfElements(fes.Get(),a,lh);
+  } ),
+        py::arg("space"),
+        py::arg("a"),
+        py::arg("heapsize") = 1000000
+        );
+
+  m.def("CompoundBitArray",
+        FunctionPointer( [] (py::list balist)
+  {
+    size_t cnt = 0;
+    for( auto aba : balist )
+    {
+      shared_ptr<BitArray> ba = py::extract<PyBA>(aba)();
+      cnt += ba->Size();
+    }
+    shared_ptr<BitArray> res = make_shared<BitArray>(cnt);
+    res->Clear();
+    size_t offset = 0;
+    for( auto aba : balist )
+    {
+      shared_ptr<BitArray> ba = py::extract<PyBA>(aba)();
+      for (size_t i = 0; i < ba->Size(); ++i)
+      {
+        if (ba->Test(i))
+          res->Set(offset+i);
+      }
+      offset += ba->Size();
+    }
+    return res;
+  } ),
+        py::arg("balist")
+        );
+
+
 
   // Export RandomCoefficientFunction to python (name "RandomCF")
   typedef PyWrapperDerived<BitArrayCoefficientFunction,CoefficientFunction> PyBACF;
@@ -177,7 +218,11 @@ void ExportNgsx(py::module &m)
        py::arg("lset"),
        py::arg("flags") = py::dict(),
        py::arg("heapsize") = 1000000)
-
+  .def("GetCutInfo", FunctionPointer ([](PyXFES self)
+  {
+    return self.Get()->GetCutInfo();
+  }),
+       "Get Information of cut geometry")
   .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyCF cf)
   {
     self.Get()->SetLevelSet(cf.Get());
@@ -687,7 +732,7 @@ void ExportNgsx(py::module &m)
 
     if (self.Get()->IsOther())
       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
-          return PyProxyFunction(adddiffop);
+    return PyProxyFunction(adddiffop);
   }));
 
   m.def("dn", FunctionPointer

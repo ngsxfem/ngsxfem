@@ -89,6 +89,11 @@ namespace ngcomp
       // SetLevelSet(lset);
     }
 
+    shared_ptr<CutInformation> GetCutInfo()
+    {
+      return cutinfo;
+    }
+
     void CleanUp();
     virtual ~XFESpace(){CleanUp();};
 
