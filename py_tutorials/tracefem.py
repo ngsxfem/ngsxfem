@@ -22,6 +22,11 @@ subdivlvl = 0
 
 # extended FESpace 
 VhG = H1(mesh, order=order, dirichlet=[])
+
+# overwrite freedofs of VhG to mark only dofs that are involved in the cut problem
+freedofs = VhG.FreeDofs()
+freedofs &= GetDofsOfElements(VhG,CutInfo(mesh, lset_approx).GetElementsOfType(IF))
+
 gfu = GridFunction(VhG)
 
 # coefficients / parameters: 
@@ -60,7 +65,7 @@ f += SymbolicLFI(levelset_domain = lset_if, form = sin(x) * v)
 f.Assemble();
 
 gfu.vec[:] = 0.0
-gfu.vec.data = a.mat.Inverse(VhG.FreeDofs()) * f.vec
+gfu.vec.data = a.mat.Inverse(freedofs) * f.vec
 
 nan = CoefficientFunction(float('nan'))
 Draw(IfPos(iscut-0.5,gfu,nan),mesh,"u")
