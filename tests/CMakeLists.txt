@@ -19,6 +19,9 @@ add_test(NAME pytests_xfes_ndof COMMAND ${PYTHON_EXECUTABLE} -m pytest
 
 add_test(NAME pytests_cutint COMMAND ${PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_localgeom.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+  
+add_test(NAME pytests_straightcutrule COMMAND ${PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_straightcutrule.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 install( FILES
   ngsxfem_report.py

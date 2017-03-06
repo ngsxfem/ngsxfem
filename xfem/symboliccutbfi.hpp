@@ -16,7 +16,8 @@ namespace ngfem
 
   class SymbolicCutBilinearFormIntegrator : public SymbolicBilinearFormIntegrator
   {
-    shared_ptr<CoefficientFunction> cf_lset;
+    shared_ptr<CoefficientFunction> cf_lset = nullptr;
+    shared_ptr<GridFunction> gf_lset = nullptr;
     DOMAIN_TYPE dt = NEG;
     int force_intorder = -1;
     int subdivlvl = 0;
