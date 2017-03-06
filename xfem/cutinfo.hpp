@@ -24,6 +24,8 @@ namespace ngcomp
     Array<shared_ptr<BitArray>> elems_of_domain_type;
     Array<shared_ptr<BitArray>> selems_of_domain_type;
     Array<shared_ptr<BitArray>> facets_of_domain_type;
+    Array<shared_ptr<BitArray>> cut_neighboring_node;
+
     double subdivlvl = 0;
   public:
     CutInformation (shared_ptr<MeshAccess> ama);

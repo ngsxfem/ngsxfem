@@ -3,16 +3,20 @@
 #include "../cutint/xintegration.hpp"
 using namespace ngsolve;
 using namespace xintegration;
+using namespace ngfem;
 
 namespace ngcomp
 {
+
   CutInformation::CutInformation (shared_ptr<MeshAccess> ama)
     : ma(ama),
     cut_ratio_of_element(2),
     elems_of_domain_type(3),
     selems_of_domain_type(3),
-    facets_of_domain_type(3)
+    facets_of_domain_type(3),
+    cut_neighboring_node(6)
   {
+
     for (auto dt : {NEG,POS,IF})
     {
       elems_of_domain_type[dt] = make_shared<BitArray>(ma->GetNE(VOL));
@@ -22,6 +26,23 @@ namespace ngcomp
     facets_of_domain_type[NEG]->Set();
     facets_of_domain_type[POS]->Clear();
     facets_of_domain_type[IF]->Clear();
+
+    for (NODE_TYPE nt : {NT_VERTEX,NT_EDGE,NT_FACE,NT_CELL})
+    {
+      cut_neighboring_node[nt] = make_shared<BitArray>(ma->GetNNodes (nt));
+      cut_neighboring_node[nt]->Clear();
+    }
+
+    if (ma->GetDimension() == 3)
+    {
+      cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_CELL];
+      cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_FACE];
+    }
+    else
+    {
+      cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_FACE];
+      cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_EDGE];
+    }
   }
 
   void CutInformation::Update(shared_ptr<CoefficientFunction> lset, LocalHeap & lh)
@@ -79,6 +100,36 @@ namespace ngcomp
 
       });
     }
+
+    int ne = ma -> GetNE();
+    IterateRange
+      (ne, lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+      if ((*elems_of_domain_type[IF]).Test(elnr))
+      {
+        ElementId elid(VOL,elnr);
+
+        Array<int> nodenums(0,lh);
+
+        ma->GetElVertices(elid,nodenums);
+        for (int node : nodenums)
+          cut_neighboring_node[NT_VERTEX]->Set(node);
+
+        ma->GetElEdges(elid,nodenums);
+        for (int node : nodenums)
+          cut_neighboring_node[NT_EDGE]->Set(node);
+
+        if (ma->GetDimension() == 3)
+        {
+          ma->GetElFaces(elid.Nr(),nodenums);
+          for (int node : nodenums)
+            cut_neighboring_node[NT_FACE]->Set(node);
+        }
+        cut_neighboring_node[NT_ELEMENT]->Set(elnr);
+      }
+    });
+
   }
 
 
