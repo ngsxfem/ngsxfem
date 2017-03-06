@@ -57,7 +57,7 @@ namespace ngcomp
       selems_of_domain_type[dt]->Clear();
     }
 
-    for (VorB vb : {VOL}) //,BND})
+    for (VorB vb : {VOL,BND})
     {
       int ne = ma->GetNE(vb);
       cut_ratio_of_element[vb] = make_shared<VVector<double>>(ne);

@@ -13,14 +13,12 @@ namespace xintegration
                                                    LocalHeap & lh,
                                                    int subdivlvl)
   {
+    // temporary fix for ET_SEGM
+    if (trafo.GetElementType() == ET_SEGM)
+      return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+
     if (gflset != nullptr)
     {
-      static bool first = true;
-      if (subdivlvl != 0 && first)
-      {
-        cout << IM(3) << "WARNING: subdivlvl > 0 for 'straight cut rule' called."  << endl;
-        first = false;
-      }
       Array<DofId> dnums(0,lh);
       gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
       FlatVector<> elvec(dnums.Size(),lh);
