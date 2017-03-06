@@ -161,11 +161,11 @@ namespace ngcomp
           ma->GetElFaces(elid.Nr(),nodenums);
           for (int node : nodenums)
             (*dom_of_node[NT_FACE])[node] = dt;
-          (*dom_of_node[NT_CELL])[elnr] = (*cut_ratio_of_element[VOL])[elnr] > 0.5 ? NEG : POS;
+          (*dom_of_node[NT_CELL])[elnr] = (*cut_ratio_of_element[VOL])(elnr) > 0.5 ? NEG : POS;
         }
         else
         {
-          (*dom_of_node[NT_FACE])[elnr] = (*cut_ratio_of_element[VOL])[elnr] > 0.5 ? NEG : POS;
+          (*dom_of_node[NT_FACE])[elnr] = (*cut_ratio_of_element[VOL])(elnr) > 0.5 ? NEG : POS;
         }
       }
 

@@ -406,13 +406,13 @@ namespace ngcomp
     for (int elnr = 0; elnr < ne; ++elnr)
     {
       basefes->GetInnerDofNrs(elnr, dnums);
-      dt = (*cutinfo->dom_of_node[NT_ELEMENT])[elnr];
+      DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_ELEMENT])[elnr];
       if (dt != IF)
         for (int l = 0; l < dnums.Size(); ++l)
         {
           int xdof = basedof2xdof[dnums[l]];
           if ( xdof != -1)
-            domofdof[xdof] = dt;
+            domofdof[xdof] = INVERT(dt);
         }
     }
 
@@ -422,13 +422,13 @@ namespace ngcomp
       for (int facnr = 0; facnr < nf; ++facnr)
       {
         basefes->GetFaceDofNrs(facnr, dnums);
-        dt = (*cutinfo->dom_of_node[NT_FACE])[facnr];
+        DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_FACE])[facnr];
         if (dt != IF)
           for (int l = 0; l < dnums.Size(); ++l)
           {
             int xdof = basedof2xdof[dnums[l]];
             if ( xdof != -1)
-              domofdof[xdof] = dt;
+              domofdof[xdof] = INVERT(dt);
           }
       }
     }
@@ -437,13 +437,13 @@ namespace ngcomp
     for (int edgnr = 0; edgnr < nedges; ++edgnr)
     {
       basefes->GetEdgeDofNrs(edgnr, dnums);
-      dt = (*cutinfo->dom_of_node[NT_EDGE])[edgnr];
+      DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_EDGE])[edgnr];
       if (dt != IF)
         for (int l = 0; l < dnums.Size(); ++l)
         {
           int xdof = basedof2xdof[dnums[l]];
           if ( xdof != -1)
-            domofdof[xdof] = dt;
+            domofdof[xdof] = INVERT(dt);
         }
     }
 
@@ -452,14 +452,14 @@ namespace ngcomp
     for (int vnr = 0; vnr < nv; ++vnr)
     {
       basefes->GetVertexDofNrs(vnr, dnums);
-      dt = (*cutinfo->dom_of_node[NT_VERTEX])[vnr];
+      DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_VERTEX])[vnr];
       if (dt != IF)
         for (int l = 0; l < dnums.Size(); ++l)
         {
           int xdof = basedof2xdof[dnums[l]];
           if ( xdof != -1)
           {
-            domofdof[xdof] = dt;
+            domofdof[xdof] = INVERT(dt);
             nvertdofs++;
           }
         }
