@@ -400,151 +400,69 @@ namespace ngcomp
 
     // domain of dof
     domofdof.SetSize(ndof);
-    domofdof = IF;
+    domofdof = NEG;
+
+    Array<int> dnums;
+    for (int elnr = 0; elnr < ne; ++elnr)
+    {
+      basefes->GetInnerDofNrs(elnr, dnums);
+      dt = (*cutinfo->dom_of_node[NT_ELEMENT])[elnr];
+      if (dt != IF)
+        for (int l = 0; l < dnums.Size(); ++l)
+        {
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+            domofdof[xdof] = dt;
+        }
+    }
 
     if (D==3)
     {
       domofface.SetSize(nf);
       for (int facnr = 0; facnr < nf; ++facnr)
       {
-        bool haspos = false;
-        // bool hasneg = false;
-
-        Array<int> elnums;
-        ma->GetFaceElements (facnr, elnums);
-
-        for (int k = 0; k < elnums.Size(); ++k)
-        {
-          DOMAIN_TYPE dt_cur = domofel[elnums[k]];
-          // if (dt_cur == NEG)
-          //   hasneg = true;
-
-          if (dt_cur == POS)
-            haspos = true;
-        }
-
-        if (haspos)
-          domofface[facnr] = NEG;
-        else
-          domofface[facnr] = POS;
-
-        Array<int> dnums;
         basefes->GetFaceDofNrs(facnr, dnums);
-        for (int l = 0; l < dnums.Size(); ++l)
-        {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-            domofdof[xdof] = domofface[facnr];
-        }
+        dt = (*cutinfo->dom_of_node[NT_FACE])[facnr];
+        if (dt != IF)
+          for (int l = 0; l < dnums.Size(); ++l)
+          {
+            int xdof = basedof2xdof[dnums[l]];
+            if ( xdof != -1)
+              domofdof[xdof] = dt;
+          }
       }
     }
 
     domofedge.SetSize(nedges);
     for (int edgnr = 0; edgnr < nedges; ++edgnr)
     {
-      bool haspos = false;
-      // bool hasneg = false;
-
-      Array<int> elnums;
-      ma->GetEdgeElements (edgnr, elnums);
-
-      for (int k = 0; k < elnums.Size(); ++k)
-      {
-        DOMAIN_TYPE dt_cur = domofel[elnums[k]];
-        // if (dt_cur == NEG)
-        //   hasneg = true;
-
-        if (dt_cur == POS)
-          haspos = true;
-      }
-
-      if (haspos)
-        domofedge[edgnr] = NEG;
-      else
-        domofedge[edgnr] = POS;
-
-      Array<int> dnums;
       basefes->GetEdgeDofNrs(edgnr, dnums);
-
-      for (int l = 0; l < dnums.Size(); ++l)
-      {
-        int xdof = basedof2xdof[dnums[l]];
-        if ( xdof != -1)
-          domofdof[xdof] = domofedge[edgnr];
-      }
+      dt = (*cutinfo->dom_of_node[NT_EDGE])[edgnr];
+      if (dt != IF)
+        for (int l = 0; l < dnums.Size(); ++l)
+        {
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+            domofdof[xdof] = dt;
+        }
     }
 
     nvertdofs = 0;
     domofvertex.SetSize(nv);
     for (int vnr = 0; vnr < nv; ++vnr)
     {
-      bool haspos = false;
-      // bool hasneg = false;
-
-      Array<int> elnums;
-      ma->GetVertexElements (vnr, elnums);
-
-      for (int k = 0; k < elnums.Size(); ++k)
-      {
-        DOMAIN_TYPE dt_cur = domofel[elnums[k]];
-        // if (dt_cur == NEG)
-        //   hasneg = true;
-
-        if (dt_cur == POS)
-          haspos = true;
-      }
-
-      if (haspos)
-        domofvertex[vnr] = NEG;
-      else
-        domofvertex[vnr] = POS;
-
-      Array<int> dnums;
       basefes->GetVertexDofNrs(vnr, dnums);
-
-      for (int l = 0; l < dnums.Size(); ++l)
-      {
-        int xdof = basedof2xdof[dnums[l]];
-        if ( xdof != -1)
+      dt = (*cutinfo->dom_of_node[NT_VERTEX])[vnr];
+      if (dt != IF)
+        for (int l = 0; l < dnums.Size(); ++l)
         {
-          domofdof[xdof] = domofvertex[vnr];
-          nvertdofs++;
+          int xdof = basedof2xdof[dnums[l]];
+          if ( xdof != -1)
+          {
+            domofdof[xdof] = dt;
+            nvertdofs++;
+          }
         }
-      }
-    }
-
-    domofinner.SetSize(ne);
-    for (int elnr = 0; elnr < ne; ++elnr)
-    {
-      DOMAIN_TYPE dt_here = element_most_pos.Test(elnr) ? POS : NEG;
-      domofinner[elnr] = dt_here;
-      Array<int> dnums;
-      basefes->GetInnerDofNrs(elnr, dnums);
-      for (int l = 0; l < dnums.Size(); ++l)
-      {
-        int xdof = basedof2xdof[dnums[l]];
-        if ( xdof != -1)
-          domofdof[xdof] = dt_here;
-      }
-    }
-
-    // domof dof on boundary
-    for (int selnr = 0; selnr < nse; ++selnr)
-    {
-      ElementId ei(BND,selnr);
-      DOMAIN_TYPE dt = domofsel[selnr];
-      Array<int> dnums;
-      basefes->GetDofNrs(ei, dnums);
-
-      for (int i = 0; i < dnums.Size(); ++i)
-      {
-        const int xdof = basedof2xdof[dnums[i]];
-        if (xdof != -1)
-        {
-          if (dt != IF)
-            domofdof[xdof] = dt == POS ? NEG : POS;
-        }
-      }
     }
 
     BitArray dofs_with_cut_on_boundary(GetNDof());
