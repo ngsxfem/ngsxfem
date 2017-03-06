@@ -41,6 +41,27 @@ namespace ngcomp
       return cut_ratio_of_element[vb];
     }
 
+    INLINE DOMAIN_TYPE DomainTypeOfElement(ElementId elid)
+    {
+      int elnr = elid.Nr();
+      VorB vb = elid.VB();
+      Array<shared_ptr<BitArray>> * ba = nullptr;
+      if (vb == VOL)
+        ba = &elems_of_domain_type;
+      else
+        ba = &selems_of_domain_type;
+
+      if ((*ba)[IF]->Test(elnr))
+        return IF;
+      else
+      {
+        if ((*ba)[NEG]->Test(elnr))
+          return NEG;
+        else
+          return POS;
+      }
+    }
+
     // template <NODE_TYPE NT>
     // DOMAIN_TYPE GetDomainOfNode (int nr)
     // {
