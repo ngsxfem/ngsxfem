@@ -22,11 +22,7 @@ namespace xintegration
 
     typename SetOfPoints::iterator it;
     it = pset.find(p);
-    if (it == pset.end())
-    {
-      pset.insert(p);
-      return &(*pset.find(p));
-    }
+    if (it == pset.end()) return &(*pset.insert(p).first);
     else
     {
 #ifdef DEBUG
@@ -409,11 +405,8 @@ namespace xintegration
 
     verts_space.SetSize(nv);
     for (int i = 0; i < nv; ++i)
-    {
-      Vec<D> newvert;
       for (int d = 0; d < D; ++d)
         verts_space[i][d] = verts[i][d];
-    }
   }
 
   template <ELEMENT_TYPE ET_SPACE, ELEMENT_TYPE ET_TIME>
@@ -477,8 +470,8 @@ namespace xintegration
   DOMAIN_TYPE NumericalIntegrationStrategy<ET_SPACE,ET_TIME>
   :: CheckIfCut() const
   {
-    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
-    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
+    //enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
+    //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
     RegionTimer reg (timer);
@@ -614,8 +607,8 @@ namespace xintegration
   :: MakeQuadRule() const
   {
 
-    enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
-    enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
+    //enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
+    //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     // check with the help of regularly distributed points if current
     // space(-time) geometry is cut (has different sign in lset-value)
