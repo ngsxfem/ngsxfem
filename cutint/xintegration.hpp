@@ -11,6 +11,13 @@ using namespace ngfem;
 namespace xintegration
 {
   /// struct which defines the relation a < b for Point4DCL 
+  const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
+                                                   shared_ptr<GridFunction> gflset,
+                                                   const ElementTransformation & trafo,
+                                                   DOMAIN_TYPE dt,
+                                                   int intorder,
+                                                   LocalHeap & lh,
+                                                   int subdivlvl = 0);
   /// (in order to use std::set-features)
   template< int SD>
   struct Pointless {
