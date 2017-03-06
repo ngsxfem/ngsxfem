@@ -9,16 +9,17 @@ using namespace xintegration;
 namespace ngfem
 {
 
-  
+
   class SymbolicCutLinearFormIntegrator : public SymbolicLinearFormIntegrator
   {
+    shared_ptr<GridFunction> gf_lset = nullptr;
     shared_ptr<CoefficientFunction> cf_lset;
     DOMAIN_TYPE dt = NEG;
     int force_intorder = -1;
     int subdivlvl = 0;
 
   public:
-    
+
     SymbolicCutLinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
                                      shared_ptr<CoefficientFunction> acf,
                                      DOMAIN_TYPE adt,

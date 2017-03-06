@@ -46,8 +46,11 @@ namespace ngcomp
     }
   }
 
-  void CutInformation::Update(shared_ptr<CoefficientFunction> lset, LocalHeap & lh)
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, LocalHeap & lh)
   {
+    shared_ptr<GridFunction> gf_lset;
+    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
+
     for (auto dt : {NEG,POS,IF})
     {
       elems_of_domain_type[dt]->Clear();
@@ -66,12 +69,12 @@ namespace ngcomp
         Ngs_Element ngel = ma->GetElement(ei);
         ELEMENT_TYPE eltype = ngel.GetType();
         ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
-        ScalarFieldEvaluator * lset_eval_p = ScalarFieldEvaluator::Create(ma->GetDimension(),
-                                                                          *lset,eltrans,lh);
+
         double part_vol [] = {0.0, 0.0};
         for (DOMAIN_TYPE np : {POS, NEG})
         {
-          const IntegrationRule * ir_np = CutIntegrationRule(lset, eltrans, np, 0, subdivlvl,lh);
+          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0, lh, subdivlvl);
+
           if (ir_np)
             for (auto ip : *ir_np)
               part_vol[np] += ip.Weight();

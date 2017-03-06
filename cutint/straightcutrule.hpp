@@ -17,10 +17,11 @@ namespace xintegration
       Array<int> ia; //the points
       int D; //Dimension
       shared_ptr<PointCnt> svs_ptr;
-      Polytope(Array<int> & a_ia, int a_D, auto a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
-      Polytope(initializer_list<int> a_ia_l, int a_D, auto a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
+    Polytope(Array<int> & a_ia, int a_D, shared_ptr<PointCnt> a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
+    Polytope(initializer_list<int> a_ia_l, int a_D, shared_ptr<PointCnt> a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
       template<int D>
-      Polytope(Vec<D, tuple<Vec<3>, double>> a_points, int a_D, auto a_svs_ptr) : D(a_D), svs_ptr(a_svs_ptr){
+    Polytope(Vec<D, tuple<Vec<3>, double>> a_points, int a_D, shared_ptr<PointCnt> a_svs_ptr) : D(a_D), svs_ptr(a_svs_ptr)
+    {
           for(int i=0; i<D; i++){
               auto p = a_points[i];
               if(svs_ptr->Contains(p)){
@@ -40,11 +41,11 @@ namespace xintegration
       auto begin() const {return ia.begin(); }
       auto end() const {return ia.end();}
 
-      void Append(auto v){ ia.Append(v); }
+    void Append(int v){ ia.Append(v); }
 
       auto operator[](int j) const { return ia[j]; }
       auto Size() const { return ia.Size(); }
-      void DeleteElement(auto i){ ia.DeleteElement(i);}
+    void DeleteElement(int i){ ia.DeleteElement(i);}
 
       Vec<3> GetPoint(int j) const { return get<0>((*svs_ptr)[ia[j]]); }
       double GetLset(int j) const{ return get<1>((*svs_ptr)[ia[j]]); }

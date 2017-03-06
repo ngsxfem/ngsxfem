@@ -1,9 +1,38 @@
 #include "xintegration.hpp"
+#include "straightcutrule.hpp"
 
 namespace xintegration
 {
 
 
+  const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
+                                                   shared_ptr<GridFunction> gflset,
+                                                   const ElementTransformation & trafo,
+                                                   DOMAIN_TYPE dt,
+                                                   int intorder,
+                                                   LocalHeap & lh,
+                                                   int subdivlvl)
+  {
+    if (gflset != nullptr)
+    {
+      static bool first = true;
+      if (subdivlvl != 0 && first)
+      {
+        cout << IM(3) << "WARNING: subdivlvl > 0 for 'straight cut rule' called."  << endl;
+        first = false;
+      }
+      Array<DofId> dnums(0,lh);
+      gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
+      FlatVector<> elvec(dnums.Size(),lh);
+      gflset->GetVector().GetIndirect(dnums,elvec);
+      return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
+    }
+    else if (cflset != nullptr)
+    {
+      return CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+    }
+    else throw Exception("Only null information provided, null integration rule served!");
+  }
   template<int SD>
   PointContainer<SD>::PointContainer()
   {
@@ -12,6 +41,21 @@ namespace xintegration
 #endif
     pset.clear();
   };
+
+
+  std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl)
+  {
+    if (subdivlvl != 0)
+      return make_tuple(cflset, nullptr);
+    else
+    {
+      shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
+      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace"))
+        return make_tuple(nullptr, ret);
+      else
+        return make_tuple(cflset, nullptr);
+    }
+  }
 
   template<int SD>
   const Vec<SD>* PointContainer<SD>::operator()(const Vec<SD> & p)

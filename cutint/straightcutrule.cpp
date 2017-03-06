@@ -44,7 +44,7 @@ namespace xintegration
 
       Vec<3> p = s.GetPoint(0) +(s.GetLset(0)/(s.GetLset(0)-s.GetLset(1)))*(s.GetPoint(1)-s.GetPoint(0));
       s.svs_ptr->Append(make_tuple(p,0));
-      return Polytope({s.svs_ptr->Size()-1}, 0, s.svs_ptr);
+      return Polytope({(int) s.svs_ptr->Size()-1}, 0, s.svs_ptr);
   }
 
   Polytope CalcCutPolytopeUsingLset(const Polytope &s){
@@ -410,47 +410,6 @@ namespace xintegration
           }
       }
   }
-  /*
-  void StraightCutQuadElementGeometry::IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
-      for(auto poly : Cut_quads){
-          double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
-          double y0 = poly.GetPoint(0)[1], y1 = poly.GetPoint(2)[1];
-
-          //function<double(double)> y_ast = [this](double x) -> double {return -(lc[1][0][0]*x+lc[0][0][0])/(lc[1][1][1]*x+lc[0][1][0]);};
-          function<double(double, double)> z_ast = [this](double x, double y) -> double {
-              return -1.*(lc[1][1][0]*x*y+lc[1][0][0]*x+lc[0][1][0]*y+lc[0][0][0])/(lc[1][0][1]*x+lc[0][1][1]*y+lc[0][0][1]+lc[1][1][1]*x*y);};
-          //auto y0 = y_ast, y1 = y_ast;
-          cout << "z_ast(0.25,0.25) : " << z_ast(0.25,0.25) << endl;
-          function<double(double, double)> z0 = [&poly, &z_ast, &z0] (double x, double y) -> double {return min(poly.GetPoint(4)[2], max(z_ast(x,y), poly.GetPoint(0)[2]));};
-          auto z1 = z0;
-          if(((dt == POS)&&(poly.GetLset(0) > 1e-12))||((dt == NEG)&&(poly.GetLset(0) < -1e-12))){
-              z0 = [&poly] (double x, double y) -> double {return poly.GetPoint(0)[2];};
-          }
-          else {
-              z1 = [&poly] (double x, double y) ->double {return poly.GetPoint(4)[2];};
-          }
-
-          IntegrationRule ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-          Vec<3> scale_f; scale_f[0] = x1-x0;
-          cout << "x interval: " << x0 << " , " << x1 << endl;
-          for(auto p1: ir_ngs){
-              Vec<3> p(0.); p[0] = x0+p1.Point()[0]*scale_f[0];
-              scale_f[1] = y1 - y0;
-              cout << "y interval: " << y0 << " , " << y1 << endl;
-              for(auto p2 : ir_ngs){
-                  p[1] = y0+p2.Point()[0]*scale_f[1];
-                  scale_f[2] = z1(p[0], p[1]) - z0(p[0], p[1]);
-                  cout << "z interval: " << z0(p[0], p[1]) << " , " << z1(p[0],p[1]) << endl;
-                  if(scale_f[2] < 0) throw Exception ("Negative Scale_f!");
-                  for(auto p3: ir_ngs){
-                      p[2] = z0(p[0],p[1]) + p3.Point()[0]*scale_f[2];
-                      intrule.Append(IntegrationPoint(p, p1.Weight()*p2.Weight()*p3.Weight()*scale_f[0]*scale_f[1]*scale_f[2]));
-                      cout << "Adding the Weight "<< p1.Weight()*p2.Weight()*p3.Weight()*scale_f[0]*scale_f[1]*scale_f[2] << " from VolumeOfCut3D" << endl;
-                  }
-              }
-          }
-      }
-  }*/
 
   void CutQuadElementGeometry::IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
       for(auto poly : Cut_quads){
@@ -539,7 +498,7 @@ namespace xintegration
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
           Mat<D,D> Finv = mip.GetJacobianInverse();
 
-          Vec<3> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point()) ;
+      Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
           const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
           (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);

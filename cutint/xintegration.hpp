@@ -11,6 +11,17 @@ using namespace ngfem;
 namespace xintegration
 {
   /// struct which defines the relation a < b for Point4DCL 
+  const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
+                                                   shared_ptr<GridFunction> gflset,
+                                                   const ElementTransformation & trafo,
+                                                   DOMAIN_TYPE dt,
+                                                   int intorder,
+                                                   LocalHeap & lh,
+                                                   int subdivlvl = 0);
+
+  std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
+
+
   /// (in order to use std::set-features)
   template< int SD>
   struct Pointless {

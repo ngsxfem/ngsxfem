@@ -21,9 +21,9 @@ namespace ngfem
                                    int aforce_intorder,
                                    int asubdivlvl)
     : SymbolicLinearFormIntegrator(acf,VOL,false), cf_lset(acf_lset), dt(adt),
-        force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
+    force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
   {
-    
+    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
   }
 
   void 
@@ -81,21 +81,21 @@ namespace ngfem
     RegionTimer reg(t);
 
     int intorder = 2*fel.Order();
-    
+
     auto et = trafo.GetElementType();
-    if (! (et == ET_TRIG || et == ET_TET))
+    if (! (et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices right now");
-    
+
     if (force_intorder >= 0)
       intorder = force_intorder;
     
     
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
-    
+
     elvec = 0;
 
-    const IntegrationRule * ir = CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
+    const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
     if (ir == nullptr)
       return;
     ///
