@@ -23,12 +23,14 @@ namespace ngcomp
     friend class XFESpace;
   protected:
     shared_ptr<MeshAccess> ma;
-    Array<shared_ptr<VVector<double>>> cut_ratio_of_element;
-    Array<shared_ptr<BitArray>> elems_of_domain_type;
-    Array<shared_ptr<BitArray>> selems_of_domain_type;
-    Array<shared_ptr<BitArray>> facets_of_domain_type;
-    Array<shared_ptr<BitArray>> cut_neighboring_node;
-
+    shared_ptr<VVector<double>> cut_ratio_of_element [2] = {nullptr, nullptr};
+    shared_ptr<BitArray> elems_of_domain_type [3] = {nullptr, nullptr, nullptr};
+    shared_ptr<BitArray> selems_of_domain_type [3] = {nullptr, nullptr, nullptr};
+    shared_ptr<BitArray> facets_of_domain_type [3] = {nullptr, nullptr, nullptr};
+    shared_ptr<BitArray> cut_neighboring_node [6] = {nullptr, nullptr, nullptr,
+                                                     nullptr, nullptr, nullptr};
+    shared_ptr<Array<DOMAIN_TYPE>> dom_of_node [6] = {nullptr, nullptr, nullptr,
+                                                      nullptr, nullptr, nullptr};
     double subdivlvl = 0;
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
@@ -45,17 +47,17 @@ namespace ngcomp
     {
       int elnr = elid.Nr();
       VorB vb = elid.VB();
-      Array<shared_ptr<BitArray>> * ba = nullptr;
+      shared_ptr<BitArray> * ba = nullptr;
       if (vb == VOL)
-        ba = &elems_of_domain_type;
+        ba = elems_of_domain_type;
       else
-        ba = &selems_of_domain_type;
+        ba = selems_of_domain_type;
 
-      if ((*ba)[IF]->Test(elnr))
+      if (ba[IF]->Test(elnr))
         return IF;
       else
       {
-        if ((*ba)[NEG]->Test(elnr))
+        if (ba[NEG]->Test(elnr))
           return NEG;
         else
           return POS;

@@ -9,12 +9,7 @@ namespace ngcomp
 {
 
   CutInformation::CutInformation (shared_ptr<MeshAccess> ama)
-    : ma(ama),
-    cut_ratio_of_element(2),
-    elems_of_domain_type(3),
-    selems_of_domain_type(3),
-    facets_of_domain_type(3),
-    cut_neighboring_node(6)
+    : ma(ama)
   {
 
     for (auto dt : {NEG,POS,IF})
@@ -31,17 +26,23 @@ namespace ngcomp
     {
       cut_neighboring_node[nt] = make_shared<BitArray>(ma->GetNNodes (nt));
       cut_neighboring_node[nt]->Clear();
+      dom_of_node[nt] = make_shared<Array<DOMAIN_TYPE>>(ma->GetNNodes (nt));
+      (*dom_of_node[nt]) = NEG;
     }
 
     if (ma->GetDimension() == 3)
     {
       cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_CELL];
       cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_FACE];
+      dom_of_node[NT_ELEMENT] = dom_of_node[NT_CELL];
+      dom_of_node[NT_FACET] = dom_of_node[NT_FACE];
     }
     else
     {
       cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_FACE];
       cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_EDGE];
+      dom_of_node[NT_ELEMENT] = dom_of_node[NT_FACE];
+      dom_of_node[NT_FACET] = dom_of_node[NT_EDGE];
     }
   }
 
@@ -128,6 +129,43 @@ namespace ngcomp
         }
         cut_neighboring_node[NT_ELEMENT]->Set(elnr);
       }
+    });
+
+    for (NODE_TYPE nt : {NT_VERTEX,NT_EDGE,NT_FACE,NT_CELL})
+      *(dom_of_node[nt]) = IF;
+
+    IterateRange
+      (ne, lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+      if (! elems_of_domain_type[IF]->Test(elnr))
+      {
+        ElementId elid(VOL,elnr);
+        Array<int> nodenums(0,lh);
+
+        DOMAIN_TYPE dt = elems_of_domain_type[NEG]->Test(elnr) ? NEG : POS;
+
+        ma->GetElVertices(elid,nodenums);
+        for (int node : nodenums)
+          (*dom_of_node[NT_VERTEX])[node] = dt;
+
+        ma->GetElEdges(elid,nodenums);
+        for (int node : nodenums)
+          (*dom_of_node[NT_EDGE])[node] = dt;
+
+        if (ma->GetDimension() == 3)
+        {
+          ma->GetElFaces(elid.Nr(),nodenums);
+          for (int node : nodenums)
+            (*dom_of_node[NT_FACE])[node] = dt;
+          (*dom_of_node[NT_CELL])[elnr] = dt;
+        }
+        else
+        {
+          (*dom_of_node[NT_FACE])[elnr] = dt;
+        }
+      }
+
     });
 
   }
