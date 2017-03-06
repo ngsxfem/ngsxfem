@@ -13,9 +13,7 @@ levelset = sqrt(x*x+y*y)-0.7
 
 sleep(1)
 
-# ways to create an extended FESpace:
-# 1. Way: create standard FESpace and build an XFESpace based on this 
-
+# way to create an extended FESpace:
 # make the standard space
 fes = H1(mesh, order = 1)
 # make the extended space
@@ -23,20 +21,24 @@ xfes = XFESpace(fes,levelset)
 # make a compound from these spaces
 xstdfes1 = FESpace([fes,xfes])
 
-# 2. Way: Create an extended standard FESpace
-
-xstdfes2 = XStdFESpace(mesh, levelset, order=1)
-u = GridFunction(xstdfes2)
+u = GridFunction(xstdfes1)
 
 Draw(levelset,mesh,"levelset")
 sleep(2)
 
-Draw(u,sd=6)
+ci = CutInfo(mesh)
+ci.Update(levelset)
+Draw(BitArrayCF(ci.GetElementsOfType(IF,VOL)),mesh,"if")
+Draw(BitArrayCF(ci.GetElementsOfType(NEG,VOL)),mesh,"neg")
+Draw(BitArrayCF(ci.GetElementsOfType(POS,VOL)),mesh,"pos")
 
-for i in range(xstdfes2.XFESpace.ndof):
-    totali = xstdfes2.StdFESpace.ndof + i
+Draw(u.components[0]+IfPos(levelset,pos(u.components[1]),neg(u.components[1])),mesh,"u") #sd=6)
+
+
+for i in range(fes.ndof):
+    totali = fes.ndof + i
     u.vec[:][totali-1] = 0.0
-    stdi = xstdfes2.XFESpace.BaseDofOfXDof(i)
+    stdi = xfes.BaseDofOfXDof(i)
     u.vec[:][stdi] = 1.0
     print("standard test function {}       ".format(stdi))
     Redraw()
