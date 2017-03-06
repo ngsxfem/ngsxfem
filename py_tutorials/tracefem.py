@@ -24,8 +24,11 @@ subdivlvl = 0
 VhG = H1(mesh, order=order, dirichlet=[])
 
 # overwrite freedofs of VhG to mark only dofs that are involved in the cut problem
+ci = CutInfo(mesh, lset_approx)
+ba_IF = ci.GetElementsOfType(IF)
+cf_IF = BitArrayCF(ba_IF)
 freedofs = VhG.FreeDofs()
-freedofs &= GetDofsOfElements(VhG,CutInfo(mesh, lset_approx).GetElementsOfType(IF))
+freedofs &= GetDofsOfElements(VhG,ba_IF)
 
 gfu = GridFunction(VhG)
 
@@ -36,15 +39,6 @@ h = specialcf.mesh_size
 #tangential projection
 def P(u):
    return u - (u*n)*n
-
-# mark only these dofs with support at the interface for the solution
-iscut = IsCut(mesh,lset_approx,subdivlvl=subdivlvl)
-for i in range(VhG.ndof):
-    VhG.FreeDofs()[i] = False
-for el in VhG.Elements() :
-    if (iscut.vec[el.nr]>0.0):
-        for dof in el.dofs:
-            VhG.FreeDofs()[dof] = True
 
 # expressions of test and trial functions:
 u = VhG.TrialFunction()
@@ -57,7 +51,7 @@ lset_if  = { "levelset" : lset_approx, "domain_type" : IF , "subdivlvl" : subdiv
 
 a = BilinearForm(VhG, symmetric = True, flags = { })
 a += SymbolicBFI(levelset_domain = lset_if , form = P(grad(u)) * P(grad(v)) + u * v)
-a += SymbolicBFI(form = 1.0/h*(iscut * grad(u)*n) * (grad(v)*n))
+a += SymbolicBFI(form = 1.0/h*(cf_IF * grad(u)*n) * (grad(v)*n))
 a.Assemble()
 
 f = LinearForm(VhG)
@@ -68,7 +62,7 @@ gfu.vec[:] = 0.0
 gfu.vec.data = a.mat.Inverse(freedofs) * f.vec
 
 nan = CoefficientFunction(float('nan'))
-Draw(IfPos(iscut-0.5,gfu,nan),mesh,"u")
+Draw(IfPos(cf_IF-0.5,gfu,nan),mesh,"u")
 
 visoptions.mminval = -0.2
 visoptions.mmaxval = 0.2
