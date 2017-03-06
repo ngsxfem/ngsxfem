@@ -2,6 +2,7 @@ add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   cutinfo.cpp
   ghostpenalty.cpp
   xFESpace.cpp
+  sFESpace.cpp
   xfemdiffops.cpp
   xfiniteelement.cpp
   symboliccutbfi.cpp
@@ -19,6 +20,7 @@ install( FILES
   cutinfo.hpp
   ghostpenalty.hpp
   xFESpace.hpp
+  sFESpace.hpp
   xfemdiffops.hpp
   xfiniteelement.hpp
   symboliccutbfi.hpp

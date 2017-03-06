@@ -9,6 +9,7 @@
 /// from ngxfem
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
+#include "../xfem/cutinfo.hpp"
 
 using namespace ngsolve;
 // using namespace cutinfo;
@@ -16,26 +17,34 @@ using namespace ngsolve;
 namespace ngcomp
 {
 
-  // Base class for extended finite elements with data for 
+  // Base class for extended finite elements with data for
   // mappings between degrees of freedoms and level set information
   class XFESpace : public FESpace
   {
-  protected:  
+  protected:
     int ndof;
     int nvertdofs; // <- number of x vertex dofs
     int order_space = 1;
 
+    // to be removed:
     int ref_lvl_space = 0;
 
     shared_ptr<Table<int>> el2dofs = NULL;
     shared_ptr<Table<int>> sel2dofs = NULL;
 
     Array<DOMAIN_TYPE> domofdof;
+
+    // to be removed:
     Array<DOMAIN_TYPE> domofel;
+    // to be removed:
     Array<DOMAIN_TYPE> domofsel;
+    // to be removed:
     Array<DOMAIN_TYPE> domofface;
+    // to be removed:
     Array<DOMAIN_TYPE> domofedge;
+    // to be removed:
     Array<DOMAIN_TYPE> domofvertex;
+    // to be removed:
     Array<DOMAIN_TYPE> domofinner;
 
     Array<int> basedof2xdof;
@@ -43,10 +52,15 @@ namespace ngcomp
 
     // Table<int> sel2dofs;
     shared_ptr<FESpace> basefes = NULL;
+
+    // to be removed:
     BitArray activeelem;
+    // to be removed:
     BitArray activeselem;
-      
+
     shared_ptr<CoefficientFunction> coef_lset = NULL;
+    shared_ptr<CutInformation> cutinfo = NULL;
+    bool private_cutinfo = true;  // <-- am I responsible for the cutinformation (or is it an external one)
 
     double vmax = 1e99;
 
@@ -61,12 +75,18 @@ namespace ngcomp
     void SetLevelSet(shared_ptr<CoefficientFunction> _coef_lset){ coef_lset = _coef_lset;};
     shared_ptr<CoefficientFunction> GetLevelSet() const { return coef_lset;};
 
-    XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags): FESpace(ama, flags){;}
-
     XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
-              shared_ptr<CoefficientFunction> lset, const Flags & flags): FESpace(ama, flags){
+              shared_ptr<CoefficientFunction> lset, const Flags & flags) : FESpace(ama, flags){
       SetBaseFESpace(basefes);
       SetLevelSet(lset);
+    }
+
+    XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
+              shared_ptr<CutInformation> acutinfo, const Flags & flags)
+      : FESpace(ama, flags), cutinfo(acutinfo)
+    {
+      SetBaseFESpace(basefes);
+      // SetLevelSet(lset);
     }
 
     void CleanUp();
@@ -77,9 +97,6 @@ namespace ngcomp
     {
       return "XFESpace";
     }
-
-    // function which can create fe-space (needed by pde-parser)
-    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags);
 
     /// update element coloring
     virtual void FinalizeUpdate(LocalHeap & lh)
@@ -98,7 +115,7 @@ namespace ngcomp
     }
 
     virtual size_t GetNDof () const { return ndof; }
-    virtual int GetNVertexDof () const { return nvertdofs; }
+    // virtual int GetNVertexDof () const { return nvertdofs; }
 
     virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const;
 
@@ -106,10 +123,10 @@ namespace ngcomp
     void GetDomainNrs (ElementId ei, Array<DOMAIN_TYPE> & domnums) const;
 
     virtual int GetRelOrder() const
-    { 
-      // cout << "virtual GetRelOrder called for FiniteElementSpace, not available ! " << endl; 
-      return 0; 
-    } 
+    {
+      // cout << "virtual GetRelOrder called for FiniteElementSpace, not available ! " << endl;
+      return 0;
+    }
 
     virtual void GetVertexDofNrs (int vnr, Array<int> & dnums) const
     {
@@ -180,32 +197,32 @@ namespace ngcomp
     }
     DOMAIN_TYPE GetDomainOfElement(int elnr) const {return domofel[elnr];}
 
-    bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
-    const BitArray & CutElements() const { return activeelem; }
-    const BitArray & CutSurfaceElements() const { return activeselem; }
-    
-    bool IsNeighborElementCut(int elnr) const 
-    { 
-      Array<int> faces(0);
-      ma->GetElFacets(elnr, faces);
-      for (int fa : faces)
-      {
-        Array<int> els(0);
-        ma->GetFacetElements(fa,els);
-        for (int el : els)
-          if (el == elnr)
-            continue;
-          else
-            if (IsElementCut(el)) return true;
-      }
-      return false;
-    }
+    // bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
+    // const BitArray & CutElements() const { return activeelem; }
+    // const BitArray & CutSurfaceElements() const { return activeselem; }
+
+    // bool IsNeighborElementCut(int elnr) const
+    // {
+    //   Array<int> faces(0);
+    //   ma->GetElFacets(elnr, faces);
+    //   for (int fa : faces)
+    //   {
+    //     Array<int> els(0);
+    //     ma->GetFacetElements(fa,els);
+    //     for (int el : els)
+    //       if (el == elnr)
+    //         continue;
+    //       else
+    //       if (IsElementCut(el)) return true;
+    //   }
+    //   return false;
+    // }
     // void SetGlobalCutInfo(AdLinCutTriang* gci_){ gci = gci_;};
 
     DOMAIN_TYPE GetDomOfDof(int n) const { return domofdof[n];}
     int GetBaseDofOfXDof(int n) const { return xdof2basedof[n];}
     int GetXDofOfBaseDof(int n) const { return basedof2xdof[n];}
-    
+
     static void XToNegPos(shared_ptr<GridFunction> gf, shared_ptr<GridFunction> gf_neg_pos);
   };
 
@@ -215,15 +232,11 @@ namespace ngcomp
   class T_XFESpace : public XFESpace
   {
   public:
-    /*
-      constructor. 
-      Arguments are the access to the mesh data structure,
-      and the flags from the define command in the pde-file
-    */
-    T_XFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
-
     T_XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
                 shared_ptr<CoefficientFunction> lset, const Flags & flags);
+
+    T_XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> basefes,
+                shared_ptr<CutInformation> cutinfo, const Flags & flags);
 
     // destructor
     virtual ~T_XFESpace ();
@@ -233,134 +246,6 @@ namespace ngcomp
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 
     SymbolTable<shared_ptr<DifferentialOperator>> GetAdditionalEvaluators () const;
-    
-  };
-
-  class NumProcXToNegPos : public NumProc
-  {
-    shared_ptr<GridFunction> gfxstd = nullptr;
-    shared_ptr<GridFunction> gfnegpos = nullptr;
-  public:
-    NumProcXToNegPos (shared_ptr<PDE> apde, const Flags & flags);
-    ~NumProcXToNegPos(){;};
-    virtual string GetClassName () const{ return "NumProcXToNegPos";};
-    virtual void Do (LocalHeap & lh);
-  };
-
-
-  class XStdFESpace : public CompoundFESpace
-  {
-  public:
-    XStdFESpace (shared_ptr<MeshAccess> ama, 
-                const Array<shared_ptr<FESpace> > & aspaces,
-                const Flags & flags);
-    virtual ~XStdFESpace () { ; }
-    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
-    {
-      Array<shared_ptr<FESpace> > spaces(2);
-
-      shared_ptr<FESpaceClasses::FESpaceInfo> info;
-      string fet_space = flags.GetStringFlag("type_std","h1ho");
-      info = GetFESpaceClasses().GetFESpace(fet_space);
-      if (!info) throw Exception("XStdFESpace ::  XStdFESpace : fespace not given ");
-      Flags fespaceflags(flags);
-      spaces[0] = info->creator(ma, fespaceflags);
-
-      spaces[1] = XFESpace::Create(ma,flags);
-      shared_ptr<XStdFESpace> fes = make_shared<XStdFESpace> (ma, spaces, flags);
-      return fes;
-    }
-
-
-    /// update element coloring
-    virtual void FinalizeUpdate(LocalHeap & lh)
-    {
-      auto coef_lset = dynamic_pointer_cast<XFESpace>(spaces[1])->GetLevelSet();
-      auto basefes = dynamic_pointer_cast<XFESpace>(spaces[1])->GetBaseFESpace();
-      
-      if ( basefes == NULL )
-      {
-        cout << " no basefes, FinalizeUpdate postponed " << endl;
-        return;
-      }
-      if ( coef_lset == NULL )
-      {
-        cout << " no lset, FinalizeUpdate postponed " << endl;
-        return;
-      }
-      CompoundFESpace::FinalizeUpdate (lh);
-    }
-    
-    shared_ptr<Table<int>> CreateSmoothingBlocks (const Flags & precflags) const;
-    Array<int> * CreateDirectSolverClusters (const Flags & flags) const;
-    virtual string GetClassName () const { return "XStdFESpace"; }
-    void SetLevelSet(shared_ptr<GridFunction> lset_){ 
-      dynamic_pointer_cast<XFESpace>(spaces[1])->SetLevelSet(lset_);
-    };
-    void SetLevelSet(shared_ptr<CoefficientFunction> lset_){ 
-      dynamic_pointer_cast<XFESpace>(spaces[1])->SetLevelSet(lset_);
-    };
-    shared_ptr<XFESpace> GetXFESpace() const { return dynamic_pointer_cast<XFESpace>(spaces[1]);}
-    shared_ptr<FESpace> GetStdFESpace() const { return spaces[0];}
-    
-  };
-  
-
-  class SFESpace : public FESpace
-  {
-  protected:  
-    int ndof=0;
-    int order;
-    BitArray activeelem;
-    shared_ptr<CoefficientFunction> coef_lset = NULL;
-    Array<int> firstdof_of_el;
-    Array<Mat<2>> cuts_on_el;
-  public:
-    SFESpace (shared_ptr<MeshAccess> ama,
-              shared_ptr<CoefficientFunction> a_coef_lset,
-              int aorder,
-              const Flags & flags);
-    
-    virtual ~SFESpace(){};
-
-    // a name for our new fe-space
-    virtual string GetClassName () const
-    {
-      return "SFESpace ( experimental and 2D )";
-    }
-
-    /// update element coloring
-    virtual void FinalizeUpdate(LocalHeap & lh)
-    {
-      if ( coef_lset == NULL )
-      {
-        cout << " no lset, FinalizeUpdate postponed " << endl;
-        return;
-      }
-      FESpace::FinalizeUpdate (lh);
-    }
-
-    virtual size_t GetNDof () const { return ndof; }
-
-    virtual void GetDofNrs (ElementId ei, Array<int> & dnums) const;
-    // virtual void UpdateCouplingDofArray();
-    virtual bool DefinedOn (ElementId id) const
-    {
-      if (activeelem.Size() == 0)
-        return false;
-      if (id.IsBoundary())
-        return false;
-      else
-        return activeelem.Test(id.Nr());
-    }
-
-    bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
-    const BitArray & CutElements() const { return activeelem; }
-
-    virtual void Update(LocalHeap & lh);
-
-
-    virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 
   };
 

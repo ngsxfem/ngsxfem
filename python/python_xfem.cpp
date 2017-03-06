@@ -3,6 +3,7 @@
 #include "../utils/bitarraycf.hpp"
 #include "../xfem/cutinfo.hpp"
 #include "../xfem/xFESpace.hpp"
+#include "../xfem/sFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
 #include "../xfem/ghostpenalty.hpp"
@@ -33,7 +34,6 @@ void ExportNgsx(py::module &m)
   // typedef PyWrapperDerived<CompoundFESpace, FESpace> PyCompFES;
 
   typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
-  typedef PyWrapperDerived<XStdFESpace, FESpace> PyXStdFES;
 
   m.def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) {
     XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get());
@@ -194,21 +194,21 @@ void ExportNgsx(py::module &m)
     return self.Get()->GetBaseDofOfXDof(i);
   }),
        "get corresponding dof of base FESpace")
-  .def("GetNVertexDofs", FunctionPointer ([](PyXFES self)
-  {
-    return self.Get()->GetNVertexDof();
-  }),
-       "get number of x dofs at vertices")
-  .def("CutElements", FunctionPointer ([](PyXFES self)
-  {
-    return self.Get()->CutElements();
-  }),
-       "get BitArray of cut elements")
-  .def("CutSurfaceElements", FunctionPointer ([](PyXFES self)
-  {
-    return self.Get()->CutSurfaceElements();
-  }),
-       "get BitArray of cut surface elements")
+  // .def("GetNVertexDofs", FunctionPointer ([](PyXFES self)
+  // {
+  //   return self.Get()->GetNVertexDof();
+  // }),
+  // "get number of x dofs at vertices")
+  // .def("CutElements", FunctionPointer ([](PyXFES self)
+  // {
+  //   return self.Get()->CutElements();
+  // }),
+  //      "get BitArray of cut elements")
+  // .def("CutSurfaceElements", FunctionPointer ([](PyXFES self)
+  // {
+  //   return self.Get()->CutSurfaceElements();
+  // }),
+  //      "get BitArray of cut surface elements")
   .def("GetDomainOfDof", FunctionPointer ([](PyXFES self, int i)
   {
     return self.Get()->GetDomainOfDof(i);
@@ -722,22 +722,8 @@ void ExportNgsx(py::module &m)
   // std::string nested_name = "comp";
   // if( bp::scope() )
   //   nested_name = bp::extract<std::string>(bp::scope().attr("__name__") + ".comp");
-  typedef PyWrapperDerived<SFESpace, FESpace> PySFES;
-  // py::class_<PySFES, PyFES>
-  //   (m, "SFESpace")
-  //   .def("Something", FunctionPointer ([](PySFES self, PyCF cf)
-  //                                      { throw Exception ("Something called"); }),
-  //        "test something")
-  //   .def("__init__", py::make_constructor
-  //        (FunctionPointer ([](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
-  //                          {
-  //                            Flags flags = py::extract<Flags> (bpflags)();
-  //                            shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset.Get(), order, flags);
-  //                            LocalHeap lh (1000000, "SFESpace::Update-heap", true);
-  //                            ret->Update(lh);
-  //                            return ret;
-  //                          })));
 
+  typedef PyWrapperDerived<SFESpace, FESpace> PySFES;
 
   m.def("SFESpace", FunctionPointer
           ([](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
