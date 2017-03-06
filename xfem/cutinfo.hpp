@@ -16,11 +16,11 @@ using namespace xintegration;
 namespace ngcomp
 {
 
-  class XFESpace;
+  template <int D> class T_XFESpace; // forward declaration
 
   class CutInformation
   {
-    friend class XFESpace;
+    template <int D> friend class T_XFESpace;
   protected:
     shared_ptr<MeshAccess> ma;
     shared_ptr<VVector<double>> cut_ratio_of_element [2] = {nullptr, nullptr};
