@@ -99,8 +99,8 @@ u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 
 err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
 
-l2error = sqrt(   NewIntegrateX(lset=lsetp1, mesh=mesh, cf=err_sqr_coefs[0], order=order,domain_type=NEG,heapsize=1000000)
-                + NewIntegrateX(lset=lsetp1, mesh=mesh, cf=err_sqr_coefs[1], order=order,domain_type=POS,heapsize=1000000) )
+l2error = sqrt(   Integrate(levelset_domain = lset_neg, cf=err_sqr_coefs[0], mesh=mesh, order=order, heapsize=1000000)
+                + Integrate(levelset_domain = lset_pos, cf=err_sqr_coefs[1], mesh=mesh, order=order, heapsize=1000000) )
 
 
 print("L2 error : ",l2error)

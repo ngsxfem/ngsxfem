@@ -143,14 +143,6 @@ def SymbolicLFI(levelset_domain=None, *args, **kwargs):
             return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
 def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, region_wise=False, element_wise = False, heapsize=1000000):
-    domain_type = levelset_domain["domain_type"]
-    if (domain_type == IF):
-        domain = interface_domain
-    elif (domain_type == NEG):
-        domain = negative_domain
-    else:
-        domain = positive_domain
-        
     if not "force_intorder" in levelset_domain or levelset_domain["force_intorder"] == -1:
         levelset_domain["force_intorder"] = -1
     else:
@@ -164,10 +156,11 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
         print("Please provide a domain type (NEG,POS or IF)")
 
     return IntegrateX(lset=levelset_domain["levelset"],
-                      mesh=mesh, cf_neg=cf, cf_pos=cf, cf_interface=cf,
+                      mesh=mesh, cf=cf,
                       order=order,
+                      domain_type=levelset_domain["domain_type"],
                       subdivlvl=levelset_domain["subdivlvl"],
-                      domains=domain, heapsize=heapsize)
+                      heapsize=heapsize)
     
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO        
@@ -175,13 +168,7 @@ Integrate_old = Integrate
 def Integrate(levelset_domain=None, *args, **kwargs):
     if levelset_domain != None and type(levelset_domain)==dict:
         print("Integrate-Wrapper: IntegrateX called")
-        resdict = Integrate_X_special_args(levelset_domain, *args, **kwargs)
-        if levelset_domain["domain_type"] == IF:
-            return resdict["interface"]
-        elif levelset_domain["domain_type"] == NEG:
-            return resdict["negdomain"]
-        else:
-            return resdict["posdomain"]
+        return Integrate_X_special_args(levelset_domain, *args, **kwargs)
     else:
         print("Integrate-Wrapper: original Integrate called")
         if (levelset_domain == None):

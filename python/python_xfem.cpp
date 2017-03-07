@@ -12,6 +12,7 @@
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
+#include "../cutint/xintegration.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -346,221 +347,6 @@ void ExportNgsx(py::module &m)
         py::arg("gf"),py::arg("lower_lset_bound")=0.0,py::arg("upper_lset_bound")=0.0,py::arg("heapsize")=10000000)
   ;
 
-
-  m.def("IntegrateX",
-        FunctionPointer([](PyCF lset,
-                           shared_ptr<MeshAccess> ma,
-                           PyCF cf_neg,
-                           PyCF cf_pos,
-                           PyCF cf_interface,
-                           int order, int subdivlvl, py::dict domains, int heapsize)
-  {
-    static Timer timer ("IntegrateX");
-    static Timer timercutgeom ("IntegrateX::MakeCutGeom");
-    static Timer timerevalcoef ("IntegrateX::EvalCoef");
-    RegionTimer reg (timer);
-    LocalHeap lh(heapsize, "lh-Integrate");
-
-    Flags flags = py::extract<Flags> (domains)();
-
-    Array<bool> tointon(3); tointon = false;
-    Array<shared_ptr<CoefficientFunction>> cf(3); cf = nullptr;
-    if (flags.GetDefineFlag("negdomain")) {
-      tointon[int(NEG)] = true;
-      if (cf_neg.Get() == nullptr)
-        throw Exception("no coef for neg domain given");
-      else
-        cf[int(NEG)] = cf_neg.Get();
-    }
-    if (flags.GetDefineFlag("posdomain")) {
-      tointon[int(POS)] = true;
-      if (cf_pos.Get() == nullptr)
-        throw Exception("no coef for pos domain given");
-      else
-        cf[int(POS)] = cf_pos.Get();
-    }
-    if (flags.GetDefineFlag("interface")) {
-      tointon[int(IF)] = true;
-      if (cf_interface.Get() == nullptr)
-        throw Exception("no coef for interface domain given");
-      else
-        cf[int(IF)] = cf_interface.Get();
-    }
-
-    Vector<> domain_sum(3);                         // [val_neg,val_pos,val_interface]
-    domain_sum = 0.0;
-    int DIM = ma->GetDimension();
-    ma->IterateElements
-      (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
-    {
-      auto & trafo = ma->GetTrafo (el, lh);
-      auto lset_eval
-        = ScalarFieldEvaluator::Create(DIM,*(lset.Get()),trafo,lh);
-      ELEMENT_TYPE eltype = el.GetType();
-      timercutgeom.Start();
-      shared_ptr<XLocalGeometryInformation> xgeom = nullptr;
-
-      CompositeQuadratureRule<2> cquad2d;
-      CompositeQuadratureRule<3> cquad3d;
-      if (DIM == 2)
-        xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT,
-                                                  *lset_eval, cquad2d, lh,
-                                                  order, 0, subdivlvl, 0);
-      else
-        xgeom = XLocalGeometryInformation::Create(eltype, ET_POINT,
-                                                  *lset_eval, cquad3d, lh,
-                                                  order, 0, subdivlvl, 0);
-      DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
-      timercutgeom.Stop();
-      if (element_domain == IF)
-      {
-        for (auto domtype : {NEG,POS})
-        {
-          if( ! tointon[int(domtype)] ) continue;
-          double hsum = 0.0;
-          // double value = 0.0;
-
-          if (DIM == 2)
-          {
-            const QuadratureRule<2> & domain_quad = cquad2d.GetRule(domtype);
-            IntegrationRule ir_domain (domain_quad.Size(),lh);
-            for (int i = 0; i < ir_domain.Size(); ++i)
-              ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
-
-            MappedIntegrationRule<2,2> mir_domain(ir_domain, trafo,lh);
-            FlatMatrix<> values(mir_domain.Size(), 1, lh);
-            timerevalcoef.Start();
-            cf[int(domtype)] -> Evaluate (mir_domain, values);
-            timerevalcoef.Stop();
-
-            for (int i = 0; i < domain_quad.Size(); ++i)
-              hsum += values(i,0) * mir_domain[i].GetWeight();
-          }
-          else
-          {
-            const QuadratureRule<3> & domain_quad = cquad3d.GetRule(domtype);
-            IntegrationRule ir_domain (domain_quad.Size(),lh);
-            for (int i = 0; i < ir_domain.Size(); ++i)
-              ir_domain[i] = IntegrationPoint (&domain_quad.points[i](0),domain_quad.weights[i]);
-
-            MappedIntegrationRule<3,3> mir_domain(ir_domain, trafo,lh);
-            FlatMatrix<> values(mir_domain.Size(), 1, lh);
-            timerevalcoef.Start();
-            cf[int(domtype)] -> Evaluate (mir_domain, values);
-            timerevalcoef.Stop();
-
-            for (int i = 0; i < domain_quad.Size(); ++i)
-              hsum += values(i,0) * mir_domain[i].GetWeight();
-          }
-          double & rsum = domain_sum(int(domtype));
-          AsAtomic(rsum) += hsum;
-        }
-
-        if (tointon[int(IF)])
-        {
-          double hsum_if = 0.0;
-          double value_if = 0.0;
-          if (DIM == 2)
-          {
-            const QuadratureRuleCoDim1<2> & interface_quad(cquad2d.GetInterfaceRule());
-            IntegrationRule ir_interface (interface_quad.Size(),lh);
-            for (int i = 0; i < ir_interface.Size(); ++i)
-              ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i]);
-
-            MappedIntegrationRule<2,2> mir_interface(ir_interface, trafo,lh);
-            FlatMatrix<> values(mir_interface.Size(), 1, lh);
-            timerevalcoef.Start();
-            cf[int(IF)] -> Evaluate (mir_interface, values);
-            timerevalcoef.Stop();
-
-            for (int i = 0; i < interface_quad.Size(); ++i)
-            {
-              MappedIntegrationPoint<2,2> & mip(mir_interface[i]);
-
-              Mat<2,2> Finv = mip.GetJacobianInverse();
-              const double absdet = mip.GetMeasure();
-
-              Vec<2> nref = interface_quad.normals[i];
-              Vec<2> normal = absdet * Trans(Finv) * nref;
-              double len = L2Norm(normal);
-              const double weight = interface_quad.weights[i] * len;
-
-              hsum_if += values(i,0) * weight;
-            }
-          }
-          else
-          {
-
-            const QuadratureRuleCoDim1<3> & interface_quad(cquad3d.GetInterfaceRule());
-            IntegrationRule ir_interface (interface_quad.Size(),lh);
-            for (int i = 0; i < ir_interface.Size(); ++i)
-              ir_interface[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i]);
-
-            MappedIntegrationRule<3,3> mir_interface(ir_interface, trafo,lh);
-            FlatMatrix<> values(mir_interface.Size(), 1, lh);
-            timerevalcoef.Start();
-            cf[int(IF)] -> Evaluate (mir_interface, values);
-            timerevalcoef.Stop();
-
-            for (int i = 0; i < interface_quad.Size(); ++i)
-            {
-              MappedIntegrationPoint<3,3> & mip(mir_interface[i]);
-
-              Mat<3,3> Finv = mip.GetJacobianInverse();
-              const double absdet = mip.GetMeasure();
-
-              Vec<3> nref = interface_quad.normals[i];
-              Vec<3> normal = absdet * Trans(Finv) * nref;
-              double len = L2Norm(normal);
-              const double weight = interface_quad.weights[i] * len;
-
-              hsum_if += values(i,0) * weight;
-            }
-          }
-
-          double & rsum_if = domain_sum(int(IF));
-          AsAtomic(rsum_if) += hsum_if;
-        }
-      }
-      else if( tointon[int(element_domain)] )
-      {
-        double hsum = 0.0;
-        IntegrationRule ir(trafo.GetElementType(), order);
-        BaseMappedIntegrationRule & mir = trafo(ir, lh);
-
-        FlatMatrix<> values(ir.Size(), 1, lh);
-        timerevalcoef.Start();
-        cf[int(element_domain)] -> Evaluate (mir, values);
-        timerevalcoef.Stop();
-        for (int i = 0; i < values.Height(); i++)
-          hsum += mir[i].GetWeight() * values(i,0);
-
-        double & rsum = domain_sum(int(element_domain));
-        AsAtomic(rsum) += hsum;
-      }
-
-    });
-
-    py::dict resdict;
-    if (tointon[int(NEG)])
-      resdict["negdomain"] = py::cast(domain_sum(int(NEG)));
-    if (tointon[int(POS)])
-      resdict["posdomain"] = py::cast(domain_sum(int(POS)));
-    if (tointon[int(IF)])
-      resdict["interface"] = py::cast(domain_sum(int(IF)));
-
-    return resdict;
-    // bp::object result;
-    // return  bp::list(bp::object(result_vec));
-  }),
-        py::arg("lset"), py::arg("mesh"),
-        py::arg("cf_neg")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
-        py::arg("cf_pos")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
-        py::arg("cf_interface")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
-        py::arg("order")=5, py::arg("subdivlvl")=0, py::arg("domains")=py::dict(), py::arg("heapsize")=1000000)
-  ;
-
-
   typedef PyWrapper<BilinearFormIntegrator> PyBFI;
   typedef PyWrapper<LinearFormIntegrator> PyLFI;
 
@@ -750,76 +536,49 @@ void ExportNgsx(py::module &m)
   }));
   // new implementation: only straight cuts - start with triangles only for a start!
 
-  m.def("NewIntegrateX",
+  m.def("IntegrateX",
         FunctionPointer([](py::object lset,
                            shared_ptr<MeshAccess> ma,
                            PyCF cf,
                            int order,
                            DOMAIN_TYPE dt,
+                           int subdivlvl,
                            int heapsize)
   {
-    static Timer timer ("NewIntegrateX");
-    static Timer timercutgeom ("NewIntegrateX::MakeCutGeom");
-    static Timer timerevalintrule ("NewIntegrateX::EvaluateIntRule");
-    static Timer timeradding("NewIntegrateX::Adding");
-    static Timer timermapir("NewIntegrateX::MapingIntergrRule");
-    static Timer timergetdnums1("NewIntegrateX::GetDNums1");
-    static Timer timergetdnums2("NewIntegrateX::GetDNums2");
-
-    py::extract<PyGF> pygf(lset);
-    if (!pygf.check())
+    py::extract<PyCF> pycf(lset);
+    if (!pycf.check())
       throw Exception("cast failed... need new candidates..");
-    shared_ptr<GridFunction> gf_lset = pygf().Get();
 
-    RegionTimer reg (timer);
-    LocalHeap lh(heapsize, "lh-New-Integrate");
+    shared_ptr<GridFunction> gf_lset = nullptr;
+    shared_ptr<CoefficientFunction> cf_lset = nullptr;
+    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(pycf().Get(),subdivlvl);
+
+    LocalHeap lh(heapsize, "lh-IntegrateX");
 
     double sum = 0.0;
     int DIM = ma->GetDimension();
-
-    auto FESpace = gf_lset->GetFESpace();
-    cout << "I found a FESpace of order " << FESpace->GetOrder() << " in NewIntegrateX" << endl;
 
     Array<int> dnums;
     ma->IterateElements
       (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
     {
-      //cout << endl << "NewIntegrateX() loop: Element Nr. " << el.Nr() << endl;
       auto & trafo = ma->GetTrafo (el, lh);
 
-      timergetdnums1.Start();
-      FESpace->GetDofNrs(el,dnums);
-      FlatVector<> elvec(dnums.Size(),lh);
-      timergetdnums1.Stop();
-      timergetdnums2.Start();
-      gf_lset->GetVector().GetIndirect(dnums,elvec);
-      timergetdnums2.Stop();
+      const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, lh, subdivlvl);
 
-      timercutgeom.Start();
-      const IntegrationRule * ir;
-      ir = StraightCutIntegrationRule(elvec, trafo, dt, order, lh);
-
-      timercutgeom.Stop();
-      timerevalintrule.Start();
       if (ir != nullptr)
       {
-        timermapir.Start();
         BaseMappedIntegrationRule & mir = trafo(*ir, lh);
         FlatMatrix<> val(mir.Size(), 1, lh);
-        timermapir.Stop();
-
 
         cf -> Evaluate (mir, val);
 
-        timeradding.Start();
         double lsum = 0.0;
         for (int i = 0; i < mir.Size(); i++)
           lsum += mir[i].GetWeight()*val(i,0);
 
         AsAtomic(sum) += lsum;
-        timeradding.Stop();
       }
-      timerevalintrule.Stop();
     });
 
     return sum;
@@ -829,6 +588,7 @@ void ExportNgsx(py::module &m)
         py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
         py::arg("order")=5,
         py::arg("domain_type")=IF,
+        py::arg("subdivlvl")=0,
         py::arg("heapsize")=1000000);
 }
 
