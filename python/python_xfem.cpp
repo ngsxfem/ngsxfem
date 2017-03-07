@@ -27,6 +27,7 @@ void ExportNgsx(py::module &m)
   typedef PyWrapper<CoefficientFunction> PyCF;
   typedef GridFunction GF;
   typedef PyWrapper<GF> PyGF;
+  typedef PyWrapper<shared_ptr<CutInformation>> PyCI;
   typedef PyWrapper<shared_ptr<BitArray>> PyBA;
 
   py::enum_<DOMAIN_TYPE>(m, "DOMAIN_TYPE")
@@ -44,7 +45,7 @@ void ExportNgsx(py::module &m)
     XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get());
   } ) );
 
-  py::class_<CutInformation>
+  py::class_<CutInformation, shared_ptr<CutInformation>>
     (m, "CutInfo")
   .def("__init__", FunctionPointer( [] (CutInformation *instance,
                                         shared_ptr<MeshAccess> ma,
@@ -184,7 +185,6 @@ void ExportNgsx(py::module &m)
 
 
 
-  // Export RandomCoefficientFunction to python (name "RandomCF")
   typedef PyWrapperDerived<BitArrayCoefficientFunction,CoefficientFunction> PyBACF;
   py::class_<PyBACF, PyCF>
     (m, "BitArrayCF")
@@ -200,23 +200,47 @@ void ExportNgsx(py::module &m)
     (m, "XFESpace")
   .def("__init__", FunctionPointer( [] (PyXFES *instance,
                                         PyFES basefes,
-                                        PyCF lset,
+                                        py::object acutinfo,
+                                        py::object alset,
                                         py::dict bpflags,
                                         int heapsize)
   {
+    shared_ptr<CoefficientFunction> cf_lset = nullptr;
+    shared_ptr<CutInformation> cutinfo = nullptr;
+    if (py::extract<PyCI> (acutinfo).check())
+      cutinfo = py::extract<PyCI>(acutinfo)();
+    if (py::extract<PyCF> (acutinfo).check())
+      cf_lset = py::extract<PyCF>(acutinfo)().Get();
+    if (py::extract<PyCF> (alset).check())
+      cf_lset = py::extract<PyCF>(alset)().Get();
+
+
     Flags flags = py::extract<Flags> (bpflags)();
     shared_ptr<XFESpace> ret = nullptr;
     shared_ptr<MeshAccess> ma = basefes.Get()->GetMeshAccess();
-    if (ma->GetDimension()==2)
-      ret = make_shared<T_XFESpace<2>> (ma, basefes.Get(), lset.Get(), flags);
+    if (cutinfo)
+    {
+      if (ma->GetDimension()==2)
+        ret = make_shared<T_XFESpace<2>> (ma, basefes.Get(), cutinfo, flags);
+      else
+        ret = make_shared<T_XFESpace<3>> (ma, basefes.Get(), cutinfo, flags);
+    }
+    else if (cf_lset)
+    {
+      if (ma->GetDimension()==2)
+        ret = make_shared<T_XFESpace<2>> (ma, basefes.Get(), cf_lset, flags);
+      else
+        ret = make_shared<T_XFESpace<3>> (ma, basefes.Get(), cf_lset, flags);
+    }
     else
-      ret = make_shared<T_XFESpace<3>> (ma, basefes.Get(), lset.Get(), flags);
+      throw Exception("levelset and cutinfo are invalid");
     LocalHeap lh (heapsize, "XFESpace::Update-heap", true);
     ret->Update(lh);
     new (instance) PyFES(ret);
   }),
        py::arg("basefes"),
-       py::arg("lset"),
+       py::arg("cutinfo") = DummyArgument(),
+       py::arg("lset") = DummyArgument(),
        py::arg("flags") = py::dict(),
        py::arg("heapsize") = 1000000)
   .def("GetCutInfo", FunctionPointer ([](PyXFES self)

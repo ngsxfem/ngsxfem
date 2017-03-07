@@ -34,7 +34,9 @@ order = 1
 # extended FESpace 
 
 Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
-Vhx = XFESpace(Vh, lsetp1)
+ci = CutInfo(mesh)
+ci.Update(lsetp1)
+Vhx = XFESpace(Vh,ci)
 VhG = FESpace([Vh,Vhx])
 print("unknowns in extended FESpace:", VhG.ndof)
 
@@ -43,8 +45,7 @@ print("unknowns in extended FESpace:", VhG.ndof)
 n = 1.0/grad(lsetp1).Norm() * grad(lsetp1)
 h = specialcf.mesh_size
 
-
-kappa = kappa(mesh,lsetp1)
+kappa = [CutRatioGF(ci),1.0-CutRatioGF(ci)]
 
 stab = 10*(alpha[1]+alpha[0])*(order+1)*order/h
 
