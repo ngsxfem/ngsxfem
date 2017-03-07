@@ -45,7 +45,9 @@ for key in domains:
 
 for order in range(8):
     for key in domains:
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=key,heapsize=1000000)
+
+        integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : key},
+                                       cf=f, mesh=mesh, order = order)
         print("Integral on Domain ", key, " : ",integral)
         errors[key].append(abs(integral - referencevals[key]))
 

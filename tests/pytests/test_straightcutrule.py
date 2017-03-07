@@ -28,7 +28,8 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
     
         f = CoefficientFunction(1)
     
-        integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
+        integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                             cf=f, mesh=mesh, order = order)
         print("Result of Integration Reflevel ",i,", Key ",domain," : ", integral)
         errors.append(abs(integral - referencevals[domain]))
 
@@ -61,7 +62,8 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
     
     f = CoefficientFunction(1)
     
-    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
     error = abs(integral - referencevals[domain])
     
     assert error < 5e-15*(order+1)*(order+1)
@@ -85,7 +87,8 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     
     f = CoefficientFunction(1)
     
-    integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f,order=order,domain_type=domain,heapsize=1000000)
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
     error = abs(integral - referencevals[domain])
     
     assert error < 5e-15*(order+1)*(order+1)

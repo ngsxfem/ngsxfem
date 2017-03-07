@@ -125,7 +125,8 @@ if __name__ == "__main__":
         for order in range(max_order+1):
             errs = dict()
             for key in domains:
-                integral = NewIntegrateX(lset=lset_approx,mesh=mesh,cf=f_ngs,order=order,domain_type=key,heapsize=1000000,use_saye = True)
+                integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : key},
+                                     cf=f_ngs, mesh=mesh, order = order)
                 inte[key] = integral
                 print("PP: Integral on Domain ", key, " : ",integral)
                 errors[key].append(abs(integral - referencevals[key]))

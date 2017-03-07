@@ -17,20 +17,19 @@ def Make2DProblem(maxh=2):
 
 # circle with radius 0.5
 levelset = sqrt(x*x+y*y)-0.5
-referencevals = { "posdomain" : 4.0-0.25*pi, "negdomain" : 0.25*pi, "interface" : pi }
+referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
 mesh = Make2DProblem(maxh=0.5)
 
 order = 5
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
 
-domains = interface_and_volume_domains
-
 errors_uncurved = dict()
 errors_curved = dict()
 eoc_uncurved = dict()
 eoc_curved = dict()
-for key in domains:
+
+for key in [NEG,POS,IF]:
     errors_curved[key] = []
     errors_uncurved[key] = []
     eoc_curved[key] = []
@@ -43,23 +42,24 @@ for reflevel in range(6):
         mesh.Refine()
     
     f = CoefficientFunction (1.0)
-    integrals_uncurved = IntegrateX(levelset,mesh,cf_neg=f,cf_pos=f,cf_interface=f,order=order, domains=domains)
-    # Applying the mesh deformation
-    deformation = lsetmeshadap.CalcDeformation(levelset)
-    mesh.SetDeformation(deformation)
 
-    integrals_curved = IntegrateX(levelset,mesh,cf_neg=f,cf_pos=f,cf_interface=f,order=order, domains=domains)
-    # Unapply the mesh deformation (for refinement)
-    mesh.UnsetDeformation()
+    for key in [NEG,POS,IF]:
+        integrals_uncurved = Integrate(levelset_domain = { "levelset" : levelset, "domain_type" : key},
+                                       cf=f, mesh=mesh, order = order)
+        # Applying the mesh deformation
+        deformation = lsetmeshadap.CalcDeformation(levelset)
+        mesh.SetDeformation(deformation)
+        integrals_curved = Integrate(levelset_domain = { "levelset" : levelset, "domain_type" : key},
+                                       cf=f, mesh=mesh, order = order)
+        # Unapply the mesh deformation (for refinement)
+        mesh.UnsetDeformation()
 
+        errors_curved[key].append(abs(integrals_curved - referencevals[key]))
+        errors_uncurved[key].append(abs(integrals_uncurved - referencevals[key]))
     # refine cut elements:
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
 
-    for key in domains:
-        errors_curved[key].append(abs(integrals_curved[key] - referencevals[key]))
-        errors_uncurved[key].append(abs(integrals_uncurved[key] - referencevals[key]))
-
-for key in domains:
+for key in [NEG,POS,IF]:
     eoc_curved[key] = [log(a/b)/log(2) for (a,b) in zip (errors_curved[key][0:-1],errors_curved[key][1:]) ]
     eoc_uncurved[key] = [log(a/b)/log(2) for (a,b) in zip (errors_uncurved[key][0:-1],errors_uncurved[key][1:]) ]
 
