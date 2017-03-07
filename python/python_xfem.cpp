@@ -223,51 +223,16 @@ void ExportNgsx(py::module &m)
     return self.Get()->GetCutInfo();
   }),
        "Get Information of cut geometry")
-  .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyCF cf)
-  {
-    self.Get()->SetLevelSet(cf.Get());
-  }),
-       "Update information on level set function")
-  .def("SetLevelSet", FunctionPointer ([](PyXFES self, PyGF gf)
-  {
-    self.Get()->SetLevelSet(gf.Get());
-  }),
-       "Update information on level set function")
-  .def("SetBaseFESpace", FunctionPointer ([](PyXFES self, PyFES fes)
-  {
-    self.Get()->SetBaseFESpace(fes.Get());
-  }),
-       "Update information on base FESpace")
   .def("BaseDofOfXDof", FunctionPointer ([](PyXFES self, int i)
   {
     return self.Get()->GetBaseDofOfXDof(i);
   }),
        "get corresponding dof of base FESpace")
-  // .def("GetNVertexDofs", FunctionPointer ([](PyXFES self)
-  // {
-  //   return self.Get()->GetNVertexDof();
-  // }),
-  // "get number of x dofs at vertices")
-  // .def("CutElements", FunctionPointer ([](PyXFES self)
-  // {
-  //   return self.Get()->CutElements();
-  // }),
-  //      "get BitArray of cut elements")
-  // .def("CutSurfaceElements", FunctionPointer ([](PyXFES self)
-  // {
-  //   return self.Get()->CutSurfaceElements();
-  // }),
-  //      "get BitArray of cut surface elements")
   .def("GetDomainOfDof", FunctionPointer ([](PyXFES self, int i)
   {
     return self.Get()->GetDomainOfDof(i);
   }),
        "get domain_type of degree of freedom")
-  .def("GetDomainOfElement", FunctionPointer ([](PyXFES self, int i)
-  {
-    return self.Get()->GetDomainOfElement(i);
-  }),
-       "get domain_type of element")
   .def("GetDomainNrs",  FunctionPointer( [] (PyXFES self, int elnr) {
     Array<DOMAIN_TYPE> domnums;
     self.Get()->GetDomainNrs( elnr, domnums );

@@ -14,54 +14,42 @@ namespace ngcomp
 
   void XFESpace :: GetDofNrs (ElementId ei, Array<int> & dnums) const
   {
-    if (ei.VB() == VOL)
+    if ( cutinfo
+         && (cutinfo->GetElementsOfDomainType(IF,ei.VB())->Size() > 0
+             && cutinfo->GetElementsOfDomainType(IF,ei.VB())->Test(ei.Nr())) )
     {
-      if (activeelem.Size() > 0 && activeelem.Test(ei.Nr()))
+      if (ei.VB() == VOL)
         dnums = (*el2dofs)[ei.Nr()];
       else
-        dnums.SetSize(0);
+        dnums = (*sel2dofs)[ei.Nr()];
     }
     else
-    {
-      if (activeselem.Size() > 0 && activeselem.Test(ei.Nr()))
-        dnums = (*sel2dofs)[ei.Nr()];
-      else
-        dnums.SetSize(0);
-    }
+      dnums.SetSize(0);
   }
 
   void XFESpace :: GetDomainNrs (ElementId ei, Array<DOMAIN_TYPE> & domnums) const
   {
-    if (ei.VB() == VOL)
+    if ( cutinfo
+         && (cutinfo->GetElementsOfDomainType(IF,ei.VB())->Size() > 0
+             && cutinfo->GetElementsOfDomainType(IF,ei.VB())->Test(ei.Nr())) )
     {
-      if (activeelem.Test(ei.Nr()))
+      if (ei.VB() == VOL)
       {
         FlatArray<int> dofs = (*el2dofs)[ei.Nr()];
         domnums.SetSize(dofs.Size());
         for (int i = 0; i < dofs.Size(); ++i)
-        {
           domnums[i] = domofdof[dofs[i]];
-        }
       }
       else
-        domnums.SetSize(0);
-    }
-    else if (ei.VB() == BND)
-    {
-      if (activeselem.Test(ei.Nr()))
       {
         FlatArray<int> dofs = (*sel2dofs)[ei.Nr()];
         domnums.SetSize(dofs.Size());
         for (int i = 0; i < dofs.Size(); ++i)
-        {
           domnums[i] = domofdof[dofs[i]];
-        }
       }
-      else
-        domnums.SetSize(0);
     }
     else
-      throw Exception("can only handle VOL and BND");
+      domnums.SetSize(0);
   }
 
   void XFESpace :: UpdateCouplingDofArray()
@@ -91,7 +79,7 @@ namespace ngcomp
         int cutels = 0;
         for (auto elnr : elnums)
         {
-          if (activeelem.Test(elnr))
+          if (cutinfo->GetElementsOfDomainType(IF,VOL)->Test(elnr))
             cutels++;
         }
         if (cutels<2)
@@ -161,11 +149,6 @@ namespace ngcomp
                                shared_ptr<CutInformation> cutinfo, const Flags & flags)
     : XFESpace (ama, basefes, cutinfo, flags)
   {
-    // cout << "Constructor of XFESpace begin" << endl;
-    vmax = flags.GetNumFlag("vmax",1e99);
-
-    ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
-
     if (flags.GetDefineFlag("trace"))
       trace = true;
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
@@ -179,16 +162,13 @@ namespace ngcomp
                                shared_ptr<CoefficientFunction> lset, const Flags & flags)
     : XFESpace (ama, basefes, lset, flags)
   {
-    // cout << "Constructor of XFESpace begin" << endl;
-    vmax = flags.GetNumFlag("vmax",1e99);
-
-    ref_lvl_space = (int) flags.GetNumFlag("ref_space",0);
-
     if (flags.GetDefineFlag("trace"))
       trace = true;
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
 
+    private_cutinfo = true;
+    coef_lset = lset;
     cutinfo = make_shared<CutInformation>(ma);
   }
 
@@ -261,18 +241,6 @@ namespace ngcomp
   template <int D>
   void T_XFESpace<D> :: Update(LocalHeap & lh)
   {
-    if ( basefes == NULL )
-    {
-      cout << " T_XFESpace<" <<  D << "> no basefes, Update postponed " << endl;
-      ndof = 0.0;
-      return;
-    }
-    if ( coef_lset == NULL )
-    {
-      cout << " T_XFESpace<" <<  D << "> no lset, Update postponed " << endl;
-      ndof = 0.0;
-      return;
-    }
     CleanUp();
 
     if (private_cutinfo)
@@ -284,8 +252,6 @@ namespace ngcomp
     static Timer timer ("XFESpace::Update");
     RegionTimer reg (timer);
 
-    order_space = basefes->GetOrder();
-
     FESpace::Update(lh);
 
     int ne=ma->GetNE();
@@ -294,16 +260,8 @@ namespace ngcomp
     int nv=ma->GetNV();
     int nse=ma->GetNSE();
 
-    activeelem.SetSize(ne);
-    activeselem.SetSize(nse);
-    activeelem.Clear();
-    activeselem.Clear();
-
     BitArray activedofs(basefes->GetNDof());
     activedofs.Clear();
-
-    domofel.SetSize(ne);
-    domofsel.SetSize(nse);
 
     static int first = -1;
     first++;
@@ -315,23 +273,6 @@ namespace ngcomp
     for ( VorB vb : {VOL,BND})
     {
       int ne = ma->GetNE(vb);
-
-      IterateRange
-        (ne, lh,
-        [&] (int elnr, LocalHeap & lh)
-      {
-        ElementId elid(vb,elnr);
-        DOMAIN_TYPE dt = cutinfo->DomainTypeOfElement(elid);
-        domofel[elnr] = dt;
-        // to be removed (cutinfo holds this information)
-        if (dt == IF)
-        {
-          if (vb == VOL)
-            activeelem.Set(elnr);
-          else
-            activeselem.Set(elnr);
-        }
-      });
 
       TableCreator<int> creator;
       for (; !creator.Done(); creator++)
@@ -378,7 +319,7 @@ namespace ngcomp
 
     for (int i = 0; i < ne; ++i)
     {
-      if (activeelem.Test(i))
+      if (cutinfo->GetElementsOfDomainType(IF,VOL)->Test(i))
       {
         FlatArray<int> dofs = (*el2dofs)[i];
         for (int j = 0; j < (*el2dofs)[i].Size(); ++j)
@@ -388,7 +329,7 @@ namespace ngcomp
 
     for (int i = 0; i < nse; ++i)
     {
-      if (activeselem.Test(i))
+      if (cutinfo->GetElementsOfDomainType(IF,BND)->Test(i))
       {
         FlatArray<int> dofs = (*sel2dofs)[i];
         for (int j = 0; j < (*sel2dofs)[i].Size(); ++j)
@@ -403,26 +344,15 @@ namespace ngcomp
     domofdof = NEG;
 
     Array<int> dnums;
-    for (int elnr = 0; elnr < ne; ++elnr)
+    for (NODE_TYPE nt : {NT_CELL,NT_FACE,NT_EDGE,NT_VERTEX})
     {
-      basefes->GetInnerDofNrs(elnr, dnums);
-      DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_ELEMENT])[elnr];
-      if (dt != IF)
-        for (int l = 0; l < dnums.Size(); ++l)
-        {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-            domofdof[xdof] = INVERT(dt);
-        }
-    }
+      if (ma->GetDimension() == 3 && nt == NT_CELL)
+        continue;
 
-    if (D==3)
-    {
-      domofface.SetSize(nf);
-      for (int facnr = 0; facnr < nf; ++facnr)
+      for (int nnr : ma->Nodes(nt))
       {
-        basefes->GetFaceDofNrs(facnr, dnums);
-        DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_FACE])[facnr];
+        basefes->GetDofNrs(NodeId(nt,nnr), dnums);
+        DOMAIN_TYPE dt = (*cutinfo->dom_of_node[nt])[nnr];
         if (dt != IF)
           for (int l = 0; l < dnums.Size(); ++l)
           {
@@ -433,45 +363,13 @@ namespace ngcomp
       }
     }
 
-    domofedge.SetSize(nedges);
-    for (int edgnr = 0; edgnr < nedges; ++edgnr)
-    {
-      basefes->GetEdgeDofNrs(edgnr, dnums);
-      DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_EDGE])[edgnr];
-      if (dt != IF)
-        for (int l = 0; l < dnums.Size(); ++l)
-        {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-            domofdof[xdof] = INVERT(dt);
-        }
-    }
-
-    nvertdofs = 0;
-    domofvertex.SetSize(nv);
-    for (int vnr = 0; vnr < nv; ++vnr)
-    {
-      basefes->GetVertexDofNrs(vnr, dnums);
-      DOMAIN_TYPE dt = (*cutinfo->dom_of_node[NT_VERTEX])[vnr];
-      if (dt != IF)
-        for (int l = 0; l < dnums.Size(); ++l)
-        {
-          int xdof = basedof2xdof[dnums[l]];
-          if ( xdof != -1)
-          {
-            domofdof[xdof] = INVERT(dt);
-            nvertdofs++;
-          }
-        }
-    }
-
     BitArray dofs_with_cut_on_boundary(GetNDof());
     dofs_with_cut_on_boundary.Clear();
 
     for (int selnr = 0; selnr < nse; ++selnr)
     {
       ElementId ei(BND,selnr);
-      DOMAIN_TYPE dt = domofsel[selnr];
+      DOMAIN_TYPE dt = cutinfo->DomainTypeOfElement(ei);
       if (dt!=IF) continue;
 
       Array<int> dnums;
@@ -518,8 +416,7 @@ namespace ngcomp
   template <int D>
   FiniteElement & T_XFESpace<D> :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    if ( ( ei.VB() == BND && activeselem.Test(ei.Nr()) )
-         || ( ei.VB() == VOL && activeelem.Test(ei.Nr()) ))
+    if (cutinfo->GetElementsOfDomainType(IF,ei.VB())->Test(ei.Nr()))
     {
       Array<DOMAIN_TYPE> domnrs;
       GetDomainNrs(ei,domnrs);
@@ -527,7 +424,7 @@ namespace ngcomp
     }
     else
     {
-      DOMAIN_TYPE dt = domofsel[ei.Nr()];
+      DOMAIN_TYPE dt = cutinfo->DomainTypeOfElement(ei);
       Ngs_Element ngsel = ma->GetElement(ei);
       ELEMENT_TYPE eltype = ngsel.GetType();
       return *(new (alloc) XDummyFE(dt,eltype));
