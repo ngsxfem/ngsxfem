@@ -462,8 +462,14 @@ void ExportNgsx(py::module &m)
 
   typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
   m.def("dn", FunctionPointer
-          ([] (const PyProxyFunction self, int order)
+          ([] (const PyProxyFunction self, int order, int comp)
   {
+
+    if (comp == -1 && dynamic_pointer_cast<CompoundDifferentialOperator>(self.Get()->Evaluator()))
+    {
+      throw Exception("cannot work with compounddiffops, prescribe comp != -1");
+    }
+
     shared_ptr<DifferentialOperator> diffopdudnk;
     switch (order)
     {
@@ -471,20 +477,27 @@ void ExportNgsx(py::module &m)
     case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,2>>> (); break;
     case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,3>>> (); break;
     case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
-    case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
-    case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
-    case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
-    case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
+    case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,5>>> (); break;
+    case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,6>>> (); break;
+    case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,7>>> (); break;
+    case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
     default : throw Exception("no order higher than 8 implemented yet");
     }
+    if (comp != -1)
+      diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comp);
 
     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
                                                  diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     if (self.Get()->IsOther())
       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
+
     return PyProxyFunction(adddiffop);
-  }));
+  }),
+        py::arg("proxy"),
+        py::arg("order"),
+        py::arg("comp") = -1
+        );
 
   m.def("dn", FunctionPointer
           ([](PyGF self, int order) -> PyCF

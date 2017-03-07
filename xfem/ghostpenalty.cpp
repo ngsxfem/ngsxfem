@@ -9,14 +9,14 @@ namespace ngfem
   {
     switch (eltype)
     {
-    case ET_POINT: point = 0.0; break;
-    case ET_SEGM: point = 0.5; break;
-    case ET_TRIG: point = 1.0/3.0; break;
-    case ET_QUAD: point = 0.5; break;
-    case ET_TET: point = 1.0/4.0; break;
-    case ET_PYRAMID: point(0) = 1.0/2.0; point(1) = 1.0/2.0; point(2) = 1.0/4.0; break;
-    case ET_PRISM: point(0) = 1.0/3.0; point(1) = 1.0/3.0; point(2) = 1.0/2.0; break;
-    case ET_HEX: point = 1.0/2.0; break;
+    case ET_POINT : point = 0.0; break;
+    case ET_SEGM : point = 0.5; break;
+    case ET_TRIG : point = 1.0/3.0; break;
+    case ET_QUAD : point = 0.5; break;
+    case ET_TET : point = 1.0/4.0; break;
+    case ET_PYRAMID : point(0) = 1.0/2.0; point(1) = 1.0/2.0; point(2) = 1.0/4.0; break;
+    case ET_PRISM : point(0) = 1.0/3.0; point(1) = 1.0/3.0; point(2) = 1.0/2.0; break;
+    case ET_HEX : point = 1.0/2.0; break;
     };
   };
 
@@ -28,7 +28,7 @@ namespace ngfem
                                                              FlatMatrix<double> & elmat,
                                                              LocalHeap & lh// ,
                                                              // BitArray* twice
-    ) const
+                                                             ) const
   {
     static int timer = NgProfiler::CreateTimer ("GhostPenaltyIntegrator");
 
@@ -36,18 +36,18 @@ namespace ngfem
     if (D==3) throw Exception("scaling is not correct!");
     NgProfiler::RegionTimer reg (timer);
 
-    const CompoundFiniteElement * dcfel1 = 
+    const CompoundFiniteElement * dcfel1 =
       dynamic_cast<const CompoundFiniteElement*> (&volumefel1);
-    const CompoundFiniteElement * dcfel2 = 
+    const CompoundFiniteElement * dcfel2 =
       dynamic_cast<const CompoundFiniteElement*> (&volumefel2);
-    if (dcfel1==NULL || dcfel2==NULL){
+    if (dcfel1==NULL || dcfel2==NULL) {
       cout << "not compound!" << endl;
       cout << " leaving " << endl;
       return;
     }
-      
-    const CompoundFiniteElement & cfel1 = *dcfel1;       
-    const CompoundFiniteElement & cfel2 = *dcfel2;       
+
+    const CompoundFiniteElement & cfel1 = *dcfel1;
+    const CompoundFiniteElement & cfel2 = *dcfel2;
 
     const XFiniteElement * xfe1 = NULL;
     const XDummyFE * dummfe1 = NULL;
@@ -59,7 +59,7 @@ namespace ngfem
     const ScalarFiniteElement<D> * scafe2 = NULL;
     // const ScalarSpaceTimeFiniteElement<D> * stscafe2 = NULL;
     const void * stscafe2 = NULL;
-      
+
     for (int i = 0; i < cfel1.GetNComponents(); ++i)
     {
       if (xfe1==NULL)
@@ -83,13 +83,13 @@ namespace ngfem
       // if (stscafe2==NULL)
       //   stscafe2 = dynamic_cast<const ScalarSpaceTimeFiniteElement<D>* >(&cfel2[i]);
     }
-    
+
     const bool spacetime = (stscafe1 != NULL);
     elmat = 0.0;
 
     DOMAIN_TYPE facetdt = IF;
 
-    if (!xfe1 || !xfe2){ // not a ghost edge
+    if (!xfe1 || !xfe2) { // not a ghost edge
       // if (true)
       //   return; // only ghost penalty at the interface
       if (!(xfe1 || xfe2))
@@ -119,7 +119,7 @@ namespace ngfem
     FlatVector<> mat2_dudn_x(ndof_x2, &mat2_dudn(ndof_sca2));
     FlatMatrixFixWidth<D> mat2_du_sca(ndof_sca2, lh);
 
-    // int maxorder = spacetime ? 
+    // int maxorder = spacetime ?
     //   max(stscafe1->OrderSpace(),stscafe2->OrderSpace())
     //   : max(scafe1->Order(),scafe2->Order());
     int maxorder = max(scafe1->Order(),scafe2->Order());
@@ -140,8 +140,8 @@ namespace ngfem
     //       commonedge = masterel1.GetBaseEdge(i);
     //     }
 
-    Facet2ElementTrafo transform1(eltype1,ElVertices1); 
-    Facet2ElementTrafo transform2(eltype2,ElVertices2); 
+    Facet2ElementTrafo transform1(eltype1,ElVertices1);
+    Facet2ElementTrafo transform2(eltype2,ElVertices2);
 
     const NORMAL * normals1 = ElementTopology::GetNormals(eltype1);
     const NORMAL * normals2 = ElementTopology::GetNormals(eltype2);
@@ -163,7 +163,7 @@ namespace ngfem
     Vec<D> pointsdiff = pointv - pointv2;
 
     Vec<D> normal_ref1, normal_ref2;
-    for (int i=0; i<D; i++){
+    for (int i=0; i<D; i++) {
       normal_ref1(i) = normals1[LocalFacetNr1][i];
       normal_ref2(i) = normals2[LocalFacetNr2][i];
     }
@@ -175,7 +175,7 @@ namespace ngfem
     {
       if (facetdt==POS && dt==NEG) continue;
       if (facetdt==NEG && dt==POS) continue;
-      
+
       const IntegrationRule & ir_facet =
         SelectIntegrationRule (etfacet, 2*p);
 
@@ -197,7 +197,7 @@ namespace ngfem
           Mat<D> inv_jac1 = sip1.GetJacobianInverse();
           double det1 = sip1.GetJacobiDet();
 
-          Vec<D> normal1 = det1 * Trans (inv_jac1) * normal_ref1;       
+          Vec<D> normal1 = det1 * Trans (inv_jac1) * normal_ref1;
           double len1 = L2Norm (normal1);
           normal1 /= len1;
           Vec<D> invjac_normal1 = inv_jac1 * normal1;
@@ -206,7 +206,7 @@ namespace ngfem
             if (spacetime)
             {
               throw Exception("no space time supported anymore");
-              // stscafe1->CalcDxShapeSpaceTime (sip1.IP(), ir_time[k](0), mat1_du_sca, lh); 
+              // stscafe1->CalcDxShapeSpaceTime (sip1.IP(), ir_time[k](0), mat1_du_sca, lh);
               // mat1_dudn_sca = mat1_du_sca * invjac_normal1;
             }
             else
@@ -214,7 +214,7 @@ namespace ngfem
           }
           else
           {
-            if (spacetime) 
+            if (spacetime)
               throw Exception("no higher order ghost penalty for spacetime yet");
             // DO num diff in normal direction
             double eps = 1e-7;
@@ -243,7 +243,7 @@ namespace ngfem
             mat1_dudn_x = mat1_dudn_sca;
             for (int i = 0; i < ndof_sca1; ++i)
               if (xfe1->GetSignsOfDof()[i]!=dt)
-                mat1_dudn_x(i) = 0;              
+                mat1_dudn_x(i) = 0;
           }
 
           const double orthdist = abs(InnerProduct(pointsdiff,normal1));
@@ -252,9 +252,9 @@ namespace ngfem
           MappedIntegrationPoint<D,D> sip2 (ip2, eltrans2);
           Mat<D> inv_jac2 = sip2.GetJacobianInverse();
           double det2 = sip2.GetJacobiDet();
-          Vec<D> normal2 = det2 * Trans (inv_jac2) * normal_ref2;       
-          double len2 = L2Norm (normal2); 
-          if(abs(len1-len2)>1e-6){
+          Vec<D> normal2 = det2 * Trans (inv_jac2) * normal_ref2;
+          double len2 = L2Norm (normal2);
+          if(abs(len1-len2)>1e-6) {
             std::cout << "len :\t" << len1 << "\t=?=\t" << len2 << std::endl;
             throw Exception ("GhostPenaltyIntegrator: len1!=len2");
           }
@@ -267,7 +267,7 @@ namespace ngfem
             if (spacetime)
             {
               throw Exception("no space time supported anymore");
-              // stscafe2->CalcDxShapeSpaceTime (sip2.IP(), ir_time[k](0), mat2_du_sca, lh); 
+              // stscafe2->CalcDxShapeSpaceTime (sip2.IP(), ir_time[k](0), mat2_du_sca, lh);
               // mat2_dudn_sca = mat2_du_sca * invjac_normal2;
             }
             else
@@ -275,7 +275,7 @@ namespace ngfem
           }
           else
           {
-            if (spacetime) 
+            if (spacetime)
               throw Exception("no higher order ghost penalty for spacetime yet");
             // DO num diff in normal direction
             double eps = 1e-7;
@@ -299,19 +299,19 @@ namespace ngfem
             mat2_dudn_sca *= 1.0/(eps*eps);
 
           }
-         
+
           if (xfe2)
           {
             mat2_dudn_x = mat2_dudn_sca;
             for (int i = 0; i < ndof_sca2; ++i)
               if (xfe2->GetSignsOfDof()[i]!=dt)
-                mat2_dudn_x(i) = 0;              
+                mat2_dudn_x(i) = 0;
           }
 
           bmat = 0.0;
           bmat.Col(0).Range(  0,    nd1) = mat1_dudn;
           bmat.Col(0).Range(nd1,nd1+nd2) = mat2_dudn;
-          
+
           double pen = std::pow(orthdist, 2*difforder-1);
           elmat += pen * delta * lam * len1 * tau * ir_time[k].Weight() * ir_facet[l].Weight() * bmat * Trans (bmat);
         }
@@ -409,7 +409,7 @@ namespace ngfem
           const int order = i+1;
           // const int accuracy = 2*(j+1);
           const int stencil_width = j+1 + int(order-0.5)/2;
-          cnt[row] = 2 * stencil_width +1; 
+          cnt[row] = 2 * stencil_width +1;
         }
 
       stencils = new Table<double>(cnt);
@@ -465,12 +465,12 @@ namespace ngfem
     // SetRefBaryCenter(bfel.ElementType(),center);
     // IntegrationPoint centerip (center(0),center(1),center(2),0.0);
     // MappedIntegrationPoint<D,D> mipc(centerip,mip.GetTransformation());
-      
+
     // cout << mipc.GetPoint() << endl;
 
     if (version == 1)
-      // not higher order accurate on curved meshes (!),
-      // but more stable and efficient (one derivate less to evaluate by FD)
+    // not higher order accurate on curved meshes (!),
+    // but more stable and efficient (one derivate less to evaluate by FD)
     {
       const ScalarFiniteElement<D> & scafe =
         dynamic_cast<const ScalarFiniteElement<D> & > (bfel);
@@ -520,9 +520,9 @@ namespace ngfem
         getchar();
       }
     }
-		else
-		{
-			// VERSION 2 (fix points on phys. domain + transform points(!) back)
+    else
+    {
+      // VERSION 2 (fix points on phys. domain + transform points(!) back)
       // higher order accurate also on curved meshes (!),
       // but takes all derivatives by FD
       const ScalarFiniteElement<D> & scafe =
@@ -600,8 +600,8 @@ namespace ngfem
       // TODO: Add version 3:
       // VERSION 3 (fix points on phys. domain + transform points(!) back)
       // take du/dn (n the path-adjusted) normal direction and take FD from this.
-			
-		}
+
+    }
 
 
   }// generate matrix
