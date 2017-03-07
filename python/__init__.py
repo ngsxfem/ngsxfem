@@ -194,7 +194,7 @@ def Integrate(levelset_domain=None, *args, **kwargs):
 
 def IndicatorCF(mesh, ba, facets = False):
     if facets:
-        ret = GridFunction(FacetFESpace(mesh,order=0))
+        ret = GridFunction(FESpace("facet",mesh,order=0))
         for i in range(len(ba)):
             if ba[i]:
                 ret.vec[i] = 1.0
