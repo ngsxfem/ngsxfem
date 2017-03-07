@@ -26,6 +26,9 @@ add_test(NAME pytests_straightcutrule COMMAND ${PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_backupcutrule COMMAND ${PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_backuprule.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_intcurved COMMAND ${PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_intcurved.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 add_test(NAME pytests_nxfem COMMAND ${PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_nxfem.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
