@@ -186,30 +186,43 @@ namespace ngcomp
     shared_ptr<BitArray> ret = make_shared<BitArray> (nf);
     ret->Clear();
 
+    BitArray fine_facet(nf);
+    fine_facet.Clear();
+    IterateRange
+      (ma->GetNE(VOL), lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+      Array<int> fanums(0,lh);
+      ma->GetElFacets (elnr, fanums);
+      for (int j=0; j<fanums.Size(); j++)
+        fine_facet.Set(fanums[j]);
+    });
+
     IterateRange
       (nf, lh,
       [&] (int facnr, LocalHeap & lh)
     {
-      Array<int> elnums(0,lh);
-      ma->GetFacetElements (facnr, elnums);
-
-      bool a_left = a->Test(elnums[0]);
-      bool a_right = elnums.Size() > 1 ? a->Test(elnums[1]) : bound_val_a;
-      bool b_left = b->Test(elnums[0]);
-      bool b_right = elnums.Size() > 1 ? b->Test(elnums[1]) : bound_val_b;
-
-      if (ask_and)
+      if (fine_facet.Test(facnr))
       {
-        if ((a_left && b_right) || (a_right && b_left))
-          ret->Set(facnr);
-      }
-      else
-      {
-        if ((a_left || b_right) || (a_right || b_left))
-          ret->Set(facnr);
-      }
+        Array<int> elnums(0,lh);
+        ma->GetFacetElements (facnr, elnums);
 
+        bool a_left = a->Test(elnums[0]);
+        bool a_right = elnums.Size() > 1 ? a->Test(elnums[1]) : bound_val_a;
+        bool b_left = b->Test(elnums[0]);
+        bool b_right = elnums.Size() > 1 ? b->Test(elnums[1]) : bound_val_b;
 
+        if (ask_and)
+        {
+          if ((a_left && b_right) || (a_right && b_left))
+            ret->Set(facnr);
+        }
+        else
+        {
+          if ((a_left || b_right) || (a_right || b_left))
+            ret->Set(facnr);
+        }
+      }
     });
     return ret;
   }
