@@ -7,17 +7,17 @@
 
 #include <ngstd.hpp> // for Array
 #include <fem.hpp>   // for ScalarFiniteElement
-#include <comp.hpp> 
+#include <comp.hpp>
 #include <solve.hpp>
 
 using namespace ngsolve;
 using namespace ngfem;
 
 namespace ngcomp
-{ 
+{
 
-/* ---------------------------------------- 
-   Interpolate a coefficient function 
+/* ----------------------------------------
+   Interpolate a coefficient function
    or an h1ho function into the space of
    piecewise linears
    ---------------------------------------- */
@@ -34,19 +34,4 @@ namespace ngcomp
     void Do (LocalHeap & lh);
   };
 
-
-  class NumProcInterpolateP1 : public NumProc
-  {
-  protected:
-    shared_ptr<InterpolateP1> interpol = nullptr;
-  public:
-    NumProcInterpolateP1 (shared_ptr<PDE> apde, const Flags & flags);
-    virtual ~NumProcInterpolateP1() { }
-    virtual string GetClassName () const
-    {
-      return "NumProcInterpolateP1";
-    }
-    virtual void Do (LocalHeap & lh);
-  };
-  
 }
