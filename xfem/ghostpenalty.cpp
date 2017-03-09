@@ -345,15 +345,24 @@ namespace ngfem
     static const FlatVector<> Get(int order, int accuracy)
     {
       CentralFDStencils & instance = Instance();
-      const FlatArray<double> fa ((*(instance.stencils))[(order-1)*max_accuracy_half+(accuracy-1)/2]);
+      int row = order == 0 ? 0 : 1+(order-1)*max_accuracy_half+(accuracy-1)/2;
+      const FlatArray<double> fa ((*(instance.stencils))[row]);
       FlatVector<> coeffs(fa.Size(),&fa[0]);
       return coeffs;
     }
     static double GetOptimalEps(int order, int accuracy)
     {
       const double EPS = std::numeric_limits<double>::epsilon();
-      const int stencil_width = order == 0 ? 1 : (accuracy+1)/2 + int(order-0.5)/2;
-      const double eps = std::pow((2 * stencil_width + 1)*EPS,1.0/(accuracy + order)); // + 0.25;
+      const int stencil_width = order == 0 ? 0 : (accuracy+1)/2 + int(order-0.5)/2;
+      const double eps = order == 0 ? 1.0 : std::pow((2 * stencil_width + 1)*EPS,1.0/(accuracy + order)); // + 0.25;
+      static bool first0 = true;
+      if (first0 && order==0)
+      {
+
+        cout << " order, eps = " << order << ", " << eps << endl;
+        first0 = false;
+        // getchar();
+      }
       static bool first1 = true;
       if (first1 && order==1)
       {
