@@ -14,6 +14,9 @@ add_test(NAME py_tutorial_nxfem_ho COMMAND ${PYTHON_EXECUTABLE}
 add_test(NAME py_tutorial_tracefem COMMAND ${PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/tracefem.py")
 
+add_test(NAME py_tutorial_fictdom COMMAND ${PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_ghostpen.py")
+
 add_test(NAME pytests_xfes_ndof COMMAND ${PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
