@@ -486,10 +486,24 @@ void ExportNgsx(py::module &m)
 
   typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
   m.def("dn", FunctionPointer
-          ([] (const PyProxyFunction self, int order, int comp)
+          ([] (const PyProxyFunction self, int order, py::object comp)
   {
 
-    if (comp == -1 && dynamic_pointer_cast<CompoundDifferentialOperator>(self.Get()->Evaluator()))
+    Array<int> comparr(0);
+    if (py::extract<int> (comp).check())
+    {
+      int c = py::extract<int>(comp)();
+      if (c != -1)
+      {
+        comparr.SetSize(1);
+        comparr[0] = c;
+      }
+    }
+
+    if (py::extract<py::list> (comp).check())
+      comparr = makeCArray<int> (py::extract<py::list> (comp)());
+
+    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self.Get()->Evaluator()))
     {
       throw Exception("cannot work with compounddiffops, prescribe comp != -1");
     }
@@ -507,8 +521,11 @@ void ExportNgsx(py::module &m)
     case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
     default : throw Exception("no order higher than 8 implemented yet");
     }
-    if (comp != -1)
-      diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comp);
+
+    for (int i = 0; i < comparr.Size(); ++i)
+    {
+      diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comparr[i]);
+    }
 
     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
                                                  diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
