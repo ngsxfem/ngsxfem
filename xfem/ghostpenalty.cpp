@@ -137,6 +137,87 @@ namespace ngfem
 
   template <int D, int ORDER>
   template <typename FEL, typename MIP, typename MAT>
+  void DiffOpDuDnkHDiv<D,ORDER>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                                 MAT & mat, LocalHeap & lh)
+  {
+    const int FD_ACCURACY = 4;
+    const HDivFiniteElement<D> & hdivfel =
+      dynamic_cast<const HDivFiniteElement<D> & > (bfel);
+    const int ndof = hdivfel.GetNDof();
+
+
+    Vec<D> normal = static_cast<const DimMappedIntegrationPoint<D>&>(mip).GetNV();
+
+    // cout << "normal: " << normal << endl;
+    // Vec<D> normal; normal(0) = -1.0; normal(1) = 1.0;
+    // normal /= L2Norm(normal);
+
+    Vec<D> invjac_normal = mip.GetJacobianInverse() * normal;
+
+    const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
+
+    FlatVector<> fdstencil (CentralFDStencils::Get(ORDER,FD_ACCURACY));
+    const double eps = h * CentralFDStencils::GetOptimalEps(ORDER,FD_ACCURACY);
+
+    const int stencilpoints = fdstencil.Size();
+    const int stencilwidth = (stencilpoints-1)/2;
+
+    FlatMatrixFixWidth<D> shape (ndof, lh);
+    mat = 0.0;
+    Vec<D> normal_dir_wrt_ref = invjac_normal;
+    const double eps_fac = std::pow(1.0/eps,ORDER);
+    for (int i = 0; i < stencilpoints; ++i)
+    {
+      Vec<D> vec = mip.GetPoint();
+      vec += (i-stencilwidth) * eps * normal;
+
+      IntegrationPoint ip_x0(mip.IP());
+      for (int d = 0; d < D; ++d)
+        ip_x0(d) += (i-stencilwidth) * eps * normal_dir_wrt_ref(d);
+      MappedIntegrationPoint<D,D> mip_x0(ip_x0,mip.GetTransformation());
+
+      Vec<D> diff = vec - mip_x0.GetPoint();
+      Vec<D> update = 0;
+      int its = 0;
+      while (L2Norm(diff) > 1e-8*h && its < 20)
+      {
+        MappedIntegrationPoint<D,D> mip_x0(ip_x0,mip.GetTransformation());
+        diff = vec - mip_x0.GetPoint();
+        // cout << "mip_x0.GetPoint()" << mip_x0.GetPoint() << endl;
+        // cout << "diff" << diff << endl;
+        update = mip_x0.GetJacobianInverse() * diff;
+        for (int d = 0; d < D; ++d)
+          ip_x0(d) += update(d);
+        // getchar();
+        its++;
+      }
+      if (its >= 50)
+        cerr << "its >= 50 " << endl;
+
+      MappedIntegrationPoint<D,D> mip_now(ip_x0,mip.GetTransformation());
+      hdivfel.CalcMappedShape (mip_now, shape);
+      mat += eps_fac * fdstencil(i) * shape;
+    }
+
+    if (false)
+    {
+      const int feorder = hdivfel.Order();
+      cout << "ORDER = " << ORDER << endl;
+      cout << mip.GetPoint() << endl;
+      // cout << "dshapedn" << endl;
+      // cout << shape << endl;
+      cout << "coeffs" << endl;
+      cout << fdstencil << endl;
+      cout << "dshapednk" << endl;
+      cout << mat << endl;
+      getchar();
+    }
+  }
+
+
+
+  template <int D, int ORDER>
+  template <typename FEL, typename MIP, typename MAT>
   void DiffOpDuDnk<D,ORDER>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
@@ -297,5 +378,22 @@ namespace ngfem
   template class T_DifferentialOperator<DiffOpDuDnk<3,6>>;
   template class T_DifferentialOperator<DiffOpDuDnk<3,7>>;
   template class T_DifferentialOperator<DiffOpDuDnk<3,8>>;
+
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,1>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,2>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,3>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,4>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,5>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,6>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,7>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<2,8>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,1>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,2>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,3>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,4>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,5>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,6>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,7>>;
+  template class T_DifferentialOperator<DiffOpDuDnkHDiv<3,8>>;
 
 }
