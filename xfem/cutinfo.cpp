@@ -44,6 +44,11 @@ namespace ngcomp
       dom_of_node[NT_ELEMENT] = dom_of_node[NT_FACE];
       dom_of_node[NT_FACET] = dom_of_node[NT_EDGE];
     }
+    for (VorB vb : {VOL,BND})
+    {
+      int ne = ma->GetNE(vb);
+      cut_ratio_of_element[vb] = make_shared<VVector<double>>(ne);
+    }
   }
 
   void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, LocalHeap & lh)
@@ -60,7 +65,6 @@ namespace ngcomp
     for (VorB vb : {VOL,BND})
     {
       int ne = ma->GetNE(vb);
-      cut_ratio_of_element[vb] = make_shared<VVector<double>>(ne);
       IterateRange
         (ne, lh,
         [&] (int elnr, LocalHeap & lh)

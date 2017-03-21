@@ -496,7 +496,7 @@ void ExportNgsx(py::module &m)
 
   typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
   m.def("dn", FunctionPointer
-          ([] (const PyProxyFunction self, int order, py::object comp)
+          ([] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
   {
 
     Array<int> comparr(0);
@@ -519,18 +519,32 @@ void ExportNgsx(py::module &m)
     }
 
     shared_ptr<DifferentialOperator> diffopdudnk;
-    switch (order)
-    {
-    case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
-    case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,2>>> (); break;
-    case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,3>>> (); break;
-    case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
-    case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,5>>> (); break;
-    case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,6>>> (); break;
-    case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,7>>> (); break;
-    case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
-    default : throw Exception("no order higher than 8 implemented yet");
-    }
+    if (! hdiv)
+      switch (order)
+      {
+      case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
+      case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,2>>> (); break;
+      case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,3>>> (); break;
+      case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,4>>> (); break;
+      case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,5>>> (); break;
+      case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,6>>> (); break;
+      case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,7>>> (); break;
+      case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
+      default : throw Exception("no order higher than 8 implemented yet");
+      }
+    else
+      switch (order)
+      {
+      case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,1>>> (); break;
+      case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,2>>> (); break;
+      case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,3>>> (); break;
+      case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,4>>> (); break;
+      case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,5>>> (); break;
+      case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,6>>> (); break;
+      case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,7>>> (); break;
+      case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnkHDiv<2,8>>> (); break;
+      default : throw Exception("no order higher than 8 implemented yet");
+      }
 
     for (int i = 0; i < comparr.Size(); ++i)
     {
@@ -547,7 +561,8 @@ void ExportNgsx(py::module &m)
   }),
         py::arg("proxy"),
         py::arg("order"),
-        py::arg("comp") = -1
+        py::arg("comp") = -1,
+        py::arg("hdiv") = false
         );
 
   m.def("dn", FunctionPointer
