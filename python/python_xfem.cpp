@@ -536,7 +536,7 @@ void ExportNgsx(py::module &m)
       default : throw Exception("no order higher than 8 implemented yet");
       }
 
-    for (int i = 0; i < comparr.Size(); ++i)
+    for (int i = comparr.Size() - 1; i >= 0; --i)
     {
       diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comparr[i]);
     }
