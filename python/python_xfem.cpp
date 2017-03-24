@@ -383,7 +383,8 @@ void ExportNgsx(py::module &m)
               VorB vb,
               bool element_boundary,
               bool skeleton,
-              py::object definedon)
+              py::object definedon,
+              py::object definedonelem)
           -> PyBFI
   {
 
@@ -422,6 +423,9 @@ void ExportNgsx(py::module &m)
       bfi->SetDefinedOn(defon_region().Mask());
     }
 
+    if (! py::extract<DummyArgument> (definedonelem).check())
+      bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
+
     return PyBFI(bfi);
   }),
         py::arg("lset"),
@@ -432,7 +436,8 @@ void ExportNgsx(py::module &m)
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
         py::arg("skeleton")=false,
-        py::arg("definedon")=DummyArgument()
+        py::arg("definedon")=DummyArgument(),
+        py::arg("definedonelements")=DummyArgument()
         );
 
 
@@ -445,7 +450,8 @@ void ExportNgsx(py::module &m)
               VorB vb,
               bool element_boundary,
               bool skeleton,
-              py::object definedon)
+              py::object definedon,
+              py::object definedonelem)
           -> PyLFI
   {
 
@@ -471,6 +477,9 @@ void ExportNgsx(py::module &m)
       lfi->SetDefinedOn(defon_region().Mask());
     }
 
+    if (! py::extract<DummyArgument> (definedonelem).check())
+      lfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
+
     return PyLFI(lfi);
   }),
         py::arg("lset"),
@@ -481,7 +490,8 @@ void ExportNgsx(py::module &m)
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),
         py::arg("skeleton")=py::bool_(false),
-        py::arg("definedon")=DummyArgument()
+        py::arg("definedon")=DummyArgument(),
+        py::arg("definedonelements")=DummyArgument()
         );
 
   typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
