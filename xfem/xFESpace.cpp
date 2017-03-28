@@ -346,20 +346,19 @@ namespace ngcomp
     Array<int> dnums;
     for (NODE_TYPE nt : {NT_CELL,NT_FACE,NT_EDGE,NT_VERTEX})
     {
-      if (ma->GetDimension() == 3 && nt == NT_CELL)
-        continue;
-
       for (int nnr : ma->Nodes(nt))
       {
-        basefes->GetDofNrs(NodeId(nt,nnr), dnums);
         DOMAIN_TYPE dt = (*cutinfo->dom_of_node[nt])[nnr];
         if (dt != IF)
+        {
+          basefes->GetDofNrs(NodeId(nt,nnr), dnums);
           for (int l = 0; l < dnums.Size(); ++l)
           {
             int xdof = basedof2xdof[dnums[l]];
             if ( xdof != -1)
               domofdof[xdof] = INVERT(dt);
           }
+        }
       }
     }
 
