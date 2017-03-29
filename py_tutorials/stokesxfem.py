@@ -9,10 +9,11 @@ from math import pi
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1],bcs=[1,2,3,4])
 mesh = Mesh (square.GenerateMesh(maxh=4, quad_dominated=False))
-for i in range(6):
+for i in range(3):
     mesh.Refine()
 
-
+order = 2 #=k in P(k)P(k-1)-Taylor-Hood pair
+    
 mu1 = 1.0
 mu2 = 10.0
 mu = [mu1,mu2]
@@ -20,8 +21,8 @@ mu = [mu1,mu2]
 R = 2.0/3.0
 aneg = 1.0/mu1
 apos = 1.0/mu2 + (1.0/mu1 - 1.0/mu2)*exp(x*x+y*y-R*R)
-gammaf = 0.5
-q = gammaf - pi*R*R/4.0*gammaf
+gammaf = 0.5 # surface tension = pressure jump
+#q = gammaf - pi*R*R/4.0*gammaf
 
 functions = {
            "Levelset" : sqrt(x*x+y*y)-R,
@@ -41,8 +42,8 @@ functions = {
            "SolutionInnerVelX_DY" : (aneg*(2*y*y-1)*exp(-1.0 *( x * x + y * y))),
            "SolutionInnerVelY_DX" : (aneg*(1-2*x*x)*exp(-1.0 *( x * x + y * y))),
            "SolutionInnerVelY_DY" : (aneg*(-2)*x*y*exp(-1.0 *( x * x + y * y))),
-           "SolutionInnerPressure" : (x*x*x + q),
-           "SolutionOuterPressure" : (x*x*x - (pi*R*R/4.0*gammaf)),
+           "SolutionInnerPressure" : (x*x*x),# + q),
+           "SolutionOuterPressure" : (x*x*x - gammaf), #(pi*R*R/4.0*gammaf)),
 }
 
 coef_g = [ CoefficientFunction((functions["SourceInnerX"],functions["SourceInnerY"])),
@@ -51,7 +52,11 @@ coef_g = [ CoefficientFunction((functions["SourceInnerX"],functions["SourceInner
 vel_sol_neg = CoefficientFunction((functions["SolutionInnerVelX"],functions["SolutionInnerVelY"]))
 vel_sol_pos = CoefficientFunction((functions["SolutionOuterVelX"],functions["SolutionOuterVelY"]))
 
-order = 2
+grad_vel_sol_neg = CoefficientFunction((functions["SolutionInnerVelX_DX"],functions["SolutionInnerVelX_DY"],functions["SolutionInnerVelY_DX"],functions["SolutionInnerVelY_DY"]))
+grad_vel_sol_pos = CoefficientFunction((functions["SolutionOuterVelX_DX"],functions["SolutionOuterVelX_DY"],functions["SolutionOuterVelY_DX"],functions["SolutionOuterVelY_DY"]))
+
+pres_sol_neg = functions["SolutionInnerPressure"]
+pres_sol_pos = functions["SolutionOuterPressure"]
 
 # stabilization parameter for ghost-penalty
 gamma_stab = 0.05
@@ -60,7 +65,7 @@ lambda_nitsche  = 0.5 * (mu[0]+mu[1]) * 20 * order * order
 
 levelset = functions["Levelset"]
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.5, discontinuous_qn=True)
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=10.5, discontinuous_qn=True)
 deformation = lsetmeshadap.CalcDeformation(levelset)
 lsetp1 = lsetmeshadap.lset_p1
 ci = CutInfo(mesh,lsetp1)
@@ -78,6 +83,7 @@ WhG = FESpace([VhG,VhG,QhG,N],flags = {"dgjumps":True})
 gfup = GridFunction(WhG)
 gfu1 = gfup.components[0]
 gfu2 = gfup.components[1]
+gfp = gfup.components[2]
 u1_coef = gfu1.components[0] + IfPos(lsetp1, pos(gfu1.components[1]), neg(gfu1.components[1]))
 u2_coef = gfu2.components[0] + IfPos(lsetp1, pos(gfu2.components[1]), neg(gfu2.components[1]))
 
@@ -86,6 +92,16 @@ vel_neg = CoefficientFunction((gfu1.components[0]+neg(gfu1.components[1]),
 vel_pos = CoefficientFunction((gfu1.components[0]+pos(gfu1.components[1]),
                                gfu2.components[0]+pos(gfu2.components[1])))
 vel_coef = CoefficientFunction((u1_coef,u2_coef))
+
+grad_vel_neg = CoefficientFunction((grad(gfu1.components[0])+neg_grad(gfu1.components[1]),
+                                    grad(gfu2.components[0])+neg_grad(gfu2.components[1])))
+grad_vel_pos = CoefficientFunction((grad(gfu1.components[0])+pos_grad(gfu1.components[1]),
+                                    grad(gfu2.components[0])+pos_grad(gfu2.components[1])))
+
+
+pres_neg = gfp.components[0]+neg(gfp.components[1])
+pres_pos = gfp.components[0]+pos(gfp.components[1])
+pres_coef = gfp.components[0] + IfPos(lsetp1, pos(gfp.components[1]), neg(gfp.components[1]))
 
 gfp = gfup.components[2]
 
@@ -152,8 +168,8 @@ a += SymbolicBFI(lset_if,  form = lambda_nitsche * InnerProduct(u[0]-u[1],v[0]-v
 # pressure stuff
 a += SymbolicBFI(lset_neg, form = - divu[0] * q[0] - divv[0] * p[0]
                                   + n * q[0] + m * p[0])
-a += SymbolicBFI(lset_pos, form = - divu[1] * q[1] - divv[1] * p[1]
-                                  + n * q[1] + m * p[1])
+a += SymbolicBFI(lset_pos, form = - divu[1] * q[1] - divv[1] * p[1])
+#                                  + n * q[1] + m * p[1])
 
 f += SymbolicLFI(lset_if,  form = gammaf * InnerProduct(average_inv_v,n_lset))
 f += SymbolicLFI(lset_neg, form = coef_g[0] * v[0])
@@ -179,9 +195,18 @@ f.vec.data -= a.mat * gfup.vec
 gfup.vec.data += a.mat.Inverse(WhG.FreeDofs()) * f.vec
               
 # #measure the error
-l2error = sqrt( Integrate(lset_neg,InnerProduct(vel_neg-vel_sol_neg,vel_neg-vel_sol_neg),mesh=mesh)
-               +Integrate(lset_pos,InnerProduct(vel_pos-vel_sol_pos,vel_pos-vel_sol_pos),mesh=mesh) )
-print("L2 Error: {0}".format(l2error))
+
+vl2error = sqrt( Integrate(lset_neg,InnerProduct(vel_neg-vel_sol_neg,vel_neg-vel_sol_neg),mesh=mesh)
+                 +Integrate(lset_pos,InnerProduct(vel_pos-vel_sol_pos,vel_pos-vel_sol_pos),mesh=mesh) )
+print("L2 Error of velocity: {0}".format(vl2error))
+
+vh1error = sqrt( Integrate(lset_neg,InnerProduct(grad_vel_neg-grad_vel_sol_neg,grad_vel_neg-grad_vel_sol_neg),mesh=mesh)
+                 +Integrate(lset_pos,InnerProduct(grad_vel_pos-grad_vel_sol_pos,grad_vel_pos-grad_vel_sol_pos),mesh=mesh) )
+print("H1 Error of velocity: {0}".format(vh1error))
+
+pl2error = sqrt(  Integrate(lset_neg,(pres_neg-pres_sol_neg)*(pres_neg-pres_sol_neg),mesh=mesh)
+                 +Integrate(lset_pos,(pres_pos-pres_sol_pos)*(pres_pos-pres_sol_pos),mesh=mesh) )
+print("L2 Error of pressure: {0}".format(pl2error))
 
 # # unset mesh adaptation
 mesh.UnsetDeformation()
@@ -191,5 +216,6 @@ mesh.UnsetDeformation()
 Draw(deformation,mesh,"deformation")
 Draw(levelset,mesh,"levelset")
 Draw(lsetp1,mesh,"lsetp1")
+Draw(pres_coef,mesh,"pressure")
 Draw(vel_coef,mesh,"vel")
 
