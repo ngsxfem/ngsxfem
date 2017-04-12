@@ -133,6 +133,7 @@ add_subdirectory(xfem)
 add_subdirectory(py_tutorials)
 add_subdirectory(lsetcurving)
 add_subdirectory(tests)
+add_subdirectory(spacetime)
 
 # get_directory_property( DirDefs COMPILE_DEFINITIONS )
 
