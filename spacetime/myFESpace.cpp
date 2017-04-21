@@ -1,3 +1,4 @@
+
 /*********************************************************************/
 /* File:   myFESpace.cpp                                             */
 /* Author: Joachim Schoeberl                                         */
@@ -6,8 +7,6 @@
 
 
 /*
-
-My own FESpace for linear and quadratic triangular elements.  
 
 A fe-space provides the connection between the local reference
 element, and the global mesh.
@@ -18,8 +17,11 @@ element, and the global mesh.
 #include <comp.hpp>    // provides FESpace, ...
 #include <h1lofe.hpp>
 
+#include <fem.hpp>
+
 
 #include "myElement.hpp"
+#include "myHOElement.hpp"
 #include "myFESpace.hpp"
 
 /*
@@ -32,133 +34,160 @@ element, and the global mesh.
 namespace ngcomp
 {
 
-  MyFESpace :: MyFESpace (shared_ptr<MeshAccess> ama, const Flags & flags)
-    : FESpace (ama, flags)
+  //SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, FESpace& aVh, ScalarFiniteElement<1>& atfe, const Flags & flags)
+  //  : FESpace (ama, flags)
+SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
+  : FESpace (ama, flags)
   {
     cout << "Constructor of MyFESpace" << endl;
     cout << "Flags = " << flags << endl;
 
-    order = int(flags.GetNumFlag ("order", 2));
+    order_s = int(flags.GetNumFlag ("order", 2));
+
+    // How to get additional NumFlags?
+    bool linear_time = flags.GetDefineFlag ("order_time");
+    order_t = 1;
+
+    Vh = aVh.get();
+    tfe = atfe.get();
+
 
     cout << "Hello from myFESpace.cpp" << endl;
-    cout << "Order: " << order << endl;
- 
-    if ( order > 2 ) {
-       cout << "Sorry, only first and second order elements are implemented. Switch to second order." << endl;
-       order = 2;
-    }
-   
+    cout << "Order Space: " << order_s << endl;
+    cout << "Order Time: " << order_t << endl;
+
     // needed to draw solution function
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<2>>>();
     evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<2>>>();
 
-    integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(), 
+    integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
+
   }
-    
-  
-  MyFESpace :: ~MyFESpace ()
+
+
+  SpaceTimeFESpace :: ~SpaceTimeFESpace ()
   {
     // nothing to do
   }
 
-  
-  void MyFESpace :: Update(LocalHeap & lh)
+
+  void SpaceTimeFESpace :: Update(LocalHeap & lh)
   {
-    // some global update: 
+    // some global update:
 
-    cout << "Update MyFESpace, #vert = " << ma->GetNV() 
-         << ", #edge = " << ma->GetNEdges() << endl;
-
-    int n_vert = ma->GetNV();
-    int n_edge =  ma->GetNEdges();
-    int n_cell =  ma->GetNE();
+    Vh->Update(lh);
+    cout << "Dofs in space: " << Vh->GetNDof() << endl;
 
     // number of dofs:
-    if (order == 1)
-          ndof = n_vert;
+    ndof = (Vh->GetNDof()) * tfe->GetNDof();
 
-    if( order == 2) {
-       first_edge_dof.SetSize(n_edge+1);
-       int ii = n_vert;
-       for ( int i=0; i < n_edge; i++, ii+=1)
-          first_edge_dof[i] = ii;
-       first_edge_dof[n_edge] = ii;
-    
-       first_cell_dof.SetSize(n_cell+1);
-       for ( int i = 0; i< n_cell; i++, ii+=1) 
-         first_cell_dof[i] = ii;
-       first_cell_dof[n_cell] = ii;
-       cout << "first_cell_dof = " << endl << first_cell_dof << endl;
-    
-       ndof = ii;
-    }
-       
+
   }
 
-  void MyFESpace :: GetDofNrs (ElementId ei, Array<int> & dnums) const
+  void SpaceTimeFESpace :: GetDofNrs (ElementId ei, Array<int> & dnums) const
   {
     // returns dofs of element ei
     // may be a volume triangle or boundary segment
-    
+
     dnums.SetSize(0);
 
-    Ngs_Element ngel = ma->GetElement (ei);
+    Array<int> Vh_dofs;
+    Vh->GetDofNrs(ei,Vh_dofs);
 
+    for( int i = 0; i < tfe->GetNDof(); i++) {
+        for (auto v : Vh_dofs)
+            dnums.Append (v+i*Vh->GetNDof());
+     }
 
-    Array<int> vert_nums;
-    ma->GetElVertices (ei, vert_nums);  // global vertex numbers
-
-
-        for (auto v : vert_nums) 
-      dnums.Append (v);
-
-    if (order == 2)
-      { 
-        for (auto e : ngel.Edges())
-	  {
-	    int first = first_edge_dof[e];
-            int next  = first_edge_dof[e+1];
-            for ( int j = first; j < next; j++) 
-              dnums.Append(j);
-           }
-        if (ei.IsVolume())
-          {
-            int first = first_cell_dof[ei.Nr()];
-            int next  = first_cell_dof[ei.Nr()+1];
-            for ( int j = first; j < next; j++)
-              dnums.Append(j);
-          }
-    }
-  }
-  
-  FiniteElement & MyFESpace :: GetFE (ElementId ei, Allocator & alloc) const
-  { 
-    Ngs_Element ngel = ma->GetElement (ei);
-    if (ei.IsVolume())
-      {
-          MyLinearQuad * quad = new (alloc) MyLinearQuad(order);
-		
-          for (int i = 0; i < 4; i++) 
-            quad->SetVertexNumber (i, ngel.vertices[i]);
-	
-      	    return *quad;
-            
-      }              
-    else
-      {
-        return * new (alloc) FE_Segm1;
-      }
   }
 
+
+  FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
+  {
+
+     // Ok to do this ?
+     ScalarFiniteElement<2>* s_FE = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
+
+     ScalarFiniteElement<1>* t_FE = tfe;
+
+     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE);
+
+     return *st_FE;
+
+   }
+
+
+
+
+ // ************************************************************** //
+
+  // Registering the SpaceTimeFESpace
+
+  // From MylittleNGSolve
+  // static RegisterFESpace<SpaceTimeFESpace> initifes ("SpaceTimeFESpace");
 
 
   /*
-    register fe-spaces
-    Object of type MyFESpace can be defined in the pde-file via
-    "define fespace v -type=myfespace"
+  template <typename FES>
+  class MyRegisterFESpace
+  {
+  public:
+    /// constructor registers fespace
+    MyRegisterFESpace (string label)
+    {
+      GetFESpaceClasses().AddFESpace (label, Create);
+      // cout << "register fespace '" << label << "'" << endl;
+    }
+
+    /// creates an fespace of type FES
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
+    {
+      return make_shared<FES> (ma, flags);
+    }
+  };
+
+    string label = "SpaceTimeFESpace";
+    static MyRegisterFESpace<SpaceTimeFESpace> initifes (label);
+
+    //  error: no matching function for call to
+    //   'ngcomp::SpaceTimeFESpace::SpaceTimeFESpace(std::shared_ptr<ngcomp::MeshAccess>&, const ngstd::Flags&)'
+
+    */
+
+
+
+
+ /*
+  template <typename FES>
+  class MyRegisterFESpace
+  {
+  public:
+    /// constructor registers fespace
+    MyRegisterFESpace (string label)
+    {
+      GetFESpaceClasses().AddFESpace (label, Create);
+      // cout << "register fespace '" << label << "'" << endl;
+    }
+
+    /// creates an fespace of type FES
+    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma,FESpace& aVh, ScalarFiniteElement<1>& atfe, const Flags & flags)
+    {
+      return make_shared<FES> (ma, aVh, atfe, flags);
+    }
+  };
+
+    string label = "SpaceTimeFESpace";
+    static MyRegisterFESpace<SpaceTimeFESpace> initifes (label);
+
+ // invalid conversion from 'std::shared_ptr<ngcomp::FESpace> (*)(std::shared_ptr<ngcomp::MeshAccess>, ngcomp::FESpace&, ngfem::ScalarFiniteElement<1>&, const ngstd::Flags&)'
+ //    to 'std::shared_ptr<ngcomp::FESpace> (*)(std::shared_ptr<ngcomp::MeshAccess>, const ngstd::Flags&)' [-fpermissive]
+ //      GetFESpaceClasses().AddFESpace (label, Create);
+
+
   */
 
-  static RegisterFESpace<MyFESpace> initifes ("myfespace");
+
+
 }

@@ -13,6 +13,9 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
+
+#include "../spacetime/myElement.hpp"
+#include "../spacetime/myFESpace.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -669,6 +672,69 @@ void ExportNgsx(py::module &m)
         py::arg("domain_type")=IF,
         py::arg("subdivlvl")=0,
         py::arg("heapsize")=1000000);
+
+
+
+
+ typedef PyWrapperDerived<SpaceTimeFESpace, FESpace> PySTFES;
+
+  py::class_<PySTFES, PyFES>
+    (m, "SpaceTimeFESpace")
+  .def("__init__", FunctionPointer( [] (PySTFES *instance,
+                                        PyFES basefes,
+                                        shared_ptr<FiniteElement> fe,
+                                        py::dict bpflags,
+                                        int heapsize)
+  {
+
+     cout << "Here earlier" << endl;
+
+    shared_ptr<SpaceTimeFESpace> ret = nullptr;
+    Flags flags = py::extract<Flags> (bpflags)();
+    shared_ptr<MeshAccess> ma = basefes.Get()->GetMeshAccess();
+
+    cout << "Here" << endl;
+    cout << fe << endl;
+    auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
+    cout << tfe << endl;
+    if(tfe == nullptr)
+           cout << "Warning!" << endl;
+
+    ret = make_shared<SpaceTimeFESpace> (ma, basefes.Get(),tfe, flags);
+
+
+
+    LocalHeap lh (heapsize, "SpaceTimeFESpace::Update-heap", true);
+    ret->Update(lh);
+    new (instance) PyFES(ret);
+  }),
+       py::arg("spacefes"),
+       py::arg("timefe"),
+       py::arg("flags") = py::dict(),
+       py::arg("heapsize") = 1000000)
+  .def("Dummy", FunctionPointer ([](PySTFES self)
+  {
+    //return self.Get()->GetCutInfo();
+    return 0;
+  }),
+       "Do nothing")
+
+  ;
+
+  m.def("ScalarTimeFE", FunctionPointer
+            ([]( int order)
+             {
+               BaseScalarFiniteElement * fe = nullptr;
+
+                 fe = new H1HighOrderFE<ET_SEGM>(order);
+
+
+               return shared_ptr<BaseScalarFiniteElement>(fe);
+             }),
+            "creates scalar Fe on Segm"
+            );
+
+
 }
 
 PYBIND11_PLUGIN(libngsxfem_py)

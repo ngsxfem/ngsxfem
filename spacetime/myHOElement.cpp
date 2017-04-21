@@ -58,10 +58,11 @@ namespace ngfem
     if (order >= 2)  
       { 
         int es = edges[0][0], ee = edges[0][1];
-        if (vnums[es] > vnums[ee]) swap (es, ee); 
+        if (vnums[es] > vnums[ee]) swap (es, ee);
         
-        IntegratedLegendrePolynomial (order, 
-                                      lami[ee]-lami[es], 
+
+        IntegratedLegendrePolynomial (order,
+                                      lami[ee]-lami[es],
                                       polx);
         for (int j = 2; j <= order; j++)
           shape[ii++] = polx[j];

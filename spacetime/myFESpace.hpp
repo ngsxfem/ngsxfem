@@ -16,15 +16,15 @@
 */
 
 
+
 namespace ngcomp
 {
 
-  class MyFESpace : public FESpace
+  class SpaceTimeFESpace : public FESpace
   {
-    bool use_quads, tp_quads;
-    int ndof, nvert,order;
-    Array<int> first_edge_dof;
-    Array<int> first_cell_dof;
+    int ndof, order_s,order_t;
+    FESpace* Vh;
+    ScalarFiniteElement<1>* tfe;
 
   public:
     /*
@@ -32,15 +32,18 @@ namespace ngcomp
       Arguments are the access to the mesh data structure,
       and the flags from the define command in the pde-file
     */
-    MyFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
+    //MyFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
+    SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags);
+
+    //virtual FESpace get_V() const { return *Vh; }
 
     // destructor
-    virtual ~MyFESpace ();
+    virtual ~SpaceTimeFESpace ();
 
     // a name for our new fe-space
     virtual string GetClassName () const
     {
-      return "MyFESpace";
+      return "SpaceTimeFESpace";
     }
 
 
@@ -49,6 +52,7 @@ namespace ngcomp
     
     virtual void GetDofNrs (ElementId ei, Array<DofId> & dnums) const;
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
+
   };
 
 }    
