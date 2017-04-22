@@ -30,35 +30,35 @@ mesh = Mesh (ngmesh)
 fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])
 tfe = ScalarTimeFE(1);
 
-#st_fe = SpaceTimeFESpace(mesh,fes1,tfe)
-
+st_fe = SpaceTimeFESpace(fes1,tfe)
+st_fe.SetTime(0.5)
 #fes = FESpace("myfespace", mesh, order = 1, dirichlet=[1,2,3,4], flags = {"order_time" : True } )
 
 #help(fes1)
 #input("")
 #print ("freedofs: ", fes.FreeDofs())
-#
-#visoptions.autoscale = False
-#visoptions.mminval=0.0
-#visoptions.mmaxval=1.0
-#visoptions.deformation = 1
-#
-#w = GridFunction(fes)
-#
+
+visoptions.autoscale = False
+visoptions.mminval=0.0
+visoptions.mmaxval=1.0
+visoptions.deformation = 1
+
+w = GridFunction(st_fe)
+
 #L = [el for el in fes.Elements()]
 #print("Len(L) = {0}".format(len(L)))
 #print("Dof-Nrs. = {0}".format(L[0].dofs))
-#
-#Draw(w)
-#
-#for i in range(fes.ndof):
-#   # print("i = {0}".format(i))
-#    if i > 0:
-#        w.vec[i-1] = 0
-#    w.vec[i] = 1
-#    Redraw()
-#    #input("")
-#    sleep(0.25)
+
+Draw(w)
+
+for i in range(st_fe.ndof):
+   # print("i = {0}".format(i))
+    if i > 0:
+        w.vec[i-1] = 0
+    w.vec[i] = 1
+    Redraw()
+    #input("")
+    sleep(0.25)
 
 
 

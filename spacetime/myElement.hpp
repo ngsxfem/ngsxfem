@@ -22,12 +22,13 @@ namespace ngfem
    {
         ScalarFiniteElement<2>* sFE = nullptr;
         ScalarFiniteElement<1>* tFE = nullptr;
+        double time;
 
 
 
     public:
       // constructor
-      SpaceTimeFE (int order,ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE );
+      SpaceTimeFE (int order,ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, double time );
 
       virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
 
@@ -41,7 +42,7 @@ namespace ngfem
       // for time derivatives
 
       virtual void CalcDtShape (const IntegrationPoint & ip,
-                               SliceMatrix<> dshape) const;
+                               BareSliceVector<> dshape) const;
       /*
         Calculate the matrix of derivatives of the shape functions in the point ip.
         dshape is an 3 by 2 matrix in our case.

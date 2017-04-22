@@ -19,7 +19,7 @@ namespace ngfem
 {
 
 
-   SpaceTimeFE :: SpaceTimeFE (int order, ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE)
+   SpaceTimeFE :: SpaceTimeFE (int order, ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, double atime)
     /*
       Call constructor for base class:
       number of dofs is (dofs in space) * (Dofs in time), maximal order is order
@@ -29,6 +29,8 @@ namespace ngfem
 
         sFE = s_FE;
         tFE = t_FE;
+        time = atime;
+
     }
 
     void SpaceTimeFE :: CalcShape (const IntegrationPoint & ip,
@@ -36,7 +38,7 @@ namespace ngfem
     {
 
       Vector<> time_shape(tFE->GetNDof());
-      IntegrationPoint z(ip(2));
+      IntegrationPoint z(time);//ip(2));
       tFE->CalcShape(z,time_shape);
 
       Vector<> space_shape(sFE->GetNDof());
@@ -82,7 +84,7 @@ namespace ngfem
     // for time derivatives
 
     void SpaceTimeFE :: CalcDtShape (const IntegrationPoint & ip,
-                                     SliceMatrix<> dshape) const
+                                     BareSliceVector<> dshape) const
 
     {
       // matrix of derivatives:
@@ -97,8 +99,7 @@ namespace ngfem
         int ii = 0;
         for(int j = 0; j < tFE->GetNDof(); j++) {
             for(int i=0; i< sFE->GetNDof(); i++) {
-                dshape(ii,0) = space_shape(i)*time_dshape(j,0);
-                ii++;
+                dshape(ii++) = space_shape(i)*time_dshape(j,0);
             }
          }
 

@@ -25,6 +25,7 @@ namespace ngcomp
     int ndof, order_s,order_t;
     FESpace* Vh;
     ScalarFiniteElement<1>* tfe;
+    double time;
 
   public:
     /*
@@ -40,6 +41,7 @@ namespace ngcomp
     // destructor
     virtual ~SpaceTimeFESpace ();
 
+
     // a name for our new fe-space
     virtual string GetClassName () const
     {
@@ -52,6 +54,9 @@ namespace ngcomp
     
     virtual void GetDofNrs (ElementId ei, Array<DofId> & dnums) const;
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
+
+    // For debugging
+    void SetTime(double a) {time = a;}
 
   };
 

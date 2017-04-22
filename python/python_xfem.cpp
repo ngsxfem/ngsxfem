@@ -687,14 +687,12 @@ void ExportNgsx(py::module &m)
                                         int heapsize)
   {
 
-     cout << "Here earlier" << endl;
 
     shared_ptr<SpaceTimeFESpace> ret = nullptr;
     Flags flags = py::extract<Flags> (bpflags)();
     shared_ptr<MeshAccess> ma = basefes.Get()->GetMeshAccess();
 
-    cout << "Here" << endl;
-    cout << fe << endl;
+
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
     cout << tfe << endl;
     if(tfe == nullptr)
@@ -712,12 +710,11 @@ void ExportNgsx(py::module &m)
        py::arg("timefe"),
        py::arg("flags") = py::dict(),
        py::arg("heapsize") = 1000000)
-  .def("Dummy", FunctionPointer ([](PySTFES self)
+  .def("SetTime", FunctionPointer ([](PySTFES self, double t)
   {
-    //return self.Get()->GetCutInfo();
-    return 0;
+    self.Get()->SetTime(t);
   }),
-       "Do nothing")
+       "Set the time variable")
 
   ;
 

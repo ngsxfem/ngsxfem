@@ -51,7 +51,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     Vh = aVh.get();
     tfe = atfe.get();
 
-
     cout << "Hello from myFESpace.cpp" << endl;
     cout << "Order Space: " << order_s << endl;
     cout << "Order Time: " << order_t << endl;
@@ -63,7 +62,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
-
+    time=0;
   }
 
 
@@ -112,7 +111,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      ScalarFiniteElement<1>* t_FE = tfe;
 
-     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE);
+     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE,time);
 
      return *st_FE;
 
