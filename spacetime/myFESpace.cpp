@@ -77,10 +77,11 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     // some global update:
 
     Vh->Update(lh);
-    cout << "Dofs in space: " << Vh->GetNDof() << endl;
+    cout << "Dofs in base: " << Vh->GetNDof() << endl;
 
     // number of dofs:
     ndof = (Vh->GetNDof()) * tfe->GetNDof();
+    cout << "Total number of Dofs: " << Vh->GetNDof() << endl;
 
 
   }
@@ -116,77 +117,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      return *st_FE;
 
    }
-
-
-
-
- // ************************************************************** //
-
-  // Registering the SpaceTimeFESpace
-
-  // From MylittleNGSolve
-  // static RegisterFESpace<SpaceTimeFESpace> initifes ("SpaceTimeFESpace");
-
-
-  /*
-  template <typename FES>
-  class MyRegisterFESpace
-  {
-  public:
-    /// constructor registers fespace
-    MyRegisterFESpace (string label)
-    {
-      GetFESpaceClasses().AddFESpace (label, Create);
-      // cout << "register fespace '" << label << "'" << endl;
-    }
-
-    /// creates an fespace of type FES
-    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma, const Flags & flags)
-    {
-      return make_shared<FES> (ma, flags);
-    }
-  };
-
-    string label = "SpaceTimeFESpace";
-    static MyRegisterFESpace<SpaceTimeFESpace> initifes (label);
-
-    //  error: no matching function for call to
-    //   'ngcomp::SpaceTimeFESpace::SpaceTimeFESpace(std::shared_ptr<ngcomp::MeshAccess>&, const ngstd::Flags&)'
-
-    */
-
-
-
-
- /*
-  template <typename FES>
-  class MyRegisterFESpace
-  {
-  public:
-    /// constructor registers fespace
-    MyRegisterFESpace (string label)
-    {
-      GetFESpaceClasses().AddFESpace (label, Create);
-      // cout << "register fespace '" << label << "'" << endl;
-    }
-
-    /// creates an fespace of type FES
-    static shared_ptr<FESpace> Create (shared_ptr<MeshAccess> ma,FESpace& aVh, ScalarFiniteElement<1>& atfe, const Flags & flags)
-    {
-      return make_shared<FES> (ma, aVh, atfe, flags);
-    }
-  };
-
-    string label = "SpaceTimeFESpace";
-    static MyRegisterFESpace<SpaceTimeFESpace> initifes (label);
-
- // invalid conversion from 'std::shared_ptr<ngcomp::FESpace> (*)(std::shared_ptr<ngcomp::MeshAccess>, ngcomp::FESpace&, ngfem::ScalarFiniteElement<1>&, const ngstd::Flags&)'
- //    to 'std::shared_ptr<ngcomp::FESpace> (*)(std::shared_ptr<ngcomp::MeshAccess>, const ngstd::Flags&)' [-fpermissive]
- //      GetFESpaceClasses().AddFESpace (label, Create);
-
-
-  */
-
 
 
 }

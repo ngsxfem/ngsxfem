@@ -37,24 +37,26 @@ namespace ngfem
                                     BareSliceVector<> shape) const
     {
 
-      Vector<> time_shape(tFE->GetNDof());
-      IntegrationPoint z(time);//ip(2));
-      tFE->CalcShape(z,time_shape);
+       if (tFE->GetNDof() == 1)
+          sFE->CalcShape(ip,shape);
+       else {
 
-      Vector<> space_shape(sFE->GetNDof());
-      sFE->CalcShape(ip,space_shape);
+            Vector<> time_shape(tFE->GetNDof());
+            IntegrationPoint z(time);//ip(2));
+            tFE->CalcShape(z,time_shape);
 
-     // define shape functions
+            Vector<> space_shape(sFE->GetNDof());
+            sFE->CalcShape(ip,space_shape);
 
-      int ii = 0;
-      for(int j = 0; j < tFE->GetNDof(); j++) {
-          for(int i=0; i< sFE->GetNDof() ; i++) {
-              shape(ii++) = space_shape(i)*time_shape(j);
-          }
+            // define shape functions
+            int ii = 0;
+            for(int j = 0; j < tFE->GetNDof(); j++) {
+               for(int i=0; i< sFE->GetNDof() ; i++) {
+                   shape(ii++) = space_shape(i)*time_shape(j);
+               }
+             }
        }
-
-
-    }
+     }
 
     void SpaceTimeFE :: CalcDShape (const IntegrationPoint & ip,
                                      SliceMatrix<> dshape) const
@@ -62,22 +64,27 @@ namespace ngfem
     {
       // matrix of derivatives:
 
-        Vector<> time_shape(tFE->GetNDof());
-        IntegrationPoint z(ip(2));
-        tFE->CalcShape(z,time_shape);
+         if (tFE->GetNDof() == 1)
+            sFE->CalcDShape(ip,dshape);
+         else {
 
-        Matrix<double> space_dshape(sFE->GetNDof(),2);
-        sFE->CalcDShape(ip,space_dshape);
+            Vector<> time_shape(tFE->GetNDof());
+            IntegrationPoint z(time);
+            tFE->CalcShape(z,time_shape);
 
-        int ii = 0;
-        for(int j = 0; j < tFE->GetNDof(); j++) {
-            for(int i=0; i< sFE->GetNDof(); i++) {
-                dshape(ii,0) = space_dshape(i,0)*time_shape(j);
-                dshape(ii,1) = space_dshape(i,1)*time_shape(j);
-                ii++;
+            Matrix<double> space_dshape(sFE->GetNDof(),2);
+            sFE->CalcDShape(ip,space_dshape);
+
+
+            int ii = 0;
+            for(int j = 0; j < tFE->GetNDof(); j++) {
+                for(int i=0; i< sFE->GetNDof(); i++) {
+                    dshape(ii,0) = space_dshape(i,0)*time_shape(j);
+                    dshape(ii,1) = space_dshape(i,1)*time_shape(j);
+                    ii++;
+                }
             }
          }
-
 
     }
 
