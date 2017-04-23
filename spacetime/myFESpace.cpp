@@ -21,7 +21,6 @@ element, and the global mesh.
 
 
 #include "myElement.hpp"
-#include "myHOElement.hpp"
 #include "myFESpace.hpp"
 
 /*

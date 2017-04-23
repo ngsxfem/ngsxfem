@@ -731,6 +731,41 @@ void ExportNgsx(py::module &m)
             "creates scalar Fe on Segm"
             );
 
+  // *********************************************
+  //
+  // DiffOpDt
+  //
+  // **********************************************
+
+  /*
+
+  m.def("dt", FunctionPointer
+          ([] (const PyProxyFunction self)
+  {
+
+    shared_ptr<DifferentialOperator> diffopdt;
+    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+
+
+
+    auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                                 diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+
+    return PyProxyFunction(adddiffop);
+  }),
+        py::arg("proxy"),
+        );
+
+  m.def("dt", FunctionPointer
+          ([](PyGF self) -> PyCF
+  {
+    shared_ptr<DifferentialOperator> diffopdt;
+    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+
+    return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
+  }));
+ */
 
 }
 

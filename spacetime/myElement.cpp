@@ -97,7 +97,7 @@ namespace ngfem
       // matrix of derivatives:
 
         Matrix<double> time_dshape(tFE->GetNDof(),1);
-        IntegrationPoint z(ip(2));
+        IntegrationPoint z(time);
         tFE->CalcDShape(z,time_dshape);
 
         Vector<> space_shape(sFE->GetNDof());
