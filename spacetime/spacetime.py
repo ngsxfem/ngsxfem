@@ -18,9 +18,9 @@ from numpy import pi
 
 
 
-from ctypes import CDLL
-# on Windows replace '.so' with '.dll'
-mylngs = CDLL("libngsxfem_spacetime.so")
+# from ctypes import CDLL
+# # on Windows replace '.so' with '.dll'
+# mylngs = CDLL("libngsxfem_spacetime.so")
 
 
 square = SplineGeometry()
