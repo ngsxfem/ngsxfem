@@ -13,6 +13,7 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../cutint/spacetimecutrule.hpp"
 
 #include "../spacetime/myElement.hpp"
 #include "../spacetime/myFESpace.hpp"
@@ -617,6 +618,8 @@ void ExportNgsx(py::module &m)
     return ret;
   }));
   // new implementation: only straight cuts - start with triangles only for a start!
+
+  m.def("DebugSpaceTimeCutIntegrationRule", FunctionPointer([](){ DebugSpaceTimeCutIntegrationRule(); }));
 
   m.def("IntegrateX",
         FunctionPointer([](py::object lset,
