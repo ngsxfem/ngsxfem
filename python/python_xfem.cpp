@@ -704,6 +704,7 @@ void ExportNgsx(py::module &m)
 
     LocalHeap lh (heapsize, "SpaceTimeFESpace::Update-heap", true);
     ret->Update(lh);
+    ret->FinalizeUpdate(lh);
     new (instance) PyFES(ret);
   }),
        py::arg("spacefes"),
