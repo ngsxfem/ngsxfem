@@ -75,8 +75,10 @@ namespace xintegration
   void CutSimplexElementGeometry::LoadBaseSimplexFromElementTopology() {
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
-      for(int i=0; i<ElementTopology::GetNVertices(et); i++)
+      for(int i=0; i<ElementTopology::GetNVertices(et); i++){
           svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
+          //cout << "point Nr. " << i << " : " << verts[i][0] << " , " << verts[i][1] << " , " << verts[i][2] << endl;
+      }
 
       if((et == ET_TRIG) || (et == ET_TET)){
           Array<int> BaseSimplex(D+1);
