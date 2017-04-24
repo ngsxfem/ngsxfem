@@ -1,4 +1,4 @@
-#define FILE_GHOSTPENALTY_CPP
+#define FILE_DIFFOPDT_CPP
 #include "diffopDt.hpp"
 #include <diffop_impl.hpp>
 #include "myElement.hpp"
@@ -17,14 +17,15 @@ namespace ngfem
       const int ndof = scafe.GetNDof();
 
       FlatVector<> dtshape (ndof,lh);
-      //dtshape = scafe.GetDtShape(mip.IP(), lh);
-      dtshape = scafe.GetShape(mip.IP(), lh); // needs to be changed
-
+      IntegrationPoint ip(mip.IP());
+      scafe.CalcDtShape(ip,dtshape);
       mat = 0.0;
       mat.Row(0) = dtshape;
 
 
     }
+
+  template class T_DifferentialOperator<DiffOpDt>;
 
 
 }

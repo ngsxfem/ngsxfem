@@ -25,11 +25,11 @@ from numpy import pi
 
 square = SplineGeometry()
 square.AddRectangle([0,0],[1,1],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.02, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])
-k_t = 0
+k_t = 1
 tfe = ScalarTimeFE(k_t) 
 
 st_fes = SpaceTimeFESpace(fes1,tfe)
@@ -56,13 +56,14 @@ visoptions.deformation = 1
 #    sleep(0.25)
     
 
-# Fitted heat equation example (k_t = 0)
+#Fitted heat equation example (k_t = 0)
 tend = 1.0
-delta_t = 1/64
+delta_t = 1/16
 tnew = 0
 t = Parameter(0)
 
 trapezoidal = { "points" : [0,1], "weights" : [1/2,1/2] }
+simpson = { "points" : [0,1/2,1], "weights" : [1/6,4/6,1/6] }
 
 u_exact = CoefficientFunction( sin(pi*t)*sin(pi*x)*sin(pi*x)*sin(pi*y)*sin(pi*y)  )
 coeff_f = CoefficientFunction( pi*cos(pi*t)*sin(pi*x)*sin(pi*x)*sin(pi*y)*sin(pi*y)
@@ -93,13 +94,14 @@ while tend - tnew > delta_t/2:
     amat.AsVector()[:] = 0
     fvec[:] = 0
     
-    for ti,omega_i in zip(trapezoidal["points"],trapezoidal["weights"]):
+    for ti,omega_i in zip(simpson["points"],simpson["weights"]):
         t.Set(tnew + delta_t*ti)
         st_fes.SetTime(ti) #for k_t = 0 this does nothing
         
         ai = BilinearForm(st_fes,symmetric=False)
         fi = LinearForm(st_fes)
         
+        ai += SymbolicBFI(form = -omega_i*u*dt(v))
         ai += SymbolicBFI(form = delta_t*omega_i*grad(u)*grad(v))
         fi += SymbolicLFI(form = delta_t*omega_i*coeff_f*v)
         

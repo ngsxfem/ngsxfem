@@ -16,6 +16,7 @@
 
 #include "../spacetime/myElement.hpp"
 #include "../spacetime/myFESpace.hpp"
+#include "../spacetime/diffopDt.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -732,13 +733,8 @@ void ExportNgsx(py::module &m)
         "creates scalar Fe on Segm"
         );
 
-  // *********************************************
-  //
-  // DiffOpDt
-  //
-  // **********************************************
 
-  /*
+  // DiffOpDt
 
      m.def("dt", FunctionPointer
           ([] (const PyProxyFunction self)
@@ -755,7 +751,7 @@ void ExportNgsx(py::module &m)
 
      return PyProxyFunction(adddiffop);
      }),
-        py::arg("proxy"),
+        py::arg("proxy")
         );
 
      m.def("dt", FunctionPointer
@@ -764,9 +760,9 @@ void ExportNgsx(py::module &m)
      shared_ptr<DifferentialOperator> diffopdt;
      diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
 
-     return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdt));
      }));
-   */
+
 
 }
 
