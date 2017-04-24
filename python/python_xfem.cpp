@@ -676,7 +676,7 @@ void ExportNgsx(py::module &m)
 
 
 
- typedef PyWrapperDerived<SpaceTimeFESpace, FESpace> PySTFES;
+  typedef PyWrapperDerived<SpaceTimeFESpace, FESpace> PySTFES;
 
   py::class_<PySTFES, PyFES>
     (m, "SpaceTimeFESpace")
@@ -696,7 +696,7 @@ void ExportNgsx(py::module &m)
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
     cout << tfe << endl;
     if(tfe == nullptr)
-           cout << "Warning!" << endl;
+      cout << "Warning!" << endl;
 
     ret = make_shared<SpaceTimeFESpace> (ma, basefes.Get(),tfe, flags);
 
@@ -720,17 +720,17 @@ void ExportNgsx(py::module &m)
   ;
 
   m.def("ScalarTimeFE", FunctionPointer
-            ([]( int order)
-             {
-               BaseScalarFiniteElement * fe = nullptr;
+          ([]( int order)
+  {
+    BaseScalarFiniteElement * fe = nullptr;
 
-                 fe = new H1HighOrderFE<ET_SEGM>(order);
+    fe = new H1HighOrderFE<ET_SEGM>(order);
 
 
-               return shared_ptr<BaseScalarFiniteElement>(fe);
-             }),
-            "creates scalar Fe on Segm"
-            );
+    return shared_ptr<BaseScalarFiniteElement>(fe);
+  }),
+        "creates scalar Fe on Segm"
+        );
 
   // *********************************************
   //
@@ -740,33 +740,33 @@ void ExportNgsx(py::module &m)
 
   /*
 
-  m.def("dt", FunctionPointer
+     m.def("dt", FunctionPointer
           ([] (const PyProxyFunction self)
-  {
+     {
 
-    shared_ptr<DifferentialOperator> diffopdt;
-    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+     shared_ptr<DifferentialOperator> diffopdt;
+     diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
 
 
 
-    auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
                                                  diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 
-    return PyProxyFunction(adddiffop);
-  }),
+     return PyProxyFunction(adddiffop);
+     }),
         py::arg("proxy"),
         );
 
-  m.def("dt", FunctionPointer
+     m.def("dt", FunctionPointer
           ([](PyGF self) -> PyCF
-  {
-    shared_ptr<DifferentialOperator> diffopdt;
-    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+     {
+     shared_ptr<DifferentialOperator> diffopdt;
+     diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
 
-    return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
-  }));
- */
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
+     }));
+   */
 
 }
 
