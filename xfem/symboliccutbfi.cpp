@@ -129,6 +129,19 @@ namespace ngfem
       return;
     ///
 
+    if (time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
+    {
+       auto ir1D = SelectIntegrationRule (ET_SEGM, 3);
+       IntegrationRule newrule(ir->Size()*ir1D.Size(),lh);
+       for (int i = 0; i < ir1D.Size(); i ++)
+         for (int j = 0; j < ir->Size(); j ++)
+           newrule[i*ir->Size()+j] = IntegrationPoint((*ir)[j](0),(*ir)[j](1),ir1D[i](0),(*ir)[j].Weight()*ir1D[i].Weight());
+       BaseMappedIntegrationRule & newmir = trafo(newrule, lh);
+       cout << " space time rule " << endl;
+       cout << newrule << endl;
+       //TODO: apply this to get mir...
+    }
+
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
     bool symmetric_so_far = true;

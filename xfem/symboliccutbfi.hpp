@@ -21,6 +21,7 @@ namespace ngfem
     DOMAIN_TYPE dt = NEG;
     int force_intorder = -1;
     int subdivlvl = 0;
+    int time_order = -1;
   public:
     
     SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
@@ -28,7 +29,7 @@ namespace ngfem
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
                                        int asubdivlvl = 0);
-
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
