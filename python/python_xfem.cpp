@@ -18,6 +18,7 @@
 #include "../spacetime/myElement.hpp"
 #include "../spacetime/myFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
+#include "../spacetime/timecf.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -383,6 +384,7 @@ void ExportNgsx(py::module &m)
           ([](PyCF lset,
               DOMAIN_TYPE dt,
               int order,
+              int time_order,
               int subdivlvl,
               PyCF cf,
               VorB vb,
@@ -415,7 +417,11 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<BilinearFormIntegrator> bfi;
     if (!has_other && !skeleton)
-      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+    {
+      auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+      bfime->SetTimeIntegrationOrder(time_order);
+      bfi = bfime;
+    }
     else
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
 
@@ -436,6 +442,7 @@ void ExportNgsx(py::module &m)
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
@@ -450,6 +457,7 @@ void ExportNgsx(py::module &m)
           ([](PyCF lset,
               DOMAIN_TYPE dt,
               int order,
+              int time_order,
               int subdivlvl,
               PyCF cf,
               VorB vb,
@@ -470,8 +478,9 @@ void ExportNgsx(py::module &m)
     if (element_boundary || skeleton)
       throw Exception("No Facet LFI with Symbolic cuts..");
 
-    shared_ptr<LinearFormIntegrator> lfi
-      = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+    auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+    lfime->SetTimeIntegrationOrder(time_order);
+    shared_ptr<LinearFormIntegrator> lfi = lfime;
 
     if (py::extract<py::list> (definedon).check())
       lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -490,6 +499,7 @@ void ExportNgsx(py::module &m)
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
@@ -720,7 +730,11 @@ void ExportNgsx(py::module &m)
     self.Get()->SetTime(t);
   }),
        "Set the time variable")
-
+  .def("SetOverrideTime", FunctionPointer ([](PySTFES self, bool override)
+  {
+    self.Get()->SetOverrideTime(override);
+  }),
+       "Set flag to or not to override the time variable")
   ;
 
   m.def("ScalarTimeFE", FunctionPointer
@@ -765,6 +779,13 @@ void ExportNgsx(py::module &m)
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdt));
      }));
+
+     m.def("ReferenceTimeVariable", FunctionPointer
+          ([]() -> PyCF
+     {
+       return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+     }));
+
 
 
 }
