@@ -128,21 +128,28 @@ namespace ngfem
     if (ir == nullptr)
       return;
     ///
-
+    const IntegrationRule * ir2 = nullptr;
     if (time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
     {
+       static bool warned = false;
+       if (!warned)
+       {
+         cout << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
+         cout << "         A mapped integration rule of this will not see the time,\n";
+         cout << "         but the underlying integration rule will." << endl;
+         warned = true;
+       }
        auto ir1D = SelectIntegrationRule (ET_SEGM, 3);
-       IntegrationRule newrule(ir->Size()*ir1D.Size(),lh);
+       ir2 = new (lh) IntegrationRule(ir->Size()*ir1D.Size(),lh);
        for (int i = 0; i < ir1D.Size(); i ++)
          for (int j = 0; j < ir->Size(); j ++)
-           newrule[i*ir->Size()+j] = IntegrationPoint((*ir)[j](0),(*ir)[j](1),ir1D[i](0),(*ir)[j].Weight()*ir1D[i].Weight());
-       BaseMappedIntegrationRule & newmir = trafo(newrule, lh);
-       cout << " space time rule " << endl;
-       cout << newrule << endl;
-       //TODO: apply this to get mir...
+           (*ir2)[i*ir->Size()+j] = IntegrationPoint((*ir)[j](0),(*ir)[j](1),ir1D[i](0),(*ir)[j].Weight()*ir1D[i].Weight());
+       // cout << *ir2<< endl;
     }
+    else
+      ir2 = ir;
 
-    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+    BaseMappedIntegrationRule & mir = trafo(*ir2, lh);
 
     bool symmetric_so_far = true;
     /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
