@@ -25,4 +25,8 @@ namespace ngfem
 
 }
 
+#ifndef FILE_DIFFOPDT_CPP
+  extern template class T_DifferentialOperator<DiffOpDt>;
+#endif
+
 #endif
