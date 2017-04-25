@@ -96,20 +96,28 @@ namespace ngfem
     {
       // matrix of derivatives:
 
-        Matrix<double> time_dshape(tFE->GetNDof(),1);
-        IntegrationPoint z(time);
-        tFE->CalcDShape(z,time_dshape);
+        if (tFE->GetNDof() == 1) {
 
-        Vector<> space_shape(sFE->GetNDof());
-        sFE->CalcShape(ip,space_shape);
-
-        int ii = 0;
-        for(int j = 0; j < tFE->GetNDof(); j++) {
             for(int i=0; i< sFE->GetNDof(); i++) {
-                dshape(ii++) = space_shape(i)*time_dshape(j,0);
+                dshape(i) = 0.0;
             }
-         }
 
+        } else{
+
+           Matrix<double> time_dshape(tFE->GetNDof(),1);
+           IntegrationPoint z(time);
+           tFE->CalcDShape(z,time_dshape);
+
+           Vector<> space_shape(sFE->GetNDof());
+           sFE->CalcShape(ip,space_shape);
+
+           int ii = 0;
+           for(int j = 0; j < tFE->GetNDof(); j++) {
+              for(int i=0; i< sFE->GetNDof(); i++) {
+                 dshape(ii++) = space_shape(i)*time_dshape(j,0);
+              }
+           }
+         }
 
     }
 
