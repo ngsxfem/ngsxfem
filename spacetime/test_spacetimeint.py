@@ -29,11 +29,14 @@ Draw(lsetp1)
 lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0}
 lset_pos = { "levelset" : lsetp1, "domain_type" : POS, "subdivlvl" : 0}
 
+t = ReferenceTimeVariable()
 
 u = st_fes.TrialFunction()
 v = st_fes.TestFunction()
 a = BilinearForm(st_fes)
-a += SymbolicBFI(levelset_domain = lset_neg, form = 1.0*grad(u)*grad(v))
+a += SymbolicBFI(levelset_domain = lset_neg, form = t*1.0*grad(u)*grad(v), time_order=1)
 # a += SymbolicBFI(levelset_domain = lset_pos, form = 1.0*u*v)
 a.Assemble()
+
+# Draw(t,mesh,"time")
 
