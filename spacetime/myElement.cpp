@@ -19,7 +19,7 @@ namespace ngfem
 {
 
 
-   SpaceTimeFE :: SpaceTimeFE (int order, ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, double atime)
+   SpaceTimeFE :: SpaceTimeFE (int order, ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
     /*
       Call constructor for base class:
       number of dofs is (dofs in space) * (Dofs in time), maximal order is order
@@ -30,7 +30,7 @@ namespace ngfem
         sFE = s_FE;
         tFE = t_FE;
         time = atime;
-
+        override_time = aoverride_time;
     }
 
     void SpaceTimeFE :: CalcShape (const IntegrationPoint & ip,
@@ -42,7 +42,7 @@ namespace ngfem
        else {
 
             Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(time);//ip(2));
+            IntegrationPoint z(override_time ? time : ip(2));
             tFE->CalcShape(z,time_shape);
 
             Vector<> space_shape(sFE->GetNDof());

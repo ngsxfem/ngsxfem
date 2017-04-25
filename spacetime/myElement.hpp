@@ -23,12 +23,12 @@ namespace ngfem
         ScalarFiniteElement<2>* sFE = nullptr;
         ScalarFiniteElement<1>* tFE = nullptr;
         double time;
-
+        bool override_time = false;
 
 
     public:
       // constructor
-      SpaceTimeFE (int order,ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, double time );
+      SpaceTimeFE (int order,ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
 
       virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
 

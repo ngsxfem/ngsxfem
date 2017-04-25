@@ -111,7 +111,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      ScalarFiniteElement<1>* t_FE = tfe;
 
-     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE,time);
+     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE,override_time,time);
 
      return *st_FE;
 

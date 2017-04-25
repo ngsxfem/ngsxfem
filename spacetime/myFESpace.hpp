@@ -26,6 +26,7 @@ namespace ngcomp
     FESpace* Vh;
     ScalarFiniteElement<1>* tfe;
     double time;
+    bool override_time = false;
 
   public:
     /*
@@ -56,7 +57,8 @@ namespace ngcomp
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 
     // For debugging
-    void SetTime(double a) {time = a;}
+    void SetTime(double a) {time = a; override_time = true;}
+    void SetOverrideTime(bool a) {override_time = a;}
 
   };
 
