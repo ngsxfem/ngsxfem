@@ -22,7 +22,7 @@ namespace ngcomp
 
   class SpaceTimeFESpace : public FESpace
   {
-    int ndof, order_s,order_t;
+    int ndof;
     FESpace* Vh;
     ScalarFiniteElement<1>* tfe;
     double time;

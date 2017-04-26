@@ -28,7 +28,7 @@ namespace ngfem
 
     public:
       // constructor
-      SpaceTimeFE (int order,ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
+      SpaceTimeFE (ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
 
       virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
 
@@ -51,8 +51,8 @@ namespace ngfem
                                SliceMatrix<> dshape) const;
 
       // there are some more functions to bring in ...
-      using ScalarFiniteElement<2>::CalcShape;
-      using ScalarFiniteElement<2>::CalcDShape;
+      //using ScalarFiniteElement<2>::CalcShape;
+      //using ScalarFiniteElement<2>::CalcDShape;
     };
 
  }

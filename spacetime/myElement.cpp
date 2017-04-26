@@ -19,12 +19,12 @@ namespace ngfem
 {
 
 
-   SpaceTimeFE :: SpaceTimeFE (int order, ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
+   SpaceTimeFE :: SpaceTimeFE (ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
     /*
       Call constructor for base class:
       number of dofs is (dofs in space) * (Dofs in time), maximal order is order
      */
-      : ScalarFiniteElement<2> ((s_FE->GetNDof())*(t_FE->GetNDof()), order)
+      : ScalarFiniteElement<2> ((s_FE->GetNDof())*(t_FE->GetNDof()), s_FE->Order())
     {
 
         sFE = s_FE;
@@ -39,7 +39,8 @@ namespace ngfem
 
        if (tFE->GetNDof() == 1)
           sFE->CalcShape(ip,shape);
-       else {
+       else
+       {
 
             Vector<> time_shape(tFE->GetNDof());
             IntegrationPoint z(override_time ? time : ip(2));
@@ -50,11 +51,11 @@ namespace ngfem
 
             // define shape functions
             int ii = 0;
-            for(int j = 0; j < tFE->GetNDof(); j++) {
-               for(int i=0; i< sFE->GetNDof() ; i++) {
-                   shape(ii++) = space_shape(i)*time_shape(j);
-               }
-             }
+            for(int j=0; j<tFE->GetNDof(); j++) {
+              for(int i=0; i<sFE->GetNDof(); i++) {
+                shape(ii++) = space_shape(i)*time_shape(j);
+              }
+            }
        }
      }
 
@@ -69,7 +70,7 @@ namespace ngfem
          else {
 
             Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(time);
+            IntegrationPoint z(override_time ? time : ip(2));
             tFE->CalcShape(z,time_shape);
 
             Matrix<double> space_dshape(sFE->GetNDof(),2);
@@ -94,10 +95,10 @@ namespace ngfem
                                      BareSliceVector<> dshape) const
 
     {
-      // matrix of derivatives:
+        // matrix of derivatives:
 
         Matrix<double> time_dshape(tFE->GetNDof(),1);
-        IntegrationPoint z(time);
+        IntegrationPoint z(override_time ? time : ip(2));
         tFE->CalcDShape(z,time_dshape);
 
         Vector<> space_shape(sFE->GetNDof());

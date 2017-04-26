@@ -41,11 +41,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     cout << "Constructor of MyFESpace" << endl;
     cout << "Flags = " << flags << endl;
 
-    order_s = int(flags.GetNumFlag ("order", 2));
-
-    // How to get additional NumFlags?
-    bool linear_time = flags.GetDefineFlag ("order_time");
-    order_t = 1;
+    int order_s = aVh->GetOrder();
+    int order_t = atfe->Order();
+    bool linear_time = order_t == 1;
 
     Vh = aVh.get();
     tfe = atfe.get();
@@ -111,7 +109,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      ScalarFiniteElement<1>* t_FE = tfe;
 
-     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE,override_time,time);
+     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(s_FE,t_FE,override_time,time);
 
      return *st_FE;
 
