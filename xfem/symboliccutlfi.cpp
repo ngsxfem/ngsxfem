@@ -95,11 +95,11 @@ namespace ngfem
 
     elvec = 0;
 
-    const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
-    if (ir == nullptr)
+    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
+    if (ir1 == nullptr)
       return;
     ///
-    const IntegrationRule * ir2 = nullptr;
+    const IntegrationRule * ir = nullptr;
     if (time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
     {
        static bool warned = false;
@@ -110,17 +110,17 @@ namespace ngfem
          cout << "         but the underlying integration rule will." << endl;
          warned = true;
        }
-       auto ir1D = SelectIntegrationRule (ET_SEGM, 3);
-       ir2 = new (lh) IntegrationRule(ir->Size()*ir1D.Size(),lh);
+       auto ir1D = SelectIntegrationRule (ET_SEGM, time_order);
+       ir = new (lh) IntegrationRule(ir1->Size()*ir1D.Size(),lh);
        for (int i = 0; i < ir1D.Size(); i ++)
-         for (int j = 0; j < ir->Size(); j ++)
-           (*ir2)[i*ir->Size()+j] = IntegrationPoint((*ir)[j](0),(*ir)[j](1),ir1D[i](0),(*ir)[j].Weight()*ir1D[i].Weight());
-       // cout << *ir2<< endl;
+         for (int j = 0; j < ir1->Size(); j ++)
+           (*ir)[i*ir1->Size()+j] = IntegrationPoint((*ir1)[j](0),(*ir1)[j](1),ir1D[i](0),(*ir1)[j].Weight()*ir1D[i].Weight());
+       // cout << *ir<< endl;
     }
     else
-      ir2 = ir;
+      ir = ir1;
 
-    BaseMappedIntegrationRule & mir = trafo(*ir2, lh);
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
     FlatVector<SCAL> elvec1(elvec.Size(), lh);
     
@@ -131,7 +131,7 @@ namespace ngfem
     for (auto proxy : proxies)
       {
         // td.Start();
-        FlatMatrix<SCAL> proxyvalues(ir->Size(), proxy->Dimension(), lh);
+        FlatMatrix<SCAL> proxyvalues(mir.Size(), proxy->Dimension(), lh);
         for (int k = 0; k < proxy->Dimension(); k++)
           {
             ud.testfunction = proxy;
