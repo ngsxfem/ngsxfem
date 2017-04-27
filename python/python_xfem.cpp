@@ -788,6 +788,75 @@ void ExportNgsx(py::module &m)
 
 
 
+
+
+
+
+
+
+   // DiffOpFixt
+
+     m.def("fix_t", FunctionPointer
+          ([] (const PyProxyFunction self, int time)
+     {
+
+     shared_ptr<DifferentialOperator> diffopfixt;
+
+     switch (time)
+     {
+     case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+     case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+     default : throw Exception("Requested time not implemented yet.");
+     }
+
+     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                                    diffopfixt, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+
+     return PyProxyFunction(adddiffop);
+     }),
+        py::arg("proxy"),
+        py::arg("time")
+        );
+
+     m.def("fix_t", FunctionPointer
+          ([](PyGF self, int time) -> PyCF
+     {
+     shared_ptr<DifferentialOperator> diffopfixt;
+
+     switch (time)
+     {
+     case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+     case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+     default : throw Exception("Requested time not implemented yet.");
+     }
+
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopfixt));
+     }));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     m.def("ReferenceTimeVariable", FunctionPointer
+          ([]() -> PyCF
+     {
+       return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+     }));
+
+
+
+
 }
 
 PYBIND11_PLUGIN(libngsxfem_py)
