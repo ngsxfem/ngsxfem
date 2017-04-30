@@ -115,4 +115,62 @@ namespace ngfem
     }
 
 
+    NodalTimeFE :: NodalTimeFE (int order)
+        : ScalarFiniteElement<1> (order+1, order)
+      {
+       k_t = order;
+      }
+
+
+      void NodalTimeFE :: CalcShape (const IntegrationPoint & ip,
+                                         BareSliceVector<> shape) const
+      {
+         Vector<double> intp_pts(k_t+1);
+         GetIntpPts (intp_pts);
+         AutoDiff<1> adx (ip(0), 0);
+         for(int i = 0; i < k_t+1; i++) {
+             shape(i) = Lagrange_Pol (adx, intp_pts , i).Value() ;
+         }
+      }
+
+
+      void NodalTimeFE :: CalcDShape (const IntegrationPoint & ip,
+                                          SliceMatrix<> dshape) const
+      {
+         Vector<double> intp_pts(k_t+1);
+         GetIntpPts (intp_pts);
+         AutoDiff<1> adx (ip(0), 0);
+         for(int i = 0; i < k_t+1; i++) {
+             dshape(i,0) = Lagrange_Pol(adx, intp_pts , i).DValue(0);
+          }
+      }
+
+      void NodalTimeFE :: GetIntpPts (Vector<>& intp_pts) const
+      {
+         switch (intp_pts.Size())
+         {
+          // Gauss-Lobatto integration points (Spectral FE)
+          case 1 : intp_pts(0) = 0.0;  break;
+          case 2 : intp_pts(0) = 0.0; intp_pts(1) = 1.0;  break;
+          case 3 : intp_pts(0) = 0.0; intp_pts(1) = 0.5; intp_pts(2) = 1.0;  break;
+          case 4 : intp_pts(0) = 0.0; intp_pts(1) = 0.5*(1-1/sqrt(5));
+                   intp_pts(2) = 0.5*(1+1/sqrt(5)); intp_pts(3) = 1.0;  break;
+          default : throw Exception("Requested TimeFE not implemented yet.");
+         }
+      }
+
+      template <class T>
+      T NodalTimeFE :: Lagrange_Pol (T x, Vector<> intp_pts ,int i) const
+      {
+         T result  = 1;
+         for (int j = 0; j < intp_pts.Size(); j++) {
+             if ( j != i)
+                  result *= ( x-intp_pts(j) ) / ( intp_pts(i) - intp_pts(j) );
+         }
+
+         return result;
+      }
+
+
+
 }

@@ -742,12 +742,12 @@ void ExportNgsx(py::module &m)
   {
     BaseScalarFiniteElement * fe = nullptr;
 
-    fe = new H1HighOrderFE<ET_SEGM>(order);
+    fe = new NodalTimeFE(order);
 
 
     return shared_ptr<BaseScalarFiniteElement>(fe);
   }),
-        "creates scalar Fe on Segm"
+        "creates nodal FE in time based on Gauss-Lobatto integration points"
         );
 
 
@@ -785,13 +785,6 @@ void ExportNgsx(py::module &m)
      {
        return PyCF(make_shared<TimeVariableCoefficientFunction> ());
      }));
-
-
-
-
-
-
-
 
 
    // DiffOpFixt
@@ -833,19 +826,6 @@ void ExportNgsx(py::module &m)
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopfixt));
      }));
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
      m.def("ReferenceTimeVariable", FunctionPointer

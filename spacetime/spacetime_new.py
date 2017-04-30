@@ -85,7 +85,8 @@ while tend - t_old > delta_t/2:
     u0.vec.data = a.mat.Inverse(st_fes.FreeDofs(),"umfpack") * f.vec
        
     # exploiting the nodal property of the time fe:
-    u0_ic.vec[:] = u0.vec[0:fes1.ndof]
+    #u0_ic.vec[:] = u0.vec[0:fes1.ndof]
+    u0_ic.vec[:] = u0.vec[fes1.ndof : 2*fes1.ndof]
     
     t_old = t_old + delta_t
     told.Set(t_old)

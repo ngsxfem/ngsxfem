@@ -43,7 +43,6 @@ namespace ngfem
       scafe.CalcShape(ip,shape);
       mat = 0.0;
       mat.Row(0) = shape;
-      cout << "Time" << time << endl;
 
 
     }

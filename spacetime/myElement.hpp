@@ -55,6 +55,30 @@ namespace ngfem
       //using ScalarFiniteElement<2>::CalcDShape;
     };
 
+
+    class NodalTimeFE : public ScalarFiniteElement<1>
+      {
+        int vnums[2];
+        int k_t;
+      public:
+        NodalTimeFE (int order);
+        virtual ELEMENT_TYPE ElementType() const { return ET_SEGM; }
+        void SetVertexNumber (int i, int v) { vnums[i] = v; }
+
+        virtual void CalcShape (const IntegrationPoint & ip,
+                                BareSliceVector<> shape) const;
+
+        virtual void CalcDShape (const IntegrationPoint & ip,
+                                 SliceMatrix<> dshape) const;
+
+        void GetIntpPts (Vector<>& intp_pts) const;
+
+      private:
+        template <class T>
+        T Lagrange_Pol (T x, Vector<> intp_pts, int i) const;
+      };
+
+
  }
 
 
