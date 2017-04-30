@@ -72,6 +72,7 @@ namespace ngfem
                                  SliceMatrix<> dshape) const;
 
         void GetIntpPts (Vector<>& intp_pts) const;
+        int order_time() const { return k_t; }
 
       private:
         template <class T>

@@ -59,7 +59,15 @@ namespace ngcomp
     // For debugging
     void SetTime(double a) {time = a; override_time = true;}
     void SetOverrideTime(bool a) {override_time = a;}
-
+    // Provide Info for Python
+    int order_time()
+    {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+         return time_FE->order_time();
+    }
+    void TimeFE_nodes(Vector<>& intp_pts)
+    {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+         time_FE->GetIntpPts (intp_pts);
+    }
   };
 
 }    

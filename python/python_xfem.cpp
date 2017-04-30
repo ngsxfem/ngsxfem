@@ -735,6 +735,18 @@ void ExportNgsx(py::module &m)
     self.Get()->SetOverrideTime(override);
   }),
        "Set flag to or not to override the time variable")
+  .def("k_t", FunctionPointer ([](PySTFES self)
+  {
+     return self->order_time();
+  }),
+     "Return order of the time FE")
+  .def("TimeFE_nodes", FunctionPointer ([](PySTFES self)
+  {
+      Vector<double> intp_pts(self->order_time() + 1);
+      self->TimeFE_nodes(intp_pts);
+      return intp_pts;
+   }),
+     "Return nodes of the time FE")
   ;
 
   m.def("ScalarTimeFE", FunctionPointer
@@ -748,7 +760,8 @@ void ExportNgsx(py::module &m)
     return shared_ptr<BaseScalarFiniteElement>(fe);
   }),
         "creates nodal FE in time based on Gauss-Lobatto integration points"
-        );
+        )
+   ;
 
 
   // DiffOpDt
