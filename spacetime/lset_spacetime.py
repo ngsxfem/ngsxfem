@@ -60,6 +60,9 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_p1_st = SpaceTimeFESpace(self.v_p1,self.tfe)
         self.lset_p1 = GridFunction(self.v_p1_st)
         
+        self.v_def_st = SpaceTimeFESpace(self.v_def,self.tfe)
+        self.deform = GridFunction(self.v_def_st, "deform")
+        
     def interpol_ho(self,levelset,t,tstart,delta_t):
         times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
         for i,ti in enumerate(times):
@@ -72,6 +75,30 @@ class LevelSetMeshAdaptation_Spacetime:
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.lset_p1_node.Set(self.lset_ho_node)
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1] = self.lset_p1_node.vec[:]
+            
+    def CalcDeformation(self, levelset,t,tstart,delta_t):
+        """
+        Compute the deformation
+        """
+        self.v_ho.Update()
+        self.lset_ho_node.Update()
+        self.v_p1.Update()
+        self.lset_p1_node.Update()
+        self.v_qn.Update()
+        self.qn.Update()
+        self.v_def.Update()
+        self.deform_node.Update()
+        
+        self.interpol_ho(levelset,t,tstart,delta_t)
+        self.interpol_p1()
+        for i in range(self.order_time + 1):
+            self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
+            self.qn.Set(self.lset_ho_node.Deriv(),heapsize=self.heapsize)
+            self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.lset_lower_bound, 
+                         self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
+            self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.deform_node.vec[:]
+            return self.deform
    
         
 # geometry        
@@ -87,12 +114,15 @@ delta_t = 0.5
 lset = CoefficientFunction( sqrt(x*x+y*y) - exp(-t)  )
 
 # Spacetime interpolation
+#mesh.Refine()
 lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = 2, order_time = 1,
-                                              threshold=0.1, discontinuous_qn=True)
+                                              threshold=0.1, discontinuous_qn=True)                                            
+                                              
 lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
 lset_ho = lset_adap_st.lset_ho
 lset_adap_st.interpol_p1()
 lset_p1 = lset_adap_st.lset_p1
+dfm = lset_adap_st.CalcDeformation(lset,t,tstart,delta_t)
 
 # Plotting
 visoptions.deformation = 1
@@ -107,5 +137,6 @@ Draw(lset_p1)
 input("")
 lset_adap_st.v_p1_st.SetTime(1.0)     
 Redraw() 
+Draw(lset_adap_st.deform_node,mesh,"deformation")
 
 
