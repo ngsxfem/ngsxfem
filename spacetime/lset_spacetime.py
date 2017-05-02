@@ -101,17 +101,21 @@ class LevelSetMeshAdaptation_Spacetime:
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.deform_node.vec[:]
         return self.deform
             
-    def CalcMaxDistance(self, levelset,t,tstart,delta_t):
+    def CalcMaxDistance(self, levelset,t,tstart,delta_t, given_pts = []):
         """
         Compute largest distance
         """
-        times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
+        if given_pts:
+            time_quad = given_pts
+        else:
+            time_quad = self.v_ho_st.TimeFE_nodes().NumPy()             
+        times = [tstart + delta_t * xi for xi in time_quad]
         max_dists = []
-        for i,ti in enumerate(times):
+        for ti,xi in zip(times,time_quad):
             t.Set(ti)
-            self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]           
-            self.deform_node.vec[:] = self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node]
-            max_dists.append(CalcMaxDistance(levelset,self.lset_p1_node,self.deform_node,heapsize=self.heapsize))
+            lset_adap_st.v_p1_st.SetTime(xi)  
+            lset_adap_st.v_def_st.SetTime(xi)  
+            max_dists.append(CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize))
         return max(max_dists)
       
        
@@ -140,7 +144,9 @@ lset_ho = lset_adap_st.lset_ho
 lset_adap_st.interpol_p1()
 lset_p1 = lset_adap_st.lset_p1
 dfm = lset_adap_st.CalcDeformation(lset,t,tstart,delta_t)
-print("Max-Dist = {0}".format(lset_adap_st.CalcMaxDistance(lset,t,tstart,delta_t)))
+print("Max-Dist nodes = {0}".format(lset_adap_st.CalcMaxDistance(lset,t,tstart,delta_t)))
+print("Max-Dist intermediate points = {0}".format(lset_adap_st.CalcMaxDistance(
+                              lset,t,tstart,delta_t,[i*0.1 for i in range(10)])))
 
 # Plotting
 visoptions.deformation = 1
