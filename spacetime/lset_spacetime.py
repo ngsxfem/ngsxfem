@@ -61,7 +61,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.lset_p1 = GridFunction(self.v_p1_st)
         
         self.v_def_st = SpaceTimeFESpace(self.v_def,self.tfe)
-        self.deform = GridFunction(self.v_def_st, "deform")
+        self.deform = GridFunction(self.v_def_st)
         
     def interpol_ho(self,levelset,t,tstart,delta_t):
         times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
@@ -69,6 +69,7 @@ class LevelSetMeshAdaptation_Spacetime:
             t.Set(ti)
             self.lset_ho_node.Set(levelset)
             self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.lset_ho_node.vec[:] 
+
     
     def interpol_p1(self):
         for i in range(self.order_time + 1):
@@ -98,45 +99,59 @@ class LevelSetMeshAdaptation_Spacetime:
             ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.lset_lower_bound, 
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.deform_node.vec[:]
-            return self.deform
-   
-        
+        return self.deform
+            
+    def CalcMaxDistance(self, levelset,t,tstart,delta_t):
+        """
+        Compute largest distance
+        """
+        times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
+        max_dists = []
+        for i,ti in enumerate(times):
+            t.Set(ti)
+            self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]           
+            self.deform_node.vec[:] = self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node]
+            max_dists.append(CalcMaxDistance(levelset,self.lset_p1_node,self.deform_node,heapsize=self.heapsize))
+        return max(max_dists)
+      
+       
 # geometry        
 square = SplineGeometry()
-square.AddRectangle([0,0],[1,1],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.2, quad_dominated=False)
+square.AddRectangle([0,0],[2,2],bc=1)
+ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 # data
 t = Parameter(0)
 tstart = 0
 delta_t = 0.5
-lset = CoefficientFunction( sqrt(x*x+y*y) - exp(-t)  )
+lset = CoefficientFunction( sqrt( (x-1-0.25*t)*(x-1-0.25*t)+(y-1)*(y-1)) - 0.5  )
 
 # Spacetime interpolation
-#mesh.Refine()
+ref_lvl = 0
+for i in range(ref_lvl):
+    mesh.Refine()
 lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = 2, order_time = 1,
                                               threshold=0.1, discontinuous_qn=True)                                            
+
                                               
 lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
 lset_ho = lset_adap_st.lset_ho
 lset_adap_st.interpol_p1()
 lset_p1 = lset_adap_st.lset_p1
 dfm = lset_adap_st.CalcDeformation(lset,t,tstart,delta_t)
+print("Max-Dist = {0}".format(lset_adap_st.CalcMaxDistance(lset,t,tstart,delta_t)))
 
 # Plotting
 visoptions.deformation = 1
 lset_adap_st.v_ho_st.SetTime(0.0)    
-Draw(lset_ho)
+lset_adap_st.v_p1_st.SetTime(0.0) 
+lset_adap_st.v_def_st.SetTime(0.0) 
+Draw(lset_ho,mesh,"lsetHO")
+Draw(lset_p1,mesh,"lsetP1")
+Draw(dfm,mesh,"deformation")
 input("")
-lset_adap_st.v_ho_st.SetTime(1.0)  
+lset_adap_st.v_ho_st.SetTime(1.0) 
+lset_adap_st.v_p1_st.SetTime(1.0)  
+lset_adap_st.v_def_st.SetTime(1.0)  
 Redraw()   
-input("")
-lset_adap_st.v_p1_st.SetTime(0.0)    
-Draw(lset_p1)
-input("")
-lset_adap_st.v_p1_st.SetTime(1.0)     
-Redraw() 
-Draw(lset_adap_st.deform_node,mesh,"deformation")
-
-
