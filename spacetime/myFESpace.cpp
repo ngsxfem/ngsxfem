@@ -41,6 +41,8 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     cout << "Constructor of MyFESpace" << endl;
     cout << "Flags = " << flags << endl;
 
+    dimension = aVh->GetDimension ();
+
     int order_s = aVh->GetOrder();
     int order_t = atfe->Order();
     bool linear_time = order_t == 1;
@@ -59,6 +61,17 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
+
+    if (dimension > 1)
+    {
+      evaluator[VOL] = make_shared<BlockDifferentialOperator> (evaluator[VOL], dimension);
+      flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
+      evaluator[BND] = 
+        make_shared<BlockDifferentialOperator> (evaluator[BND], dimension);
+      // flux_evaluator[BND] = 
+      //   make_shared<BlockDifferentialOperator> (flux_evaluator[BND], dimension);
+    }
+
     time=0;
   }
 
