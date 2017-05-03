@@ -114,7 +114,7 @@ class LevelSetMeshAdaptation_Spacetime:
         for ti,xi in zip(times,time_quad):
             t.Set(ti)
             self.v_p1_st.SetTime(xi)  
-            self.v_def_st.SetTime(xi)  
+            self.v_def_st.SetTime(xi)
             max_dists.append(CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize))
         return max(max_dists)
       
@@ -142,10 +142,10 @@ def SolveProblem(mesh,delta_t,k_s=2,k_t=1):
     
     while tend - tnew > delta_t/2:
         t.Set(tnew)
-        dfm = lset_adap_st.CalcDeformation(lset,t,tstart,delta_t)      
-        max_nodes.append(lset_adap_st.CalcMaxDistance(lset,t,tstart,delta_t))
+        dfm = lset_adap_st.CalcDeformation(lset,t,tnew,delta_t)      
+        max_nodes.append(lset_adap_st.CalcMaxDistance(lset,t,tnew,delta_t))
         max_interm.append(lset_adap_st.CalcMaxDistance(
-                              lset,t,tstart,delta_t,[i*0.1 for i in range(11)]))
+                              lset,t,tnew,delta_t,[i*0.1 for i in range(11)]))
         tnew += delta_t 
     return max(max_nodes),max(max_interm)
 
