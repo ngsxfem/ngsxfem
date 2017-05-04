@@ -52,7 +52,7 @@ namespace xintegration
       if(((s.Size() == 3)&&(s.D == 2))||((s.Size() == 4)&&(s.D == 3))){
         for(int ii = 0; ii<s.Size(); ii++) { int i = s[ii];
             for(int ij= ii+1; ij<s.Size(); ij++){ int j = s[ij];
-                if(s.GetLset(ii)*s.GetLset(ij) < -1e-10){
+                if(s.GetLset(ii)*s.GetLset(ij) < -1e-14){
                     Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1, s.svs_ptr));
                     cut_points.Append(p[0]);
                 }
