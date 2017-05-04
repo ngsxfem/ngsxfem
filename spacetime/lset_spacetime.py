@@ -74,7 +74,7 @@ class LevelSetMeshAdaptation_Spacetime:
     def interpol_p1(self):
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
-            self.lset_p1_node.Set(self.lset_ho_node)
+            InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1] = self.lset_p1_node.vec[:]
             
     def CalcDeformation(self, levelset,t,tstart,delta_t):
