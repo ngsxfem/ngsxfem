@@ -153,8 +153,16 @@ namespace ngfem
           case 1 : intp_pts(0) = 0.0;  break;
           case 2 : intp_pts(0) = 0.0; intp_pts(1) = 1.0;  break;
           case 3 : intp_pts(0) = 0.0; intp_pts(1) = 0.5; intp_pts(2) = 1.0;  break;
-          case 4 : intp_pts(0) = 0.0; intp_pts(1) = 0.5*(1-1/sqrt(5));
-                   intp_pts(2) = 0.5*(1+1/sqrt(5)); intp_pts(3) = 1.0;  break;
+          case 4 : intp_pts(0) = 0.0; intp_pts(1) = 0.5*(1.0-1.0/sqrt(5.0));
+                   intp_pts(2) = 0.5*(1.0+1.0/sqrt(5.0)); intp_pts(3) = 1.0;  break;
+          case 5 : intp_pts(0) = 0.0; intp_pts(1) = 0.5*(1.0-sqrt(3.0/7.0)); intp_pts(2) = 0.5;
+                   intp_pts(3) = 0.5*(1.0+sqrt(3.0/7.0)); intp_pts(4) = 1.0;  break;
+          case 6 : intp_pts(0) = 0.0;
+                   intp_pts(1) = 0.5*(1.0 - sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
+                   intp_pts(2) = 0.5*(1.0 - sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
+                   intp_pts(3) = 0.5*(1.0 + sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
+                   intp_pts(4) = 0.5*(1.0 + sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
+                   intp_pts(5) = 1.0;  break;
           default : throw Exception("Requested TimeFE not implemented yet.");
          }
       }
