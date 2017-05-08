@@ -63,6 +63,8 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_def_st = SpaceTimeFESpace(self.v_def,self.tfe)
         self.deform = GridFunction(self.v_def_st)
         
+        self.ci = CutInfo(mesh)
+        
     def interpol_ho(self,levelset,t,tstart,delta_t):
         times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
         for i,ti in enumerate(times):
@@ -70,7 +72,6 @@ class LevelSetMeshAdaptation_Spacetime:
             self.lset_ho_node.Set(levelset)
             self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.lset_ho_node.vec[:] 
 
-    
     def interpol_p1(self):
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
@@ -92,6 +93,30 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.interpol_ho(levelset,t,tstart,delta_t)
         self.interpol_p1()
+        
+        # Build BitArray of relevant elements in the time slab
+        hasneg_spacetime = BitArray(self.ci.GetElementsOfType(NEG))
+        hasneg_spacetime[:] = False
+        haspos_spacetime = BitArray(self.ci.GetElementsOfType(POS))
+        haspos_spacetime[:] = False
+        hasif_spacetime = BitArray(self.ci.GetElementsOfType(IF))
+        hasif_spacetime[:]= False
+        
+        for i in  range(len(self.v_ho_st.TimeFE_nodes().NumPy())):
+            self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
+            self.ci.Update(self.lset_p1_node)
+            hasneg_spacetime |= self.ci.GetElementsOfType(NEG)
+            hasneg_spacetime |= self.ci.GetElementsOfType(IF)
+            haspos_spacetime |= self.ci.GetElementsOfType(POS)
+            haspos_spacetime |= self.ci.GetElementsOfType(IF)
+            hasif_spacetime |= self.ci.GetElementsOfType(IF)
+            hasif_spacetime |= self.ci.GetElementsOfType(IF)
+            
+        jumpels = BitArray(hasneg_spacetime)
+        jumpels &= haspos_spacetime
+        hasif_spacetime |= jumpels
+        Draw(BitArrayCF(hasif_spacetime),mesh,"hasif")
+        
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv(),heapsize=self.heapsize)
@@ -115,19 +140,22 @@ class LevelSetMeshAdaptation_Spacetime:
             t.Set(ti)
             self.v_p1_st.SetTime(xi)  
             self.v_def_st.SetTime(xi)
+            self.v_ho_st.SetTime(xi)
             max_dists.append(CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize))
+            #max_dists.append(CalcMaxDistance(self.lset_ho,self.lset_p1,self.deform,heapsize=self.heapsize))
         return max(max_dists)
       
        
 # geometry        
 square = SplineGeometry()
 square.AddRectangle([0,0],[2,2],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.5, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.04, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 # data
 t = Parameter(0)
 lset = CoefficientFunction( sqrt( (x-1-0.25*sin(pi*t))*(x-1-0.25*sin(pi*t))+(y-1)*(y-1)) - 0.5  )
+
 
 
 def SolveProblem(mesh,delta_t,k_s=2,k_t=1):
@@ -160,7 +188,7 @@ def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):
             mesh.Refine()
         elif where == "time" and ref_lvl > 0:
             delta_t = delta_t / 2  
-        e1,e2 = SolveProblem(mesh,delta_t,k_s=2,k_t=5)
+        e1,e2 = SolveProblem(mesh,delta_t,k_s=1,k_t=2)
         max_dist_nodes.append(e1)
         max_dist_interm.append(e2)
         ref_lvl = ref_lvl + 1
@@ -175,7 +203,7 @@ def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):
         print("Eoc intermediate = {0}".format(eoc_interm))
             
             
-StudyConvergence(delta_t=0.01,max_rfs=4,where = "space")
+StudyConvergence(delta_t=0.5,max_rfs=4,where = "time")
         
                                             
 #lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
