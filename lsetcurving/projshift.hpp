@@ -12,6 +12,7 @@ namespace ngcomp
 
   void ProjectShift (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
                      shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn,
+                     shared_ptr<BitArray> ba,
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & lh);
     
@@ -26,6 +27,7 @@ namespace ngcomp
     shared_ptr<GridFunction> lset;
     shared_ptr<CoefficientFunction> qn;
     shared_ptr<GridFunction> deform;
+    shared_ptr<BitArray> a;
     
   public:
     NumProcProjectShift (shared_ptr<PDE> apde, const Flags & flags);

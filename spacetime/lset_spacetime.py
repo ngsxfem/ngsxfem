@@ -121,7 +121,7 @@ class LevelSetMeshAdaptation_Spacetime:
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv(),heapsize=self.heapsize)
             self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.lset_lower_bound, 
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, hasif_spacetime, self.lset_lower_bound, 
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.deform_node.vec[:]
         return self.deform
@@ -149,7 +149,7 @@ class LevelSetMeshAdaptation_Spacetime:
 # geometry        
 square = SplineGeometry()
 square.AddRectangle([0,0],[2,2],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.04, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.02, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 # data
@@ -188,7 +188,7 @@ def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):
             mesh.Refine()
         elif where == "time" and ref_lvl > 0:
             delta_t = delta_t / 2  
-        e1,e2 = SolveProblem(mesh,delta_t,k_s=1,k_t=2)
+        e1,e2 = SolveProblem(mesh,delta_t,k_s=2,k_t=2)
         max_dist_nodes.append(e1)
         max_dist_interm.append(e2)
         ref_lvl = ref_lvl + 1

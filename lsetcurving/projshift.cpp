@@ -7,6 +7,7 @@ namespace ngcomp
 
   void ProjectShift (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
                      shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn,
+                     shared_ptr<BitArray> ba,
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & clh)
   {
@@ -57,9 +58,15 @@ namespace ngcomp
          FlatVector<> vals(p1_dofs.Size(),lh);
          lset_p1->GetVector().GetIndirect(p1_dofs,vals);
          const ElementTransformation & eltrans = el.GetTrafo();
-      
+         /*
+         if (ba->Test(elnr))
+             cout << "projshift: Detected marked element with number " << elnr <<  endl; */
+
+         if ( !(ba->Test(elnr)) )
+              return;
+         /*
          if (!ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound))
-           return;
+           return; */
 
          int ndofs = el.GetDofs().Size();
          const FiniteElement & fel_deform = el.GetFE();
@@ -177,11 +184,13 @@ namespace ngcomp
     lset = apde->GetGridFunction(flags.GetStringFlag("levelset","lset"));
     deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
     qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
+    //a = apde->GetBitArray(flags.GetStringFlag("ba","ba"));
+    a = NULL;
   }
 
   void NumProcProjectShift::Do (LocalHeap & lh)
   {
-    ProjectShift(lset, gf_lset_p1, deform, qn, lower_lset_bound, upper_lset_bound, threshold, lh);
+    ProjectShift(lset, gf_lset_p1, deform, qn, a, lower_lset_bound, upper_lset_bound, threshold, lh);
   }
 
   static RegisterNumProc<NumProcProjectShift> npprojshift("projectshift");
