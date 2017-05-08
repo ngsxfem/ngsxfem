@@ -28,6 +28,29 @@ namespace ngfem
   template class T_DifferentialOperator<DiffOpDt>;
 
 
+  template <int time>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpFixt<time>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                             MAT & mat, LocalHeap & lh)
+  {
+
+      const SpaceTimeFE & scafe =
+              dynamic_cast<const SpaceTimeFE & > (bfel);
+      const int ndof = scafe.GetNDof();
+
+      FlatVector<> shape (ndof,lh);
+      IntegrationPoint ip(mip.IP()(0),mip.IP()(1),time);
+      scafe.CalcShape(ip,shape);
+      mat = 0.0;
+      mat.Row(0) = shape;
+
+
+    }
+
+  template class T_DifferentialOperator<DiffOpFixt<0>>;
+  template class T_DifferentialOperator<DiffOpFixt<1>>;
+
+
 }
 
 

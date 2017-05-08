@@ -13,10 +13,12 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../cutint/spacetimecutrule.hpp"
 
 #include "../spacetime/myElement.hpp"
 #include "../spacetime/myFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
+#include "../spacetime/timecf.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -382,6 +384,7 @@ void ExportNgsx(py::module &m)
           ([](PyCF lset,
               DOMAIN_TYPE dt,
               int order,
+              int time_order,
               int subdivlvl,
               PyCF cf,
               VorB vb,
@@ -414,7 +417,11 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<BilinearFormIntegrator> bfi;
     if (!has_other && !skeleton)
-      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+    {
+      auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+      bfime->SetTimeIntegrationOrder(time_order);
+      bfi = bfime;
+    }
     else
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
 
@@ -435,6 +442,7 @@ void ExportNgsx(py::module &m)
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
@@ -449,6 +457,7 @@ void ExportNgsx(py::module &m)
           ([](PyCF lset,
               DOMAIN_TYPE dt,
               int order,
+              int time_order,
               int subdivlvl,
               PyCF cf,
               VorB vb,
@@ -469,8 +478,9 @@ void ExportNgsx(py::module &m)
     if (element_boundary || skeleton)
       throw Exception("No Facet LFI with Symbolic cuts..");
 
-    shared_ptr<LinearFormIntegrator> lfi
-      = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+    auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+    lfime->SetTimeIntegrationOrder(time_order);
+    shared_ptr<LinearFormIntegrator> lfi = lfime;
 
     if (py::extract<py::list> (definedon).check())
       lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -489,6 +499,7 @@ void ExportNgsx(py::module &m)
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
@@ -619,6 +630,8 @@ void ExportNgsx(py::module &m)
   }));
   // new implementation: only straight cuts - start with triangles only for a start!
 
+  m.def("DebugSpaceTimeCutIntegrationRule", FunctionPointer([](){ DebugSpaceTimeCutIntegrationRule(); }));
+
   m.def("IntegrateX",
         FunctionPointer([](py::object lset,
                            shared_ptr<MeshAccess> ma,
@@ -717,7 +730,23 @@ void ExportNgsx(py::module &m)
     self.Get()->SetTime(t);
   }),
        "Set the time variable")
-
+  .def("SetOverrideTime", FunctionPointer ([](PySTFES self, bool override)
+  {
+    self.Get()->SetOverrideTime(override);
+  }),
+       "Set flag to or not to override the time variable")
+  .def("k_t", FunctionPointer ([](PySTFES self)
+  {
+     return self->order_time();
+  }),
+     "Return order of the time FE")
+  .def("TimeFE_nodes", FunctionPointer ([](PySTFES self)
+  {
+      Vector<double> intp_pts(self->order_time() + 1);
+      self->TimeFE_nodes(intp_pts);
+      return intp_pts;
+   }),
+     "Return nodes of the time FE")
   ;
 
   m.def("ScalarTimeFE", FunctionPointer
@@ -725,13 +754,14 @@ void ExportNgsx(py::module &m)
   {
     BaseScalarFiniteElement * fe = nullptr;
 
-    fe = new H1HighOrderFE<ET_SEGM>(order);
+    fe = new NodalTimeFE(order);
 
 
     return shared_ptr<BaseScalarFiniteElement>(fe);
   }),
-        "creates scalar Fe on Segm"
-        );
+        "creates nodal FE in time based on Gauss-Lobatto integration points"
+        )
+   ;
 
 
   // DiffOpDt
@@ -762,6 +792,62 @@ void ExportNgsx(py::module &m)
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdt));
      }));
+
+     m.def("ReferenceTimeVariable", FunctionPointer
+          ([]() -> PyCF
+     {
+       return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+     }));
+
+
+   // DiffOpFixt
+
+     m.def("fix_t", FunctionPointer
+          ([] (const PyProxyFunction self, int time)
+     {
+
+     shared_ptr<DifferentialOperator> diffopfixt;
+
+     switch (time)
+     {
+     case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+     case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+     default : throw Exception("Requested time not implemented yet.");
+     }
+
+     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                                    diffopfixt, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+
+     return PyProxyFunction(adddiffop);
+     }),
+        py::arg("proxy"),
+        py::arg("time")
+        );
+
+     m.def("fix_t", FunctionPointer
+          ([](PyGF self, int time) -> PyCF
+     {
+     shared_ptr<DifferentialOperator> diffopfixt;
+
+     switch (time)
+     {
+     case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+     case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+     default : throw Exception("Requested time not implemented yet.");
+     }
+
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopfixt));
+     }));
+
+
+     m.def("ReferenceTimeVariable", FunctionPointer
+          ([]() -> PyCF
+     {
+       return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+     }));
+
+
 
 
 }

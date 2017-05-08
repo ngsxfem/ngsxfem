@@ -2,6 +2,7 @@ add_library(ngsxfem_spacetime ${NGS_LIB_TYPE}
   myElement.cpp
   myFESpace.cpp
   diffopDt.cpp
+  timecf.cpp
 )
 
 set_target_properties(ngsxfem_spacetime PROPERTIES SUFFIX ".so")
@@ -16,6 +17,7 @@ install( FILES
   myElement.hpp
   myFESpace.hpp
   diffopDt.hpp
+  timecf.hpp
   DESTINATION include
 )
 

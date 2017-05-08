@@ -22,10 +22,11 @@ namespace ngcomp
 
   class SpaceTimeFESpace : public FESpace
   {
-    int ndof, order_s,order_t;
+    int ndof;
     FESpace* Vh;
     ScalarFiniteElement<1>* tfe;
     double time;
+    bool override_time = false;
 
   public:
     /*
@@ -56,8 +57,17 @@ namespace ngcomp
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 
     // For debugging
-    void SetTime(double a) {time = a;}
-
+    void SetTime(double a) {time = a; override_time = true;}
+    void SetOverrideTime(bool a) {override_time = a;}
+    // Provide Info for Python
+    int order_time()
+    {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+         return time_FE->order_time();
+    }
+    void TimeFE_nodes(Vector<>& intp_pts)
+    {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+         time_FE->GetIntpPts (intp_pts);
+    }
   };
 
 }    

@@ -41,11 +41,11 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     cout << "Constructor of MyFESpace" << endl;
     cout << "Flags = " << flags << endl;
 
-    order_s = int(flags.GetNumFlag ("order", 2));
+    dimension = aVh->GetDimension ();
 
-    // How to get additional NumFlags?
-    bool linear_time = flags.GetDefineFlag ("order_time");
-    order_t = 1;
+    int order_s = aVh->GetOrder();
+    int order_t = atfe->Order();
+    bool linear_time = order_t == 1;
 
     Vh = aVh.get();
     tfe = atfe.get();
@@ -61,6 +61,17 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
+
+    if (dimension > 1)
+    {
+      evaluator[VOL] = make_shared<BlockDifferentialOperator> (evaluator[VOL], dimension);
+      flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
+      evaluator[BND] = 
+        make_shared<BlockDifferentialOperator> (evaluator[BND], dimension);
+      // flux_evaluator[BND] = 
+      //   make_shared<BlockDifferentialOperator> (flux_evaluator[BND], dimension);
+    }
+
     time=0;
   }
 
@@ -111,7 +122,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      ScalarFiniteElement<1>* t_FE = tfe;
 
-     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(order_s,s_FE,t_FE,time);
+     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(s_FE,t_FE,override_time,time);
 
      return *st_FE;
 
