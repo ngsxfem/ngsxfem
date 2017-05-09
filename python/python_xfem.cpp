@@ -348,12 +348,16 @@ void ExportNgsx(py::module &m)
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   ;
 
-  m.def("ProjectShift", FunctionPointer( [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, PyBA ba, double lower, double upper, double threshold, int heapsize)
+  m.def("ProjectShift", FunctionPointer( [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, py::object pba, double lower, double upper, double threshold, int heapsize)
   {
+    shared_ptr<BitArray> ba = nullptr;
+    if (py::extract<PyBA> (pba).check())
+      ba = py::extract<PyBA>(pba)();
+    
     LocalHeap lh (heapsize, "ProjectShift-Heap");
     ProjectShift(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), ba, lower, upper, threshold, lh);
   } ),
-        py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("ba")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("threshold")=1.0,py::arg("heapsize")=1000000)
+        py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL, py::arg("ba")=py::none(),py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("threshold")=1.0,py::arg("heapsize")=1000000)
   ;
 
 // ProjectShift

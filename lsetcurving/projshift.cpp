@@ -62,11 +62,10 @@ namespace ngcomp
          if (ba->Test(elnr))
              cout << "projshift: Detected marked element with number " << elnr <<  endl; */
 
-         if ( !(ba->Test(elnr)) )
-              return;
-         /*
-         if (!ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound))
-           return; */
+         if ( (ba) && ( !(ba->Test(elnr)) ))
+           return;
+         if ( (!ba) && !ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound) )
+           return;
 
          int ndofs = el.GetDofs().Size();
          const FiniteElement & fel_deform = el.GetFE();

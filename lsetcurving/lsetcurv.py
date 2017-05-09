@@ -43,7 +43,7 @@ class LevelSetMeshAdaptation:
         self.deform = GridFunction(self.v_def, "deform")
         self.heapsize = heapsize
 
-    def CalcDeformation(self, levelset):
+    def CalcDeformation(self, levelset, ba = None):
         """
         Compute the deformation
         """
@@ -59,7 +59,8 @@ class LevelSetMeshAdaptation:
         self.lset_ho.Set(levelset,heapsize=self.heapsize)
         self.qn.Set(self.lset_ho.Deriv(),heapsize=self.heapsize)
         InterpolateToP1(self.lset_ho,self.lset_p1)
-        ProjectShift(self.lset_ho, self.lset_p1, self.deform, self.qn, self.lset_lower_bound, self.lset_upper_bound, self.threshold, heapsize=self.heapsize);
+        ProjectShift(self.lset_ho, self.lset_p1, self.deform, self.qn, ba,
+                     self.lset_lower_bound, self.lset_upper_bound, self.threshold, heapsize=self.heapsize);
         return self.deform
 
 
