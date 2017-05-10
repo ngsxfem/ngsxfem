@@ -115,7 +115,7 @@ class LevelSetMeshAdaptation_Spacetime:
         jumpels = BitArray(hasneg_spacetime)
         jumpels &= haspos_spacetime
         hasif_spacetime |= jumpels
-        Draw(BitArrayCF(hasif_spacetime),mesh,"hasif")
+        #Draw(BitArrayCF(hasif_spacetime),mesh,"hasif")
         
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
@@ -143,13 +143,16 @@ class LevelSetMeshAdaptation_Spacetime:
             self.v_ho_st.SetTime(xi)
             max_dists.append(CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize))
             #max_dists.append(CalcMaxDistance(self.lset_ho,self.lset_p1,self.deform,heapsize=self.heapsize))
+        self.v_p1_st.SetOverrideTime(False)
+        self.v_def_st.SetOverrideTime(False)
+        self.v_ho_st.SetOverrideTime(False)
         return max(max_dists)
       
        
 # geometry        
 square = SplineGeometry()
 square.AddRectangle([0,0],[2,2],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.02, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.03, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 # data
@@ -166,7 +169,7 @@ def SolveProblem(mesh,delta_t,k_s=2,k_t=1):
     tend = 1
     t.Set(tnew)
     lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = k_t,
-                                             threshold=0.1, discontinuous_qn=True)
+                                             threshold=0.5, discontinuous_qn=True)
     
     while tend - tnew > delta_t/2:
         t.Set(tnew)
@@ -188,7 +191,7 @@ def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):
             mesh.Refine()
         elif where == "time" and ref_lvl > 0:
             delta_t = delta_t / 2  
-        e1,e2 = SolveProblem(mesh,delta_t,k_s=2,k_t=2)
+        e1,e2 = SolveProblem(mesh,delta_t,k_s=4,k_t=2)
         max_dist_nodes.append(e1)
         max_dist_interm.append(e2)
         ref_lvl = ref_lvl + 1
@@ -203,7 +206,7 @@ def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):
         print("Eoc intermediate = {0}".format(eoc_interm))
             
             
-StudyConvergence(delta_t=0.5,max_rfs=4,where = "time")
+StudyConvergence(delta_t=0.5,max_rfs=5,where = "time")
         
                                             
 #lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
