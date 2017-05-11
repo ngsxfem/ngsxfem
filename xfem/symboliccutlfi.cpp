@@ -95,12 +95,12 @@ namespace ngfem
 
     elvec = 0;
 
-    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
+    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl);
     if (ir1 == nullptr)
       return;
     ///
     const IntegrationRule * ir = nullptr;
-    if (time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
+    if (false && time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
     {
        static bool warned = false;
        if (!warned)

@@ -22,7 +22,7 @@ install( FILES
 )
 
 install (FILES
-        spacetime.py 
+        lset_spacetime.py
         DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
         COMPONENT xfem
         )

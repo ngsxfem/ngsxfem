@@ -664,7 +664,7 @@ void ExportNgsx(py::module &m)
     {
       auto & trafo = ma->GetTrafo (el, lh);
 
-      const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, lh, subdivlvl);
+      const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order,-1, lh, subdivlvl);
 
       if (ir != nullptr)
       {

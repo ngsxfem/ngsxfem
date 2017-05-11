@@ -77,7 +77,7 @@ namespace ngcomp
         double part_vol [] = {0.0, 0.0};
         for (DOMAIN_TYPE np : {POS, NEG})
         {
-          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0, lh, subdivlvl);
+          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,-1, lh, subdivlvl);
 
           if (ir_np)
             for (auto ip : *ir_np)

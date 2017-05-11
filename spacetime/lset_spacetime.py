@@ -150,65 +150,65 @@ class LevelSetMeshAdaptation_Spacetime:
       
        
 # geometry        
-square = SplineGeometry()
-square.AddRectangle([0,0],[2,2],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.03, quad_dominated=False)
-mesh = Mesh (ngmesh)
-
-# data
-t = Parameter(0)
-lset = CoefficientFunction( sqrt( (x-1-0.25*sin(pi*t))*(x-1-0.25*sin(pi*t))+(y-1)*(y-1)) - 0.5  )
-
-
-
-def SolveProblem(mesh,delta_t,k_s=2,k_t=1):
-    max_nodes = []
-    max_interm = []
-    tstart = 0
-    tnew = 0
-    tend = 1
-    t.Set(tnew)
-    lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = k_t,
-                                             threshold=0.5, discontinuous_qn=True)
-    
-    while tend - tnew > delta_t/2:
-        t.Set(tnew)
-        dfm = lset_adap_st.CalcDeformation(lset,t,tnew,delta_t)      
-        max_nodes.append(lset_adap_st.CalcMaxDistance(lset,t,tnew,delta_t))
-        max_interm.append(lset_adap_st.CalcMaxDistance(
-                              lset,t,tnew,delta_t,[i*0.1 for i in range(11)]))
-        tnew += delta_t 
-    return max(max_nodes),max(max_interm)
-
-
-def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):   
-    max_dist_nodes = []
-    max_dist_interm = []
-    ref_lvl = 0
-    while ref_lvl <= max_rfs:  
-        
-        if where == "space" and ref_lvl > 0:
-            mesh.Refine()
-        elif where == "time" and ref_lvl > 0:
-            delta_t = delta_t / 2  
-        e1,e2 = SolveProblem(mesh,delta_t,k_s=4,k_t=2)
-        max_dist_nodes.append(e1)
-        max_dist_interm.append(e2)
-        ref_lvl = ref_lvl + 1
-    print("Studying convergence in: " + where)
-    print("Max-Dist nodes = {0}".format(max_dist_nodes))
-    if min(max_dist_nodes):
-        eoc_nodes = [ log(max_dist_nodes[i-1]/max_dist_nodes[i])/log(2) for i in range(1,len(max_dist_nodes))]
-        print("Eoc nodes = {0}".format(eoc_nodes))
-    print("Max-Dist intermediate = {0}".format(max_dist_interm))
-    if min(max_dist_interm):
-        eoc_interm = [ log(max_dist_interm[i-1]/max_dist_interm[i])/log(2) for i in range(1,len(max_dist_interm))]
-        print("Eoc intermediate = {0}".format(eoc_interm))
-            
-            
-StudyConvergence(delta_t=0.5,max_rfs=5,where = "time")
-        
-                                            
+#square = SplineGeometry()
+#square.AddRectangle([0,0],[2,2],bc=1)
+#ngmesh = square.GenerateMesh(maxh=0.03, quad_dominated=False)
+#mesh = Mesh (ngmesh)
+#
+## data
+#t = Parameter(0)
+#lset = CoefficientFunction( sqrt( (x-1-0.25*sin(pi*t))*(x-1-0.25*sin(pi*t))+(y-1)*(y-1)) - 0.5  )
+#
+#
+#
+#def SolveProblem(mesh,delta_t,k_s=2,k_t=1):
+#    max_nodes = []
+#    max_interm = []
+#    tstart = 0
+#    tnew = 0
+#    tend = 1
+#    t.Set(tnew)
+#    lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = k_t,
+#                                             threshold=0.5, discontinuous_qn=True)
+#    
+#    while tend - tnew > delta_t/2:
+#        t.Set(tnew)
+#        dfm = lset_adap_st.CalcDeformation(lset,t,tnew,delta_t)      
+#        max_nodes.append(lset_adap_st.CalcMaxDistance(lset,t,tnew,delta_t))
+#        max_interm.append(lset_adap_st.CalcMaxDistance(
+#                              lset,t,tnew,delta_t,[i*0.1 for i in range(11)]))
+#        tnew += delta_t 
+#    return max(max_nodes),max(max_interm)
+#
+#
+#def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):   
+#    max_dist_nodes = []
+#    max_dist_interm = []
+#    ref_lvl = 0
+#    while ref_lvl <= max_rfs:  
+#        
+#        if where == "space" and ref_lvl > 0:
+#            mesh.Refine()
+#        elif where == "time" and ref_lvl > 0:
+#            delta_t = delta_t / 2  
+#        e1,e2 = SolveProblem(mesh,delta_t,k_s=3,k_t=2)
+#        max_dist_nodes.append(e1)
+#        max_dist_interm.append(e2)
+#        ref_lvl = ref_lvl + 1
+#    print("Studying convergence in: " + where)
+#    print("Max-Dist nodes = {0}".format(max_dist_nodes))
+#    if min(max_dist_nodes):
+#        eoc_nodes = [ log(max_dist_nodes[i-1]/max_dist_nodes[i])/log(2) for i in range(1,len(max_dist_nodes))]
+#        print("Eoc nodes = {0}".format(eoc_nodes))
+#    print("Max-Dist intermediate = {0}".format(max_dist_interm))
+#    if min(max_dist_interm):
+#        eoc_interm = [ log(max_dist_interm[i-1]/max_dist_interm[i])/log(2) for i in range(1,len(max_dist_interm))]
+#        print("Eoc intermediate = {0}".format(eoc_interm))
+#            
+#            
+#StudyConvergence(delta_t=0.01,max_rfs=5,where = "time")
+#        
+#                                            
 #lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
 #lset_ho = lset_adap_st.lset_ho
 #lset_adap_st.interpol_p1()

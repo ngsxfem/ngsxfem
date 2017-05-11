@@ -1,5 +1,6 @@
 #include "xintegration.hpp"
 #include "straightcutrule.hpp"
+#include "spacetimecutrule.hpp"
 
 namespace xintegration
 {
@@ -10,12 +11,16 @@ namespace xintegration
                                                    const ElementTransformation & trafo,
                                                    DOMAIN_TYPE dt,
                                                    int intorder,
+                                                   int time_intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl)
+                                                   int subdivlvl
+                                                   )
   {
     // temporary fix for ET_SEGM
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+
+    //cout << "time_intorder = " << time_intorder << endl;
 
     if (gflset != nullptr)
     {
@@ -23,11 +28,16 @@ namespace xintegration
       gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
       FlatVector<> elvec(dnums.Size(),lh);
       gflset->GetVector().GetIndirect(dnums,elvec);
-      return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
+      if (time_intorder >= 0)
+          return SpaceTimeCutIntegrationRule(elvec,trafo.GetElementType(), dt, time_intorder, intorder, lh);
+      else
+          return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
     }
     else if (cflset != nullptr)
     {
-      return CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+      if (time_intorder < 0)
+          return CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+      else throw Exception("Space-time requires the levelset as a GridFunction!");
     }
     else throw Exception("Only null information provided, null integration rule served!");
   }
@@ -48,7 +58,7 @@ namespace xintegration
     else
     {
       shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
-      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace"))
+      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && ( (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace") || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")))
         return make_tuple(nullptr, ret);
       else
         return make_tuple(cflset, nullptr);
