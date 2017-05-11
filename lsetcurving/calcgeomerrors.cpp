@@ -82,7 +82,7 @@ namespace ngcomp
       HeapReset hr(lh);
       progress.Update ();
 
-      Ngs_Element ngel = ma->GetElement(elnr);
+      Ngs_Element ngel = ma->GetElement(el);
       ELEMENT_TYPE eltype = ngel.GetType();
       Array<int> dofs;
       gf_lset_p1->GetFESpace()->GetDofNrs(el,dofs);
@@ -228,7 +228,7 @@ namespace ngcomp
       HeapReset hr(lh);
       progress.Update ();
 
-      Ngs_Element ngel = ma->GetElement(elnr);
+      Ngs_Element ngel = ma->GetElement(el);
       ELEMENT_TYPE eltype = ngel.GetType();
       Array<int> dofs;
       gf_lset_p1->GetFESpace()->GetDofNrs(el,dofs);

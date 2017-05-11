@@ -32,7 +32,7 @@ namespace ngcomp
     if (ei.VB() == VOL)
     {
       int elnr = ei.Nr();
-      Ngs_Element ngel = ma->GetElement(elnr);
+      Ngs_Element ngel = ma->GetElement(ei);
       ELEMENT_TYPE eltype = ngel.GetType();
       if (eltype != ET_TRIG)
         throw Exception("can only work with trigs...");
@@ -78,7 +78,7 @@ namespace ngcomp
     for (int elnr = 0; elnr < ne; ++elnr)
     {
       HeapReset hr(lh);
-      Ngs_Element ngel = ma->GetElement(elnr);
+      Ngs_Element ngel = ma->GetElement(ElementId(VOL,elnr));
       ELEMENT_TYPE eltype = ngel.GetType();
       if (eltype != ET_TRIG)
         throw Exception("only trigs right now...");
