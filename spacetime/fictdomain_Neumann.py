@@ -16,7 +16,7 @@ from xfem.lset_spacetime import *
 
 square = SplineGeometry()
 square.AddRectangle([0,0],[1,1],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.02, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])
@@ -56,15 +56,7 @@ Draw(u0_ic,mesh,"u")
 u = st_fes.TrialFunction()
 v = st_fes.TestFunction()
 
-a = BilinearForm(st_fes,symmetric=False)
-f = LinearForm(st_fes)
-a.Assemble()
-f.Assemble()
-amat = a.mat.CreateMatrix()
-fvec = f.vec.CreateVector()
-
 lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
-
 
 a = BilinearForm(st_fes,symmetric=False)
 a += SymbolicBFI(levelset_domain = lset_neg, form = dt(u)*v, time_order=2)
@@ -81,7 +73,7 @@ while tend - t_old > delta_t/2:
               
     f = LinearForm(st_fes)
     f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
-    f += SymbolicLFI(form = u0_ic*v )
+    f += SymbolicLFI(form = u0_ic*fix_t(v,0) )
     f.Assemble()
 
     u0.vec.data = a.mat.Inverse(st_fes.FreeDofs(),"umfpack") * f.vec
@@ -92,12 +84,13 @@ while tend - t_old > delta_t/2:
     t_old = t_old + delta_t
     told.Set(t_old)
     
-    #Draw(sqrt((u_exact-u0_ic)*(u_exact-u0_ic)),mesh,"error")
+    Draw(sqrt((u_exact-u0_ic)*(u_exact-u0_ic)),mesh,"error")
     
     l2error = sqrt (Integrate ( (u_exact-u0_ic)*(u_exact-u0_ic), mesh))
            
     Redraw(blocking=True)
     
     print("t = {0}, l2error = {1}".format(t_old,l2error))
+    
     
 
