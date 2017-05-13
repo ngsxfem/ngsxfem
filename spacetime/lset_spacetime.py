@@ -71,6 +71,7 @@ class LevelSetMeshAdaptation_Spacetime:
             t.Set(ti)
             self.lset_ho_node.Set(levelset)
             self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.lset_ho_node.vec[:] 
+        t.Set(tstart)
 
     def interpol_p1(self):
         for i in range(self.order_time + 1):
@@ -146,6 +147,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_p1_st.SetOverrideTime(False)
         self.v_def_st.SetOverrideTime(False)
         self.v_ho_st.SetOverrideTime(False)
+        t.Set(tstart)
         return max(max_dists)
       
        
