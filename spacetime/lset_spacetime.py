@@ -65,6 +65,9 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.ci = CutInfo(mesh)
         
+        self.hasneg_spacetime = BitArray(self.ci.GetElementsOfType(NEG))
+        self.hasneg_spacetime[:] = False
+        
     def interpol_ho(self,levelset,t,tstart,delta_t):
         times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
         for i,ti in enumerate(times):
@@ -112,6 +115,9 @@ class LevelSetMeshAdaptation_Spacetime:
             haspos_spacetime |= self.ci.GetElementsOfType(IF)
             hasif_spacetime |= self.ci.GetElementsOfType(IF)
             hasif_spacetime |= self.ci.GetElementsOfType(IF)
+        
+        self.hasneg_spacetime[:] = False
+        self.hasneg_spacetime |= hasneg_spacetime
             
         jumpels = BitArray(hasneg_spacetime)
         jumpels &= haspos_spacetime
