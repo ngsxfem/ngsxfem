@@ -52,8 +52,7 @@ namespace xintegration
       if(((s.Size() == 3)&&(s.D == 2))||((s.Size() == 4)&&(s.D == 3))){
         for(int ii = 0; ii<s.Size(); ii++) { int i = s[ii];
             for(int ij= ii+1; ij<s.Size(); ij++){ int j = s[ij];
-                if ((s.GetLset(ii) > 0) != (s.GetLset(ij) > 0))
-                {
+                if((s.GetLset(ii) >= 0) != (s.GetLset(ij) >= 0)){
                     Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1, s.svs_ptr));
                     cut_points.Append(p[0]);
                 }
@@ -234,7 +233,7 @@ namespace xintegration
       vector<vector<tuple<int,int>>> EdgesOfDim{{make_tuple(0,1),make_tuple(3,2)}, {make_tuple(1,2),make_tuple(0,3)}};
       for(int dim:{0,1}){
           for(tuple<int, int> edge:EdgesOfDim[dim]){
-              if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
+              if((lset[get<0>(edge)] >= 0) != (lset[get<1>(edge)] >= 0)) {
                   Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
                   cut_points[dim].push_back(p.GetPoint(0)[dim]);
               }
@@ -271,7 +270,7 @@ namespace xintegration
                                               {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)}};
     for(int dim:{0,1,2}){
         for(tuple<int, int> edge:EdgesOfDim[dim]){
-            if(lset[get<0>(edge)]*lset[get<1>(edge)] < -1e-12) {
+            if((lset[get<0>(edge)] >= 0) != (lset[get<1>(edge)] > 0)) {
                 Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
                 cut_points[dim].push_back(p.GetPoint(0)[dim]);
             }
