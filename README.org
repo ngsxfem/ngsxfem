@@ -6,7 +6,7 @@ ngs-xfem is an academic software. Its primary intention is to facilitate the dev
 *** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
 Given a level set function \phi which describes the geometry (e.g. \Omega = { \phi < 0 }) a piecewise linear approximation is made. On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
 On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) subdomains where the level set is positive/negative/zero.
-#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="200"/><img src="doc/graphics/intpoints.jpg" height="200"/></p>
+#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="175"/><img src="doc/graphics/intpoints.jpg" height="175"/></p>
 
 *** Tools to work on an "active mesh" only
 In unfitted finite element methods some functions and integrals are only defined on a subset of the mesh. Accordingly finite element spaces and integrals have to be defined only on this active mesh. 
