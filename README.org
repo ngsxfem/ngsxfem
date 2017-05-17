@@ -1,9 +1,19 @@
+** About ngs-xfem
+ngs-xfem is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... .
+The essential new tools (compared to Netgen/NGSolve) are
+ * Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
+ * Finite element spaces that depend only on implicitly described geometries, e.g. XFEM spaces
+ * Higher order representation of implicit level-set geometries 
+ * Several helper functionalities which is helpful when working only on a subset of the mesh, the so-called "active mesh"
+
+ngs-xfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+
 ** Linux Build Steps
-You require Netgen/NGSolve to run the xfem module (ngs-xfem). 
+You require Netgen/NGSolve to run and build the xfem module (ngs-xfem). 
 You can either install it before hand (default option) 
 or let Netgen/NGSolve be installed as an external dependency. 
 #+BEGIN_SRC shell
-git clone https://gitlab.asc.tuwien.ac.at/jschoeberl/xfem.git
+git clone https://github/ngsxfem/ngsxfem.git
 cd xfem
 mkdir build
 cd build
