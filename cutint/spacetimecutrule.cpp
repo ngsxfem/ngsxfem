@@ -30,7 +30,7 @@ namespace xintegration
            return roots;
        }
         else {
-            cout << "Calling bisection" << endl;
+            //cout << "Calling bisection" << endl;
             vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
             vector<double> roots; double delta_x = 1./subdivs;
             FlatVector<> shape(li.Size(), lh);
@@ -76,7 +76,7 @@ namespace xintegration
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
-        cout << "The lset function values divided: " << lset_st << endl;
+        //cout << "The lset function values divided: " << lset_st << endl;
 
         vector<double> cut_points{0,1};
         for(int i=0; i<space_nfreedofs; i++){
@@ -85,8 +85,8 @@ namespace xintegration
             if(cp.size() > 0) cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
         }
         sort(cut_points.begin(), cut_points.end());
-        cout << "The sorted cut points: " << endl;
-        for(auto d: cut_points) cout << d << endl;
+        //cout << "The sorted cut points: " << endl;
+        //for(auto d: cut_points) cout << d << endl;
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         auto ir = new (lh) IntegrationRule();
@@ -99,8 +99,8 @@ namespace xintegration
                 FlatVector<> shape(time_nfreedofs, lh);
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
-                cout << "t: " << t << endl;
-                cout << "cf_lset_at_t = " << cf_lset_at_t << endl;
+                //cout << "t: " << t << endl;
+                //cout << "cf_lset_at_t = " << cf_lset_at_t << endl;
 
                 DOMAIN_TYPE dt_at_t = CheckIfStraightCut(cf_lset_at_t);
                 IntegrationRule quad_at_t;
@@ -117,6 +117,8 @@ namespace xintegration
                 }
             }
         }
+        //cout << "The lset function: " << cf_lset_at_element << endl;
+        //cout << "The Intrule: " << *ir << endl;
         return ir;
     }
 
