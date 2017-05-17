@@ -62,7 +62,7 @@ namespace xintegration
         for(int i=0; i<space_nfreedofs; i++){
             auto li = lset_st.Col(i);
             auto cp = root_finding(li, fe_time, lh);
-            cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
+            if(cp.size() > 0) cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
         }
         sort(cut_points.begin(), cut_points.end());
         cout << "The sorted cut points: " << endl;
