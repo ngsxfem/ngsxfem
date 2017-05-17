@@ -13,7 +13,24 @@ namespace xintegration
             }
             else return {};
         }
+        else if(fe_time->Order() == 2){
+           double c = li[0], a = 2*li[0]+2*li[2]-4.*li[1], b = li[2] - a - c;
+           vector<double> roots;
+           if(abs(pow(b,2) - 4*a*c) < 1e-10){
+               double x_ast = -b/(2*a);
+               if(x_ast <= 1 && x_ast >= 0) roots.push_back(x_ast);
+           }
+           else {
+               double x_ast1 = -1./(2*a)*(b + sqrt(pow(b,2) - 4*a*c));
+               double x_ast2 = -1./(2*a)*(b - sqrt(pow(b,2) - 4*a*c));
+
+               if(x_ast1 <= 1 && x_ast1 >= 0) roots.push_back(x_ast1);
+               if(x_ast2 <= 1 && x_ast2 >= 0) roots.push_back(x_ast2);
+           }
+           return roots;
+       }
         else {
+            cout << "Calling bisection" << endl;
             vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
             vector<double> roots; double delta_x = 1./subdivs;
             FlatVector<> shape(li.Size(), lh);
@@ -76,7 +93,7 @@ namespace xintegration
         for(int i=0; i<space_nfreedofs; i++){
             auto li = lset_st.Col(i);
             auto cp = root_finding(li, fe_time, lh);
-            cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
+            if(cp.size() > 0) cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
         }
         sort(cut_points.begin(), cut_points.end());
         cout << "The sorted cut points: " << endl;
@@ -133,5 +150,13 @@ namespace xintegration
 
         cout << "V_pos: " << V_pos << endl << "V_neg: " << V_neg << endl;
         cout << "V_pos + V_neg = " << V_pos + V_neg << endl;
+
+        //Testing of the root_finding function
+        cout << "Testing of the root finding function: " << endl;
+
+        NodalTimeFE time_fe2(2);
+        auto roots = root_finding(Vector<>{-2, 0.1, 1}, &time_fe2, lh);
+        cout << "The roots: " << endl;
+        for(auto d:roots) cout << d << endl;
     }
 }
