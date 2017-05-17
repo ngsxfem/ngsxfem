@@ -98,6 +98,6 @@ Only python-files are used.
 With =ngsxfem= we ship the following examples:
 ** =py_tutorials/cutfem.py=: 
 In this example we consider an unfitted interface problem that we solve with piecewise linear cut finite elements. The problem in strong form reads as
-\begin{equation}
+
   - \alpha_i \Delta u = f~~in~~\Omega_i,~i=1,2 
-\end{equation}
+...
