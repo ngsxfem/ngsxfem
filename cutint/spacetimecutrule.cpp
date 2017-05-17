@@ -147,5 +147,9 @@ namespace xintegration
         auto roots = root_finding(Vector<>{-2, 0.1, 1}, &time_fe2, lh);
         cout << "The roots: " << endl;
         for(auto d:roots) cout << d << endl;
+
+        cout << "Testing of the problematic lset function: " << endl;
+        Vector<> iamproblematic{0.00673963, -0.0999511, -0.0127287, 0.0220921, -0.0849581, 0.000203323};
+        auto ir_neg2 = SpaceTimeCutIntegrationRule(iamproblematic, ET_TRIG, &time_fe, POS, 0,0,lh);
     }
 }
