@@ -3,7 +3,7 @@
 
 namespace xintegration
 {
-    vector<double> root_finding(auto li, ScalarFiniteElement<1>* fe_time, LocalHeap& lh, int subdivs=50, int bisection_iterations = 40){
+    vector<double> root_finding(SliceVector<> li, ScalarFiniteElement<1>* fe_time, LocalHeap& lh, int subdivs=50, int bisection_iterations = 40){
         if(li.Size() == 2){
             if((li[0] >= 0) != (li[1] >= 0)){
                 return {-li[0]/(li[1] - li[0]) };
