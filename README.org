@@ -4,20 +4,19 @@ ngs-xfem is an academic software. Its primary intention is to facilitate the dev
 
 ** The tools
 *** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
-Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
-#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" width="300"/></p>
+Given a level set function which describes the geometry a piecewise linear approximation is made. On simplices (triangles and tetrahedra) a decomposition into simple geometries is carried out.
+#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" width="450"/></p>
+On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) subdomains where the level set is positive/negative/zero.
+#+html: <p align="center"><img src="doc/graphics/intpoint.jpg" width="300"/></p>
 
-[[doc/graphics/cuttet.jpg]]
-Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
-Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
-#+attr_html: :width 300px
-[[doc/graphics/intpoints.jpg]]
-Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
-Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
+$\phi(x)$ with $\phi(x) = 0$.
 
-*** Tools to work on the active mesh only
-#+attr_html: :width 300px
-[[doc/graphics/unfittedmesh.jpg]]
+$$
+  f(x) = q
+$$
+
+*** Tools to work on an "active mesh" only
+#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" width="300"/></p>
 
 *** Unfitted finite element (XFEM)
 #+attr_html: :width 300px
