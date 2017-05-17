@@ -11,7 +11,7 @@ On these simple (uncut) geometries standard quadrature rules of arbitrary order 
 *** Tools to work on an "active mesh" only
 In unfitted finite element methods some functions and integrals are only defined on a subset of the mesh. Accordingly finite element spaces and integrals have to be defined only on this active mesh. 
 ngsxfem offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces.
-#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" width="300" data-rotate="90"/> <img src="doc/graphics/unfittedmesh.jpg" height="300"/></p> 
+#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="300"/> <img src="doc/graphics/unfittedmesh.jpg" height="300"/></p> 
 
 *** Higher order representation of implicit level-set geometries 
 #+attr_html: :width 300px
