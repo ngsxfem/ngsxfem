@@ -3,6 +3,48 @@
 
 namespace xintegration
 {
+    vector<double> root_finding(auto li, ScalarFiniteElement<1>* fe_time, LocalHeap& lh, int subdivs=50, int bisection_iterations = 40){
+        if(li.Size() == -1){
+            if((li[0] >= 0) != (li[1] >= 0)){
+                return {-li[0]/(li[1] - li[0]) };
+            }
+            else return {};
+        }
+        else {
+            vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
+            vector<double> roots; double delta_x = 1./subdivs;
+            FlatVector<> shape(li.Size(), lh);
+            function<double(double)> eval = [&li, &fe_time, &shape](double xi) -> double {
+                fe_time->CalcShape(IntegrationPoint(Vec<3>{xi,0,0}, 0.), shape);
+                return (Trans(li)*shape)(0);
+            };
+            for(int i=0; i<subdivs; i++){
+                double xi = delta_x*i;
+                vals[i] = eval(xi);
+                if(vals[i] == 0) roots.push_back(xi);
+                if(i >= 1) if(vals[i-1] * vals[i] < 0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
+            }
+            for(auto interval : sign_change_intervals){
+                double a = get<0>(interval), b = get<1>(interval); double x_mid;
+                double aval = eval(a), bval = eval(b);
+                for(int j=0; j<bisection_iterations; j++){
+                    x_mid = 0.5*(a+b);
+                    double val = eval(x_mid);
+                    if(val == 0) break;
+                    if(val * aval < 0) {
+                        b = x_mid; bval = val;
+                    }
+                    else if(val * bval < 0){
+                        a = x_mid; aval = val;
+                    }
+                    else throw Exception("Strange sign structure during bisection!");
+                }
+                roots.push_back(0.5*(a+b));
+            }
+            return roots;
+        }
+    }
+
     const IntegrationRule * SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
                                                         ELEMENT_TYPE et_space,
                                                         ScalarFiniteElement<1>* fe_time,
@@ -18,9 +60,8 @@ namespace xintegration
         vector<double> cut_points{0,1};
         for(int i=0; i<space_nfreedofs; i++){
             auto li = lset_st.Col(i);
-            if(li[0]*li[1] < -1e-10){
-                cut_points.push_back(-li[0]/(li[1] - li[0]));
-            }
+            auto cp = root_finding(li, fe_time, lh);
+            cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
         }
         sort(cut_points.begin(), cut_points.end());
         cout << "The sorted cut points: " << endl;
