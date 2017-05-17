@@ -13,24 +13,11 @@ namespace xintegration
         int lset_nfreedofs = cf_lset_at_element.Size();
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
-        if(lset_nfreedofs != 2*space_nfreedofs)
-            throw Exception("Only P1 functions in time are allowed right now");
-        if(et_space != ET_TRIG)
-            throw Exception("Only Trigs as dt_space allowed right now");
-
-        Array<Vec<2>> lset_on_space_vert(space_nfreedofs);
-        for(int i=0; i<lset_nfreedofs; i++){
-            lset_on_space_vert[i % space_nfreedofs][i/space_nfreedofs] = cf_lset_at_element[i];
-        }
-        cout << "The lset function values divided: " << lset_on_space_vert << endl;
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
-        cout << "The Matrix lset_st: " << lset_st << endl;
-        cout << "The Matrix lset_st.col(0): " << lset_st.Col(0) << endl;
-        cout << "The Matrix lset_st.col(1): " << lset_st.Col(1) << endl;
-        cout << "The Matrix lset_st.col(2): " << lset_st.Col(2) << endl;
 
         vector<double> cut_points{0,1};
-        for(auto li : lset_on_space_vert){
+        for(int i=0; i<space_nfreedofs; i++){
+            auto li = lset_st.Col(i);
             if(li[0]*li[1] < -1e-10){
                 cut_points.push_back(-li[0]/(li[1] - li[0]));
             }
@@ -44,13 +31,12 @@ namespace xintegration
 
         for(int i=0; i<cut_points.size() -1; i++){
             double t0 = cut_points[i], t1 = cut_points[i+1];
-            cout << "(t0,t1) = ( " << t0 << " , " << t1 << " )" << endl;
             for(auto ip:ir_time){
                 double t = t0 + ip.Point()[0]*(t1 - t0);
-                FlatVector<> cf_lset_at_t(3,lh);
-                for(int j=0; j<3; j++) cf_lset_at_t[j] = lset_on_space_vert[j][0] + t*(lset_on_space_vert[j][1] - lset_on_space_vert[j][0]);
-                cout << "t: " << t << endl;
-                cout << "cf_lset_at_t: " << cf_lset_at_t << endl;
+                FlatVector<> cf_lset_at_t(space_nfreedofs,lh);
+                FlatVector<> shape(time_nfreedofs, lh);
+                fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
+                cf_lset_at_t = Trans(lset_st)*shape;
 
                 DOMAIN_TYPE dt_at_t = CheckIfStraightCut(cf_lset_at_t);
                 IntegrationRule quad_at_t;
@@ -80,8 +66,8 @@ namespace xintegration
         for(int i=0; i<6; i++) a[i] = a2[i]; //Why isn't the Vec<6>{1,1,...} constructor working any more??
         //auto time_fe = new NodalTimeFE(1);
         NodalTimeFE time_fe(1);
-        auto ir_neg = SpaceTimeCutIntegrationRule(a, ET_TRIG, &time_fe, NEG, 2, 2, lh);
-        auto ir_pos = SpaceTimeCutIntegrationRule(a, ET_TRIG,&time_fe, POS, 2, 2, lh);
+        auto ir_neg = SpaceTimeCutIntegrationRule(a, ET_TRIG, &time_fe, NEG, 0, 0, lh);
+        auto ir_pos = SpaceTimeCutIntegrationRule(a, ET_TRIG,&time_fe, POS, 0, 0, lh);
         cout << "IR neg: " << *ir_neg << endl << "IR pos: " << *ir_pos << endl;
         double V_pos, V_neg;
         for(auto ip: *ir_neg) V_neg += ip.Weight();
