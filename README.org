@@ -5,8 +5,7 @@ ngs-xfem is an academic software. Its primary intention is to facilitate the dev
 ** The tools
 *** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
 Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
-#+ATTR_HTML: width="300px"
-#+ATTR_ORG: :width 300
+#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" /></p>
 [[doc/graphics/cuttet.jpg]]
 Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
 Given a level set function a piecewise linear approximation is made and a decomposition into simple geometries is carried out on which standard quadrature rules of arbitrary order are used. 
