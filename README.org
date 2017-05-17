@@ -1,6 +1,8 @@
-#+OPTIONS: toc:2
+ * [[*About%20ngs-xfem][About ngs-xfem]]
+ * [[*Installation][Installation]]
+ * [[*Examples][Examples]]
 
-* About ngs-xfem
+* About ngs-xfem 
 ngs-xfem is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... .
 ngs-xfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
@@ -95,10 +97,10 @@ Note that we use pytest (with python version > 3).
 From version 1.0.0 on there are no pde-files used in this project anymore. 
 Only python-files are used.
 
-* Examples
+* Examples 
 With ngsxfem we ship the following examples:
  * =py_tutorials/cutfem.py=: 
  In the example =py_tutorials/cutfem.py= we consider an unfitted interface problem that we solve with piecewise linear cut finite elements. The problem in strong form reads as
  \begin{equation}
-  - \Delta u = f \text{ in } \Omega_i,~i=1,2 
+  - \Delta u = f \quad in \Omega_i,~i=1,2 
  \end{equation}
