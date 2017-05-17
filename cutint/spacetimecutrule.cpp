@@ -4,7 +4,7 @@
 namespace xintegration
 {
     vector<double> root_finding(auto li, ScalarFiniteElement<1>* fe_time, LocalHeap& lh, int subdivs=50, int bisection_iterations = 40){
-        if(li.Size() == -1){
+        if(li.Size() == 1){
             if((li[0] >= 0) != (li[1] >= 0)){
                 return {-li[0]/(li[1] - li[0]) };
             }
@@ -64,8 +64,8 @@ namespace xintegration
             cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
         }
         sort(cut_points.begin(), cut_points.end());
-        cout << "The sorted cut points: " << endl;
-        for(auto d: cut_points) cout << d << endl;
+        //cout << "The sorted cut points: " << endl;
+        //for(auto d: cut_points) cout << d << endl;
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         auto ir = new (lh) IntegrationRule();
