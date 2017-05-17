@@ -56,6 +56,7 @@ namespace xintegration
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
+        cout << "The lset function values divided: " << lset_st << endl;
 
         vector<double> cut_points{0,1};
         for(int i=0; i<space_nfreedofs; i++){
@@ -64,8 +65,8 @@ namespace xintegration
             cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
         }
         sort(cut_points.begin(), cut_points.end());
-        //cout << "The sorted cut points: " << endl;
-        //for(auto d: cut_points) cout << d << endl;
+        cout << "The sorted cut points: " << endl;
+        for(auto d: cut_points) cout << d << endl;
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         auto ir = new (lh) IntegrationRule();
@@ -78,6 +79,8 @@ namespace xintegration
                 FlatVector<> shape(time_nfreedofs, lh);
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
+                cout << "t: " << t << endl;
+                cout << "cf_lset_at_t = " << cf_lset_at_t << endl;
 
                 DOMAIN_TYPE dt_at_t = CheckIfStraightCut(cf_lset_at_t);
                 IntegrationRule quad_at_t;
