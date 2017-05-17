@@ -8,48 +8,74 @@ namespace xintegration
        if(fe_time->Order() == 0)
          return {};
        else if(fe_time->Order() == 1){
+            // we assume to know the basis here:
+            // phi0 =  1 - x
+            // phi1 =      x
             if((li[0] >= 0) != (li[1] >= 0)){
                 return {-li[0]/(li[1] - li[0]) };
             }
             else return {};
         }
         else if(fe_time->Order() == 2){
+           // we assume to know the basis here:
+           // phi0 = (1-x)*(1-2x) = 1 - 3*x + 2*x*x,
+           // phi1 =    4*x*(1-x) =     4*x - 4*x*x,
+           // phi2 =     x*(2x-1) =     - x + 2*x*x.
+           //  sum_i c_i phi_i(x) = c + b*x + a*x*x,
            double c = li[0], a = 2*li[0]+2*li[2]-4.*li[1], b = li[2] - a - c;
            vector<double> roots;
-           if(abs(pow(b,2) - 4*a*c) < 1e-10){
+           const double w = b*b - 4*a*c;
+           if(abs(w) < 1e-12){
                double x_ast = -b/(2*a);
-               if(x_ast <= 1 && x_ast >= 0) roots.push_back(x_ast);
+               if(x_ast < 1 && x_ast > 0) roots.push_back(x_ast);
            }
            else {
-               double x_ast1 = -1./(2*a)*(b + sqrt(pow(b,2) - 4*a*c));
-               double x_ast2 = -1./(2*a)*(b - sqrt(pow(b,2) - 4*a*c));
+               // if w<0 x_ast_i is nan (not in (0,1))
+               double x_ast1 = (b + sqrt(w))/(-2.0*a);
+               double x_ast2 = (b - sqrt(w))/(-2.0*a);
 
-               if(x_ast1 <= 1 && x_ast1 >= 0) roots.push_back(x_ast1);
-               if(x_ast2 <= 1 && x_ast2 >= 0) roots.push_back(x_ast2);
+               if(x_ast1 < 1 && x_ast1 > 0) roots.push_back(x_ast1);
+               if(x_ast2 < 1 && x_ast2 > 0) roots.push_back(x_ast2);
            }
            return roots;
        }
         else {
-            //cout << "Calling bisection" << endl;
+            static bool first = true;
+            if (first)
+            {
+              cout << "Calling bisection ..." << endl;
+              first = false;
+            }
             vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
             vector<double> roots; double delta_x = 1./subdivs;
             FlatVector<> shape(li.Size(), lh);
             function<double(double)> eval = [&li, &fe_time, &shape](double xi) -> double {
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{xi,0,0}, 0.), shape);
-                return (Trans(li)*shape)(0);
+                return InnerProduct(li,shape);
             };
-            for(int i=0; i<subdivs; i++){
+            for(int i=0; i<subdivs+1; i++){
                 double xi = delta_x*i;
                 vals[i] = eval(xi);
-                if(vals[i] == 0) roots.push_back(xi);
+                if(vals[i] == 0)
+                  roots.push_back(xi);
                 if(i >= 1) if(vals[i-1] * vals[i] < 0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
             }
             for(auto interval : sign_change_intervals){
                 double a = get<0>(interval), b = get<1>(interval); double x_mid;
                 double aval = eval(a), bval = eval(b);
                 for(int j=0; j<bisection_iterations; j++){
-                    x_mid = 0.5*(a+b);
-                    double val = eval(x_mid);
+                  
+                  //secant rule stopping criteria
+                  const double x_lin = a - aval*(b-a)/(bval-aval);
+                  double val = eval(x_lin);
+                  if (2*abs(val) < 1e-12)
+                  {
+                    a=b=x_lin;
+                    break;
+                  }
+
+                  x_mid = 0.5*(a+b);
+                  val = eval(x_mid);
                     if(val == 0) break;
                     if(val * aval < 0) {
                         b = x_mid; bval = val;
