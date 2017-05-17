@@ -11,11 +11,11 @@ On these simple (uncut) geometries standard quadrature rules of arbitrary order 
 *** Tools to work on an "active mesh" only
 In unfitted finite element methods some functions and integrals are only defined on a subset of the mesh. Accordingly finite element spaces and integrals have to be defined only on this active mesh. 
 ngsxfem offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces. On cut elements one often also uses locally modified finite elements, e.g. by restriction of finite elements on the background mesh.
-#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="300"/> <img src="doc/graphics/xfem.jpg" height="300"/></p> 
+#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="225"/> <img src="doc/graphics/xfem.jpg" height="225"/></p> 
 
 *** Higher order representation of implicit level-set geometries 
-To obtain higher order accuracy, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. 
-#+attr_html: :width 300px
+To obtain higher order accuracy, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. Thereby the piecewise linear approximation (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
+#+attr_html: :width 225px
 [[doc/graphics/lsetcurv.jpg]]
 
 
