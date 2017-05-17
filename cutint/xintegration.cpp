@@ -1,6 +1,9 @@
 #include "xintegration.hpp"
 #include "straightcutrule.hpp"
 #include "spacetimecutrule.hpp"
+#include "../spacetime/myElement.hpp"
+#include "../spacetime/myFESpace.hpp"
+
 
 namespace xintegration
 {
@@ -29,9 +32,10 @@ namespace xintegration
       FlatVector<> elvec(dnums.Size(),lh);
       gflset->GetVector().GetIndirect(dnums,elvec);
       if (time_intorder >= 0) {
-
-          //ScalarFiniteElement<1>* fe_time = gflset->GetFESpace()
-          return SpaceTimeCutIntegrationRule(elvec,trafo.GetElementType(),nullptr, dt, time_intorder, intorder, lh);
+          FESpace* raw_FE = (gflset->GetFESpace()).get();
+          SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+          ScalarFiniteElement<1>* fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
+          return SpaceTimeCutIntegrationRule(elvec,trafo.GetElementType(), fe_time, dt, time_intorder, intorder, lh);
       } else {
           return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
       }
