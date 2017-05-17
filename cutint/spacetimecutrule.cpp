@@ -1,9 +1,11 @@
 #include "spacetimecutrule.hpp"
+#include "../spacetime/myElement.hpp"
 
 namespace xintegration
 {
     const IntegrationRule * SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
                                                         ELEMENT_TYPE et_space,
+                                                        ScalarFiniteElement<1>* fe_time,
                                                         DOMAIN_TYPE dt,
                                                         int order_time,
                                                         int order_space,
@@ -70,8 +72,10 @@ namespace xintegration
         //vector<double> a2{1,1,1,-1,-2,-3}; //Maximal number of cuts in time
         FlatVector<> a(6,lh);
         for(int i=0; i<6; i++) a[i] = a2[i]; //Why isn't the Vec<6>{1,1,...} constructor working any more??
-        auto ir_neg = SpaceTimeCutIntegrationRule(a, ET_TRIG, NEG, 2, 2, lh);
-        auto ir_pos = SpaceTimeCutIntegrationRule(a, ET_TRIG, POS, 2, 2, lh);
+        //auto time_fe = new NodalTimeFE(1);
+        NodalTimeFE time_fe(1);
+        auto ir_neg = SpaceTimeCutIntegrationRule(a, ET_TRIG, &time_fe, NEG, 2, 2, lh);
+        auto ir_pos = SpaceTimeCutIntegrationRule(a, ET_TRIG,&time_fe, POS, 2, 2, lh);
         cout << "IR neg: " << *ir_neg << endl << "IR pos: " << *ir_pos << endl;
         double V_pos, V_neg;
         for(auto ip: *ir_neg) V_neg += ip.Weight();

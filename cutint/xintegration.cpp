@@ -28,10 +28,13 @@ namespace xintegration
       gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
       FlatVector<> elvec(dnums.Size(),lh);
       gflset->GetVector().GetIndirect(dnums,elvec);
-      if (time_intorder >= 0)
-          return SpaceTimeCutIntegrationRule(elvec,trafo.GetElementType(), dt, time_intorder, intorder, lh);
-      else
+      if (time_intorder >= 0) {
+
+          //ScalarFiniteElement<1>* fe_time = gflset->GetFESpace()
+          return SpaceTimeCutIntegrationRule(elvec,trafo.GetElementType(),nullptr, dt, time_intorder, intorder, lh);
+      } else {
           return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
+      }
     }
     else if (cflset != nullptr)
     {
