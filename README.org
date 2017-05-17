@@ -8,6 +8,8 @@ The essential new tools (compared to Netgen/NGSolve) are
 
 #+ATTR_HTML: :style margin-left: auto; margin-right: auto;
 [[doc/graphics/unfittedmesh.jpg]]
+[[doc/graphics/xfem.jpg]]
+[[doc/graphics/lsetcurv.jpg]]
 
 ngs-xfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
