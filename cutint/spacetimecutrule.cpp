@@ -19,20 +19,31 @@ namespace xintegration
             FlatVector<> shape(li.Size(), lh);
             function<double(double)> eval = [&li, &fe_time, &shape](double xi) -> double {
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{xi,0,0}, 0.), shape);
-                return (Trans(li)*shape)(0);
+                return InnerProduct(li,shape);
             };
-            for(int i=0; i<subdivs; i++){
+            for(int i=0; i<subdivs+1; i++){
                 double xi = delta_x*i;
                 vals[i] = eval(xi);
-                if(vals[i] == 0) roots.push_back(xi);
+                if(vals[i] == 0)
+                  roots.push_back(xi);
                 if(i >= 1) if(vals[i-1] * vals[i] < 0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
             }
             for(auto interval : sign_change_intervals){
                 double a = get<0>(interval), b = get<1>(interval); double x_mid;
                 double aval = eval(a), bval = eval(b);
                 for(int j=0; j<bisection_iterations; j++){
-                    x_mid = 0.5*(a+b);
-                    double val = eval(x_mid);
+                  
+                  //secant rule stopping criteria
+                  const double x_lin = a - aval*(b-a)/(bval-aval);
+                  double val = eval(x_lin);
+                  if (2*abs(val) < 1e-12)
+                  {
+                    a=b=x_lin;
+                    break;
+                  }
+
+                  x_mid = 0.5*(a+b);
+                  val = eval(x_mid);
                     if(val == 0) break;
                     if(val * aval < 0) {
                         b = x_mid; bval = val;
