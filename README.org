@@ -6,16 +6,16 @@ ngs-xfem is an academic software. Its primary intention is to facilitate the dev
 *** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
 Given a level set function \phi which describes the geometry (e.g. \Omega = { \phi < 0 }) a piecewise linear approximation is made. On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
 On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) subdomains where the level set is positive/negative/zero.
-#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="250"/><img src="doc/graphics/intpoints.jpg" height="250"/></p>
+#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="200"/><img src="doc/graphics/intpoints.jpg" height="200"/></p>
 
 *** Tools to work on an "active mesh" only
 In unfitted finite element methods some functions and integrals are only defined on a subset of the mesh. Accordingly finite element spaces and integrals have to be defined only on this active mesh. 
 ngsxfem offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces. On cut elements one often also uses locally modified finite elements, e.g. by restriction of finite elements on the background mesh.
-#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="225"/> <img src="doc/graphics/xfem.jpg" height="225"/></p> 
+#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="175"/> <img src="doc/graphics/xfem.jpg" height="175"/></p> 
 
 *** Higher order representation of implicit level-set geometries 
 To obtain higher order accuracy, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. Thereby the piecewise linear approximation (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
-#+attr_html: :width 225px
+#+attr_html: :width 175px
 [[doc/graphics/lsetcurv.jpg]]
 
 
