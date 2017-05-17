@@ -12,6 +12,7 @@ namespace xintegration
                                                         LocalHeap & lh){
         int lset_nfreedofs = cf_lset_at_element.Size();
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
+        int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
         if(lset_nfreedofs != 2*space_nfreedofs)
             throw Exception("Only P1 functions in time are allowed right now");
         if(et_space != ET_TRIG)
@@ -22,6 +23,11 @@ namespace xintegration
             lset_on_space_vert[i % space_nfreedofs][i/space_nfreedofs] = cf_lset_at_element[i];
         }
         cout << "The lset function values divided: " << lset_on_space_vert << endl;
+        FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
+        cout << "The Matrix lset_st: " << lset_st << endl;
+        cout << "The Matrix lset_st.col(0): " << lset_st.Col(0) << endl;
+        cout << "The Matrix lset_st.col(1): " << lset_st.Col(1) << endl;
+        cout << "The Matrix lset_st.col(2): " << lset_st.Col(2) << endl;
 
         vector<double> cut_points{0,1};
         for(auto li : lset_on_space_vert){
