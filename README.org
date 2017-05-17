@@ -2,7 +2,7 @@
 ngs-xfem is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... .
 ngs-xfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
-** The tools
+** The main features
 *** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
 Given a level set function \phi which describes the geometry (e.g. \Omega = { \phi < 0 }) a piecewise linear approximation is made. On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
 On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) subdomains where the level set is positive/negative/zero.
@@ -18,7 +18,10 @@ To obtain higher order accuracy, we offer a mesh transformation technique in the
 #+attr_html: :width 175px
 [[doc/graphics/lsetcurv.jpg]]
 
+** Applications
+This section is to be added soon ...
 
+* Installation
 ** Linux Build Steps
 You require Netgen/NGSolve to run and build the xfem module (ngs-xfem). 
 You can either install it before hand (default option) 
