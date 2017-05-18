@@ -507,7 +507,7 @@ namespace xintegration
       }
   }
 
-  // integration rules that are returned assume that no scaling with mip.GetMeasure() takes place
+  // integration rules that are filled into quad_untrafo assume that no scaling with mip.GetMeasure() takes place
   // and directly give the correct weight on the "physical" domain
   void UntransformedStraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
                                                      ELEMENT_TYPE et,
