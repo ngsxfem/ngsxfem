@@ -16,10 +16,16 @@ square.AddRectangle([-1,-0.75],[1,1.5],bc=1)
 ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
-fes1 = H1(mesh, order=1, dirichlet=[])
-fes_lset_slice = H1(mesh, order=1, dirichlet=[])
+n_ref = 0
+for i in range(n_ref):
+    mesh.Refine()
+
 k_t = 1
-k_s = 1
+k_s = 2
+fes1 = H1(mesh, order=k_s, dirichlet=[])
+fes_lset_slice = H1(mesh, order=1, dirichlet=[])
+fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
+
 lset_order_time = 2
 tfe = ScalarTimeFE(k_t) 
 
@@ -28,7 +34,7 @@ visoptions.deformation = 1
 
 #Fitted heat equation example
 tend = 0.5
-delta_t = 1/32
+delta_t = 1/64
 tnew = 0
 
 told = Parameter(0)
@@ -54,12 +60,13 @@ u_exact = CoefficientFunction(cos(tmp1*sqrt(x*x+(y-rho)*(y-rho)))*cos(tmp1*sqrt(
 
 u0 = GridFunction(st_fes)
 u0_ic = GridFunction(fes1)
-Draw(u0_ic,mesh,"u")
+#Draw(u0_ic,mesh,"u")
 u = st_fes.TrialFunction()
 v = st_fes.TestFunction()
 
 lset_top = GridFunction(fes_lset_slice)
 lset_bottom = GridFunction(fes_lset_slice)
+dfm_top = GridFunction(fes_dfm_slice)
 
 t_old = 0
 u0_ic.Set(u_exact)
@@ -68,6 +75,7 @@ u0_ic.Set(u_exact)
 while tend - t_old > delta_t/2:
     
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t) 
+    dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1    
     hasneg_spacetime = lset_adap_st.hasneg_spacetime
     active_dofs = GetDofsOfElements(st_fes,hasneg_spacetime)
@@ -89,23 +97,29 @@ while tend - t_old > delta_t/2:
     #Draw(lset_bottom,mesh,"bottom") 
     #Draw(lset_top,mesh,"top") 
     #input("lvlsets")
-    a.Assemble()
-              
+                
     f = LinearForm(st_fes)
     f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
     f += SymbolicLFI(levelset_domain = lset_neg_bottom,form = u0_ic*fix_t(v,0) )
+    
+    mesh.SetDeformation(dfm)
+    a.Assemble()
     f.Assemble()
+    mesh.UnsetDeformation()
     u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
        
     # exploiting the nodal property of the time fe:
-    u0_ic.vec[:] = u0.vec[fes1.ndof : 2*fes1.ndof]
+    u0_ic.vec[:] = u0.vec[k_t*fes1.ndof : (k_t+1)*fes1.ndof]
     
     t_old = t_old + delta_t
     told.Set(t_old)
     
+    mesh.SetDeformation(dfm_top)
     l2error = sqrt(Integrate(lset_neg_top,(u_exact-u0_ic)*(u_exact-u0_ic),mesh))
+    mesh.UnsetDeformation()
     print("t = {0}, l2error = {1}".format(t_old,l2error))
-   
-    Redraw(blocking=True)
+    
+    Draw(IfPos(-lset_top,u0_ic,float('nan')),mesh,"u")
+    #Redraw(blocking=True)
     #Draw(sqrt((u_exact-u0_ic)*(u_exact-u0_ic)),mesh,"error") 
        
