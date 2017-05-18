@@ -124,6 +124,12 @@ namespace xintegration
       virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
+  void UntransformedStraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element, ELEMENT_TYPE et,
+                                                     DOMAIN_TYPE dt,
+                                                     int intorder,
+                                                     LocalHeap & lh,
+                                                     IntegrationRule& quad_untrafo);
+
   const IntegrationRule * StraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,

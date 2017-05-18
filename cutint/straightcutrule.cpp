@@ -507,6 +507,33 @@ namespace xintegration
       }
   }
 
+  void UntransformedStraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
+                                                     ELEMENT_TYPE et,
+                                                     DOMAIN_TYPE dt,
+                                                     int intorder,
+                                                     LocalHeap & lh,
+                                                     IntegrationRule& quad_untrafo)
+  {
+    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_QUAD)&&(et != ET_HEX)){
+      cout << "Element Type: " << et << endl;
+      throw Exception("only trigs, tets and quads for now");
+    }
+    auto element_domain = CheckIfStraightCut(cf_lset_at_element);
+
+    CutSimplexElementGeometry geom(cf_lset_at_element, et, lh);
+    CutQuadElementGeometry geom_quad(cf_lset_at_element, et, lh);
+
+    if (element_domain == IF)
+    {
+      if((et == ET_QUAD)||(et == ET_HEX)) geom_quad.GetIntegrationRule(intorder, dt, quad_untrafo);
+      else geom.GetIntegrationRule(intorder, dt, quad_untrafo);
+    }
+    else if(dt == element_domain)
+    {
+      quad_untrafo.Append(SelectIntegrationRule (et, intorder));
+    }
+  }
+
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)
   const IntegrationRule * StraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,

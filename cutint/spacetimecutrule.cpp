@@ -123,19 +123,13 @@ namespace xintegration
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
 
-                DOMAIN_TYPE dt_at_t = CheckIfStraightCut(cf_lset_at_t);
                 IntegrationRule quad_at_t;
-                if(dt_at_t == IF){
-                    CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);
-                    geom.GetIntegrationRule(order_space, dt, quad_at_t);
+                UntransformedStraightCutIntegrationRule(cf_lset_at_t, et_space, dt, order_space, lh, quad_at_t);
+                for(IntegrationPoint& ip2 : quad_at_t) {
+                    ip2.Point()[2] = t;
+                    ip2.SetWeight(ip2.Weight()*ip.Weight()*(t1-t0));
                 }
-                else if(dt_at_t == dt){
-                    quad_at_t.Append(SelectIntegrationRule(ET_TRIG, order_space));
-                }
-                for(auto ip2 : quad_at_t) {
-                    auto ip2Point = ip2.Point(); ip2Point[2] = t;
-                    ir->Append(IntegrationPoint(ip2Point, ip2.Weight()*ip.Weight()*(t1-t0)));
-                }
+                ir->Append(quad_at_t);
             }
         }
         return ir;
