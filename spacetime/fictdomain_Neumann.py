@@ -20,6 +20,7 @@ fes1 = H1(mesh, order=1, dirichlet=[])
 fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 k_t = 1
 k_s = 1
+lset_order_time = 2
 tfe = ScalarTimeFE(k_t) 
 
 st_fes = SpaceTimeFESpace(fes1,tfe)
@@ -34,7 +35,7 @@ told = Parameter(0)
 tref = ReferenceTimeVariable()
 t = told + delta_t*tref
 
-lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = k_t,
+lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = lset_order_time,
                                          threshold=0.5, discontinuous_qn=True)
 
 r0 = 0.5
@@ -76,7 +77,7 @@ while tend - t_old > delta_t/2:
     # Put this into LevelSetMeshAdaptation_Spacetime later on
     lset_bottom.vec[:] = lset_p1.vec[0:fes_lset_slice.ndof]
     lset_neg_bottom = { "levelset" : lset_bottom, "domain_type" : NEG, "subdivlvl" : 0}
-    lset_top.vec[:] = lset_p1.vec[fes_lset_slice.ndof : 2*fes_lset_slice.ndof]
+    lset_top.vec[:] = lset_p1.vec[lset_order_time*fes_lset_slice.ndof : (lset_order_time+1)*fes_lset_slice.ndof]
     lset_neg_top = { "levelset" : lset_top, "domain_type" : NEG, "subdivlvl" : 0}
     
     a = BilinearForm(st_fes,symmetric=False)
