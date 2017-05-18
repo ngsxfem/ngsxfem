@@ -124,6 +124,9 @@ namespace xintegration
       virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
   };
 
+  template<unsigned int D>
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface);
+
   void UntransformedStraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element, ELEMENT_TYPE et,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,

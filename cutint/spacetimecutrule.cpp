@@ -92,12 +92,13 @@ namespace xintegration
     }
 
     const IntegrationRule * SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
-                                                        ELEMENT_TYPE et_space,
+                                                        const ElementTransformation &trafo,
                                                         ScalarFiniteElement<1>* fe_time,
                                                         DOMAIN_TYPE dt,
                                                         int order_time,
                                                         int order_space,
                                                         LocalHeap & lh){
+        ELEMENT_TYPE et_space = trafo.GetElementType();
         int lset_nfreedofs = cf_lset_at_element.Size();
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
@@ -123,20 +124,50 @@ namespace xintegration
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
 
-                IntegrationRule quad_at_t;
-                UntransformedStraightCutIntegrationRule(cf_lset_at_t, et_space, dt, order_space, lh, quad_at_t);
-                for(IntegrationPoint& ip2 : quad_at_t) {
+                IntegrationRule quad_untrafo;
+                auto element_domain = CheckIfStraightCut(cf_lset_at_t);
+
+                CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);
+                CutQuadElementGeometry geom_quad(cf_lset_at_t, et_space, lh);
+
+                if (element_domain == IF)
+                {
+                  if((et_space == ET_QUAD)||(et_space == ET_HEX)) geom_quad.GetIntegrationRule(order_space, dt, quad_untrafo);
+                  else geom.GetIntegrationRule(order_space, dt, quad_untrafo);
+                }
+                else if(dt == element_domain)
+                {
+                  quad_untrafo.Append(SelectIntegrationRule (et_space, order_space));
+                }
+                for(IntegrationPoint& ip2 : quad_untrafo) {
                     ip2.Point()[2] = t;
                     ip2.SetWeight(ip2.Weight()*ip.Weight()*(t1-t0));
                 }
-                ir->Append(quad_at_t);
+                if((element_domain == IF)&&(dt == IF)){
+                    auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
+                    if (trafo.SpaceDim() == 2){
+                        if(et_space == ET_QUAD){
+                            TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
+                        }
+                        else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
+                    }
+                    else{
+                        if(et_space == ET_HEX){
+                            TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad, ir_interface);
+                        }
+                        else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom, ir_interface);
+                    }
+                    ir->Append(*ir_interface);
+                }
+                else ir->Append(quad_untrafo);
+
             }
         }
         return ir;
     }
 
     void DebugSpaceTimeCutIntegrationRule(){
-        LocalHeap lh(10000);
+        /*LocalHeap lh(10000);
 
         //vector<double> a2{-1.,-1.,1.,-1.,-1.,1.}; //Mimic the function phi(x,y,z) = 1- 2*x - 2*y
         vector<double> a2{-1.,-1., 1.,-3.,-3.,-1}; //Mimic the function phi(x,y,z) = 1- 2*x - 2*y - 2*z
@@ -144,6 +175,7 @@ namespace xintegration
         FlatVector<> a(6,lh);
         for(int i=0; i<6; i++) a[i] = a2[i]; //Why isn't the Vec<6>{1,1,...} constructor working any more??
         //auto time_fe = new NodalTimeFE(1);
+
         NodalTimeFE time_fe(1);
         auto ir_neg = SpaceTimeCutIntegrationRule(a, ET_TRIG, &time_fe, NEG, 0, 0, lh);
         auto ir_pos = SpaceTimeCutIntegrationRule(a, ET_TRIG,&time_fe, POS, 0, 0, lh);
@@ -165,6 +197,6 @@ namespace xintegration
 
         cout << "Testing of the problematic lset function: " << endl;
         Vector<> iamproblematic{0.00673963, -0.0999511, -0.0127287, 0.0220921, -0.0849581, 0.000203323};
-        auto ir_neg2 = SpaceTimeCutIntegrationRule(iamproblematic, ET_TRIG, &time_fe, POS, 0,0,lh);
+        auto ir_neg2 = SpaceTimeCutIntegrationRule(iamproblematic, ET_TRIG, &time_fe, POS, 0,0,lh);*/
     }
 }

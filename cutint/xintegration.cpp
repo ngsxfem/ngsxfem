@@ -35,7 +35,7 @@ namespace xintegration
           FESpace* raw_FE = (gflset->GetFESpace()).get();
           SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
           ScalarFiniteElement<1>* fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
-          return SpaceTimeCutIntegrationRule(elvec,trafo.GetElementType(), fe_time, dt, time_intorder, intorder, lh);
+          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, lh);
       } else {
           return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
       }

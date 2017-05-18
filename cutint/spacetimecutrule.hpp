@@ -13,8 +13,7 @@ namespace xintegration
   void DebugSpaceTimeCutIntegrationRule();
 
   const IntegrationRule * SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
-                                                     //const ElementTransformation & trafo, //To be added
-                                                     ELEMENT_TYPE et_space,
+                                                     const ElementTransformation & trafo, //To be added
                                                      ScalarFiniteElement<1>* fe_time,
                                                      DOMAIN_TYPE dt,
                                                      int order_time,
