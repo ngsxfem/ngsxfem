@@ -67,6 +67,12 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.hasneg_spacetime = BitArray(self.ci.GetElementsOfType(NEG))
         self.hasneg_spacetime[:] = False
+        self.haspos_spacetime = BitArray(self.ci.GetElementsOfType(POS))
+        self.haspos_spacetime[:] = False
+        
+        self.v_kappa_node = L2(mesh,order=0)
+        self.v_kappa = SpaceTimeFESpace(self.v_kappa_node,self.tfe)
+        self.kappa = GridFunction(self.v_kappa, "kappa")        
         
     def interpol_ho(self,levelset,t,tstart,delta_t):
         times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
@@ -82,7 +88,7 @@ class LevelSetMeshAdaptation_Spacetime:
             InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1] = self.lset_p1_node.vec[:]
             
-    def CalcDeformation(self, levelset,t,tstart,delta_t):
+    def CalcDeformation(self, levelset,t,tstart,delta_t,calc_kappa = False):
         """
         Compute the deformation
         """
@@ -94,6 +100,9 @@ class LevelSetMeshAdaptation_Spacetime:
         self.qn.Update()
         self.v_def.Update()
         self.deform_node.Update()
+        self.v_kappa_node.Update()
+        self.v_kappa.Update()
+        self.kappa.Update()
         
         self.interpol_ho(levelset,t,tstart,delta_t)
         self.interpol_p1()
@@ -115,9 +124,14 @@ class LevelSetMeshAdaptation_Spacetime:
             haspos_spacetime |= self.ci.GetElementsOfType(IF)
             hasif_spacetime |= self.ci.GetElementsOfType(IF)
             hasif_spacetime |= self.ci.GetElementsOfType(IF)
+            if calc_kappa:
+                self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof] = self.ci.GetCutRatios(VOL)
         
         self.hasneg_spacetime[:] = False
         self.hasneg_spacetime |= hasneg_spacetime
+        self.haspos_spacetime[:] = False
+        self.haspos_spacetime |= haspos_spacetime
+       
             
         jumpels = BitArray(hasneg_spacetime)
         jumpels &= haspos_spacetime
@@ -157,7 +171,7 @@ class LevelSetMeshAdaptation_Spacetime:
         return max(max_dists)
       
        
-# geometry        
+## geometry        
 #square = SplineGeometry()
 #square.AddRectangle([0,0],[2,2],bc=1)
 #ngmesh = square.GenerateMesh(maxh=0.03, quad_dominated=False)
@@ -181,7 +195,8 @@ class LevelSetMeshAdaptation_Spacetime:
 #    
 #    while tend - tnew > delta_t/2:
 #        t.Set(tnew)
-#        dfm = lset_adap_st.CalcDeformation(lset,t,tnew,delta_t)      
+#        dfm = lset_adap_st.CalcDeformation(lset,t,tnew,delta_t,calc_kappa=True) 
+#        Draw(lset_adap_st.kappa,mesh,"kappa")
 #        max_nodes.append(lset_adap_st.CalcMaxDistance(lset,t,tnew,delta_t))
 #        max_interm.append(lset_adap_st.CalcMaxDistance(
 #                              lset,t,tnew,delta_t,[i*0.1 for i in range(11)]))
@@ -214,7 +229,7 @@ class LevelSetMeshAdaptation_Spacetime:
 #        print("Eoc intermediate = {0}".format(eoc_interm))
 #            
 #            
-#StudyConvergence(delta_t=0.01,max_rfs=5,where = "time")
+#StudyConvergence(delta_t=0.01,max_rfs=3,where = "time")
 #        
 #                                            
 #lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
