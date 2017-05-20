@@ -770,22 +770,46 @@ void ExportNgsx(py::module &m)
 
   // DiffOpDt
 
-     m.def("dt", FunctionPointer
-          ([] (const PyProxyFunction self)
-     {
+  m.def("dt", FunctionPointer
+       ([] (const PyProxyFunction self,py::object comp)
+  {
+    Array<int> comparr(0);
+    if (py::extract<int> (comp).check())
+    {
+      int c = py::extract<int>(comp)();
+      if (c != -1)
+      {
+        comparr.SetSize(1);
+        comparr[0] = c;
+      }
+    }
 
-     shared_ptr<DifferentialOperator> diffopdt;
-     diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+    if (py::extract<py::list> (comp).check())
+      comparr = makeCArray<int> (py::extract<py::list> (comp)());
 
+    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self.Get()->Evaluator()))
+    {
+      throw Exception("cannot work with compounddiffops, prescribe comp != -1");
+    }
 
+  shared_ptr<DifferentialOperator> diffopdt;
+  diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
 
-     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
-                                                 diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
+  for (int i = comparr.Size() - 1; i >= 0; --i)
+  {
+    diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
+  }
 
+  auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                               diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-     return PyProxyFunction(adddiffop);
-     }),
-        py::arg("proxy")
+  if (self.Get()->IsOther())
+    adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
+
+  return PyProxyFunction(adddiffop);
+  }),
+        py::arg("proxy"),
+        py::arg("comp") = -1
         );
 
      m.def("dt", FunctionPointer
