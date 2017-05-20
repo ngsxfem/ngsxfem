@@ -792,70 +792,96 @@ void ExportNgsx(py::module &m)
       throw Exception("cannot work with compounddiffops, prescribe comp != -1");
     }
 
-  shared_ptr<DifferentialOperator> diffopdt;
-  diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+    shared_ptr<DifferentialOperator> diffopdt;
+    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
 
-  for (int i = comparr.Size() - 1; i >= 0; --i)
+    for (int i = comparr.Size() - 1; i >= 0; --i)
+    {
+      diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
+    }
+
+    auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                                 diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+    if (self.Get()->IsOther())
+      adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
+
+    return PyProxyFunction(adddiffop);
+    }),
+          py::arg("proxy"),
+          py::arg("comp") = -1
+          );
+
+  m.def("dt", FunctionPointer
+       ([](PyGF self) -> PyCF
   {
-    diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
-  }
+    shared_ptr<DifferentialOperator> diffopdt;
+    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
 
-  auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
-                                               diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
+    return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdt));
+  }));
 
-  if (self.Get()->IsOther())
-    adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
-
-  return PyProxyFunction(adddiffop);
-  }),
-        py::arg("proxy"),
-        py::arg("comp") = -1
-        );
-
-     m.def("dt", FunctionPointer
-          ([](PyGF self) -> PyCF
-     {
-     shared_ptr<DifferentialOperator> diffopdt;
-     diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
-
-     return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdt));
-     }));
-
-     m.def("ReferenceTimeVariable", FunctionPointer
-          ([]() -> PyCF
-     {
-       return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-     }));
+   m.def("ReferenceTimeVariable", FunctionPointer
+        ([]() -> PyCF
+   {
+     return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+   }));
 
 
    // DiffOpFixt
 
-     m.def("fix_t", FunctionPointer
-          ([] (const PyProxyFunction self, int time)
-     {
+  m.def("fix_t", FunctionPointer
+       ([] (const PyProxyFunction self, int time,py::object comp)
+  {
+    Array<int> comparr(0);
+    if (py::extract<int> (comp).check())
+    {
+      int c = py::extract<int>(comp)();
+      if (c != -1)
+      {
+        comparr.SetSize(1);
+        comparr[0] = c;
+      }
+    }
 
-     shared_ptr<DifferentialOperator> diffopfixt;
+    if (py::extract<py::list> (comp).check())
+      comparr = makeCArray<int> (py::extract<py::list> (comp)());
 
-     switch (time)
-     {
-     case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-     case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
-     default : throw Exception("Requested time not implemented yet.");
-     }
+    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self.Get()->Evaluator()))
+    {
+      throw Exception("cannot work with compounddiffops, prescribe comp != -1");
+    }
 
-     auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
-                                                    diffopfixt, nullptr, nullptr, nullptr, nullptr, nullptr);
+    shared_ptr<DifferentialOperator> diffopfixt;
 
+    switch (time)
+    {
+      case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+      case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+      default : throw Exception("Requested time not implemented yet.");
+    }
 
-     return PyProxyFunction(adddiffop);
-     }),
-        py::arg("proxy"),
-        py::arg("time")
-        );
+    for (int i = comparr.Size() - 1; i >= 0; --i)
+    {
+      diffopfixt = make_shared<CompoundDifferentialOperator> (diffopfixt, comparr[i]);
+    }
 
-     m.def("fix_t", FunctionPointer
-          ([](PyGF self, int time) -> PyCF
-     {
+    auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+                                                 diffopfixt, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+    if (self.Get()->IsOther())
+      adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
+
+    return PyProxyFunction(adddiffop);
+    }),
+          py::arg("proxy"),
+          py::arg("time"),
+          py::arg("comp") = -1
+          );
+
+   m.def("fix_t", FunctionPointer
+        ([](PyGF self, int time) -> PyCF
+   {
      shared_ptr<DifferentialOperator> diffopfixt;
 
      switch (time)
@@ -866,14 +892,14 @@ void ExportNgsx(py::module &m)
      }
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopfixt));
-     }));
+   }));
 
 
-     m.def("ReferenceTimeVariable", FunctionPointer
-          ([]() -> PyCF
-     {
-       return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-     }));
+   m.def("ReferenceTimeVariable", FunctionPointer
+        ([]() -> PyCF
+   {
+     return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+   }));
 
 
 
