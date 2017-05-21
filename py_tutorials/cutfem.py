@@ -1,3 +1,49 @@
+"""
+In this example we solve a scalar *unfitted* interface problem. As a discretization method we use a
+level set based geometry description and a Cut Finite element method with a Nitsche formulation to
+impose the interface conditions. 
+
+    domain: 
+    -------
+
+    The domain is [-1.5,1.5]^2 while the interface is described by a level set function ( unit ball
+    in the ||·||_4 norm ). In the discretization the level set function is approximated with a
+    piecewise linear interpolation. 
+
+    PDE problem:
+    ------------
+    domain equations:
+      - alpha_i u_xx - alpha_i u_yy = f in subdomain i, i=1,2
+    interface conditions:
+                                [u] = 0 on interface (continuity across the interface     )
+                   [-alpha · du/dn] = 0 on interface (conservation of the (diffusive) flux)
+
+    discretization:
+    ---------------
+    Finite element space:
+    For each subdomain we consider the space of piecewise linears restricted to the corresponding
+    subdomain. 
+
+    Variational formulation:
+    We use a Nitsche formulation which involves averages of the fluxes and jumps of the solution
+    across the interface. For the average we use the Hansbo-choice where the average is adjusted to
+    the local cut configuration in order to ensure stability of the resulting formulation.
+    
+    ...to be continued...
+
+    implementation:
+    ---------------
+    Finite element space:
+    The finite element space is a simple composition of two scalar piecewise linear finite element
+    spaces. However, in the variational formulation only these degrees of freedom that have some
+    part in the corresponding subdomain are used and appear in the equations. Many unused dofs
+    appear and have to be marked to finally obtain a regular matrix.
+
+    ...to be continued...
+
+
+"""
+
 from math import pi
 # ngsolve stuff
 from ngsolve import *
