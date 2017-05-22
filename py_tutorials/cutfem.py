@@ -19,8 +19,8 @@ impose the interface conditions.
                    [-alpha · du/dn] =    0 on interface (conservation of the (diffusive) flux),
                                  u  =  u_D on domain boundary.
 
-    The r.h.s. term f is chosen according to a manufactured solution which allows us to measure
-    errors after the computation of a discrete solution.
+    The r.h.s. term f and the Dirichlet data u_D is chosen according to a manufactured solution
+    which allows us to measure errors after the computation of a discrete solution.
     The coefficients alpha are domain-wise constants which are different in the two subdomains.
 
     discretization:
