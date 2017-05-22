@@ -13,7 +13,7 @@ impose the interface conditions.
     PDE problem:
     ------------
     domain equations:
-      - alpha_i u_xx - alpha_i u_yy =   f in subdomain i, i=1,2,
+            - alpha_i (u_xx + u_yy) =   f in subdomain i, i=1,2,
     interface conditions:
                                 [u] =    0 on interface (continuity across the interface     ),
                    [-alpha · du/dn] =    0 on interface (conservation of the (diffusive) flux),
@@ -55,9 +55,9 @@ impose the interface conditions.
 
     extensions:
     -----------
-    Instead of using the CutFEM-characterization of the space, one could use an
+    * Instead of using the CutFEM-characterization of the space, one could use an
     XFEM-characterization, cf. nxfem.py. 
-    To obtain higher order accuracy (also w.r.t. the geometry approximatin) isoparametric unfitted
+    * To obtain higher order accuracy (also w.r.t. the geometry approximatin) isoparametric unfitted
     methods can be used, cf. nxfem_higher_order.py.
 
     literature:
@@ -189,7 +189,6 @@ gfu.vec.data += update
 # visualization of (discrete) solution: Wherever (interpolated) level set function is negative
 # visualize the first component, where it is positive visualize the second component
 u_coef = IfPos(lsetp1, gfu.components[1], gfu.components[0])
-u = [gfu.components[i] for i in [0,1]]
 
 # visualize levelset, interpolated levelset and discrete solution:
 # (Note that the visualization does not respect the discontinuities. They are smeared out. To see
@@ -202,9 +201,7 @@ Draw(u_coef,mesh,"u")
 err_sqr_coefs = [(gfu.components[i]-solution[i])*(gfu.components[i]-solution[i]) for i in [0,1] ]
 
 # Computation of L2 error:
-l2error = sqrt(   Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=mesh,
-                            order=2, heapsize=1000000)
-                + Integrate( levelset_domain=lset_pos, cf=err_sqr_coefs[1], mesh=mesh,
-                            order=2, heapsize=1000000))
+l2error = sqrt(   Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=mesh, order=2)
+                + Integrate( levelset_domain=lset_pos, cf=err_sqr_coefs[1], mesh=mesh, order=2))
 
 print("L2 error : ",l2error)
