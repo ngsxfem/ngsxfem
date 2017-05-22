@@ -1,3 +1,74 @@
+"""
+In this example we solve an *unfitted* Stokes interface problem with a high order isoparametric
+unfitteddiscretization method. 
+This file is based on the discretizations in cutfem.py, nxfem.py and nxfem_higher_order.py. 
+
+    domain: 
+    -------
+    The domain is [-1,1]^2 while the interface is described by a level set function ( circile with
+    radius R=2/3).
+
+    PDE problem:
+    ------------
+    domain equations for velocity (u1,u2) and pressure p:
+     - alpha_i (u1_xx + u1_yy) + p_x = rho_i g1 in subdomain i, i=1,2,
+     - alpha_i (u2_xx + u2_yy) + p_y = rho_i g2 in subdomain i, i=1,2,
+                         u1_x + u2_y = 0        in subdomain i, i=1,2,
+    interface conditions:
+                                [u] =    0 on interface (continuity across the interface    ),
+             [-alpha · du/dn + p·n] =    f on interface (conservation of the (momentum) flux),
+                                 u  =  u_D on domain boundary.
+
+    The r.h.s. term (g1,g2) corresponds to gravity, the term f is surface tension force (here f =
+    kappa · n where kappa is the mean curvature (1/R)). The Dirichlet data is chosen according to a
+    manufactured solution introduced in [1]
+    which allows us to measure errors after the computation of a discrete solution.
+    The coefficients alpha are domain-wise constants which are different in the two subdomains.
+    
+
+    discretization:
+    ---------------
+    Finite element space:
+    As in nxfem.py but for every velocity component and the pressure
+
+    Variational formulation:
+    We use a Nitsche formulation which involves averages of the fluxes and jumps of the solution
+    across the interface [2]. For the average we use the Hansbo-choice [3] where the average is
+    adjusted to the local cut configuration in order to ensure stability of the resulting viscosity
+    formulation. 
+    To ensure inf-sup for the velocity-pressure space we add a ghost penalty stabilization on the
+    pressure space, cf. [2]. 
+
+    Surface tension:  
+    In this example we prescribe the surface tension analytically, i.e. we circumvent approximating
+    the mean curvature from the level set function. 
+
+    implementational aspects:
+    ---------------
+    Geometry approximation:
+    As in nxfem_higher_order.py
+
+    Ghost penalty stabilization:
+    The edge-based stabilizations require different couplings (compared to standard
+    discretizations). To add these to the sparsity pattern we have to add the "dgjumps" flags which
+    prepares the sparse matrix for the corresponding needed couplings.
+
+
+    linear systems:
+    ---------------
+    A (sparse) direct solver is applied to solve the arising linear systems.
+
+    literature:
+    -----------
+    [1]: M.Kirchhart, S.Groß, A.Reusken, Analysis of an XFEM discretization for Stokes interface
+    problems, SISC, 2016
+    [2]: P.Lederer, C.-M.Pfeiler, C.Wintersteiger, C.Lehrenfeld, Higher order unfitted fem for
+    stokes interface problems. PAMM, 2016 
+    [3]: A.Hansbo, P.Hansbo, An unfitted finite element method, based on Nitsche's method, for
+    elliptic interface problems, Comp. Meth. Appl. Mech. Eng., 2002
+
+"""
+
 from netgen.geom2d import SplineGeometry
 from netgen.meshing import MeshingParameters
 from ngsolve import *
