@@ -62,14 +62,14 @@ def SymbolicBFI(levelset_domain=None, *args, **kwargs):
             print("Please provide a level set function")
         if not "domain_type" in levelset_domain:
             print("Please provide a domain type (NEG,POS or IF)")
-        print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
+        # print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
         return SymbolicCutBFI(lset=levelset_domain["levelset"],
                               domain_type=levelset_domain["domain_type"],
                               force_intorder=levelset_domain["force_intorder"],
                               subdivlvl=levelset_domain["subdivlvl"],
                               *args, **kwargs)
     else:
-        print("SymbolicBFI-Wrapper: original SymbolicBFI called")
+        # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
         if (levelset_domain == None):
             return SymbolicBFI_old(*args,**kwargs)
         else:
@@ -86,14 +86,14 @@ def SymbolicLFI(levelset_domain=None, *args, **kwargs):
             print("Please provide a level set function")
         if not "domain_type" in levelset_domain:
             print("Please provide a domain type (NEG,POS or IF)")
-        print("SymbolicLFI-Wrapper: SymbolicCutLFI called")
+        # print("SymbolicLFI-Wrapper: SymbolicCutLFI called")
         return SymbolicCutLFI(lset=levelset_domain["levelset"],
                               domain_type=levelset_domain["domain_type"],
                               force_intorder=levelset_domain["force_intorder"],
                               subdivlvl=levelset_domain["subdivlvl"],
                               *args, **kwargs)
     else:
-        print("SymbolicLFI-Wrapper: original SymbolicLFI called")
+        # print("SymbolicLFI-Wrapper: original SymbolicLFI called")
         if (levelset_domain == None):
             return SymbolicLFI_old(*args,**kwargs)
         else:
@@ -124,10 +124,10 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
 Integrate_old = Integrate
 def Integrate(levelset_domain=None, *args, **kwargs):
     if levelset_domain != None and type(levelset_domain)==dict:
-        print("Integrate-Wrapper: IntegrateX called")
+        # print("Integrate-Wrapper: IntegrateX called")
         return Integrate_X_special_args(levelset_domain, *args, **kwargs)
     else:
-        print("Integrate-Wrapper: original Integrate called")
+        # print("Integrate-Wrapper: original Integrate called")
         if (levelset_domain == None):
             return Integrate_old(*args,**kwargs)
         else:
