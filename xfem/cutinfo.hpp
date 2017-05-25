@@ -34,7 +34,7 @@ namespace ngcomp
     double subdivlvl = 0;
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
-    void Update(shared_ptr<CoefficientFunction> lset, LocalHeap & lh);
+    void Update(shared_ptr<CoefficientFunction> lset, int time_order, LocalHeap & lh);
 
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
 

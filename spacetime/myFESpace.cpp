@@ -91,7 +91,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     // number of dofs:
     ndof = (Vh->GetNDof()) * tfe->GetNDof();
-    cout << "Total number of Dofs: " << Vh->GetNDof() << endl;
+    cout << "Total number of Dofs: " << ndof << endl;
 
 
   }
