@@ -47,7 +47,7 @@ VhG = FESpace([st_fes,st_fes])
 #visoptions.deformation = 1
 
 tend = 1
-delta_t = 1/128
+delta_t = 1/16
 tnew = 0
 
 told = Parameter(0)
@@ -126,18 +126,17 @@ coef_u0 = [CoefficientFunction(0),CoefficientFunction(0)]
 u0_ic.components[0].Set(coef_u0[0]) # set initial condition
 u0_ic.components[1].Set(coef_u0[1]) # set initial condition
 
-# not needed when active dofs are determined by generalization of 
-# CutInfo to space-time 
-#m_reg = BilinearForm(VhG,symmetric=False)
-#epsilon = 1e-8
-#m_reg += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1])    
-#st_fes.SetTime(0.0)
-#m_reg.Assemble()
-#st_fes.SetTime(1.0)
-#m1 = m_reg.mat.CreateMatrix()
-#m_reg.Assemble()
-#m_reg.mat.AsVector().data +=  m1.AsVector()
-#st_fes.SetOverrideTime(False)
+
+m_reg = BilinearForm(VhG,symmetric=False)
+epsilon = 1e-8
+m_reg += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1])    
+st_fes.SetTime(0.0)
+m_reg.Assemble()
+st_fes.SetTime(1.0)
+m1 = m_reg.mat.CreateMatrix()
+m_reg.Assemble()
+m_reg.mat.AsVector().data +=  m1.AsVector()
+st_fes.SetOverrideTime(False)
 
 ci = CutInfo(mesh)
 
@@ -213,7 +212,7 @@ while tend - t_old > delta_t/2:
     
     #mesh.SetDeformation(dfm)
     a.Assemble()
-    #a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
+    a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
     f.Assemble()
     #mesh.UnsetDeformation()
     u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
