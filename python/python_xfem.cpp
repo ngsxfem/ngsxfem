@@ -56,6 +56,7 @@ void ExportNgsx(py::module &m)
   .def("__init__", FunctionPointer( [] (CutInformation *instance,
                                         shared_ptr<MeshAccess> ma,
                                         py::object lset,
+                                        int time_order,
                                         int heapsize)
   {
     new (instance) CutInformation (ma);
@@ -63,21 +64,24 @@ void ExportNgsx(py::module &m)
     {
       PyCF cflset = py::extract<PyCF>(lset)();
       LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-      instance->Update(cflset.Get(),lh);
+      instance->Update(cflset.Get(),time_order,lh);
     }
   }),
        py::arg("mesh"),
        py::arg("levelset") = DummyArgument(),
+       py::arg("time_order")=-1,
        py::arg("heapsize") = 1000000
        )
   .def("Update", FunctionPointer ([](CutInformation & self,
                                      PyCF lset,
+                                     int time_order,
                                      int heapsize)
   {
     LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-    self.Update(lset.Get(),lh);
+    self.Update(lset.Get(),time_order,lh);
   }),
        py::arg("levelset"),
+       py::arg("time_order")=-1,
        py::arg("heapsize") = 1000000
        )
   .def("Mesh", FunctionPointer ([](CutInformation & self)
