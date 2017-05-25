@@ -14,7 +14,7 @@ using namespace ngcomp;
 namespace ngfem
 {
   typedef std::pair<double,double> TimeInterval;
-  
+
   class ScalarFieldEvaluator
   {
   public:
@@ -54,8 +54,8 @@ namespace ngfem
     mutable bool timefixed = false;
   public:
     ScalarFEEvaluator(const FiniteElement & a_fe, FlatVector<> a_linvec, LocalHeap & a_lh)
-      : linvec(a_linvec), 
-        lh(a_lh)
+      : linvec(a_linvec),
+      lh(a_lh)
     {
       // st_fe = dynamic_cast< const ScalarSpaceTimeFiniteElement<D> * >(&a_fe);
       s_fe = dynamic_cast< const ScalarFiniteElement<D> * >(&a_fe);
@@ -67,8 +67,8 @@ namespace ngfem
         throw Exception("ScalarFEEvaluator - constructor: cast failed...");
       }
     }
-    
-    void FixTime(double a_fixedtime ) const 
+
+    void FixTime(double a_fixedtime ) const
     {
       timefixed = true;
       fixedtime = a_fixedtime;
@@ -78,7 +78,7 @@ namespace ngfem
     {
       timefixed = false;
     }
-      
+
     virtual double operator()(const Vec<D>& point) const;
     virtual double operator()(const Vec<D+1>& point) const;
   };
@@ -93,11 +93,11 @@ namespace ngfem
     double fixedtime = 0.0;
 
   public:
-    CoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans) 
-      : eval(a_eval), eltrans(a_eltrans) { ; }
+    CoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans)
+      : eval(a_eval), eltrans(a_eltrans) {; }
 
-    CoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans, double a_fixedtime) 
-      : eval(a_eval), eltrans(a_eltrans), use_fixedtime(true), fixedtime(a_fixedtime) { ; }
+    CoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans, double a_fixedtime)
+      : eval(a_eval), eltrans(a_eltrans), use_fixedtime(true), fixedtime(a_fixedtime) {; }
 
 
     virtual double Evaluate_SD(const FlatVector<>& point) const
@@ -117,134 +117,9 @@ namespace ngfem
       else
       {
         throw Exception (" Is this still used somewhere ? ");
-        // DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-        // mipp.Point().Range(0,D) = mip->GetPoint();
-        // mipp.Point()[D] = fixedtime;
-        // return eval.Evaluate(mipp);
       }
     }
-    
-    // virtual double operator()(const Vec<1>& point) const
-    // {
-    //   IntegrationPoint ip(point(0));
-    //   MappedIntegrationPoint<1,D> mip(ip, eltrans);
-    //   if (!fixedtime)
-    //   {
-    //     return eval.Evaluate(mip);
-    //   }
-    //   else
-    //   {
-    //     DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-    //     mipp.Point().Range(0,D) = mip.GetPoint();
-    //     mipp.Point()[D] = fixedtime;
-    //     return eval.Evaluate(mipp);
-    //   }
-    // }
-
-    // virtual double operator()(const Vec<2>& point) const
-    // {
-    //   IntegrationPoint ip(point(0), point(1));
-    //   MappedIntegrationPoint<2,D> mip(ip, eltrans);
-    //   if (!fixedtime)
-    //   {
-    //     return eval.Evaluate(mip);
-    //   }
-    //   else
-    //   {
-    //     DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-    //     mipp.Point().Range(0,D) = mip.GetPoint();
-    //     mipp.Point()[D] = fixedtime;
-    //     return eval.Evaluate(mipp);
-    //   }
-    // }
-
-    // virtual double operator()(const Vec<3>& point) const
-    // {
-    //   IntegrationPoint ip(point(0),point(1),point(2));
-    //   shared_ptr<BaseMappedIntegrationPoint> mip = NULL;
-    //   if (D==3)
-    //     mip = make_shared< MappedIntegrationPoint<3,3> >(ip, eltrans);
-    //   else
-    //     throw Exception (" Dimensions do not match, D < 3 ? ");
-    //   if (!fixedtime)
-    //   {
-    //     return eval.Evaluate(*mip);
-    //   }
-    //   else
-    //   {
-    //     DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-    //     mipp.Point().Range(0,D) = mip->GetPoint();
-    //     mipp.Point()[D] = fixedtime;
-    //     return eval.Evaluate(mipp);
-    //   }
-    // }
   };
-
-  /*
-  template <int D> // D : resulting space dimension..
-  class SpaceTimeCoefficientFunctionEvaluator : public ScalarFieldEvaluator
-  {
-  protected:
-    const CoefficientFunction & eval;
-    const ElementTransformation & eltrans;
-    TimeInterval ti;
-  public:
-    SpaceTimeCoefficientFunctionEvaluator( const CoefficientFunction & a_eval, const ElementTransformation & a_eltrans, const TimeInterval & a_ti) 
-      : eval(a_eval), eltrans(a_eltrans), ti(a_ti) 
-    { 
-      // static bool first = true;
-      // if (first)
-      // {
-      //   cout << " WARNING SpaceTimeCoefficientFunctionEvaluator only evaluates as a time-independent lset " << endl;
-      //   first = false;
-      // }
-    }
-
-    virtual double operator()(const Vec<2>& point) const
-    {
-      IntegrationPoint ip(point(0));
-      MappedIntegrationPoint<1,D> mip(ip, eltrans);
-      DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-      mipp.Point().Range(0,D) = mip.GetPoint();
-      mipp.Point()[D] = (1.0-point(1)) * ti.first + point(1) * ti.second;
-      double ret = eval.Evaluate(mipp);
-      return ret;
-    }
-
-    virtual double operator()(const Vec<3>& point) const
-    {
-      IntegrationPoint ip(point(0),point(1));
-      MappedIntegrationPoint<2,D> mip(ip, eltrans);
-      DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-      mipp.Point().Range(0,D) = mip.GetPoint();
-      // mipp.Point()[D] = (1.0-point(2)) * ti.first + point(2) * ti.second;
-      mipp.Point()[D] = (1.0-point(2)) * ti.first + point(2) * ti.second;
-      // std::cout << " mipp.Point() = " << mipp.Point() << std::endl;
-      // std::cout << " eval.Evaluate(mipp) = " << eval.Evaluate(mipp) << std::endl;
-      double res = eval.Evaluate(mipp);
-
-      return res;
-    }
-
-    virtual double operator()(const Vec<4>& point) const
-    {
-      IntegrationPoint ip(point(0),point(1),point(2));
-
-      shared_ptr<BaseMappedIntegrationPoint> mip = NULL;
-      if (D==3)
-        mip = make_shared< MappedIntegrationPoint<3,3> >(ip, eltrans);
-      else
-        throw Exception (" Dimensions do not match, D < 3 ? ");
-      DimMappedIntegrationPoint<D+1> mipp(ip,eltrans);
-      mipp.Point().Range(0,D) = mip->GetPoint();
-      mipp.Point()[D] = (1.0-point(3)) * ti.first + point(3) * ti.second;
-      return eval.Evaluate(mipp);
-    }
-
-
-  };
-  */
-
 
 } // end of namespace
 
