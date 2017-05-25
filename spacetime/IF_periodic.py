@@ -37,7 +37,7 @@ fes1 = Periodic(H1(mesh,order=k_s,dirichlet=[]))
 fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
-# matrix becomes singular for lset_order_time = 2
+
 lset_order_time = 2
 tfe = ScalarTimeFE(k_t) 
 
@@ -126,15 +126,35 @@ coef_u0 = [CoefficientFunction(0),CoefficientFunction(0)]
 u0_ic.components[0].Set(coef_u0[0]) # set initial condition
 u0_ic.components[1].Set(coef_u0[1]) # set initial condition
 
+# not needed when active dofs are determined by generalization of 
+# CutInfo to space-time 
+#m_reg = BilinearForm(VhG,symmetric=False)
+#epsilon = 1e-8
+#m_reg += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1])    
+#st_fes.SetTime(0.0)
+#m_reg.Assemble()
+#st_fes.SetTime(1.0)
+#m1 = m_reg.mat.CreateMatrix()
+#m_reg.Assemble()
+#m_reg.mat.AsVector().data +=  m1.AsVector()
+#st_fes.SetOverrideTime(False)
+
+ci = CutInfo(mesh)
+
 
 while tend - t_old > delta_t/2:
     
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t,calc_kappa = True) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1  
+    ci.Update(lset_p1,2)
+    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
     active_dofs = BitArray(VhG.FreeDofs())
-    active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,lset_adap_st.hasneg_spacetime),GetDofsOfElements(st_fes,lset_adap_st.haspos_spacetime)])
-    #print(active_dofs)
+    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
+    hasneg_spacetime |= ci.GetElementsOfType(IF)
+    haspos_spacetime = BitArray(ci.GetElementsOfType(POS))
+    haspos_spacetime |= ci.GetElementsOfType(IF)
+    active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,hasneg_spacetime),GetDofsOfElements(st_fes,haspos_spacetime)])
     
     lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
     lset_pos = { "levelset" : lset_p1, "domain_type" : POS, "subdivlvl" : 0}
@@ -193,6 +213,7 @@ while tend - t_old > delta_t/2:
     
     #mesh.SetDeformation(dfm)
     a.Assemble()
+    #a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
     f.Assemble()
     #mesh.UnsetDeformation()
     u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
