@@ -180,7 +180,7 @@ namespace ngfem
     // }
   };
 
-
+  /*
   template <int D> // D : resulting space dimension..
   class SpaceTimeCoefficientFunctionEvaluator : public ScalarFieldEvaluator
   {
@@ -243,7 +243,7 @@ namespace ngfem
 
 
   };
-
+  */
 
 
 } // end of namespace
