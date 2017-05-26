@@ -4,6 +4,46 @@ from xfem import *
 from netgen.geom2d import SplineGeometry
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
+import netgen.meshing as ngm
+
+@pytest.mark.parametrize("domain", [NEG, POS, IF])
+@pytest.mark.parametrize("alpha", [2,4,8])
+
+def test_polynomial_ET_Segm(domain, alpha):
+    order = alpha
+    m = ngm.Mesh()
+    m.dim = 1
+    nel = 1
+    
+    pnums = []
+    for i in range(0, nel+1):
+        pnums.append (m.Add (ngm.MeshPoint (ngm.Pnt(i/nel, 0, 0))))
+    
+    for i in range(0,nel):
+        m.Add (ngm.Element1D ([pnums[i],pnums[i+1]], index=1))
+    
+    m.Add (ngm.Element0D (pnums[0], index=1))
+    m.Add (ngm.Element0D (pnums[nel], index=2))
+    mesh = Mesh(m)
+    
+    x_ast = 0.78522
+    levelset = x_ast-x
+    referencevals = {POS:pow(x_ast, alpha+1)/(alpha+1), NEG:(1-pow(x_ast, alpha+1))/(alpha+1), IF: pow(x_ast, alpha)}
+    V = H1(mesh, order=1)
+    lset_approx = GridFunction(V)
+    #InterpolateToP1(levelset,lset_approx)
+    lset_approx.Set(levelset)
+    
+    f = pow(x, alpha)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                             cf=f, mesh=mesh, order = order)
+    print("Result of Integration Key ",domain," : ", integral)
+    error = abs(integral - referencevals[domain])
+    print("Error: ", error)
+    
+    assert error < 5e-15*(order+1)*(order+1)
+
 
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
