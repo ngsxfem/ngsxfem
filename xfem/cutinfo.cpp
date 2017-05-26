@@ -75,7 +75,7 @@ namespace ngcomp
         double part_vol [] = {0.0, 0.0};
         for (DOMAIN_TYPE np : {POS, NEG})
         {
-          const IntegrationRule * ir_np = (time_order > -1 && vb == BND) ? nullptr : CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,time_order, lh, subdivlvl);
+          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,time_order, lh, subdivlvl);
           // If(time_order > -1 && vb == BND) should have part_vol[NEG] == 0, which will lead to
           // the BND element being marked as POS.
           if (ir_np)
