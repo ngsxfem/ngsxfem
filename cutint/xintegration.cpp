@@ -1,9 +1,5 @@
 #include "xintegration.hpp"
 #include "straightcutrule.hpp"
-#include "spacetimecutrule.hpp"
-#include "../spacetime/myElement.hpp"
-#include "../spacetime/myFESpace.hpp"
-
 
 namespace xintegration
 {
@@ -14,15 +10,14 @@ namespace xintegration
                                                    const ElementTransformation & trafo,
                                                    DOMAIN_TYPE dt,
                                                    int intorder,
-                                                   int time_intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl
-                                                   )
+                                                   int subdivlvl)
   {
     // temporary fix for ET_SEGM
-    // if (trafo.GetElementType() == ET_SEGM && time_intorder ==-1)
+    /*
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+    */
 
     if (gflset != nullptr)
     {
@@ -64,7 +59,7 @@ namespace xintegration
     else
     {
       shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
-      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && ( (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace") || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")))
+      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace"))
         return make_tuple(nullptr, ret);
       else
         return make_tuple(cflset, nullptr);

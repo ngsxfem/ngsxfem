@@ -66,7 +66,8 @@ namespace xintegration
   }
 
   double MeasureSimplVol(const Polytope &s){
-      if(s.Size()==2) return L2Norm(Vec<3>(s.GetPoint(1)-s.GetPoint(0)));
+      if(s.Size() == 1) return 1.;
+      else if(s.Size()==2) return L2Norm(Vec<3>(s.GetPoint(1)-s.GetPoint(0)));
       else if(s.Size()==3) return L2Norm(Cross(Vec<3>(s.GetPoint(2) - s.GetPoint(0)), Vec<3>(s.GetPoint(1) - s.GetPoint(0))));
       else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(s.GetPoint(3)-s.GetPoint(0)), Vec<3>(s.GetPoint(2)-s.GetPoint(0)), Vec<3>(s.GetPoint(1)-s.GetPoint(0))));
       else throw Exception("Calc the Volume of this type of Simplex not implemented!");
@@ -80,7 +81,7 @@ namespace xintegration
           //cout << "point Nr. " << i << " : " << verts[i][0] << " , " << verts[i][1] << " , " << verts[i][2] << endl;
       }
 
-      if((et == ET_TRIG) || (et == ET_TET)){
+      if((et == ET_SEGM) || (et == ET_TRIG) || (et == ET_TET)){
           Array<int> BaseSimplex(D+1);
           for(int i=0; i<BaseSimplex.Size(); i++) BaseSimplex[i] = i;
           simplices.Append(Polytope(BaseSimplex, D, svs_ptr));
@@ -108,7 +109,9 @@ namespace xintegration
   }
 
   void CutSimplexElementGeometry::CutBaseSimplex(DOMAIN_TYPE dt){
-      Polytope s_cut = CalcCutPolytopeUsingLset(simplices[0]);
+      Polytope s_cut;
+      if(D> 1) s_cut = CalcCutPolytopeUsingLset(simplices[0]);
+      if(D==1) s_cut = CalcCutPointLineUsingLset(simplices[0]);
 
       if(dt == IF) CalcNormal(simplices[0]);
       simplices.DeleteAll();
@@ -171,7 +174,8 @@ namespace xintegration
         double trafofac = MeasureSimplVol(simplices[i]);
 
         const IntegrationRule * ir_ngs;
-        if(simplices[i].Size() == 2) ir_ngs = & SelectIntegrationRule(ET_SEGM, order);
+        if(simplices[i].Size() == 1) ir_ngs = & SelectIntegrationRule(ET_POINT, order);
+        else if(simplices[i].Size() == 2) ir_ngs = & SelectIntegrationRule(ET_SEGM, order);
         else if(simplices[i].Size() == 3) ir_ngs = & SelectIntegrationRule(ET_TRIG, order);
         else if(simplices[i].Size() == 4) ir_ngs = & SelectIntegrationRule (ET_TET, order);
 
@@ -554,9 +558,9 @@ namespace xintegration
 
     auto et = trafo.GetElementType();
 
-    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_QUAD)&&(et != ET_HEX)){
+    if ((et != ET_SEGM)&&(et != ET_TRIG)&&(et != ET_TET)&&(et != ET_QUAD)&&(et != ET_HEX)){
       cout << "Element Type: " << et << endl;
-      throw Exception("only trigs, tets and quads for now");
+      throw Exception("only segms, trigs, tets and quads for now");
     }
 
     timercutgeom.Start();
@@ -588,7 +592,8 @@ namespace xintegration
       if (dt == IF)
       {
         auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-        if (DIM == 2){
+        if(DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, geom, ir_interface);
+        else if (DIM == 2){
             if(et == ET_QUAD){
                 TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
             }
