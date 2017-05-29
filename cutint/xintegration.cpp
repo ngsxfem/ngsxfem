@@ -4,7 +4,6 @@
 #include "../spacetime/myElement.hpp"
 #include "../spacetime/myFESpace.hpp"
 
-
 namespace xintegration
 {
 
@@ -16,13 +15,13 @@ namespace xintegration
                                                    int intorder,
                                                    int time_intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl
-                                                   )
+                                                   int subdivlvl)
   {
     // temporary fix for ET_SEGM
-    // if (trafo.GetElementType() == ET_SEGM && time_intorder ==-1)
+    /*
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+    */
 
     if (gflset != nullptr)
     {
