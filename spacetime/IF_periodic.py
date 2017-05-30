@@ -21,24 +21,25 @@ periodic.Append ( ["line", pnums[3], pnums[2]], leftdomain=0, rightdomain=1, cop
 lright = periodic.Append ( ["line", pnums[1], pnums[2]], bc="periodic")
 periodic.Append ( ["line", pnums[0], pnums[3]], leftdomain=0, rightdomain=1, copy=lright, bc="periodic")
 
-maxh = 0.1
+maxh = 0.8
 mesh = Mesh(periodic.GenerateMesh(maxh=maxh))
 
-n_ref = 0
+n_ref = 2
 for i in range(n_ref):
     mesh.Refine()
 
 h = specialcf.mesh_size
 
 # FE Spaces
-k_t = 1
-k_s = 1
+k_t = 2
+k_s = 2
 fes1 = Periodic(H1(mesh,order=k_s,dirichlet=[]))
 fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
 
-lset_order_time = 2
+lset_order_time = 4
+time_order = 4
 tfe = ScalarTimeFE(k_t) 
 
 st_fes = SpaceTimeFESpace(fes1,tfe)
@@ -47,7 +48,7 @@ VhG = FESpace([st_fes,st_fes])
 #visoptions.deformation = 1
 
 tend = 1
-delta_t = 1/16
+delta_t = 1/32
 tnew = 0
 
 told = Parameter(0)
@@ -55,7 +56,7 @@ tref = ReferenceTimeVariable()
 t = told + delta_t*tref
 
 lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = lset_order_time,
-                                         threshold=0.1, discontinuous_qn=True)
+                                         threshold=0.5, discontinuous_qn=True)
 
 # Problem data
 
@@ -126,17 +127,19 @@ coef_u0 = [CoefficientFunction(0),CoefficientFunction(0)]
 u0_ic.components[0].Set(coef_u0[0]) # set initial condition
 u0_ic.components[1].Set(coef_u0[1]) # set initial condition
 
-
 m_reg = BilinearForm(VhG,symmetric=False)
-epsilon = 1e-8
-m_reg += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1])    
-st_fes.SetTime(0.0)
+epsilon = 1e-9
 m_reg.Assemble()
-st_fes.SetTime(1.0)
-m1 = m_reg.mat.CreateMatrix()
-m_reg.Assemble()
-m_reg.mat.AsVector().data +=  m1.AsVector()
+for ti in st_fes.TimeFE_nodes().NumPy():
+    m_tmp = BilinearForm(VhG,symmetric=False)
+    m_tmp += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1]) 
+    st_fes.SetTime(ti)
+    m_tmp.Assemble()
+    m1 = m_tmp.mat.CreateMatrix()
+    m_reg.mat.AsVector().data +=  m1.AsVector()
+    
 st_fes.SetOverrideTime(False)
+
 
 ci = CutInfo(mesh)
 
@@ -146,7 +149,7 @@ while tend - t_old > delta_t/2:
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t,calc_kappa = True) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1  
-    ci.Update(lset_p1,2)
+    ci.Update(lset_p1,lset_order_time)
     hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
     active_dofs = BitArray(VhG.FreeDofs())
     hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
@@ -186,11 +189,11 @@ while tend - t_old > delta_t/2:
 
     a += SymbolicBFI(levelset_domain = lset_neg, form =  dt(u[0],0)*v[0]*beta[0]
                                                       + delta_t*alpha[0]*beta[0]*gradu[0]*gradv[0]
-                                                      + delta_t*beta[0]*gradu[0]*w*v[0], time_order=2)    
+                                                      + delta_t*beta[0]*gradu[0]*w*v[0], time_order=time_order)    
                                                       
     a += SymbolicBFI(levelset_domain = lset_pos, form = dt(u[1],1)*v[1]*beta[1]  
                                                       + delta_t*alpha[1]*beta[1]*gradu[1]*gradv[1]
-                                                      + delta_t*beta[1]*gradu[1]*w*v[1], time_order=2)
+                                                      + delta_t*beta[1]*gradu[1]*w*v[1], time_order=time_order)
  
     a += SymbolicBFI(levelset_domain = lset_neg_bottom, form = beta[0]*fix_t(u[0],0,0)*fix_t(v[0],0,0) )
     a += SymbolicBFI(levelset_domain = lset_pos_bottom, form = beta[1]*fix_t(u[1],0,1)*fix_t(v[1],0,1) )
@@ -199,22 +202,22 @@ while tend - t_old > delta_t/2:
 
     a += SymbolicBFI(levelset_domain = lset_if, form = delta_t*( average_flux_u*betajump_v   
                                                               + betajump_u*average_flux_v 
-                                                            + stab*betajump_u*betajump_v), time_order=2 )
+                                                            + stab*betajump_u*betajump_v), time_order=time_order )
 
                                                                
                 
     f = LinearForm(VhG)
-    f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*beta[0]*coeff_f[0]*v[0], time_order=2)
-    f += SymbolicLFI(levelset_domain = lset_pos, form = delta_t*beta[1]*coeff_f[1]*v[1], time_order=2)
+    f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*beta[0]*coeff_f[0]*v[0], time_order=time_order)
+    f += SymbolicLFI(levelset_domain = lset_pos, form = delta_t*beta[1]*coeff_f[1]*v[1], time_order=time_order)
     f += SymbolicLFI(levelset_domain = lset_neg_bottom,form = beta[0]*u0_ic.components[0]*fix_t(v[0],0,0) )
     f += SymbolicLFI(levelset_domain = lset_pos_bottom,form = beta[1]*u0_ic.components[1]*fix_t(v[1],0,1) )
     
     
-    #mesh.SetDeformation(dfm)
+    mesh.SetDeformation(dfm)
     a.Assemble()
     a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
     f.Assemble()
-    #mesh.UnsetDeformation()
+    mesh.UnsetDeformation()
     u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
        
     # exploiting the nodal property of the time fe:
@@ -224,13 +227,13 @@ while tend - t_old > delta_t/2:
     t_old = t_old + delta_t
     told.Set(t_old)
     
-    #mesh.SetDeformation(dfm_top)
+    mesh.SetDeformation(dfm_top)
     err_sqr_coefs = [ (u0_ic.components[i] - exact[i])*(u0_ic.components[i] - exact[i]) for i in [0,1] ]
     l2error = sqrt( Integrate( levelset_domain=lset_neg_top, cf=err_sqr_coefs[0], mesh=mesh,
                            order=2*k_s, heapsize=1000000)
                 + Integrate(levelset_domain=lset_pos_top, cf=err_sqr_coefs[1], mesh=mesh,
                             order=2*k_s, heapsize=1000000)) 
-    #mesh.UnsetDeformation()
+    mesh.UnsetDeformation()
     print("t = {0}, l2error = {1}".format(t_old,l2error))
     
     Draw(IfPos(lset_top,u0_ic.components[1],u0_ic.components[0]),mesh,"u")
