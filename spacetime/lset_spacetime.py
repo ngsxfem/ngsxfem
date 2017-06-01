@@ -69,6 +69,8 @@ class LevelSetMeshAdaptation_Spacetime:
         self.hasneg_spacetime[:] = False
         self.haspos_spacetime = BitArray(self.ci.GetElementsOfType(POS))
         self.haspos_spacetime[:] = False
+        self.hasif_spacetime = BitArray(self.ci.GetElementsOfType(IF))
+        self.hasif_spacetime[:] = False
         
         self.v_kappa_node = L2(mesh,order=0)
         self.v_kappa = SpaceTimeFESpace(self.v_kappa_node,self.tfe)
@@ -106,43 +108,28 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.interpol_ho(levelset,t,tstart,delta_t)
         self.interpol_p1()
-        
-        # Build BitArray of relevant elements in the time slab
-        hasneg_spacetime = BitArray(self.ci.GetElementsOfType(NEG))
-        hasneg_spacetime[:] = False
-        haspos_spacetime = BitArray(self.ci.GetElementsOfType(POS))
-        haspos_spacetime[:] = False
-        hasif_spacetime = BitArray(self.ci.GetElementsOfType(IF))
-        hasif_spacetime[:]= False
-        
+                
         for i in  range(len(self.v_ho_st.TimeFE_nodes().NumPy())):
             self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             self.ci.Update(self.lset_p1_node)
-            hasneg_spacetime |= self.ci.GetElementsOfType(NEG)
-            hasneg_spacetime |= self.ci.GetElementsOfType(IF)
-            haspos_spacetime |= self.ci.GetElementsOfType(POS)
-            haspos_spacetime |= self.ci.GetElementsOfType(IF)
-            hasif_spacetime |= self.ci.GetElementsOfType(IF)
-            hasif_spacetime |= self.ci.GetElementsOfType(IF)
             if calc_kappa:
                 self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof] = self.ci.GetCutRatios(VOL)
         
+        
+        self.ci.Update(self.lset_p1,self.order_time)
         self.hasneg_spacetime[:] = False
-        self.hasneg_spacetime |= hasneg_spacetime
+        self.hasneg_spacetime |= self.ci.GetElementsOfType(NEG)
         self.haspos_spacetime[:] = False
-        self.haspos_spacetime |= haspos_spacetime
-       
-            
-        jumpels = BitArray(hasneg_spacetime)
-        jumpels &= haspos_spacetime
-        hasif_spacetime |= jumpels
-        #Draw(BitArrayCF(hasif_spacetime),mesh,"hasif")
+        self.haspos_spacetime |= self.ci.GetElementsOfType(POS)
+        self.hasif_spacetime[:] = False
+        self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
+        
         
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv(),heapsize=self.heapsize)
             self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, hasif_spacetime, self.lset_lower_bound, 
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime, self.lset_lower_bound, 
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.deform_node.vec[:]
         return self.deform

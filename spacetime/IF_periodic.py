@@ -21,10 +21,10 @@ periodic.Append ( ["line", pnums[3], pnums[2]], leftdomain=0, rightdomain=1, cop
 lright = periodic.Append ( ["line", pnums[1], pnums[2]], bc="periodic")
 periodic.Append ( ["line", pnums[0], pnums[3]], leftdomain=0, rightdomain=1, copy=lright, bc="periodic")
 
-maxh = 0.8
+maxh = 0.1
 mesh = Mesh(periodic.GenerateMesh(maxh=maxh))
 
-n_ref = 2
+n_ref = 0
 for i in range(n_ref):
     mesh.Refine()
 
@@ -38,7 +38,7 @@ fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
 
-lset_order_time = 4
+lset_order_time = 2
 time_order = 4
 tfe = ScalarTimeFE(k_t) 
 
@@ -48,7 +48,7 @@ VhG = FESpace([st_fes,st_fes])
 #visoptions.deformation = 1
 
 tend = 1
-delta_t = 1/32
+delta_t = 1/16
 tnew = 0
 
 told = Parameter(0)
@@ -128,7 +128,8 @@ u0_ic.components[0].Set(coef_u0[0]) # set initial condition
 u0_ic.components[1].Set(coef_u0[1]) # set initial condition
 
 m_reg = BilinearForm(VhG,symmetric=False)
-epsilon = 1e-9
+epsilon = 1e-8
+#epsilon = 0
 m_reg.Assemble()
 for ti in st_fes.TimeFE_nodes().NumPy():
     m_tmp = BilinearForm(VhG,symmetric=False)
@@ -141,23 +142,21 @@ for ti in st_fes.TimeFE_nodes().NumPy():
 st_fes.SetOverrideTime(False)
 
 
-ci = CutInfo(mesh)
-
-
 while tend - t_old > delta_t/2:
     
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t,calc_kappa = True) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1  
-    ci.Update(lset_p1,lset_order_time)
-    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
+
     active_dofs = BitArray(VhG.FreeDofs())
-    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
-    hasneg_spacetime |= ci.GetElementsOfType(IF)
-    haspos_spacetime = BitArray(ci.GetElementsOfType(POS))
-    haspos_spacetime |= ci.GetElementsOfType(IF)
-    active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,hasneg_spacetime),GetDofsOfElements(st_fes,haspos_spacetime)])
+   
+    hasneg_spacetime = lset_adap_st.hasneg_spacetime
+    hasneg_spacetime |= lset_adap_st.hasif_spacetime
+    haspos_spacetime = lset_adap_st.haspos_spacetime
+    haspos_spacetime |= lset_adap_st.hasif_spacetime
     
+    active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,hasneg_spacetime),GetDofsOfElements(st_fes,haspos_spacetime)])    
+
     lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
     lset_pos = { "levelset" : lset_p1, "domain_type" : POS, "subdivlvl" : 0}
     lset_if = { "levelset" : lset_p1, "domain_type" : IF, "subdivlvl" : 0}

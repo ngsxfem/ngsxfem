@@ -72,16 +72,15 @@ dfm_top = GridFunction(fes_dfm_slice)
 t_old = 0
 u0_ic.Set(u_exact)
 
-ci = CutInfo(mesh)
 
 while tend - t_old > delta_t/2:
     
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1    
-    ci.Update(lset_p1,lset_order_time)
-    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
-    hasneg_spacetime |= ci.GetElementsOfType(IF)
+
+    hasneg_spacetime = lset_adap_st.hasneg_spacetime
+    hasneg_spacetime |= lset_adap_st.hasif_spacetime
     active_dofs = GetDofsOfElements(st_fes,hasneg_spacetime)
     #print(active_dofs)
     

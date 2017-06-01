@@ -11,6 +11,7 @@ from numpy import pi
 from xfem.lset_spacetime import *
 
 # geometry
+# Geometry 
 square = SplineGeometry()
 square.AddRectangle([0,0],[2,2],bc=1)
 maxh = 0.1
@@ -28,18 +29,22 @@ n_outer = specialcf.normal(mesh.dim)
 # FE Spaces
 k_t = 2
 k_s = 2
-fes1 = H1(mesh, order=k_s, dirichlet=[1])
+fes1 = H1(mesh, order=k_s,dirichlet=[1])
 fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
-lset_order_time = 4
+lset_order_time = 2
 time_order = 4
 tfe = ScalarTimeFE(k_t) 
 
-st_fes = SpaceTimeFESpace(fes1,tfe)
+st_fes = SpaceTimeFESpace(fes1,tfe,dirichlet=[1])
+print(fes1.FreeDofs())
+print(st_fes.FreeDofs())
+#input("Stop")
 VhG_ic = FESpace([fes1,fes1])
 VhG = FESpace([st_fes,st_fes])
 #visoptions.deformation = 1
+
 
 tend = 0.5
 delta_t = 1/16
@@ -111,34 +116,19 @@ u0_ic.components[1].Set(coef_u0[1]) # set initial condition
 stab = 10*(alpha[0]+alpha[1])*(k_s+1)*(k_s+1)/h
 stab_outer = 10*(k_s+1)*(k_s+1)/h
 
-ci = CutInfo(mesh)
-
 
 while tend - t_old > delta_t/2:
     
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t,calc_kappa = True) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1  
-    ci.Update(lset_p1,2)
-    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
     active_dofs = BitArray(VhG.FreeDofs())
-    #print(active_dofs )
-    #print(fes1.FreeDofs())
-    #print(fes1.ndof)
-    for j in range( 2*(k_t+1) ):
-        #print("j*fes1.ndof = {0}".format(j*fes1.ndof))
-        for i in range(fes1.ndof):
-            if not fes1.FreeDofs()[i]:
-                active_dofs[i+j*fes1.ndof] = False
-    #print(active_dofs)        
-    #input("stop")    
-        
-        
-        
-    hasneg_spacetime = BitArray(ci.GetElementsOfType(NEG))
-    hasneg_spacetime |= ci.GetElementsOfType(IF)
-    haspos_spacetime = BitArray(ci.GetElementsOfType(POS))
-    haspos_spacetime |= ci.GetElementsOfType(IF)
+   
+    hasneg_spacetime = lset_adap_st.hasneg_spacetime
+    hasneg_spacetime |= lset_adap_st.hasif_spacetime
+    haspos_spacetime = lset_adap_st.haspos_spacetime
+    haspos_spacetime |= lset_adap_st.hasif_spacetime
+    
     active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,hasneg_spacetime),GetDofsOfElements(st_fes,haspos_spacetime)])
     #print(active_dofs) 
     
@@ -199,8 +189,6 @@ while tend - t_old > delta_t/2:
     
     mesh.SetDeformation(dfm)
     a.Assemble()
-    #a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
-    #input("Here3")
     f.Assemble()
 
     mesh.UnsetDeformation()
