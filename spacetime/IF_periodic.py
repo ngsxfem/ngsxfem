@@ -186,16 +186,17 @@ while tend - t_old > delta_t/2:
      
     a = BilinearForm(VhG,symmetric=False)
 
-    a += SymbolicBFI(levelset_domain = lset_neg, form =  dt(u[0],0)*v[0]*beta[0]
+    a += SymbolicBFI(levelset_domain = lset_neg, form =  -u[0]*dt(v[0],0)*beta[0]
                                                       + delta_t*alpha[0]*beta[0]*gradu[0]*gradv[0]
-                                                      + delta_t*beta[0]*gradu[0]*w*v[0], time_order=time_order)    
+                                                      - delta_t*beta[0]*u[0]*gradv[0]*w, time_order=time_order)    
                                                       
-    a += SymbolicBFI(levelset_domain = lset_pos, form = dt(u[1],1)*v[1]*beta[1]  
+    a += SymbolicBFI(levelset_domain = lset_pos, form = -u[1]*dt(v[1],1)*beta[1]  
                                                       + delta_t*alpha[1]*beta[1]*gradu[1]*gradv[1]
-                                                      + delta_t*beta[1]*gradu[1]*w*v[1], time_order=time_order)
+                                                      - delta_t*beta[1]*u[1]*gradv[1]*w, time_order=time_order)
  
-    a += SymbolicBFI(levelset_domain = lset_neg_bottom, form = beta[0]*fix_t(u[0],0,0)*fix_t(v[0],0,0) )
-    a += SymbolicBFI(levelset_domain = lset_pos_bottom, form = beta[1]*fix_t(u[1],0,1)*fix_t(v[1],0,1) )
+    
+    a += SymbolicBFI(levelset_domain = lset_neg_top, form = beta[0]*fix_t(u[0],1,0)*fix_t(v[0],1,0) )
+    a += SymbolicBFI(levelset_domain = lset_pos_top, form = beta[1]*fix_t(u[1],1,1)*fix_t(v[1],1,1) )
     
     
 
