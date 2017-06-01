@@ -85,7 +85,15 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   void SpaceTimeFESpace :: Update(LocalHeap & lh)
   {
     // some global update:
-
+    if(dirichlet_boundaries.Size() == 0) {
+      dirichlet_boundaries.SetSize(ma->GetNBoundaries());
+      dirichlet_boundaries.Clear();
+      for(int i = 0; i < ma->GetNBoundaries();i++) {
+          if(Vh->IsDirichletBoundary(i))
+            dirichlet_boundaries.Set(i);
+       }
+    }
+    FESpace::Update(lh);
     Vh->Update(lh);
     cout << "Dofs in base: " << Vh->GetNDof() << endl;
 

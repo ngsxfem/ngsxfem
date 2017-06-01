@@ -1,4 +1,5 @@
 //#include "../ngstd/python_ngstd.hpp"
+#include <regex>
 #include <python_ngstd.hpp>
 #include "../utils/bitarraycf.hpp"
 #include "../xfem/cutinfo.hpp"
@@ -14,6 +15,7 @@
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/spacetimecutrule.hpp"
+
 
 #include "../spacetime/myElement.hpp"
 #include "../spacetime/myFESpace.hpp"
@@ -705,6 +707,7 @@ void ExportNgsx(py::module &m)
   .def("__init__", FunctionPointer( [] (PySTFES *instance,
                                         PyFES basefes,
                                         shared_ptr<FiniteElement> fe,
+                                        py::object dirichlet,
                                         py::dict bpflags,
                                         int heapsize)
   {
@@ -714,6 +717,20 @@ void ExportNgsx(py::module &m)
     Flags flags = py::extract<Flags> (bpflags)();
     shared_ptr<MeshAccess> ma = basefes.Get()->GetMeshAccess();
 
+    if (py::isinstance<py::list>(dirichlet)) {
+        flags.SetFlag("dirichlet", makeCArray<double>(py::list(dirichlet)));
+
+    }
+
+    if (py::isinstance<py::str>(dirichlet))
+    {
+          std::regex pattern(dirichlet.cast<string>());
+          Array<double> dirlist;
+          for (int i = 0; i < ma->GetNBoundaries(); i++)
+             if (std::regex_match (ma->GetMaterial(BND, i), pattern))
+               dirlist.Append (i+1);
+               flags.SetFlag("dirichlet", dirlist);
+    }
 
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
     cout << tfe << endl;
@@ -731,6 +748,7 @@ void ExportNgsx(py::module &m)
   }),
        py::arg("spacefes"),
        py::arg("timefe"),
+       py::arg("dirichlet") = DummyArgument(),
        py::arg("flags") = py::dict(),
        py::arg("heapsize") = 1000000)
   .def("SetTime", FunctionPointer ([](PySTFES self, double t)
