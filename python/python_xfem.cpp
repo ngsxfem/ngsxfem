@@ -23,12 +23,12 @@ void ExportNgsx(py::module &m)
 
 
 
-  typedef PyWrapper<FESpace> PyFES;
-  typedef PyWrapper<CoefficientFunction> PyCF;
+  typedef shared_ptr<FESpace> PyFES;
+  typedef shared_ptr<CoefficientFunction> PyCF;
   typedef GridFunction GF;
-  typedef PyWrapper<GF> PyGF;
-  typedef PyWrapper<shared_ptr<CutInformation>> PyCI;
-  typedef PyWrapper<shared_ptr<BitArray>> PyBA;
+  typedef shared_ptr<GF> PyGF;
+  typedef shared_ptr<CutInformation> PyCI;
+  typedef shared_ptr<BitArray> PyBA;
 
   py::enum_<DOMAIN_TYPE>(m, "DOMAIN_TYPE")
   .value("POS", POS)
@@ -39,15 +39,15 @@ void ExportNgsx(py::module &m)
 
   // typedef PyWrapperDerived<CompoundFESpace, FESpace> PyCompFES;
 
-  typedef PyWrapperDerived<XFESpace, FESpace> PyXFES;
+  typedef shared_ptr<XFESpace> PyXFES;
 
-  m.def("XToNegPos", FunctionPointer( [] (PyGF gfx, PyGF gfnegpos) {
-    XFESpace::XToNegPos(gfx.Get(),gfnegpos.Get());
-  } ) );
+  m.def("XToNegPos",  [] (PyGF gfx, PyGF gfnegpos) {
+    XFESpace::XToNegPos(gfx,gfnegpos);
+  }  );
 
   py::class_<CutInformation, shared_ptr<CutInformation>>
     (m, "CutInfo")
-  .def("__init__", FunctionPointer( [] (CutInformation *instance,
+  .def("__init__",  [] (CutInformation *instance,
                                         shared_ptr<MeshAccess> ma,
                                         py::object lset,
                                         int heapsize)
@@ -57,55 +57,55 @@ void ExportNgsx(py::module &m)
     {
       PyCF cflset = py::extract<PyCF>(lset)();
       LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-      instance->Update(cflset.Get(),lh);
+      instance->Update(cflset,lh);
     }
-  }),
+  },
        py::arg("mesh"),
        py::arg("levelset") = DummyArgument(),
        py::arg("heapsize") = 1000000
        )
-  .def("Update", FunctionPointer ([](CutInformation & self,
+  .def("Update", [](CutInformation & self,
                                      PyCF lset,
                                      int heapsize)
   {
     LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-    self.Update(lset.Get(),lh);
-  }),
+    self.Update(lset,lh);
+  },
        py::arg("levelset"),
        py::arg("heapsize") = 1000000
        )
-  .def("Mesh", FunctionPointer ([](CutInformation & self)
+  .def("Mesh", [](CutInformation & self)
   {
     return self.GetMesh();
-  })
+  }
        )
-  .def("GetElementsOfType", FunctionPointer ([](CutInformation & self,
+  .def("GetElementsOfType", [](CutInformation & self,
                                                 DOMAIN_TYPE dt,
                                                 VorB vb)
   {
     return self.GetElementsOfDomainType(dt,vb);
-  }),
+  },
        py::arg("domain_type") = IF,
        py::arg("VOL_or_BND") = VOL
        )
-  .def("GetFacetsOfType", FunctionPointer ([](CutInformation & self,
+  .def("GetFacetsOfType", [](CutInformation & self,
                                               DOMAIN_TYPE dt)
   {
     return self.GetFacetsOfDomainType(dt);
-  }),
+  },
        py::arg("domain_type") = IF)
 
-  .def("GetCutRatios", FunctionPointer ([](CutInformation & self,
+  .def("GetCutRatios", [](CutInformation & self,
                                            VorB vb)
   {
     return self.GetCutRatios(vb);
-  }),
+  },
        py::arg("VOL_or_BND") = VOL)
   ;
 
 
   m.def("GetFacetsWithNeighborTypes",
-        FunctionPointer( [] (shared_ptr<MeshAccess> ma,
+         [] (shared_ptr<MeshAccess> ma,
                              shared_ptr<BitArray> a,
                              bool bv_a,
                              bool bv_b,
@@ -120,7 +120,7 @@ void ExportNgsx(py::module &m)
     else
       b = a;
     return GetFacetsWithNeighborTypes(ma,a,b,bv_a,bv_b,use_and,lh);
-  } ),
+  } ,
         py::arg("mesh"),
         py::arg("a"),
         py::arg("bnd_val_a") = true,
@@ -131,33 +131,33 @@ void ExportNgsx(py::module &m)
         );
 
   m.def("GetElementsWithNeighborFacets",
-        FunctionPointer( [] (shared_ptr<MeshAccess> ma,
+         [] (shared_ptr<MeshAccess> ma,
                              shared_ptr<BitArray> a,
                              int heapsize)
   {
     LocalHeap lh (heapsize, "GetElementsWithNeighborFacets-heap", true);
     return GetElementsWithNeighborFacets(ma,a,lh);
-  } ),
+  } ,
         py::arg("mesh"),
         py::arg("a"),
         py::arg("heapsize") = 1000000
         );
 
   m.def("GetDofsOfElements",
-        FunctionPointer( [] (PyFES fes,
+         [] (PyFES fes,
                              PyBA a,
                              int heapsize)
   {
     LocalHeap lh (heapsize, "GetDofsOfElements-heap", true);
-    return GetDofsOfElements(fes.Get(),a,lh);
-  } ),
+    return GetDofsOfElements(fes,a,lh);
+  } ,
         py::arg("space"),
         py::arg("a"),
         py::arg("heapsize") = 1000000
         );
 
   m.def("CompoundBitArray",
-        FunctionPointer( [] (py::list balist)
+         [] (py::list balist)
   {
     size_t cnt = 0;
     for( auto aba : balist )
@@ -179,26 +179,25 @@ void ExportNgsx(py::module &m)
       offset += ba->Size();
     }
     return res;
-  } ),
+  } ,
         py::arg("balist")
         );
 
 
 
-  typedef PyWrapperDerived<BitArrayCoefficientFunction,CoefficientFunction> PyBACF;
-  py::class_<PyBACF, PyCF>
+  typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
+  py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
     (m, "BitArrayCF")
   .def("__init__",
-       [](PyBACF *instance, shared_ptr<BitArray> ba)
+       [](BitArrayCoefficientFunction *instance, shared_ptr<BitArray> ba)
   {
-    new (instance) PyBACF(make_shared<BitArrayCoefficientFunction> (ba));
+    new (instance) BitArrayCoefficientFunction (ba);
   },
        py::arg("bitarray")
        );
 
-  py::class_<PyXFES, PyFES>
-    (m, "XFESpace")
-  .def("__init__", FunctionPointer( [] (PyXFES *instance,
+//   .def("__init__",  [] (XFESpace *instance,
+  m.def("XFESpace", [] (
                                         PyFES basefes,
                                         py::object acutinfo,
                                         py::object alset,
@@ -210,82 +209,87 @@ void ExportNgsx(py::module &m)
     if (py::extract<PyCI> (acutinfo).check())
       cutinfo = py::extract<PyCI>(acutinfo)();
     if (py::extract<PyCF> (acutinfo).check())
-      cf_lset = py::extract<PyCF>(acutinfo)().Get();
+      cf_lset = py::extract<PyCF>(acutinfo)();
     if (py::extract<PyCF> (alset).check())
-      cf_lset = py::extract<PyCF>(alset)().Get();
+      cf_lset = py::extract<PyCF>(alset)();
 
 
     Flags flags = py::extract<Flags> (bpflags)();
     shared_ptr<XFESpace> ret = nullptr;
-    shared_ptr<MeshAccess> ma = basefes.Get()->GetMeshAccess();
+    shared_ptr<MeshAccess> ma = basefes->GetMeshAccess();
     if (cutinfo)
     {
       if (ma->GetDimension()==2)
-        ret = make_shared<T_XFESpace<2>> (ma, basefes.Get(), cutinfo, flags);
+        ret = make_shared<T_XFESpace<2>> (ma, basefes, cutinfo, flags);
       else
-        ret = make_shared<T_XFESpace<3>> (ma, basefes.Get(), cutinfo, flags);
+        ret = make_shared<T_XFESpace<3>> (ma, basefes, cutinfo, flags);
     }
     else if (cf_lset)
     {
       if (ma->GetDimension()==2)
-        ret = make_shared<T_XFESpace<2>> (ma, basefes.Get(), cf_lset, flags);
+        ret = make_shared<T_XFESpace<2>> (ma, basefes, cf_lset, flags);
       else
-        ret = make_shared<T_XFESpace<3>> (ma, basefes.Get(), cf_lset, flags);
+        ret = make_shared<T_XFESpace<3>> (ma, basefes, cf_lset, flags);
     }
     else
       throw Exception("levelset and cutinfo are invalid");
     LocalHeap lh (heapsize, "XFESpace::Update-heap", true);
     ret->Update(lh);
-    new (instance) PyFES(ret);
-  }),
+    return ret;
+  },
        py::arg("basefes"),
        py::arg("cutinfo") = DummyArgument(),
        py::arg("lset") = DummyArgument(),
        py::arg("flags") = py::dict(),
        py::arg("heapsize") = 1000000)
-  .def("GetCutInfo", FunctionPointer ([](PyXFES self)
+  ;
+         
+
+  py::class_<XFESpace, PyXFES, FESpace>
+    (m, "CXFESpace")
+  .def("GetCutInfo", [](PyXFES self)
   {
-    return self.Get()->GetCutInfo();
-  }),
+    return self->GetCutInfo();
+  },
        "Get Information of cut geometry")
-  .def("BaseDofOfXDof", FunctionPointer ([](PyXFES self, int i)
+  .def("BaseDofOfXDof", [](PyXFES self, int i)
   {
-    return self.Get()->GetBaseDofOfXDof(i);
-  }),
+    return self->GetBaseDofOfXDof(i);
+  },
        "get corresponding dof of base FESpace")
-  .def("GetDomainOfDof", FunctionPointer ([](PyXFES self, int i)
+  .def("GetDomainOfDof", [](PyXFES self, int i)
   {
-    return self.Get()->GetDomainOfDof(i);
-  }),
+    return self->GetDomainOfDof(i);
+  },
        "get domain_type of degree of freedom")
-  .def("GetDomainNrs",  FunctionPointer( [] (PyXFES self, int elnr) {
+  .def("GetDomainNrs",   [] (PyXFES self, int elnr) {
     Array<DOMAIN_TYPE> domnums;
-    self.Get()->GetDomainNrs( elnr, domnums );
+    self->GetDomainNrs( elnr, domnums );
     return domnums;
-  }))
+  })
   ;
 
-  m.def("InterpolateToP1", FunctionPointer( [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
   {
-    InterpolateP1 interpol(gf_ho.Get(), gf_p1.Get());
+    InterpolateP1 interpol(gf_ho, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
     interpol.Do(lh);
-  } ),
+  } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,py::arg("heapsize")=1000000)
   ;
 
-  m.def("InterpolateToP1", FunctionPointer( [] (PyCF coef, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, int heapsize)
   {
-    InterpolateP1 interpol(coef.Get(), gf_p1.Get());
+    InterpolateP1 interpol(coef, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
     interpol.Do(lh);
-  } ),
+  } ,
         py::arg("coef"),py::arg("gf"),py::arg("heapsize")=1000000)
   ;
 
   py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
   .def(py::init<>())
-  .def("Print", FunctionPointer ([](StatisticContainer & self, string label, string select)
+  .def("Print", [](StatisticContainer & self, string label, string select)
   {
     if (select == "L1")
       PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
@@ -302,80 +306,79 @@ void ExportNgsx(py::module &m)
       PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
       PrintConvergenceTable(self.ErrorMisc,label+"_misc");
     }
-  }),
+  },
        py::arg("label")="something",py::arg("select")="all"
        )
   ;
 
-  m.def("CalcMaxDistance", FunctionPointer( [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, int heapsize)
+  m.def("CalcMaxDistance",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, int heapsize)
   {
     StatisticContainer dummy;
     LocalHeap lh (heapsize, "CalcDistance-Heap");
     if (lset_p1->GetMeshAccess()->GetDimension()==2)
-      CalcDistances<2>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  dummy, lh, -1.0, false);
+      CalcDistances<2>(lset_ho, lset_p1, deform,  dummy, lh, -1.0, false);
     else
-      CalcDistances<3>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  dummy, lh, -1.0, false);
+      CalcDistances<3>(lset_ho, lset_p1, deform,  dummy, lh, -1.0, false);
     return (double) dummy.ErrorMaxNorm[dummy.ErrorMaxNorm.Size()-1];
-  } ),
+  } ,
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("heapsize")=1000000)
   ;
 
-  m.def("CalcDistances", FunctionPointer( [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, StatisticContainer & stats, int heapsize, double refine_threshold, bool absolute)
+  m.def("CalcDistances",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, StatisticContainer & stats, int heapsize, double refine_threshold, bool absolute)
   {
     LocalHeap lh (heapsize, "CalcDistance-Heap");
-    if (lset_p1.Get()->GetMeshAccess()->GetDimension()==2)
-      CalcDistances<2>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  stats, lh, refine_threshold, absolute);
+    if (lset_p1->GetMeshAccess()->GetDimension()==2)
+      CalcDistances<2>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold, absolute);
     else
-      CalcDistances<3>(lset_ho.Get(), lset_p1.Get(), deform.Get(),  stats, lh, refine_threshold, absolute);
-  } ),
+      CalcDistances<3>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold, absolute);
+  } ,
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("stats")=NULL,py::arg("heapsize")=1000000,py::arg("refine_threshold")=-1.0,py::arg("absolute")=false)
   ;
 
-  m.def("CalcDeformationError", FunctionPointer( [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, StatisticContainer & stats, double lower, double upper, int heapsize)
+  m.def("CalcDeformationError",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, StatisticContainer & stats, double lower, double upper, int heapsize)
   {
     LocalHeap lh (heapsize, "CalcDeformationError-Heap");
-    if (lset_p1.Get()->GetMeshAccess()->GetDimension()==2)
-      CalcDeformationError<2>(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), stats, lh, lower, upper);
+    if (lset_p1->GetMeshAccess()->GetDimension()==2)
+      CalcDeformationError<2>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
     else
-      CalcDeformationError<3>(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), stats, lh, lower, upper);
-  } ),
+      CalcDeformationError<3>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
+  } ,
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   ;
 
-  m.def("ProjectShift", FunctionPointer( [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, double lower, double upper, double threshold, int heapsize)
+  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, double lower, double upper, double threshold, int heapsize)
   {
     LocalHeap lh (heapsize, "ProjectShift-Heap");
-    ProjectShift(lset_ho.Get(), lset_p1.Get(), deform.Get(), qn.Get(), lower, upper, threshold, lh);
-  } ),
+    ProjectShift(lset_ho, lset_p1, deform, qn, lower, upper, threshold, lh);
+  } ,
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("threshold")=1.0,py::arg("heapsize")=1000000)
   ;
 
 // ProjectShift
 
 
-  m.def("RefineAtLevelSet", FunctionPointer( [] (PyGF lset_p1, double lower, double upper, int heapsize)
+  m.def("RefineAtLevelSet",  [] (PyGF lset_p1, double lower, double upper, int heapsize)
   {
     LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
-    RefineAtLevelSet(lset_p1.Get(), lower, upper, lh);
-  } ),
+    RefineAtLevelSet(lset_p1, lower, upper, lh);
+  } ,
         py::arg("lset_p1")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   ;
 
 
 
-  m.def("RefineAtLevelSet", FunctionPointer( [] (PyGF gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
+  m.def("RefineAtLevelSet",  [] (PyGF gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
   {
     LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
-    RefineAtLevelSet(gf.Get(),lower_lset_bound,upper_lset_bound,lh);
-  } ),
+    RefineAtLevelSet(gf,lower_lset_bound,upper_lset_bound,lh);
+  } ,
         py::arg("gf"),py::arg("lower_lset_bound")=0.0,py::arg("upper_lset_bound")=0.0,py::arg("heapsize")=10000000)
   ;
 
-  typedef PyWrapper<BilinearFormIntegrator> PyBFI;
-  typedef PyWrapper<LinearFormIntegrator> PyLFI;
+  typedef shared_ptr<BilinearFormIntegrator> PyBFI;
+  typedef shared_ptr<LinearFormIntegrator> PyLFI;
 
-  m.def("SymbolicCutBFI", FunctionPointer
-          ([](PyCF lset,
+  m.def("SymbolicCutBFI", [](PyCF lset,
               DOMAIN_TYPE dt,
               int order,
               int subdivlvl,
@@ -397,7 +400,7 @@ void ExportNgsx(py::module &m)
 
     // check for DG terms
     bool has_other = false;
-    cf.Get()->TraverseTree ([&has_other] (CoefficientFunction & cf)
+    cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
     {
       if (dynamic_cast<ProxyFunction*> (&cf))
         if (dynamic_cast<ProxyFunction&> (cf).IsOther())
@@ -410,9 +413,9 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<BilinearFormIntegrator> bfi;
     if (!has_other && !skeleton)
-      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
     else
-      bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+      bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
 
     if (py::extract<py::list> (definedon).check())
       bfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -427,7 +430,7 @@ void ExportNgsx(py::module &m)
       bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
     return PyBFI(bfi);
-  }),
+  },
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
@@ -441,8 +444,7 @@ void ExportNgsx(py::module &m)
         );
 
 
-  m.def("SymbolicCutLFI", FunctionPointer
-          ([](PyCF lset,
+  m.def("SymbolicCutLFI", [](PyCF lset,
               DOMAIN_TYPE dt,
               int order,
               int subdivlvl,
@@ -466,7 +468,7 @@ void ExportNgsx(py::module &m)
       throw Exception("No Facet LFI with Symbolic cuts..");
 
     shared_ptr<LinearFormIntegrator> lfi
-      = make_shared<SymbolicCutLinearFormIntegrator> (lset.Get(), cf.Get(), dt, order, subdivlvl);
+      = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
 
     if (py::extract<py::list> (definedon).check())
       lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -481,7 +483,7 @@ void ExportNgsx(py::module &m)
       lfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
     return PyLFI(lfi);
-  }),
+  },
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
@@ -494,9 +496,8 @@ void ExportNgsx(py::module &m)
         py::arg("definedonelements")=DummyArgument()
         );
 
-  typedef PyWrapperDerived<ProxyFunction, CoefficientFunction> PyProxyFunction;
-  m.def("dn", FunctionPointer
-          ([] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
+  typedef shared_ptr<ProxyFunction> PyProxyFunction;
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
   {
 
     Array<int> comparr(0);
@@ -513,7 +514,7 @@ void ExportNgsx(py::module &m)
     if (py::extract<py::list> (comp).check())
       comparr = makeCArray<int> (py::extract<py::list> (comp)());
 
-    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self.Get()->Evaluator()))
+    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))
     {
       throw Exception("cannot work with compounddiffops, prescribe comp != -1");
     }
@@ -551,22 +552,21 @@ void ExportNgsx(py::module &m)
       diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comparr[i]);
     }
 
-    auto adddiffop = make_shared<ProxyFunction> (self.Get()->IsTestFunction(), self.Get()->IsComplex(),
+    auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
                                                  diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    if (self.Get()->IsOther())
+    if (self->IsOther())
       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
 
     return PyProxyFunction(adddiffop);
-  }),
+  },
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
         py::arg("hdiv") = false
         );
 
-  m.def("dn", FunctionPointer
-          ([](PyGF self, int order) -> PyCF
+  m.def("dn", [](PyGF self, int order) -> PyCF
   {
     shared_ptr<DifferentialOperator> diffopdudnk;
     switch (order)
@@ -581,8 +581,8 @@ void ExportNgsx(py::module &m)
     case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
     default : throw Exception("no order higher than 8 implemented yet");
     }
-    return PyCF(make_shared<GridFunctionCoefficientFunction> (self.Get(), diffopdudnk));
-  }));
+    return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdudnk));
+  });
 
   // bp::def("GFCoeff", FunctionPointer( [] (shared_ptr<GridFunction> in) { return dynamic_pointer_cast<CoefficientFunction>(make_shared<GridFunctionCoefficientFunction>(in)); } ) );
 
@@ -600,23 +600,22 @@ void ExportNgsx(py::module &m)
   // if( bp::scope() )
   //   nested_name = bp::extract<std::string>(bp::scope().attr("__name__") + ".comp");
 
-  typedef PyWrapperDerived<SFESpace, FESpace> PySFES;
+  typedef shared_ptr<SFESpace> PySFES;
 
-  m.def("SFESpace", FunctionPointer
-          ([](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
+  m.def("SFESpace", [](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
           -> PyFES
   {
     Flags flags = py::extract<Flags> (bpflags)();
-    shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset.Get(), order, flags);
+    shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset, order, flags);
     LocalHeap lh (1000000, "SFESpace::Update-heap", true);
     ret->Update(lh);
     ret->FinalizeUpdate(lh);
     return ret;
-  }));
+  });
   // new implementation: only straight cuts - start with triangles only for a start!
 
   m.def("IntegrateX",
-        FunctionPointer([](py::object lset,
+        [](py::object lset,
                            shared_ptr<MeshAccess> ma,
                            PyCF cf,
                            int order,
@@ -630,7 +629,7 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<GridFunction> gf_lset = nullptr;
     shared_ptr<CoefficientFunction> cf_lset = nullptr;
-    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(pycf().Get(),subdivlvl);
+    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(pycf(),subdivlvl);
 
     LocalHeap lh(heapsize, "lh-IntegrateX");
 
@@ -661,7 +660,7 @@ void ExportNgsx(py::module &m)
     });
 
     return sum;
-  }),
+  },
         py::arg("lset"),
         py::arg("mesh"),
         py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
@@ -671,7 +670,7 @@ void ExportNgsx(py::module &m)
         py::arg("heapsize")=1000000);
 }
 
-PYBIND11_PLUGIN(libngsxfem_py)
+PYBIND11_PLUGIN(ngsxfem_py)
 {
   cout << "importing ngs-xfem-" << NGSXFEM_VERSION << endl;
   py::module m("xfem", "pybind xfem");

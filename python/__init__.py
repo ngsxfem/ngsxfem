@@ -1,7 +1,7 @@
 from ngsolve.comp import *
 from ngsolve.fem import *
 from ngsolve.utils import L2
-from libngsxfem_py import *
+from xfem.ngsxfem_py import *
 
 def extend(func):
     if func.derivname == "extend":

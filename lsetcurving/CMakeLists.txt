@@ -21,6 +21,6 @@ endif(NOT WIN32)
 
 install (FILES
         lsetcurv.py 
-        DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+        DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
         )
