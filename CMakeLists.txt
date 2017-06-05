@@ -48,7 +48,7 @@ if(BUILD_NGSOLVE)
 
   set(NGSolve_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake CACHE STRING "NGSolve camke config dir")
   set(Netgen_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake CACHE STRING "Netgen camke config dir")
-  
+
 endif(BUILD_NGSOLVE)
 
 if(USE_CCACHE)
@@ -68,6 +68,8 @@ set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 include_directories(${NGSOLVE_INCLUDE_DIR})
+
+set(CMAKE_CXX_COMPILER ${NGSOLVE_INSTALL_DIR}/bin/ngscxx)
 
 add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 
