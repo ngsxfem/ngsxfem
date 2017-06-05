@@ -14,8 +14,10 @@ namespace xintegration
                                                    int subdivlvl)
   {
     // temporary fix for ET_SEGM
+    /*
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+    */
 
     if (gflset != nullptr)
     {
