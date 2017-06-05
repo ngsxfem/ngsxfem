@@ -1,5 +1,5 @@
 #include "spacetimecutrule.hpp"
-#include "../spacetime/myElement.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
 
 namespace xintegration
 {

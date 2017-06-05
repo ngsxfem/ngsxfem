@@ -12,7 +12,7 @@ SpaceTimeFE
 
 
 #include <fem.hpp>
-#include "myElement.hpp"
+#include "SpaceTimeFE.hpp"
 
 
 namespace ngfem
