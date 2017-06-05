@@ -2,7 +2,7 @@
 #include "straightcutrule.hpp"
 #include "spacetimecutrule.hpp"
 #include "../spacetime/SpaceTimeFE.hpp"
-#include "../spacetime/myFESpace.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
 
 namespace xintegration
 {

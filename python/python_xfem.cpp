@@ -18,7 +18,7 @@
 
 
 #include "../spacetime/SpaceTimeFE.hpp"
-#include "../spacetime/myFESpace.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
 #include "../spacetime/timecf.hpp"
 // #include "../utils/error.hpp"

@@ -1,5 +1,5 @@
-#ifndef FILE_MYFESPACE_HPP
-#define FILE_MYFESPACE_HPP
+#ifndef FILE_SPACETIMEFESPACE_HPP
+#define FILE_SPACETIMEFESPACE_HPP
 
 /*********************************************************************/
 /* File:   myFESpace.hpp                                             */
