@@ -46,8 +46,8 @@ if(BUILD_NGSOLVE)
     execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
   endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
-  set(NGSolve_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake/ngsolve CACHE STRING "NGSolve camke config dir")
-  set(Netgen_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake/netgen CACHE STRING "Netgen camke config dir")
+  set(NGSolve_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake CACHE STRING "NGSolve camke config dir")
+  set(Netgen_DIR ${CMAKE_INSTALL_PREFIX}/share/cmake CACHE STRING "Netgen camke config dir")
   
 endif(BUILD_NGSOLVE)
 
