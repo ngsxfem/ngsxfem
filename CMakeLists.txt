@@ -124,7 +124,7 @@ set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --pr
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER Christoph Lehrenfeld <christoph.lehrenfeld@gmail.com>)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of xfem)
 set(CPACK_PACKAGE_DESCRIPTION Long description of xfem)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.1)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.2)")
 # TODO (use dpkg -s <packagename> to retrieve version)
 
 set(CPACK_DEBIAN_PACKAGE_SECTION Science)
