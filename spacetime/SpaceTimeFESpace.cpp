@@ -1,17 +1,11 @@
 
+// SpaceTimeFESpace based on:
+
 /*********************************************************************/
 /* File:   myFESpace.cpp                                             */
 /* Author: Joachim Schoeberl                                         */
 /* Date:   26. Apr. 2009                                             */
 /*********************************************************************/
-
-
-/*
-
-A fe-space provides the connection between the local reference
-element, and the global mesh.
-
-*/
 
 
 #include <comp.hpp>    // provides FESpace, ...
@@ -33,12 +27,10 @@ element, and the global mesh.
 namespace ngcomp
 {
 
-  //SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, FESpace& aVh, ScalarFiniteElement<1>& atfe, const Flags & flags)
-  //  : FESpace (ama, flags)
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
   : FESpace (ama, flags)
   {
-    cout << "Constructor of MyFESpace" << endl;
+    cout << "Constructor of SpaceTimeFESpace" << endl;
     cout << "Flags = " << flags << endl;
 
     dimension = aVh->GetDimension ();
@@ -50,7 +42,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     Vh = aVh.get();
     tfe = atfe.get();
 
-    cout << "Hello from myFESpace.cpp" << endl;
+    cout << "Hello from SpaceTimeFESpace.cpp" << endl;
     cout << "Order Space: " << order_s << endl;
     cout << "Order Time: " << order_t << endl;
 
@@ -106,8 +98,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
   void SpaceTimeFESpace :: GetDofNrs (ElementId ei, Array<int> & dnums) const
   {
-    // returns dofs of element ei
-    // may be a volume triangle or boundary segment
 
     dnums.SetSize(0);
 
@@ -125,7 +115,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
 
-     // Ok to do this ?
      ScalarFiniteElement<2>* s_FE = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
 
      ScalarFiniteElement<1>* t_FE = tfe;
