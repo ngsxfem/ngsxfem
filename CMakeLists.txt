@@ -67,16 +67,17 @@ set(NGSXFEM_VERSION_MINOR 0.0)
 set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
-include_directories(${NGSOLVE_INCLUDE_DIR})
-
-set(CMAKE_CXX_COMPILER ${NGSOLVE_INSTALL_DIR}/bin/ngscxx)
+# include_directories(${NGSOLVE_INCLUDE_DIR})
+# set(CMAKE_CXX_COMPILER ${NGSOLVE_INSTALL_DIR}/bin/ngscxx)
+# link_directories("${NGSOLVE_INSTALL_DIR}/lib/")
+# SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+# SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 
 set(NGS_LIB_TYPE SHARED)
 set(NETGEN_LIBS ngsolve)
 
-link_directories("${NGSOLVE_INSTALL_DIR}/lib/")
 
 if (ADDITIONAL_PATHS)
     list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
@@ -88,9 +89,6 @@ endif (ADDITIONAL_PATHS)
 set(CMAKE_MACOSX_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH "${NETGEN_RPATH_TOKEN};${NETGEN_RPATH_TOKEN}/${NETGEN_RPATH}")
 
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 set(ADDITIONAL_PATHS "" CACHE PATH "List of paths to additional libraries in non-standard locations, seperated by ';'")
 
 #######################################################################
@@ -98,7 +96,9 @@ set(ADDITIONAL_PATHS "" CACHE PATH "List of paths to additional libraries in non
 enable_testing()
 include(CTest)
 
-set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+set(ngs_install_dir RUNTIME DESTINATION ${NGSOLVE_INSTALL_DIR_BIN} LIBRARY DESTINATION ${NGSOLVE_INSTALL_DIR_LIB} ARCHIVE DESTINATION ${NGSOLVE_INSTALL_DIR_LIB})
+
+#set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 
 include_directories ("${PROJECT_SOURCE_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}")
