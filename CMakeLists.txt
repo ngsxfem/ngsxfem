@@ -95,7 +95,7 @@ set(ADDITIONAL_PATHS "" CACHE PATH "List of paths to additional libraries in non
 enable_testing()
 include(CTest)
 
-set(ngs_install_dir RUNTIME DESTINATION ${NGSOLVE_INSTALL_DIR}/bin LIBRARY DESTINATION ${NGSOLVE_INSTALL_DIR}/lib ARCHIVE DESTINATION ${NGSOLVE_INSTALL_DIR}/lib)
+set(ngs_install_dir RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 
 include_directories ("${PROJECT_SOURCE_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}")
