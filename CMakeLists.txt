@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 
-if(NOT INSTALL_DIR)
-  message( FATAL_ERROR "Please provide an INSTALL_DIR, CMake will exit." )
-endif(NOT INSTALL_DIR)
+if(NOT CMAKE_INSTALL_PREFIX)
+  message( FATAL_ERROR "Please provide an CMAKE_INSTALL_PREFIX, CMake will exit." )
+endif(NOT CMAKE_INSTALL_PREFIX)
 
 set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
@@ -25,7 +25,7 @@ if(BUILD_NGSOLVE)
   set(TCL_INCLUDE_PATH "/usr/include" CACHE STRING "tcl include path")
 
   execute_process(COMMAND mkdir -p ngsolve)
-  execute_process(COMMAND cmake -DINSTALL_DIR=${INSTALL_DIR}
+  execute_process(COMMAND cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DUSE_CCACHE=${USE_CCACHE}
     -DUSE_UMFPACK=${USE_UMFPACK}
