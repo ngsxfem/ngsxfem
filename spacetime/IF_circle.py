@@ -140,7 +140,12 @@ while tend - t_old > delta_t/2:
     lset_pos_top = { "levelset" : lset_top, "domain_type" : POS, "subdivlvl" : 0}
     
     n_lset_p1 = 1.0/grad(lset_adap_st.lset_p1).Norm() * grad(lset_adap_st.lset_p1)
-    kappa = [lset_adap_st.kappa,1-lset_adap_st.kappa]
+    
+    
+    kappas = {"interp" : (lset_adap_st.kappa,1-lset_adap_st.kappa), 
+              "st_CutInfo" : (CutRatioGF(lset_adap_st.ci),1-CutRatioGF(lset_adap_st.ci)) }
+    kappa = kappas["st_CutInfo"]
+    
 #    time_quad = lset_adap_st.v_ho_st.TimeFE_nodes().NumPy()
 #    times = [t_old + delta_t * xi for xi in time_quad]
 #    for tau in times:  
