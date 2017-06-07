@@ -1,18 +1,13 @@
+// SpaceTimeFE based on:
+
 /*********************************************************************/
 /* File:   myElement.cpp                                             */
 /* Author: Joachim Schoeberl                                         */
 /* Date:   26. Apr. 2009                                             */
 /*********************************************************************/
 
-/*
-
-SpaceTimeFE
-
-*/
-
-
 #include <fem.hpp>
-#include "myElement.hpp"
+#include "SpaceTimeFE.hpp"
 
 
 namespace ngfem

@@ -1,5 +1,5 @@
 #include "spacetimecutrule.hpp"
-#include "../spacetime/myElement.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
 
 namespace xintegration
 {
@@ -140,12 +140,14 @@ namespace xintegration
                   quad_untrafo.Append(SelectIntegrationRule (et_space, order_space));
                 }
                 for(IntegrationPoint& ip2 : quad_untrafo) {
-                    ip2.Point()[2] = t;
+                    if(trafo.SpaceDim() == 1) ip2.Point()[1] = t;
+                    if(trafo.SpaceDim() == 2) ip2.Point()[2] = t;
                     ip2.SetWeight(ip2.Weight()*ip.Weight()*(t1-t0));
                 }
                 if((element_domain == IF)&&(dt == IF)){
                     auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-                    if (trafo.SpaceDim() == 2){
+                    if(trafo.SpaceDim() == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, geom, ir_interface);
+                    else if (trafo.SpaceDim() == 2){
                         if(et_space == ET_QUAD){
                             TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
                         }

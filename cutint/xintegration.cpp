@@ -1,8 +1,8 @@
 #include "xintegration.hpp"
 #include "straightcutrule.hpp"
 #include "spacetimecutrule.hpp"
-#include "../spacetime/myElement.hpp"
-#include "../spacetime/myFESpace.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
 
 
 namespace xintegration
@@ -16,16 +16,15 @@ namespace xintegration
                                                    int intorder,
                                                    int time_intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl
-                                                   )
+                                                   int subdivlvl)
   {
     // temporary fix for ET_SEGM
     /*
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
-    */
 
     //cout << "time_intorder = " << time_intorder << endl;
+    */
 
     if (gflset != nullptr)
     {

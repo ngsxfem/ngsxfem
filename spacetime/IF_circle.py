@@ -11,43 +11,38 @@ from numpy import pi
 from xfem.lset_spacetime import *
 
 # geometry
-periodic = SplineGeometry()
-pnts = [ (0,0), (2,0), (2,2), (0,2) ]
-pnums = [periodic.AppendPoint(*p) for p in pnts]
-
-uright = periodic.Append ( ["line", pnums[0], pnums[1]], bc="periodic")
-periodic.Append ( ["line", pnums[3], pnums[2]], leftdomain=0, rightdomain=1, copy=uright, bc="periodic")
-
-lright = periodic.Append ( ["line", pnums[1], pnums[2]], bc="periodic")
-periodic.Append ( ["line", pnums[0], pnums[3]], leftdomain=0, rightdomain=1, copy=lright, bc="periodic")
-
+# Geometry 
+square = SplineGeometry()
+square.AddRectangle([0,0],[2,2],bc=1)
 maxh = 0.1
-mesh = Mesh(periodic.GenerateMesh(maxh=maxh))
+mesh = Mesh (square.GenerateMesh(maxh=maxh, quad_dominated=False))
 
 n_ref = 0
 for i in range(n_ref):
     mesh.Refine()
 
 h = specialcf.mesh_size
+n_outer = specialcf.normal(mesh.dim)
+
+
 
 # FE Spaces
 k_t = 2
 k_s = 2
-fes1 = Periodic(H1(mesh,order=k_s,dirichlet=[]))
+fes1 = H1(mesh, order=k_s,dirichlet=[1])
 fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
-
 
 lset_order_time = 2
 time_order = 4
 tfe = ScalarTimeFE(k_t) 
 
-st_fes = SpaceTimeFESpace(fes1,tfe)
+st_fes = SpaceTimeFESpace(fes1,tfe,dirichlet=[1])
 VhG_ic = FESpace([fes1,fes1])
 VhG = FESpace([st_fes,st_fes])
-#visoptions.deformation = 1
 
-tend = 1
+
+tend = 0.5
 delta_t = 1/16
 tnew = 0
 
@@ -56,55 +51,42 @@ tref = ReferenceTimeVariable()
 t = told + delta_t*tref
 
 lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = lset_order_time,
-                                         threshold=0.5, discontinuous_qn=True)
+                                         threshold=0.1, discontinuous_qn=True)
 
 # Problem data
+rho =  CoefficientFunction((1/(4*pi))*sin(2*pi*t))
+d_rho = CoefficientFunction(0.5*cos(2*pi*t))
 
-problems =  {"planar": ( CoefficientFunction(0.25*t), CoefficientFunction(0.25),
-                         CoefficientFunction(1),CoefficientFunction(0),CoefficientFunction(0)),
-             "nonlinear": ( CoefficientFunction((0.25/pi)*sin(2*pi*t)),CoefficientFunction(0.5*cos(2*pi*t)),
-                            CoefficientFunction(7/8 + (1/4)*y*y*(2-y)*(2-y)),CoefficientFunction( y*(1-y)*(2-y) ),CoefficientFunction( (1-y)*(2-y) - y*(2-y) - y*(1-y))) }
-          
-rho,d_rho,q_coeff,d_q_coeff,dd_q_coeff = problems["planar"]
+#rho =  CoefficientFunction(0)
+#d_rho = CoefficientFunction(0)
 
-#rho = CoefficientFunction(0.0)
-#d_rho = CoefficientFunction(0.0)
-
-alpha_neg = 1.0
-alpha_pos = 2.0
+alpha_neg = 10.0
+alpha_pos = 20.0
 alpha = [alpha_neg,alpha_pos]
-beta_neg = 1.5
+beta_neg = 2.0
 beta_pos = 1.0
 beta = [beta_neg,beta_pos]
 
-a_const = 1.02728
-b_const = 6.34294
+r0 = 1/3
+w = CoefficientFunction((d_rho,0)) # convection
+levelset= CoefficientFunction(sqrt((x-0.5-rho)*(x-0.5-rho)+(y-1)*(y-1)) -r0)
+a_const = 1.1569
+b_const = -8.1621
 k_const = 1
 
-stab = 10*(alpha[0]+alpha[1])*(k_s+1)*(k_s+1)/h
-
-r11 = x - q_coeff - rho
-
-w = CoefficientFunction((d_rho,0)) # convection
-D_const = 2/3
-levelset= CoefficientFunction(sqrt(r11*r11) - 0.5*D_const)
-
-
-f_neg = ( k_const*pi*cos(k_const*pi*t)*(a_const*r11 + b_const*r11*r11*r11 )
-         - alpha[0]*sin(k_const*pi*t)*6*b_const*r11*(1+d_q_coeff*d_q_coeff)
-         + alpha[0] * sin(k_const*pi*t)*(a_const+3*b_const*r11*r11) * dd_q_coeff )
-
-f_pos = ( k_const*pi*cos(k_const*pi*t)*sin(pi*r11)
-         - alpha[1]*sin(k_const*pi*t)*(-pi*pi*sin(pi*r11))*(1+d_q_coeff*d_q_coeff)
-         + alpha[1]*sin(k_const*pi*t)*pi*cos(pi*r11) * dd_q_coeff )
-
+r_lset = CoefficientFunction(sqrt((x-0.5-rho)*(x-0.5-rho) + (y-1)*(y-1)))
+f_pos = CoefficientFunction(   pi*cos(pi*t)*cos(pi*r_lset) 
+                             + alpha_pos*sin(pi*t)*pi*pi*cos(pi*r_lset)
+                             + alpha_pos*pi*sin(pi*t)*sin(pi*r_lset)/r_lset )
+f_neg = ( k_const*pi*cos(k_const*pi*t)*(a_const+b_const*((x-0.5-rho)*(x-0.5-rho)+(y-1)*(y-1))) 
+         - alpha_neg*sin(k_const*pi*t)*2*b_const
+         - alpha_neg*sin(k_const*pi*t)*2*b_const   )
 coeff_f = [f_neg,f_pos]
 
+
 # for monitoring the error
-exact = [sin(k_const*pi*t)*(a_const*r11+b_const*r11*r11*r11),
-         sin(k_const*pi*t)*sin(pi*r11)]
-
-
+exact = [sin(k_const*pi*t)*(a_const+b_const*((x-0.5-rho)*(x-0.5-rho)+(y-1)*(y-1)) ),
+         sin(k_const*pi*t)*cos(pi*sqrt((x-0.5-rho)*(x-0.5-rho)+(y-1)*(y-1)))]
 
 u0 = GridFunction(VhG)
 u0_ic = GridFunction(VhG_ic)
@@ -127,19 +109,8 @@ coef_u0 = [CoefficientFunction(0),CoefficientFunction(0)]
 u0_ic.components[0].Set(coef_u0[0]) # set initial condition
 u0_ic.components[1].Set(coef_u0[1]) # set initial condition
 
-m_reg = BilinearForm(VhG,symmetric=False)
-epsilon = 1e-8
-#epsilon = 0
-m_reg.Assemble()
-for ti in st_fes.TimeFE_nodes().NumPy():
-    m_tmp = BilinearForm(VhG,symmetric=False)
-    m_tmp += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1]) 
-    st_fes.SetTime(ti)
-    m_tmp.Assemble()
-    m1 = m_tmp.mat.CreateMatrix()
-    m_reg.mat.AsVector().data +=  m1.AsVector()
-    
-st_fes.SetOverrideTime(False)
+stab = 10*(alpha[0]+alpha[1])*(k_s+1)*(k_s+1)/h
+stab_outer = 10*(k_s+1)*(k_s+1)/h
 
 
 while tend - t_old > delta_t/2:
@@ -147,7 +118,6 @@ while tend - t_old > delta_t/2:
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t,calc_kappa = True) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1  
-
     active_dofs = BitArray(VhG.FreeDofs())
    
     hasneg_spacetime = lset_adap_st.hasneg_spacetime
@@ -155,8 +125,9 @@ while tend - t_old > delta_t/2:
     haspos_spacetime = lset_adap_st.haspos_spacetime
     haspos_spacetime |= lset_adap_st.hasif_spacetime
     
-    active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,hasneg_spacetime),GetDofsOfElements(st_fes,haspos_spacetime)])    
-
+    active_dofs &= CompoundBitArray([GetDofsOfElements(st_fes,hasneg_spacetime),GetDofsOfElements(st_fes,haspos_spacetime)])
+    #print(active_dofs) 
+    
     lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
     lset_pos = { "levelset" : lset_p1, "domain_type" : POS, "subdivlvl" : 0}
     lset_if = { "levelset" : lset_p1, "domain_type" : IF, "subdivlvl" : 0}
@@ -170,9 +141,10 @@ while tend - t_old > delta_t/2:
     
     n_lset_p1 = 1.0/grad(lset_adap_st.lset_p1).Norm() * grad(lset_adap_st.lset_p1)
     
+    
     kappas = {"interp" : (lset_adap_st.kappa,1-lset_adap_st.kappa), 
               "st_CutInfo" : (CutRatioGF(lset_adap_st.ci),1-CutRatioGF(lset_adap_st.ci)) }
-    kappa = kappas["interp"]
+    kappa = kappas["st_CutInfo"]
     
 #    time_quad = lset_adap_st.v_ho_st.TimeFE_nodes().NumPy()
 #    times = [t_old + delta_t * xi for xi in time_quad]
@@ -215,21 +187,45 @@ while tend - t_old > delta_t/2:
     f += SymbolicLFI(levelset_domain = lset_pos, form = delta_t*beta[1]*coeff_f[1]*v[1], time_order=time_order)
     f += SymbolicLFI(levelset_domain = lset_neg_bottom,form = beta[0]*u0_ic.components[0]*fix_t(v[0],0,0) )
     f += SymbolicLFI(levelset_domain = lset_pos_bottom,form = beta[1]*u0_ic.components[1]*fix_t(v[1],0,1) )
-    
+     
     
     mesh.SetDeformation(dfm)
     a.Assemble()
-    a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
     f.Assemble()
+
     mesh.UnsetDeformation()
-    u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
+    
+    # Setting boundary values (temporary solution)
+    u0.vec[:] = 0
+   
+    times = [t_old + delta_t * xi for xi in st_fes.TimeFE_nodes().NumPy()]
+    u_bnd = GridFunction(fes1)
+    for i,ti in enumerate(times):
+        rho_ti = (1/(4*pi))*sin(2*pi*ti)
+        print(ti)
+        u_bnd.Set(sin(k_const*pi*ti)*cos(pi*sqrt((x-0.5-rho_ti)*(x-0.5-rho_ti)+(y-1)*(y-1))),BND)
+        u0.components[1].vec[i*fes1.ndof : (i+1)*fes1.ndof] = u_bnd.vec[:] 
+    
+    #u_bnd.vec[:] = u0.components[1].vec[0 : fes1.ndof]   
+    #Draw(sqrt((u_bnd-exact[1])*(u_bnd-exact[1])),mesh,"errorB")
+    #input("Stop")
+    
+           
+    res = f.vec.CreateVector()
+    res.data = f.vec - a.mat * u0.vec
+    u0.vec.data += a.mat.Inverse(active_dofs,"umfpack") * res
+           
+    
        
-    # exploiting the nodal property of the time fe:
+    # exploiting the nodal property of the time fe:b_const
     for i in range(2): 
         u0_ic.components[i].vec[:] = u0.components[i].vec[k_t*fes1.ndof : (k_t+1)*fes1.ndof]
    
+    
+    
     t_old = t_old + delta_t
     told.Set(t_old)
+    #u0_ic.components[1].Set(exact[1])
     
     mesh.SetDeformation(dfm_top)
     err_sqr_coefs = [ (u0_ic.components[i] - exact[i])*(u0_ic.components[i] - exact[i]) for i in [0,1] ]
@@ -241,8 +237,8 @@ while tend - t_old > delta_t/2:
     print("t = {0}, l2error = {1}".format(t_old,l2error))
     
     Draw(IfPos(lset_top,u0_ic.components[1],u0_ic.components[0]),mesh,"u")
-#    Draw(IfPos(lset_top,sqrt(err_sqr_coefs[1]),sqrt(err_sqr_coefs[0])),mesh,"error")
-#    Draw(IfPos(lset_top,exact[1],exact[0]),mesh,"exact")
+    #Draw(IfPos(lset_top,sqrt(err_sqr_coefs[1]),sqrt(err_sqr_coefs[0])),mesh,"error")
+    #Draw(IfPos(lset_top,exact[1],exact[0]),mesh,"exact")
     #input("Continue")
     #Redraw(blocking=True)
        

@@ -1,7 +1,7 @@
 #define FILE_DIFFOPDT_CPP
 #include "diffopDt.hpp"
 #include <diffop_impl.hpp>
-#include "myElement.hpp"
+#include "SpaceTimeFE.hpp"
 
 
 namespace ngfem

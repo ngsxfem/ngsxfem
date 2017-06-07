@@ -1,6 +1,6 @@
 add_library(ngsxfem_spacetime ${NGS_LIB_TYPE}
-  myElement.cpp
-  myFESpace.cpp
+  SpaceTimeFE.cpp
+  SpaceTimeFESpace.cpp
   diffopDt.cpp
   timecf.cpp
 )
@@ -14,8 +14,8 @@ endif(NOT WIN32)
 
 
 install( FILES
-  myElement.hpp
-  myFESpace.hpp
+  SpaceTimeFE.hpp
+  SpaceTimeFESpace.hpp
   diffopDt.hpp
   timecf.hpp
   DESTINATION include

@@ -1,19 +1,13 @@
-#ifndef FILE_MYFESPACE_HPP
-#define FILE_MYFESPACE_HPP
+#ifndef FILE_SPACETIMEFESPACE_HPP
+#define FILE_SPACETIMEFESPACE_HPP
+
+// SpaceTimeFESpace based on:
 
 /*********************************************************************/
 /* File:   myFESpace.hpp                                             */
 /* Author: Joachim Schoeberl                                         */
 /* Date:   26. Apr. 2009                                             */
 /*********************************************************************/
-
-/*
-
-  My own FESpace for linear and quadratic triangular elements An
-  fe-space is the connection between the local reference element, and
-  the global mesh.
-
-*/
 
 
 
@@ -29,12 +23,7 @@ namespace ngcomp
     bool override_time = false;
 
   public:
-    /*
-      constructor. 
-      Arguments are the access to the mesh data structure,
-      and the flags from the define command in the pde-file
-    */
-    //MyFESpace (shared_ptr<MeshAccess> ama, const Flags & flags);
+
     SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags);
 
     //virtual FESpace get_V() const { return *Vh; }
@@ -42,8 +31,6 @@ namespace ngcomp
     // destructor
     virtual ~SpaceTimeFESpace ();
 
-
-    // a name for our new fe-space
     virtual string GetClassName () const
     {
       return "SpaceTimeFESpace";

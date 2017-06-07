@@ -1,4 +1,5 @@
 //#include "../ngstd/python_ngstd.hpp"
+#include <regex>
 #include <python_ngstd.hpp>
 #include "../utils/bitarraycf.hpp"
 #include "../xfem/cutinfo.hpp"
@@ -15,8 +16,8 @@
 #include "../cutint/xintegration.hpp"
 #include "../cutint/spacetimecutrule.hpp"
 
-#include "../spacetime/myElement.hpp"
-#include "../spacetime/myFESpace.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
 #include "../spacetime/timecf.hpp"
 // #include "../utils/error.hpp"
@@ -56,6 +57,7 @@ void ExportNgsx(py::module &m)
   .def("__init__",  [] (CutInformation *instance,
                                         shared_ptr<MeshAccess> ma,
                                         py::object lset,
+                                        int time_order,
                                         int heapsize)
   {
     new (instance) CutInformation (ma);
@@ -63,21 +65,24 @@ void ExportNgsx(py::module &m)
     {
       PyCF cflset = py::extract<PyCF>(lset)();
       LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-      instance->Update(cflset,lh);
+      instance->Update(cflset,time_order,lh);
     }
   },
        py::arg("mesh"),
        py::arg("levelset") = DummyArgument(),
+       py::arg("time_order")=-1,
        py::arg("heapsize") = 1000000
        )
   .def("Update", [](CutInformation & self,
                                      PyCF lset,
+                                     int time_order,
                                      int heapsize)
   {
     LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-    self.Update(lset,lh);
+    self.Update(lset,time_order,lh);
   },
        py::arg("levelset"),
+       py::arg("time_order")=-1,
        py::arg("heapsize") = 1000000
        )
   .def("Mesh", [](CutInformation & self)
@@ -351,8 +356,12 @@ void ExportNgsx(py::module &m)
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   ;
 
-  m.def("ProjectShift", [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, PyBA ba, double lower, double upper, double threshold, int heapsize)
+  m.def("ProjectShift", [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, py::object pba, double lower, double upper, double threshold, int heapsize)
   {
+    shared_ptr<BitArray> ba = nullptr;
+    if (py::extract<PyBA> (pba).check())
+      ba = py::extract<PyBA>(pba)();
+    
     LocalHeap lh (heapsize, "ProjectShift-Heap");
     ProjectShift(lset_ho, lset_p1, deform, qn, ba, lower, upper, threshold, lh);
   } ,
@@ -628,6 +637,8 @@ void ExportNgsx(py::module &m)
   });
   // new implementation: only straight cuts - start with triangles only for a start!
 
+  m.def("DebugSpaceTimeCutIntegrationRule", [](){ DebugSpaceTimeCutIntegrationRule(); });
+
   m.def("IntegrateX",
         [](py::object lset,
                            shared_ptr<MeshAccess> ma,
@@ -685,9 +696,12 @@ void ExportNgsx(py::module &m)
 
   typedef shared_ptr<SpaceTimeFESpace> PySTFES;
 
+
+
   m.def("SpaceTimeFESpace", [] (
                                         PyFES basefes,
                                         shared_ptr<FiniteElement> fe,
+                                        py::object dirichlet,
                                         py::dict bpflags,
                                         int heapsize)
   {
@@ -697,6 +711,20 @@ void ExportNgsx(py::module &m)
     Flags flags = py::extract<Flags> (bpflags)();
     shared_ptr<MeshAccess> ma = basefes->GetMeshAccess();
 
+    if (py::isinstance<py::list>(dirichlet)) {
+        flags.SetFlag("dirichlet", makeCArray<double>(py::list(dirichlet)));
+
+    }
+
+    if (py::isinstance<py::str>(dirichlet))
+    {
+          std::regex pattern(dirichlet.cast<string>());
+          Array<double> dirlist;
+          for (int i = 0; i < ma->GetNBoundaries(); i++)
+             if (std::regex_match (ma->GetMaterial(BND, i), pattern))
+               dirlist.Append (i+1);
+               flags.SetFlag("dirichlet", dirlist);
+    }
 
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
     cout << tfe << endl;
@@ -712,9 +740,10 @@ void ExportNgsx(py::module &m)
     ret->FinalizeUpdate(lh);
     return ret;
   },
-        py::arg("spacefes"),
-        py::arg("timefe"),
-        py::arg("flags") = py::dict(),
+       py::arg("spacefes"),
+       py::arg("timefe"),
+       py::arg("dirichlet") = DummyArgument(),
+       py::arg("flags") = py::dict(),
         py::arg("heapsize") = 1000000);
 
   py::class_<SpaceTimeFESpace, PySTFES, FESpace>

@@ -27,6 +27,7 @@ fes_lset_slice = H1(mesh, order=1, dirichlet=[])
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
 lset_order_time = 2
+time_order = 2
 tfe = ScalarTimeFE(k_t) 
 
 st_fes = SpaceTimeFESpace(fes1,tfe)
@@ -77,7 +78,9 @@ while tend - t_old > delta_t/2:
     dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t) 
     dfm_top.vec[:] = dfm.vec[lset_order_time*lset_adap_st.ndof_node : (lset_order_time+1)*lset_adap_st.ndof_node]
     lset_p1 = lset_adap_st.lset_p1    
+
     hasneg_spacetime = lset_adap_st.hasneg_spacetime
+    hasneg_spacetime |= lset_adap_st.hasif_spacetime
     active_dofs = GetDofsOfElements(st_fes,hasneg_spacetime)
     #print(active_dofs)
     
@@ -89,9 +92,9 @@ while tend - t_old > delta_t/2:
     lset_neg_top = { "levelset" : lset_top, "domain_type" : NEG, "subdivlvl" : 0}
     
     a = BilinearForm(st_fes,symmetric=False)
-    a += SymbolicBFI(levelset_domain = lset_neg, form = -u*dt(v), time_order=2)
-    a += SymbolicBFI(levelset_domain = lset_neg, form = delta_t*grad(u)*grad(v), time_order=2)
-    a += SymbolicBFI(levelset_domain = lset_neg, form = -delta_t*u*w*grad(v), time_order=2)
+    a += SymbolicBFI(levelset_domain = lset_neg, form = -u*dt(v), time_order=time_order)
+    a += SymbolicBFI(levelset_domain = lset_neg, form = delta_t*grad(u)*grad(v), time_order=time_order)
+    a += SymbolicBFI(levelset_domain = lset_neg, form = -delta_t*u*w*grad(v), time_order=time_order)
     a += SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1) )
     
     #Draw(lset_bottom,mesh,"bottom") 
@@ -99,7 +102,7 @@ while tend - t_old > delta_t/2:
     #input("lvlsets")
                 
     f = LinearForm(st_fes)
-    f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
+    f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)
     f += SymbolicLFI(levelset_domain = lset_neg_bottom,form = u0_ic*fix_t(v,0) )
     
     mesh.SetDeformation(dfm)
