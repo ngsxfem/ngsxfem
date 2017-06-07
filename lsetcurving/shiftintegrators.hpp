@@ -19,7 +19,7 @@ namespace ngfem
     shared_ptr<CoefficientFunction> qn;
   public:
     ShiftIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
-    virtual ~ShiftIntegrator(){ ; };
+    virtual ~ShiftIntegrator(){; };
     virtual string Name () const { return "ShiftIntegrator"; }
     virtual int DimElement () const { return D; }
     virtual int DimSpace () const { return D; }
@@ -38,28 +38,5 @@ namespace ngfem
       CalcElementVector(fel,eltrans,elvec,lh,nullptr);
     }
   };
-
-  
-  template <int D>
-  class RestrictedMassIntegrator : public BilinearFormIntegrator
-  {
-    shared_ptr<CoefficientFunction> coef;
-    shared_ptr<CoefficientFunction> coef_lset_p1;
-    double lower_lset_bound = 0.0;
-    double upper_lset_bound = 0.0;
-  public:
-    RestrictedMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs);
-    virtual ~RestrictedMassIntegrator(){ ; };
-    virtual string Name () const { return "RestrictedMassIntegrator"; }
-    virtual int DimElement () const { return D; }
-    virtual int DimSpace () const { return D; }
-    virtual VorB VB () const { return VOL; }
-    virtual bool IsSymmetric () const { return true; }
-    virtual void CalcElementMatrix (const FiniteElement & fel,
-                                    const ElementTransformation & eltrans,
-                                    FlatMatrix<double> elmat,
-                                    LocalHeap & lh) const;
-  };
-
 
 }

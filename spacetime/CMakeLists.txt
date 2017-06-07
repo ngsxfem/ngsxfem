@@ -23,6 +23,6 @@ install( FILES
 
 install (FILES
         lset_spacetime.py
-        DESTINATION ${PYTHON_PACKAGES_INSTALL_DIR}/xfem
+        DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
         )

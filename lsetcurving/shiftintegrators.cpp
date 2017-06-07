@@ -48,9 +48,9 @@ namespace ngfem
     
     FlatMatrixFixWidth<D> elvecmat(scafe.GetNDof(),&elvec(0));
     elvecmat = 0.0;
-    /*
+
     if (!ElementInRelevantBand(coef_lset_p1, eltrans, lower_lset_bound, upper_lset_bound))
-      return; */
+      return;
     
     FlatVector<> shape (scafe.GetNDof(),lh);
       
@@ -107,69 +107,6 @@ namespace ngfem
   template class ShiftIntegrator<2>;
   template class ShiftIntegrator<3>;
 
-  static RegisterLinearFormIntegrator<ShiftIntegrator<2> > initpsistar2d ("shiftsource_2", 2, 2);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<3> > initpsistar3d ("shiftsource_2", 3, 2);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<2> > initpsistar2d3 ("shiftsource_3", 2, 3);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<3> > initpsistar3d3 ("shiftsource_3", 3, 3);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<2> > initpsistar2d4 ("shiftsource_4", 2, 4);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<3> > initpsistar3d4 ("shiftsource_4", 3, 4);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<2> > initpsistar2d5 ("shiftsource_5", 2, 5);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<3> > initpsistar3d5 ("shiftsource_5", 3, 5);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<2> > initpsistar2d6 ("shiftsource_6", 2, 6);
-  static RegisterLinearFormIntegrator<ShiftIntegrator<3> > initpsistar3d6 ("shiftsource_6", 3, 6);
-
-
-  template <int D>
-  RestrictedMassIntegrator<D> :: RestrictedMassIntegrator (const Array<shared_ptr<CoefficientFunction>> & coeffs) : coef(coeffs[0]), coef_lset_p1(coeffs[1])
-  {
-    if (coeffs.Size() > 2)
-    {
-      lower_lset_bound = coeffs[2]->EvaluateConst();
-    }
-    if (coeffs.Size() > 3)
-    {
-      upper_lset_bound = coeffs[3]->EvaluateConst();
-    }
-  }
-
-  template <int D>
-  void RestrictedMassIntegrator<D> :: CalcElementMatrix (const FiniteElement & fel,
-                                                         const ElementTransformation & eltrans,
-                                                         FlatMatrix<double> elmat,
-                                                         LocalHeap & lh) const
-  {
-    static Timer time_fct ("RestrictedMassInt::CalcElMat");
-    RegionTimer reg (time_fct);
-    
-    elmat = 0.0;
-    const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);
-      
-    if (!ElementInRelevantBand(coef_lset_p1, eltrans, lower_lset_bound, upper_lset_bound))
-      return;
-      
-    FlatVector<> shape (scafe.GetNDof(),lh);
-      
-    IntegrationRule ir = SelectIntegrationRule (eltrans.GetElementType(), 2*scafe.Order());
-    for (int l = 0 ; l < ir.GetNIP(); l++)
-    {
-      MappedIntegrationPoint<D,D> mip(ir[l], eltrans);
-      const double coef_val = coef->Evaluate(mip);
-      scafe.CalcShape(ir[l],shape);
-      elmat += coef_val * mip.GetWeight() * shape * Trans(shape);
-    }      
-  }
-
-  template class RestrictedMassIntegrator<2>;
-  template class RestrictedMassIntegrator<3>;
-
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<2> > initmassstar2d ("restrictedmass_2", 2, 2);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<3> > initmassstar3d ("restrictedmass_2", 3, 2);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<2> > initmassstar2d3 ("restrictedmass_3", 2, 3);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<3> > initmassstar3d3 ("restrictedmass_3", 3, 3);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<2> > initmassstar2d4 ("restrictedmass_4", 2, 4);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<3> > initmassstar3d4 ("restrictedmass_4", 3, 4);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<2> > initmassstar2d5 ("restrictedmass_5", 2, 5);
-  static RegisterBilinearFormIntegrator<RestrictedMassIntegrator<3> > initmassstar3d5 ("restrictedmass_5", 3, 5);
   
 }
 

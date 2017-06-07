@@ -20,8 +20,10 @@ namespace xintegration
                                                    )
   {
     // temporary fix for ET_SEGM
+    /*
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+    */
 
     //cout << "time_intorder = " << time_intorder << endl;
 

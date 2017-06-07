@@ -1,9 +1,34 @@
+#+OPTIONS: toc:2   
+* About =ngsxfem= 
+=ngsxfem= is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... .
+=ngsxfem= is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+
+** The main features
+*** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
+Given a level set function \phi which describes the geometry (e.g. \Omega = { \phi < 0 }) a piecewise linear approximation is made. On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
+On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) subdomains where the level set is positive/negative/zero.
+#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="175"/><img src="doc/graphics/intpoints.jpg" height="175"/></p>
+
+*** Tools to work on an "active mesh" only
+In unfitted finite element methods some functions and integrals are only defined on a subset of the mesh. Accordingly finite element spaces and integrals have to be defined only on this active mesh. 
+=ngsxfem= offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces. On cut elements one often also uses locally modified finite elements, e.g. by restriction of finite elements on the background mesh.
+#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="175"/> <img src="doc/graphics/xfem.jpg" height="175"/></p> 
+
+*** Higher order representation of implicit level-set geometries 
+To obtain higher order accuracy, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. Thereby the piecewise linear approximation (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
+#+attr_html: :width 175px
+#+html: <p align="center"><img src="doc/graphics/lsetcurv.jpg" height="175"/></p>
+
+** Applications
+This section is to be added soon ...
+
+* Installation <<Installation>> 
 ** Linux Build Steps
-You require Netgen/NGSolve to run the xfem module (ngs-xfem). 
+You require Netgen/NGSolve to run and build the xfem module (=ngsxfem=). 
 You can either install it before hand (default option) 
 or let Netgen/NGSolve be installed as an external dependency. 
 #+BEGIN_SRC shell
-git clone https://gitlab.asc.tuwien.ac.at/jschoeberl/xfem.git
+git clone https://github/ngsxfem/ngsxfem.git
 cd xfem
 mkdir build
 cd build
@@ -12,14 +37,14 @@ cd build
 *** Building xfem with pre-installed NGSolve 
 You have Netgen/NGSolve installed? Perfect. Then let INSTLOCATION be the location 
 Netgen/NGSolve is already installed to. To install xfem make sure that you have 
-write access to that same directory. Then build ngs-xfem with 
+write access to that same directory. Then build =ngsxfem= with 
 #+BEGIN_SRC shell
 cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=OFF
 make
 make install
 #+END_SRC
 
-*** Building the NGS-Suite and ngs-xfem together 
+*** Building the NGS-Suite and =ngsxfem= together 
 If you do not have Netgen/NGSolve installed, you may first call
 #+BEGIN_SRC shell
 git submodule update --init
@@ -34,8 +59,8 @@ For INSTLOCATION you choose a nice installation location.
 Afterwards make sure that the installed NGS/xfem-libraries and executable will be found 
 by PATH and python.
 
-** Updating ngs-xfem
-To update ngs-xfem, update the sources
+** Updating =ngsxfem=
+To update =ngsxfem=, update the sources
 #+BEGIN_SRC shell
 git pull origin master
 #+END_SRC
@@ -68,3 +93,13 @@ Note that we use pytest (with python version > 3).
 ** pde vs. py files
 From version 1.0.0 on there are no pde-files used in this project anymore. 
 Only python-files are used.
+
+* Examples 
+At [[https://github.com/ngsxfem/ngsxfem-jupyter]] you can find tutorial-style jupyter notebooks for ngsxfem.
+
+With =ngsxfem= we ship the following examples:
+** =py_tutorials/cutfem.py=: 
+In this example we consider an unfitted interface problem that we solve with piecewise linear cut finite elements. The problem in strong form reads as
+
+  - \alpha_i \Delta u = f~~in~~\Omega_i,~i=1,2 
+...
