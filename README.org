@@ -95,6 +95,8 @@ From version 1.0.0 on there are no pde-files used in this project anymore.
 Only python-files are used.
 
 * Examples 
+At [[https://github.com/ngsxfem/ngsxfem-jupyter]] you can find tutorial-style jupyter notebooks for ngsxfem.
+
 With =ngsxfem= we ship the following examples:
 ** =py_tutorials/cutfem.py=: 
 In this example we consider an unfitted interface problem that we solve with piecewise linear cut finite elements. The problem in strong form reads as
