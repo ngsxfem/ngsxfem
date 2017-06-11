@@ -48,9 +48,6 @@ namespace ngfem
     
     FlatMatrixFixWidth<D> elvecmat(scafe.GetNDof(),&elvec(0));
     elvecmat = 0.0;
-
-    if (!ElementInRelevantBand(coef_lset_p1, eltrans, lower_lset_bound, upper_lset_bound))
-      return;
     
     FlatVector<> shape (scafe.GetNDof(),lh);
       
