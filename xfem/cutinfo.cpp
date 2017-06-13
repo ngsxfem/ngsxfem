@@ -120,17 +120,17 @@ namespace ngcomp
 
         Array<int> nodenums(0,lh);
 
-        ma->GetElVertices(elid,nodenums);
+        nodenums = ma->GetElVertices(elid);
         for (int node : nodenums)
           cut_neighboring_node[NT_VERTEX]->Set(node);
 
-        ma->GetElEdges(elid,nodenums);
+        nodenums = ma->GetElEdges(elid);
         for (int node : nodenums)
           cut_neighboring_node[NT_EDGE]->Set(node);
 
         if (ma->GetDimension() == 3)
         {
-          ma->GetElFaces(elid.Nr(),nodenums);
+          nodenums = ma->GetElFaces(elid.Nr());
           for (int node : nodenums)
             cut_neighboring_node[NT_FACE]->Set(node);
         }
@@ -152,17 +152,17 @@ namespace ngcomp
 
         DOMAIN_TYPE dt = elems_of_domain_type[NEG]->Test(elnr) ? NEG : POS;
 
-        ma->GetElVertices(elid,nodenums);
+        nodenums = ma->GetElVertices(elid);
         for (int node : nodenums)
           (*dom_of_node[NT_VERTEX])[node] = dt;
 
-        ma->GetElEdges(elid,nodenums);
+        nodenums = ma->GetElEdges(elid);
         for (int node : nodenums)
           (*dom_of_node[NT_EDGE])[node] = dt;
 
         if (ma->GetDimension() == 3)
         {
-          ma->GetElFaces(elid.Nr(),nodenums);
+          nodenums = ma->GetElFaces(elid.Nr());
           for (int node : nodenums)
             (*dom_of_node[NT_FACE])[node] = dt;
           (*dom_of_node[NT_CELL])[elnr] = (*cut_ratio_of_element[VOL])(elnr) > 0.5 ? NEG : POS;
@@ -197,7 +197,7 @@ namespace ngcomp
       [&] (int elnr, LocalHeap & lh)
     {
       Array<int> fanums(0,lh);
-      ma->GetElFacets (elnr, fanums);
+      fanums = ma->GetElFacets (ElementId(VOL,elnr));
       for (int j=0; j<fanums.Size(); j++)
         fine_facet.Set(fanums[j]);
     });
