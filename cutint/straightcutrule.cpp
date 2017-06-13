@@ -128,7 +128,7 @@ namespace xintegration
           Array<int> nothing;
           Polytope relevant_base_simplex_vertices(nothing, D, svs_ptr);
           for(int i=0; i<D+1; i++)
-              if( ((dt == POS) &&(lset[i] > 1e-10)) || ((dt == NEG) &&(lset[i] < -1e-10)))
+              if( ((dt == POS) &&(lset[i] > 0)) || ((dt == NEG) &&(lset[i] < 0)))
                   relevant_base_simplex_vertices.Append(i);
           if((relevant_base_simplex_vertices.Size() == 1)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
               Polytope s(s_cut);
