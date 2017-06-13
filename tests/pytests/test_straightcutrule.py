@@ -132,3 +132,27 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     error = abs(integral - referencevals[domain])
     
     assert error < 5e-15*(order+1)*(order+1)
+
+@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("order", [2])
+@pytest.mark.parametrize("domain", [NEG, POS, IF])
+@pytest.mark.parametrize("dim", [x,y])
+
+def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated, dim):
+    square = SplineGeometry()
+    square.AddRectangle([0,0],[1,1],bc=1)
+    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    
+    levelset = 1 - 3*dim
+    referencevals = {NEG: 2./3, POS: 1./3, IF: 1. }
+    
+    lset_approx = GridFunction(H1(mesh,order=1))
+    InterpolateToP1(levelset,lset_approx)
+    
+    f = CoefficientFunction(1)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
+    error = abs(integral - referencevals[domain])
+    
+    assert error < 5e-15*(order+1)*(order+1)
