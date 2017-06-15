@@ -13,6 +13,7 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../utils/restrictedblf.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -185,6 +186,27 @@ void ExportNgsx(py::module &m)
 
 
 
+  typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
+  py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
+    (m, "CRestrictedBilinearForm");
+  m.def("RestrictedBilinearForm",
+         [](shared_ptr<FESpace> fes,
+            const string & aname,
+            shared_ptr<BitArray> ael_restriction,
+            shared_ptr<BitArray> afac_restriction,
+            py::dict bpflags)
+         {
+           Flags flags = py::extract<Flags> (bpflags)();
+           return make_shared<RestrictedBilinearForm> (fes, aname, ael_restriction, afac_restriction, flags);
+         },
+         py::arg("space"),
+         py::arg("name"),
+         py::arg("element_restriction"),
+         py::arg("facet_restriction"),
+         py::arg("flags") = py::dict()
+      );
+
+  
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
     (m, "BitArrayCF")
