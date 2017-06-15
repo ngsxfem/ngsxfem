@@ -189,7 +189,7 @@ namespace ngfem
       *n_totalits += it;
 #pragma omp critical (maxits)
     if (n_maxits)
-      *n_maxits = max((double)it,*n_maxits);
+      *n_maxits = max2((double)it,*n_maxits);
 
     if (it == 100){
       RegionTimer reg (time_not_conv);

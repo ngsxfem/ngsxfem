@@ -68,7 +68,12 @@ set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 
-set(NGS_LIB_TYPE SHARED)
+if(WIN32)
+    set(NGS_LIB_TYPE STATIC)
+else(WIN32)
+    set(NGS_LIB_TYPE SHARED)
+endif(WIN32)
+
 set(NETGEN_LIBS ngsolve)
 
 

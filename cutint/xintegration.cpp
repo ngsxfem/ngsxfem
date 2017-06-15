@@ -3,6 +3,7 @@
 
 namespace xintegration
 {
+  using ngfem::INT;
 
 
   const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
