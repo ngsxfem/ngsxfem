@@ -192,17 +192,27 @@ void ExportNgsx(py::module &m)
   m.def("RestrictedBilinearForm",
          [](shared_ptr<FESpace> fes,
             const string & aname,
-            shared_ptr<BitArray> ael_restriction,
-            shared_ptr<BitArray> afac_restriction,
+            py::object ael_restriction,
+            py::object afac_restriction,
             py::dict bpflags)
          {
            Flags flags = py::extract<Flags> (bpflags)();
-           return make_shared<RestrictedBilinearForm> (fes, aname, ael_restriction, afac_restriction, flags);
+
+           shared_ptr<BitArray> el_restriction = nullptr;
+           shared_ptr<BitArray> fac_restriction = nullptr;
+           if (py::extract<PyBA> (ael_restriction).check())
+             el_restriction = py::extract<PyBA>(ael_restriction)();
+
+           if (py::extract<PyBA> (afac_restriction).check())
+             fac_restriction = py::extract<PyBA>(afac_restriction)();
+
+           
+           return make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
          },
          py::arg("space"),
-         py::arg("name"),
-         py::arg("element_restriction"),
-         py::arg("facet_restriction"),
+         py::arg("name") = "bfa",
+         py::arg("element_restriction") = DummyArgument(),
+         py::arg("facet_restriction") = DummyArgument(),
          py::arg("flags") = py::dict()
       );
 
