@@ -395,9 +395,6 @@ void ExportNgsx(py::module &m)
     if (defon_region.check())
       vb = VorB(defon_region());
 
-    if (vb == BND)
-      throw Exception("Symbolic cuts not yet (tested) for boundaries..");
-
     // check for DG terms
     bool has_other = false;
     cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
@@ -413,10 +410,14 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<BilinearFormIntegrator> bfi;
     if (!has_other && !skeleton)
-      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
     else
+    {
+      if (vb == BND)
+        throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
+      
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
-
+    }
     if (py::extract<py::list> (definedon).check())
       bfi -> SetDefinedOn (makeCArray<int> (definedon));
 
@@ -461,14 +462,14 @@ void ExportNgsx(py::module &m)
     if (defon_region.check())
       vb = VorB(defon_region());
 
-    if (vb == BND)
-      throw Exception("Symbolic cuts not yet (tested) for boundaries..");
+    // if (vb == BND)
+    //   throw Exception("Symbolic cuts not yet (tested) for boundaries..");
 
     if (element_boundary || skeleton)
       throw Exception("No Facet LFI with Symbolic cuts..");
 
     shared_ptr<LinearFormIntegrator> lfi
-      = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+      = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, vb);
 
     if (py::extract<py::list> (definedon).check())
       lfi -> SetDefinedOn (makeCArray<int> (definedon));

@@ -27,9 +27,10 @@ namespace ngfem
                                        shared_ptr<CoefficientFunction> acf,
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
-                                       int asubdivlvl = 0);
+                                       int asubdivlvl = 0,
+                                       VorB vb = VOL);
 
-    virtual VorB VB () const { return VOL; }
+    // virtual VorB VB () const { return vb; }
     virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 

@@ -500,16 +500,31 @@ namespace xintegration
 
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface){
-      for (int i = 0; i < quad_untrafo.Size(); ++i)
+    for (int i = 0; i < quad_untrafo.Size(); ++i)
+    {
+      if (trafo.VB())
       {
-          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
-          Mat<D,D> Finv = mip.GetJacobianInverse();
+        if (D == 3)
+          throw Exception("trafo correction not yet tested!");
+        MappedIntegrationPoint<D-1,D> mip(quad_untrafo[i],trafo);
+        Mat<D-1,D> Finv = mip.GetJacobianInverse();
 
-      Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
-          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+        Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
+        const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
-          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+        (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
       }
+      else
+      {
+        MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
+        Mat<D,D> Finv = mip.GetJacobianInverse();
+
+        Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
+        const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+
+        (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+      }
+    }
   }
 
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the

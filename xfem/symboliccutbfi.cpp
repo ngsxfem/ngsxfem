@@ -19,8 +19,9 @@ namespace ngfem
                                      shared_ptr<CoefficientFunction> acf,
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder,
-                                     int asubdivlvl)
-    : SymbolicBilinearFormIntegrator(acf,VOL,false),
+                                     int asubdivlvl,
+                                     VorB vb)
+    : SymbolicBilinearFormIntegrator(acf,vb,false),
     cf_lset(acf_lset),
     dt(adt),
     force_intorder(aforce_intorder),
@@ -111,8 +112,8 @@ namespace ngfem
     if (et == ET_TRIG || et == ET_TET)
       intorder -= test_difforder+trial_difforder;
 
-    if (! (et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
-      throw Exception("SymbolicCutBFI can only treat simplices right now");
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
 
     if (force_intorder >= 0)
       intorder = force_intorder;
