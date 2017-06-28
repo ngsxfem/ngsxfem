@@ -115,9 +115,10 @@ namespace xintegration
       CutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
           et = a_et;
           D = Dim(et); svs_ptr = make_shared<PointCnt>();
-          if(D == 3){//Why is this required?!!
-              vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
-              for(int i=0; i<lset.Size(); i++) lset[i] = lset_s[lset.Size()-1-i];
+          if(D == 3){
+              vector<double> lset_tmp = lset;
+              lset[0] = lset_tmp[7]; lset[1] = lset_tmp[6]; lset[6] = lset_tmp[1]; lset[7] = lset_tmp[0];
+
           }
       }
 
