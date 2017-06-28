@@ -116,8 +116,8 @@ namespace xintegration
           et = a_et;
           D = Dim(et); svs_ptr = make_shared<PointCnt>();
           if(D == 3){
-              vector<double> lset_tmp = lset;
-              lset[0] = lset_tmp[7]; lset[1] = lset_tmp[6]; lset[6] = lset_tmp[1]; lset[7] = lset_tmp[0];
+              double lset_tmp0 = lset[0], lset_tmp1 = lset[1];
+              lset[0] = lset[7]; lset[1] = lset[6]; lset[6] = lset_tmp1; lset[7] = lset_tmp0;
 
           }
       }
