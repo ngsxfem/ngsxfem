@@ -198,6 +198,12 @@ namespace xintegration
   }
 
   void CutQuadElementGeometry::LoadBaseQuadFromElementTopology() {
+      vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
+      if(et == ET_HEX){
+          lset[0] = lset_s[7]; lset[1] = lset_s[6];
+          lset[6] = lset_s[1]; lset[7] = lset_s[0];
+      }
+
       const POINT3D * verts = ElementTopology::GetVertices(et);
 
       for(int i=0; i<ElementTopology::GetNVertices(et); i++){
