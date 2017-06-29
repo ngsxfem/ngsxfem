@@ -158,6 +158,7 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     
     integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
                          cf=f, mesh=mesh, order = order)
+    print("Integral: ", integral)
     error = abs(integral - referencevals[domain])
     
     assert error < 5e-15*(order+1)*(order+1)
