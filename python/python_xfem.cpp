@@ -845,7 +845,7 @@ void ExportNgsx(py::module &m)
 
    // DiffOpFixt
 
-  m.def("fix_t", [] (const PyProxyFunction self, int time,py::object comp)
+  m.def("fix_t", [] (const PyProxyFunction self, double time,py::object comp)
   {
     Array<int> comparr(0);
     if (py::extract<int> (comp).check())
@@ -868,12 +868,20 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<DifferentialOperator> diffopfixt;
 
-    switch (time)
+    if(time == 0.0 || time == 1.0)
     {
-      case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-      case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
-      default : throw Exception("Requested time not implemented yet.");
+      switch (int(time))
+      {
+        case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+        case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+        default : throw Exception("Requested time not implemented yet.");
+      }
     }
+    else {
+      cout << "Calling DiffOpFixAnyTime" << endl;
+      diffopfixt = make_shared<DiffOpFixAnyTime> (time);
+    }
+
 
     for (int i = comparr.Size() - 1; i >= 0; --i)
     {
@@ -893,16 +901,24 @@ void ExportNgsx(py::module &m)
           py::arg("comp") = -1
           );
 
-   m.def("fix_t", [](PyGF self, int time) -> PyCF
+   m.def("fix_t", [](PyGF self, double time) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
 
-     switch (time)
+     if(time == 0.0 || time == 1.0)
      {
-     case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-     case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
-     default : throw Exception("Requested time not implemented yet.");
+       switch (int(time))
+       {
+         case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
+         case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+         default : throw Exception("Requested time not implemented yet.");
+       }
      }
+     else {
+       cout << "Calling DiffOpFixAnyTime" << endl;
+       diffopfixt = make_shared<DiffOpFixAnyTime> (time);
+     }
+
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
    });
