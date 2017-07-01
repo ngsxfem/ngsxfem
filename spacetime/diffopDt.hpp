@@ -77,6 +77,13 @@ namespace ngfem
         SliceMatrix<double,ColMajor> mat,
         LocalHeap & lh) const;
 
+    virtual void
+    ApplyTrans (const FiniteElement & fel,
+        const BaseMappedIntegrationPoint & mip,
+        FlatVector<double> flux,
+        FlatVector<double> x,
+        LocalHeap & lh) const;
+
   };
 
 

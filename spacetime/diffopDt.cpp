@@ -71,6 +71,19 @@ namespace ngfem
     mat.Row(0) = shape;
   }
 
+  void DiffOpFixAnyTime ::
+  ApplyTrans (const FiniteElement & fel,
+              const BaseMappedIntegrationPoint & mip,
+              FlatVector<double> flux,
+              FlatVector<double> x,
+              LocalHeap & lh) const
+  {
+    HeapReset hr(lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), x.Size(), lh);
+    CalcMatrix (fel, mip, mat, lh);
+    x = Trans(mat) * flux;
+  }
+
 
 
 }
