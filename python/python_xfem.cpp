@@ -845,7 +845,7 @@ void ExportNgsx(py::module &m)
 
    // DiffOpFixt
 
-  m.def("fix_t", [] (const PyProxyFunction self, double time,py::object comp)
+  m.def("fix_t", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
   {
     Array<int> comparr(0);
     if (py::extract<int> (comp).check())
@@ -868,7 +868,7 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<DifferentialOperator> diffopfixt;
 
-    if(time == 0.0 || time == 1.0)
+    if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
     {
       switch (int(time))
       {
@@ -898,14 +898,15 @@ void ExportNgsx(py::module &m)
     },
           py::arg("proxy"),
           py::arg("time"),
-          py::arg("comp") = -1
+          py::arg("comp") = -1,
+          py::arg("use_FixAnyTime") = false
           );
 
-   m.def("fix_t", [](PyGF self, double time) -> PyCF
+   m.def("fix_t", [](PyGF self, double time, bool use_FixAnyTime) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
 
-     if(time == 0.0 || time == 1.0)
+     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
      {
        switch (int(time))
        {
