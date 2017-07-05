@@ -105,6 +105,7 @@ namespace ngfem
     }
 
   };
+  
   class SymbolicCutFacetBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
@@ -166,5 +167,65 @@ namespace ngfem
     }
 
   };
+
+  class SymbolicFacetBilinearFormIntegrator2 : public SymbolicFacetBilinearFormIntegrator
+  {
+  protected:
+    int force_intorder = -1;
+    int time_order = -1;
+  public:
+    SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
+                                          int aforce_intorder);
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+
+    virtual VorB VB () const { return vb; }
+    virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
+    
+    virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
+                                                                          element_boundary); }
+    
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const;
+
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
+                     const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
+                     const ElementTransformation & seltrans,  
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+    {
+      throw Exception("SymbolicFacetBilinearFormIntegrator2::CalcFacetMatrix on boundary not yet implemented");
+    }
+
+    virtual void
+    ApplyFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                      const FiniteElement & volumefel2, int LocalFacetNr2,
+                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                      FlatVector<double> elx, FlatVector<double> ely,
+                      LocalHeap & lh) const
+    {
+      throw Exception("SymbolicFacetBilinearFormIntegrator2::ApplyFacetMatrix not yet implemented");
+    }
+
+
+    virtual void
+    ApplyFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
+                      const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
+                      const ElementTransformation & seltrans, FlatArray<int> & SElVertices,
+                      FlatVector<double> elx, FlatVector<double> ely,
+                      LocalHeap & lh) const
+    {
+      throw Exception("SymbolicFacetBilinearFormIntegrator2::ApplyFacetMatrix not yet implemented");
+    }
+
+  };
+
+
 
 }

@@ -516,4 +516,166 @@ namespace ngfem
         }
   }
 
+
+
+  SymbolicFacetBilinearFormIntegrator2 ::
+  SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
+                                        int aforce_intorder)
+    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false),
+      force_intorder(aforce_intorder)
+  {
+    simd_evaluate=false;
+  }
+
+  void SymbolicFacetBilinearFormIntegrator2 ::
+  CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
+                   const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
+                   const FiniteElement & fel2, int LocalFacetNr2,
+                   const ElementTransformation & trafo2, FlatArray<int> & ElVertices2,
+                   FlatMatrix<double> elmat,
+                   LocalHeap & lh) const
+  {
+    elmat = 0.0;
+
+    if (LocalFacetNr2==-1) throw Exception ("SymbolicFacetBFI: LocalFacetNr2==-1");
+
+    int maxorder = max2 (fel1.Order(), fel2.Order());
+
+    auto eltype1 = trafo1.GetElementType();
+    auto eltype2 = trafo2.GetElementType();
+    auto etfacet = ElementTopology::GetFacetType (eltype1, LocalFacetNr1);
+
+    IntegrationRule ir_facet(etfacet, 2*maxorder);
+    
+    Facet2ElementTrafo transform1(eltype1, ElVertices1); 
+    Facet2ElementTrafo transform2(eltype2, ElVertices2);
+    
+    IntegrationRule & ir_facet_vol1_tmp = transform1(LocalFacetNr1, ir_facet, lh);
+    IntegrationRule & ir_facet_vol2_tmp = transform2(LocalFacetNr2, ir_facet, lh);
+
+    IntegrationRule * ir_facet_vol1 = nullptr;
+    IntegrationRule * ir_facet_vol2 = nullptr;
+
+    
+    if (time_order >= 0)
+    {
+      FlatVector<> st_point(3,lh);
+      const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_order);
+
+      auto ir_spacetime1 = new (lh) IntegrationRule (ir_facet_vol1_tmp.Size()*ir_time.Size(),lh);
+      for (int i = 0; i < ir_time.Size(); i++)
+      {
+        for (int j = 0; j < ir_facet_vol1_tmp.Size(); j++)
+        {
+          const int ij = i*ir_facet_vol1_tmp.Size()+j;
+          (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol1_tmp[j].Weight() );
+          st_point = ir_facet_vol1_tmp[j].Point();
+          st_point(2) = ir_time[i](0);
+          (*ir_spacetime1)[ij].Point() = st_point;
+        }
+      }
+      auto ir_spacetime2 = new (lh) IntegrationRule (ir_facet_vol2_tmp.Size()*ir_time.Size(),lh);
+      for (int i = 0; i < ir_time.Size(); i++)
+      {
+        for (int j = 0; j < ir_facet_vol2_tmp.Size(); j++)
+        {
+          const int ij = i*ir_facet_vol2_tmp.Size()+j;
+          (*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol2_tmp[j].Weight() );
+          st_point = ir_facet_vol2_tmp[j].Point();
+          st_point(2) = ir_time[i](0);
+          (*ir_spacetime2)[ij].Point() = st_point;
+        }
+      }
+      ir_facet_vol1 = ir_spacetime1;
+      ir_facet_vol2 = ir_spacetime2;
+    }
+    else
+    {
+      ir_facet_vol1 = &ir_facet_vol1_tmp;
+      ir_facet_vol2 = &ir_facet_vol2_tmp;
+    }
+
+    // cout << *ir_facet_vol1 << endl;
+    // cout << *ir_facet_vol2 << endl;
+    // getchar();
+    
+    BaseMappedIntegrationRule & mir1 = trafo1(*ir_facet_vol1, lh);
+    BaseMappedIntegrationRule & mir2 = trafo2(*ir_facet_vol2, lh);
+
+    ProxyUserData ud;
+    const_cast<ElementTransformation&>(trafo1).userdata = &ud;
+
+    for (int k1 : Range(trial_proxies))
+      for (int l1 : Range(test_proxies))
+        {
+          HeapReset hr(lh);
+          FlatMatrix<> val(mir1.Size(), 1,lh);
+          
+          auto proxy1 = trial_proxies[k1];
+          auto proxy2 = test_proxies[l1];
+
+          FlatTensor<3> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
+
+          mir1.ComputeNormalsAndMeasure (eltype1, LocalFacetNr1);
+          mir2.ComputeNormalsAndMeasure (eltype2, LocalFacetNr2);
+          
+          for (int k = 0; k < proxy1->Dimension(); k++)
+            for (int l = 0; l < proxy2->Dimension(); l++)
+              {
+                ud.trialfunction = proxy1;
+                ud.trial_comp = k;
+                ud.testfunction = proxy2;
+                ud.test_comp = l;
+                
+                cf -> Evaluate (mir1, val);
+                proxyvalues(STAR,l,k) = val.Col(0);
+              }
+
+          for (int i = 0; i < mir1.Size(); i++)
+            // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
+            proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
+
+          IntRange trial_range  = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
+          IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());
+
+          auto loc_elmat = elmat.Rows(test_range).Cols(trial_range);
+          FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
+          FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
+
+          constexpr size_t BS = 16;
+          for (size_t i = 0; i < mir1.Size(); i+=BS)
+            {
+              int rest = min2(size_t(BS), mir1.Size()-i);
+              HeapReset hr(lh);
+              FlatMatrix<double,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
+              FlatMatrix<double,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
+
+              for (int j = 0; j < rest; j++)
+                {
+                  int ii = i+j;
+                  IntRange r2 = proxy2->Dimension() * IntRange(j,j+1);
+                  if (proxy1->IsOther())
+                    proxy1->Evaluator()->CalcMatrix(fel2, mir2[ii], bmat1, lh);
+                  else
+                    proxy1->Evaluator()->CalcMatrix(fel1, mir1[ii], bmat1, lh);
+                  
+                  if (proxy2->IsOther())
+                    proxy2->Evaluator()->CalcMatrix(fel2, mir2[ii], bmat2, lh);
+                  else
+                    proxy2->Evaluator()->CalcMatrix(fel1, mir1[ii], bmat2, lh);
+                  
+                  bdbmat1.Rows(r2) = proxyvalues(ii,STAR,STAR) * bmat1;
+                  bbmat2.Rows(r2) = bmat2;
+                }
+              
+              IntRange r1 = proxy1->Evaluator()->UsedDofs(proxy1->IsOther() ? fel2 : fel1);
+              IntRange r2 = proxy2->Evaluator()->UsedDofs(proxy2->IsOther() ? fel2 : fel1);
+              loc_elmat.Rows(r2).Cols(r1) += Trans (bbmat2.Cols(r2)) * bdbmat1.Cols(r1) | Lapack;
+            }
+        }
+  }
+
+  
+
+  
 }
