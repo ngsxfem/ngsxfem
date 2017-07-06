@@ -491,10 +491,10 @@ void ExportNgsx(py::module &m)
     }
     else
     {
-      throw Exception("Patch facet blf not implemented yet: TODO(2)!");
-      // auto bfime = make_shared<SymbolicFacetPatchIntegrator> (cf, order);
-      // bfime->SetTimeIntegrationOrder(time_order);
-      // bfi = bfime;
+      // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
+      auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf, order);
+      bfime->SetTimeIntegrationOrder(time_order);
+      bfi = bfime;
     }
 
     if (! py::extract<DummyArgument> (definedonelem).check())

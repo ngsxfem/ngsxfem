@@ -95,10 +95,15 @@ def dnjump(u,order,comp = -1):
         return dn(u,order,comp) + dn(u.Other(),order,comp)
 
 # ghost penalty terms:
-gp_term = CoefficientFunction(0.0)
-for i in range(order):
-    gp_term += gamma_stab[i] * power(h,2*i+1) * dnjump(u,i+1)*dnjump(v,i+1)
-a += SymbolicBFI(form = cf_ghost*gp_term,VOL_or_BND = VOL, skeleton=True)
+# gp_term = CoefficientFunction(0.0)
+# for i in range(order):
+#     gp_term += gamma_stab[i] * power(h,2*i+1) * dnjump(u,i+1)*dnjump(v,i+1)
+# a += SymbolicBFI(form = cf_ghost*gp_term,VOL_or_BND = VOL, skeleton=True, definedonelements=ba_facets)
+
+a += SymbolicFacetPatchBFI(form = 1.0/h*1.0/h*(u-u.Other())*(v-v.Other()),
+                           skeleton=False,
+                           definedonelements=ba_facets)
+# a += SymbolicBFI(form = cf_ghost*gp_term,VOL_or_BND = VOL, skeleton=True)
 
 # apply mesh adaptation    
 mesh.SetDeformation(deformation)
