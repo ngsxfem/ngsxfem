@@ -14,6 +14,7 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../utils/restrictedblf.hpp"
 #include "../cutint/spacetimecutrule.hpp"
 
 #include "../spacetime/SpaceTimeFE.hpp"
@@ -194,6 +195,35 @@ void ExportNgsx(py::module &m)
         py::arg("balist")
         );
 
+  typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
+  py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
+    (m, "CRestrictedBilinearForm");
+  m.def("RestrictedBilinearForm",
+         [](shared_ptr<FESpace> fes,
+            const string & aname,
+            py::object ael_restriction,
+            py::object afac_restriction,
+            py::dict bpflags)
+         {
+           Flags flags = py::extract<Flags> (bpflags)();
+
+           shared_ptr<BitArray> el_restriction = nullptr;
+           shared_ptr<BitArray> fac_restriction = nullptr;
+           if (py::extract<PyBA> (ael_restriction).check())
+             el_restriction = py::extract<PyBA>(ael_restriction)();
+
+           if (py::extract<PyBA> (afac_restriction).check())
+             fac_restriction = py::extract<PyBA>(afac_restriction)();
+
+           
+           return make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+         },
+         py::arg("space"),
+         py::arg("name") = "bfa",
+         py::arg("element_restriction") = DummyArgument(),
+         py::arg("facet_restriction") = DummyArgument(),
+         py::arg("flags") = py::dict()
+      );
 
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
@@ -207,6 +237,7 @@ void ExportNgsx(py::module &m)
        py::arg("bitarray")
        );
 
+//   .def("__init__",  [] (XFESpace *instance,
   m.def("XFESpace", [] (
                                         PyFES basefes,
                                         py::object acutinfo,
@@ -361,7 +392,6 @@ void ExportNgsx(py::module &m)
     shared_ptr<BitArray> ba = nullptr;
     if (py::extract<PyBA> (pba).check())
       ba = py::extract<PyBA>(pba)();
-    
     LocalHeap lh (heapsize, "ProjectShift-Heap");
     ProjectShift(lset_ho, lset_p1, deform, qn, ba, lower, upper, threshold, lh);
   } ,
@@ -508,8 +538,6 @@ void ExportNgsx(py::module &m)
         py::arg("skeleton") = true,
         py::arg("definedonelements")=DummyArgument()
     );
-
-  
 
   m.def("SymbolicCutLFI", [](PyCF lset,
               DOMAIN_TYPE dt,
@@ -685,7 +713,6 @@ void ExportNgsx(py::module &m)
   // new implementation: only straight cuts - start with triangles only for a start!
 
   m.def("DebugSpaceTimeCutIntegrationRule", [](){ DebugSpaceTimeCutIntegrationRule(); });
-
   m.def("IntegrateX",
         [](py::object lset,
                            shared_ptr<MeshAccess> ma,
@@ -740,7 +767,6 @@ void ExportNgsx(py::module &m)
         py::arg("domain_type")=IF,
         py::arg("subdivlvl")=0,
         py::arg("heapsize")=1000000);
-
   typedef shared_ptr<SpaceTimeFESpace> PySTFES;
 
 
@@ -976,10 +1002,6 @@ void ExportNgsx(py::module &m)
    {
      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
    });
-
-
-
-
 }
 
 PYBIND11_PLUGIN(ngsxfem_py)

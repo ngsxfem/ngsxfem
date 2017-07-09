@@ -4,13 +4,13 @@ if(NETGEN_USE_PYTHON)
     install(TARGETS ngsxfem_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem)
 
 if(NOT WIN32)
-        target_link_libraries(ngsxfem_py ngsxfem_lsetcurving ngsxfem_utils ngsxfem_spacetime)
+        target_link_libraries(ngsxfem_py ngsxfem_lsetcurving ngsxfem_utils ngsxfem_cutint ngsxfem_spacetime)
         install( TARGETS ngsxfem_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem )
 endif(NOT WIN32)
 
     install (FILES
-            __init__.py 
+        __init__.py 
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
-            COMPONENT xfem
-            )
+        COMPONENT xfem
+    )
 endif(NETGEN_USE_PYTHON)

@@ -22,7 +22,7 @@ To obtain higher order accuracy, we offer a mesh transformation technique in the
 ** Applications
 This section is to be added soon ...
 
-* Installation <<Installation>> 
+* Installation
 ** Linux Build Steps
 You require Netgen/NGSolve to run and build the xfem module (=ngsxfem=). 
 You can either install it before hand (default option) 
@@ -96,10 +96,11 @@ Only python-files are used.
 
 * Examples 
 At [[https://github.com/ngsxfem/ngsxfem-jupyter]] you can find tutorial-style jupyter notebooks for ngsxfem.
-
-With =ngsxfem= we ship the following examples:
-** =py_tutorials/cutfem.py=: 
-In this example we consider an unfitted interface problem that we solve with piecewise linear cut finite elements. The problem in strong form reads as
-
-  - \alpha_i \Delta u = f~~in~~\Omega_i,~i=1,2 
-...
+Further, in =py_tutorials/= there are some simple examples for some known unfitted discretizations:
+ * =py_tutorials/cutfem.py= : stationary interface problem with a (P1) CutFEM method with Nitsche
+ * =py_tutorials/nxfem.py= : stationary interface problem with a (P1) XFEM method with Nitsche (similar to =cutfem.py=)
+ * =py_tutorials/nxfem_higher_order.py= : stationary interface problem with a higher order isoparametric unfitted FEM with Nitsche (similar to =nxfem.py=)
+ * =py_tutorials/fictdom_ghostpen.py= : stationary fictitious domain problem with isoparametric CutFEM, Nitsche and ghost penalty stabilization
+ * =py_tutorials/stokesxfem.py= : stationary Stokes interface problem with an isoparametric (P2X/P1X) Taylor-Hood-Nitsche-XFEM discretization
+ * =py_tutorials/tracefem.py= : stationary surface PDE problem with a TraceFEM discretization
+ * =py_tutorials/moving_domain.py= : moving fictitous domain problem using a space time unfitted FEM (cf. corresponding tutorial at [[https://github.com/ngsxfem/ngsxfem-jupyter]] )

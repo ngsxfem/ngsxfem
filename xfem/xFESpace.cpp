@@ -213,6 +213,7 @@ namespace ngcomp
   void IterateRange (int ne, LocalHeap & clh,
                      const function<void(int,LocalHeap&)> & func)
   {
+#ifndef WIN32
     if (task_manager)
     {
       SharedLoop2 sl(ne);
@@ -229,6 +230,7 @@ namespace ngcomp
       } );
     }
     else
+#endif // WIN32
     {
       for (int elnr = 0; elnr < ne; elnr++)
       {
