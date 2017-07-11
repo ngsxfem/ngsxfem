@@ -59,7 +59,7 @@ from ngsolve.utils import *
 from xfem import *
 from netgen.geom2d import SplineGeometry
 from xfem.lsetcurv import *
-from numpy import pi
+from math import pi
 
 
 class quad_rule:
