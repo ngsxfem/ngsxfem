@@ -339,16 +339,34 @@ namespace xintegration
       for(auto poly: Cut_quads){
           double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
 
-          function<double(double)> y_ast = [this](double x) -> double {return -(lc[1][0][0]*x+lc[0][0][0])/(lc[1][1][1]*x+lc[0][1][0]);};
-          function<double(double)> Dy_ast = [this](double x) -> double {return -(lc[1][0][0]*(lc[1][1][1]*x+lc[0][1][0]) - lc[1][1][1]*(lc[1][0][0]*x+lc[0][0][0]))/pow(lc[1][1][1]*x+lc[0][1][0], 2);};
-          auto y0 = y_ast, y1 = y_ast, Dy0 = Dy_ast, Dy1 = Dy_ast;
-          if(poly.GetLset(0) > 1e-12){
+          int z_ind = -1; function<double(double)> y0, Dy0, y1, Dy1;
+          if(CheckIfStraightCut(Vec<4>{poly.GetLset(0), poly.GetLset(1), poly.GetLset(2), poly.GetLset(3)}) == IF) z_ind = 0;
+          else if (CheckIfStraightCut(Vec<4>{poly.GetLset(4), poly.GetLset(5), poly.GetLset(6), poly.GetLset(7)}) == IF) z_ind = 1;
+          else {
               y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
               Dy0 = [] (double x) -> double {return 0;};
-          }
-          else {
               y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
               Dy1 = [] (double x) -> double {return 0;};
+          }
+          if(z_ind != -1){
+              function<double(double)> y_ast, Dy_ast;
+              if(z_ind == 0){
+                  y_ast = [this, z_ind](double x) -> double {return -(lc[1][0][z_ind]*x+lc[0][0][z_ind])/(lc[1][1][z_ind]*x+lc[0][1][z_ind]);};
+                  Dy_ast = [this, z_ind](double x) -> double {return -(lc[1][0][z_ind]*(lc[1][1][z_ind]*x+lc[0][1][z_ind]) - lc[1][1][z_ind]*(lc[1][0][z_ind]*x+lc[0][0][z_ind]))/pow(lc[1][1][z_ind]*x+lc[0][1][z_ind], 2);};
+              }
+              else {
+                  y_ast = [this](double x) -> double {return -((lc[1][0][1] + lc[1][0][0])*x+(lc[0][0][1] + lc[0][0][0]))/((lc[1][1][1] + lc[1][1][0])*x+(lc[0][1][1] + lc[0][1][0]));};
+                  Dy_ast = [this](double x) -> double {return -((lc[1][0][1] + lc[1][0][0])*((lc[1][1][1] + lc[1][1][0])*x+(lc[0][1][1] + lc[0][1][0])) - (lc[1][1][1] + lc[1][1][0])*((lc[1][0][1] + lc[1][0][0])*x+(lc[0][0][1] + lc[0][0][0])))/pow((lc[1][1][1] + lc[1][1][0])*x+(lc[0][1][1] + lc[0][1][0]), 2);};
+              }
+              y0 = y_ast, y1 = y_ast, Dy0 = Dy_ast, Dy1 = Dy_ast;
+              if(poly.GetLset(4*z_ind) > 1e-12){
+                  y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
+                  Dy0 = [] (double x) -> double {return 0;};
+              }
+              else {
+                  y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
+                  Dy1 = [] (double x) -> double {return 0;};
+              }
           }
 
           const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
@@ -361,7 +379,7 @@ namespace xintegration
                 scale_f[1] = y1(p[0]) - y0(p[0]);
                 p[1] = y0(p[0])+ip2.Point()[0]*scale_f[1];
                 double u = lc[1][1][0]*p[0]*p[1] +lc[1][0][0]*p[0]+lc[0][1][0]*p[1]+lc[0][0][0];
-                double v = lc[1][0][1]*p[0]+lc[0][1][1]*p[1]+lc[0][0][1]+lc[1][0][1]; p[2] = -u/v;
+                double v = lc[1][1][1]*p[0]*p[1] +lc[1][0][1]*p[0]+lc[0][1][1]*p[1]+lc[0][0][1]; p[2] = -u/v;
                 Vec<3> del_gamma_xi(0.0), del_gamma_eta(0.0);
                 del_gamma_xi[0] = scale_f[0];
                 del_gamma_eta[1] = scale_f[1];
@@ -423,7 +441,7 @@ namespace xintegration
           const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
           for(auto p1: ir_ngs){
               FlatVector<> lset_proj(4, lh); double xi = p1.Point()[0];
-              for(int i=0; i<4; i++) lset_proj[i] = poly.GetLset(i)*xi+poly.GetLset(i+4)*(1-xi);
+              for(int i=0; i<4; i++) lset_proj[i] = poly.GetLset(i)*(1-xi)+poly.GetLset(i+4)*(xi);
               //cout << "The levelset Projection: " << lset_proj << endl;
               CutQuadElementGeometry CoDim1Projection(lset_proj, ET_QUAD, lh);
               IntegrationRule ir_tmp;
@@ -500,16 +518,31 @@ namespace xintegration
 
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface){
-      for (int i = 0; i < quad_untrafo.Size(); ++i)
+    for (int i = 0; i < quad_untrafo.Size(); ++i)
+    {
+      if (trafo.VB())
       {
-          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
-          Mat<D,D> Finv = mip.GetJacobianInverse();
+        if (D == 3)
+          throw Exception("trafo correction not yet tested!");
+        MappedIntegrationPoint<D-1,D> mip(quad_untrafo[i],trafo);
+        Mat<D-1,D> Finv = mip.GetJacobianInverse();
 
-      Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
-          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+        Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
+        const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
-          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+        (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
       }
+      else
+      {
+        MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
+        Mat<D,D> Finv = mip.GetJacobianInverse();
+
+        Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
+        const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+
+        (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+      }
+    }
   }
 
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
