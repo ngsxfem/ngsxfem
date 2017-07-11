@@ -28,7 +28,9 @@ namespace ngfem
                                        shared_ptr<CoefficientFunction> acf,
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
-                                       int asubdivlvl = 0);
+                                       int asubdivlvl = 0,
+                                       VorB vb = VOL);
+
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     virtual VorB VB () const { return VOL; }
     virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
@@ -105,7 +107,6 @@ namespace ngfem
     }
 
   };
-  
   class SymbolicCutFacetBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
@@ -167,7 +168,6 @@ namespace ngfem
     }
 
   };
-
   class SymbolicFacetBilinearFormIntegrator2 : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
@@ -284,7 +284,5 @@ namespace ngfem
     }
 
   };
-  
-
 
 }

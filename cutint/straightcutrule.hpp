@@ -97,7 +97,7 @@ namespace xintegration
       Vec<2, Array<Polytope>> segments;
       Vec<2, Vec<2, Vec<2, double>>> lc; //TODO: Replace with MultilinearFunction
       Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
-      FlatVector<> lset;
+      Vector<> lset;
 
       void IntegrateCutQuads(int order, IntegrationRule &intrule);
       void IntegrateCutQuads3D(int order, IntegrationRule &intrule);
@@ -115,10 +115,6 @@ namespace xintegration
       CutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
           et = a_et;
           D = Dim(et); svs_ptr = make_shared<PointCnt>();
-          if(D == 3){//Why is this required?!!
-              vector<double> lset_s(lset.Size()); for(int i=0; i<lset.Size(); i++) lset_s[i] = lset[i];
-              for(int i=0; i<lset.Size(); i++) lset[i] = lset_s[lset.Size()-1-i];
-          }
       }
 
       virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);

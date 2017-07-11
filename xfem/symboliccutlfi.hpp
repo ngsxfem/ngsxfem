@@ -18,13 +18,15 @@ namespace ngfem
     int force_intorder = -1;
     int subdivlvl = 0;
     int time_order = -1;
+
   public:
 
     SymbolicCutLinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
                                      shared_ptr<CoefficientFunction> acf,
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder = -1,
-                                     int asubdivlvl = 0);
+                                     int asubdivlvl = 0,
+                                     VorB vb = VOL);
 
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     virtual VorB VB () const { return VOL; }

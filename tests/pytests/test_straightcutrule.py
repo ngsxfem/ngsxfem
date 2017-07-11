@@ -110,6 +110,35 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
 
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
+@pytest.mark.parametrize("domain", [NEG, POS])
+@pytest.mark.parametrize("alpha", [0,1,2])
+@pytest.mark.parametrize("dim", [x,y])
+
+#integrate f(x) = dim^alpha on the geometry implied by phi(x,y,z) = 1 - 2*x - 2*y
+# for analytic solution see
+# http://www.wolframalpha.com/input/?i=integrate+from+0+to+1%2F2+from+0+to+(1%2F2-x)+x%5Ealpha+dy+dx
+def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, quad_dominated, alpha, dim):
+    square = SplineGeometry()
+    square.AddRectangle([0,0],[1,1],bc=1)
+    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    
+    levelset = 1 - 2*x - 2*y
+    val_pos = pow(2,-alpha-2)/(alpha*alpha + 3*alpha+2)
+    referencevals = {POS: val_pos, NEG: 1./(alpha+1) - val_pos}
+    
+    lset_approx = GridFunction(H1(mesh,order=1))
+    InterpolateToP1(levelset,lset_approx)
+    
+    f = pow(dim,alpha)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
+    error = abs(integral - referencevals[domain])
+    
+    assert error < 5e-15*(order+1)*(order+1)
+
+@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
 def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated):
@@ -129,6 +158,40 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     
     integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
                          cf=f, mesh=mesh, order = order)
+    print("Integral: ", integral)
+    error = abs(integral - referencevals[domain])
+    
+    assert error < 5e-15*(order+1)*(order+1)
+
+@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("order", [4])
+@pytest.mark.parametrize("domain", [NEG, POS])
+@pytest.mark.parametrize("alpha", [0,1,2])
+@pytest.mark.parametrize("dim", [x,y,z])
+
+#integrate f(x) = dim^alpha on the geometry implied by phi(x,y,z) = 1 - 2*x - 2*y - 2*z
+# for analytic solution see
+# http://www.wolframalpha.com/input/?i=integrate+from+0+to+1%2F2+from+0+to+(1%2F2-x)+from+0+to+(1%2F2-x-y)+x%5Ealpha+dz+dy+dx
+def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad_dominated, alpha, dim):
+    ngsglobals.msg_level = 0
+
+    cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
+    geom = CSGeometry()
+    geom.Add (cube)
+    ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
+    mesh = Mesh(ngmesh)
+        
+    levelset = 1 - 2*x- 2*y - 2*z
+    val_pos = pow(2,-alpha-3)/(pow(alpha,3)+6*alpha*alpha + 11*alpha+6)
+    referencevals = {POS: val_pos, NEG: 1./(alpha+1) - val_pos}
+    
+    lset_approx = GridFunction(H1(mesh,order=1))
+    InterpolateToP1(levelset,lset_approx)
+    
+    f = pow(dim,alpha)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
     error = abs(integral - referencevals[domain])
     
     assert error < 5e-15*(order+1)*(order+1)
@@ -138,7 +201,7 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 @pytest.mark.parametrize("dim", [x,y])
 
-def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated, dim):
+def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad_dominated, dim):
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
     mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))

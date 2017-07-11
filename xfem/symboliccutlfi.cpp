@@ -19,8 +19,9 @@ namespace ngfem
                                    shared_ptr<CoefficientFunction> acf,
                                    DOMAIN_TYPE adt,
                                    int aforce_intorder,
-                                   int asubdivlvl)
-    : SymbolicLinearFormIntegrator(acf,VOL,false), cf_lset(acf_lset), dt(adt),
+                                   int asubdivlvl,
+                                   VorB vb)
+    : SymbolicLinearFormIntegrator(acf,vb,false), cf_lset(acf_lset), dt(adt),
     force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
   {
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
@@ -83,7 +84,7 @@ namespace ngfem
     int intorder = 2*fel.Order();
 
     auto et = trafo.GetElementType();
-    if (! (et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices right now");
 
     if (force_intorder >= 0)
