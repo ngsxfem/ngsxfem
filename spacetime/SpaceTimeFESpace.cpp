@@ -126,4 +126,14 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
    }
 
 
+  shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
+  {
+
+     auto restricted_GF = make_shared < T_GridFunction < double > >( *Vh) ;
+     restricted_GF->GetVector() = 0.0;
+     return restricted_GF;
+
+  }
+
+
 }

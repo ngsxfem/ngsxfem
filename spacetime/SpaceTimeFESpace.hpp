@@ -27,6 +27,7 @@ namespace ngcomp
     SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags);
 
     //virtual FESpace get_V() const { return *Vh; }
+    // FESpace* GetSpaceFESpace() { return Vh; }
 
     // destructor
     virtual ~SpaceTimeFESpace ();
@@ -56,6 +57,7 @@ namespace ngcomp
     {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
          time_FE->GetIntpPts (intp_pts);
     }
+    shared_ptr<GridFunction> CreateRestrictedGF( shared_ptr<GridFunction> st_GF, double time);
   };
 
 }    

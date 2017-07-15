@@ -1005,6 +1005,13 @@ void ExportNgsx(py::module &m)
    {
      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
    });
+
+   m.def("RestrictToTime", [](PyGF st_GF,double time) -> PyGF
+   {
+     FESpace* raw_FE = (st_GF->GetFESpace()).get();
+     SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+     return st_FE->CreateRestrictedGF(st_GF,time);
+   });
 }
 
 PYBIND11_PLUGIN(ngsxfem_py)
