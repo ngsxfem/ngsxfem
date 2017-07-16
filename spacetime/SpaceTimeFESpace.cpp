@@ -28,7 +28,7 @@ namespace ngcomp
 {
 
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
-  : FESpace (ama, flags)
+  : FESpace (ama, flags), Vh_ptr(aVh)
   {
     cout << "Constructor of SpaceTimeFESpace" << endl;
     cout << "Flags = " << flags << endl;
@@ -129,8 +129,19 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
   {
 
-     auto restricted_GF = make_shared < T_GridFunction < double > >( *Vh) ;
-     restricted_GF->GetVector() = 0.0;
+     //auto restricted_GF = make_shared < T_GridFunction < double > >( *Vh) ;
+     auto restricted_GF =  make_shared < T_GridFunction < double > >( Vh_ptr);
+     auto st_vec = st_GF->GetVectorPtr()->FV<double>();
+     restricted_GF->Update();
+     auto restricted_vec = restricted_GF->GetVectorPtr()->FV<double>();
+
+     if(time == 0.0) {
+         for(int i = 0; i < Vh->GetNDof(); i++)
+             restricted_vec[i] = st_vec[i];
+     } else {
+         cout << "Only t = 0 implemented so far." << endl;
+     }
+
      return restricted_GF;
 
   }

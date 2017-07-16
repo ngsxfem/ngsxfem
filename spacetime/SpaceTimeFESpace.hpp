@@ -18,6 +18,7 @@ namespace ngcomp
   {
     int ndof;
     FESpace* Vh;
+    shared_ptr<FESpace> Vh_ptr;
     ScalarFiniteElement<1>* tfe;
     double time;
     bool override_time = false;
