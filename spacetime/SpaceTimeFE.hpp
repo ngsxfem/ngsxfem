@@ -64,9 +64,18 @@ namespace ngfem
         void GetIntpPts (Vector<>& intp_pts) const;
         int order_time() const { return k_t; }
 
-      private:
         template <class T>
-        T Lagrange_Pol (T x, Vector<> intp_pts, int i) const;
+        T Lagrange_Pol (T x, Vector<> intp_pts, int i) const
+        {
+           T result  = 1;
+           for (int j = 0; j < intp_pts.Size(); j++) {
+               if ( j != i)
+                    result *= ( x-intp_pts(j) ) / ( intp_pts(i) - intp_pts(j) );
+           }
+
+           return result;
+        }
+
       };
 
  }

@@ -129,19 +129,32 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
   {
 
-     //auto restricted_GF = make_shared < T_GridFunction < double > >( *Vh) ;
      auto restricted_GF =  make_shared < T_GridFunction < double > >( Vh_ptr);
-     auto st_vec = st_GF->GetVectorPtr()->FV<double>();
      restricted_GF->Update();
+     auto st_vec = st_GF->GetVectorPtr()->FV<double>();   
      auto restricted_vec = restricted_GF->GetVectorPtr()->FV<double>();
+     restricted_vec = 0.0;
 
-     if(time == 0.0) {
-         for(int i = 0; i < Vh->GetNDof(); i++)
-             restricted_vec[i] = st_vec[i];
-     } else {
-         cout << "Only t = 0 implemented so far." << endl;
+     Vector<double> nodes(order_time() +1 );
+     TimeFE_nodes(nodes);
+
+     // Using nodal property for special case
+     for(int i= 0; i < nodes.Size(); i++) {
+         if(time == nodes[i]) {
+             cout << "Nodal case" << endl;
+             for(int j = 0; j < Vh->GetNDof();j++)
+                 restricted_vec[j] = st_vec[j+i*Vh->GetNDof()];
+             return restricted_GF;
+         }
      }
-
+     cout << "General case" << endl;
+     // General case
+     NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
+     for(int i= 0; i < nodes.Size(); i++) {
+         double weight_time = time_FE->Lagrange_Pol(time,nodes,i);
+         for(int j = 0; j < Vh->GetNDof();j++)
+             restricted_vec[j] += weight_time * st_vec[j+i*Vh->GetNDof()];
+     }
      return restricted_GF;
 
   }
