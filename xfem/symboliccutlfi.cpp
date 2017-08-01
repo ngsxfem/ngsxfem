@@ -55,7 +55,7 @@ namespace ngfem
                        FlatVector<SCAL> elvec,
                        LocalHeap & lh) const
   {
-    static Timer t("symbolicCutLFI - CalcElementMatrix", 2);
+    static Timer t("symbolicCutLFI - CalcElementVector", 2);
     HeapReset hr(lh);
     
     // tstart.Start();
