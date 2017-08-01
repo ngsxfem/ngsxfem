@@ -498,7 +498,7 @@ void ExportNgsx(py::module &m)
         );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, int dim_space, bool hdiv)
   {
 
     Array<int> comparr(0);
@@ -523,7 +523,7 @@ void ExportNgsx(py::module &m)
     shared_ptr<DifferentialOperator> diffopdudnk;
     if (! hdiv)
     {
-      if (self->Dimension() == 2)
+      if (dim_space == 2)
       {
       switch (order)
       {
@@ -584,6 +584,7 @@ void ExportNgsx(py::module &m)
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
+        py::arg("dim_space") = 2,
         py::arg("hdiv") = false
         );
 
