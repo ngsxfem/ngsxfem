@@ -1,4 +1,4 @@
 [submodule "external_dependencies/ngsolve"]
 	path = external_dependencies/ngsolve
-	url = git://git.code.sf.net/p/ngsolve/git
+	url = git://github.com/NGSolve/ngsolve
 	ignore=dirty
