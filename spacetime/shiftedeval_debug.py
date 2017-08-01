@@ -7,8 +7,11 @@ from xfem import *
 
 ngsglobals.msg_level = 1
 
-# generate a triangular mesh of mesh-size 0.2
-mesh = Mesh(unit_square.GenerateMesh(maxh=0.5))
+# works for me
+mesh = Mesh(unit_square.GenerateMesh(maxh=0.28))
+
+# this crashes
+#mesh = Mesh(unit_square.GenerateMesh(maxh=0.29))
 
 # H1-conforming finite element space
 fes = H1(mesh, order=3, dirichlet=[1,2,3,4])
