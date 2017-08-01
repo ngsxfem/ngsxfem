@@ -523,7 +523,7 @@ void ExportNgsx(py::module &m)
     shared_ptr<DifferentialOperator> diffopdudnk;
     if (! hdiv)
     {
-      if (self->Dimension() == 3)
+      if (self->Dimension() == 2)
       {
       switch (order)
       {
