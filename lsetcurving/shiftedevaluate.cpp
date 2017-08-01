@@ -65,11 +65,11 @@ namespace ngfem
     MappedIntegrationPoint<2,2> mip_x0(ipx0,mip.GetTransformation());
     Vec<2> zdiff = z-mip_x0.GetPoint();
     
-    static atomic<int> cnt_its(0);
-    static atomic<int> cnt_calls(0);
+    // static atomic<int> cnt_its(0);
+    // static atomic<int> cnt_calls(0);
       
     // Fixed point iteration
-    while (true)
+    while (its < 50)
     {
       scafe_back.CalcShape(ipx,shape_back);
       dvec_back = Trans(vector_back)*shape_back;
@@ -80,10 +80,13 @@ namespace ngfem
       ipx.Point() = mip.GetJacobianInverse() * (zdiff - dvec_back);
 
       its++;
-      cnt_its++;
+      // cnt_its++;
       
     }
-    cnt_calls++;
+    if (its == 50)
+      throw Exception(" shifted eval took 50 iterations and didn't (yet?) converge! ");
+    
+    // cnt_calls++;
     // cout << "cnt/calls = " << cnt_its/cnt_calls << endl;
 
     /* 
