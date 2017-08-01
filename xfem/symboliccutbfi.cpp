@@ -19,8 +19,9 @@ namespace ngfem
                                      shared_ptr<CoefficientFunction> acf,
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder,
-                                     int asubdivlvl)
-    : SymbolicBilinearFormIntegrator(acf,VOL,false),
+                                     int asubdivlvl,
+                                     VorB vb)
+    : SymbolicBilinearFormIntegrator(acf,vb,false),
     cf_lset(acf_lset),
     dt(adt),
     force_intorder(aforce_intorder),
@@ -31,33 +32,33 @@ namespace ngfem
 
   void
   SymbolicCutBilinearFormIntegrator ::
-  CalcElementMatrix (const FiniteElement & fel,
-                     const ElementTransformation & trafo,
-                     FlatMatrix<double> elmat,
-                     LocalHeap & lh) const
+  CalcElementMatrixAdd (const FiniteElement & fel,
+                        const ElementTransformation & trafo,
+                        FlatMatrix<double> elmat,
+                        LocalHeap & lh) const
   {
-    T_CalcElementMatrix<double> (fel, trafo, elmat, lh);
+    T_CalcElementMatrixAdd<double> (fel, trafo, elmat, lh);
   }
 
   void
   SymbolicCutBilinearFormIntegrator ::
-  CalcElementMatrix (const FiniteElement & fel,
-                     const ElementTransformation & trafo,
-                     FlatMatrix<Complex> elmat,
-                     LocalHeap & lh) const
+  CalcElementMatrixAdd (const FiniteElement & fel,
+                        const ElementTransformation & trafo,
+                        FlatMatrix<Complex> elmat,
+                        LocalHeap & lh) const
   {
     if (fel.ComplexShapes() || trafo.IsComplex())
-      T_CalcElementMatrix<Complex,Complex> (fel, trafo, elmat, lh);
+      T_CalcElementMatrixAdd<Complex,Complex> (fel, trafo, elmat, lh);
     else
-      T_CalcElementMatrix<Complex,double> (fel, trafo, elmat, lh);
+      T_CalcElementMatrixAdd<Complex,double> (fel, trafo, elmat, lh);
   }
 
   template <typename SCAL, typename SCAL_SHAPES>
   void SymbolicCutBilinearFormIntegrator ::
-  T_CalcElementMatrix (const FiniteElement & fel,
-                       const ElementTransformation & trafo,
-                       FlatMatrix<SCAL> elmat,
-                       LocalHeap & lh) const
+  T_CalcElementMatrixAdd (const FiniteElement & fel,
+                          const ElementTransformation & trafo,
+                          FlatMatrix<SCAL> elmat,
+                          LocalHeap & lh) const
 
   {
     static Timer t("symbolicCutBFI - CalcElementMatrix", 2);
@@ -111,8 +112,8 @@ namespace ngfem
     if (et == ET_TRIG || et == ET_TET)
       intorder -= test_difforder+trial_difforder;
 
-    if (! (et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
-      throw Exception("SymbolicCutBFI can only treat simplices right now");
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
 
     if (force_intorder >= 0)
       intorder = force_intorder;
@@ -121,7 +122,7 @@ namespace ngfem
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
 
-    elmat = 0;
+    // elmat = 0;
 
     const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
 
