@@ -59,7 +59,7 @@ from ngsolve.utils import *
 from xfem import *
 from netgen.geom2d import SplineGeometry
 from xfem.lsetcurv import *
-from numpy import pi
+from math import pi
 
 
 class quad_rule:
@@ -352,13 +352,16 @@ def SolveProblem(sd, delta_t ):
     u0.Update()
     gfu.Update() # also updates W
 
-    u0.Set(coef_u0) # set initial condition
-
     # keeping track of time
     tstart  = 0
     told = tstart
     tnew = told
     t.Set(tstart)
+    
+    deformation = sd.lsetmeshadap.CalcDeformation(levelset)
+    mesh.SetDeformation(deformation)            
+    u0.Set(coef_u0) # set initial condition
+    mesh.UnsetDeformation()
     
     # Dummy-Assemble
     a =  BilinearForm(W,symmetric=False)

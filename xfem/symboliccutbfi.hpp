@@ -37,28 +37,28 @@ namespace ngfem
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
     virtual void 
-    CalcElementMatrix (const FiniteElement & fel,
-		       const ElementTransformation & trafo, 
-		       FlatMatrix<double> elmat,
-		       LocalHeap & lh) const;
+    CalcElementMatrixAdd (const FiniteElement & fel,
+                          const ElementTransformation & trafo, 
+                          FlatMatrix<double> elmat,
+                          LocalHeap & lh) const;
 
     virtual void 
-    CalcElementMatrix (const FiniteElement & fel,
-		       const ElementTransformation & trafo, 
-		       FlatMatrix<Complex> elmat,
-		       LocalHeap & lh) const;    
+    CalcElementMatrixAdd (const FiniteElement & fel,
+                          const ElementTransformation & trafo, 
+                          FlatMatrix<Complex> elmat,
+                          LocalHeap & lh) const;    
 
     template <typename SCAL, typename SCAL_SHAPES = double>
-    void T_CalcElementMatrix (const FiniteElement & fel,
-                              const ElementTransformation & trafo, 
-                              FlatMatrix<SCAL> elmat,
-                              LocalHeap & lh) const;
+    void T_CalcElementMatrixAdd (const FiniteElement & fel,
+                                 const ElementTransformation & trafo, 
+                                 FlatMatrix<SCAL> elmat,
+                                 LocalHeap & lh) const;
 
     template <int D, typename SCAL, typename SCAL_SHAPES>
-    void T_CalcElementMatrixEB (const FiniteElement & fel,
-                                const ElementTransformation & trafo, 
-                                FlatMatrix<SCAL> elmat,
-                                LocalHeap & lh) const
+    void T_CalcElementMatrixEBAdd (const FiniteElement & fel,
+                                   const ElementTransformation & trafo, 
+                                   FlatMatrix<SCAL> elmat,
+                                   LocalHeap & lh) const
     {
       throw Exception("SymbolicCutBilinearFormIntegrator::T_CalcElementMatrixEB not yet implemented");
     }
