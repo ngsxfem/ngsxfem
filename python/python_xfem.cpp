@@ -16,6 +16,7 @@
 #include "../cutint/xintegration.hpp"
 #include "../utils/restrictedblf.hpp"
 #include "../cutint/spacetimecutrule.hpp"
+#include "../lsetcurving/shiftedevaluate.hpp"
 
 #include "../spacetime/SpaceTimeFE.hpp"
 #include "../spacetime/SpaceTimeFESpace.hpp"
@@ -998,6 +999,15 @@ void ExportNgsx(py::module &m)
 
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
+   });
+
+   m.def("shifted_eval", [](PyGF self, PyGF back,PyGF forth ) -> PyCF
+   {
+
+     auto diffop = make_shared<DiffOpShiftedEval> (back,forth);
+
+
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop));
    });
 
 
