@@ -211,6 +211,19 @@ namespace ngcomp
         Array<int> elnums(0,lh);
         ma->GetFacetElements (facnr, elnums);
 
+        if(elnums.Size() < 2)
+        {
+          int facet2 = ma->GetPeriodicFacet(facnr);
+          if(facet2 > facnr)
+          {
+            Array<int> elnums_per(1,lh);
+            ma->GetFacetElements (facet2, elnums_per);
+            elnums.Append(elnums_per[0]);
+          }
+          else
+            return;
+        }
+        
         bool a_left = a->Test(elnums[0]);
         bool a_right = elnums.Size() > 1 ? a->Test(elnums[1]) : bound_val_a;
         bool b_left = b->Test(elnums[0]);

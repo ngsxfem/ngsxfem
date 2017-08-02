@@ -427,9 +427,6 @@ void ExportNgsx(py::module &m)
     if (defon_region.check())
       vb = VorB(defon_region());
 
-    if (vb == BND)
-      throw Exception("Symbolic cuts not yet (tested) for boundaries..");
-
     // check for DG terms
     bool has_other = false;
     cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
@@ -445,10 +442,14 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<BilinearFormIntegrator> bfi;
     if (!has_other && !skeleton)
-      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+      bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
     else
+    {
+      if (vb == BND)
+        throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
+      
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
-
+    }
     if (py::extract<py::list> (definedon).check())
       bfi -> SetDefinedOn (makeCArray<int> (definedon));
 
@@ -493,14 +494,14 @@ void ExportNgsx(py::module &m)
     if (defon_region.check())
       vb = VorB(defon_region());
 
-    if (vb == BND)
-      throw Exception("Symbolic cuts not yet (tested) for boundaries..");
+    // if (vb == BND)
+    //   throw Exception("Symbolic cuts not yet (tested) for boundaries..");
 
     if (element_boundary || skeleton)
       throw Exception("No Facet LFI with Symbolic cuts..");
 
     shared_ptr<LinearFormIntegrator> lfi
-      = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+      = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, vb);
 
     if (py::extract<py::list> (definedon).check())
       lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -529,7 +530,7 @@ void ExportNgsx(py::module &m)
         );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, int dim_space, bool hdiv)
   {
 
     Array<int> comparr(0);
@@ -553,6 +554,9 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<DifferentialOperator> diffopdudnk;
     if (! hdiv)
+    {
+      if (dim_space == 2)
+      {
       switch (order)
       {
       case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
@@ -565,6 +569,23 @@ void ExportNgsx(py::module &m)
       case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
       default : throw Exception("no order higher than 8 implemented yet");
       }
+      }
+      else
+      {
+      switch (order)
+      {
+      case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,1>>> (); break;
+      case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,2>>> (); break;
+      case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,3>>> (); break;
+      case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,4>>> (); break;
+      case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,5>>> (); break;
+      case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,6>>> (); break;
+      case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,7>>> (); break;
+      case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,8>>> (); break;
+      default : throw Exception("no order higher than 8 implemented yet");
+      }
+      }
+    }
     else
       switch (order)
       {
@@ -595,6 +616,7 @@ void ExportNgsx(py::module &m)
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
+        py::arg("dim_space") = 2,
         py::arg("hdiv") = false
         );
 
@@ -700,6 +722,8 @@ void ExportNgsx(py::module &m)
         py::arg("domain_type")=IF,
         py::arg("subdivlvl")=0,
         py::arg("heapsize")=1000000);
+
+
 }
 
 PYBIND11_PLUGIN(ngsxfem_py)
