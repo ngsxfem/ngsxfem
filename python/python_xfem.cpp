@@ -194,6 +194,7 @@ void ExportNgsx(py::module &m)
             const string & aname,
             py::object ael_restriction,
             py::object afac_restriction,
+            bool check_unused,
             py::dict bpflags)
          {
            Flags flags = py::extract<Flags> (bpflags)();
@@ -206,13 +207,15 @@ void ExportNgsx(py::module &m)
            if (py::extract<PyBA> (afac_restriction).check())
              fac_restriction = py::extract<PyBA>(afac_restriction)();
 
-           
-           return make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+           auto biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+           biform -> SetCheckUnused (check_unused);                             
+           return biform;
          },
          py::arg("space"),
          py::arg("name") = "bfa",
          py::arg("element_restriction") = DummyArgument(),
          py::arg("facet_restriction") = DummyArgument(),
+         py::arg("check_unused") = true,
          py::arg("flags") = py::dict()
       );
 

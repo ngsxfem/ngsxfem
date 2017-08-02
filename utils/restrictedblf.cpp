@@ -83,6 +83,7 @@ namespace ngcomp
         {
           //add dofs of neighbour elements as well
           Array<DofId> dnums_dg;
+          Array<int> elnums_per;
 
           for (int i = 0; i < nf; i++)
             {
@@ -93,6 +94,17 @@ namespace ngcomp
               for (int k=0; k<elnums.Size(); k++)
                 nbelems.Append(elnums[k]);
 
+              // timerDG1.Stop();
+              if(nbelems.Size() < 2)
+              {
+                int facet2 = ma->GetPeriodicFacet(i);
+                if(facet2 != i)
+                {
+                  ma->GetFacetElements (facet2, elnums_per);
+                  nbelems.Append(elnums_per[0]);
+                }
+              }
+              
               dnums_dg.SetSize(0);
               for (int k=0;k<nbelems.Size();k++){
                 int elnr=nbelems[k];
@@ -101,6 +113,7 @@ namespace ngcomp
                 dnums_dg.Append(dnums);
               }
               QuickSort (dnums_dg);
+              // cout << " to face " << i << " I add dnums: " << dnums_dg << endl;
               for (int j = 0; j < dnums_dg.Size(); j++)
                 if (dnums_dg[j] != -1 && (j==0 || (dnums_dg[j] != dnums_dg[j-1]) ))
                   creator.Add (neV+neB+neBB+nspe+i, dnums_dg[j]);
