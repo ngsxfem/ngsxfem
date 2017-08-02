@@ -498,7 +498,7 @@ void ExportNgsx(py::module &m)
         );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, int dim_space, bool hdiv)
   {
 
     Array<int> comparr(0);
@@ -522,6 +522,9 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<DifferentialOperator> diffopdudnk;
     if (! hdiv)
+    {
+      if (dim_space == 2)
+      {
       switch (order)
       {
       case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
@@ -534,6 +537,23 @@ void ExportNgsx(py::module &m)
       case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
       default : throw Exception("no order higher than 8 implemented yet");
       }
+      }
+      else
+      {
+      switch (order)
+      {
+      case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,1>>> (); break;
+      case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,2>>> (); break;
+      case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,3>>> (); break;
+      case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,4>>> (); break;
+      case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,5>>> (); break;
+      case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,6>>> (); break;
+      case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,7>>> (); break;
+      case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,8>>> (); break;
+      default : throw Exception("no order higher than 8 implemented yet");
+      }
+      }
+    }
     else
       switch (order)
       {
@@ -564,6 +584,7 @@ void ExportNgsx(py::module &m)
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
+        py::arg("dim_space") = 2,
         py::arg("hdiv") = false
         );
 
