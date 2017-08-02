@@ -69,7 +69,7 @@ namespace ngfem
     // static atomic<int> cnt_calls(0);
       
     // Fixed point iteration
-    while (its < 50)
+    while (its < 100)
     {
       scafe_back.CalcShape(ipx,shape_back);
       dvec_back = Trans(vector_back)*shape_back;
@@ -173,6 +173,20 @@ namespace ngfem
     mat.Row(0) = shape;
   }
 
+
+  void DiffOpShiftedEval ::
+  Apply (const FiniteElement & fel,
+         const BaseMappedIntegrationPoint & mip,
+         FlatVector<double> x, 
+         FlatVector<double> flux,
+         LocalHeap & lh) const
+  {
+    HeapReset hr(lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), x.Size(), lh);
+    CalcMatrix (fel, mip, mat, lh);
+    flux = mat * x;
+  }
+  
   void DiffOpShiftedEval ::
   ApplyTrans (const FiniteElement & fel,
               const BaseMappedIntegrationPoint & mip,
