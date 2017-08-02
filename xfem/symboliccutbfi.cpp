@@ -152,7 +152,7 @@ namespace ngfem
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
-    bool symmetric_so_far = true;
+    bool symmetric_so_far = false; // not reasonable for the Add-version
     /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
 
     int k1 = 0;
