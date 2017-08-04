@@ -42,7 +42,7 @@ To compute the error we construct a manufactured solution of the PDE to study op
     -----------
     * Instead of using the normal diffusion method, one could use ghost penalty method (or some others) for consistent stabilization. 
     * We choose the order of mesh deformation the same as the finite element polynomial degree, which gives the optimal error convergence. 
-      You can also set the order for mesh deformation different from the polynomial degree, in order to test other possibilities. 
+      You can also set the order different from the polynomial degree, in order to test other possibilities. 
 
 """
 
