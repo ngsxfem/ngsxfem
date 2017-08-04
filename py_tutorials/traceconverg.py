@@ -41,10 +41,8 @@ To compute the error we construct a manufactured solution of the PDE to study op
     extensions:
     -----------
     * Instead of using the normal diffusion method, one could use ghost penalty method (or some others) for consistent stabilization. 
-    * To obtain higher order accuracy (w.r.t. the geometry approximation) isoparametric unfitted methods are applied. 
-      For sake of simplicity We choose the order of mesh deformation the same as the finite element polynomial degree, 
-      but one can set higher order for mesh deformation different from the polynomial degree. 
-      It is verified that the order p+1 of mesh deformation gives the optimal error convergence if the polynomial degree is p. 
+    * We choose the order of mesh deformation the same as the finite element polynomial degree, which gives the optimal error convergence. 
+      You can also set the order for mesh deformation different from the polynomial degree, in order to test other possibilities. 
 
 """
 
@@ -62,7 +60,7 @@ from netgen.csg import *
 import matplotlib.pyplot as plt
 
 # the order of finite element space (polynomial degree)
-p = 8
+p = 1
 # times of mesh refinement for convergence study
 ij = 5
 # a list to store errors
@@ -85,7 +83,7 @@ for i in range(ij):
         
     Draw(phi, mesh, "levelset")
     
-    # level set function 1st-order interpolation and high-order deformation
+    # level set function 1st-order interpolation and pth-order deformation
     lsetad = LevelSetMeshAdaptation(mesh, order = p, threshold = 1000) # threshold: the limit of deformation
     deform = lsetad.CalcDeformation(phi)
     lsetip = lsetad.lset_p1 # InterpolateToP1(lset,lsetip)
@@ -98,7 +96,7 @@ for i in range(ij):
     # declare the integration domains
     lsetif = {"levelset": lsetip, "domain_type": IF, "subdivlvl": subdiv}
     
-    # declare a trace finite element space with order p
+    # declare a trace finite element space with polynomial degree p
     trVh = H1(mesh, order = p, dirichlet = [])
     # declare the symbolic trial and test functions
     u = trVh.TrialFunction()
@@ -111,7 +109,6 @@ for i in range(ij):
     
     # declare a grid function to store the solution
     gf = GridFunction(trVh)
-    gf2 = GridFunction(trVh)
     
     # calculate normal vector n and mesh size h
     n = 1.0/sqrt(InnerProduct(grad(lsetip),grad(lsetip))) * grad(lsetip)
@@ -141,7 +138,7 @@ for i in range(ij):
     # visualization settings
     visoptions.mminval = 0
     visoptions.mmaxval = 0
-    visoptions.deformation = 1
+    visoptions.deformation = 0
     visoptions.autoscale = 1
     
     # compute the error between the numerical and the exact solutions
