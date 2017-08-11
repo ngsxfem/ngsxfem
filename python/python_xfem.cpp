@@ -485,6 +485,51 @@ void ExportNgsx(py::module &m)
         py::arg("definedonelements")=DummyArgument()
         );
 
+  m.def("SymbolicFacetPatchBFI", [](PyCF cf,
+                                    int order,
+                                    //int time_order,
+                                    bool skeleton,
+                                    py::object definedonelem)
+        -> PyBFI
+  {
+    // check for DG terms
+    bool has_other = false;
+    cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
+    {
+      if (dynamic_cast<ProxyFunction*> (&cf))
+        if (dynamic_cast<ProxyFunction&> (cf).IsOther())
+          has_other = true;
+    });
+    if (!has_other)
+      cout << " no Other() used?!" << endl;
+
+  
+    shared_ptr<BilinearFormIntegrator> bfi;
+    if (skeleton)
+    {
+      auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator> (cf, VOL, false);
+      //bfime->SetTimeIntegrationOrder(time_order);
+      bfi = bfime;
+    }
+    else
+    {
+      // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
+      auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf, order);
+      //bfime->SetTimeIntegrationOrder(time_order);
+      bfi = bfime;
+    }
+
+    if (! py::extract<DummyArgument> (definedonelem).check())
+      bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
+
+    return PyBFI(bfi);
+  },
+        py::arg("form"),
+        py::arg("force_intorder")=-1,
+        //py::arg("time_order")=-1,
+        py::arg("skeleton") = true,
+        py::arg("definedonelements")=DummyArgument()
+    );
 
   m.def("SymbolicCutLFI", [](PyCF lset,
               DOMAIN_TYPE dt,
