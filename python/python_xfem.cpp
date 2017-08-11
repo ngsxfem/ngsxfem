@@ -14,6 +14,7 @@
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../utils/restrictedblf.hpp"
+#include "../lsetcurving/shiftedevaluate.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -730,6 +731,17 @@ void ExportNgsx(py::module &m)
         py::arg("domain_type")=IF,
         py::arg("subdivlvl")=0,
         py::arg("heapsize")=1000000);
+
+
+   m.def("shifted_eval", [](PyGF self, PyGF back,PyGF forth ) -> PyCF
+   {
+
+     auto diffop = make_shared<DiffOpShiftedEval> (back,forth);
+
+
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop));
+   });
+
 
 
 }
