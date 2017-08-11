@@ -46,8 +46,6 @@ namespace ngcomp
       {
 	for(VorB vb : {VOL, BND, BBND})
 	  {
-            if (vb==VOL)
-              cout << "warning: no vol restriction yet..." << endl;
 	    int nre = ma->GetNE(vb);
 	    ParallelForRange (Range(nre), [&](IntRange r)
 			      {
@@ -57,8 +55,12 @@ namespace ngcomp
                                     // if (vb == VOL)
                                     //   if (el_restriction && (! el_restriction->Test(i)))
                                     //     continue;
+                                    if (vb == VOL)
+                                      if (el_restriction && (! el_restriction->Test(i)))
+                                        continue;
 				    auto eid = ElementId(vb,i);
-				    if (!fespace->DefinedOn (vb,ma->GetElIndex(eid))) continue;
+				    if (!fespace->DefinedOn (vb,ma->GetElIndex(eid)))
+                                      continue;
 				    
 				    if (vb == VOL && eliminate_internal)
 				      fespace->GetDofNrs (i, dnums, EXTERNAL_DOF);

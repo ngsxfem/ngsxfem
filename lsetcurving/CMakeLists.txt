@@ -1,12 +1,12 @@
 add_library(ngsxfem_lsetcurving ${NGS_LIB_TYPE}
   p1interpol.cpp shiftintegrators.cpp calcpointshift.cpp calcgeomerrors.cpp lsetrefine.cpp
-  projshift.cpp
+  projshift.cpp shiftedevaluate.cpp
   )
 
 
 install( FILES
   p1interpol.hpp shiftintegrators.hpp calcpointshift.hpp calcgeomerrors.hpp lsetrefine.hpp
-  projshift.hpp
+  projshift.hpp shiftedevaluate.hpp
   DESTINATION include
   )
 

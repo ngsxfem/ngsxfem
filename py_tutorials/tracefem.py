@@ -62,7 +62,7 @@ gfu.vec[:] = 0.0
 gfu.vec.data = a.mat.Inverse(freedofs) * f.vec
 
 import sys
-if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
    nan = CoefficientFunction(float('nan'))
    Draw(IfPos(cf_IF-0.5,gfu,nan),mesh,"u")
 
