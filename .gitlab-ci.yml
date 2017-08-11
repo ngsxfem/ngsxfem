@@ -17,7 +17,7 @@ build:
     - mkdir -p /home/gitlab-runner/inst/netgen
     - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
     - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
-    - git submodule update --init --recursive
+    - git submodule update --remote --init --recursive
     - export NGS_VERSION=`git submodule | awk '{print $1;}'`
     - export NGS_INSTALLED_VERSION=`cat /home/gitlab-runner/ngsxfem-reports/lastngs.version | awk '{print $1;}'`
     - echo NGS_VERSION is $NGS_VERSION
