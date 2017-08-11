@@ -5,6 +5,8 @@ from netgen.geom2d import SplineGeometry
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
 import netgen.meshing as ngm
+from make_uniform2D_grid import MakeUniform2DGrid
+from make_uniform3D_grid import MakeUniform3DGrid
 
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 @pytest.mark.parametrize("alpha", [2,4,8])
@@ -50,9 +52,7 @@ def test_polynomial_ET_Segm(domain, alpha):
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
 def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
-    square = SplineGeometry()
-    square.AddRectangle([0,0],[1,1],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
     r=0.6
 
     levelset = sqrt(x*x+y*y)-r
@@ -90,9 +90,7 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
 def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated):
-    square = SplineGeometry()
-    square.AddRectangle([0,0],[1,1],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
     
     levelset = 1 - 2*x - 2*y
     referencevals = {NEG: 7/8, POS: 1/8, IF: 1/sqrt(2)}
@@ -142,11 +140,14 @@ def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, qua
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
 def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated):
-    cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
-    geom = CSGeometry()
-    geom.Add (cube)
-    ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
-    mesh = Mesh(ngmesh)
+    if (quad_dominated):
+        mesh = MakeUniform3DGrid(quads = True, N=1, P1=(0,0,0),P2=(1,1,1))
+    else:
+        cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
+        geom = CSGeometry()
+        geom.Add (cube)
+        ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
+        mesh = Mesh(ngmesh)
     
     levelset = 1 - 2*x - 2*y - 2*z
     referencevals = { POS : 1./48, NEG : 47./48, IF : sqrt(3)/8 }
@@ -175,11 +176,14 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
 def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad_dominated, alpha, dim):
     ngsglobals.msg_level = 0
 
-    cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
-    geom = CSGeometry()
-    geom.Add (cube)
-    ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
-    mesh = Mesh(ngmesh)
+    if (quad_dominated):
+        mesh = MakeUniform3DGrid(quads = True, N=1, P1=(0,0,0),P2=(1,1,1))
+    else:
+        cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
+        geom = CSGeometry()
+        geom.Add (cube)
+        ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
+        mesh = Mesh(ngmesh)
         
     levelset = 1 - 2*x- 2*y - 2*z
     val_pos = pow(2,-alpha-3)/(pow(alpha,3)+6*alpha*alpha + 11*alpha+6)
@@ -202,9 +206,7 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, qua
 @pytest.mark.parametrize("dim", [x,y])
 
 def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad_dominated, dim):
-    square = SplineGeometry()
-    square.AddRectangle([0,0],[1,1],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
     
     levelset = 1 - 3*dim
     referencevals = {NEG: 2./3, POS: 1./3, IF: 1. }
