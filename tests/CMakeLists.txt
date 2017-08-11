@@ -3,22 +3,22 @@ include(CTest)
 add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
 
 add_test(NAME py_tutorial_nxfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem.py")
+  "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem.py" "testmode")
 
 add_test(NAME py_tutorial_cutfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/cutfem.py")
+  "${PROJECT_SOURCE_DIR}/py_tutorials/cutfem.py" "testmode")
 
 add_test(NAME py_tutorial_nxfem_ho COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem_higher_order.py")
+  "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem_higher_order.py" "testmode")
 
 add_test(NAME py_tutorial_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/tracefem.py")
+  "${PROJECT_SOURCE_DIR}/py_tutorials/tracefem.py" "testmode")
 
 add_test(NAME py_tutorial_stokesxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/stokesxfem.py")
+  "${PROJECT_SOURCE_DIR}/py_tutorials/stokesxfem.py" "testmode")
 
 add_test(NAME py_tutorial_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_ghostpen.py")
+  "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_ghostpen.py" "testmode")
 
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
