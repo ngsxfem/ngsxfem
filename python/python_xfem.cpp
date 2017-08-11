@@ -210,7 +210,7 @@ void ExportNgsx(py::module &m)
            if (fes->IsComplex())
              throw Exception("RestrictedBilinearForm not implemented for complex fespace");
            
-           auto biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+           shared_ptr<BilinearForm> biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
            biform -> SetCheckUnused (check_unused);                             
            return biform;
          },
