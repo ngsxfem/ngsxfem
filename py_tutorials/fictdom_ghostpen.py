@@ -21,7 +21,7 @@ mesh = Mesh (ngmesh)
 
 order = 3
 # stabilization parameter for ghost-penalty
-gamma_stab = [0.1,0.01,0.001,0.0001,0.00001,0.00001]
+# gamma_stab = [0.1,0.01,0.001,0.0001,0.00001,0.00001]
 # stabilization parameter for Nitsche
 lambda_nitsche  = 10 * order * order
 
