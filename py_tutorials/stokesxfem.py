@@ -278,7 +278,7 @@ pl2error = sqrt(  Integrate(lset_neg,(pres_neg-pres_sol_neg)*(pres_neg-pres_sol_
 print("L2 Error of pressure: {0}".format(pl2error))
 
 import sys
-if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
   # # unset mesh adaptation
   mesh.UnsetDeformation()
 
