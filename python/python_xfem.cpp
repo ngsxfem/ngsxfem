@@ -186,9 +186,9 @@ void ExportNgsx(py::module &m)
 
 
 
-  typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
-  py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
-    (m, "CRestrictedBilinearForm");
+  // typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
+  // py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
+  //   (m, "CRestrictedBilinearForm");
   m.def("RestrictedBilinearForm",
          [](shared_ptr<FESpace> fes,
             const string & aname,
@@ -207,6 +207,9 @@ void ExportNgsx(py::module &m)
            if (py::extract<PyBA> (afac_restriction).check())
              fac_restriction = py::extract<PyBA>(afac_restriction)();
 
+           if (fes->IsComplex())
+             throw Exception("RestrictedBilinearForm not implemented for complex fespace");
+           
            auto biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
            biform -> SetCheckUnused (check_unused);                             
            return biform;
