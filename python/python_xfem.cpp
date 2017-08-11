@@ -456,7 +456,6 @@ void ExportNgsx(py::module &m)
     {
       if (vb == BND)
         throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-      
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
     }
     if (py::extract<py::list> (definedon).check())
