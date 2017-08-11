@@ -13,6 +13,7 @@
 #include "../lsetcurving/projshift.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../utils/restrictedblf.hpp"
 // #include "../utils/error.hpp"
 
 //using namespace ngcomp;
@@ -185,6 +186,43 @@ void ExportNgsx(py::module &m)
 
 
 
+  // typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
+  // py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
+  //   (m, "CRestrictedBilinearForm");
+  m.def("RestrictedBilinearForm",
+         [](shared_ptr<FESpace> fes,
+            const string & aname,
+            py::object ael_restriction,
+            py::object afac_restriction,
+            bool check_unused,
+            py::dict bpflags)
+         {
+           Flags flags = py::extract<Flags> (bpflags)();
+
+           shared_ptr<BitArray> el_restriction = nullptr;
+           shared_ptr<BitArray> fac_restriction = nullptr;
+           if (py::extract<PyBA> (ael_restriction).check())
+             el_restriction = py::extract<PyBA>(ael_restriction)();
+
+           if (py::extract<PyBA> (afac_restriction).check())
+             fac_restriction = py::extract<PyBA>(afac_restriction)();
+
+           if (fes->IsComplex())
+             throw Exception("RestrictedBilinearForm not implemented for complex fespace");
+           
+           shared_ptr<BilinearForm> biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+           biform -> SetCheckUnused (check_unused);                             
+           return biform;
+         },
+         py::arg("space"),
+         py::arg("name") = "bfa",
+         py::arg("element_restriction") = DummyArgument(),
+         py::arg("facet_restriction") = DummyArgument(),
+         py::arg("check_unused") = true,
+         py::arg("flags") = py::dict()
+      );
+
+  
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
     (m, "BitArrayCF")
@@ -269,22 +307,24 @@ void ExportNgsx(py::module &m)
   })
   ;
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
   {
     InterpolateP1 interpol(gf_ho, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
-    interpol.Do(lh);
+    interpol.Do(lh,eps_perturbation);
   } ,
-        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,py::arg("heapsize")=1000000)
+        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
+        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000)
   ;
 
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
   {
     InterpolateP1 interpol(coef, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
-    interpol.Do(lh);
+    interpol.Do(lh,eps_perturbation);
   } ,
-        py::arg("coef"),py::arg("gf"),py::arg("heapsize")=1000000)
+        py::arg("coef"),py::arg("gf"),
+        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000)
   ;
 
   py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")

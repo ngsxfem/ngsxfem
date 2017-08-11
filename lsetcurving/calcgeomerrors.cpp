@@ -39,8 +39,7 @@ namespace ngcomp
 
 
   template<int D>
-  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform,
-                      StatisticContainer & cont, LocalHeap & lh, double refine_threshold, bool abs_ref_threshold){
+  void CalcDistances (shared_ptr<CoefficientFunction> lset_ho, shared_ptr<GridFunction> gf_lset_p1, shared_ptr<GridFunction> deform, StatisticContainer & cont, LocalHeap & lh, double refine_threshold, bool abs_ref_threshold){
     static Timer time_fct ("CalcDistances");
     RegionTimer reg (time_fct);
 
@@ -468,55 +467,18 @@ namespace ngcomp
     cont.ErrorMisc.Append(sqrt(deform_jump_integral/facet_integral));
   }
 
-
-  NumProcCalcErrors::NumProcCalcErrors (shared_ptr<PDE> apde, const Flags & flags)
-  {
-    lower_lset_bound = flags.GetNumFlag("lset_lower_bound",0.0);
-    upper_lset_bound = flags.GetNumFlag("lset_upper_bound",0.0);
-    refine_threshold = flags.GetNumFlag("refine_threshold",-1.0);
-    gf_lset_p1 = apde->GetGridFunction(flags.GetStringFlag("levelset_p1","gf_lset_p1"));
-    lset = apde->GetCoefficientFunction(flags.GetStringFlag("levelset","lset"));
-    deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
-    qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
-    only_distance = flags.GetDefineFlag("only_distance");
-    abs_ref_threshold = flags.GetDefineFlag("abs_ref_threshold");
-  }
-
-  void NumProcCalcErrors::Do (LocalHeap & lh)
-  {
-    auto ma = deform->GetMeshAccess();
-    if (ma->GetDimension() == 2)
-    {
-      CalcDistances<2>(lset, gf_lset_p1, deform,
-                       // lower_lset_bound, upper_lset_bound,
-                       lset_error_container, lh, refine_threshold, abs_ref_threshold);
-      if (!only_distance)
-        CalcDeformationError<2>(lset, gf_lset_p1, deform, qn,
-                                // lower_lset_bound, upper_lset_bound,
-                                deform_error_container, lh, lower_lset_bound, upper_lset_bound);
-    }
-    else
-    {
-      CalcDistances<3>(lset, gf_lset_p1, deform,
-                       // lower_lset_bound, upper_lset_bound,
-                       lset_error_container, lh, refine_threshold, abs_ref_threshold);
-      if (!only_distance)
-        CalcDeformationError<3>(lset, gf_lset_p1, deform, qn,
-                                // lower_lset_bound, upper_lset_bound,
-                                deform_error_container, lh, lower_lset_bound, upper_lset_bound);
-    }
-
-
-
-    PrintConvergenceTable(lset_error_container.ErrorL1Norm, "lset_on_gamma_l1");
-    PrintConvergenceTable(lset_error_container.ErrorMaxNorm, "lset_on_gamma_max");
-    PrintConvergenceTable(deform_error_container.ErrorL2Norm, "deform_l2");
-    PrintConvergenceTable(deform_error_container.ErrorMaxNorm, "deform_max");
-    PrintConvergenceTable(deform_error_container.ErrorMisc, "deform_jump");
-  }
-
-
+  template void CalcDistances<2>(shared_ptr<CoefficientFunction> , shared_ptr<GridFunction> ,
+                                 shared_ptr<GridFunction> , StatisticContainer & , LocalHeap & ,
+                                 double , bool );
+  template void CalcDistances<3>(shared_ptr<CoefficientFunction> , shared_ptr<GridFunction> ,
+                                 shared_ptr<GridFunction> , StatisticContainer & , LocalHeap & ,
+                                 double , bool );
+  template void CalcDeformationError<2> (shared_ptr<CoefficientFunction> , shared_ptr<GridFunction> ,
+                                         shared_ptr<GridFunction> , shared_ptr<CoefficientFunction> ,
+                                         StatisticContainer & , LocalHeap & , double , double );
+  template void CalcDeformationError<3> (shared_ptr<CoefficientFunction> , shared_ptr<GridFunction> ,
+                                         shared_ptr<GridFunction> , shared_ptr<CoefficientFunction> ,
+                                         StatisticContainer & , LocalHeap & , double , double );
+  
 }
-
-static RegisterNumProc<NumProcCalcErrors> npcalcerr("calcerrors");
 

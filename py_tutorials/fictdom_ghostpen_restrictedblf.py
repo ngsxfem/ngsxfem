@@ -67,17 +67,27 @@ cf_ghost = IndicatorCF(mesh,ba_facets,facets=True)
 n_levelset = 1.0/Norm(grad(lsetp1)) * grad(lsetp1)
            
 a = BilinearForm(Vh,symmetric=False)
+a.Assemble()
+print(len(a.mat.AsVector()))
+a = RestrictedBilinearForm(Vh,"test",hasneg,ba_facets)
+a.Assemble()
+print(len(a.mat.AsVector()))
+
 f = LinearForm(Vh)
             
 u,v = Vh.TrialFunction(), Vh.TestFunction()
 
 # Diffusion term
-a += SymbolicBFI(lset_neg,form = grad(u)*grad(v))
+diff_bfi = SymbolicBFI(lset_neg,form = grad(u)*grad(v))
+diff_bfi.SetDefinedOnElements(hasneg)
+a += diff_bfi
 # Nitsche term
 nitsche_term  = -grad(u) * n_levelset * v
 nitsche_term += -grad(v) * n_levelset * u
 nitsche_term += (lambda_nitsche/h) * u * v
-a += SymbolicBFI(lset_if,form = nitsche_term)
+nitsche_bfi = SymbolicBFI(lset_if,form = nitsche_term)
+nitsche_bfi.SetDefinedOnElements(hasif)
+a += nitsche_bfi
 # rhs term:
 f += SymbolicLFI(lset_neg, form=coeff_f*v)
 
@@ -98,8 +108,9 @@ def dnjump(u,order,comp = -1):
 gp_term = CoefficientFunction(0.0)
 for i in range(order):
     gp_term += gamma_stab[i] * power(h,2*i+1) * dnjump(u,i+1)*dnjump(v,i+1)
-a += SymbolicBFI(form = cf_ghost*gp_term,VOL_or_BND = VOL, skeleton=True)
-
+gp_int = SymbolicBFI(form = cf_ghost*gp_term,VOL_or_BND = VOL, skeleton=True)
+gp_int.SetDefinedOnElements(ba_facets)
+a += gp_int
 # apply mesh adaptation    
 mesh.SetDeformation(deformation)
 
@@ -114,7 +125,7 @@ l2error = sqrt(Integrate(lset_neg,(gfu-exact)*(gfu-exact),mesh))
 print("L2 Error: {0}".format(l2error))
 
 # unset mesh adaptation
-# mesh.UnsetDeformation()
+mesh.UnsetDeformation()
 
 #visualization:
 

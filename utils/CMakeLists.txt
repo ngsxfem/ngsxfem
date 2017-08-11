@@ -1,4 +1,5 @@
 add_library(ngsxfem_utils ${NGS_LIB_TYPE}
+  restrictedblf.cpp
   bitarraycf.cpp
   ngsxstd.cpp
 )
@@ -10,6 +11,7 @@ install( TARGETS ngsxfem_utils ${ngs_install_dir})
 
 
 install( FILES
+  restrictedblf.hpp
   ngsxstd.hpp
   bitarraycf.hpp
   DESTINATION include

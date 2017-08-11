@@ -40,22 +40,5 @@ namespace ngcomp
       
   }
 
-
-
-  NumProcLevelSetRefine::NumProcLevelSetRefine (shared_ptr<PDE> apde, const Flags & flags)
-  {
-    lower_lset_bound = flags.GetNumFlag("lower_lset_bound",0.0);
-    upper_lset_bound = flags.GetNumFlag("upper_lset_bound",0.0);
-    gf_lset_p1 = apde->GetGridFunction(flags.GetStringFlag("levelset","gf_lset_p1"));
-  }
-  
-  void NumProcLevelSetRefine::Do (LocalHeap & lh)
-  {
-    RefineAtLevelSet(gf_lset_p1, lower_lset_bound, upper_lset_bound, lh);
-  }
-
-
 }
-
-static RegisterNumProc<NumProcLevelSetRefine> nplsetrefine("levelsetrefine");
 

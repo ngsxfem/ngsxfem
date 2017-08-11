@@ -61,13 +61,15 @@ f.Assemble();
 gfu.vec[:] = 0.0
 gfu.vec.data = a.mat.Inverse(freedofs) * f.vec
 
-nan = CoefficientFunction(float('nan'))
-Draw(IfPos(cf_IF-0.5,gfu,nan),mesh,"u")
+import sys
+if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+   nan = CoefficientFunction(float('nan'))
+   Draw(IfPos(cf_IF-0.5,gfu,nan),mesh,"u")
 
-visoptions.mminval = -0.2
-visoptions.mmaxval = 0.2
-visoptions.deformation = 1
-visoptions.autoscale = 0
+   visoptions.mminval = -0.2
+   visoptions.mmaxval = 0.2
+   visoptions.deformation = 1
+   visoptions.autoscale = 0
 
 
 

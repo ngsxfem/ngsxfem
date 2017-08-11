@@ -249,9 +249,7 @@ f += SymbolicLFI(lset_pos, form = coef_g[1] * v[1])
 
 # # ghost penalty terms:
 for i in range(2):
-    bfi_gp = SymbolicBFI(form = - gamma_stab * h*h*h* dpdn_jump[i]*dqdn_jump[i],VOL_or_BND = VOL, skeleton=True)
-    bfi_gp.SetDefinedOnElements(ba_facets[i])
-    a += bfi_gp
+    a += SymbolicBFI(form = - gamma_stab * h*h*h* dpdn_jump[i]*dqdn_jump[i],VOL_or_BND = VOL, skeleton=True, definedonelements=ba_facets[i])
 
 # apply mesh adaptation    
 mesh.SetDeformation(deformation)
@@ -279,14 +277,14 @@ pl2error = sqrt(  Integrate(lset_neg,(pres_neg-pres_sol_neg)*(pres_neg-pres_sol_
                  +Integrate(lset_pos,(pres_pos-pres_sol_pos)*(pres_pos-pres_sol_pos),mesh=mesh) )
 print("L2 Error of pressure: {0}".format(pl2error))
 
-# # unset mesh adaptation
-mesh.UnsetDeformation()
+import sys
+if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+  # # unset mesh adaptation
+  mesh.UnsetDeformation()
 
-# #visualization:
-
-Draw(deformation,mesh,"deformation")
-Draw(levelset,mesh,"levelset")
-Draw(lsetp1,mesh,"lsetp1")
-Draw(pres_coef,mesh,"pressure")
-Draw(vel_coef,mesh,"vel")
-
+  # #visualization:
+  Draw(deformation,mesh,"deformation")
+  Draw(levelset,mesh,"levelset")
+  Draw(lsetp1,mesh,"lsetp1")
+  Draw(pres_coef,mesh,"pressure")
+  Draw(vel_coef,mesh,"vel")
