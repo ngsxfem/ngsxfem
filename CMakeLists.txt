@@ -21,7 +21,7 @@ endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
 if(BUILD_NGSOLVE)
   message(STATUS "Use NGSolve from submodule, updating modules...")
-  execute_process(COMMAND git submodule update --remote --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
   set(USE_UMFPACK ON CACHE BOOL "use umfpack library")

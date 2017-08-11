@@ -17,7 +17,7 @@ build:
     - mkdir -p /home/gitlab-runner/inst/netgen
     - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
     - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
-    - git submodule update --remote --init --recursive
+    - git submodule update --init --recursive
     - export NGS_VERSION=`git submodule | awk '{print $1;}'`
     - export NGS_INSTALLED_VERSION=`cat /home/gitlab-runner/ngsxfem-reports/lastngs.version | awk '{print $1;}'`
     - echo NGS_VERSION is $NGS_VERSION
@@ -50,7 +50,7 @@ ctests-tutorials:
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'py_tutorial'"
   when: always
-  allow_failure: true
+  allow_failure: false
 
 ctests-mayfail:
   stage: test
