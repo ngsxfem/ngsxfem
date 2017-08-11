@@ -33,7 +33,7 @@ build:
     - cp -r /home/gitlab-runner/inst/netgen /home/gitlab-runner/ngsxfem-reports/last-inst
     - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
 
-ctests-allow-fail:
+ctests-tutorials:
   stage: test
   cache:
     key: "$CI_PIPELINE_ID"
@@ -50,8 +50,27 @@ ctests-allow-fail:
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
     - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'py_tutorial'"
   when: always
-  allow_failure: true
+  allow_failure: false
 
+ctests-mayfail:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'pymayfailtests'"
+  when: always
+  allow_failure: true
+        
 ctests-remaining:
   stage: test
   cache:
@@ -67,7 +86,7 @@ ctests-remaining:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -E 'py_tutorial'"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'pytests'"
   when: always
   allow_failure: false
   

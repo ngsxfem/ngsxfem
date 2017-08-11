@@ -61,7 +61,7 @@ namespace ngcomp
          /*
          if (ba->Test(elnr))
              cout << "projshift: Detected marked element with number " << elnr <<  endl; */
-
+      
          if ( (ba) && ( !(ba->Test(elnr)) ))
            return;
          if ( (!ba) && !ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound) )
@@ -174,24 +174,5 @@ namespace ngcomp
   }
     
   
-  NumProcProjectShift::NumProcProjectShift (shared_ptr<PDE> apde, const Flags & flags)
-  {
-    lower_lset_bound = flags.GetNumFlag("lset_lower_bound",0.0);
-    upper_lset_bound = flags.GetNumFlag("lset_upper_bound",0.0);
-    threshold = flags.GetNumFlag("threshold",1.0);
-    gf_lset_p1 = apde->GetGridFunction(flags.GetStringFlag("levelset_p1","gf_lset_p1"));
-    lset = apde->GetGridFunction(flags.GetStringFlag("levelset","lset"));
-    deform = apde->GetGridFunction(flags.GetStringFlag("deform","deform"));
-    qn = apde->GetCoefficientFunction(flags.GetStringFlag("quasinormal","qn"));
-    //a = apde->GetBitArray(flags.GetStringFlag("ba","ba"));
-    a = NULL;
-  }
-
-  void NumProcProjectShift::Do (LocalHeap & lh)
-  {
-    ProjectShift(lset, gf_lset_p1, deform, qn, a, lower_lset_bound, upper_lset_bound, threshold, lh);
-  }
-
-  static RegisterNumProc<NumProcProjectShift> npprojshift("projectshift");
 }
 

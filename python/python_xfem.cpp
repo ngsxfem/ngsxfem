@@ -196,9 +196,11 @@ void ExportNgsx(py::module &m)
         py::arg("balist")
         );
 
-  typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
-  py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
-    (m, "CRestrictedBilinearForm");
+
+
+  //typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
+  //py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
+  //  (m, "CRestrictedBilinearForm");
   m.def("RestrictedBilinearForm",
          [](shared_ptr<FESpace> fes,
             const string & aname,
@@ -217,7 +219,10 @@ void ExportNgsx(py::module &m)
            if (py::extract<PyBA> (afac_restriction).check())
              fac_restriction = py::extract<PyBA>(afac_restriction)();
 
-           auto biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+           if (fes->IsComplex())
+             throw Exception("RestrictedBilinearForm not implemented for complex fespace");
+           
+           shared_ptr<BilinearForm> biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
            biform -> SetCheckUnused (check_unused);                             
            return biform;
          },
@@ -229,7 +234,7 @@ void ExportNgsx(py::module &m)
          py::arg("flags") = py::dict()
       );
 
-
+  
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
     (m, "BitArrayCF")
@@ -314,22 +319,24 @@ void ExportNgsx(py::module &m)
   })
   ;
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
   {
     InterpolateP1 interpol(gf_ho, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
-    interpol.Do(lh);
+    interpol.Do(lh,eps_perturbation);
   } ,
-        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,py::arg("heapsize")=1000000)
+        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
+        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000)
   ;
 
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
   {
     InterpolateP1 interpol(coef, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
-    interpol.Do(lh);
+    interpol.Do(lh,eps_perturbation);
   } ,
-        py::arg("coef"),py::arg("gf"),py::arg("heapsize")=1000000)
+        py::arg("coef"),py::arg("gf"),
+        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000)
   ;
 
   py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
@@ -446,7 +453,6 @@ void ExportNgsx(py::module &m)
 
     if (vb == BND)
       throw Exception("Symbolic cuts not yet (tested) for boundaries..");
-
     // check for DG terms
     bool has_other = false;
     cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
@@ -463,7 +469,7 @@ void ExportNgsx(py::module &m)
     shared_ptr<BilinearFormIntegrator> bfi;
     if (!has_other && !skeleton)
     {
-      auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+      auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
       bfime->SetTimeIntegrationOrder(time_order);
       bfi = bfime;
     }
@@ -471,6 +477,7 @@ void ExportNgsx(py::module &m)
     {
       if (vb == BND)
         throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
+      
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
     }
     if (py::extract<py::list> (definedon).check())
@@ -564,13 +571,15 @@ void ExportNgsx(py::module &m)
     if (defon_region.check())
       vb = VorB(defon_region());
 
+    // if (vb == BND)
+    //   throw Exception("Symbolic cuts not yet (tested) for boundaries..");
     if (vb == BND)
       throw Exception("Symbolic cuts not yet (tested) for boundaries..");
 
     if (element_boundary || skeleton)
       throw Exception("No Facet LFI with Symbolic cuts..");
 
-    auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+    auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
     lfime->SetTimeIntegrationOrder(time_order);
     shared_ptr<LinearFormIntegrator> lfi = lfime;
 
@@ -602,7 +611,7 @@ void ExportNgsx(py::module &m)
         );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, int dim_space, bool hdiv)
   {
 
     Array<int> comparr(0);
@@ -626,6 +635,9 @@ void ExportNgsx(py::module &m)
 
     shared_ptr<DifferentialOperator> diffopdudnk;
     if (! hdiv)
+    {
+      if (dim_space == 2)
+      {
       switch (order)
       {
       case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,1>>> (); break;
@@ -638,6 +650,23 @@ void ExportNgsx(py::module &m)
       case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
       default : throw Exception("no order higher than 8 implemented yet");
       }
+      }
+      else
+      {
+      switch (order)
+      {
+      case 1 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,1>>> (); break;
+      case 2 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,2>>> (); break;
+      case 3 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,3>>> (); break;
+      case 4 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,4>>> (); break;
+      case 5 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,5>>> (); break;
+      case 6 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,6>>> (); break;
+      case 7 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,7>>> (); break;
+      case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<3,8>>> (); break;
+      default : throw Exception("no order higher than 8 implemented yet");
+      }
+      }
+    }
     else
       switch (order)
       {
@@ -668,6 +697,7 @@ void ExportNgsx(py::module &m)
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
+        py::arg("dim") = 2,
         py::arg("hdiv") = false
         );
 
@@ -775,7 +805,6 @@ void ExportNgsx(py::module &m)
         py::arg("subdivlvl")=0,
         py::arg("heapsize")=1000000);
   typedef shared_ptr<SpaceTimeFESpace> PySTFES;
-
 
 
   m.def("SpaceTimeFESpace", [] (
