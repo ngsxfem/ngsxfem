@@ -198,9 +198,6 @@ void ExportNgsx(py::module &m)
 
 
 
-  //typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
-  //py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
-  //  (m, "CRestrictedBilinearForm");
   m.def("RestrictedBilinearForm",
          [](shared_ptr<FESpace> fes,
             const string & aname,
@@ -697,7 +694,7 @@ void ExportNgsx(py::module &m)
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
-        py::arg("dim") = 2,
+        py::arg("dim_space") = 2,
         py::arg("hdiv") = false
         );
 
