@@ -114,7 +114,7 @@ l2error = sqrt(Integrate(lset_neg,(gfu-exact)*(gfu-exact),mesh))
 print("L2 Error: {0}".format(l2error))
 
 # unset mesh adaptation
-mesh.UnsetDeformation()
+# mesh.UnsetDeformation()
 
 #visualization:
 
