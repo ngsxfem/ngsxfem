@@ -269,22 +269,24 @@ void ExportNgsx(py::module &m)
   })
   ;
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
   {
     InterpolateP1 interpol(gf_ho, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
-    interpol.Do(lh);
+    interpol.Do(lh,eps_perturbation);
   } ,
-        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,py::arg("heapsize")=1000000)
+        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
+        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000)
   ;
 
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
   {
     InterpolateP1 interpol(coef, gf_p1);
     LocalHeap lh (heapsize, "InterpolateP1-Heap");
-    interpol.Do(lh);
+    interpol.Do(lh,eps_perturbation);
   } ,
-        py::arg("coef"),py::arg("gf"),py::arg("heapsize")=1000000)
+        py::arg("coef"),py::arg("gf"),
+        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000)
   ;
 
   py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")

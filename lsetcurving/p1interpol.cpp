@@ -22,7 +22,7 @@ namespace ngcomp
     : ma(a_gf_p1->GetMeshAccess()), coef(nullptr), gf(a_gf), gf_p1(a_gf_p1)
   {; }
 
-  void InterpolateP1::Do(LocalHeap & lh)
+  void InterpolateP1::Do(LocalHeap & lh, double eps_perturbation)
   {
     static Timer time_fct ("LsetCurv::InterpolateP1::Do");
     RegionTimer reg (time_fct);
@@ -80,8 +80,8 @@ namespace ngcomp
       gf_p1->GetFESpace()->GetVertexDofNrs(vnr,dof);
       FlatVector<> val(1,&val_lset);
       // avoid vertex cuts by introducing a small perturbation:
-      if (abs(val(0)) < 1e-16)
-        val(0) = 1e-16;
+      if (abs(val(0)) < eps_perturbation)
+        val(0) = eps_perturbation;
       if (dof[0] != -1)
         gf_p1->GetVector().SetIndirect(dof,val);
     }
