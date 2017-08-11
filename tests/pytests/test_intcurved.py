@@ -7,26 +7,19 @@ from xfem import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 
+from make_uniform2D_grid import MakeUniform2DGrid
+
 import pytest
 
-@pytest.mark.parametrize("quad_dominated", [False, True])
+@pytest.mark.parametrize("quad_dominated", [False,True])
 @pytest.mark.parametrize("order", [1,2,3])
 
 def test_intcurved(quad_dominated, order):
-    #square domain [-1,1]x[-1,1]
-    def Make2DProblem(maxh=2):
-        from netgen.geom2d import SplineGeometry
-        square = SplineGeometry()
-        square.AddRectangle([-1,-1],[1,1],bc=1)
-        mesh = Mesh (square.GenerateMesh(maxh=maxh, quad_dominated=quad_dominated))
-        return mesh;
-
-    # circle with radius 0.5
     levelset = sqrt(x*x+y*y)-0.5
     referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
-    mesh = Make2DProblem(maxh=0.5)
-
+    mesh = MakeUniform2DGrid(quads = quad_dominated, N=4, P1=(-1,-1), P2=(1,1))
+    
     lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
     lsetp1 = lsetmeshadap.lset_p1
     errors_uncurved = dict()
@@ -78,14 +71,14 @@ def test_intcurved(quad_dominated, order):
     print("errors (  curved):  \n{}\n".format(  errors_curved))
     print("   eoc (  curved):  \n{}\n".format(     eoc_curved))
 
-    print("avg.eoc(  curved):  \n{}\n".format(     sum(eoc_curved[IF][2:])/len(eoc_curved[IF][2:])))
-    print("avg.eoc(  curved):  \n{}\n".format(     sum(eoc_curved[NEG][2:])/len(eoc_curved[NEG][2:])))
-    print("avg.eoc(  curved):  \n{}\n".format(     sum(eoc_curved[POS][2:])/len(eoc_curved[POS][2:])))
+    print("avg.eoc(curved, IF):  \n{}\n".format(     sum(eoc_curved[IF][2:])/len(eoc_curved[IF][2:])))
+    print("avg.eoc(curved,NEG):  \n{}\n".format(     sum(eoc_curved[NEG][2:])/len(eoc_curved[NEG][2:])))
+    print("avg.eoc(curved,POS):  \n{}\n".format(     sum(eoc_curved[POS][2:])/len(eoc_curved[POS][2:])))
 
     if (order > 1):
-        assert errors_curved[IF][-1] < 1e-6
-        assert errors_curved[NEG][-1] < 1e-6
-        assert errors_curved[POS][-1] < 1e-6
+        assert errors_curved[IF][-1] < 1e-5
+        assert errors_curved[NEG][-1] < 1e-5
+        assert errors_curved[POS][-1] < 1e-5
     else:
         assert errors_curved[IF][-1] < 1e-4
         assert errors_curved[NEG][-1] < 1e-4

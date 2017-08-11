@@ -177,12 +177,14 @@ u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 #  kinks or jumps more clearly increase the subdivision option in the visualization.)
 # drawing deformation allows to deform the mesh to obtain the geometry that is used
 # in the computations:
-Draw(levelset,mesh,"levelset")
-Draw(lsetp1,mesh,"lsetp1")
-Draw(lsetmeshadap.deform,mesh,"deformation")
-Draw(u_coef,mesh,"u")
-Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"graph_of_u",sd=3)
-visoptions.deformation = 1
+import sys
+if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+    Draw(levelset,mesh,"levelset")
+    Draw(lsetp1,mesh,"lsetp1")
+    Draw(lsetmeshadap.deform,mesh,"deformation")
+    Draw(u_coef,mesh,"u")
+    Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"graph_of_u",sd=3)
+    visoptions.deformation = 1
 
 err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
 
@@ -193,7 +195,8 @@ l2error = sqrt( Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=m
 
 print("L2 error : ",l2error)
 # for later refinements etc. its always a good idea to deactivate the mesh deformation
-mesh.UnsetDeformation()
+if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+    mesh.UnsetDeformation()
 
 
 

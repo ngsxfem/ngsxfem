@@ -1,5 +1,5 @@
 add_library(ngsxfem_lsetcurving ${NGS_LIB_TYPE}
-  p1interpol.cpp shiftintegrators.cpp calcpointshift.cpp setdeformation.cpp calcgeomerrors.cpp lsetrefine.cpp
+  p1interpol.cpp shiftintegrators.cpp calcpointshift.cpp calcgeomerrors.cpp lsetrefine.cpp
   projshift.cpp
   )
 

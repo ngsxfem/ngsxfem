@@ -13,8 +13,8 @@ namespace xintegration
     bool hasneg = false;
 
     for (auto v : cf_lset_at_element) {
-        if (!haspos && (v > 1e-10)) haspos = true;
-        if (!hasneg && (v < -1e-10)) hasneg = true;
+        if (!haspos && (v > 0)) haspos = true;
+        if (!hasneg && (v < 0)) hasneg = true;
         if(haspos && hasneg) break;
     }
 
@@ -282,11 +282,11 @@ namespace xintegration
     //cout << "Length of Cut Points z: " << cut_points[2].size() << endl;
 
     for(int i=0; i<cut_points[0].size()-1; i++){
-        if(cut_points[0][i+1] -cut_points[0][i] > 1e-10){
+        if(cut_points[0][i+1] -cut_points[0][i] > 1e-14){ //<-- CL: is this really save?
             for(int j=0; j<cut_points[1].size()-1; j++){
-                if(cut_points[1][j+1] - cut_points[1][j] > 1e-10){
+                if(cut_points[1][j+1] - cut_points[1][j] > 1e-14){ //<-- CL: is this really save?
                     for(int k=0; k<cut_points[2].size()-1; k++){
-                        if(cut_points[2][k+1] - cut_points[2][k] > 1e-10){
+                        if(cut_points[2][k+1] - cut_points[2][k] > 1e-14){ //<-- CL: is this really save?
                             Vec<8, tuple<Vec<3>, double>> quad_points;
                             get<0>(quad_points[0]) = {cut_points[0][i], cut_points[1][j], cut_points[2][k]};
                             get<0>(quad_points[1]) = {cut_points[0][i+1], cut_points[1][j], cut_points[2][k]};
@@ -315,7 +315,7 @@ namespace xintegration
       for(auto poly: Cut_quads){
           double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
           const IntegrationRule &  ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-          if(x1-x0<1e-13) {
+          if(x1-x0<1e-16) { //<-- CL: is this really save?
               double x_ast = 0.5*(x1+x0);
               for(auto ip:ir_ngs) {
                   Vec<3> point(0.0); point[0] = x_ast; point[1] = ip.Point()[0];
