@@ -516,9 +516,6 @@ namespace ngfem
             }
         }
   }
-
-
-
   SymbolicFacetBilinearFormIntegrator2 ::
   SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
                                         int aforce_intorder)
@@ -884,7 +881,4 @@ namespace ngfem
         }
   }
 
-  
-
-  
 }

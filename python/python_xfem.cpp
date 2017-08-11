@@ -17,12 +17,11 @@
 #include "../utils/restrictedblf.hpp"
 #include "../cutint/spacetimecutrule.hpp"
 #include "../lsetcurving/shiftedevaluate.hpp"
-
+// #include "../utils/error.hpp"
 #include "../spacetime/SpaceTimeFE.hpp"
 #include "../spacetime/SpaceTimeFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
 #include "../spacetime/timecf.hpp"
-// #include "../utils/error.hpp"
 
 //using namespace ngcomp;
 
@@ -198,6 +197,9 @@ void ExportNgsx(py::module &m)
 
 
 
+  // typedef shared_ptr<RestrictedBilinearForm> PyRBLF;
+  // py::class_<RestrictedBilinearForm, PyRBLF, BilinearForm>
+  //   (m, "CRestrictedBilinearForm");
   m.def("RestrictedBilinearForm",
          [](shared_ptr<FESpace> fes,
             const string & aname,
@@ -1029,7 +1031,6 @@ void ExportNgsx(py::module &m)
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
    });
-
    m.def("shifted_eval", [](PyGF self, PyGF back,PyGF forth ) -> PyCF
    {
 

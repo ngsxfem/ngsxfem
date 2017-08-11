@@ -21,7 +21,7 @@ mesh = Mesh (ngmesh)
 
 order = 3
 # stabilization parameter for ghost-penalty
-gamma_stab = [0.1,0.01,0.001,0.0001,0.00001,0.00001]
+# gamma_stab = [0.1,0.01,0.001,0.0001,0.00001,0.00001]
 # stabilization parameter for Nitsche
 lambda_nitsche  = 10 * order * order
 
@@ -95,10 +95,16 @@ def dnjump(u,order,comp = -1):
         return dn(u,order,comp) + dn(u.Other(),order,comp)
 
 # ghost penalty terms:
-gp_term = CoefficientFunction(0.0)
-for i in range(order):
-    gp_term += gamma_stab[i] * power(h,2*i+1) * dnjump(u,i+1)*dnjump(v,i+1)
-a += SymbolicBFI(form = cf_ghost*gp_term,VOL_or_BND = VOL, skeleton=True)
+# gp_term = CoefficientFunction(0.0)
+# for i in range(order):
+#     gp_term += gamma_stab[i] * power(h,2*i+1) * dnjump(u,i+1)*dnjump(v,i+1)
+# a += SymbolicBFI(form = gp_term,VOL_or_BND = VOL, skeleton=True, definedonelements=ba_facets)
+
+
+a += SymbolicFacetPatchBFI(form = 0.1*1.0/h*1.0/h*(u-u.Other())*(v-v.Other()),
+                           skeleton=False,
+                           definedonelements=ba_facets)
+
 
 # apply mesh adaptation    
 mesh.SetDeformation(deformation)
@@ -118,7 +124,7 @@ print("L2 Error: {0}".format(l2error))
 
 #visualization:
 import sys
-if len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
   Draw(deformation,mesh,"deformation")
   Draw(levelset,mesh,"levelset")
   Draw(lsetp1,mesh,"lsetp1")
