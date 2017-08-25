@@ -191,7 +191,7 @@ namespace ngfem
     if (n_maxits)
       *n_maxits = max2((double)it,*n_maxits);
 
-    if (it == 100){
+    if (it == 20){
       RegionTimer reg (time_not_conv);
       
       std::cout << " SearchCorrespondingPoint:: did not converge " << std::endl;
