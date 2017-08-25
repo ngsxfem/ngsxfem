@@ -20,6 +20,9 @@ add_test(NAME py_tutorial_stokesxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME py_tutorial_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_ghostpen.py" "testmode")
 
+add_test(NAME py_tutorial_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_dg_ghostpen.py" "testmode")
+
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 

@@ -155,7 +155,7 @@ lset_pos = { "levelset" : lsetp1, "domain_type" : POS, "subdivlvl" : 0}
 lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0}
 
 # bilinear forms:
-a = BilinearForm(VhG, symmetric = True, flags = { })
+a = BilinearForm(VhG, symmetric = True)
 # l.h.s. domain integrals:
 a += SymbolicBFI(levelset_domain = lset_neg, form = alpha[0] * gradu[0] * gradv[0])
 a += SymbolicBFI(levelset_domain = lset_pos, form = alpha[1] * gradu[1] * gradv[1])

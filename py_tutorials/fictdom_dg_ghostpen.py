@@ -38,7 +38,7 @@ coeff_f = CoefficientFunction( -20*( (r1+r2)/sqrt(x*x+y*y) -4) )
 # for monitoring the error
 exact = CoefficientFunction(20*(r2-sqrt(x*x+y*y))*(sqrt(x*x+y*y)-r1))
 
-Vh = L2(mesh, order = order, dirichlet=[],flags = {"dgjumps":True})    
+Vh = L2(mesh, order = order, dirichlet=[], dgjumps = True)    
 gfu = GridFunction(Vh)
 
 h = specialcf.mesh_size   
@@ -112,21 +112,26 @@ print("L2 Error: {0}".format(l2error))
 # unset mesh adaptation
 mesh.UnsetDeformation()
 
+
 #visualization:
-
-Draw(deformation,mesh,"deformation")
-Draw(levelset,mesh,"levelset")
-Draw(lsetp1,mesh,"lsetp1")
-Draw(gfu,mesh,"extu")
-Draw(IfPos(-lsetp1,gfu,float('nan')),mesh,"u")
-warped_u = CoefficientFunction((deformation[0],
-                         deformation[1],
-                         IfPos(-lsetp1,0.2*gfu,float('nan'))))
-Draw(warped_u,mesh,"warped_u",sd=4)
-
-from ngsolve.internal import *
-visoptions.autoscale = False
-visoptions.mminval=0
-visoptions.mmaxval=1.25
-visoptions.deformation = 1
-
+import sys
+if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
+  #visualization:
+  
+  Draw(deformation,mesh,"deformation")
+  Draw(levelset,mesh,"levelset")
+  Draw(lsetp1,mesh,"lsetp1")
+  Draw(gfu,mesh,"extu")
+  Draw(IfPos(-lsetp1,gfu,float('nan')),mesh,"u")
+  warped_u = CoefficientFunction((deformation[0],
+                           deformation[1],
+                           IfPos(-lsetp1,0.2*gfu,float('nan'))))
+  Draw(warped_u,mesh,"warped_u",sd=4)
+  
+  from ngsolve.internal import *
+  visoptions.autoscale = False
+  visoptions.mminval=0
+  visoptions.mmaxval=1.25
+  visoptions.deformation = 1
+  
+  
