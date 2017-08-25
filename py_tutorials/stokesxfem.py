@@ -149,7 +149,7 @@ Qhx = XFESpace(Qh, ci)
 QhG = FESpace([Qh, Qhx])
 N = FESpace("number",mesh)
 
-WhG = FESpace([VhG,VhG,QhG,N],flags = {"dgjumps":True})
+WhG = FESpace([VhG,VhG,QhG,N],flags = {"dgjumps" : True})
 
 gfup = GridFunction(WhG)
 gfu1 = gfup.components[0]

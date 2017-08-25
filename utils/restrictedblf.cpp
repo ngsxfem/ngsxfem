@@ -128,8 +128,8 @@ namespace ngcomp
 
     if (!fespace2)
       {
-        graph = new MatrixGraph (ndof, *creator.GetTable(), *creator.GetTable(), symmetric);
-        delete creator.GetTable();
+        auto table = creator.MoveTable();
+        graph = new MatrixGraph (ndof, table, table, symmetric);
       }
     else
       {

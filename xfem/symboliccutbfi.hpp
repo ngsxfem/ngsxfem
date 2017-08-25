@@ -124,15 +124,15 @@ namespace ngfem
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }
-    
+
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
                      const FiniteElement & volumefel2, int LocalFacetNr2,
                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
-                     FlatMatrix<double> & elmat,
+                     FlatMatrix<double> elmat,
                      LocalHeap & lh) const;
-
+    
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
                      const ElementTransformation & eltrans, FlatArray<int> & ElVertices,

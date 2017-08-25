@@ -387,12 +387,21 @@ void ExportNgsx(py::module &m)
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   ;
 
-  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, double lower, double upper, double threshold, int heapsize)
+  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, PyCF blending,
+                             double lower, double upper, double threshold, int heapsize)
   {
     LocalHeap lh (heapsize, "ProjectShift-Heap");
-    ProjectShift(lset_ho, lset_p1, deform, qn, lower, upper, threshold, lh);
+    ProjectShift(lset_ho, lset_p1, deform, qn, blending, lower, upper, threshold, lh);
   } ,
-        py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("threshold")=1.0,py::arg("heapsize")=1000000)
+        py::arg("lset_ho")=NULL,
+        py::arg("lset_p1")=NULL,
+        py::arg("deform")=NULL,
+        py::arg("qn")=NULL,
+        py::arg("blending")=NULL,
+        py::arg("lower")=0.0,
+        py::arg("upper")=0.0,
+        py::arg("threshold")=1.0,
+        py::arg("heapsize")=1000000)
   ;
 
 // ProjectShift
@@ -456,7 +465,6 @@ void ExportNgsx(py::module &m)
     {
       if (vb == BND)
         throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-      
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
     }
     if (py::extract<py::list> (definedon).check())

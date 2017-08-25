@@ -120,13 +120,13 @@ for i in range(ij):
         return u - (u*n)*n
 
     # assemble the bilinear form A(u,v)
-    a = BilinearForm(trVh, symmetric = True, flags = {}, check_unused = False)
+    a = BilinearForm(trVh, symmetric = True, check_unused = False)
     a += SymbolicBFI(levelset_domain = lsetif, form = u * v + P(grad(u)) * P(grad(v)), definedonelements = elem)
     a += SymbolicBFI(form = gamma * (grad(u)*n) * (grad(v)*n), definedonelements = elem) # normal diffusion
     a.Assemble()
     
     # assemble the linear form f(v)
-    f = LinearForm(trVh, flags = {})
+    f = LinearForm(trVh)
     f += SymbolicLFI(levelset_domain = lsetif, form = 2*(x + y) * v, definedonelements = elem)
     f.Assemble()
     
