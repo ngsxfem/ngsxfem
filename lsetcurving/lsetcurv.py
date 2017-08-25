@@ -43,7 +43,7 @@ class LevelSetMeshAdaptation:
         self.deform = GridFunction(self.v_def, "deform")
         self.heapsize = heapsize
 
-    def CalcDeformation(self, levelset):
+    def CalcDeformation(self, levelset, blending=None):
         """
         Compute the deformation
         """
@@ -59,7 +59,24 @@ class LevelSetMeshAdaptation:
         self.lset_ho.Set(levelset,heapsize=self.heapsize)
         self.qn.Set(self.lset_ho.Deriv(),heapsize=self.heapsize)
         InterpolateToP1(self.lset_ho,self.lset_p1)
-        ProjectShift(self.lset_ho, self.lset_p1, self.deform, self.qn, self.lset_lower_bound, self.lset_upper_bound, self.threshold, heapsize=self.heapsize);
+        if blending == None or blending == "none":
+            blending = CoefficientFunction(0.0)
+        elif blending == "quadratic":
+            scale=sqrt(self.lset_p1.space.mesh.dim) * specialcf.mesh_size
+            blending = self.lset_p1*self.lset_p1/( scale * scale)
+        elif blending == "quartic":
+            scale=sqrt(self.lset_p1.space.mesh.dim) * specialcf.mesh_size
+            blending = self.lset_p1*self.lset_p1*self.lset_p1*self.lset_p1/(scale*scale*scale*scale)
+            
+        ProjectShift(self.lset_ho,
+                     self.lset_p1,
+                     self.deform,
+                     self.qn,
+                     blending,
+                     lower=self.lset_lower_bound,
+                     upper=self.lset_upper_bound,
+                     threshold=self.threshold,
+                     heapsize=self.heapsize)
         return self.deform
 
 
