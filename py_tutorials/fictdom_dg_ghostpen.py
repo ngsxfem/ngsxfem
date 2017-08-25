@@ -103,7 +103,7 @@ a.Assemble()
 f.Assemble()
 
 # Solve linear system              
-gfu.vec.data = a.mat.Inverse(active_dofs,"pardiso") * f.vec
+gfu.vec.data = a.mat.Inverse(active_dofs,"sparsecholesky") * f.vec
               
 #measure the error
 l2error = sqrt(Integrate(lset_neg,(gfu-exact)*(gfu-exact),mesh))
