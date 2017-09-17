@@ -3,7 +3,7 @@
 #include "../utils/bitarraycf.hpp"
 #include "../xfem/cutinfo.hpp"
 #include "../xfem/xFESpace.hpp"
-#include "../xfem/sFESpace.hpp"
+// #include "../xfem/sFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
 #include "../xfem/ghostpenalty.hpp"
@@ -716,18 +716,18 @@ void ExportNgsx(py::module &m)
   // if( bp::scope() )
   //   nested_name = bp::extract<std::string>(bp::scope().attr("__name__") + ".comp");
 
-  typedef shared_ptr<SFESpace> PySFES;
+  // typedef shared_ptr<SFESpace> PySFES;
 
-  m.def("SFESpace", [](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
-          -> PyFES
-  {
-    Flags flags = py::extract<Flags> (bpflags)();
-    shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset, order, flags);
-    LocalHeap lh (1000000, "SFESpace::Update-heap", true);
-    ret->Update(lh);
-    ret->FinalizeUpdate(lh);
-    return ret;
-  });
+  // m.def("SFESpace", [](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
+  //         -> PyFES
+  // {
+  //   Flags flags = py::extract<Flags> (bpflags)();
+  //   shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset, order, flags);
+  //   LocalHeap lh (1000000, "SFESpace::Update-heap", true);
+  //   ret->Update(lh);
+  //   ret->FinalizeUpdate(lh);
+  //   return ret;
+  // });
   // new implementation: only straight cuts - start with triangles only for a start!
 
   m.def("IntegrateX",
@@ -801,8 +801,8 @@ void ExportNgsx(py::module &m)
 
 PYBIND11_PLUGIN(ngsxfem_py)
 {
-  cout << "importing ngs-xfem-" << NGSXFEM_VERSION << endl;
-  py::module m("xfem", "pybind xfem");
+  cout << "importing ngs-xfem" << NGSXFEM_VERSION << endl;
+  py::module m("ngsxfem", "pybind ngsxfem");
   ExportNgsx(m);
   return m.ptr();
 }
