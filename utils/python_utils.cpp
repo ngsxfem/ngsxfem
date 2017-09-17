@@ -33,9 +33,9 @@ void ExportNgsx_utils(py::module &m)
 
           if (fes->IsComplex())
             throw Exception("RestrictedBilinearForm not implemented for complex fespace");
-           
+
           shared_ptr<BilinearForm> biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
-          biform -> SetCheckUnused (check_unused);                             
+          biform -> SetCheckUnused (check_unused);
           return biform;
         },
         py::arg("space"),
@@ -44,7 +44,7 @@ void ExportNgsx_utils(py::module &m)
         py::arg("facet_restriction") = DummyArgument(),
         py::arg("check_unused") = true,
         py::arg("flags") = py::dict()
-    );
+        );
 }
 
 PYBIND11_PLUGIN(ngsxfem_utils_py)
