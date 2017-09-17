@@ -3,6 +3,7 @@ from ngsolve.fem import *
 from ngsolve.utils import L2
 from xfem.ngsxfem_py import *
 from xfem.ngsxfem_xfem_py import *
+from xfem.ngsxfem_utils_py import *
 
 def extend(func):
     if func.derivname == "extend":
