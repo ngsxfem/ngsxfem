@@ -5,6 +5,7 @@
 #include <comp.hpp>
 #include <fem.hpp>
 
+#include "../utils/bitarraycf.hpp"
 #include "../utils/restrictedblf.hpp"
 
 using namespace ngcomp;
@@ -45,6 +46,47 @@ void ExportNgsx_utils(py::module &m)
         py::arg("check_unused") = true,
         py::arg("flags") = py::dict()
         );
+
+  m.def("CompoundBitArray",
+        [] (py::list balist)
+        {
+          size_t cnt = 0;
+          for( auto aba : balist )
+          {
+            shared_ptr<BitArray> ba = py::extract<PyBA>(aba)();
+            cnt += ba->Size();
+          }
+          shared_ptr<BitArray> res = make_shared<BitArray>(cnt);
+          res->Clear();
+          size_t offset = 0;
+          for( auto aba : balist )
+          {
+            shared_ptr<BitArray> ba = py::extract<PyBA>(aba)();
+            for (size_t i = 0; i < ba->Size(); ++i)
+            {
+              if (ba->Test(i))
+                res->Set(offset+i);
+            }
+            offset += ba->Size();
+          }
+          return res;
+        } ,
+        py::arg("balist")
+    );
+
+
+  
+  typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
+  py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
+    (m, "BitArrayCF")
+    .def("__init__",
+         [](BitArrayCoefficientFunction *instance, shared_ptr<BitArray> ba)
+         {
+           new (instance) BitArrayCoefficientFunction (ba);
+         },
+         py::arg("bitarray")
+      );
+  
 }
 
 PYBIND11_PLUGIN(ngsxfem_utils_py)
