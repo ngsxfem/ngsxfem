@@ -107,30 +107,15 @@ namespace ngcomp
 
       if (ElementInRelevantBand(lset_vals_p1, 0.0, 0.0))
       {
-
-        ScalarFieldEvaluator * lset_eval_p
-          = ScalarFieldEvaluator::Create(D,*gf_lset_p1,*eltrans,lh);
-
-        auto cquad = new CompositeQuadratureRule<D>();
-
-        ELEMENT_TYPE et_time = ET_POINT;
-
-        auto xgeom = XLocalGeometryInformation::Create(eltype, et_time, *lset_eval_p,
-                                                       *cquad, lh,
-                                                       2*order, 0,
-                                                       0, 0);
-
-        xgeom->MakeQuadRule();
-        FlatXLocalGeometryInformation fxgeom(*xgeom,lh);
-        const FlatCompositeQuadratureRule<D> & fcompr(fxgeom.GetCompositeRule<D>());
-        // const FlatQuadratureRule<D> & fquad(fcompr.GetRule(NEG));
-        const FlatQuadratureRuleCoDim1<D> & fquad_if(fcompr.GetInterfaceRule());
-
+        const IntegrationRule * ir = CreateCutIntegrationRule(nullptr, gf_lset_p1, *eltrans,
+                                                              IF, 2*order, -1, lh, 0);
+        const IntegrationRule & fquad_if(*ir);
+        
         bool mark_this_el = false;
 
         for (int i = 0; i < fquad_if.Size(); ++i)
         {
-          IntegrationPoint ip(&fquad_if.points(i,0),0.0); // x_hathat
+          IntegrationPoint & ip(fquad_if[i]); // x_hathat
           MappedIntegrationPoint<D,D> mip(ip, *eltrans_curved); // x
 
           Vec<D> y = mx0.GetJacobianInverse() * (mip.GetPoint() - mx0.GetPoint()); //point such that level set is approximately that of x_hathat
@@ -160,22 +145,14 @@ namespace ngcomp
               mark_this_el = true;
             }
 
-          Mat<D,D> Finv = mip.GetJacobianInverse();
-          const double absdet = mip.GetMeasure();
-
-          Vec<D> nref = fquad_if.normals.Row(i);
-          Vec<D> normal = absdet * Trans(Finv) * nref;
-          double len = L2Norm(normal);
-          normal /= len;
-
-          const double weight = fquad_if.weights(i) * len;
+          const double weight = mip.GetWeight();
 
 // #pragma omp atomic
           lset_error_l1 += weight * abs(lset_val);
           // surface += weight;
         }
         // pointsout << endl;
-        delete cquad;
+        // delete cquad;
 
         if (mark_this_el)
         {

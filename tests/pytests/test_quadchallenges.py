@@ -67,3 +67,26 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, qua
     
     assert error < 5e-15*(order+1)*(order+1)
     
+
+@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("order", [2,4,6])
+@pytest.mark.parametrize("domain", [NEG, POS, IF])
+
+def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
+    mesh = MakeUniform3DGrid(quads = True, N=1, P1=(0,0,0),P2=(1,1,1))
+    lset_approx = GridFunction(H1(mesh,order=1))
+    for i,v in enumerate([-4,4,-1,-1,2,-3,5,-1]):
+        lset_approx.vec[i] = v
+    
+    f = CoefficientFunction(1)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order, heapsize=10000000)
+    print("Integral: ", integral)
+
+    if domain == IF:
+        assert integral < 10
+    elif domain == NEG:
+        assert abs(integral - 0.5167820912197415) < 3.4e-3
+    else:
+        assert abs(integral - 0.4825797907263282) < 3.4e-3

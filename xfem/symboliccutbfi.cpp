@@ -343,10 +343,9 @@ namespace ngfem
     const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
     const FiniteElement & fel2, int LocalFacetNr2,
     const ElementTransformation & trafo2, FlatArray<int> & ElVertices2,
-    FlatMatrix<double> & elmat,
+    FlatMatrix<double> elmat,
     LocalHeap & lh) const
   {
-    // cout << "calc boundary facet matrix (DG)" << endl;
     elmat = 0.0;
 
     if (LocalFacetNr2==-1) throw Exception ("SymbolicFacetBFI: LocalFacetNr2==-1");
@@ -412,7 +411,7 @@ namespace ngfem
         {
           HeapReset hr(lh);
           FlatMatrix<> val(mir1.Size(), 1,lh);
-          
+
           auto proxy1 = trial_proxies[k1];
           auto proxy2 = test_proxies[l1];
 

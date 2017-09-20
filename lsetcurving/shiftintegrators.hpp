@@ -13,6 +13,7 @@ namespace ngfem
   {
     shared_ptr<CoefficientFunction> coef_lset_p1;
     shared_ptr<CoefficientFunction> coef_lset_ho;
+    shared_ptr<CoefficientFunction> coef_blending = nullptr;
     double max_deform = -1;
     double lower_lset_bound = 0.0;
     double upper_lset_bound = 0.0;

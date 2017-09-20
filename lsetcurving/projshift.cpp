@@ -8,6 +8,7 @@ namespace ngcomp
   void ProjectShift (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
                      shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn,
                      shared_ptr<BitArray> ba,
+                     shared_ptr<CoefficientFunction> blending,
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & clh)
   {
@@ -32,6 +33,7 @@ namespace ngcomp
     shift_array.Append(make_shared<ConstantCoefficientFunction>(lower_lset_bound));
     shift_array.Append(make_shared<ConstantCoefficientFunction>(upper_lset_bound));
     shift_array.Append(qn);
+    shift_array.Append(blending);
     
     shared_ptr<ShiftIntegrator<2>> shift2D;
     shared_ptr<ShiftIntegrator<3>> shift3D;
@@ -58,9 +60,6 @@ namespace ngcomp
          FlatVector<> vals(p1_dofs.Size(),lh);
          lset_p1->GetVector().GetIndirect(p1_dofs,vals);
          const ElementTransformation & eltrans = el.GetTrafo();
-         /*
-         if (ba->Test(elnr))
-             cout << "projshift: Detected marked element with number " << elnr <<  endl; */
       
          if ( (ba) && ( !(ba->Test(elnr)) ))
            return;

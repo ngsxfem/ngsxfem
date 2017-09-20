@@ -204,9 +204,9 @@ k_s = 2 #space
 k_t = 2 # time
 
 # FE-Spaces
-V=H1(mesh, order = k_s, dirichlet=[],flags = {"dgjumps":True})
+V=H1(mesh, order = k_s, dirichlet=[],dgjumps = True)
 u0 = GridFunction(V)
-W = FESpace([V for l in range(k_t+1)],flags = {"dgjumps":True}) # added DG Jumps for Ghost-penalty terms
+W = FESpace([V for l in range(k_t+1)],dgjumps = True) # added DG Jumps for Ghost-penalty terms
 gfu = GridFunction(W)
 Draw(u0,mesh,"unew")
 

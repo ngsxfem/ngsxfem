@@ -28,6 +28,11 @@ namespace ngfem
       // std::cout << " ShiftIntegrator called with more than 5 arguments " << std::endl;
       qn = coeffs[5];
     }
+    if (coeffs.Size() > 6)
+    {
+      // std::cout << " ShiftIntegrator called with more than 5 arguments " << std::endl;
+      coef_blending = coeffs[6];
+    }
   }
   
   template <int D>
@@ -78,7 +83,22 @@ namespace ngfem
       for (int d = 0; d < D; ++d)
         orig_point(d) = ir[l](d);
 
-      double goal_val = coef_lset_p1->Evaluate(mip);
+      const double lsetp1val = coef_lset_p1->Evaluate(mip);
+                                                                                 
+      // const double h = D == 2 ? sqrt(2) * sqrt(mip.GetMeasure()) : sqrt(3) * cbrt(mip.GetMeasure());
+      // double alpha = abs(lsetp1val / h) * abs(lsetp1val / h);
+
+      double alpha = 0.0; // blending factor, 0.0 means: find phi_lin, 1.0 means: find phi (i.e. goal value = start value)
+      if (coef_blending)
+        alpha = coef_blending->Evaluate(mip);
+
+      if (alpha > 1)
+        throw Exception("alpha should not be larger than 1");
+      
+      double goal_val = (1.0-alpha) * lsetp1val + alpha * lseteval->Evaluate(mip.IP(),lh);
+
+      // double goal_val = coef_lset_p1->Evaluate(mip);
+      
       Vec<D> final_point;
       SearchCorrespondingPoint<D>(*lseteval,
                                   orig_point, goal_val, 

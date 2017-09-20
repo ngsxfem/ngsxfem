@@ -28,8 +28,8 @@ You require Netgen/NGSolve to run and build the xfem module (=ngsxfem=).
 You can either install it before hand (default option) 
 or let Netgen/NGSolve be installed as an external dependency. 
 #+BEGIN_SRC shell
-git clone https://github/ngsxfem/ngsxfem.git
-cd xfem
+git clone https://github.com/ngsxfem/ngsxfem.git
+cd ngsxfem
 mkdir build
 cd build
 #+END_SRC

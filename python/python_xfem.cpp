@@ -397,15 +397,25 @@ void ExportNgsx(py::module &m)
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   ;
 
-  m.def("ProjectShift", [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, py::object pba, double lower, double upper, double threshold, int heapsize)
+  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, py::object pba, PyCF blending,
+                             double lower, double upper, double threshold, int heapsize)
   {
     shared_ptr<BitArray> ba = nullptr;
     if (py::extract<PyBA> (pba).check())
       ba = py::extract<PyBA>(pba)();
     LocalHeap lh (heapsize, "ProjectShift-Heap");
-    ProjectShift(lset_ho, lset_p1, deform, qn, ba, lower, upper, threshold, lh);
+    ProjectShift(lset_ho, lset_p1, deform, qn, ba, blending, lower, upper, threshold, lh);
   } ,
-        py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL, py::arg("ba")=py::none(),py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("threshold")=1.0,py::arg("heapsize")=1000000)
+        py::arg("lset_ho")=NULL,
+        py::arg("lset_p1")=NULL,
+        py::arg("deform")=NULL,
+        py::arg("qn")=NULL,
+        py::arg("ba")=py::none(),
+        py::arg("blending")=NULL,
+        py::arg("lower")=0.0,
+        py::arg("upper")=0.0,
+        py::arg("threshold")=1.0,
+        py::arg("heapsize")=1000000)
   ;
 
 // ProjectShift
@@ -450,8 +460,6 @@ void ExportNgsx(py::module &m)
     if (defon_region.check())
       vb = VorB(defon_region());
 
-    if (vb == BND)
-      throw Exception("Symbolic cuts not yet (tested) for boundaries..");
     // check for DG terms
     bool has_other = false;
     cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
@@ -508,6 +516,7 @@ void ExportNgsx(py::module &m)
 
   m.def("SymbolicFacetPatchBFI", [](PyCF cf,
                                     int order,
+                                    //int time_order,
                                     int time_order,
                                     bool skeleton,
                                     py::object definedonelem)
@@ -530,12 +539,14 @@ void ExportNgsx(py::module &m)
     {
       auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator2> (cf, order);
       bfime->SetTimeIntegrationOrder(time_order);
+      //bfime->SetTimeIntegrationOrder(time_order);
       bfi = bfime;
     }
     else
     {
       // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
       auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf, order);
+      //bfime->SetTimeIntegrationOrder(time_order);
       bfime->SetTimeIntegrationOrder(time_order);
       bfi = bfime;
     }
@@ -547,6 +558,7 @@ void ExportNgsx(py::module &m)
   },
         py::arg("form"),
         py::arg("force_intorder")=-1,
+        //py::arg("time_order")=-1,
         py::arg("time_order")=-1,
         py::arg("skeleton") = true,
         py::arg("definedonelements")=DummyArgument()

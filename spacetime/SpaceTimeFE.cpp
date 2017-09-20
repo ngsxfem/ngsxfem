@@ -1,9 +1,7 @@
-// SpaceTimeFE based on:
-
 /*********************************************************************/
-/* File:   myElement.cpp                                             */
-/* Author: Joachim Schoeberl                                         */
-/* Date:   26. Apr. 2009                                             */
+/* File:   SpaceTimeFE.cpp (based on mylittlengsolve)                */
+/* Author: Janosch Preuss                                            */
+/* Date:   June 2017                                                 */
 /*********************************************************************/
 
 #include <fem.hpp>
