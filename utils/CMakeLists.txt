@@ -3,8 +3,6 @@ set_target_properties(ngsxfem_utils_py PROPERTIES INSTALL_RPATH "${NETGEN_RPATH_
 install(TARGETS ngsxfem_utils_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem)
 target_link_libraries(ngsxfem_utils_py ngsxfem_utils)
 
-#ngsxfem_lsetcurving ngsxfem_utils ngsxfem_cutint ngsxfem_xfem)
-
 
 
 add_library(ngsxfem_utils ${NGS_LIB_TYPE}

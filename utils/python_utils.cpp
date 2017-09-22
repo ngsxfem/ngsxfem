@@ -12,6 +12,8 @@ using namespace ngcomp;
 
 void ExportNgsx_utils(py::module &m)
 {
+
+
   typedef shared_ptr<BitArray> PyBA;
 
   m.def("RestrictedBilinearForm",
@@ -45,7 +47,7 @@ void ExportNgsx_utils(py::module &m)
         py::arg("facet_restriction") = DummyArgument(),
         py::arg("check_unused") = true,
         py::arg("flags") = py::dict()
-        );
+    );
 
   m.def("CompoundBitArray",
         [] (py::list balist)
