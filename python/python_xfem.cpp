@@ -872,7 +872,7 @@ void ExportNgsx(py::module &m)
   {
     self->SetTime(t);
   },
-       "Set the time variable")
+       "Set the time variable\n Also sets override time")
   .def("SetOverrideTime", [](PySTFES self, bool override)
   {
     self->SetOverrideTime(override);
@@ -1063,7 +1063,7 @@ void ExportNgsx(py::module &m)
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
      return st_FE->CreateRestrictedGF(st_GF,time);
-   });
+   }, "Create spatial-only Gridfunction corresponding to a fixed time.");
 }
 
 PYBIND11_PLUGIN(ngsxfem_py)
