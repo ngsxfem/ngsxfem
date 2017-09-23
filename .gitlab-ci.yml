@@ -13,6 +13,7 @@ build:
       - build/
   script:
     - mkdir -p build
+    - mkdir -p /home/gitlab-runner/ngsxfem-reports
     - mkdir -p /home/gitlab-runner/inst
     - mkdir -p /home/gitlab-runner/inst/netgen
     - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
