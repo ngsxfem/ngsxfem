@@ -501,10 +501,8 @@ void ExportNgsx_xfem(py::module &m)
   
 }
 
-PYBIND11_PLUGIN(ngsxfem_xfem_py)
+PYBIND11_MODULE(ngsxfem_xfem_py,m)
 {
   cout << "importing ngsxfem-xfem lib" << endl;
-  py::module m("ngsxfem-xfem", "pybind ngsxfem-xfem");
   ExportNgsx_xfem(m);
-  return m.ptr();
 }

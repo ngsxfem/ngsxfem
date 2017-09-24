@@ -152,10 +152,8 @@ void ExportNgsx_lsetcurving(py::module &m)
   
 }
 
-PYBIND11_PLUGIN(ngsxfem_lsetcurving_py)
+PYBIND11_MODULE(ngsxfem_lsetcurving_py,m)
 {
   cout << "importing ngsxfem-lsetcurving lib" << endl;
-  py::module m("ngsxfem-lsetcurving", "pybind ngsxfem-lsetcurving");
   ExportNgsx_lsetcurving(m);
-  return m.ptr();
 }

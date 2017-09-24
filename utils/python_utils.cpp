@@ -91,10 +91,8 @@ void ExportNgsx_utils(py::module &m)
   
 }
 
-PYBIND11_PLUGIN(ngsxfem_utils_py)
+PYBIND11_MODULE(ngsxfem_utils_py,m)
 {
   cout << "importing ngsxfem-utils lib" << endl;
-  py::module m("ngsxfem-utils", "pybind ngsxfem-utils");
   ExportNgsx_utils(m);
-  return m.ptr();
 }

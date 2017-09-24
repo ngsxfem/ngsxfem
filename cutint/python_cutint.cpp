@@ -74,10 +74,8 @@ void ExportNgsx_cutint(py::module &m)
 
 }
 
-PYBIND11_PLUGIN(ngsxfem_cutint_py)
+PYBIND11_MODULE(ngsxfem_cutint_py,m)
 {
   cout << "importing ngsxfem-cutint lib" << endl;
-  py::module m("ngsxfem-cutint", "pybind ngsxfem-cutint");
   ExportNgsx_cutint(m);
-  return m.ptr();
 }
