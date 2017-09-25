@@ -126,29 +126,89 @@ void ExportNgsx_lsetcurving(py::module &m)
           LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
           RefineAtLevelSet(lset_p1, lower, upper, lh);
         } ,
-        py::arg("lset_p1")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
-    ;
+        py::arg("gf")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000,
+        docu_string(R"raw_string(
+Mark mesh for refinement on all elements where the 
+piecewise linear level set function lset_p1 has 
+values in the interval [lower,upper] (default [0,0]).
 
+Parameters
 
+gf : ngsolve.GridFunction
+  Scalar piecewise (multi-)linear Gridfunction
 
-  m.def("RefineAtLevelSet",  [] (PyGF gf, double lower_lset_bound, double upper_lset_bound, int heapsize)
+lower : float
+  smallest level set value of interest
+
+upper : float
+  largest level set value of interest
+
+heapsize : int
+  heapsize of local computations.
+)raw_string"));
+
+  m.def("shifted_eval", [](PyGF self,
+                           py::object back_in,
+                           py::object forth_in)
+        -> PyCF
         {
-          LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
-          RefineAtLevelSet(gf,lower_lset_bound,upper_lset_bound,lh);
-        } ,
-        py::arg("gf"),py::arg("lower_lset_bound")=0.0,py::arg("upper_lset_bound")=0.0,py::arg("heapsize")=10000000)
-    ;
+          PyGF back = nullptr;
+          if (py::extract<PyGF> (back_in).check())
+            back = py::extract<PyGF>(back_in)();
+          PyGF forth = nullptr;
+          if (py::extract<PyGF> (forth_in).check())
+            forth = py::extract<PyGF>(forth_in)();
 
-  m.def("shifted_eval", [](PyGF self, PyGF back,PyGF forth ) -> PyCF
-        {
-
-          auto diffop = make_shared<DiffOpShiftedEval> (back,forth);
-
+          shared_ptr<DifferentialOperator> diffop  = nullptr;
+          
+          if (self->GetFESpace()->GetDimension() == 1)
+            diffop = make_shared<DiffOpShiftedEval<1>> (back,forth);
+          else if (self->GetFESpace()->GetDimension() == 2)
+            diffop = make_shared<DiffOpShiftedEval<2>> (back,forth);
+          else
+            throw Exception("shifted_eval only for dim <= 2 so far");
 
           return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop));
-        });
+        },
+        py::arg("gf"),
+        py::arg("back") = DummyArgument(),
+        py::arg("forth") = DummyArgument(),
+        docu_string(R"raw_string(
+Returns a CoefficientFunction that evaluates Gridfunction 
+gf at a shifted location, s.t. the original function to 
+gf, gf: x -> f(x) is changed to cf: x -> f(s(x)) where 
+z = s(x) is the shifted location that is computed 
+( pointwise ) from:
 
+     Psi_back(z) = Psi_forth(x),
+< = >            z = Inv(Psi_back)( Psi_forth(x) )
+< = >            s = Inv(Psi_back) o Psi_forth(x)
 
+To compute z = s(x) a fixed point iteration is used.
+
+ATTENTION: 
+==========
+
+If s(x) leaves the the element that the integration point 
+x is defined on, it will *NOT* change the element but 
+result in an integration point that lies outside of the 
+physical element.
+
+Parameters
+
+back : ngsolve.GridFunction
+  transformation describing Psi_back as I + d_back
+  where d_back is the deformation (can be None).
+
+forth : ngsolve.GridFunction
+  transformation describing Psi_forth as I + d_forth
+  where d_forth is the deformation (can be None).
+
+ASSUMPTIONS: 
+============
+- 2D mesh
+- Gridfunction of dim=1 or dim=2 (ScalarFE behind it)
+)raw_string"));
   
 }
 

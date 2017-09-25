@@ -9,7 +9,7 @@ using namespace ngcomp;
 namespace ngfem
 {
 
-
+  template <int D>
   class DiffOpShiftedEval : public DifferentialOperator
   {
 
@@ -19,10 +19,10 @@ namespace ngfem
     shared_ptr<GridFunction> back;
     shared_ptr<GridFunction> forth;
 
-    enum { DIM = 1 };          // just one copy of the spaces
+    enum { DIM = D };          // D copies of the spaces
     enum { DIM_SPACE = 2 };    // D-dim space
     enum { DIM_ELEMENT = 2 };  // D-dim elements (in contrast to boundary elements)
-    enum { DIM_DMAT = 1 };     // D-matrix
+    enum { DIM_DMAT = D };     // D-matrix
     enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
 
     DiffOpShiftedEval(shared_ptr<GridFunction> aback,shared_ptr<GridFunction> aforth)
