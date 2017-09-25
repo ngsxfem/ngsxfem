@@ -70,7 +70,50 @@ void ExportNgsx_cutint(py::module &m)
         py::arg("order")=5,
         py::arg("domain_type")=IF,
         py::arg("subdivlvl")=0,
-        py::arg("heapsize")=1000000);
+        py::arg("heapsize")=1000000,
+        docu_string(R"raw_string(
+Integrate on a level set domains. The accuracy of
+the integration is 'order' w.r.t. a (multi-)linear
+approximation of the level set function. At first,
+this implies that the accuracy will, in general,
+only be second order. However, if the isoparametric
+approach is used (cf. lsetcurving functionality) 
+this will be improved.
+
+Parameters
+
+lset : ngsolve.CoefficientFunction
+  CoefficientFunction that describes the geometry. 
+  In the best case lset is a GridFunction of an 
+  FESpace with scalar continuous piecewise (multi-)
+  linear basis functions.
+
+mesh : 
+  Mesh to integrate on (on some part) 
+
+cf : ngsolve.CoefficientFunction
+  the integrand
+
+order : int
+  integration order.
+
+domain_type : {NEG,POS,IF} (ENUM)
+  Integration on the domain where either:
+  * the level set function is negative (NEG)
+  * the level set function is positive (POS)
+  * the level set function is zero     (IF )
+
+subdivlvl : int
+  On simplex meshes a subtriangulation is created
+  on which the level set function lset is 
+  interpolated piecewise linearly. Based on this
+  approximation, the integration rule is 
+  constructed. Note: this argument only works on 
+  simplices.
+
+heapsize : int
+  heapsize for local computations.
+)raw_string"));
 
 }
 

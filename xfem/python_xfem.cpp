@@ -40,7 +40,14 @@ void ExportNgsx_xfem(py::module &m)
     }  );
 
   py::class_<CutInformation, shared_ptr<CutInformation>>
-    (m, "CutInfo")
+    (m, "CutInfo",
+R"raw(A CutInfo stores and organizes cut informations in the mesh
+with respect to some level set function. Elements (BND / VOL) and 
+facets can be either cut elements or in the positive (POS) or 
+negative (NEG) part of the domain. A CutInfo provides information
+about the cut configuration in terms of BitArrays and Vectors 
+of Ratios.
+)raw")
     .def("__init__",  [] (CutInformation *instance,
                           shared_ptr<MeshAccess> ma,
                           py::object lset,
@@ -66,12 +73,14 @@ void ExportNgsx_xfem(py::module &m)
            self.Update(lset,lh);
          },
          py::arg("levelset"),
-         py::arg("heapsize") = 1000000
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Updates a CutInfo based on a level set function.)raw_string")
       )
     .def("Mesh", [](CutInformation & self)
          {
            return self.GetMesh();
-         }
+         },docu_string(R"raw_string(
+Returns mesh of CutInfo)raw_string")
       )
     .def("GetElementsOfType", [](CutInformation & self,
                                  DOMAIN_TYPE dt,
@@ -80,21 +89,27 @@ void ExportNgsx_xfem(py::module &m)
            return self.GetElementsOfDomainType(dt,vb);
          },
          py::arg("domain_type") = IF,
-         py::arg("VOL_or_BND") = VOL
+         py::arg("VOL_or_BND") = VOL,docu_string(R"raw_string(
+Returns BitArray that is true for every element that has the 
+corresponding type (NEG/POS/IF))raw_string")
       )
     .def("GetFacetsOfType", [](CutInformation & self,
                                DOMAIN_TYPE dt)
          {
            return self.GetFacetsOfDomainType(dt);
          },
-         py::arg("domain_type") = IF)
+         py::arg("domain_type") = IF,docu_string(R"raw_string(
+Returns BitArray that is true for every facet that has the 
+corresponding type (NEG/POS/IF))raw_string"))
 
     .def("GetCutRatios", [](CutInformation & self,
                             VorB vb)
          {
            return self.GetCutRatios(vb);
          },
-         py::arg("VOL_or_BND") = VOL)
+         py::arg("VOL_or_BND") = VOL,docu_string(R"raw_string(
+Returns Vector of the ratios between the measure of the NEG
+domain on a (boundary) element and the full (boundary) element)raw_string"))
     ;
 
 

@@ -1,3 +1,13 @@
+"""
+(ngs)xfem
+=========
+
+A module for unfitted discretizations in NGSolve
+
+Modules:
+xfem.lsetcuving ... isoparametric unfitted FEM
+"""
+
 from ngsolve.comp import *
 from ngsolve.fem import *
 from ngsolve.utils import L2
