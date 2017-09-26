@@ -46,8 +46,51 @@ void ExportNgsx_utils(py::module &m)
         py::arg("element_restriction") = DummyArgument(),
         py::arg("facet_restriction") = DummyArgument(),
         py::arg("check_unused") = true,
-        py::arg("flags") = py::dict()
-    );
+        py::arg("flags") = py::dict(),
+        docu_string(R"raw_string(
+A restricted bilinear form is a (so far real-valued)
+bilinear form with a reduced MatrixGraph compared
+to the usual BilinearForm. BitArray(s) define on which
+elements/facets entries will be created.
+
+Use cases:
+
+ * ghost penalty type stabilization:
+    Facet-stabilization that are introduced only act
+    on a few facets in the mesh. By providing the
+    information on the corresponding facets, these
+    additional couplings will only be introduced where
+    necessary.
+
+ * fictitious domain methods:
+    When PDE problems are only solved on a part of a
+    domain while a finite element space is used that
+    is still defined on the whole domain, a BitArray
+    can be used to mark the 'active' part of the mesh.
+
+Parameters
+
+space : ngsolve.FESpace
+  finite element space on which the bilinear form is
+  defined.
+
+name : string
+  name of the bilinear form
+
+element_restriction : ngsolve.BitArray
+  BitArray defining the 'active mesh' element-wise
+
+facet_restriction : ngsolve.BitArray
+  BitArray defining the 'active facets'. This is only
+  relevant if FESpace has DG-terms (dgjumps=True)
+
+check_unused : boolean
+  Check if some degrees of freedoms are not considered
+  during assembly
+
+flags : ngsolve.Flags
+  additional bilinear form flags
+)raw_string"));
 
   m.def("CompoundBitArray",
         [] (py::list balist)
@@ -73,14 +116,24 @@ void ExportNgsx_utils(py::module &m)
           }
           return res;
         } ,
-        py::arg("balist")
+        py::arg("balist"),
+        docu_string(R"raw_string(
+Takes a list of BitArrays and merges them to one larger
+BitArray. Can be useful for CompoundFESpaces.)raw_string")
     );
 
 
-  
+
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
-    (m, "BitArrayCF")
+    (m, "BitArrayCF",
+        docu_string(R"raw_string(
+CoefficientFunction that evaluates a BitArray. On elements
+with an index i where the BitArray evaluates to true the
+CoefficientFunction will evaluate as 1, otherwise as 0.
+
+Similar functionality (also for facets) can be obtained
+with IndicatorCF.)raw_string"))
     .def("__init__",
          [](BitArrayCoefficientFunction *instance, shared_ptr<BitArray> ba)
          {
@@ -88,7 +141,7 @@ void ExportNgsx_utils(py::module &m)
          },
          py::arg("bitarray")
       );
-  
+
 }
 
 PYBIND11_MODULE(ngsxfem_utils_py,m)
