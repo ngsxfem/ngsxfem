@@ -36,6 +36,8 @@ namespace xintegration
       if (time_intorder >= 0) {
           FESpace* raw_FE = (gflset->GetFESpace()).get();
           SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+          if (!st_FE)
+            throw Exception("not a space time FE");
           ScalarFiniteElement<1>* fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
           return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, lh);
       } else {

@@ -35,7 +35,7 @@ levelset = IfPos(r-rc, r-rc-rr,rc-r-rr)
 coeff_f = CoefficientFunction( -20*( (r1+r2)/sqrt(x*x+y*y) -4) ) 
 
 # for monitoring the error
-exact = CoefficientFunction(20*(r2-sqrt(x*x+y*y))*(sqrt(x*x+y*y)-r1))
+exact = CoefficientFunction(20*(r2-sqrt(x*x+y*y))*(sqrt(x*x+y*y)-r1)).Compile()
 
 Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)    
 gfu = GridFunction(Vh)

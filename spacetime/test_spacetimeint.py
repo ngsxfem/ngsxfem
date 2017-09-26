@@ -20,6 +20,7 @@ tfe = ScalarTimeFE(k_t)
 st_fes = SpaceTimeFESpace(fes1,tfe)
 st_fes.SetTime(0.5)
 
+raise Exception("Chirstoph this test is old(?) - lsetp1 is not a space time function")
 
 levelset = (sqrt(x*x+y*y) - 1000.5)
 lsetp1 = GridFunction(H1(mesh,order=1))

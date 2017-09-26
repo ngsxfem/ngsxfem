@@ -1,3 +1,10 @@
+add_ngsolve_python_module(ngsxfem_utils_py python_utils.cpp)
+set_target_properties(ngsxfem_utils_py PROPERTIES INSTALL_RPATH "${NETGEN_RPATH_TOKEN}/../${NETGEN_PYTHON_RPATH}")
+install(TARGETS ngsxfem_utils_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem)
+target_link_libraries(ngsxfem_utils_py ngsxfem_utils)
+
+
+
 add_library(ngsxfem_utils ${NGS_LIB_TYPE}
   restrictedblf.cpp
   bitarraycf.cpp
