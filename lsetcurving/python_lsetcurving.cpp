@@ -31,8 +31,7 @@ void ExportNgsx_lsetcurving(py::module &m)
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
         py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
-Takes the vertex values of a GridFunction (also 
-possible with a CoefficentFunction) and puts them
+Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
 into a piecewise (multi-) linear function.
 
 Parameters
@@ -44,12 +43,9 @@ gf_p1 : ngsolve.GridFunction
   Function to interpolate to (should be P1)
 
 eps_perturbation : float
-  If the absolute value if the function is
-  smaller than eps_perturbation, it will be 
-  set to eps_perturbation. Thereby, exact 
-  and close-to zeros at vertices are avoided
-  (Useful to reduce cut configurations for
-  level set based methods). 
+  If the absolute value if the function is smaller than eps_perturbation, it will be set to
+  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
+  configurations for level set based methods).
 
 heapsize : int
   heapsize of local computations.
@@ -66,8 +62,7 @@ heapsize : int
         py::arg("coef"),py::arg("gf"),
         py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
-Takes the vertex values of a CoefficentFunction) 
-and puts them into a piecewise (multi-) linear 
+Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.
 
 Parameters
@@ -79,12 +74,9 @@ gf_p1 : ngsolve.GridFunction
   Function to interpolate to (should be P1)
 
 eps_perturbation : float
-  If the absolute value if the function is
-  smaller than eps_perturbation, it will be 
-  set to eps_perturbation. Thereby, exact 
-  and close-to zeros at vertices are avoided
-  (Useful to reduce cut configurations for
-  level set based methods). 
+  If the absolute value if the function is smaller than eps_perturbation, it will be set to
+  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
+  configurations for level set based methods).
 
 heapsize : int
   heapsize of local computations.
@@ -128,8 +120,7 @@ heapsize : int
         } ,
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
-Compute approximated distance between of the
-isoparametrically obtained geometry.
+Compute approximated distance between of the isoparametrically obtained geometry.
 
   G_h = { phi_lin o Psi^{-1} }
 
@@ -147,8 +138,7 @@ where
   phi_lin = lset_p1
   Psi = Id + deform
 
-The approximation is obtained as the maximum
-that is only computed on the integration points.
+The approximation is obtained as the maximum that is only computed on the integration points.
 
 Parameters
 
@@ -178,8 +168,7 @@ heapsize : int
         } ,
         py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("stats")=NULL,py::arg("heapsize")=1000000,py::arg("refine_threshold")=-1.0,py::arg("absolute")=false,
         docu_string(R"raw_string(
-This is an internal function (and should be removed after
-some refactoring at some point)!
+This is an internal function (and should be removed after some refactoring at some point)!
 )raw_string")
     )
     ;
@@ -211,12 +200,9 @@ some refactoring at some point)!
         py::arg("threshold")=1.0,
         py::arg("heapsize")=1000000),
         docu_string(R"raw_string(
-Computes the shift between points that are on 
-the (P1 ) approximated level set function and its higher
-order accurate version. This is only applied on elements 
-where a level value inside (lower,upper) exists.
-The result is put into deform (D) which is computed 
-pointwise as
+Computes the shift between points that are on the (P1 ) approximated level set function and its
+higher order accurate version. This is only applied on elements where a level value inside
+(lower,upper) exists. The result is put into deform (D) which is computed pointwise as
 
 1)phi_lin( Psi(x) ) = phi_h(x)
 
@@ -246,38 +232,30 @@ lset_p1 : ngsolve.GridFunction
   Scalar piecewise (multi-)linear Gridfunction
 
 deform : ngsolve.GridFunction
-  vector valued GridFunction to store the resulting
-  deformation
+  vector valued GridFunction to store the resulting deformation
 
 blending : ngsolve.CoefficientFunction
-  Option to apply the mesh deformation more localized on cut elements.
-  Setting blending function to 0 (CoefficientFunction(0.0))
-  corresponds to applying the mapping on all points on cut elements completely
-  Using a blending function as a CoefficientFunction allows for a transition 
-  between the full application of the mapping (value 0) and no application of 
-  the mapping (value 1).
+  Option to apply the mesh deformation more localized on cut elements. Setting blending function to
+  0 (CoefficientFunction(0.0)) corresponds to applying the mapping on all points on cut elements
+  completely. Using a blending function as a CoefficientFunction allows for a transition between the
+  full application of the mapping (value 0) and no application of the mapping (value 1).
 
-  This argument can be left away. Otherwise the mapping
-  1) is changed to
+  This argument can be left away. Otherwise the mapping 1) is changed to
 
 2)phi_lin(Psi(x))=phi_h(x)+b(x)·(phi_lin-phi_h)(x) 
 
-  with a blending function b(x). Note that b(x) should 
-  be 0 where phi_lin(x) = 0
+  with a blending function b(x). Note that b(x) should be 0 where phi_lin(x) = 0
 
 lower: float
-  smallest relevant level set value to define the 'cut'
-  elements where the mapping should be applied
+  smallest relevant level set value to define the 'cut' elements where the mapping should be applied
 
 upper: float
-  highest relevant level set value to define the 'cut'
-  elements where the mapping should be applied
+  highest relevant level set value to define the 'cut' elements where the mapping should be applied
 
 threshold: float
   maximum (pointwise) value for d(x)/h in the mapping
     Psi(x) = x + d(x) qn(x)
-  This might be necessary if the geometry is only 
-  coarsely approximated to avoid irregular meshes
+  This might be necessary if the geometry is only coarsely approximated to avoid irregular meshes
   after a corresponding mesh deformation.
 
 heapsize : int
@@ -295,8 +273,7 @@ heapsize : int
         } ,
         py::arg("gf")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
-Mark mesh for refinement on all elements where the 
-piecewise linear level set function lset_p1 has 
+Mark mesh for refinement on all elements where the piecewise linear level set function lset_p1 has
 values in the interval [lower,upper] (default [0,0]).
 
 Parameters
@@ -341,11 +318,9 @@ heapsize : int
         py::arg("back") = DummyArgument(),
         py::arg("forth") = DummyArgument(),
         docu_string(R"raw_string(
-Returns a CoefficientFunction that evaluates Gridfunction 
-gf at a shifted location, s.t. the original function to 
-gf, gf: x -> f(x) is changed to cf: x -> f(s(x)) where 
-z = s(x) is the shifted location that is computed 
-( pointwise ) from:
+Returns a CoefficientFunction that evaluates Gridfunction gf at a shifted location, s.t. the
+original function to gf, gf: x -> f(x) is changed to cf: x -> f(s(x)) where z = s(x) is the shifted
+location that is computed ( pointwise ) from:
 
      Psi_back(z) = Psi_forth(x),
 < = >            z = Inv(Psi_back)( Psi_forth(x) )
@@ -356,20 +331,16 @@ To compute z = s(x) a fixed point iteration is used.
 ATTENTION: 
 ==========
 
-If s(x) leaves the the element that the integration point 
-x is defined on, it will *NOT* change the element but 
-result in an integration point that lies outside of the 
-physical element.
+If s(x) leaves the the element that the integration point x is defined on, it will *NOT* change the
+element but result in an integration point that lies outside of the physical element.
 
 Parameters
 
 back : ngsolve.GridFunction
-  transformation describing Psi_back as I + d_back
-  where d_back is the deformation (can be None).
+  transformation describing Psi_back as I + d_back where d_back is the deformation (can be None).
 
 forth : ngsolve.GridFunction
-  transformation describing Psi_forth as I + d_forth
-  where d_forth is the deformation (can be None).
+  transformation describing Psi_forth as I + d_forth where d_forth is the deformation (can be None).
 
 ASSUMPTIONS: 
 ============

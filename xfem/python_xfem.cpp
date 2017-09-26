@@ -31,22 +31,28 @@ void ExportNgsx_xfem(py::module &m)
           ret->Update(lh);
           ret->FinalizeUpdate(lh);
           return ret;
-        });
+        },
+        docu_string(R"raw_string(
+This is a special finite elemetn space which is a 1D polynomial along the zero level of the linearly
+approximated level set function lset and constantly extended in normal directions to this.
+)raw_string"));
 
   typedef shared_ptr<XFESpace> PyXFES;
 
   m.def("XToNegPos",  [] (PyGF gfx, PyGF gfnegpos) {
       XFESpace::XToNegPos(gfx,gfnegpos);
-    }  );
+    }, docu_string(R"raw_string(
+Takes a GridFunction of an extended FESpace, i.e. a compound space of V and VX = XFESpace(V) and
+interpretes it as a function in the CompoundFESpace of V and V. Updates the values of the vector of
+the corresponding second GridFunction.
+)raw_string") );
 
   py::class_<CutInformation, shared_ptr<CutInformation>>
-    (m, "CutInfo",
-R"raw(A CutInfo stores and organizes cut informations in the mesh
-with respect to some level set function. Elements (BND / VOL) and 
-facets can be either cut elements or in the positive (POS) or 
-negative (NEG) part of the domain. A CutInfo provides information
-about the cut configuration in terms of BitArrays and Vectors 
-of Ratios.
+    (m, "CutInfo",R"raw(
+A CutInfo stores and organizes cut informations in the mesh with respect to a level set function. 
+Elements (BND / VOL) and facets can be either cut elements or in the positive (POS) or negative
+(NEG) part of the domain. A CutInfo provides information about the cut configuration in terms of
+BitArrays and Vectors of Ratios. (Internally also domain_types for different mesh nodes are stored.)
 )raw")
     .def("__init__",  [] (CutInformation *instance,
                           shared_ptr<MeshAccess> ma,
@@ -99,8 +105,8 @@ corresponding type (NEG/POS/IF))raw_string")
            return self.GetFacetsOfDomainType(dt);
          },
          py::arg("domain_type") = IF,docu_string(R"raw_string(
-Returns BitArray that is true for every facet that has the 
-corresponding type (NEG/POS/IF))raw_string"))
+Returns BitArray that is true for every facet that has the corresponding type (NEG/POS/IF)
+)raw_string"))
 
     .def("GetCutRatios", [](CutInformation & self,
                             VorB vb)
@@ -108,8 +114,9 @@ corresponding type (NEG/POS/IF))raw_string"))
            return self.GetCutRatios(vb);
          },
          py::arg("VOL_or_BND") = VOL,docu_string(R"raw_string(
-Returns Vector of the ratios between the measure of the NEG
-domain on a (boundary) element and the full (boundary) element)raw_string"))
+Returns Vector of the ratios between the measure of the NEG domain on a (boundary) element and the
+full (boundary) element
+)raw_string"))
     ;
 
 
@@ -136,7 +143,42 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         py::arg("bnd_val_b") = true,
         py::arg("use_and") = true,
         py::arg("b") = DummyArgument(),
-        py::arg("heapsize") = 1000000
+        py::arg("heapsize") = 1000000, docu_string(R"raw_string(
+Given a mesh and two BitArrays (if only one is provided these are set to be equal) facets will be
+marked (in terms of BitArrays) depending on the BitArray-values on the neighboring elements. The
+BitArrays are complemented with flags for potential boundary values for the BitArrays. The decision
+on every facet is now based on the values a and b (left and right) where a or b can also be obtained
+from the BitArray boundary values.
+The result is:
+  result =    (a(left) and b(right)) 
+           or (b(left) and a(right)) 
+or 
+  result =    (a(left) or b(right)) 
+           or (b(left) or a(right)) 
+
+Parameters:
+
+mesh : 
+  mesh
+
+a : ngsolve.BitArray
+  first BitArray 
+
+b : ngsolve.BitArray / None
+  second BitArray. If None, b=a
+
+bnd_val_a : boolean
+  BitArray-replacement for a if a(left) or a(right) is not valid (at the boundary)
+
+bnd_val_a : boolean
+  BitArray-replacement for b if b(left) or b(right) is not valid (at the boundary)
+
+use_and : boolean
+  use 'and'-relation to evaluate the result. Otherwise use 'or'-relation 
+
+heapsize : int
+  heapsize of local computations.
+)raw_string")
     );
 
   m.def("GetElementsWithNeighborFacets",
@@ -149,7 +191,23 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         } ,
         py::arg("mesh"),
         py::arg("a"),
-        py::arg("heapsize") = 1000000
+        py::arg("heapsize") = 1000000,
+        docu_string(R"raw_string(
+Given a BitArray marking some facets extract
+a BitArray of elements that are neighboring
+these facets
+
+Parameters:
+
+mesh : 
+  mesh
+
+a : ngsolve.BitArray
+  BitArray for marked facets
+
+heapsize : int
+  heapsize of local computations.
+)raw_string")
     );
 
   m.def("GetDofsOfElements",
@@ -162,7 +220,25 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         } ,
         py::arg("space"),
         py::arg("a"),
-        py::arg("heapsize") = 1000000
+        py::arg("heapsize") = 1000000,
+        docu_string(R"raw_string(
+Given a BitArray marking some elements in a
+mesh extract all unknowns that are supported
+on these elements as a BitArray.
+
+Parameters:
+
+space : ngsolve.FESpace
+  finite element space from which the 
+  corresponding dofs should be extracted
+
+a : ngsolve.BitArray
+  BitArray for marked elements
+
+heapsize : int
+  heapsize of local computations.
+)raw_string")
+
     );
 
 
@@ -211,12 +287,46 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         py::arg("cutinfo") = DummyArgument(),
         py::arg("lset") = DummyArgument(),
         py::arg("flags") = py::dict(),
-        py::arg("heapsize") = 1000000)
-    ;
+        py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Constructor for XFESpace [For documentation of XFESpace-class see help(CXFESpace)]:
+
+Extended finite element space. Takes a basis FESpace and creates an enrichment space based on cut
+information. The cut information is provided by a CutInfo object or - if a level set function is
+only provided - a CutInfo object is created. The enrichment doubles the unknowns on all cut elements
+and assigns to them a sign (NEG/POS). One of the differential operators neg(...) or pos(...)
+evaluates like the basis function of the origin space, the other one as zero for every basis
+function. Away from cut elements no basis function is supported.
+
+Parameters
+
+basefes : ngsolve.FESpace
+  basic FESpace to be extended
+
+cutinfo : xfem.CutInfo / None
+  Information on the cut configurations (cut elements, sign of vertices....)
+
+lset : ngsolve.CoefficientFunction / None
+  level set function to construct own CutInfo (if no CutInfo is provided)
+
+flags : Flags
+  additional FESpace-flags
+
+heapsize : int
+  heapsize of local computations.
+)raw_string"));
          
 
   py::class_<XFESpace, PyXFES, FESpace>
-    (m, "CXFESpace")
+    (m, "CXFESpace",docu_string(R"raw_string(
+XFESpace-class [For documentation of the XFESpace-constructor see help(XFESpace)]:
+
+Extended finite element space. Takes a basis FESpace and creates an enrichment space based on cut
+information.  The cut information is provided by a CutInfo object or - if a level set function is
+only provided - a CutInfo object is created. The enrichment doubles the unknowns on all cut elements
+and assigns to them a sign (NEG/POS). One of the differential operators neg(...) or pos(...)
+evaluates like the basis function of the origin space, the other one as zero for every basis
+function. Away from cut elements no basis function is supported.
+)raw_string"))
     .def("GetCutInfo", [](PyXFES self)
          {
            return self->GetCutInfo();
@@ -225,18 +335,37 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
     .def("BaseDofOfXDof", [](PyXFES self, int i)
          {
            return self->GetBaseDofOfXDof(i);
-         },
-         "get corresponding dof of base FESpace")
+         },docu_string(R"raw_string(
+To an unknown of the extended space, get the corresponding unknown of the base FESpace.
+
+Parameters
+
+i : int
+  degree of freedom 
+)raw_string"))
     .def("GetDomainOfDof", [](PyXFES self, int i)
          {
            return self->GetDomainOfDof(i);
-         },
-         "get domain_type of degree of freedom")
+         },docu_string(R"raw_string(
+Get Domain (NEG/POS) of a degree of freedom of the extended FESpace.
+
+Parameters
+
+i : int
+  degree of freedom 
+)raw_string"))
     .def("GetDomainNrs",   [] (PyXFES self, int elnr) {
         Array<DOMAIN_TYPE> domnums;
         self->GetDomainNrs( elnr, domnums );
         return domnums;
-      })
+      },docu_string(R"raw_string(
+Get Array of Domains (Array of NEG/POS) of degrees of freedom of the extended FESpace on one element.
+
+Parameters
+
+elnr : int
+  element number
+)raw_string"))
     ;
 
   typedef shared_ptr<BilinearFormIntegrator> PyBFI;
@@ -304,7 +433,9 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         py::arg("element_boundary")=false,
         py::arg("skeleton")=false,
         py::arg("definedon")=DummyArgument(),
-        py::arg("definedonelements")=DummyArgument()
+        py::arg("definedonelements")=DummyArgument(),
+        docu_string(R"raw_string(
+see documentation of SymbolicBFI (which is a wrapper))raw_string")
     );
 
   m.def("SymbolicFacetPatchBFI", [](PyCF cf,
@@ -350,7 +481,26 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         py::arg("force_intorder")=-1,
         //py::arg("time_order")=-1,
         py::arg("skeleton") = true,
-        py::arg("definedonelements")=DummyArgument()
+        py::arg("definedonelements")=DummyArgument(),
+        docu_string(R"raw_string(
+Integrator on facet patches. Two versions are possible:
+* Either (skeleton=False) an integration on the element patch consisting of two neighboring elements is applied, 
+* or (skeleton=True) the integration is applied on the facet. 
+
+Parameters
+
+form : ngsolve.CoefficientFunction
+  var form to integrate
+
+force_intorder : int
+  (only active in the facet patch case (skeleton=False)) use this integration order in the integration
+
+skeleton : boolean
+  decider on facet patch vs facet integration
+
+definedonelements : ngsolve.BitArray/None
+  array which decides on which facets the integrator should be applied
+)raw_string")
     );
 
   m.def("SymbolicCutLFI", [](PyCF lset,
@@ -402,7 +552,9 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         py::arg("element_boundary")=py::bool_(false),
         py::arg("skeleton")=py::bool_(false),
         py::arg("definedon")=DummyArgument(),
-        py::arg("definedonelements")=DummyArgument()
+        py::arg("definedonelements")=DummyArgument(),
+        docu_string(R"raw_string(
+see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
@@ -493,10 +645,31 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
         py::arg("order"),
         py::arg("comp") = -1,
         py::arg("dim_space") = 2,
-        py::arg("hdiv") = false
+        py::arg("hdiv") = false,
+        docu_string(R"raw_string(
+Normal derivative of higher order. This is evaluated via numerical differentiation which offers only
+limited accuracy (~ 1e-7).
+
+Parameters
+
+proxy : ngsolve.ProxyFunction
+  test / trialfunction to the the normal derivative of
+
+order : int
+  order of derivative (in normal direction)
+
+comp : int
+  component of proxy if test / trialfunction is a component of a compound or vector test / trialfunction
+
+dim_space : int
+  dimension of the space
+
+hdiv : boolean
+  assumes scalar FEs if false, otherwise assumes hdiv
+)raw_string")
     );
 
-  m.def("dn", [](PyGF self, int order) -> PyCF
+  m.def("dn", [](PyGF gf, int order) -> PyCF
         {
           shared_ptr<DifferentialOperator> diffopdudnk;
           switch (order)
@@ -511,8 +684,23 @@ domain on a (boundary) element and the full (boundary) element)raw_string"))
           case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
           default : throw Exception("no order higher than 8 implemented yet");
           }
-          return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdudnk));
-        });
+          return PyCF(make_shared<GridFunctionCoefficientFunction> (gf, diffopdudnk));
+        },
+        py::arg("gf"),
+        py::arg("order"),
+        docu_string(R"raw_string(
+Normal derivative of higher order for a GridFunction. This is evaluated via numerical
+differentiation which offers only limited accuracy (~ 1e-7).
+
+Parameters
+
+gf : ngsolve.GridFunction
+  (scalar) GridFunction to the the normal derivative of
+
+order : int
+  order of derivative (in normal direction)
+)raw_string")
+);
   
 }
 
