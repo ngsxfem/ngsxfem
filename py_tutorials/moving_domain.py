@@ -206,7 +206,7 @@ k_t = 2 # time
 # FE-Spaces
 V=H1(mesh, order = k_s, dirichlet=[],dgjumps = True)
 u0 = GridFunction(V)
-W = FESpace([V for l in range(k_t+1)],dgjumps = True) # added DG Jumps for Ghost-penalty terms
+W = FESpace([V for l in range(k_t+1)],flags = {"dgjumps" : True}) # added DG Jumps for Ghost-penalty terms
 gfu = GridFunction(W)
 Draw(u0,mesh,"unew")
 
@@ -279,7 +279,7 @@ class SlabDiscretization:
         # the actual linear system is assembled in the SolveProblem function below. 
         for t_i, omega_i in zip(self.points_time_ref, self.weights_time_ref):
                            
-            ai = BilinearForm(W,symmetric=False)
+            ai = BilinearForm(W,symmetric=False,check_unused=False)
             fi = LinearForm(W)
             
             marked_integrators_at_ti = {}
