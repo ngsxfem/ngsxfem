@@ -132,7 +132,7 @@ namespace xintegration
 
       bool HasTopologyChangeAlongXi();
       void Decompose();
-      vector<LevelsetCuttedQuadliteral> QuadliteralDecomposition; //TODO: What vector-Replacement of Ngs can I use here? ... Array requires empty constructor.
+      Array<unique_ptr<LevelsetCuttedQuadliteral>> QuadliteralDecomposition;
   };
 
   template<unsigned int D>

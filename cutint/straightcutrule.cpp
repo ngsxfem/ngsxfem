@@ -224,13 +224,11 @@ namespace xintegration
           if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
           if(q.D == 2){
               array<tuple<double, double>, 2> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(xi0,xi1)});
-              LevelsetCuttedQuadliteral qi(lset, dt, Quadliteral(bnd_vals));
-              QuadliteralDecomposition.push_back(qi);
+              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals)));
           }
           else if(q.D == 3){
               array<tuple<double, double>, 3> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(q.points[0][1], q.points[2][1]), make_tuple(xi0,xi1)});
-              LevelsetCuttedQuadliteral qi(lset, dt, Quadliteral(bnd_vals));
-              QuadliteralDecomposition.push_back(qi);
+              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals)));
           }
       }
   }
@@ -378,10 +376,10 @@ namespace xintegration
       if(dt_quad == IF){
           if(HasTopologyChangeAlongXi()) {
               Decompose();
-              for(auto sub_q : QuadliteralDecomposition){
-                  DOMAIN_TYPE dt_decomp_quad = CheckIfStraightCut(sub_q.q.GetLsetVals(lset), 1e-15);
-                  if (dt_decomp_quad == IF) sub_q.GetTensorProductAlongXiIntegrationRule(intrule, order);
-                  else if (dt_decomp_quad == dt) sub_q.q.GetPlainIntegrationRule(intrule, order);
+              for(auto& sub_q : QuadliteralDecomposition){
+                  DOMAIN_TYPE dt_decomp_quad = CheckIfStraightCut(sub_q->q.GetLsetVals(lset), 1e-15);
+                  if (dt_decomp_quad == IF) sub_q->GetTensorProductAlongXiIntegrationRule(intrule, order);
+                  else if (dt_decomp_quad == dt) sub_q->q.GetPlainIntegrationRule(intrule, order);
               }
           }
           else GetTensorProductAlongXiIntegrationRule(intrule, order);
