@@ -85,6 +85,43 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
     mean_eoc = sum(mean_eoc_array)/len(mean_eoc_array)
     assert mean_eoc > 1.75
 
+
+@pytest.mark.parametrize("order", [2,4])
+@pytest.mark.parametrize("domain", [POS, NEG])
+def test_new_integrateX_via_sphere_geom_quad(order, domain):
+    r=0.7234436998
+
+    levelset = sqrt(x*x+y*y+z*z)-r
+    referencevals = { POS : 1-pi*r*r*r/6, NEG : pi*r*r*r/6, IF : r*r*pi/2}
+
+    n_ref = 6
+    errors = []
+
+    for i in range(n_ref):
+        mesh = MakeUniform3DGrid(quads = True, N=int(pow(2,i)), P1=(0,0,0),P2=(1,1,1))
+        print("i: " +str(i))
+        print("Argument Meshing: ",str(int(pow(2,i))))
+        
+        V = H1(mesh,order=1)
+        lset_approx = GridFunction(V)
+        InterpolateToP1(levelset,lset_approx)
+    
+        f = CoefficientFunction(1)
+    
+        integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
+        print("Result of Integration Reflevel ",i,", Key ",domain," : ", integral)
+        errors.append(abs(integral - referencevals[domain]))
+        
+    eoc = [log(errors[i+1]/errors[i])/log(0.5) for i in range(n_ref-1)]
+
+    print("L2-errors:", errors)
+    print("experimental order of convergence (L2):", eoc)
+
+    mean_eoc_array = eoc[1:]
+    mean_eoc = sum(mean_eoc_array)/len(mean_eoc_array)
+    assert mean_eoc > 1.75
+
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
@@ -105,6 +142,35 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
     error = abs(integral - referencevals[domain])
     
     assert error < 5e-15*(order+1)*(order+1)
+
+@pytest.mark.parametrize("quad_dominated", [False, True])
+@pytest.mark.parametrize("order", [2])
+@pytest.mark.parametrize("domain", [IF, NEG, POS])
+@pytest.mark.parametrize("dim", [x,y])
+@pytest.mark.parametrize("eps", [1e-1, 1e-2, 5e-3, 1e-3, 0])
+
+def test_new_integrateX_via_orth_cutted_quad2D_epsiloned(order, domain, quad_dominated, dim, eps):
+    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
+    
+    if dim == x:
+        levelset = 1 - 2*x + eps*(y-0.5)
+    elif dim == y:
+        levelset = 1 - 2*y + eps*(x-0.5)
+        
+    referencevals = {NEG: 1./2, POS: 1./2, IF: sqrt(1.+eps*eps/4) }
+    
+    lset_approx = GridFunction(H1(mesh,order=1))
+    InterpolateToP1(levelset,lset_approx)
+    
+    f = CoefficientFunction(1)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
+    error = abs(integral - referencevals[domain])
+    print(error)
+    
+    assert error < 5e-15*(order+1)*(order+1)
+
 
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
@@ -210,6 +276,36 @@ def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad_dominated, di
     
     levelset = 1 - 3*dim
     referencevals = {NEG: 2./3, POS: 1./3, IF: 1. }
+    
+    lset_approx = GridFunction(H1(mesh,order=1))
+    InterpolateToP1(levelset,lset_approx)
+    
+    f = CoefficientFunction(1)
+    
+    integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
+    error = abs(integral - referencevals[domain])
+    
+    assert error < 5e-15*(order+1)*(order+1)
+    
+
+@pytest.mark.parametrize("quad_dominated", [False, True])
+@pytest.mark.parametrize("order", [2])
+@pytest.mark.parametrize("domain", [NEG, POS])
+@pytest.mark.parametrize("dim", [x]) #TODO: More dims after implementation of this feature
+
+def test_new_integrateX_via_orth_cutted_quad3D(order, domain, quad_dominated, dim):
+    if (quad_dominated):
+        mesh = MakeUniform3DGrid(quads = True, N=1, P1=(0,0,0),P2=(1,1,1))
+    else:
+        cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
+        geom = CSGeometry()
+        geom.Add (cube)
+        ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
+        mesh = Mesh(ngmesh)
+    
+    levelset = 1 - 2*dim
+    referencevals = { POS : 1./2, NEG : 1./2, IF : 1. }
     
     lset_approx = GridFunction(H1(mesh,order=1))
     InterpolateToP1(levelset,lset_approx)
