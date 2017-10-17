@@ -120,7 +120,7 @@ namespace xintegration
   public:
       virtual void GetIntegrationRule(IntegrationRule &intrule, int order);
       void GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order);
-      DIMENSION_SWAP GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL);
+      DIMENSION_SWAP GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol = FIRST_ALLOWED);
 
       Quadliteral q;
 
