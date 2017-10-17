@@ -9,116 +9,134 @@ using namespace ngfem;
 
 namespace xintegration
 {
-  typedef Array<tuple<Vec<3>, double>> PointCnt;
-  DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element);
+  enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL};
+  enum DIMENSION_SWAP {ID, X_Y};
 
-  class Polytope {
+  DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element, double epsilon = 0);
+  DOMAIN_TYPE CheckIfStraightCut(vector<double> cf_lset_at_element, double epsilon = 0);
+
+  class LevelsetWrapper {
   public:
-      Array<int> ia; //the points
+      Vec<2, Vec<2, Vec<2, double>>> c;
+
+      LevelsetWrapper(vector<double> a_vals, ELEMENT_TYPE a_et) { GetCoeffsFromVals(a_et, a_vals); }
+
+      Vec<3> GetNormal(const Vec<3>& p) const;
+      Vec<3> GetGrad(const Vec<3>& p) const;
+      double operator() (const Vec<3> & p) const;
+      vector<double> initial_coefs;
+  private:
+      void GetCoeffsFromVals(ELEMENT_TYPE et, vector<double> vals);
+  };
+
+  class PolytopE { //The PolytopE which is given as the convex hull of the points
+  public:
+      Array<Vec<3>> points; //the points
       int D; //Dimension
-      shared_ptr<PointCnt> svs_ptr;
-    Polytope(Array<int> & a_ia, int a_D, shared_ptr<PointCnt> a_svs_ptr) : ia(a_ia), D(a_D), svs_ptr(a_svs_ptr) {;}
-    Polytope(initializer_list<int> a_ia_l, int a_D, shared_ptr<PointCnt> a_svs_ptr) : ia(a_ia_l), D(a_D), svs_ptr(a_svs_ptr) {;}
-      template<int D>
-    Polytope(Vec<D, tuple<Vec<3>, double>> a_points, int a_D, shared_ptr<PointCnt> a_svs_ptr) : D(a_D), svs_ptr(a_svs_ptr)
-    {
-          for(int i=0; i<D; i++){
-              auto p = a_points[i];
-              if(svs_ptr->Contains(p)){
-                  ia.Append(svs_ptr->Pos(p));
-              }
-              else {
-                  svs_ptr->Append(p);
-                  ia.Append(svs_ptr->Size() - 1);
-              }
-          }
+
+      PolytopE(const Array<Vec<3>>& a_points, int a_D) : points(a_points), D(a_D) {;}
+      PolytopE() { D = -1; } //TODO: Remove this constructor
+
+      vector<double> GetLsetVals(LevelsetWrapper lset){
+          vector<double> v;
+          for(const auto& p: points) v.push_back(lset(p));
+          return v;
+      }
+  };
+
+  class SimpleX : public PolytopE { //A SimpleX is a PolytopE of dim D with D+1 vertices
+  public:
+      SimpleX(const Array<Vec<3>>& a_points) : PolytopE(a_points, a_points.Size()-1) {;}
+      SimpleX() { D = -1; }
+
+      SimpleX(const PolytopE& p) : PolytopE(p.points, p.D) {
+          if(p.D+1 != p.points.Size()) throw Exception("PolytopE -> Simplex constructor called with PolytopE which is not a simplex");
       }
 
-      Polytope(){D = -1; svs_ptr = nullptr; }
+      SimpleX(ELEMENT_TYPE et) {
+          if(et == ET_SEGM) *this = SimpleX({{1,0,0}, {0,0,0}});
+          else if(et == ET_TRIG) *this = SimpleX({{1,0,0}, {0,1,0}, {0,0,0}});
+          else if(et == ET_TET) *this = SimpleX({{1,0,0}, {0,1,0}, {0,0,1}, {0,0,0}});
+          else throw Exception ("You tried to create an Simplex with wrong ET");
+      }
 
-      auto begin() {return ia.begin(); }
-      auto end() {return ia.end();}
-      auto begin() const {return ia.begin(); }
-      auto end() const {return ia.end();}
+      PolytopE CalcIFPolytopEUsingLset(vector<double> lset_on_points);
 
-    void Append(int v){ ia.Append(v); }
-
-      auto operator[](int j) const { return ia[j]; }
-      auto Size() const { return ia.Size(); }
-    void DeleteElement(int i){ ia.DeleteElement(i);}
-
-      Vec<3> GetPoint(int j) const { return get<0>((*svs_ptr)[ia[j]]); }
-      double GetLset(int j) const{ return get<1>((*svs_ptr)[ia[j]]); }
+      void GetPlainIntegrationRule(IntegrationRule &intrule, int order);
+      double GetVolume();
   };
 
-  double MeasureSimplVol(const Polytope &s);
-  Polytope CalcCutPolytopeUsingLset(const Polytope &s);
-  Polytope CalcCutPointLineUsingLset(const Polytope &s);
-
-  class CutElementGeometry {
-  protected:
-      ELEMENT_TYPE et;
-      int D;
+  class Quadliteral : public PolytopE { //A specific PolytopE: A quadliteral
   public:
-      virtual Vec<3> GetNormal(const Vec<3>& p) const = 0;
-      virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule) = 0;
+      Quadliteral(array<tuple<double, double>, 2> bnds) {
+          D = 2; points.SetSize(4);
+          points[0] = {get<0>(bnds[0]), get<0>(bnds[1]), 0};
+          points[1] = {get<1>(bnds[0]), get<0>(bnds[1]), 0};
+          points[2] = {get<1>(bnds[0]), get<1>(bnds[1]), 0};
+          points[3] = {get<0>(bnds[0]), get<1>(bnds[1]), 0};
+      }
+      Quadliteral(array<tuple<double, double>, 3> bnds) {
+          D = 3; points.SetSize(8);
+          points[0] = {get<0>(bnds[0]), get<0>(bnds[1]), get<0>(bnds[2])};
+          points[1] = {get<1>(bnds[0]), get<0>(bnds[1]), get<0>(bnds[2])};
+          points[2] = {get<1>(bnds[0]), get<1>(bnds[1]), get<0>(bnds[2])};
+          points[3] = {get<0>(bnds[0]), get<1>(bnds[1]), get<0>(bnds[2])};
+          points[4] = {get<0>(bnds[0]), get<0>(bnds[1]), get<1>(bnds[2])};
+          points[5] = {get<1>(bnds[0]), get<0>(bnds[1]), get<1>(bnds[2])};
+          points[6] = {get<1>(bnds[0]), get<1>(bnds[1]), get<1>(bnds[2])};
+          points[7] = {get<0>(bnds[0]), get<1>(bnds[1]), get<1>(bnds[2])};
+      }
+      Quadliteral(ELEMENT_TYPE et) {
+          if(et == ET_QUAD) *this = Quadliteral(array<tuple<double, double>, 2>({make_tuple(0,1),make_tuple(0,1)}));
+          else if (et == ET_HEX) *this = Quadliteral(array<tuple<double, double>, 3>({make_tuple(0,1),make_tuple(0,1),make_tuple(0,1)}));
+          else throw Exception ("You tried to create an Quadliteral with wrong ET");
+      }
+
+      void GetPlainIntegrationRule(IntegrationRule &intrule, int order);
+      double GetVolume();
   };
 
-  class CutSimplexElementGeometry : public CutElementGeometry {
+  class LevelsetCuttedPolytopE {
+  public:
+      virtual void GetIntegrationRule(IntegrationRule &intrule, int order) = 0;
+      LevelsetWrapper lset;
+      DOMAIN_TYPE dt;
+
+      LevelsetCuttedPolytopE(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt): lset(a_lset), dt(a_dt) {;}
+  };
+
+  class LevelsetCuttedSimplex : public LevelsetCuttedPolytopE {
+  public:
+      virtual void GetIntegrationRule(IntegrationRule &intrule, int order);
+      SimpleX s;
+
+      LevelsetCuttedSimplex(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, SimpleX a_s) : LevelsetCuttedPolytopE(a_lset, a_dt), s(a_s) { ;}
   private:
-      shared_ptr<PointCnt> svs_ptr;
-      Array<Polytope> simplices;
-      FlatVector<> lset;
-
-      void CalcNormal(const Polytope &base_simplex);
-      void LoadBaseSimplexFromElementTopology();
-      void CutBaseSimplex(DOMAIN_TYPE dt);
-      Vec<3> normal;
-
-  public:
-      LocalHeap & lh;
-
-      CutSimplexElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
-          et = a_et;
-          D = Dim(et);
-          svs_ptr = make_shared<PointCnt>();
-      }
-
-      virtual Vec<3> GetNormal(const Vec<3>& p) const{
-          return normal;
-      }
-
-      virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
+      void Decompose();
+      Array<SimpleX> SimplexDecomposition; //TODO: Cf. line 117
   };
 
-  class CutQuadElementGeometry : public CutElementGeometry {
+  class LevelsetCuttedQuadliteral : public LevelsetCuttedPolytopE {
+  public:
+      virtual void GetIntegrationRule(IntegrationRule &intrule, int order);
+      void GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order);
+      DIMENSION_SWAP GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL);
+
+      Quadliteral q;
+
+      LevelsetCuttedQuadliteral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadliteral a_q) : LevelsetCuttedPolytopE(a_lset, a_dt), q(a_q) { ;}
+      void GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order);
   private:
-      shared_ptr<PointCnt> svs_ptr;
-      Vec<2, Array<Polytope>> segments;
-      Vec<2, Vec<2, Vec<2, double>>> lc; //TODO: Replace with MultilinearFunction
-      Array<Polytope> Cut_quads; Array<Polytope> Volume_quads;
-      Vector<> lset;
+      void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
+      void GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order);
 
-      void IntegrateCutQuads(int order, IntegrationRule &intrule);
-      void IntegrateCutQuads3D(int order, IntegrationRule &intrule);
-      void IntegrateVolumeQuads(int order, IntegrationRule &intrule);
-      void IntegrateVolumeQuads3D(int order, IntegrationRule &intrule);
-      void IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule);
-      void IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule);
-      void FindVolumeAndCutQuads(DOMAIN_TYPE dt);
-      void FindVolumeAndCutQuads3D(DOMAIN_TYPE dt);
-  public:
-      void LoadBaseQuadFromElementTopology();
-      LocalHeap & lh;
-
-      virtual Vec<3> GetNormal(const Vec<3>& p) const;
-      CutQuadElementGeometry(FlatVector<> a_lset, ELEMENT_TYPE a_et, LocalHeap &a_lh) : lset(a_lset), lh(a_lh) {
-          et = a_et;
-          D = Dim(et); svs_ptr = make_shared<PointCnt>();
-      }
-
-      virtual void GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule);
+      bool HasTopologyChangeAlongXi();
+      void Decompose();
+      vector<LevelsetCuttedQuadliteral> QuadliteralDecomposition; //TODO: What vector-Replacement of Ngs can I use here? ... Array requires empty constructor.
   };
+
+  template<unsigned int D>
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper& lset, IntegrationRule * ir_interface);
 
   const IntegrationRule * StraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
                                                      const ElementTransformation & trafo,

@@ -8,13 +8,14 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 
 namespace xintegration
 {
-  DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element) {
+  const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
+  DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
     bool hasneg = false;
 
     for (auto v : cf_lset_at_element) {
-        if (!haspos && (v > 0)) haspos = true;
-        if (!hasneg && (v < 0)) hasneg = true;
+        if (!haspos && (v > epsilon)) haspos = true;
+        if (!hasneg && (v < -epsilon)) hasneg = true;
         if(haspos && hasneg) break;
     }
 
@@ -23,139 +24,151 @@ namespace xintegration
     else return POS;
   }
 
-  DOMAIN_TYPE CheckIfStraightCut(const Polytope &s){
-      bool haspos = false;
-      bool hasneg = false;
+  DOMAIN_TYPE CheckIfStraightCut (vector<double> cf_lset_at_element, double epsilon) {
+    bool haspos = false;
+    bool hasneg = false;
 
-      for (int j=0; j<s.Size(); j++) {
-          double v = s.GetLset(j);
-          if (!haspos && (v > 1e-10)) haspos = true;
-          if (!hasneg && (v < -1e-10)) hasneg = true;
-          if(haspos && hasneg) break;
-      }
+    for (auto v : cf_lset_at_element) {
+        if (!haspos && (v > epsilon)) haspos = true;
+        if (!hasneg && (v < -epsilon)) hasneg = true;
+        if(haspos && hasneg) break;
+    }
 
-      if ((hasneg && haspos)||(!hasneg && !haspos)) return IF;
-      else if (hasneg) return NEG;
-      else return POS;
+    if ((hasneg && haspos)||(!hasneg && !haspos)) return IF;
+    else if (hasneg) return NEG;
+    else return POS;
   }
 
-  Polytope CalcCutPointLineUsingLset(const Polytope &s){
-      if((s.D != 1) ||(s.Size() != 2)) throw Exception("You called the cut-a-line function with a Polytope which is not a line!");
-
-      Vec<3> p = s.GetPoint(0) +(s.GetLset(0)/(s.GetLset(0)-s.GetLset(1)))*(s.GetPoint(1)-s.GetPoint(0));
-      s.svs_ptr->Append(make_tuple(p,0));
-      return Polytope({(int) s.svs_ptr->Size()-1}, 0, s.svs_ptr);
-  }
-
-  Polytope CalcCutPolytopeUsingLset(const Polytope &s){
-      Array<int> cut_points;
-      if(((s.Size() == 3)&&(s.D == 2))||((s.Size() == 4)&&(s.D == 3))){
-        for(int ii = 0; ii<s.Size(); ii++) { int i = s[ii];
-            for(int ij= ii+1; ij<s.Size(); ij++){ int j = s[ij];
-                if((s.GetLset(ii) >= 0) != (s.GetLset(ij) >= 0)){
-                    Polytope p = CalcCutPointLineUsingLset(Polytope({i, j}, 1, s.svs_ptr));
-                    cut_points.Append(p[0]);
+  PolytopE SimpleX::CalcIFPolytopEUsingLset(vector<double> lset_on_points){
+      static Timer t ("SimpleX::CalcIFPolytopEUsingLset"); RegionTimer reg(t);
+      if(CheckIfStraightCut(lset_on_points) != IF) throw Exception ("You tried to cut a simplex with a plain geometry lset function");
+      if(D == 1) return SimpleX({Vec<3>(points[0] +(lset_on_points[0]/(lset_on_points[0]-lset_on_points[1]))*(points[1]-points[0]))});
+      else {
+          Array<Vec<3>> cut_points;
+          for(int i = 0; i<points.Size(); i++) {
+            for(int j= i+1; j<points.Size(); j++){
+                if((lset_on_points[i] >= 0) != (lset_on_points[j] >= 0)){
+                    SimpleX s({points[i], points[j]});
+                    auto p = s.CalcIFPolytopEUsingLset({lset_on_points[i], lset_on_points[j]});
+                    cut_points.Append(p.points[0]);
                 }
             }
-        }
-    }
-    else {
-        throw Exception("You tried to cut a Polytope which is not a simplex.");
-    }
-    return Polytope(cut_points, s.D-1, s.svs_ptr);
+          }
+          return PolytopE(cut_points, D-1);
+      }
   }
 
-  double MeasureSimplVol(const Polytope &s){
-      if(s.Size() == 1) return 1.;
-      else if(s.Size()==2) return L2Norm(Vec<3>(s.GetPoint(1)-s.GetPoint(0)));
-      else if(s.Size()==3) return L2Norm(Cross(Vec<3>(s.GetPoint(2) - s.GetPoint(0)), Vec<3>(s.GetPoint(1) - s.GetPoint(0))));
-      else if(s.Size()==4) return abs(Determinant<3>(Vec<3>(s.GetPoint(3)-s.GetPoint(0)), Vec<3>(s.GetPoint(2)-s.GetPoint(0)), Vec<3>(s.GetPoint(1)-s.GetPoint(0))));
+  double SimpleX::GetVolume(){
+      if(D == 0) return 1;
+      else if(D == 1) return L2Norm( points[1] - points[0] );
+      else if( D == 2) return L2Norm(Cross( Vec<3>(points[2] - points[0]), Vec<3>(points[1] - points[0]) ));
+      else if( D == 3) return abs(Determinant<3>(points[3] - points[0], points[2] - points[0], points[1] - points[0]));
       else throw Exception("Calc the Volume of this type of Simplex not implemented!");
   }
 
-  void CutSimplexElementGeometry::LoadBaseSimplexFromElementTopology() {
-      const POINT3D * verts = ElementTopology::GetVertices(et);
-
-      for(int i=0; i<ElementTopology::GetNVertices(et); i++)
-          svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
-
-      if((et == ET_SEGM) || (et == ET_TRIG) || (et == ET_TET)){
-          Array<int> BaseSimplex(D+1);
-          for(int i=0; i<BaseSimplex.Size(); i++) BaseSimplex[i] = i;
-          simplices.Append(Polytope(BaseSimplex, D, svs_ptr));
-      }
-      else throw Exception("Error in LoadBaseSimplexFromElementTopology() - ET_TYPE not supported yet!");
+  double Quadliteral::GetVolume(){
+      if( D == 2) return L2Norm(Cross( Vec<3>(points[3] - points[0]), Vec<3>(points[1] - points[0])));
+      else if( D == 3) return abs(Determinant<3>(points[4] - points[0], points[3] - points[0], points[1] - points[0]));
   }
 
-  void CutSimplexElementGeometry::CalcNormal(const Polytope &base_simplex){
-      Vec<3> delta_vec;
-      double delta_f;
-      Vec<3> grad_f; grad_f = 0;
-      for(int i=0; i<D; i++) {
-          delta_vec = base_simplex.GetPoint(i)-base_simplex.GetPoint(D);
-          delta_f = base_simplex.GetLset(i)-base_simplex.GetLset(D);
+  void SimpleX::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
+      static Timer t ("SimpleX::GetPlainIntegrationRule"); RegionTimer reg(t);
+      double trafofac = GetVolume();
 
-          for(int j=0; j<3; j++) {
-              if (abs(delta_vec[j]) > 1e-10){
-                  if(abs(L2Norm(delta_vec) - abs(delta_vec[j]))> 1e-10) throw Exception("Situation to complicated for this type of Grad calculation!");
-                  grad_f[j] = delta_f/(delta_vec[j]);
-              }
-          }
+      const IntegrationRule * ir_ngs;
+      if(D == 0) ir_ngs = & SelectIntegrationRule(ET_POINT, order);
+      else if(D == 1) ir_ngs = & SelectIntegrationRule(ET_SEGM, order);
+      else if(D == 2) ir_ngs = & SelectIntegrationRule(ET_TRIG, order);
+      else if(D == 3) ir_ngs = & SelectIntegrationRule (ET_TET, order);
+
+      for (const auto& ip : *ir_ngs) {
+        Vec<3> point(0.0); double originweight = 1.0;
+        for (int m = 0; m < points.Size()-1 ;++m) originweight -= ip(m);
+          point = originweight * (points[0]);
+        for (int m = 0; m < points.Size()-1 ;++m)
+          point += ip(m) * (points[m+1]);
+        intrule.Append(IntegrationPoint(point, ip.Weight() * trafofac));
       }
-      grad_f /= L2Norm(grad_f);
-      normal = grad_f;
   }
 
-  void CutSimplexElementGeometry::CutBaseSimplex(DOMAIN_TYPE dt){
-      Polytope s_cut;
-      if(D> 1) s_cut = CalcCutPolytopeUsingLset(simplices[0]);
-      if(D==1) s_cut = CalcCutPointLineUsingLset(simplices[0]);
+  void Quadliteral::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
+      static Timer t ("Quadliteral::GetPlainIntegrationRule"); RegionTimer reg(t);
+      double trafofac = GetVolume();
 
-      if(dt == IF) CalcNormal(simplices[0]);
-      simplices.DeleteAll();
+      const IntegrationRule * ir_ngs;
+      Mat<3,3> A(0.0);
+      if(D == 2){
+          ir_ngs = & SelectIntegrationRule(ET_QUAD, order);
+          A(0,0) = points[1][0] - points[0][0]; //TODO: Write down this nicer...
+          A(1,0) = points[1][1] - points[0][1];
+          A(0,1) = points[3][0] - points[0][0];
+          A(1,1) = points[3][1] - points[0][1];
+      }
+      else if(D == 3){
+          ir_ngs =& SelectIntegrationRule(ET_HEX, order);
+          //throw Exception("Plain 3D Intrule");
+          A.Col(0) = points[1] - points[0];
+          A.Col(1) = points[3] - points[0];
+          A.Col(2) = points[4] - points[0];
+      }
+
+      for(const auto& ip : *ir_ngs){
+          Vec<3> point(0.); point = points[0] + A*ip.Point();
+          intrule.Append(IntegrationPoint(point, ip.Weight()*trafofac));
+      }
+  }
+
+  void LevelsetCuttedSimplex::Decompose(){
+      static Timer t ("LevelsetCuttedSimplex::Decompose"); RegionTimer reg(t);
+      vector<double> lsetvals = lset.initial_coefs;
+      PolytopE s_cut = s.CalcIFPolytopEUsingLset(lsetvals);
+
       if(dt == IF) {
-          if(s_cut.Size() == D) simplices.Append(s_cut);
-          else if((s_cut.Size() == 4)&&(D==3)){
-              simplices.Append(Polytope({s_cut[0],s_cut[1],s_cut[3]},2, svs_ptr));
-              simplices.Append(Polytope({s_cut[0],s_cut[2],s_cut[3]},2, svs_ptr));
+          if(s_cut.points.Size() == s.D) SimplexDecomposition.Append(s_cut);
+          else if((s_cut.points.Size() == 4)&&(s.D==3)){
+              SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[1],s_cut.points[3]}));
+              SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[2],s_cut.points[3]}));
           }
-          else {
-              cout << "s_cut: " << s_cut.ia << endl;
-              throw Exception("Bad length of s_cut!");
-          }
+          else throw Exception("Bad length of s_cut!");
       }
       else {
-          Array<int> nothing;
-          Polytope relevant_base_simplex_vertices(nothing, D, svs_ptr);
-          for(int i=0; i<D+1; i++)
-              if( ((dt == POS) &&(lset[i] > 0)) || ((dt == NEG) &&(lset[i] < 0)))
+          Array<int> relevant_base_simplex_vertices;
+          for(int i=0; i<s.D+1; i++)
+              if( ((dt == POS) &&(lsetvals[i] > 0)) || ((dt == NEG) &&(lsetvals[i] < 0)))
                   relevant_base_simplex_vertices.Append(i);
           if((relevant_base_simplex_vertices.Size() == 1)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
-              Polytope s(s_cut);
-              s.Append(relevant_base_simplex_vertices[0]);
-              simplices.Append(s);
+              Array<Vec<3>> point_list(s_cut.points);
+              point_list.Append(s.points[relevant_base_simplex_vertices[0]]);
+              SimplexDecomposition.Append(SimpleX(point_list));
           }
-          else if((relevant_base_simplex_vertices.Size() == 2) && (D==2)){ //Triangle is cut to a quad
-              Polytope s1(relevant_base_simplex_vertices), s2(s_cut);// s1 = ; s2 = ;
-              s1.Append(s_cut[1]); s2.Append(relevant_base_simplex_vertices[0]); //The right indices follow from the cutting order
-              simplices.Append(s1);
-              simplices.Append(s2);
+          else if((relevant_base_simplex_vertices.Size() == 2) && (s.D==2)){ //Triangle is cut to a quad
+              Array<Vec<3>> point_listA;
+              for(int i : relevant_base_simplex_vertices) point_listA.Append(s.points[i]);
+              point_listA.Append(s_cut.points[1]);
+              Array<Vec<3>> point_listB(s_cut.points); point_listB.Append(s.points[relevant_base_simplex_vertices[0]]);
+              SimplexDecomposition.Append(SimpleX(point_listA));
+              SimplexDecomposition.Append(SimpleX(point_listB));
           }
-          else if((relevant_base_simplex_vertices.Size() == 2) && (D==3)) { //Tetraeder is cut to several tetraeder
-              Polytope s1(s_cut); s1.ia[0] = relevant_base_simplex_vertices[1];
-              Polytope s2(relevant_base_simplex_vertices); s2.Append(s_cut[1]); s2.Append(s_cut[2]);
-              Polytope s3(s_cut); s3.ia[3] = relevant_base_simplex_vertices[0];
-              simplices.Append(s1);
-              simplices.Append(s2);
-              simplices.Append(s3);
+          else if((relevant_base_simplex_vertices.Size() == 2) && (s.D==3)) { //Tetraeder is cut to several tetraeder
+              Array<Vec<3>> point_listA(s_cut.points); point_listA[0] = s.points[relevant_base_simplex_vertices[1]];
+              Array<Vec<3>> point_listB;
+              for(int i : relevant_base_simplex_vertices) point_listB.Append(s.points[i]);
+              point_listB.Append(s_cut.points[1]); point_listB.Append(s_cut.points[2]);
+              Array<Vec<3>> point_listC(s_cut.points); point_listC[3] = s.points[relevant_base_simplex_vertices[0]];
+              SimplexDecomposition.Append(point_listA);
+              SimplexDecomposition.Append(point_listB);
+              SimplexDecomposition.Append(point_listC);
           }
-          else if((relevant_base_simplex_vertices.Size() == 3) && (D == 3)){
-              Polytope s1(s_cut); s1.Append(relevant_base_simplex_vertices[2]);
-              Polytope s2(relevant_base_simplex_vertices); s2.Append(s_cut[1]);
-              Polytope s3(s_cut); s3.ia[2] = relevant_base_simplex_vertices[0]; s3.Append(relevant_base_simplex_vertices[2]);
-              simplices.Append(s1);
-              simplices.Append(s2);
-              simplices.Append(s3);
+          else if((relevant_base_simplex_vertices.Size() == 3) && (s.D == 3)){
+              Array<Vec<3>> point_listA(s_cut.points); point_listA.Append(s.points[relevant_base_simplex_vertices[2]]);
+              Array<Vec<3>> point_listB;
+              for(int i : relevant_base_simplex_vertices) point_listB.Append(s.points[i]);
+              point_listB.Append(s_cut.points[1]);
+              Array<Vec<3>> point_listC(s_cut.points); point_listC[2] = s.points[relevant_base_simplex_vertices[0]];
+              point_listC.Append(s.points[relevant_base_simplex_vertices[2]]);
+              SimplexDecomposition.Append(point_listA);
+              SimplexDecomposition.Append(point_listB);
+              SimplexDecomposition.Append(point_listC);
           }
           else {
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
@@ -163,386 +176,290 @@ namespace xintegration
       }
   }
 
-  void CutSimplexElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
-      LoadBaseSimplexFromElementTopology();
-      CutBaseSimplex(dt);
+  void LevelsetCuttedSimplex::GetIntegrationRule(IntegrationRule &intrule, int order){
+      static Timer t ("LevelsetCuttedSimplex::GetIntegrationRule"); RegionTimer reg(t);
+      Decompose();
+      for(auto s : SimplexDecomposition) s.GetPlainIntegrationRule(intrule, order);
+  }
 
-      int ref_ir_ngs_size; int j =0;
-      for(int i=0; i<simplices.Size(); i++) {
-        double trafofac = MeasureSimplVol(simplices[i]);
+  bool LevelsetCuttedQuadliteral::HasTopologyChangeAlongXi(){
+      vector<tuple<int,int>> EdgesOfDimXi;
+      if( q.D == 2) EdgesOfDimXi = {make_tuple(1,2),make_tuple(0,3)};
+      else if (q.D == 3) EdgesOfDimXi = {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)};
 
-        const IntegrationRule * ir_ngs;
-        if(simplices[i].Size() == 1) ir_ngs = & SelectIntegrationRule(ET_POINT, order);
-        else if(simplices[i].Size() == 2) ir_ngs = & SelectIntegrationRule(ET_SEGM, order);
-        else if(simplices[i].Size() == 3) ir_ngs = & SelectIntegrationRule(ET_TRIG, order);
-        else if(simplices[i].Size() == 4) ir_ngs = & SelectIntegrationRule (ET_TET, order);
+      Vec<2> vals;
+      for (auto t : EdgesOfDimXi) {
+          vals[1] = lset(q.points[get<0>(t)]); vals[0] = lset(q.points[get<1>(t)]);
+          if(SCR_DEBUG_OUTPUT) {
+              cout << "Checking for topology change along edge with lset vals " << vals[0] << " , " << vals[1] << endl;
+              cout << "Corresponding points: " << q.points[get<0>(t)] << " \n " << q.points[get<1>(t)] << endl;
+          }
+          if(CheckIfStraightCut(vals) == IF) return true;
+      }
+      return false;
+  }
 
-        //cout << "Size of Simplices nr. " << i << ": " << simplices[i].Size() << endl;
+  void LevelsetCuttedQuadliteral::Decompose(){
+      static Timer t ("LevelsetCuttedQuadliteral::Decompose"); RegionTimer reg(t);
+      set<double> TopologyChangeXisS{0,1};
+      int xi = q.D ==2 ? 1 : 2;
+      vector<tuple<int,int>> EdgesOfDimXi;
+      if( q.D == 2) EdgesOfDimXi = {make_tuple(1,2),make_tuple(0,3)};
+      else if (q.D == 3) EdgesOfDimXi = {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)};
+      else throw Exception("Wrong dimensionality of q in LevelsetCuttedQuadliteral::Decompose");
+      vector<double> vals(2);
+      for (auto t : EdgesOfDimXi) {
+          vals[1] = lset(q.points[get<0>(t)]); vals[0] = lset(q.points[get<1>(t)]);
+          if(SCR_DEBUG_OUTPUT) cout << "Searching for xi along lset vals " << vals[1] << " , " << vals[0] << endl;
+          SimpleX unit_line(ET_SEGM);
+          if(CheckIfStraightCut(vals) == IF)
+              TopologyChangeXisS.insert((unit_line.CalcIFPolytopEUsingLset(vals)).points[0][0]);
+      }
+      vector<double> TopologyChangeXis(TopologyChangeXisS.begin(), TopologyChangeXisS.end());
+      sort(TopologyChangeXis.begin(), TopologyChangeXis.end());
 
-        if(i == 0){
-            intrule.SetSize(simplices.Size()*ir_ngs->Size());
-            ref_ir_ngs_size = ir_ngs->Size();
-        }
-        else if (ir_ngs->Size() != ref_ir_ngs_size) throw Exception("Different sizes for ir_ngs are not supported!");
+      for(int i=0; i<TopologyChangeXis.size() -1; i++){
+          double xi0 = TopologyChangeXis[i]; double xi1 = TopologyChangeXis[i+1];
+          if(SCR_DEBUG_OUTPUT) cout << "Decomposition along interval [xi_0 , xi_1]: " << xi0 << " , " << xi1 << endl;
+          if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
+          if(q.D == 2){
+              array<tuple<double, double>, 2> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(xi0,xi1)});
+              LevelsetCuttedQuadliteral qi(lset, dt, Quadliteral(bnd_vals));
+              QuadliteralDecomposition.push_back(qi);
+          }
+          else if(q.D == 3){
+              array<tuple<double, double>, 3> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(q.points[0][1], q.points[2][1]), make_tuple(xi0,xi1)});
+              LevelsetCuttedQuadliteral qi(lset, dt, Quadliteral(bnd_vals));
+              QuadliteralDecomposition.push_back(qi);
+          }
+      }
+  }
+  const double C = 50;
+  const double c = sqrt(1-1./pow(C,2));
 
-        for (auto ip : *ir_ngs) {
-          Vec<3> point(0.0); double originweight = 1.0;
-          for (int m = 0; m < simplices[i].Size()-1 ;++m) originweight -= ip(m);
-            point = originweight * (simplices[i].GetPoint(0));
-          for (int m = 0; m < simplices[i].Size()-1 ;++m)
-            point += ip(m) * (simplices[i].GetPoint(m+1));
-          intrule[j] = IntegrationPoint(point, ip.Weight() * trafofac);
-          j++;
-        }
+  void LevelsetCuttedQuadliteral::GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order){
+      int xi = q.D ==2 ? 1 : 2;
+
+      double xi0 = q.points[0][xi]; double xi1;
+      if (xi == 1) xi1 = q.points[2][1];
+      else xi1 = q.points[4][2];
+
+      const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
+      for(auto p1: ir_ngs){
+          double xi_ast = xi0 + p1.Point()[0]*(xi1 - xi0);
+          IntegrationRule new_intrule;
+          vector<double> lsetproj( q.D == 2 ? 2 : 4);
+          if(q.D == 2) {
+              lsetproj[1] = lset(Vec<3>(q.points[0][0],xi_ast,0)); lsetproj[0] = lset(Vec<3>(q.points[2][0], xi_ast,0));
+              LevelsetCuttedSimplex Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_SEGM), dt, SimpleX(ET_SEGM));
+              Codim1ElemAtXast.GetIntegrationRule(new_intrule, order);
+          }
+          else if(q.D == 3){
+              lsetproj[0] = lset(Vec<3>(q.points[0][0],q.points[0][1], xi_ast)); lsetproj[1] = lset(Vec<3>(q.points[2][0],q.points[0][1], xi_ast));
+              lsetproj[2] = lset(Vec<3>(q.points[2][0],q.points[2][1], xi_ast)); lsetproj[3] = lset(Vec<3>(q.points[0][0],q.points[2][1], xi_ast));
+              LevelsetCuttedQuadliteral Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_QUAD), dt, Quadliteral(ET_QUAD));
+              Codim1ElemAtXast.GetIntegrationRule(new_intrule, order);
+          }
+          for(const auto& p2 : new_intrule){
+              Vec<3> ip(0.); ip[xi] = xi_ast;
+              ip[0] = q.points[0][0] + p2.Point()[0]*(q.points[2][0] - q.points[0][0]);
+              if (q.D==3) ip[1] = q.points[0][1] + p2.Point()[1]*(q.points[2][1] - q.points[0][1]);
+              double if_scale_factor = 1;
+              if (dt == IF){
+                  Vec<3> lset_grad = lset.GetGrad(ip);
+                  if(SCR_DEBUG_OUTPUT) cout << "Doing IF scaling: lset_grad: " << lset_grad << endl;
+                  if(q.D == 2) if_scale_factor = L2Norm(lset_grad)/abs(lset_grad[0]);
+                  else if(q.D == 3) if_scale_factor = L2Norm(lset_grad)/sqrt(pow(lset_grad[0],2) + pow(lset_grad[1],2));
+                  if( isnan(if_scale_factor) || if_scale_factor > C ) throw Exception("if_scale_factor larger than bound");
+                  if(SCR_DEBUG_OUTPUT) cout << "IF scaling factor: " << if_scale_factor << endl;
+              }
+              intrule.Append(IntegrationPoint( ip , p2.Weight()*p1.Weight()*(xi1-xi0)*if_scale_factor));
+          }
       }
   }
 
-  void CutQuadElementGeometry::LoadBaseQuadFromElementTopology() {
-      const POINT3D * verts = ElementTopology::GetVertices(et);
-
-      for(int i=0; i<ElementTopology::GetNVertices(et); i++){
-          svs_ptr->Append(make_tuple(Vec<3>{verts[i][0], verts[i][1], verts[i][2]}, lset[i]));
-          //cout << "Point Nr. " << i << endl;
-          //cout << verts[i][0] << "\t" << verts[i][1] << "\t" << verts[i][2] << endl;
+  void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order){
+      IntegrationRule intrule_rotated;
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "Rotation procedure started:" << endl;
+          cout << "My lset vals:" << endl;
+          for(auto d: q.GetLsetVals(lset)) cout << d << endl;
       }
-
-      if((et != ET_QUAD)&&(et != ET_HEX)) throw Exception("Error in LoadBaseQuadFromElementTopology() - ET_TYPE not supported yet!");
+      LevelsetWrapper lset_rotated = lset;
+      for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[j][i][k];
+      Quadliteral q_rotated = q;
+      for(int i=0; i<q.points.Size(); i++) {
+          q_rotated.points[i][0] = q.points[i][1];
+          q_rotated.points[i][1] = q.points[i][0];
+      }
+      Vec<3> tmp = q_rotated.points[1]; q_rotated.points[1] = q_rotated.points[3]; q_rotated.points[3] = tmp;
+      if(q.D == 3){ tmp = q_rotated.points[5]; q_rotated.points[5] = q_rotated.points[7]; q_rotated.points[7] = tmp; }
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "rotated lset vals:" << endl;
+          for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
+      }
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated);
+      me_rotated.GetIntegrationRuleAlongXi(intrule_rotated, order);
+      for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[1], ip.Point()[0], ip.Point()[2]}, ip.Weight()));
   }
 
-  Vec<3> CutQuadElementGeometry::GetNormal(const Vec<3>& p) const{
+  /*
+  void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order){
+      IntegrationRule intrule_rotated;
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "Rotation procedure started:" << endl;
+          cout << "My lset vals:" << endl;
+          for(auto d: q.GetLsetVals(lset)) cout << d << endl;
+      }
+      LevelsetWrapper lset_rotated = lset;
+      for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[k][j][i];
+      Quadliteral q_rotated = q;
+      for(int i=0; i<q.points.Size(); i++) {
+          q_rotated.points[i][0] = q.points[i][2];
+          q_rotated.points[i][2] = q.points[i][0];
+      }
+      Vec<3> tmp = q_rotated.points[1]; q_rotated.points[1] = q_rotated.points[4]; q_rotated.points[4] = tmp;
+      if(q.D == 3){ tmp = q_rotated.points[2]; q_rotated.points[2] = q_rotated.points[7]; q_rotated.points[7] = tmp; }
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "rotated lset vals:" << endl;
+          for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
+      }
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated);
+      me_rotated.GetIntegrationRule(intrule_rotated, order);
+      for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[2], ip.Point()[1], ip.Point()[0]}, ip.Weight()));
+  }*/
+
+  DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol){
+      if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
+      if(q.D == 3) return ID;
+
+      bool allowance_array[] = {true, true};
+      double h_root = -lset.c[1][0][0]/lset.c[1][1][0];
+      if ((h_root > 0)&&(h_root < 1)) {
+          if(SCR_DEBUG_OUTPUT) cout << "Found the y root " << h_root << " of h!" << endl;
+          allowance_array[1] = false;
+      }
+      h_root = -lset.c[0][1][0]/lset.c[1][1][0];
+      if ((h_root > 0)&&(h_root < 1)) {
+          if(SCR_DEBUG_OUTPUT) cout << "Found the x root " << h_root << " of h!" << endl;
+          allowance_array[0] = false;
+      }
+
+      vector<double> q_max_of_dim{0,0};
+      for(const auto& p: {Vec<3>{0,0,0}, Vec<3>{1,0,0}, Vec<3>{1,1,0}, Vec<3>{0,1,0}}) {
+          auto lset_grad = lset.GetGrad(p);
+          double q_y = abs(lset_grad[1])/L2Norm(lset_grad);
+          double q_x = abs(lset_grad[0])/L2Norm(lset_grad);
+          if (q_y > q_max_of_dim[1]) q_max_of_dim[1] = q_y;
+          if (q_x > q_max_of_dim[0]) q_max_of_dim[0] = q_x;
+      }
+      allowance_array[0] = allowance_array[0] && (q_max_of_dim[0] < c);
+      allowance_array[1] = allowance_array[1] && (q_max_of_dim[1] < c);
+
+      if(pol == FIRST_ALLOWED){
+          if(allowance_array[1]) return ID;
+          else if(allowance_array[0]) return X_Y;
+          else throw Exception ("No allowed direction could be found");
+      }
+      else if(pol == FIND_OPTIMAL){
+          if(allowance_array[1] && allowance_array[0]){
+              if(q_max_of_dim[1] <= q_max_of_dim[0]) return ID;
+              else return X_Y;
+          }
+          else if(allowance_array[1]) return ID;
+          else if(allowance_array[0]) return X_Y;
+          else throw Exception ("No allowed direction could be found");
+      }
+      else throw Exception("Unsupported DIMENSION_SWAP policy");
+  }
+
+  void LevelsetCuttedQuadliteral::GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order){
+      DOMAIN_TYPE dt_quad = CheckIfStraightCut(q.GetLsetVals(lset));
+      if(dt_quad == IF){
+          if(HasTopologyChangeAlongXi()) {
+              Decompose();
+              for(auto sub_q : QuadliteralDecomposition){
+                  DOMAIN_TYPE dt_decomp_quad = CheckIfStraightCut(sub_q.q.GetLsetVals(lset), 1e-15);
+                  if (dt_decomp_quad == IF) sub_q.GetTensorProductAlongXiIntegrationRule(intrule, order);
+                  else if (dt_decomp_quad == dt) sub_q.q.GetPlainIntegrationRule(intrule, order);
+              }
+          }
+          else GetTensorProductAlongXiIntegrationRule(intrule, order);
+      }
+      else if (dt_quad == dt) q.GetPlainIntegrationRule(intrule, order);
+  }
+
+  void LevelsetCuttedQuadliteral::GetIntegrationRule(IntegrationRule &intrule, int order){
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "\n -- LevelsetCuttedQuadliteral::GetIntegrationRule called" << endl;
+          cout << "on Quad: " << q.points << endl;
+          cout << "with the lset vals: " << endl;
+          for(auto d: q.GetLsetVals(lset)) cout << d << endl;
+          cout << " -- \n" << endl;
+      }
+      DIMENSION_SWAP sw = GetDimensionSwap();
+      if(sw == ID) GetIntegrationRuleAlongXi(intrule, order);
+      else if (sw == X_Y) GetIntegrationRuleOnXYPermutatedQuad(intrule, order);
+      else throw Exception ("Geometry Flip necessary but not yet implemented");
+  }
+
+  void LevelsetWrapper::GetCoeffsFromVals(ELEMENT_TYPE et, vector<double> vals){
+      Vec<2, Vec<2, Vec<2, double>>> ci;
+      for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) ci[i][j][k] = 0.; //TODO: Better Solution??
+      if(et == ET_SEGM){
+          ci[0][0][0] = vals[1]; ci[1][0][0] = vals[0] - vals[1];
+      }
+      else if(et == ET_TRIG) {
+          ci[0][0][0] = vals[2]; ci[1][0][0] = vals[0] - vals[2]; ci[0][1][0] = vals[1] - vals[2];
+      }
+      else if(et == ET_TET) {
+          ci[0][0][0] = vals[3]; ci[1][0][0] = vals[0] - vals[3]; ci[0][1][0] = vals[1] - vals[3]; ci[0][0][1] = vals[2] - vals[3];
+      }
+      else if(et == ET_QUAD){
+          ci[0][0][0] = vals[0]; ci[1][0][0] = vals[1]-ci[0][0][0], ci[0][1][0] = vals[3] - ci[0][0][0], ci[1][1][0] = vals[2] - ci[1][0][0]- ci[0][1][0]- ci[0][0][0];
+      }
+      else if(et == ET_HEX){
+          ci[0][0][0] = vals[0]; ci[1][0][0] = vals[1]-vals[0]; ci[0][1][0] = vals[3] - vals[0]; ci[0][0][1] = vals[4] - vals[0];
+          ci[1][1][0] = vals[2] - ci[1][0][0] - ci[0][1][0] - ci[0][0][0];
+          ci[1][0][1] = vals[5] - ci[1][0][0] - ci[0][0][1] - ci[0][0][0];
+          ci[0][1][1] = vals[7] - ci[0][1][0] - ci[0][0][1] - ci[0][0][0];
+          ci[1][1][1] = vals[6] - ci[1][1][0] - ci[1][0][1] - ci[0][1][1] - ci[1][0][0] - ci[0][1][0] - ci[0][0][1] - ci[0][0][0];
+      }
+      c = ci; initial_coefs = vals;
+  }
+
+  Vec<3> LevelsetWrapper::GetGrad(const Vec<3>& p) const{
       Vec<3> geom_normal(0.);
-      if(D==2){
-        geom_normal[0] = lc[1][0][0]+lc[1][1][0]*p[1];
-        geom_normal[1] = lc[0][1][0]+lc[1][1][0]*p[0];
-      }
-      else{
-          geom_normal[0] = lc[1][0][0]+lc[1][1][0]*p[1]+lc[1][0][1]*p[2]+lc[1][1][1]*p[1]*p[2];
-          geom_normal[1] = lc[0][1][0]+lc[1][1][0]*p[0]+lc[0][1][1]*p[2]+lc[1][1][1]*p[0]*p[2];
-          geom_normal[2] = lc[0][0][1]+lc[0][1][1]*p[1]+lc[1][0][1]*p[0]+lc[1][1][1]*p[0]*p[1];
-      }
+      geom_normal[0] = c[1][0][0]+c[1][1][0]*p[1]+c[1][0][1]*p[2]+c[1][1][1]*p[1]*p[2];
+      geom_normal[1] = c[0][1][0]+c[1][1][0]*p[0]+c[0][1][1]*p[2]+c[1][1][1]*p[0]*p[2];
+      geom_normal[2] = c[0][0][1]+c[0][1][1]*p[1]+c[1][0][1]*p[0]+c[1][1][1]*p[0]*p[1];
+      return geom_normal;
+  }
+
+  Vec<3> LevelsetWrapper::GetNormal(const Vec<3>& p) const{
+      Vec<3> geom_normal = GetGrad(p);
       geom_normal /= L2Norm(geom_normal);
       return geom_normal;
   }
 
-  void CutQuadElementGeometry::FindVolumeAndCutQuads(DOMAIN_TYPE dt){
-      function<double(Vec<3>)> levelset = [this] (const Vec<3>& p) {return lc[1][0][0]*p[0]+lc[0][1][0]*p[1]+lc[1][1][0]*p[0]*p[1]+lc[0][0][0];};
-
-      Vec<2, vector<double>> cut_points;
-      for (int dim:{0,1}) { cut_points[dim].push_back(0); cut_points[dim].push_back(1);}
-
-      vector<vector<tuple<int,int>>> EdgesOfDim{{make_tuple(0,1),make_tuple(3,2)}, {make_tuple(1,2),make_tuple(0,3)}};
-      for(int dim:{0,1}){
-          for(tuple<int, int> edge:EdgesOfDim[dim]){
-              if((lset[get<0>(edge)] >= 0) != (lset[get<1>(edge)] >= 0)) {
-                  Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
-                  cut_points[dim].push_back(p.GetPoint(0)[dim]);
-              }
-          }
-          sort(cut_points[dim].begin(), cut_points[dim].end());
-      }
-
-      for(int i=0; i<cut_points[0].size()-1; i++){
-          for(int j=0; j<cut_points[1].size()-1; j++){
-              Vec<4, tuple<Vec<3>, double>> quad_points;
-              get<0>(quad_points[0]) = {cut_points[0][i], cut_points[1][j], 0};
-              get<0>(quad_points[1]) = {cut_points[0][i+1], cut_points[1][j], 0};
-              get<0>(quad_points[2]) = {cut_points[0][i+1], cut_points[1][j+1], 0};
-              get<0>(quad_points[3]) = {cut_points[0][i], cut_points[1][j+1], 0};
-              for(int k=0; k<quad_points.Size(); k++) get<1>(quad_points[k]) = levelset(get<0>(quad_points[k]));
-              Polytope poly(quad_points, 2, svs_ptr);
-              DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
-              if(dt_poly == IF) Cut_quads.Append(poly);
-              else if(dt_poly == dt) Volume_quads.Append(poly);
-          }
-      }
-  }
-
-  void CutQuadElementGeometry::FindVolumeAndCutQuads3D(DOMAIN_TYPE dt){
-    function<double(Vec<3>)> levelset = [this] (const Vec<3>& p) {
-        double s = 0; for(int i0:{0,1}) for(int i1:{0,1}) for(int i2:{0,1}) s+= lc[i0][i1][i2]*pow(p[0],i0)*pow(p[1],i1)*pow(p[2],i2);
-        return s;};
-
-    Vec<3, vector<double>> cut_points;
-    for (int dim:{0,1,2}) { cut_points[dim].push_back(0); cut_points[dim].push_back(1);}
-
-    vector<vector<tuple<int,int>>> EdgesOfDim{{make_tuple(0,1),make_tuple(3,2),make_tuple(4,5),make_tuple(7,6)},
-                                              {make_tuple(1,2),make_tuple(0,3),make_tuple(4,7),make_tuple(5,6)},
-                                              {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)}};
-    for(int dim:{0,1,2}){
-        for(tuple<int, int> edge:EdgesOfDim[dim]){
-            if((lset[get<0>(edge)] >= 0) != (lset[get<1>(edge)] > 0)) {
-                Polytope p = CalcCutPointLineUsingLset(Polytope({get<0>(edge), get<1>(edge)}, 1, svs_ptr));
-                cut_points[dim].push_back(p.GetPoint(0)[dim]);
-            }
-        }
-        sort(cut_points[dim].begin(), cut_points[dim].end());
-    }
-    //cout << "Length of Cut Points x: " << cut_points[0].size() << endl;
-    //cout << "Length of Cut Points y: " << cut_points[1].size() << endl;
-    //cout << "Length of Cut Points z: " << cut_points[2].size() << endl;
-
-    for(int i=0; i<cut_points[0].size()-1; i++){
-        if(cut_points[0][i+1] -cut_points[0][i] > 1e-14){ //<-- CL: is this really save?
-            for(int j=0; j<cut_points[1].size()-1; j++){
-                if(cut_points[1][j+1] - cut_points[1][j] > 1e-14){ //<-- CL: is this really save?
-                    for(int k=0; k<cut_points[2].size()-1; k++){
-                        if(cut_points[2][k+1] - cut_points[2][k] > 1e-14){ //<-- CL: is this really save?
-                            Vec<8, tuple<Vec<3>, double>> quad_points;
-                            get<0>(quad_points[0]) = {cut_points[0][i], cut_points[1][j], cut_points[2][k]};
-                            get<0>(quad_points[1]) = {cut_points[0][i+1], cut_points[1][j], cut_points[2][k]};
-                            get<0>(quad_points[2]) = {cut_points[0][i+1], cut_points[1][j+1], cut_points[2][k]};
-                            get<0>(quad_points[3]) = {cut_points[0][i], cut_points[1][j+1], cut_points[2][k]};
-                            get<0>(quad_points[4]) = {cut_points[0][i], cut_points[1][j], cut_points[2][k+1]};
-                            get<0>(quad_points[5]) = {cut_points[0][i+1], cut_points[1][j], cut_points[2][k+1]};
-                            get<0>(quad_points[6]) = {cut_points[0][i+1], cut_points[1][j+1], cut_points[2][k+1]};
-                            get<0>(quad_points[7]) = {cut_points[0][i], cut_points[1][j+1], cut_points[2][k+1]};
-                            for(int n=0; n<quad_points.Size(); n++) get<1>(quad_points[n]) = levelset(get<0>(quad_points[n]));
-                            Polytope poly(quad_points, 3, svs_ptr);
-                            DOMAIN_TYPE dt_poly = CheckIfStraightCut(poly);
-                            if(dt_poly == IF) Cut_quads.Append(poly);
-                            else if(dt_poly == dt) Volume_quads.Append(poly);
-                        }
-                        else throw Exception("Orthogonal cut z!!");
-                    }
-                }
-                else throw Exception("Orthogonal cut y!!");
-            }
-        }
-        else throw Exception("Orthogonal cut x!!");
-    }
-}
-  void CutQuadElementGeometry::IntegrateCutQuads(int order, IntegrationRule &intrule) {
-      for(auto poly: Cut_quads){
-          double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(1)[0];
-          const IntegrationRule &  ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-          if(x1-x0<1e-16) { //<-- CL: is this really save?
-              double x_ast = 0.5*(x1+x0);
-              for(auto ip:ir_ngs) {
-                  Vec<3> point(0.0); point[0] = x_ast; point[1] = ip.Point()[0];
-                  intrule.Append(IntegrationPoint(point, ip.Weight()));
-              }
-          }
-          else {
-              for (auto ip : ir_ngs) {
-                Vec<3> point(0.0);
-                point[0] = x0+ip.Point()[0]*(x1-x0);
-                double u = lc[1][0][0]*point[0]+lc[0][0][0], v = lc[1][1][0]*point[0]+lc[0][1][0]; point[1] = -u/v;
-                Vec<3> grad_gamma(0.0); grad_gamma[0] = x1-x0;
-                grad_gamma[1] = -(x1-x0)*(lc[1][0][0]*v - lc[1][1][0]*u)/(pow(v,2));
-                intrule.Append(IntegrationPoint(point, ip.Weight() * L2Norm(grad_gamma)));
-              }
-          }
-      }
-  }
-
-  void CutQuadElementGeometry::IntegrateCutQuads3D(int order, IntegrationRule &intrule) {
-      for(auto poly: Cut_quads){
-          double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
-
-          int z_ind = -1; function<double(double)> y0, Dy0, y1, Dy1;
-          if(CheckIfStraightCut(Vec<4>{poly.GetLset(0), poly.GetLset(1), poly.GetLset(2), poly.GetLset(3)}) == IF) z_ind = 0;
-          else if (CheckIfStraightCut(Vec<4>{poly.GetLset(4), poly.GetLset(5), poly.GetLset(6), poly.GetLset(7)}) == IF) z_ind = 1;
-          else {
-              y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
-              Dy0 = [] (double x) -> double {return 0;};
-              y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
-              Dy1 = [] (double x) -> double {return 0;};
-          }
-          if(z_ind != -1){
-              function<double(double)> y_ast, Dy_ast;
-              if(z_ind == 0){
-                  y_ast = [this, z_ind](double x) -> double {return -(lc[1][0][z_ind]*x+lc[0][0][z_ind])/(lc[1][1][z_ind]*x+lc[0][1][z_ind]);};
-                  Dy_ast = [this, z_ind](double x) -> double {return -(lc[1][0][z_ind]*(lc[1][1][z_ind]*x+lc[0][1][z_ind]) - lc[1][1][z_ind]*(lc[1][0][z_ind]*x+lc[0][0][z_ind]))/pow(lc[1][1][z_ind]*x+lc[0][1][z_ind], 2);};
-              }
-              else {
-                  y_ast = [this](double x) -> double {return -((lc[1][0][1] + lc[1][0][0])*x+(lc[0][0][1] + lc[0][0][0]))/((lc[1][1][1] + lc[1][1][0])*x+(lc[0][1][1] + lc[0][1][0]));};
-                  Dy_ast = [this](double x) -> double {return -((lc[1][0][1] + lc[1][0][0])*((lc[1][1][1] + lc[1][1][0])*x+(lc[0][1][1] + lc[0][1][0])) - (lc[1][1][1] + lc[1][1][0])*((lc[1][0][1] + lc[1][0][0])*x+(lc[0][0][1] + lc[0][0][0])))/pow((lc[1][1][1] + lc[1][1][0])*x+(lc[0][1][1] + lc[0][1][0]), 2);};
-              }
-              y0 = y_ast, y1 = y_ast, Dy0 = Dy_ast, Dy1 = Dy_ast;
-              if(poly.GetLset(4*z_ind) > 1e-12){
-                  y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
-                  Dy0 = [] (double x) -> double {return 0;};
-              }
-              else {
-                  y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
-                  Dy1 = [] (double x) -> double {return 0;};
-              }
-          }
-
-          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-
-          Vec<2> scale_f; scale_f[0] = x1-x0;
-          for (auto ip1 : ir_ngs) {
-            for(auto ip2: ir_ngs) {
-                Vec<3> p(0.0);
-                p[0] = x0+ip1.Point()[0]*scale_f[0];
-                scale_f[1] = y1(p[0]) - y0(p[0]);
-                p[1] = y0(p[0])+ip2.Point()[0]*scale_f[1];
-                double u = lc[1][1][0]*p[0]*p[1] +lc[1][0][0]*p[0]+lc[0][1][0]*p[1]+lc[0][0][0];
-                double v = lc[1][1][1]*p[0]*p[1] +lc[1][0][1]*p[0]+lc[0][1][1]*p[1]+lc[0][0][1]; p[2] = -u/v;
-                Vec<3> del_gamma_xi(0.0), del_gamma_eta(0.0);
-                del_gamma_xi[0] = scale_f[0];
-                del_gamma_eta[1] = scale_f[1];
-                del_gamma_xi[1] = ip2.Point()[0]*scale_f[0]*(Dy1(p[0]) - Dy0(p[0]));
-                double Dxu = lc[1][0][0]+lc[1][1][0]*p[1]*del_gamma_xi[1]/scale_f[0]+lc[0][1][0]*del_gamma_xi[1]/scale_f[0];
-                double Dxv = lc[1][0][1]+lc[1][1][1]*p[1]*del_gamma_xi[1]/scale_f[0]+lc[0][1][1]*del_gamma_xi[1]/scale_f[0];
-                del_gamma_xi[2]  = -scale_f[0]*(Dxu*v - Dxv*u)/(pow(v,2));
-                del_gamma_eta[2] = -scale_f[1]*((lc[0][1][0] + lc[1][1][0]*p[0])*v - (lc[0][1][1]+lc[1][1][1]*p[0])*u)/(pow(v,2));
-                double trafocfac =L2Norm(Cross(del_gamma_xi, del_gamma_eta));
-                intrule.Append(IntegrationPoint(p, ip1.Weight() * ip2.Weight()* trafocfac));
-                //cout << "Appending the Weight " << ip1.Weight() * ip2.Weight()* trafocfac << " on IF int 3D" << endl;
-            }
-          }
-      }
-  }
-
-
-  void CutQuadElementGeometry::IntegrateVolumeQuads(int order, IntegrationRule &intrule){
-      for(auto quad : Volume_quads) {
-          Mat<2,2> A(0.0);
-          A(0,0) = quad.GetPoint(1)[0] - quad.GetPoint(0)[0];
-          A(1,0) = quad.GetPoint(1)[1] - quad.GetPoint(0)[1];
-          A(0,1) = quad.GetPoint(3)[0] - quad.GetPoint(0)[0];
-          A(1,1) = quad.GetPoint(3)[1] - quad.GetPoint(0)[1];
-          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_QUAD, order);
-          double trafofac = abs(Det(A));
-          for(auto ip : ir_ngs){
-              Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
-              intrule.Append(IntegrationPoint(p, ip.Weight()*trafofac));
-          }
-      }
-  }
-
-  void CutQuadElementGeometry::IntegrateVolumeQuads3D(int order, IntegrationRule &intrule){
-      for(auto quad : Volume_quads) {
-          Mat<3,3> A(0.0);
-          A(0,0) = quad.GetPoint(1)[0] - quad.GetPoint(0)[0];
-          A(1,0) = quad.GetPoint(1)[1] - quad.GetPoint(0)[1];
-          A(2,0) = quad.GetPoint(1)[2] - quad.GetPoint(0)[2];
-          A(0,1) = quad.GetPoint(3)[0] - quad.GetPoint(0)[0];
-          A(1,1) = quad.GetPoint(3)[1] - quad.GetPoint(0)[1];
-          A(2,1) = quad.GetPoint(3)[2] - quad.GetPoint(0)[2];
-          A(0,2) = quad.GetPoint(4)[0] - quad.GetPoint(0)[0];
-          A(1,2) = quad.GetPoint(4)[1] - quad.GetPoint(0)[1];
-          A(2,2) = quad.GetPoint(4)[2] - quad.GetPoint(0)[2];
-          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_HEX, order);
-          double trafofac = abs(Det(A));
-          for(auto ip : ir_ngs){
-              Vec<3> p(0.); p = quad.GetPoint(0) + A*ip.Point();
-              intrule.Append(IntegrationPoint(p, ip.Weight()*trafofac));
-              //cout << "Adding the weight " << ip.Weight()*trafofac << " from Volume 3D" << endl;
-          }
-      }
-  }
-
-  void CutQuadElementGeometry::IntegrateVolumeOfCutQuads3D(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
-      for(auto poly : Cut_quads){
-          double V_poly = 1; for(int i=0; i<3; i++) V_poly *= poly.GetPoint(6)[i]-poly.GetPoint(0)[i];
-          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-          for(auto p1: ir_ngs){
-              FlatVector<> lset_proj(4, lh); double xi = p1.Point()[0];
-              for(int i=0; i<4; i++) lset_proj[i] = poly.GetLset(i)*(1-xi)+poly.GetLset(i+4)*(xi);
-              //cout << "The levelset Projection: " << lset_proj << endl;
-              CutQuadElementGeometry CoDim1Projection(lset_proj, ET_QUAD, lh);
-              IntegrationRule ir_tmp;
-              CoDim1Projection.GetIntegrationRule(order, dt, ir_tmp);
-              for(auto p2: ir_tmp){
-                  Vec<3> p(0.);
-                  for(int i=0; i<2; i++) p[i] = poly.GetPoint(0)[i]+ p2.Point()[i]*(poly.GetPoint(6)[i]-poly.GetPoint(0)[i]);
-                  p[2] = poly.GetPoint(0)[2]+ xi*(poly.GetPoint(6)[2]-poly.GetPoint(0)[2]);
-                  intrule.Append(IntegrationPoint(p , p1.Weight()* p2.Weight()* V_poly));
-                  //cout << "Appended the weight " << p1.Weight()* p2.Weight()*V_poly << " from VolumeOfCut3D." << endl;
-              }
-          }
-      }
-  }
-
-  void CutQuadElementGeometry::IntegrateVolumeOfCutQuads(DOMAIN_TYPE dt, int order, IntegrationRule &intrule){
-      for(auto poly : Cut_quads){
-          double x0 = poly.GetPoint(0)[0], x1 = poly.GetPoint(2)[0];
-          if(x1-x0< 1e-13) return;
-          function<double(double)> y_ast = [this](double x) -> double {return -(lc[1][0][0]*x+lc[0][0][0])/(lc[1][1][0]*x+lc[0][1][0]);};
-          auto y0 = y_ast, y1 = y_ast;
-          if(((dt == POS)&&(poly.GetLset(0)+poly.GetLset(1) > 1e-12))||((dt == NEG)&&(poly.GetLset(0)+poly.GetLset(1) < -1e-12)))
-              y0 = [&poly] (double x) -> double {return poly.GetPoint(0)[1];};
-          else
-              y1 = [&poly] (double x) ->double {return poly.GetPoint(2)[1];};
-
-          const IntegrationRule & ir_ngs = SelectIntegrationRule(ET_SEGM, order);
-          Vec<2> scale_f; scale_f[0] = x1-x0;
-          for(auto p1: ir_ngs){
-              for(auto p2 : ir_ngs){
-                  Vec<3> p(0.); p[0] = x0+p1.Point()[0]*scale_f[0];
-                  scale_f[1] = y1(p[0]) - y0(p[0]);
-                  p[1] = y0(p[0]) + p2.Point()[0]*scale_f[1];
-                  intrule.Append(IntegrationPoint(p, p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1]));
-                  //cout << "Appended the weight " << p1.Weight()*p2.Weight()*scale_f[0]*scale_f[1] << "from Volume of Cut 2D." << endl;
-              }
-          }
-      }
-  }
-
-  void CutQuadElementGeometry::GetIntegrationRule(int order, DOMAIN_TYPE dt, IntegrationRule &intrule){
-      LoadBaseQuadFromElementTopology();
-      if(D == 2){
-          lc[0][0][0] = lset[0]; lc[1][0][0] = lset[1]-lc[0][0][0], lc[0][1][0] = lset[3] - lc[0][0][0], lc[1][1][0] = lset[2] - lc[1][0][0]- lc[0][1][0]- lc[0][0][0];
-          for(int i1=0; i1<D; i1++) for(int i2=0; i2<D; i2++) lc[i1][i2][1] = 0.;
-      }
-      else{
-          //cout << "Levelset: " << lset << endl;
-          lc[0][0][0] = lset[0]; lc[1][0][0] = lset[1]-lset[0]; lc[0][1][0] = lset[3] - lset[0]; lc[0][0][1] = lset[4] - lset[0];
-          lc[1][1][0] = lset[2] - lc[1][0][0] - lc[0][1][0] - lc[0][0][0];
-          lc[1][0][1] = lset[5] - lc[1][0][0] - lc[0][0][1] - lc[0][0][0];
-          lc[0][1][1] = lset[7] - lc[0][1][0] - lc[0][0][1] - lc[0][0][0];
-          lc[1][1][1] = lset[6] - lc[1][1][0] - lc[1][0][1] - lc[0][1][1] - lc[1][0][0] - lc[0][1][0] - lc[0][0][1] - lc[0][0][0];
-          //cout << "Lc: " << lc << endl;
-      }
-      if(D==2) FindVolumeAndCutQuads(dt);
-      else FindVolumeAndCutQuads3D(dt);
-
-      if(dt == IF){
-          if (D==2) IntegrateCutQuads(order, intrule);
-          else IntegrateCutQuads3D(order, intrule);
-      }
-      else {
-          if(D==2) {
-              IntegrateVolumeQuads(order, intrule);
-              IntegrateVolumeOfCutQuads(dt, order, intrule);
-          }
-          else{
-              IntegrateVolumeQuads3D(order, intrule);
-              IntegrateVolumeOfCutQuads3D(dt, order, intrule);
-          }
-      }
+  double LevelsetWrapper::operator ()(const Vec<3>& p) const{
+      double v = 0;
+      for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) v += c[i][j][k]*pow(p[0], i)*pow(p[1], j)*pow(p[2], k);
+      return v;
   }
 
   template<unsigned int D>
-  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const CutElementGeometry & geom, IntegrationRule * ir_interface){
-    for (int i = 0; i < quad_untrafo.Size(); ++i)
-    {
-      if (trafo.VB())
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper &lset, IntegrationRule * ir_interface){
+      for (int i = 0; i < quad_untrafo.Size(); ++i)
       {
-        if (D == 3)
-          throw Exception("trafo correction not yet tested!");
-        MappedIntegrationPoint<D-1,D> mip(quad_untrafo[i],trafo);
-        Mat<D-1,D> Finv = mip.GetJacobianInverse();
+          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
+          Mat<D,D> Finv = mip.GetJacobianInverse();
 
-        Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
-        const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+          Vec<D> normal = Trans(Finv) * lset.GetNormal(quad_untrafo[i].Point());
+          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
 
-        (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
       }
-      else
-      {
-        MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
-        Mat<D,D> Finv = mip.GetJacobianInverse();
-
-        Vec<D> normal = Trans(Finv) * geom.GetNormal(quad_untrafo[i].Point());
-        const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
-
-        (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
-      }
-    }
   }
 
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
@@ -563,28 +480,35 @@ namespace xintegration
 
     auto et = trafo.GetElementType();
 
-    if ((et != ET_SEGM)&&(et != ET_TRIG)&&(et != ET_TET)&&(et != ET_QUAD)&&(et != ET_HEX)){
+    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
       cout << "Element Type: " << et << endl;
-      throw Exception("only segms, trigs, tets and quads for now");
+      throw Exception("only trigs, tets, quads for now");
     }
+
+    bool is_quad = (et == ET_QUAD) || (et == ET_HEX);
 
     timercutgeom.Start();
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
     timercutgeom.Stop();
 
     timermakequadrule.Start();
-    CutSimplexElementGeometry geom(cf_lset_at_element, et, lh);
-    CutQuadElementGeometry geom_quad(cf_lset_at_element, et, lh);
     IntegrationRule quad_untrafo;
+    vector<double> lset_vals(cf_lset_at_element.Size());
+    for(int i=0; i<lset_vals.size(); i++) lset_vals[i] = cf_lset_at_element[i];
+    LevelsetWrapper lset(lset_vals, et);
 
     if (element_domain == IF)
     {
       static Timer timer1("StraightCutElementGeometry::Load+Cut");
       timer1.Start();
-      if((et == ET_QUAD)||(et == ET_HEX)) {
-          geom_quad.GetIntegrationRule(intorder, dt, quad_untrafo);
+      if(!is_quad){
+          LevelsetCuttedSimplex s(lset, dt, SimpleX(et));
+          s.GetIntegrationRule(quad_untrafo, intorder);
       }
-      else geom.GetIntegrationRule(intorder, dt, quad_untrafo);
+      else{
+          LevelsetCuttedQuadliteral q(lset, dt, Quadliteral(et));
+          q.GetIntegrationRule(quad_untrafo, intorder);
+      }
       timer1.Stop();
     }
 
@@ -597,19 +521,9 @@ namespace xintegration
       if (dt == IF)
       {
         auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-        if(DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, geom, ir_interface);
-        else if (DIM == 2){
-            if(et == ET_QUAD){
-                TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom_quad, ir_interface);
-            }
-            else TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, geom, ir_interface);
-        }
-        else{
-            if(et == ET_HEX){
-                TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom_quad, ir_interface);
-            }
-            else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, geom, ir_interface);
-        }
+        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface);
+        else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface);
+        else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, lset, ir_interface);
         ir = ir_interface;
       }
       else {
@@ -618,6 +532,7 @@ namespace xintegration
           (*ir_domain)[i] = IntegrationPoint (quad_untrafo[i].Point(),quad_untrafo[i].Weight());
         ir = ir_domain;
       }
+      //if(SCR_DEBUG_OUTPUT) cout << "The intrule: " << *ir << endl;
     }
     else
     {
