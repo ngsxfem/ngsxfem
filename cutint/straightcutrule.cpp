@@ -9,6 +9,7 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 namespace xintegration
 {
   const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
+  const bool SCR_FILE_OUTPUT = false; //Temporary solution!!
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
     bool hasneg = false;
@@ -531,6 +532,15 @@ namespace xintegration
         ir = ir_domain;
       }
       //if(SCR_DEBUG_OUTPUT) cout << "The intrule: " << *ir << endl;
+      if(SCR_FILE_OUTPUT){
+          ofstream cutrule_outfile("cutrule.dat", fstream::app);
+          cutrule_outfile << "dt = " << dt << endl;
+          for (auto ip : *ir){
+            cutrule_outfile << ip.Point()[0] << "\t" << ip.Point()[1] << "\t" << ip.Point()[2] << "\t\t" << ip.Weight() << endl;
+          }
+          cutrule_outfile << endl;
+          cutrule_outfile.close();
+      }
     }
     else
     {
