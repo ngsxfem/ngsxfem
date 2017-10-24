@@ -187,6 +187,76 @@ void ExportNgsx_spacetime(py::module &m)
    });
 
 
+   // DiffOpDtVec
+
+   m.def("dt_vec", [] (const PyProxyFunction self,py::object comp)
+   {
+     Array<int> comparr(0);
+     if (py::extract<int> (comp).check())
+     {
+       int c = py::extract<int>(comp)();
+       if (c != -1)
+       {
+         comparr.SetSize(1);
+         comparr[0] = c;
+       }
+     }
+
+     if (py::extract<py::list> (comp).check())
+       comparr = makeCArray<int> (py::extract<py::list> (comp)());
+
+     if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))
+     {
+       throw Exception("cannot work with compounddiffops, prescribe comp != -1");
+     }
+
+     shared_ptr<DifferentialOperator> diffopdtvec;
+
+     switch (self->Dimension())
+     {
+       case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
+       case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
+       default : throw Exception("Diffop dt only implemented for dim <= 2 so far.");
+     }
+
+     for (int i = comparr.Size() - 1; i >= 0; --i)
+     {
+       diffopdtvec = make_shared<CompoundDifferentialOperator> (diffopdtvec, comparr[i]);
+     }
+
+     auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
+                                                  diffopdtvec, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+     if (self->IsOther())
+       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
+
+     return PyProxyFunction(adddiffop);
+     },
+           py::arg("proxy"),
+           py::arg("comp") = -1
+           );
+
+   m.def("dt_vec", [](PyGF self) -> PyCF
+   {
+     shared_ptr<DifferentialOperator> diffopdtvec;
+
+     switch (self->Dimension())
+     {
+       case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
+       case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
+       default : throw Exception("Diffop dt only implemented for dim <= 2 so far.");
+     }
+
+     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdtvec,nullptr,nullptr,0));
+   });
+
+
+    m.def("ReferenceTimeVariable", []() -> PyCF
+    {
+      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+    });
+
+
    // DiffOpFixt
 
   m.def("fix_t", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
