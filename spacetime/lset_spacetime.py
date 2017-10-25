@@ -32,6 +32,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.lset_lower_bound = lset_lower_bound
         self.lset_upper_bound = lset_upper_bound
         self.threshold = threshold
+        self.periodic = periodic
         
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho_node = GridFunction (self.v_ho, "lset_ho_node")
@@ -47,7 +48,11 @@ class LevelSetMeshAdaptation_Spacetime:
         self.lset_p1_node = GridFunction (self.v_p1, "lset_p1_node")
         self.ndof_node_p1 = len(self.lset_p1_node.vec)
 
-        self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
+        if self.periodic:
+            self.v_def = Periodic(H1(mesh, order=self.order_deform, dim=mesh.dim))
+        else:
+            self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
+        
         self.deform_node = GridFunction(self.v_def, "deform_node")
         self.heapsize = heapsize
         
