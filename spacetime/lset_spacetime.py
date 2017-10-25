@@ -20,7 +20,7 @@ class LevelSetMeshAdaptation_Spacetime:
     order_lset = 2
 
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
-                 lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000):
+                 lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000,periodic=False):
         """
         Deformation
         """
