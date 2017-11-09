@@ -395,10 +395,18 @@ namespace xintegration
           SimpleX trig2({{1,0,0}, {0,1,0}, {1,1,0}});
           LevelsetWrapper lset_trig1 = lset; lset_trig1.update_initial_coefs(trig1.points);
           LevelsetWrapper lset_trig2 = lset; lset_trig2.update_initial_coefs(trig2.points);
-          LevelsetCuttedSimplex trig1_cut(lset_trig1, dt, trig1);
-          LevelsetCuttedSimplex trig2_cut(lset_trig2, dt, trig2);
-          trig1_cut.GetIntegrationRule(intrule, order);
-          trig2_cut.GetIntegrationRule(intrule, order);
+          DOMAIN_TYPE dt_trig1 = CheckIfStraightCut(lset_trig1.initial_coefs);
+          if((dt_trig1 != IF)&&(dt_trig1 == dt)) trig1.GetPlainIntegrationRule(intrule, order);
+          else if(dt_trig1 == IF) {
+              LevelsetCuttedSimplex trig1_cut(lset_trig1, dt, trig1);
+              trig1_cut.GetIntegrationRule(intrule, order);
+          }
+          DOMAIN_TYPE dt_trig2 = CheckIfStraightCut(lset_trig2.initial_coefs);
+          if((dt_trig2 != IF)&&(dt_trig2 == dt)) trig2.GetPlainIntegrationRule(intrule, order);
+          else if(dt_trig2 == IF) {
+              LevelsetCuttedSimplex trig2_cut(lset_trig2, dt, trig2);
+              trig2_cut.GetIntegrationRule(intrule, order);
+          }
       }
   }
 
