@@ -447,6 +447,11 @@ namespace xintegration
       return v;
   }
 
+  void LevelsetWrapper::update_initial_coefs(const Array<Vec<3>> &a_points){
+      initial_coefs.resize(a_points.Size());
+      for(int i=0; i<a_points.Size(); i++) initial_coefs[i]=operator ()(a_points[i]);
+  }
+
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper &lset, IntegrationRule * ir_interface){
       for (int i = 0; i < quad_untrafo.Size(); ++i)

@@ -25,6 +25,7 @@ namespace xintegration
       Vec<3> GetGrad(const Vec<3>& p) const;
       double operator() (const Vec<3> & p) const;
       vector<double> initial_coefs;
+      void update_initial_coefs(const Array<Vec<3>>& a_points);
   private:
       void GetCoeffsFromVals(ELEMENT_TYPE et, vector<double> vals);
   };
