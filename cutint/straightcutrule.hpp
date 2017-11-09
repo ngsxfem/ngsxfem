@@ -9,7 +9,7 @@ using namespace ngfem;
 
 namespace xintegration
 {
-  enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL};
+  enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL, ALWAYS_NONE};
   enum DIMENSION_SWAP {ID, X_Y, NONE};
 
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element, double epsilon = 0);

@@ -331,6 +331,7 @@ namespace xintegration
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol){
       if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
       if(q.D == 3) return ID;
+      if(pol == ALWAYS_NONE) return NONE;
 
       bool allowance_array[] = {true, true};
       double h_root = -lset.c[1][0][0]/lset.c[1][1][0];
