@@ -9,7 +9,7 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 namespace xintegration
 {
   const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
-  const bool SCR_FILE_OUTPUT = true; //Temporary solution!!
+  const bool SCR_FILE_OUTPUT = false; //Temporary solution!!
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
     bool hasneg = false;
