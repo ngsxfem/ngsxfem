@@ -10,7 +10,7 @@ using namespace ngfem;
 namespace xintegration
 {
   enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL};
-  enum DIMENSION_SWAP {ID, X_Y};
+  enum DIMENSION_SWAP {ID, X_Y, NONE};
 
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element, double epsilon = 0);
   DOMAIN_TYPE CheckIfStraightCut(vector<double> cf_lset_at_element, double epsilon = 0);
@@ -130,6 +130,7 @@ namespace xintegration
   private:
       void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
       void GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order);
+      void GetFallbackIntegrationRule(IntegrationRule &intrule, int order);
 
       bool HasTopologyChangeAlongXi();
       void Decompose();

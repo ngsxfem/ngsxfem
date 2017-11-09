@@ -9,7 +9,7 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 namespace xintegration
 {
   const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
-  const bool SCR_FILE_OUTPUT = false; //Temporary solution!!
+  const bool SCR_FILE_OUTPUT = true; //Temporary solution!!
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
     bool hasneg = false;
@@ -358,7 +358,7 @@ namespace xintegration
       if(pol == FIRST_ALLOWED){
           if(allowance_array[1]) return ID;
           else if(allowance_array[0]) return X_Y;
-          else throw Exception ("No allowed direction could be found");
+          else return NONE;
       }
       else if(pol == FIND_OPTIMAL){
           if(allowance_array[1] && allowance_array[0]){
@@ -367,7 +367,7 @@ namespace xintegration
           }
           else if(allowance_array[1]) return ID;
           else if(allowance_array[0]) return X_Y;
-          else throw Exception ("No allowed direction could be found");
+          else return NONE;
       }
       else throw Exception("Unsupported DIMENSION_SWAP policy");
   }
@@ -388,6 +388,19 @@ namespace xintegration
       else if (dt_quad == dt) q.GetPlainIntegrationRule(intrule, order);
   }
 
+  void LevelsetCuttedQuadliteral::GetFallbackIntegrationRule(IntegrationRule &intrule, int order){
+      if(q.D == 2){
+          SimpleX trig1({{1,0,0}, {0,1,0}, {0,0,0}});
+          SimpleX trig2({{1,0,0}, {0,1,0}, {1,1,0}});
+          LevelsetWrapper lset_trig1 = lset; lset_trig1.update_initial_coefs(trig1.points);
+          LevelsetWrapper lset_trig2 = lset; lset_trig2.update_initial_coefs(trig2.points);
+          LevelsetCuttedSimplex trig1_cut(lset_trig1, dt, trig1);
+          LevelsetCuttedSimplex trig2_cut(lset_trig2, dt, trig2);
+          trig1_cut.GetIntegrationRule(intrule, order);
+          trig2_cut.GetIntegrationRule(intrule, order);
+      }
+  }
+
   void LevelsetCuttedQuadliteral::GetIntegrationRule(IntegrationRule &intrule, int order){
       if(SCR_DEBUG_OUTPUT) {
           cout << "\n -- LevelsetCuttedQuadliteral::GetIntegrationRule called" << endl;
@@ -399,7 +412,7 @@ namespace xintegration
       DIMENSION_SWAP sw = GetDimensionSwap();
       if(sw == ID) GetIntegrationRuleAlongXi(intrule, order);
       else if (sw == X_Y) GetIntegrationRuleOnXYPermutatedQuad(intrule, order);
-      else throw Exception ("Geometry Flip necessary but not yet implemented");
+      else if (sw == NONE) GetFallbackIntegrationRule(intrule, order);
   }
 
   void LevelsetWrapper::GetCoeffsFromVals(ELEMENT_TYPE et, vector<double> vals){
