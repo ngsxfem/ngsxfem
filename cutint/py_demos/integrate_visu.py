@@ -11,7 +11,9 @@ square = SplineGeometry()
 square.AddRectangle([0,0],[1,1],bc=1)
 mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
-lsetvals_list = [ [1.,-1.,-1.1,-1.] , [1.,0.7,-1,-0.6], [1., -0.3, -1.3, 0.55] ]
+#lsetvals_list = [ [1.,-1.,-1.1,-1.] , [1.,0.7,-1,-0.6], [1., -0.3, -1.3, 0.55] ]
+
+lsetvals_list = [ [-alpha,1., -alpha,1.] for alpha in [0.1, 0.3, 0.8] ]
 
 V = H1(mesh,order=1)
 lset_approx = GridFunction(V)
