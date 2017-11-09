@@ -45,4 +45,5 @@ for lsetvals in lsetvals_list:
         tikz_out.close()
         os.system("lualatex -shell-escape tikz_frame.tex > tex.log")
         os.system("cp tikz_frame.pdf tikz_frame_lsetvals_"+str(lset_i)+".pdf")
+        os.system("cp tikz_out.tex tikz_out_lsetvals_"+str(lset_i)+".tex")
         lset_i += 1
