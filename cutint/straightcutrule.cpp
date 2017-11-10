@@ -391,21 +391,17 @@ namespace xintegration
 
   void LevelsetCuttedQuadliteral::GetFallbackIntegrationRule(IntegrationRule &intrule, int order){
       if(q.D == 2){
-          SimpleX trig1({{1,0,0}, {0,1,0}, {0,0,0}});
-          SimpleX trig2({{1,0,0}, {0,1,0}, {1,1,0}});
-          LevelsetWrapper lset_trig1 = lset; lset_trig1.update_initial_coefs(trig1.points);
-          LevelsetWrapper lset_trig2 = lset; lset_trig2.update_initial_coefs(trig2.points);
-          DOMAIN_TYPE dt_trig1 = CheckIfStraightCut(lset_trig1.initial_coefs);
-          if((dt_trig1 != IF)&&(dt_trig1 == dt)) trig1.GetPlainIntegrationRule(intrule, order);
-          else if(dt_trig1 == IF) {
-              LevelsetCuttedSimplex trig1_cut(lset_trig1, dt, trig1);
-              trig1_cut.GetIntegrationRule(intrule, order);
-          }
-          DOMAIN_TYPE dt_trig2 = CheckIfStraightCut(lset_trig2.initial_coefs);
-          if((dt_trig2 != IF)&&(dt_trig2 == dt)) trig2.GetPlainIntegrationRule(intrule, order);
-          else if(dt_trig2 == IF) {
-              LevelsetCuttedSimplex trig2_cut(lset_trig2, dt, trig2);
-              trig2_cut.GetIntegrationRule(intrule, order);
+          vector<vector<int>> sub_simplices{{0,1,3}, {2,1,3}};
+          for(auto pnts_idxs: sub_simplices){
+              Array<Vec<3>> pnt_list; for(auto i : pnts_idxs) pnt_list.Append(q.points[i]);
+              SimpleX trig(pnt_list);
+              LevelsetWrapper lset_trig = lset; lset_trig.update_initial_coefs(trig.points);
+              DOMAIN_TYPE dt_trig = CheckIfStraightCut(lset_trig.initial_coefs);
+              if((dt_trig != IF)&&(dt_trig == dt)) trig.GetPlainIntegrationRule(intrule, order);
+              else if(dt_trig == IF) {
+                  LevelsetCuttedSimplex trig_cut(lset_trig, dt, trig);
+                  trig_cut.GetIntegrationRule(intrule, order);
+              }
           }
       }
   }
