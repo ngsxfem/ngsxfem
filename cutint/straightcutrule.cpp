@@ -330,8 +330,8 @@ namespace xintegration
 
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol){
       if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
-      if(q.D == 3) return ID;
       if(pol == ALWAYS_NONE) return NONE;
+      if(q.D == 3) return ID;
 
       bool allowance_array[] = {true, true};
       double h_root = -lset.c[1][0][0]/lset.c[1][1][0];
@@ -390,18 +390,19 @@ namespace xintegration
   }
 
   void LevelsetCuttedQuadliteral::GetFallbackIntegrationRule(IntegrationRule &intrule, int order){
-      if(q.D == 2){
-          vector<vector<int>> sub_simplices{{0,1,3}, {2,1,3}};
-          for(auto pnts_idxs: sub_simplices){
-              Array<Vec<3>> pnt_list; for(auto i : pnts_idxs) pnt_list.Append(q.points[i]);
-              SimpleX trig(pnt_list);
-              LevelsetWrapper lset_trig = lset; lset_trig.update_initial_coefs(trig.points);
-              DOMAIN_TYPE dt_trig = CheckIfStraightCut(lset_trig.initial_coefs);
-              if((dt_trig != IF)&&(dt_trig == dt)) trig.GetPlainIntegrationRule(intrule, order);
-              else if(dt_trig == IF) {
-                  LevelsetCuttedSimplex trig_cut(lset_trig, dt, trig);
-                  trig_cut.GetIntegrationRule(intrule, order);
-              }
+      vector<vector<int>> sub_simplices;
+      if(q.D == 2) sub_simplices = {{0,1,3}, {2,1,3}};
+      else if(q.D == 3) sub_simplices = {{3,0,1,5}, {3,1,2,5}, {3,5,2,6}, {4,5,0,3}, {4,7,5,3}, {7,6,5,3}};
+      for(auto pnts_idxs: sub_simplices){
+          Array<Vec<3>> pnt_list(pnts_idxs.size());
+          for(int i=0; i<pnts_idxs.size(); i++) pnt_list[i] = q.points[pnts_idxs[i]];
+          SimpleX simpl(pnt_list);
+          LevelsetWrapper lset_simpl = lset; lset_simpl.update_initial_coefs(simpl.points);
+          DOMAIN_TYPE dt_simpl = CheckIfStraightCut(lset_simpl.initial_coefs);
+          if((dt_simpl != IF)&&(dt_simpl == dt)) simpl.GetPlainIntegrationRule(intrule, order);
+          else if(dt_simpl == IF) {
+              LevelsetCuttedSimplex trig_cut(lset_simpl, dt, simpl);
+              trig_cut.GetIntegrationRule(intrule, order);
           }
       }
   }
