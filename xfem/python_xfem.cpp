@@ -633,7 +633,7 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
             diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comparr[i]);
           }
 
-          auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
+          auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(),self->IsTestFunction(), self->IsComplex(),
                                                        diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
 
           if (self->IsOther())
