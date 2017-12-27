@@ -150,13 +150,11 @@ class LevelSetMeshAdaptation_Spacetime:
         times = [tstart + delta_t * xi for xi in time_quad]
         max_dists = []
         for ti,xi in zip(times,time_quad):
-            t.Set(ti)
-            self.v_p1_st.SetTime(xi)  
+            t.Set(ti) 
             self.v_def_st.SetTime(xi)
             self.v_ho_st.SetTime(xi)
-            max_dists.append(CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize))
+            max_dists.append(CalcMaxDistance(levelset,RestrictToTime(self.lset_p1,xi),self.deform,heapsize=self.heapsize))
             #max_dists.append(CalcMaxDistance(self.lset_ho,self.lset_p1,self.deform,heapsize=self.heapsize))
-        self.v_p1_st.SetOverrideTime(False)
         self.v_def_st.SetOverrideTime(False)
         self.v_ho_st.SetOverrideTime(False)
         t.Set(tstart)
