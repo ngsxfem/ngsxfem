@@ -42,13 +42,13 @@ namespace ngfem
                    Allocator & lh);
     virtual ~XFiniteElement();
     /// the name
-    virtual string ClassName(void) const;
+    virtual string ClassName(void) const override;
 
     const FiniteElement & GetBaseFE() const { return base; };
 
     const FlatArray<DOMAIN_TYPE>& GetSignsOfDof() const;
 
-    virtual ELEMENT_TYPE ElementType() const { return base.ElementType(); }
+    virtual ELEMENT_TYPE ElementType() const override { return base.ElementType(); }
   };
 
   /**
@@ -63,16 +63,16 @@ namespace ngfem
     SFiniteElement(Mat<2> acuts, int order, Allocator & lh);
     virtual ~SFiniteElement();
     /// the name
-    virtual string ClassName(void) const;
+    virtual string ClassName(void) const override;
 
-    virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
+    virtual ELEMENT_TYPE ElementType() const override { return ET_TRIG; }
 
     /// compute shape, row is shape nr, col is ip nr
     virtual void CalcShape (const IntegrationPoint & ip,
-                            BareSliceVector<> shape) const;
+                            BareSliceVector<> shape) const override;
 
     virtual void CalcDShape (const IntegrationPoint & ip,
-                             SliceMatrix<> dshape) const
+                             BareSliceMatrix<> dshape) const override
     {
       throw Exception("noenoe, ich soll nich");
     }
