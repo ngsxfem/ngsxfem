@@ -328,6 +328,34 @@ namespace xintegration
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[2], ip.Point()[1], ip.Point()[0]}, ip.Weight()));
   }*/
 
+  double LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
+      double Vsq = 0;
+      //if(q.D == 2)
+      auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
+      auto dim_idx_list = {0,1};
+      if(q.D == 3) {
+          corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0),
+                     Vec<3>(0,0,1), Vec<3>(1,0,1), Vec<3>(0,1,1), Vec<3>(1,1,1)};
+          dim_idx_list = {0,1,2};
+      }
+
+      for (auto dim_idx : dim_idx_list) {
+          double max = 0;
+          for(const auto& p : corners){
+              double v = pow(lset.GetGrad(p)[dim_idx], 2);
+              if (v > max) max = v;
+          }
+          Vsq += max;
+      }
+      double V = sqrt(Vsq);
+      double q_max = 0;
+      for (const auto& p : corners){
+          double q_est = pow(V,2)/(pow(V,2) - pow(lset.GetGrad(p)[2],2));
+          if(q_est > q_max) q_max = q_est;
+      }
+      return q_max;
+  }
+
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol){
       if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
       if(pol == ALWAYS_NONE) return NONE;

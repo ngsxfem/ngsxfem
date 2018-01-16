@@ -131,6 +131,7 @@ namespace xintegration
       void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
       void GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order);
       void GetFallbackIntegrationRule(IntegrationRule &intrule, int order);
+      double GetSufficientCritsQBound ();
 
       bool HasTopologyChangeAlongXi();
       void Decompose();
