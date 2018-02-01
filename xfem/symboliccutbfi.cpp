@@ -339,43 +339,120 @@ namespace ngfem
     Facet2ElementTrafo transform1(eltype1, ElVertices1); 
 
     if (etfacet != ET_SEGM)
-      throw Exception("cut facet bilinear form can only do ET_SEGM-facets right now");
-
-    IntegrationPoint ipl(0,0,0,0);
-    IntegrationPoint ipr(1,0,0,0);
-    const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
-    const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
-    MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
-    MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
-    double lset_l = cf_lset->Evaluate(mipl);
-    double lset_r = cf_lset->Evaluate(mipr);
-
-    if ((lset_l > 0 && lset_r > 0) && dt == NEG) return;
-    if ((lset_l < 0 && lset_r < 0) && dt == POS) return;
+      if (dt != IF)
+        throw Exception("cut facet bilinear form can only do ET_SEGM-facets or IF right now");
 
     IntegrationRule * ir_facet = nullptr;
+    //HACKED! TODO: less hacked
 
-    if ((lset_l > 0) != (lset_r > 0))
+    if (dt == IF)
     {
-      IntegrationRule ir_tmp (etfacet, 2*maxorder);
+      static bool first = true;
+      if (first)
+        cout << " this is pretty hacked! " << endl;
+      first = false;
+
+      if (maxorder > 1)
+        throw Exception("maxorder > 1");
+
+      IntegrationPoint ip[3] = {IntegrationPoint(0,0,0,0),
+                                IntegrationPoint(1,0,0,0),
+                                IntegrationPoint(0,1,0,0)};
+      const IntegrationPoint & facet_ip_1 = transform1( LocalFacetNr1, ip[0]);
+      const IntegrationPoint & facet_ip_2 = transform1( LocalFacetNr1, ip[1]);
+      const IntegrationPoint & facet_ip_3 = transform1( LocalFacetNr1, ip[2]);
+      MappedIntegrationPoint<2,2> mip1(facet_ip_1,trafo1);
+      MappedIntegrationPoint<2,2> mip2(facet_ip_2,trafo1);
+      MappedIntegrationPoint<2,2> mip3(facet_ip_3,trafo1);
+      double lset[3] = {cf_lset->Evaluate(mip1),cf_lset->Evaluate(mip2),cf_lset->Evaluate(mip3)};
+
+      if ((lset[0] > 0 && lset[1] > 0 && lset[2] > 0)) return;
+      if ((lset[0] < 0 && lset[1] < 0 && lset[2] < 0)) return;
+
+      cout << " we have a cut " << endl;
+      cout << " level set values are " << endl;
+      cout << lset[0] << " at (0,0) " << endl;
+      cout << lset[1] << " at (1,0) " << endl;
+      cout << lset[2] << " at (0,1) " << endl;
+      
+      IntegrationPoint cut[2] = {IntegrationPoint(), IntegrationPoint()};
+      int ncut = 0;
+      int edges[3][2] = {{0,1},{1,2},{2,0}};
+      for (int edge = 0; edge < 3; edge++)
+      {
+        int node1 = edges[edge][0];
+        int node2 = edges[edge][1];
+        if (((lset[node1] > 0) && (lset[node2] < 0)) || ((lset[node1] < 0) && (lset[node2] > 0)))
+        {
+          cut[ncut].Point() += lset[node2] / (lset[node2]-lset[node1]) * ip[node1].Point();
+          cut[ncut].Point() += lset[node1] / (lset[node1]-lset[node2]) * ip[node2].Point();
+          ncut++;
+        }
+      }
+
+      cout << " cuts are at " << endl;
+      cout << cut[0] << endl;
+      cout << cut[1] << endl;
+      
+      IntegrationRule ir_tmp (ET_SEGM, 4*maxorder);
+      cout << "maxorder = " << maxorder << endl;
       ir_facet = new (lh) IntegrationRule(ir_tmp.Size(),lh);
-      ///....CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
-      double x0 = 0.0;
-      double x1 = 1.0;
-      double xhat = - lset_l / (lset_r - lset_l );
-      if ( ((lset_l > 0) && dt == POS) || ((lset_l < 0) && dt == NEG))
-        x1 = xhat;
-      else
-        x0 = xhat;
-      double len = x1-x0;
+      auto diffvec = cut[1].Point() - cut[0].Point();
+      // double len = diffvec.norm();
+      cout << " diffvec is " << endl;
+      cout << diffvec << endl;
+      cout << " integration points are " << endl;
       for (int i = 0; i < ir_tmp.Size(); i++)
-        (*ir_facet)[i] = IntegrationPoint(x0 + ir_tmp[i].Point()[0] * len, 0, 0, len*ir_tmp[i].Weight());
+      {
+        const double s = ir_tmp[i].Point()[0];
+        Vec<3> p = cut[0].Point() + s * diffvec;
+        (*ir_facet)[i] = IntegrationPoint(p, ir_tmp[i].Weight());
+        cout << (*ir_facet)[i].Point() << endl;
+        // MappedIntegrationPoint<3,3> mip((*ir_facet)[i],trafo1);
+        // auto F = mip.GetJacobian();
+        // const double len = Norm(F * diffvec);
+        // const double correctionfactorfacet = todo;
+        // (*ir_facet)[i].Weight() *= len / correctionfactorfacet;
+      }
+      getchar();
     }
     else
     {
-      ir_facet = new (lh) IntegrationRule(etfacet, 2*maxorder);
+      IntegrationPoint ipl(0,0,0,0);
+      IntegrationPoint ipr(1,0,0,0);
+      const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
+      const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
+      MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
+      MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
+      double lset_l = cf_lset->Evaluate(mipl);
+      double lset_r = cf_lset->Evaluate(mipr);
+
+      if ((lset_l > 0 && lset_r > 0) && dt == NEG) return;
+      if ((lset_l < 0 && lset_r < 0) && dt == POS) return;
+
+
+      if ((lset_l > 0) != (lset_r > 0))
+      {
+        IntegrationRule ir_tmp (etfacet, 2*maxorder);
+        ir_facet = new (lh) IntegrationRule(ir_tmp.Size(),lh);
+        ///....CutIntegrationRule(cf_lset, trafo, dt, intorder, subdivlvl, lh);
+        double x0 = 0.0;
+        double x1 = 1.0;
+        double xhat = - lset_l / (lset_r - lset_l );
+        if ( ((lset_l > 0) && dt == POS) || ((lset_l < 0) && dt == NEG))
+          x1 = xhat;
+        else
+          x0 = xhat;
+        double len = x1-x0;
+        for (int i = 0; i < ir_tmp.Size(); i++)
+          (*ir_facet)[i] = IntegrationPoint(x0 + ir_tmp[i].Point()[0] * len, 0, 0, len*ir_tmp[i].Weight());
+      }
+      else
+      {
+        ir_facet = new (lh) IntegrationRule(etfacet, 2*maxorder);
+      }
     }
-    
+
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_facet), lh);
     BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
 
