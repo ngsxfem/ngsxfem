@@ -352,8 +352,8 @@ namespace ngfem
         cout << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
       first = false;
 
-      if (maxorder > 1)
-        throw Exception("maxorder > 1");
+      // if (maxorder > 1)
+      //   throw Exception("maxorder > 1");
 
       IntegrationPoint ip[3] = {IntegrationPoint(1,0,0,0),
                                 IntegrationPoint(0,1,0,0),
