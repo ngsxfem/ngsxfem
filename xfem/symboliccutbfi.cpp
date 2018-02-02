@@ -339,7 +339,7 @@ namespace ngfem
     Facet2ElementTrafo transform1(eltype1, ElVertices1); 
 
     if (etfacet != ET_SEGM)
-      if (dt != IF)
+      if (etfacet != ET_TRIG || dt != IF)
         throw Exception("cut facet bilinear form can only do ET_SEGM-facets or IF right now");
 
     IntegrationRule * ir_facet = nullptr;
@@ -349,31 +349,31 @@ namespace ngfem
     {
       static bool first = true;
       if (first)
-        cout << " this is pretty hacked! " << endl;
+        cout << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
       first = false;
 
       if (maxorder > 1)
         throw Exception("maxorder > 1");
 
-      IntegrationPoint ip[3] = {IntegrationPoint(0,0,0,0),
-                                IntegrationPoint(1,0,0,0),
-                                IntegrationPoint(0,1,0,0)};
+      IntegrationPoint ip[3] = {IntegrationPoint(1,0,0,0),
+                                IntegrationPoint(0,1,0,0),
+                                IntegrationPoint(0,0,0,0)};
       const IntegrationPoint & facet_ip_1 = transform1( LocalFacetNr1, ip[0]);
       const IntegrationPoint & facet_ip_2 = transform1( LocalFacetNr1, ip[1]);
       const IntegrationPoint & facet_ip_3 = transform1( LocalFacetNr1, ip[2]);
-      MappedIntegrationPoint<2,2> mip1(facet_ip_1,trafo1);
-      MappedIntegrationPoint<2,2> mip2(facet_ip_2,trafo1);
-      MappedIntegrationPoint<2,2> mip3(facet_ip_3,trafo1);
+      MappedIntegrationPoint<3,3> mip1(facet_ip_1,trafo1);
+      MappedIntegrationPoint<3,3> mip2(facet_ip_2,trafo1);
+      MappedIntegrationPoint<3,3> mip3(facet_ip_3,trafo1);
       double lset[3] = {cf_lset->Evaluate(mip1),cf_lset->Evaluate(mip2),cf_lset->Evaluate(mip3)};
 
       if ((lset[0] > 0 && lset[1] > 0 && lset[2] > 0)) return;
       if ((lset[0] < 0 && lset[1] < 0 && lset[2] < 0)) return;
 
-      cout << " we have a cut " << endl;
-      cout << " level set values are " << endl;
-      cout << lset[0] << " at (0,0) " << endl;
-      cout << lset[1] << " at (1,0) " << endl;
-      cout << lset[2] << " at (0,1) " << endl;
+      // cout << " we have a cut " << endl;
+      // cout << " level set values are " << endl;
+      // cout << lset[0] << " at (0,0) [" << mip1.GetPoint() << "]" << endl;
+      // cout << lset[1] << " at (1,0) [" << mip2.GetPoint() << "]" << endl;
+      // cout << lset[2] << " at (0,1) [" << mip3.GetPoint() << "]" << endl;
       
       IntegrationPoint cut[2] = {IntegrationPoint(), IntegrationPoint()};
       int ncut = 0;
@@ -382,39 +382,57 @@ namespace ngfem
       {
         int node1 = edges[edge][0];
         int node2 = edges[edge][1];
+        // cout<< node1 <<endl;
+        // cout<< node2 <<endl;
         if (((lset[node1] > 0) && (lset[node2] < 0)) || ((lset[node1] < 0) && (lset[node2] > 0)))
         {
-          cut[ncut].Point() += lset[node2] / (lset[node2]-lset[node1]) * ip[node1].Point();
-          cut[ncut].Point() += lset[node1] / (lset[node1]-lset[node2]) * ip[node2].Point();
+          Vec<3> cutpoint = 0.0;
+          cutpoint += lset[node2] / (lset[node2]-lset[node1]) * ip[node1].Point();
+          cutpoint += lset[node1] / (lset[node1]-lset[node2]) * ip[node2].Point();
+          cut[ncut] = transform1( LocalFacetNr1, cutpoint);
           ncut++;
         }
       }
 
-      cout << " cuts are at " << endl;
-      cout << cut[0] << endl;
-      cout << cut[1] << endl;
+      // cout << " cuts are at " << endl;
+
+      // MappedIntegrationPoint<3,3> mipcut1(cut[0],trafo1);
+      // MappedIntegrationPoint<3,3> mipcut2(cut[1],trafo1);
+
+      // cout << cut[0] << " ( " << mipcut1.GetPoint() << " ) "  << endl;
+      // cout << cut[1] << " ( " << mipcut2.GetPoint() << " ) "  << endl;
       
-      IntegrationRule ir_tmp (ET_SEGM, 4*maxorder);
-      cout << "maxorder = " << maxorder << endl;
+      IntegrationRule ir_tmp (ET_SEGM, 2*maxorder);
+      // cout << "maxorder = " << maxorder << endl;
       ir_facet = new (lh) IntegrationRule(ir_tmp.Size(),lh);
       auto diffvec = cut[1].Point() - cut[0].Point();
-      // double len = diffvec.norm();
-      cout << " diffvec is " << endl;
-      cout << diffvec << endl;
-      cout << " integration points are " << endl;
+      // cout << " diffvec is " << endl;
+      // cout << diffvec << endl;
+      // cout << " integration points are " << endl;
       for (int i = 0; i < ir_tmp.Size(); i++)
       {
         const double s = ir_tmp[i].Point()[0];
         Vec<3> p = cut[0].Point() + s * diffvec;
         (*ir_facet)[i] = IntegrationPoint(p, ir_tmp[i].Weight());
-        cout << (*ir_facet)[i].Point() << endl;
-        // MappedIntegrationPoint<3,3> mip((*ir_facet)[i],trafo1);
-        // auto F = mip.GetJacobian();
-        // const double len = Norm(F * diffvec);
-        // const double correctionfactorfacet = todo;
-        // (*ir_facet)[i].Weight() *= len / correctionfactorfacet;
+        // cout << (*ir_facet)[i].Point();
+        
+        MappedIntegrationPoint<3,3> mip((*ir_facet)[i],trafo1);
+        // cout << "mip: " << mip.GetPoint() << endl;
+        auto F = mip.GetJacobian();
+        auto mapped_diffvec = F * diffvec;
+        const double meas1D = L2Norm(mapped_diffvec);
+
+        auto inv_jac = mip.GetJacobianInverse();
+        double det = fabs (mip.GetJacobiDet()); // GetMeasure();
+        auto normal_ref = ElementTopology::GetNormals<3>(ET_TET)[LocalFacetNr1];
+        auto normal = det * Trans (inv_jac) * normal_ref;
+        double meas2D = L2Norm (normal);       // that's the surface measure
+        
+        (*ir_facet)[i].SetWeight((*ir_facet)[i].Weight() * meas1D / meas2D);
+        // cout << "meas 1D: " << meas1D << endl;
+        // cout << "meas 2D: " << meas2D << endl;
       }
-      getchar();
+      // getchar();
     }
     else
     {
