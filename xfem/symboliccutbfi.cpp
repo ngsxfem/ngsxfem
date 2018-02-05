@@ -345,7 +345,7 @@ namespace ngfem
     IntegrationRule * ir_facet = nullptr;
     //HACKED! TODO: less hacked
 
-    if (dt == IF)
+    if (etfacet != ET_SEGM && dt == IF)
     {
       static bool first = true;
       if (first)
@@ -422,19 +422,20 @@ namespace ngfem
         auto mapped_diffvec = F * diffvec;
         const double meas1D = L2Norm(mapped_diffvec);
 
-        auto inv_jac = mip.GetJacobianInverse();
-        double det = fabs (mip.GetJacobiDet()); // GetMeasure();
-        auto normal_ref = ElementTopology::GetNormals<3>(ET_TET)[LocalFacetNr1];
-        auto normal = det * Trans (inv_jac) * normal_ref;
-        double meas2D = L2Norm (normal);       // that's the surface measure
+        // auto inv_jac = mip.GetJacobianInverse();
+        // double det = fabs (mip.GetJacobiDet()); // GetMeasure();
+        // auto normal_ref = ElementTopology::GetNormals<3>(ET_TET)[LocalFacetNr1];
+        // auto normal = det * Trans (inv_jac) * normal_ref;
+        // double meas2D = L2Norm (normal);       // that's the surface measure
         
-        (*ir_facet)[i].SetWeight((*ir_facet)[i].Weight() * meas1D / meas2D);
+        (*ir_facet)[i].SetWeight((*ir_facet)[i].Weight() * meas1D);
+        // (*ir_facet)[i].SetWeight((*ir_facet)[i].Weight() * meas1D / meas2D);
         // cout << "meas 1D: " << meas1D << endl;
         // cout << "meas 2D: " << meas2D << endl;
       }
       // getchar();
     }
-    else
+    else //ET_SEGM
     {
       IntegrationPoint ipl(0,0,0,0);
       IntegrationPoint ipr(1,0,0,0);
@@ -445,11 +446,18 @@ namespace ngfem
       double lset_l = cf_lset->Evaluate(mipl);
       double lset_r = cf_lset->Evaluate(mipr);
 
-      if ((lset_l > 0 && lset_r > 0) && dt == NEG) return;
-      if ((lset_l < 0 && lset_r < 0) && dt == POS) return;
+      
+      if ((lset_l > 0 && lset_r > 0) && dt != POS) return;
+      if ((lset_l < 0 && lset_r < 0) && dt != NEG) return;
 
-
-      if ((lset_l > 0) != (lset_r > 0))
+      if (dt == IF)
+      {
+        ir_facet = new (lh) IntegrationRule(1,lh);
+        double xhat = - lset_l / (lset_r - lset_l );
+        (*ir_facet)[0] = IntegrationPoint(xhat, 0, 0, 1.0);
+        
+      }
+      else if ((lset_l > 0) != (lset_r > 0))
       {
         IntegrationRule ir_tmp (etfacet, 2*maxorder);
         ir_facet = new (lh) IntegrationRule(ir_tmp.Size(),lh);
@@ -550,9 +558,14 @@ namespace ngfem
                 proxyvalues(STAR,l,k) = val.Col(0);
               }
 
-          for (int i = 0; i < mir1.Size(); i++)
-            // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
-            proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_facet)[i].Weight();
+          if (dt == IF)
+            for (int i = 0; i < mir1.Size(); i++)
+              // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
+              proxyvalues(i,STAR,STAR) *= (*ir_facet)[i].Weight();
+          else
+            for (int i = 0; i < mir1.Size(); i++)
+              // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
+              proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_facet)[i].Weight();
 
           IntRange trial_range = proxy1->IsOther() ? IntRange(fel1.GetNDof(), elmat.Width()) : IntRange(0, fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(fel1.GetNDof(), elmat.Height()) : IntRange(0, fel1.GetNDof());
