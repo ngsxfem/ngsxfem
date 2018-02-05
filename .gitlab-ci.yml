@@ -4,6 +4,7 @@ beforescript:
     - echo " before script "
     - rm -rf /home/gitlab-runner/inst/netgen
     - mkdir -p /home/gitlab-runner/inst/netgen
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter ninja --run "echo \"nix-shell test\" "
 
 build:
   stage: build

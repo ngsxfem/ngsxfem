@@ -31,7 +31,7 @@ namespace ngfem
                                        VorB vb = VOL);
 
     // virtual VorB VB () const { return vb; }
-    virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
+    virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
     virtual void 
@@ -120,7 +120,7 @@ namespace ngfem
                                             int asubdivlvl);
 
     virtual VorB VB () const { return vb; }
-    virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
+    virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }
@@ -178,7 +178,7 @@ namespace ngfem
     //void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
 
     virtual VorB VB () const { return vb; }
-    virtual bool IsSymmetric() const { return true; }  // correct would be: don't know
+    virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }

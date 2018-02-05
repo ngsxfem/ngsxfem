@@ -39,10 +39,17 @@ You have Netgen/NGSolve installed? Perfect. Then let INSTLOCATION be the locatio
 Netgen/NGSolve is already installed to. To install xfem make sure that you have 
 write access to that same directory. Then build =ngsxfem= with 
 #+BEGIN_SRC shell
-cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=OFF
+cmake ../ -DCMAKE_INSTALL_PREFIX=INSTLOCATION -DBUILD_NGSOLVE=OFF
 make
 make install
 #+END_SRC
+
+**** Fix of potential issues
+If you have compiling problems or at run time some NGSolve symbols are not found, it may be (happened in some configurations) that the NGSolve compiler and linker wrapper =ngscxx= and =ngsld= were not used. In this case you may add
+#+BEGIN_SRC shell
+cmake ... -DCMAKE_CXX_COMPILER=ngscxx -DCMAKE_LINKER=ngsld
+#+END_SRC
+to the cmake configuration.
 
 *** Building the NGS-Suite and =ngsxfem= together 
 If you do not have Netgen/NGSolve installed, you may first call
@@ -51,7 +58,7 @@ git submodule update --init
 #+END_SRC
 which pulls Netgen/NGSolve as external dependencies. Then, just call
 #+BEGIN_SRC shell
-cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=ON
+cmake ../ -DCMAKE_INSTALL_PREFIX=INSTLOCATION -DBUILD_NGSOLVE=ON
 make
 make install
 #+END_SRC
@@ -73,6 +80,7 @@ git submodule update --init --recursive
 Otherwise update your NGSolve version manually. 
 As a rule we try to be compatible to the latest release of NGSolve. 
 To be sure check the version in external_dependencies/ngsolve
+
 
 ** Examples
 To run the python examples be sure to follow the build steps above.

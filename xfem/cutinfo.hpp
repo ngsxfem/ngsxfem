@@ -24,9 +24,9 @@ namespace ngcomp
   protected:
     shared_ptr<MeshAccess> ma;
     shared_ptr<VVector<double>> cut_ratio_of_element [2] = {nullptr, nullptr};
-    shared_ptr<BitArray> elems_of_domain_type [3] = {nullptr, nullptr, nullptr};
-    shared_ptr<BitArray> selems_of_domain_type [3] = {nullptr, nullptr, nullptr};
-    shared_ptr<BitArray> facets_of_domain_type [3] = {nullptr, nullptr, nullptr};
+    shared_ptr<BitArray> elems_of_domain_type [N_COMBINED_DOMAIN_TYPES] = {nullptr, nullptr, nullptr};
+    shared_ptr<BitArray> selems_of_domain_type [N_COMBINED_DOMAIN_TYPES] = {nullptr, nullptr, nullptr};
+    shared_ptr<BitArray> facets_of_domain_type [N_COMBINED_DOMAIN_TYPES] = {nullptr, nullptr, nullptr};
     shared_ptr<BitArray> cut_neighboring_node [6] = {nullptr, nullptr, nullptr,
                                                      nullptr, nullptr, nullptr};
     shared_ptr<Array<DOMAIN_TYPE>> dom_of_node [6] = {nullptr, nullptr, nullptr,
@@ -73,7 +73,7 @@ namespace ngcomp
     //     return GetCutRatioOfNode<NT>(nr) == 0.0 ? NEG : POS;
     // }
 
-    shared_ptr<BitArray> GetElementsOfDomainType(DOMAIN_TYPE dt, VorB vb) const
+    shared_ptr<BitArray> GetElementsOfDomainType(COMBINED_DOMAIN_TYPE dt, VorB vb) const
     {
       if (vb == VOL)
         return elems_of_domain_type[dt];
@@ -81,7 +81,13 @@ namespace ngcomp
         return selems_of_domain_type[dt];
     }
 
-    shared_ptr<BitArray> GetFacetsOfDomainType(DOMAIN_TYPE dt) const { return facets_of_domain_type[dt]; }
+    shared_ptr<BitArray> GetElementsOfDomainType(DOMAIN_TYPE dt, VorB vb) const
+    {
+      return GetElementsOfDomainType(TO_CDT(dt),vb);
+    }
+    
+    shared_ptr<BitArray> GetFacetsOfDomainType(COMBINED_DOMAIN_TYPE dt) const { return facets_of_domain_type[dt]; }
+    shared_ptr<BitArray> GetFacetsOfDomainType(DOMAIN_TYPE dt) const { return facets_of_domain_type[TO_CDT(dt)]; }
 
   };
 
