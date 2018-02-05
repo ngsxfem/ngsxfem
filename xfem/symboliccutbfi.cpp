@@ -478,6 +478,9 @@ namespace ngfem
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_facet), lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
 
+    mir1.SetOtherMIR (&mir2);
+    mir2.SetOtherMIR (&mir1);
+    
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo1).userdata = &ud;
 
@@ -533,6 +536,7 @@ namespace ngfem
           */
 
           mir1.ComputeNormalsAndMeasure (eltype1, LocalFacetNr1);
+          mir2.ComputeNormalsAndMeasure (eltype2, LocalFacetNr2);
           
           for (int k = 0; k < proxy1->Dimension(); k++)
             for (int l = 0; l < proxy2->Dimension(); l++)
