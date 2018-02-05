@@ -13,14 +13,6 @@ using namespace xintegration;
 void ExportNgsx_cutint(py::module &m)
 {
 
-
-  py::enum_<SWAP_DIMENSIONS_POLICY>(m, "QUAD_DIRECTION_POLICY")
-    .value("FIRST", FIRST_ALLOWED)
-    .value("OPTIMAL", FIND_OPTIMAL)
-    .value("FALLBACK", ALWAYS_NONE)
-    .export_values()
-    ;
-
   typedef shared_ptr<CoefficientFunction> PyCF;
   typedef GridFunction GF;
   typedef shared_ptr<GF> PyGF;

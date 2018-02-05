@@ -3,7 +3,7 @@
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <ngstd.hpp> // for Array
 
-#include "../cutint/xdecompose.hpp"
+#include "../cutint/xintegration.hpp"
 using namespace xintegration;
 
 // #include "xfiniteelement.hpp"
@@ -21,6 +21,7 @@ namespace ngfem
     DOMAIN_TYPE dt = NEG;
     int force_intorder = -1;
     int subdivlvl = 0;
+    SWAP_DIMENSIONS_POLICY pol;
   public:
     
     SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
@@ -28,6 +29,7 @@ namespace ngfem
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
                                        int asubdivlvl = 0,
+                                       SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL,
                                        VorB vb = VOL);
 
     // virtual VorB VB () const { return vb; }

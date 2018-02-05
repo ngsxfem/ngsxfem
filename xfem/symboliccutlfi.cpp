@@ -20,9 +20,10 @@ namespace ngfem
                                    DOMAIN_TYPE adt,
                                    int aforce_intorder,
                                    int asubdivlvl,
+                                   SWAP_DIMENSIONS_POLICY apol,
                                    VorB vb)
     : SymbolicLinearFormIntegrator(acf,vb,false), cf_lset(acf_lset), dt(adt),
-    force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
+      force_intorder(aforce_intorder), subdivlvl(asubdivlvl), pol(apol)
   {
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
   }
@@ -96,7 +97,7 @@ namespace ngfem
 
     elvec = 0;
 
-    const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
+    const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl, pol);
     if (ir == nullptr)
       return;
     ///

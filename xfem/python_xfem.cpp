@@ -11,7 +11,6 @@ using namespace ngcomp;
 void ExportNgsx_xfem(py::module &m)
 {
 
-
   typedef shared_ptr<CoefficientFunction> PyCF;
   typedef shared_ptr<FESpace> PyFES;
   typedef shared_ptr<SFESpace> PySFES;
@@ -391,6 +390,7 @@ elnr : int
                              DOMAIN_TYPE dt,
                              int order,
                              int subdivlvl,
+                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -419,7 +419,7 @@ elnr : int
 
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
-            bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
+            bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol, vb);
           else
           {
             if (vb == BND)
@@ -444,6 +444,7 @@ elnr : int
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
         py::arg("subdivlvl")=0,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
@@ -523,6 +524,7 @@ definedonelements : ngsolve.BitArray/None
                              DOMAIN_TYPE dt,
                              int order,
                              int subdivlvl,
+                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -543,7 +545,7 @@ definedonelements : ngsolve.BitArray/None
             throw Exception("No Facet LFI with Symbolic cuts..");
 
           shared_ptr<LinearFormIntegrator> lfi
-            = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, vb);
+            = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol, vb);
 
           if (py::extract<py::list> (definedon).check())
             lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -563,6 +565,7 @@ definedonelements : ngsolve.BitArray/None
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
         py::arg("subdivlvl")=0,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),

@@ -233,7 +233,7 @@ namespace xintegration
           }
       }
   }
-  const double C = 50;
+  const double C = 20;
   const double c = sqrt(1-1./pow(C,2));
 
   void LevelsetCuttedQuadliteral::GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order){

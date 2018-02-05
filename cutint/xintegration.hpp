@@ -11,7 +11,6 @@ using namespace ngfem;
 using ngfem::ELEMENT_TYPE;
 namespace xintegration
 {
-  enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL, ALWAYS_NONE};
   /// struct which defines the relation a < b for Point4DCL 
   const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
                                                    shared_ptr<GridFunction> gflset,
