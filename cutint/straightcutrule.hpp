@@ -9,7 +9,6 @@ using namespace ngfem;
 
 namespace xintegration
 {
-  enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL, ALWAYS_NONE};
   enum DIMENSION_SWAP {ID, X_Y, NONE};
 
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element, double epsilon = 0);
@@ -119,13 +118,14 @@ namespace xintegration
 
   class LevelsetCuttedQuadliteral : public LevelsetCuttedPolytopE {
   public:
+      SWAP_DIMENSIONS_POLICY pol;
       virtual void GetIntegrationRule(IntegrationRule &intrule, int order);
       void GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order);
-      DIMENSION_SWAP GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol = FIRST_ALLOWED);
+      DIMENSION_SWAP GetDimensionSwap();
 
       Quadliteral q;
 
-      LevelsetCuttedQuadliteral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadliteral a_q) : LevelsetCuttedPolytopE(a_lset, a_dt), q(a_q) { ;}
+      LevelsetCuttedQuadliteral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadliteral a_q, SWAP_DIMENSIONS_POLICY a_pol) : LevelsetCuttedPolytopE(a_lset, a_dt), pol(a_pol), q(a_q) { ;}
       void GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order);
   private:
       void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
@@ -145,5 +145,6 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                      LocalHeap & lh);
 }

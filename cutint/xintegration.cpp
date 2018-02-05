@@ -12,7 +12,8 @@ namespace xintegration
                                                    DOMAIN_TYPE dt,
                                                    int intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl)
+                                                   int subdivlvl,
+                                                   SWAP_DIMENSIONS_POLICY quad_dir_policy)
   {
     // temporary fix for ET_SEGM
     /*
@@ -26,7 +27,7 @@ namespace xintegration
       gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
       FlatVector<> elvec(dnums.Size(),lh);
       gflset->GetVector().GetIndirect(dnums,elvec);
-      return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
+      return StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
     }
     else if (cflset != nullptr)
     {

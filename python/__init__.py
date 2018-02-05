@@ -262,12 +262,15 @@ See documentation of Integrate.
         print("Please provide a level set function")
     if not "domain_type" in levelset_domain:
         print("Please provide a domain type (NEG,POS or IF)")
+    if not "quad_dir_policy" in levelset_domain:
+        levelset_domain["quad_dir_policy"] = OPTIMAL
 
     return IntegrateX(lset=levelset_domain["levelset"],
                       mesh=mesh, cf=cf,
                       order=order,
                       domain_type=levelset_domain["domain_type"],
                       subdivlvl=levelset_domain["subdivlvl"],
+                      quad_dir_policy=levelset_domain["quad_dir_policy"],
                       heapsize=heapsize)
 
 

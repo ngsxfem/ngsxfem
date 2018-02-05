@@ -225,11 +225,11 @@ namespace xintegration
           if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
           if(q.D == 2){
               array<tuple<double, double>, 2> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(xi0,xi1)});
-              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals)));
+              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals),pol));
           }
           else if(q.D == 3){
               array<tuple<double, double>, 3> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(q.points[0][1], q.points[2][1]), make_tuple(xi0,xi1)});
-              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals)));
+              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals),pol));
           }
       }
   }
@@ -256,7 +256,7 @@ namespace xintegration
           else if(q.D == 3){
               lsetproj[0] = lset(Vec<3>(q.points[0][0],q.points[0][1], xi_ast)); lsetproj[1] = lset(Vec<3>(q.points[2][0],q.points[0][1], xi_ast));
               lsetproj[2] = lset(Vec<3>(q.points[2][0],q.points[2][1], xi_ast)); lsetproj[3] = lset(Vec<3>(q.points[0][0],q.points[2][1], xi_ast));
-              LevelsetCuttedQuadliteral Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_QUAD), dt, Quadliteral(ET_QUAD));
+              LevelsetCuttedQuadliteral Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_QUAD), dt, Quadliteral(ET_QUAD), pol);
               Codim1ElemAtXast.GetIntegrationRule(new_intrule, order);
           }
           for(const auto& p2 : new_intrule){
@@ -297,7 +297,7 @@ namespace xintegration
           cout << "rotated lset vals:" << endl;
           for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
       }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated);
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol);
       me_rotated.GetIntegrationRuleAlongXi(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[1], ip.Point()[0], ip.Point()[2]}, ip.Weight()));
   }
@@ -356,7 +356,7 @@ namespace xintegration
       return q_max;
   }
 
-  DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(SWAP_DIMENSIONS_POLICY pol){
+  DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
       if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
       if(pol == ALWAYS_NONE) return NONE;
       if(q.D == 3) return ID;
@@ -519,6 +519,7 @@ namespace xintegration
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                      LocalHeap & lh)
   {
     static Timer t ("NewStraightCutIntegrationRule");
@@ -557,7 +558,7 @@ namespace xintegration
           s.GetIntegrationRule(quad_untrafo, intorder);
       }
       else{
-          LevelsetCuttedQuadliteral q(lset, dt, Quadliteral(et));
+          LevelsetCuttedQuadliteral q(lset, dt, Quadliteral(et), quad_dir_policy);
           q.GetIntegrationRule(quad_untrafo, intorder);
       }
       timer1.Stop();
