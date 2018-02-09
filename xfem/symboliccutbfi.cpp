@@ -343,7 +343,6 @@ namespace ngfem
         throw Exception("cut facet bilinear form can only do ET_SEGM-facets or IF right now");
 
     IntegrationRule * ir_facet = nullptr;
-    //HACKED! TODO: less hacked
 
     if (etfacet != ET_SEGM && dt == IF)
     {
@@ -352,88 +351,69 @@ namespace ngfem
         cout << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
       first = false;
 
-      // if (maxorder > 1)
-      //   throw Exception("maxorder > 1");
+      // Determine vertex values of the level set function:
+      double lset[3];
+      int v = 0;
+      Vec<2> verts[] {{1,0}, {0,1}, {0,0}};
+      bool haspos = false;
+      bool hasneg = false;
+      for (Vec<2> vertex : verts )
+      {
+        IntegrationPoint ip(vertex);
+        const IntegrationPoint & ip_in_tet = transform1( LocalFacetNr1, ip);
+        MappedIntegrationPoint<3,3> mip(ip_in_tet,trafo1);
+        lset[v] = cf_lset->Evaluate(mip);
+        haspos = lset[v] > 0 ? true : haspos;
+        hasneg = lset[v] < 0 ? true : hasneg;
+        v++;
+      }
 
-      IntegrationPoint ip[3] = {IntegrationPoint(1,0,0,0),
-                                IntegrationPoint(0,1,0,0),
-                                IntegrationPoint(0,0,0,0)};
-      const IntegrationPoint & facet_ip_1 = transform1( LocalFacetNr1, ip[0]);
-      const IntegrationPoint & facet_ip_2 = transform1( LocalFacetNr1, ip[1]);
-      const IntegrationPoint & facet_ip_3 = transform1( LocalFacetNr1, ip[2]);
-      MappedIntegrationPoint<3,3> mip1(facet_ip_1,trafo1);
-      MappedIntegrationPoint<3,3> mip2(facet_ip_2,trafo1);
-      MappedIntegrationPoint<3,3> mip3(facet_ip_3,trafo1);
-      double lset[3] = {cf_lset->Evaluate(mip1),cf_lset->Evaluate(mip2),cf_lset->Evaluate(mip3)};
+      if (!hasneg || !haspos) return;
 
-      if ((lset[0] > 0 && lset[1] > 0 && lset[2] > 0)) return;
-      if ((lset[0] < 0 && lset[1] < 0 && lset[2] < 0)) return;
-
-      // cout << " we have a cut " << endl;
-      // cout << " level set values are " << endl;
-      // cout << lset[0] << " at (0,0) [" << mip1.GetPoint() << "]" << endl;
-      // cout << lset[1] << " at (1,0) [" << mip2.GetPoint() << "]" << endl;
-      // cout << lset[2] << " at (0,1) [" << mip3.GetPoint() << "]" << endl;
-      
-      IntegrationPoint cut[2] = {IntegrationPoint(), IntegrationPoint()};
+      // Determine the two cut positions:
+      IntegrationRule cut(2,lh);
       int ncut = 0;
       int edges[3][2] = {{0,1},{1,2},{2,0}};
       for (int edge = 0; edge < 3; edge++)
       {
         int node1 = edges[edge][0];
         int node2 = edges[edge][1];
-        // cout<< node1 <<endl;
-        // cout<< node2 <<endl;
         if (((lset[node1] > 0) && (lset[node2] < 0)) || ((lset[node1] < 0) && (lset[node2] > 0)))
         {
-          Vec<3> cutpoint = 0.0;
-          cutpoint += lset[node2] / (lset[node2]-lset[node1]) * ip[node1].Point();
-          cutpoint += lset[node1] / (lset[node1]-lset[node2]) * ip[node2].Point();
+          Vec<2> cutpoint = 0.0;
+          cutpoint += lset[node2] / (lset[node2]-lset[node1]) * verts[node1];
+          cutpoint += lset[node1] / (lset[node1]-lset[node2]) * verts[node2];
           cut[ncut] = transform1( LocalFacetNr1, cutpoint);
           ncut++;
         }
       }
 
-      // cout << " cuts are at " << endl;
+      // Make an integration along the two cut points:
 
-      // MappedIntegrationPoint<3,3> mipcut1(cut[0],trafo1);
-      // MappedIntegrationPoint<3,3> mipcut2(cut[1],trafo1);
-
-      // cout << cut[0] << " ( " << mipcut1.GetPoint() << " ) "  << endl;
-      // cout << cut[1] << " ( " << mipcut2.GetPoint() << " ) "  << endl;
-      
-      IntegrationRule ir_tmp (ET_SEGM, 2*maxorder);
-      // cout << "maxorder = " << maxorder << endl;
-      ir_facet = new (lh) IntegrationRule(ir_tmp.Size(),lh);
+      // direction of the edge to integrate along
       auto diffvec = cut[1].Point() - cut[0].Point();
-      // cout << " diffvec is " << endl;
-      // cout << diffvec << endl;
-      // cout << " integration points are " << endl;
-      for (int i = 0; i < ir_tmp.Size(); i++)
+      // rule for reference segm (not a  copy)
+      IntegrationRule ir_tmp(ET_SEGM, 2*maxorder);
+      const int npoints = ir_tmp.Size();
+      // new rule
+      ir_facet = new (lh) IntegrationRule(npoints,lh);
+
+      for (int i = 0; i < npoints; i++)
       {
+        IntegrationPoint & ip = (*ir_facet)[i];
         const double s = ir_tmp[i].Point()[0];
         Vec<3> p = cut[0].Point() + s * diffvec;
-        (*ir_facet)[i] = IntegrationPoint(p, ir_tmp[i].Weight());
-        // cout << (*ir_facet)[i].Point();
-        
-        MappedIntegrationPoint<3,3> mip((*ir_facet)[i],trafo1);
+        ip.SetNr(ir_tmp[i].Nr());
+        ip.Point() = p;
+        // ip.SetWeight(ir_tmp[i].Weight()); //Point() = p;
+        MappedIntegrationPoint<3,3> mip(ip,trafo1);
         // cout << "mip: " << mip.GetPoint() << endl;
         auto F = mip.GetJacobian();
         auto mapped_diffvec = F * diffvec;
         const double meas1D = L2Norm(mapped_diffvec);
-
-        // auto inv_jac = mip.GetJacobianInverse();
-        // double det = fabs (mip.GetJacobiDet()); // GetMeasure();
-        // auto normal_ref = ElementTopology::GetNormals<3>(ET_TET)[LocalFacetNr1];
-        // auto normal = det * Trans (inv_jac) * normal_ref;
-        // double meas2D = L2Norm (normal);       // that's the surface measure
-        
-        (*ir_facet)[i].SetWeight((*ir_facet)[i].Weight() * meas1D);
-        // (*ir_facet)[i].SetWeight((*ir_facet)[i].Weight() * meas1D / meas2D);
+        ip.SetWeight(ir_tmp[i].Weight() * meas1D);
         // cout << "meas 1D: " << meas1D << endl;
-        // cout << "meas 2D: " << meas2D << endl;
       }
-      // getchar();
     }
     else //ET_SEGM
     {
@@ -485,7 +465,7 @@ namespace ngfem
     Facet2ElementTrafo transform2(eltype2, ElVertices2); 
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_facet), lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
-
+    
     mir1.SetOtherMIR (&mir2);
     mir2.SetOtherMIR (&mir1);
     
