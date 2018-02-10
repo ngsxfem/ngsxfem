@@ -233,7 +233,7 @@ namespace xintegration
           }
       }
   }
-  const double C = 20;
+  const double C = 50;
   const double c = sqrt(1-1./pow(C,2));
 
   void LevelsetCuttedQuadliteral::GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order){
@@ -328,7 +328,7 @@ namespace xintegration
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[2], ip.Point()[1], ip.Point()[0]}, ip.Weight()));
   }*/
 
-  double LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
+  vector<double> LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
       double Vsq = 0;
       //if(q.D == 2)
       cout << "Calculating the suff Crits Q bound in " << q.D << " dims" << endl;
@@ -349,21 +349,20 @@ namespace xintegration
           Vsq += max;
       }
       double V = sqrt(Vsq);
-      cout << " Calculated V = " << V << endl;
-      double q_max = 0;
+      vector<double> q_max_of_dim{0,0};
+      if(q.D == 3) q_max_of_dim.push_back(0);
+
       for (const auto& p : corners){
-          double q_est = pow(V,2)/(pow(V,2) - pow(lset.GetGrad(p)[q.D-1],2));
-          if(q_est > q_max) q_max = q_est;
+          for (auto dim_idx : dim_idx_list) {
+            double q_est = pow(V,2)/(pow(V,2) - pow(lset.GetGrad(p)[dim_idx],2));
+            if(q_est > q_max_of_dim[dim_idx]) q_max_of_dim[dim_idx] = q_est;
+          }
       }
-      cout << "Final val: " << sqrt(1-1/q_max ) << endl;
-      return sqrt(1-1/q_max);
+      for (auto dim_idx : dim_idx_list) q_max_of_dim[dim_idx] =sqrt( 1 - 1/ q_max_of_dim[dim_idx]);
+      return q_max_of_dim;
   }
 
-  DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
-      if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
-      if(pol == ALWAYS_NONE) return NONE;
-      if(q.D == 3) return ID;
-
+  vector<double> LevelsetCuttedQuadliteral::GetExactCritsQBound2D(){
       bool allowance_array[] = {true, true};
       double h_root = -lset.c[1][0][0]/lset.c[1][1][0];
       if ((h_root > 0)&&(h_root < 1)) {
@@ -384,27 +383,39 @@ namespace xintegration
           if (q_y > q_max_of_dim[1]) q_max_of_dim[1] = q_y;
           if (q_x > q_max_of_dim[0]) q_max_of_dim[0] = q_x;
       }
-      allowance_array[0] = allowance_array[0] && (q_max_of_dim[0] < c);
-      allowance_array[1] = allowance_array[1] && (q_max_of_dim[1] < c);
+      for (auto idx: {0,1}) if(! allowance_array[idx]) q_max_of_dim[idx] = 2; //Encode non-allowance of a dimension in the double
+      return q_max_of_dim;
+  }
 
-      cout << "The exact values of q_max are (for both dims) : " << q_max_of_dim[0] << "\t" << q_max_of_dim[1] << endl;
-      double Suff_Bound = GetSufficientCritsQBound();
-      cout << "The sufficient crit. bound is : " << Suff_Bound  << endl;
+  DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
+      if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
+      cout << "Policy : "; if(pol == ALWAYS_NONE) cout << "ALWAYS_NONE" << endl;
+      else if (pol == FIRST_ALLOWED) cout << "FIRST_ALLOWED" << endl;
+      else if (pol == FIND_OPTIMAL) cout << "FIND_OPTIMAL" << endl;
+      else cout << pol << endl;
 
-      cout << "\t\t !! Ratio between suff and exact: " << Suff_Bound/ q_max_of_dim[1] << endl;
+      if(pol == ALWAYS_NONE) return NONE;
+      if(q.D == 3) return ID;
+
+      auto Exact_Bound = GetExactCritsQBound2D();
+      cout << "The exact values of q_max are (for both dims) : " << Exact_Bound[0] << "\t" << Exact_Bound[1] << endl;
+      auto Suff_Bound = GetSufficientCritsQBound();
+      cout << "The sufficient crit. bound is : " << Suff_Bound[0] << "\t" << Suff_Bound[1]  << endl;
+
+      cout << "\t\t !! Ratios between suff and exact: " << Suff_Bound[0] / Exact_Bound[0] << "\t" << Suff_Bound[1] / Exact_Bound[1] << endl;
 
       if(pol == FIRST_ALLOWED){
-          if(allowance_array[1]) return ID;
-          else if(allowance_array[0]) return X_Y;
+          if(Exact_Bound[1]< c) return ID;
+          else if(Exact_Bound[0] < c) return X_Y;
           else return NONE;
       }
       else if(pol == FIND_OPTIMAL){
-          if(allowance_array[1] && allowance_array[0]){
-              if(q_max_of_dim[1] <= q_max_of_dim[0]) return ID;
+          if( (Exact_Bound[0] < c) && (Exact_Bound[1] < c)){
+              if(Exact_Bound[1] <= Exact_Bound[0]) return ID;
               else return X_Y;
           }
-          else if(allowance_array[1]) return ID;
-          else if(allowance_array[0]) return X_Y;
+          else if(Exact_Bound[1] < c) return ID;
+          else if(Exact_Bound[0] < c) return X_Y;
           else return NONE;
       }
       else throw Exception("Unsupported DIMENSION_SWAP policy");
