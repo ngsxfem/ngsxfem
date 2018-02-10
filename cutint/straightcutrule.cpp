@@ -8,7 +8,7 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 
 namespace xintegration
 {
-  const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
+  const bool SCR_DEBUG_OUTPUT = false; //Temporary solution!!
   const bool SCR_FILE_OUTPUT = false; //Temporary solution!!
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
@@ -331,6 +331,7 @@ namespace xintegration
   double LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
       double Vsq = 0;
       //if(q.D == 2)
+      cout << "Calculating the suff Crits Q bound in " << q.D << " dims" << endl;
       auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
       auto dim_idx_list = {0,1};
       if(q.D == 3) {
@@ -348,12 +349,14 @@ namespace xintegration
           Vsq += max;
       }
       double V = sqrt(Vsq);
+      cout << " Calculated V = " << V << endl;
       double q_max = 0;
       for (const auto& p : corners){
-          double q_est = pow(V,2)/(pow(V,2) - pow(lset.GetGrad(p)[2],2));
+          double q_est = pow(V,2)/(pow(V,2) - pow(lset.GetGrad(p)[q.D-1],2));
           if(q_est > q_max) q_max = q_est;
       }
-      return q_max;
+      cout << "Final val: " << sqrt(1-1/q_max ) << endl;
+      return sqrt(1-1/q_max);
   }
 
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
@@ -383,6 +386,12 @@ namespace xintegration
       }
       allowance_array[0] = allowance_array[0] && (q_max_of_dim[0] < c);
       allowance_array[1] = allowance_array[1] && (q_max_of_dim[1] < c);
+
+      cout << "The exact values of q_max are (for both dims) : " << q_max_of_dim[0] << "\t" << q_max_of_dim[1] << endl;
+      double Suff_Bound = GetSufficientCritsQBound();
+      cout << "The sufficient crit. bound is : " << Suff_Bound  << endl;
+
+      cout << "\t\t !! Ratio between suff and exact: " << Suff_Bound/ q_max_of_dim[1] << endl;
 
       if(pol == FIRST_ALLOWED){
           if(allowance_array[1]) return ID;
