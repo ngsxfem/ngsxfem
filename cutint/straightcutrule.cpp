@@ -8,7 +8,7 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 
 namespace xintegration
 {
-  const bool SCR_DEBUG_OUTPUT = false; //Temporary solution!!
+  const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
   const bool SCR_FILE_OUTPUT = false; //Temporary solution!!
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
@@ -222,7 +222,7 @@ namespace xintegration
       for(int i=0; i<TopologyChangeXis.size() -1; i++){
           double xi0 = TopologyChangeXis[i]; double xi1 = TopologyChangeXis[i+1];
           if(SCR_DEBUG_OUTPUT) cout << "Decomposition along interval [xi_0 , xi_1]: " << xi0 << " , " << xi1 << endl;
-          if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
+          //if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
           if(q.D == 2){
               array<tuple<double, double>, 2> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(xi0,xi1)});
               QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals),pol));
@@ -297,12 +297,12 @@ namespace xintegration
           cout << "rotated lset vals:" << endl;
           for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
       }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol);
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, FIRST_ALLOWED);
       me_rotated.GetIntegrationRuleAlongXi(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[1], ip.Point()[0], ip.Point()[2]}, ip.Weight()));
   }
 
-  /*
+
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order){
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
@@ -318,19 +318,43 @@ namespace xintegration
           q_rotated.points[i][2] = q.points[i][0];
       }
       Vec<3> tmp = q_rotated.points[1]; q_rotated.points[1] = q_rotated.points[4]; q_rotated.points[4] = tmp;
-      if(q.D == 3){ tmp = q_rotated.points[2]; q_rotated.points[2] = q_rotated.points[7]; q_rotated.points[7] = tmp; }
+      if(q.D == 3) { tmp = q_rotated.points[2]; q_rotated.points[2] = q_rotated.points[7]; q_rotated.points[7] = tmp; }
       if(SCR_DEBUG_OUTPUT) {
           cout << "rotated lset vals:" << endl;
           for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
       }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated);
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, FIRST_ALLOWED);
       me_rotated.GetIntegrationRule(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[2], ip.Point()[1], ip.Point()[0]}, ip.Weight()));
-  }*/
+  }
+
+  void LevelsetCuttedQuadliteral::GetIntegrationRuleOnYZPermutatedQuad(IntegrationRule &intrule, int order){
+      IntegrationRule intrule_rotated;
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "Rotation procedure started:" << endl;
+          cout << "My lset vals:" << endl;
+          for(auto d: q.GetLsetVals(lset)) cout << d << endl;
+      }
+      LevelsetWrapper lset_rotated = lset;
+      for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[i][k][j];
+      Quadliteral q_rotated = q;
+      for(int i=0; i<q.points.Size(); i++) {
+          q_rotated.points[i][1] = q.points[i][2];
+          q_rotated.points[i][2] = q.points[i][1];
+      }
+      Vec<3> tmp = q_rotated.points[3]; q_rotated.points[3] = q_rotated.points[4]; q_rotated.points[4] = tmp;
+      if(q.D == 3) { tmp = q_rotated.points[2]; q_rotated.points[2] = q_rotated.points[5]; q_rotated.points[5] = tmp; }
+      if(SCR_DEBUG_OUTPUT) {
+          cout << "rotated lset vals:" << endl;
+          for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
+      }
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, FIRST_ALLOWED);
+      me_rotated.GetIntegrationRule(intrule_rotated, order);
+      for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[0], ip.Point()[2], ip.Point()[1]}, ip.Weight()));
+  }
 
   vector<double> LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
       double Vsq = 0;
-      //if(q.D == 2)
       cout << "Calculating the suff Crits Q bound in " << q.D << " dims" << endl;
       auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
       auto dim_idx_list = {0,1};
@@ -389,36 +413,58 @@ namespace xintegration
 
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
       if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
-      cout << "Policy : "; if(pol == ALWAYS_NONE) cout << "ALWAYS_NONE" << endl;
-      else if (pol == FIRST_ALLOWED) cout << "FIRST_ALLOWED" << endl;
-      else if (pol == FIND_OPTIMAL) cout << "FIND_OPTIMAL" << endl;
-      else cout << pol << endl;
 
       if(pol == ALWAYS_NONE) return NONE;
-      if(q.D == 3) return ID;
 
-      auto Exact_Bound = GetExactCritsQBound2D();
-      cout << "The exact values of q_max are (for both dims) : " << Exact_Bound[0] << "\t" << Exact_Bound[1] << endl;
-      auto Suff_Bound = GetSufficientCritsQBound();
-      cout << "The sufficient crit. bound is : " << Suff_Bound[0] << "\t" << Suff_Bound[1]  << endl;
+      if(q.D == 2){
+        auto Exact_Bound = GetExactCritsQBound2D();
+        //Testing the Sufficient criterion in 2D
+        /*cout << "The exact values of q_max are (for both dims) : " << Exact_Bound[0] << "\t" << Exact_Bound[1] << endl;
+        auto Suff_Bound = GetSufficientCritsQBound();
+        cout << "The sufficient crit. bound is : " << Suff_Bound[0] << "\t" << Suff_Bound[1]  << endl;
 
-      cout << "\t\t !! Ratios between suff and exact: " << Suff_Bound[0] / Exact_Bound[0] << "\t" << Suff_Bound[1] / Exact_Bound[1] << endl;
-
-      if(pol == FIRST_ALLOWED){
-          if(Exact_Bound[1]< c) return ID;
-          else if(Exact_Bound[0] < c) return X_Y;
-          else return NONE;
+        cout << "\t\t !! Ratios between suff and exact: " << Suff_Bound[0] / Exact_Bound[0] << "\t" << Suff_Bound[1] / Exact_Bound[1] << endl;
+        */
+        if(pol == FIRST_ALLOWED){
+            if(Exact_Bound[1]< c) return ID;
+            else if(Exact_Bound[0] < c) return X_Y;
+            else return NONE;
+        }
+        else if(pol == FIND_OPTIMAL){
+            if( (Exact_Bound[0] < c) && (Exact_Bound[1] < c)){
+                if(Exact_Bound[1] <= Exact_Bound[0]) return ID;
+                else return X_Y;
+            }
+            else if(Exact_Bound[1] < c) return ID;
+            else if(Exact_Bound[0] < c) return X_Y;
+            else return NONE;
+        }
       }
-      else if(pol == FIND_OPTIMAL){
-          if( (Exact_Bound[0] < c) && (Exact_Bound[1] < c)){
-              if(Exact_Bound[1] <= Exact_Bound[0]) return ID;
-              else return X_Y;
+      else if (q.D == 3){
+          //return ID;
+          auto Suff_Bound = GetSufficientCritsQBound();
+          cout << "3D Bounds: " << endl;
+          for(auto b: Suff_Bound) cout << b << "\t";
+          if(pol == FIRST_ALLOWED){
+              if(Suff_Bound[2] < c) return ID;
+              else if(Suff_Bound[1] < c) return Y_Z;
+              else if(Suff_Bound[0] < c) return X_Z;
+              else return NONE;
           }
-          else if(Exact_Bound[1] < c) return ID;
-          else if(Exact_Bound[0] < c) return X_Y;
-          else return NONE;
+          else if(pol == FIND_OPTIMAL){
+              cout << "Policy: Find_optimal 3D starts ..." << endl;
+              int min_dim = distance ( Suff_Bound.begin(), min_element(Suff_Bound.begin(), Suff_Bound.end(), [] (double v1, double v2) {return v1 <= v2;} ));
+              if( (min_dim < 0) || (min_dim > 2) ) throw Exception("Finding optimal direction failed");
+              cout << "Min_dim = " << min_dim << " with val : " << Suff_Bound[min_dim] << endl;
+
+              if(Suff_Bound[min_dim] < c){
+                  if (min_dim == 0) return X_Z;
+                  else if(min_dim == 1) return Y_Z;
+                  else return ID;
+              }
+              else return NONE;
+          }
       }
-      else throw Exception("Unsupported DIMENSION_SWAP policy");
   }
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order){
@@ -447,6 +493,8 @@ namespace xintegration
           SimpleX simpl(pnt_list);
           LevelsetWrapper lset_simpl = lset; lset_simpl.update_initial_coefs(simpl.points);
           DOMAIN_TYPE dt_simpl = CheckIfStraightCut(lset_simpl.initial_coefs);
+          cout << "Fallback routine sub levelset vals: " << endl;
+          for(auto d: lset_simpl.initial_coefs ) cout << d << endl;
           if((dt_simpl != IF)&&(dt_simpl == dt)) simpl.GetPlainIntegrationRule(intrule, order);
           else if(dt_simpl == IF) {
               LevelsetCuttedSimplex trig_cut(lset_simpl, dt, simpl);
@@ -466,7 +514,10 @@ namespace xintegration
       DIMENSION_SWAP sw = GetDimensionSwap();
       if(sw == ID) GetIntegrationRuleAlongXi(intrule, order);
       else if (sw == X_Y) GetIntegrationRuleOnXYPermutatedQuad(intrule, order);
+      else if (sw == Y_Z) GetIntegrationRuleOnYZPermutatedQuad(intrule, order);
+      else if (sw == X_Z) GetIntegrationRuleOnXZPermutatedQuad(intrule, order);
       else if (sw == NONE) GetFallbackIntegrationRule(intrule, order);
+      else throw Exception ("Unknown Dimension Swap!");
   }
 
   void LevelsetWrapper::GetCoeffsFromVals(ELEMENT_TYPE et, vector<double> vals){
@@ -516,7 +567,11 @@ namespace xintegration
 
   void LevelsetWrapper::update_initial_coefs(const Array<Vec<3>> &a_points){
       initial_coefs.resize(a_points.Size());
-      for(int i=0; i<a_points.Size(); i++) initial_coefs[i]=operator ()(a_points[i]);
+      for(int i=0; i<a_points.Size(); i++){
+          double d = operator ()(a_points[i]);
+          if(abs(d) > 1e-16) initial_coefs[i]= d;
+          else initial_coefs[i] = 1e-16;
+      }
   }
 
   template<unsigned int D>

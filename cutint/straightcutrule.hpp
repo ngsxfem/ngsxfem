@@ -9,7 +9,7 @@ using namespace ngfem;
 
 namespace xintegration
 {
-  enum DIMENSION_SWAP {ID, X_Y, NONE};
+  enum DIMENSION_SWAP {ID, X_Y, X_Z, Y_Z, NONE};
 
   DOMAIN_TYPE CheckIfStraightCut(FlatVector<> cf_lset_at_element, double epsilon = 0);
   DOMAIN_TYPE CheckIfStraightCut(vector<double> cf_lset_at_element, double epsilon = 0);
@@ -130,6 +130,8 @@ namespace xintegration
   private:
       void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
       void GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order);
+      void GetIntegrationRuleOnYZPermutatedQuad(IntegrationRule &intrule, int order);
+
       void GetFallbackIntegrationRule(IntegrationRule &intrule, int order);
       vector<double> GetSufficientCritsQBound ();
       vector<double> GetExactCritsQBound2D ();
