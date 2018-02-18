@@ -44,12 +44,16 @@ namespace ngcomp
     XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> abasefes,
               shared_ptr<CoefficientFunction> lset, const Flags & flags)
       : FESpace(ama, flags), basefes(abasefes)
-    {}
+    {
+      type = "xfes(" + abasefes->type + ")";
+    }
 
     XFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> abasefes,
               shared_ptr<CutInformation> acutinfo, const Flags & flags)
       : FESpace(ama, flags), basefes(abasefes), cutinfo(acutinfo)
-    {}
+    {
+      type = "xfes(" + abasefes->type + ")";
+    }
 
     shared_ptr<CutInformation> GetCutInfo()
     {
