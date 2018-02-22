@@ -21,7 +21,7 @@ namespace ngfem
                                      int aforce_intorder,
                                      int asubdivlvl,
                                      VorB vb)
-    : SymbolicBilinearFormIntegrator(acf,vb,false),
+    : SymbolicBilinearFormIntegrator(acf,vb,VOL),
     cf_lset(acf_lset),
     dt(adt),
     force_intorder(aforce_intorder),
@@ -75,7 +75,7 @@ namespace ngfem
     */
 
     // tstart.Start();
-    if (element_boundary)
+    if (element_vb != VOL)
       {
         switch (trafo.SpaceDim())
           {
