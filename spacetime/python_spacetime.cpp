@@ -161,9 +161,8 @@ void ExportNgsx_spacetime(py::module &m)
       diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
     }
 
-    auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
-                                                 diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
-
+    auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(), self->IsTestFunction(), self->IsComplex(),diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
+    
     if (self->IsOther())
       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
 
@@ -224,8 +223,7 @@ void ExportNgsx_spacetime(py::module &m)
        diffopdtvec = make_shared<CompoundDifferentialOperator> (diffopdtvec, comparr[i]);
      }
 
-     auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
-                                                  diffopdtvec, nullptr, nullptr, nullptr, nullptr, nullptr);
+     auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(), self->IsTestFunction(), self->IsComplex(), diffopdtvec, nullptr, nullptr, nullptr, nullptr, nullptr);
 
      if (self->IsOther())
        adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
@@ -302,8 +300,7 @@ void ExportNgsx_spacetime(py::module &m)
       diffopfixt = make_shared<CompoundDifferentialOperator> (diffopfixt, comparr[i]);
     }
 
-    auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
-                                                 diffopfixt, nullptr, nullptr, nullptr, nullptr, nullptr);
+    auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(), self->IsTestFunction(), self->IsComplex(), diffopfixt, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     if (self->IsOther())
       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));

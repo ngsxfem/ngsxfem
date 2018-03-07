@@ -40,7 +40,7 @@ namespace ngfem
                                BareSliceVector<> dshape) const;
 
       virtual void CalcDShape (const IntegrationPoint & ip,
-                               SliceMatrix<> dshape) const;
+                               BareSliceMatrix<> dshape) const;
 
       // there are some more functions to bring in ...
       //using ScalarFiniteElement<2>::CalcShape;
@@ -61,7 +61,7 @@ namespace ngfem
                                 BareSliceVector<> shape) const;
 
         virtual void CalcDShape (const IntegrationPoint & ip,
-                                 SliceMatrix<> dshape) const;
+                                 BareSliceMatrix<> dshape) const;
 
         void GetIntpPts (Vector<>& intp_pts) const;
         int order_time() const { return k_t; }

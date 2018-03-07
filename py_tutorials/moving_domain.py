@@ -206,7 +206,7 @@ k_t = 2 # time
 # FE-Spaces
 V=H1(mesh, order = k_s, dirichlet=[],dgjumps = True)
 u0 = GridFunction(V)
-W = FESpace([V for l in range(k_t+1)],dgjumps = True) # added DG Jumps for Ghost-penalty terms
+W = FESpace([V for l in range(k_t+1)],flags = {"dgjumps" : True}) # added DG Jumps for Ghost-penalty terms
 gfu = GridFunction(W)
 Draw(u0,mesh,"unew")
 
@@ -279,7 +279,7 @@ class SlabDiscretization:
         # the actual linear system is assembled in the SolveProblem function below. 
         for t_i, omega_i in zip(self.points_time_ref, self.weights_time_ref):
                            
-            ai = BilinearForm(W,symmetric=False)
+            ai = BilinearForm(W,symmetric=False,check_unused=False)
             fi = LinearForm(W)
             
             marked_integrators_at_ti = {}
@@ -404,10 +404,8 @@ def SolveProblem(sd, delta_t ):
             t.Set(told + t_i * delta_t)
             deformation = sd.lsetmeshadap.CalcDeformation(levelset)
             ci.Update(sd.lsetmeshadap.lset_p1)
-            hasneg_spacetime |= ci.GetElementsOfType(NEG)
-            hasneg_spacetime |= ci.GetElementsOfType(IF)
-            haspos_spacetime |= ci.GetElementsOfType(POS)
-            haspos_spacetime |= ci.GetElementsOfType(IF)
+            hasneg_spacetime |= ci.GetElementsOfType(HASNEG)
+            haspos_spacetime |= ci.GetElementsOfType(HASPOS)
             hasif_spacetime |= ci.GetElementsOfType(IF)
 
         # elements that have been in haspos and in hasneg should be marked as hasif!
@@ -438,10 +436,8 @@ def SolveProblem(sd, delta_t ):
             
             # collect information about the current cut-situation
             ci.Update(sd.lsetmeshadap.lset_p1)
-            hasneg_ti = BitArray(ci.GetElementsOfType(NEG))
-            hasneg_ti |= ci.GetElementsOfType(IF) 
-            haspos_ti = BitArray(ci.GetElementsOfType(POS))
-            haspos_ti |= ci.GetElementsOfType(IF) 
+            hasneg_ti = BitArray(ci.GetElementsOfType(HASNEG))
+            haspos_ti = BitArray(ci.GetElementsOfType(HASPOS))
 
             markers["hasneg_at_ti"] = hasneg_ti
             markers["haspos_at_ti"] = haspos_ti

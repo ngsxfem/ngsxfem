@@ -118,25 +118,41 @@ time_order : int
 Returns mesh of CutInfo)raw_string")
       )
     .def("GetElementsOfType", [](CutInformation & self,
-                                 DOMAIN_TYPE dt,
+                                 py::object dt,
                                  VorB vb)
          {
-           return self.GetElementsOfDomainType(dt,vb);
+           COMBINED_DOMAIN_TYPE cdt = CDOM_NO;
+           if (py::extract<COMBINED_DOMAIN_TYPE> (dt).check())
+             cdt = py::extract<COMBINED_DOMAIN_TYPE>(dt)();
+           else if (py::extract<DOMAIN_TYPE> (dt).check())
+             cdt = TO_CDT(py::extract<DOMAIN_TYPE>(dt)());
+           else
+             throw Exception(" unknown type for dt ");
+           return self.GetElementsOfDomainType(cdt,vb);
          },
          py::arg("domain_type") = IF,
          py::arg("VOL_or_BND") = VOL,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-corresponding type (NEG/POS/IF))raw_string")
+corresponding combined domain type 
+(NO/NEG/POS/UNCUT/IF/HASNEG/HASPOS/ANY))raw_string")
       )
     .def("GetFacetsOfType", [](CutInformation & self,
-                               DOMAIN_TYPE dt)
+                               py::object dt)
          {
-           return self.GetFacetsOfDomainType(dt);
+           COMBINED_DOMAIN_TYPE cdt = CDOM_NO;
+           if (py::extract<COMBINED_DOMAIN_TYPE> (dt).check())
+             cdt = py::extract<COMBINED_DOMAIN_TYPE>(dt)();
+           else if (py::extract<DOMAIN_TYPE> (dt).check())
+             cdt = TO_CDT(py::extract<DOMAIN_TYPE>(dt)());
+           else
+             throw Exception(" unknown type for dt ");
+           return self.GetFacetsOfDomainType(cdt);
          },
          py::arg("domain_type") = IF,docu_string(R"raw_string(
-Returns BitArray that is true for every facet that has the corresponding type (NEG/POS/IF)
-)raw_string"))
-
+Returns BitArray that is true for every facet that has the 
+corresponding combined domain type 
+(NO/NEG/POS/UNCUT/IF/HASNEG/HASPOS/ANY))raw_string")
+      )
     .def("GetCutRatios", [](CutInformation & self,
                             VorB vb)
          {
@@ -677,7 +693,7 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
             diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comparr[i]);
           }
 
-          auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
+          auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(),self->IsTestFunction(), self->IsComplex(),
                                                        diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
 
           if (self->IsOther())

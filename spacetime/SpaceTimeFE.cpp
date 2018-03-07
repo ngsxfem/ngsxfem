@@ -53,7 +53,7 @@ namespace ngfem
      }
 
     void SpaceTimeFE :: CalcDShape (const IntegrationPoint & ip,
-                                     SliceMatrix<> dshape) const
+                                    BareSliceMatrix<> dshape) const
 
     {
       // matrix of derivatives:
@@ -115,7 +115,7 @@ namespace ngfem
 
 
       void NodalTimeFE :: CalcShape (const IntegrationPoint & ip,
-                                         BareSliceVector<> shape) const
+                                     BareSliceVector<> shape) const
       {
          Vector<double> intp_pts(k_t+1);
          GetIntpPts (intp_pts);
@@ -127,7 +127,7 @@ namespace ngfem
 
 
       void NodalTimeFE :: CalcDShape (const IntegrationPoint & ip,
-                                          SliceMatrix<> dshape) const
+                                      BareSliceMatrix<> dshape) const
       {
          Vector<double> intp_pts(k_t+1);
          GetIntpPts (intp_pts);

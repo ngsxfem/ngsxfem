@@ -52,13 +52,11 @@ lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0}
 
 # element, facet and dof marking w.r.t. boundary approximation with lsetp1:
 ci = CutInfo(mesh,lsetp1)
-hasneg = BitArray(ci.GetElementsOfType(NEG))
-hasneg |= ci.GetElementsOfType(IF)
+hasneg = ci.GetElementsOfType(HASNEG)
 active_dofs = GetDofsOfElements(Vh,hasneg)
 active_dofs &= Vh.FreeDofs()
 
-hasif = BitArray(ci.GetElementsOfType(IF))
-hasif |= ci.GetElementsOfType(IF) 
+hasif = ci.GetElementsOfType(IF)
               
 ba_facets = GetFacetsWithNeighborTypes(mesh,a=hasneg,b=hasif)
 # facets on which ghost penalty stabilization should be applied
