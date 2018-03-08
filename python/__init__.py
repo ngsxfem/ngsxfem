@@ -255,7 +255,7 @@ Other Parameters :
         else:
             return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
-def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, region_wise=False, element_wise = False, heapsize=1000000):
+def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000):
     """
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
@@ -277,6 +277,7 @@ See documentation of Integrate.
                       order=order,
                       domain_type=levelset_domain["domain_type"],
                       subdivlvl=levelset_domain["subdivlvl"],
+                      time_order=time_order,
                       heapsize=heapsize)
 
 
@@ -317,6 +318,9 @@ cf : ngsolve.CoefficientFunction
 
 order : int (default = 5)
   integration order. Can be overruled by "force_intorder"-entry of the levelset_domain dictionary.
+
+time_order : int (default = -1)
+  integration order in time (for space-time integration), default: -1 (no space-time integrals)
 
 region_wise : bool
   (only active for non-levelset version)
