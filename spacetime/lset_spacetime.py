@@ -20,7 +20,7 @@ class LevelSetMeshAdaptation_Spacetime:
     order_lset = 2
 
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
-                 lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000):
+                 lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000,periodic=False):
         """
         Deformation
         """
@@ -32,6 +32,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.lset_lower_bound = lset_lower_bound
         self.lset_upper_bound = lset_upper_bound
         self.threshold = threshold
+        self.periodic = periodic
         
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho_node = GridFunction (self.v_ho, "lset_ho_node")
@@ -47,7 +48,11 @@ class LevelSetMeshAdaptation_Spacetime:
         self.lset_p1_node = GridFunction (self.v_p1, "lset_p1_node")
         self.ndof_node_p1 = len(self.lset_p1_node.vec)
 
-        self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
+        if self.periodic:
+            self.v_def = Periodic(H1(mesh, order=self.order_deform, dim=mesh.dim))
+        else:
+            self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
+        
         self.deform_node = GridFunction(self.v_def, "deform_node")
         self.heapsize = heapsize
         
@@ -145,13 +150,11 @@ class LevelSetMeshAdaptation_Spacetime:
         times = [tstart + delta_t * xi for xi in time_quad]
         max_dists = []
         for ti,xi in zip(times,time_quad):
-            t.Set(ti)
-            self.v_p1_st.SetTime(xi)  
+            t.Set(ti) 
             self.v_def_st.SetTime(xi)
             self.v_ho_st.SetTime(xi)
-            max_dists.append(CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize))
+            max_dists.append(CalcMaxDistance(levelset,RestrictToTime(self.lset_p1,xi),self.deform,heapsize=self.heapsize))
             #max_dists.append(CalcMaxDistance(self.lset_ho,self.lset_p1,self.deform,heapsize=self.heapsize))
-        self.v_p1_st.SetOverrideTime(False)
         self.v_def_st.SetOverrideTime(False)
         self.v_ho_st.SetOverrideTime(False)
         t.Set(tstart)

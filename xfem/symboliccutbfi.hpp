@@ -32,7 +32,7 @@ namespace ngfem
                                        VorB vb = VOL);
 
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
-    // virtual VorB VB () const { return vb; }
+    virtual VorB VB () const { return VOL; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
@@ -284,5 +284,6 @@ namespace ngfem
     }
 
   };
+
 
 }
