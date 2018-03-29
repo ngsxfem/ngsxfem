@@ -141,7 +141,7 @@ namespace xintegration
       else {
           Array<int> relevant_base_simplex_vertices;
           for(int i=0; i<s.D+1; i++)
-              if( ((dt == POS) &&(lsetvals[i] > 0)) || ((dt == NEG) &&(lsetvals[i] < 0)))
+              if( ((dt == POS) &&(lsetvals[i] >= 0)) || ((dt == NEG) &&(lsetvals[i] < 0)))
                   relevant_base_simplex_vertices.Append(i);
           if((relevant_base_simplex_vertices.Size() == 1)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
               Array<Vec<3>> point_list(s_cut.points);
