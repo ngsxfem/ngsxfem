@@ -130,7 +130,12 @@ namespace xintegration
               SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[1],s_cut.points[3]}));
               SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[2],s_cut.points[3]}));
           }
-          else throw Exception("Bad length of s_cut!");
+          else {
+            cout << "s.D = " << s.D << " , s_cut.points.Size() = " << s_cut.points.Size() << endl;
+            cout << "@ lset vals: " << endl;
+            for (auto d: lsetvals) cout << d << endl;
+            throw Exception("Bad length of s_cut!");
+          }
       }
       else {
           Array<int> relevant_base_simplex_vertices;
@@ -172,6 +177,8 @@ namespace xintegration
               SimplexDecomposition.Append(point_listC);
           }
           else {
+              cout << "@ lset vals: " << endl;
+              for (auto d: lsetvals) cout << d << endl;
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
           }
       }
@@ -269,7 +276,10 @@ namespace xintegration
                   if(SCR_DEBUG_OUTPUT) cout << "Doing IF scaling: lset_grad: " << lset_grad << endl;
                   if(q.D == 2) if_scale_factor = L2Norm(lset_grad)/abs(lset_grad[0]);
                   else if(q.D == 3) if_scale_factor = L2Norm(lset_grad)/sqrt(pow(lset_grad[0],2) + pow(lset_grad[1],2));
-                  if( isnan(if_scale_factor) || if_scale_factor > C ) throw Exception("if_scale_factor larger than bound");
+                  if( isnan(if_scale_factor) || if_scale_factor > C ){
+                      cout << "IF scaling factor: " << if_scale_factor << endl;
+                      throw Exception("if_scale_factor larger than bound");
+                  }
                   if(SCR_DEBUG_OUTPUT) cout << "IF scaling factor: " << if_scale_factor << endl;
               }
               intrule.Append(IntegrationPoint( ip , p2.Weight()*p1.Weight()*(xi1-xi0)*if_scale_factor));
