@@ -272,7 +272,7 @@ namespace xintegration
               if (q.D==3) ip[1] = q.points[0][1] + p2.Point()[1]*(q.points[2][1] - q.points[0][1]);
               double if_scale_factor = 1;
               if (dt == IF){
-                  Vec<3> lset_grad = lset.GetGrad(ip);
+                  Vec<3> lset_grad(0.); lset_grad = lset.GetGrad(ip);
                   if(SCR_DEBUG_OUTPUT) cout << "Doing IF scaling: lset_grad: " << lset_grad << endl;
                   if(q.D == 2) if_scale_factor = L2Norm(lset_grad)/abs(lset_grad[0]);
                   else if(q.D == 3) if_scale_factor = L2Norm(lset_grad)/sqrt(pow(lset_grad[0],2) + pow(lset_grad[1],2));
@@ -587,6 +587,7 @@ namespace xintegration
       initial_coefs.resize(a_points.Size());
       for(int i=0; i<a_points.Size(); i++){
           double d = operator ()(a_points[i]);
+          //initial_coefs[i]= d;
           if(abs(d) > 1e-16) initial_coefs[i]= d;
           else initial_coefs[i] = 1e-16;
       }
