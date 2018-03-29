@@ -278,6 +278,7 @@ namespace xintegration
   }
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order){
+      cout << "Permutating X and Y" << endl;
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
           cout << "Rotation procedure started:" << endl;
@@ -297,13 +298,14 @@ namespace xintegration
           cout << "rotated lset vals:" << endl;
           for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
       }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, FIRST_ALLOWED);
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol, false);
       me_rotated.GetIntegrationRuleAlongXi(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[1], ip.Point()[0], ip.Point()[2]}, ip.Weight()));
   }
 
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order){
+      cout << "Permutating X and Z" << endl;
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
           cout << "Rotation procedure started:" << endl;
@@ -323,12 +325,13 @@ namespace xintegration
           cout << "rotated lset vals:" << endl;
           for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
       }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, FIRST_ALLOWED);
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol, false);
       me_rotated.GetIntegrationRule(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[2], ip.Point()[1], ip.Point()[0]}, ip.Weight()));
   }
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnYZPermutatedQuad(IntegrationRule &intrule, int order){
+      cout << "Permutating Y and Z" << endl;
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
           cout << "Rotation procedure started:" << endl;
@@ -348,7 +351,7 @@ namespace xintegration
           cout << "rotated lset vals:" << endl;
           for(auto d: q_rotated.GetLsetVals(lset_rotated)) cout << d << endl;
       }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, FIRST_ALLOWED);
+      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol, false);
       me_rotated.GetIntegrationRule(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[0], ip.Point()[2], ip.Point()[1]}, ip.Weight()));
   }
@@ -415,6 +418,7 @@ namespace xintegration
       if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
 
       if(pol == ALWAYS_NONE) return NONE;
+      if(!consider_dim_swap) return ID;
 
       if(q.D == 2){
         auto Exact_Bound = GetExactCritsQBound2D();
