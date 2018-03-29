@@ -8,7 +8,8 @@ bool operator==(const Vec<3> a, const Vec<3> b){
 
 namespace xintegration
 {
-  const bool SCR_DEBUG_OUTPUT = true; //Temporary solution!!
+  const bool TRIGGER_MEMORY_LEAK = true;
+  const bool SCR_DEBUG_OUTPUT = false; //Temporary solution!!
   const bool SCR_FILE_OUTPUT = false; //Temporary solution!!
   DOMAIN_TYPE CheckIfStraightCut (FlatVector<> cf_lset_at_element, double epsilon) {
     bool haspos = false;
@@ -425,7 +426,7 @@ namespace xintegration
   }
 
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
-      if(SCR_DEBUG_OUTPUT) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
+      if(!TRIGGER_MEMORY_LEAK) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
 
       if(pol == ALWAYS_NONE) return NONE;
       if(!consider_dim_swap) return ID;
@@ -522,13 +523,14 @@ namespace xintegration
   }
 
   void LevelsetCuttedQuadliteral::GetIntegrationRule(IntegrationRule &intrule, int order){
-      if(SCR_DEBUG_OUTPUT) {
+      if(!TRIGGER_MEMORY_LEAK) {
           cout << "\n -- LevelsetCuttedQuadliteral::GetIntegrationRule called" << endl;
-          cout << "on Quad: " << q.points << endl;
           cout << "with the lset vals: " << endl;
-          for(auto d: q.GetLsetVals(lset)) cout << d << endl;
+          //for(auto d: q.GetLsetVals(lset)) cout << d << endl;
+          //cout << "on Quad: " << q.points << endl;
           cout << " -- \n" << endl;
       }
+
       DIMENSION_SWAP sw = GetDimensionSwap();
       if(sw == ID) GetIntegrationRuleAlongXi(intrule, order);
       else if (sw == X_Y) GetIntegrationRuleOnXYPermutatedQuad(intrule, order);
