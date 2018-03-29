@@ -368,7 +368,7 @@ namespace xintegration
 
   vector<double> LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
       double Vsq = 0;
-      cout << "Calculating the suff Crits Q bound in " << q.D << " dims" << endl;
+      if(SCR_DEBUG_OUTPUT) cout << "Calculating the suff Crits Q bound in " << q.D << " dims" << endl;
       auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
       auto dim_idx_list = {0,1};
       if(q.D == 3) {
@@ -457,8 +457,10 @@ namespace xintegration
       else if (q.D == 3){
           //return ID;
           auto Suff_Bound = GetSufficientCritsQBound();
-          cout << "3D Bounds: " << endl;
-          for(auto b: Suff_Bound) cout << b << "\t";
+          if(SCR_DEBUG_OUTPUT){
+            cout << "3D Bounds: " << endl;
+            for(auto b: Suff_Bound) cout << b << "\t";
+          }
           if(pol == FIRST_ALLOWED){
               if(Suff_Bound[2] < c) return ID;
               else if(Suff_Bound[1] < c) return Y_Z;
@@ -466,10 +468,10 @@ namespace xintegration
               else return NONE;
           }
           else if(pol == FIND_OPTIMAL){
-              cout << "Policy: Find_optimal 3D starts ..." << endl;
+              if(SCR_DEBUG_OUTPUT) cout << "Policy: Find_optimal 3D starts ..." << endl;
               int min_dim = distance ( Suff_Bound.begin(), min_element(Suff_Bound.begin(), Suff_Bound.end(), [] (double v1, double v2) {return v1 <= v2;} ));
               if( (min_dim < 0) || (min_dim > 2) ) throw Exception("Finding optimal direction failed");
-              cout << "Min_dim = " << min_dim << " with val : " << Suff_Bound[min_dim] << endl;
+              if(SCR_DEBUG_OUTPUT) cout << "Min_dim = " << min_dim << " with val : " << Suff_Bound[min_dim] << endl;
 
               if(Suff_Bound[min_dim] < c){
                   if (min_dim == 0) return X_Z;
@@ -507,8 +509,10 @@ namespace xintegration
           SimpleX simpl(pnt_list);
           LevelsetWrapper lset_simpl = lset; lset_simpl.update_initial_coefs(simpl.points);
           DOMAIN_TYPE dt_simpl = CheckIfStraightCut(lset_simpl.initial_coefs);
-          cout << "Fallback routine sub levelset vals: " << endl;
-          for(auto d: lset_simpl.initial_coefs ) cout << d << endl;
+          if(SCR_DEBUG_OUTPUT){
+            cout << "Fallback routine sub levelset vals: " << endl;
+            for(auto d: lset_simpl.initial_coefs ) cout << d << endl;
+          }
           if((dt_simpl != IF)&&(dt_simpl == dt)) simpl.GetPlainIntegrationRule(intrule, order);
           else if(dt_simpl == IF) {
               LevelsetCuttedSimplex trig_cut(lset_simpl, dt, simpl);
