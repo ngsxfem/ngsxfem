@@ -57,6 +57,7 @@ namespace ngcomp
                       const Flags & flags) :
     FESpace(ama, flags), coef_lset(a_coef_lset), order(aorder)
   {
+    type = "sfes";
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
   }
