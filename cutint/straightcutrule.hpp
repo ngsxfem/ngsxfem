@@ -24,17 +24,17 @@ namespace xintegration
       Vec<3> GetGrad(const Vec<3>& p) const;
       double operator() (const Vec<3> & p) const;
       vector<double> initial_coefs;
-      void update_initial_coefs(const Array<Vec<3>>& a_points);
+      void update_initial_coefs(const vector<Vec<3> > &a_points);
   private:
       void GetCoeffsFromVals(ELEMENT_TYPE et, vector<double> vals);
   };
 
   class PolytopE { //The PolytopE which is given as the convex hull of the points
   public:
-      Array<Vec<3>> points; //the points
+      vector<Vec<3>> points; //the points
       int D; //Dimension
 
-      PolytopE(const Array<Vec<3>>& a_points, int a_D) : points(a_points), D(a_D) {;}
+      PolytopE(const vector<Vec<3>>& a_points, int a_D) : points(a_points), D(a_D) {;}
       PolytopE() { D = -1; } //TODO: Remove this constructor
 
       vector<double> GetLsetVals(LevelsetWrapper lset){
@@ -46,11 +46,11 @@ namespace xintegration
 
   class SimpleX : public PolytopE { //A SimpleX is a PolytopE of dim D with D+1 vertices
   public:
-      SimpleX(const Array<Vec<3>>& a_points) : PolytopE(a_points, a_points.Size()-1) {;}
+      SimpleX(const vector<Vec<3>>& a_points) : PolytopE(a_points, a_points.size()-1) {;}
       SimpleX() { D = -1; }
 
       SimpleX(const PolytopE& p) : PolytopE(p.points, p.D) {
-          if(p.D+1 != p.points.Size()) throw Exception("PolytopE -> Simplex constructor called with PolytopE which is not a simplex");
+          if(p.D+1 != p.points.size()) throw Exception("PolytopE -> Simplex constructor called with PolytopE which is not a simplex");
       }
 
       SimpleX(ELEMENT_TYPE et) {
@@ -69,14 +69,16 @@ namespace xintegration
   class Quadliteral : public PolytopE { //A specific PolytopE: A quadliteral
   public:
       Quadliteral(array<tuple<double, double>, 2> bnds) {
-          D = 2; points.SetSize(4);
+          D = 2; //points.SetSize(4);
+          points.resize(4);
           points[0] = {get<0>(bnds[0]), get<0>(bnds[1]), 0};
           points[1] = {get<1>(bnds[0]), get<0>(bnds[1]), 0};
           points[2] = {get<1>(bnds[0]), get<1>(bnds[1]), 0};
           points[3] = {get<0>(bnds[0]), get<1>(bnds[1]), 0};
       }
       Quadliteral(array<tuple<double, double>, 3> bnds) {
-          D = 3; points.SetSize(8);
+          D = 3; //points.SetSize(8);
+          points.resize(8);
           points[0] = {get<0>(bnds[0]), get<0>(bnds[1]), get<0>(bnds[2])};
           points[1] = {get<1>(bnds[0]), get<0>(bnds[1]), get<0>(bnds[2])};
           points[2] = {get<1>(bnds[0]), get<1>(bnds[1]), get<0>(bnds[2])};

@@ -46,13 +46,13 @@ namespace xintegration
       if(CheckIfStraightCut(lset_on_points) != IF) throw Exception ("You tried to cut a simplex with a plain geometry lset function");
       if(D == 1) return SimpleX({Vec<3>(points[0] +(lset_on_points[0]/(lset_on_points[0]-lset_on_points[1]))*(points[1]-points[0]))});
       else {
-          Array<Vec<3>> cut_points;
-          for(int i = 0; i<points.Size(); i++) {
-            for(int j= i+1; j<points.Size(); j++){
+          vector<Vec<3>> cut_points;
+          for(int i = 0; i<points.size(); i++) {
+            for(int j= i+1; j<points.size(); j++){
                 if((lset_on_points[i] >= 0) != (lset_on_points[j] >= 0)){
                     SimpleX s({points[i], points[j]});
                     auto p = s.CalcIFPolytopEUsingLset({lset_on_points[i], lset_on_points[j]});
-                    cut_points.Append(p.points[0]);
+                    cut_points.push_back(p.points[0]);
                 }
             }
           }
@@ -85,9 +85,9 @@ namespace xintegration
 
       for (const auto& ip : *ir_ngs) {
         Vec<3> point(0.0); double originweight = 1.0;
-        for (int m = 0; m < points.Size()-1 ;++m) originweight -= ip(m);
+        for (int m = 0; m < points.size()-1 ;++m) originweight -= ip(m);
           point = originweight * (points[0]);
-        for (int m = 0; m < points.Size()-1 ;++m)
+        for (int m = 0; m < points.size()-1 ;++m)
           point += ip(m) * (points[m+1]);
         intrule.Append(IntegrationPoint(point, ip.Weight() * trafofac));
       }
@@ -126,13 +126,13 @@ namespace xintegration
       PolytopE s_cut = s.CalcIFPolytopEUsingLset(lsetvals);
 
       if(dt == IF) {
-          if(s_cut.points.Size() == s.D) SimplexDecomposition.Append(s_cut);
-          else if((s_cut.points.Size() == 4)&&(s.D==3)){
+          if(s_cut.points.size() == s.D) SimplexDecomposition.Append(s_cut);
+          else if((s_cut.points.size() == 4)&&(s.D==3)){
               SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[1],s_cut.points[3]}));
               SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[2],s_cut.points[3]}));
           }
           else {
-            cout << "s.D = " << s.D << " , s_cut.points.Size() = " << s_cut.points.Size() << endl;
+            cout << "s.D = " << s.D << " , s_cut.points.size() = " << s_cut.points.size() << endl;
             cout << "@ lset vals: " << endl;
             for (auto d: lsetvals) cout << d << endl;
             throw Exception("Bad length of s_cut!");
@@ -144,35 +144,35 @@ namespace xintegration
               if( ((dt == POS) &&(lsetvals[i] > 0)) || ((dt == NEG) &&(lsetvals[i] < 0)))
                   relevant_base_simplex_vertices.Append(i);
           if((relevant_base_simplex_vertices.Size() == 1)){ //Triangle is cut to a triangle || Tetraeder to a tetraeder
-              Array<Vec<3>> point_list(s_cut.points);
-              point_list.Append(s.points[relevant_base_simplex_vertices[0]]);
+              vector<Vec<3>> point_list(s_cut.points);
+              point_list.push_back(s.points[relevant_base_simplex_vertices[0]]);
               SimplexDecomposition.Append(SimpleX(point_list));
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (s.D==2)){ //Triangle is cut to a quad
-              Array<Vec<3>> point_listA;
-              for(int i : relevant_base_simplex_vertices) point_listA.Append(s.points[i]);
-              point_listA.Append(s_cut.points[1]);
-              Array<Vec<3>> point_listB(s_cut.points); point_listB.Append(s.points[relevant_base_simplex_vertices[0]]);
+              vector<Vec<3>> point_listA;
+              for(int i : relevant_base_simplex_vertices) point_listA.push_back(s.points[i]);
+              point_listA.push_back(s_cut.points[1]);
+              vector<Vec<3>> point_listB(s_cut.points); point_listB.push_back(s.points[relevant_base_simplex_vertices[0]]);
               SimplexDecomposition.Append(SimpleX(point_listA));
               SimplexDecomposition.Append(SimpleX(point_listB));
           }
           else if((relevant_base_simplex_vertices.Size() == 2) && (s.D==3)) { //Tetraeder is cut to several tetraeder
-              Array<Vec<3>> point_listA(s_cut.points); point_listA[0] = s.points[relevant_base_simplex_vertices[1]];
-              Array<Vec<3>> point_listB;
-              for(int i : relevant_base_simplex_vertices) point_listB.Append(s.points[i]);
-              point_listB.Append(s_cut.points[1]); point_listB.Append(s_cut.points[2]);
-              Array<Vec<3>> point_listC(s_cut.points); point_listC[3] = s.points[relevant_base_simplex_vertices[0]];
+              vector<Vec<3>> point_listA(s_cut.points); point_listA[0] = s.points[relevant_base_simplex_vertices[1]];
+              vector<Vec<3>> point_listB;
+              for(int i : relevant_base_simplex_vertices) point_listB.push_back(s.points[i]);
+              point_listB.push_back(s_cut.points[1]); point_listB.push_back(s_cut.points[2]);
+              vector<Vec<3>> point_listC(s_cut.points); point_listC[3] = s.points[relevant_base_simplex_vertices[0]];
               SimplexDecomposition.Append(point_listA);
               SimplexDecomposition.Append(point_listB);
               SimplexDecomposition.Append(point_listC);
           }
           else if((relevant_base_simplex_vertices.Size() == 3) && (s.D == 3)){
-              Array<Vec<3>> point_listA(s_cut.points); point_listA.Append(s.points[relevant_base_simplex_vertices[2]]);
-              Array<Vec<3>> point_listB;
-              for(int i : relevant_base_simplex_vertices) point_listB.Append(s.points[i]);
-              point_listB.Append(s_cut.points[1]);
-              Array<Vec<3>> point_listC(s_cut.points); point_listC[2] = s.points[relevant_base_simplex_vertices[0]];
-              point_listC.Append(s.points[relevant_base_simplex_vertices[2]]);
+              vector<Vec<3>> point_listA(s_cut.points); point_listA.push_back(s.points[relevant_base_simplex_vertices[2]]);
+              vector<Vec<3>> point_listB;
+              for(int i : relevant_base_simplex_vertices) point_listB.push_back(s.points[i]);
+              point_listB.push_back(s_cut.points[1]);
+              vector<Vec<3>> point_listC(s_cut.points); point_listC[2] = s.points[relevant_base_simplex_vertices[0]];
+              point_listC.push_back(s.points[relevant_base_simplex_vertices[2]]);
               SimplexDecomposition.Append(point_listA);
               SimplexDecomposition.Append(point_listB);
               SimplexDecomposition.Append(point_listC);
@@ -299,7 +299,7 @@ namespace xintegration
       LevelsetWrapper lset_rotated = lset;
       for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[j][i][k];
       Quadliteral q_rotated = q;
-      for(int i=0; i<q.points.Size(); i++) {
+      for(int i=0; i<q.points.size(); i++) {
           q_rotated.points[i][0] = q.points[i][1];
           q_rotated.points[i][1] = q.points[i][0];
       }
@@ -326,7 +326,7 @@ namespace xintegration
       LevelsetWrapper lset_rotated = lset;
       for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[k][j][i];
       Quadliteral q_rotated = q;
-      for(int i=0; i<q.points.Size(); i++) {
+      for(int i=0; i<q.points.size(); i++) {
           q_rotated.points[i][0] = q.points[i][2];
           q_rotated.points[i][2] = q.points[i][0];
       }
@@ -352,7 +352,7 @@ namespace xintegration
       LevelsetWrapper lset_rotated = lset;
       for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[i][k][j];
       Quadliteral q_rotated = q;
-      for(int i=0; i<q.points.Size(); i++) {
+      for(int i=0; i<q.points.size(); i++) {
           q_rotated.points[i][1] = q.points[i][2];
           q_rotated.points[i][2] = q.points[i][1];
       }
@@ -401,6 +401,7 @@ namespace xintegration
   }
 
   vector<double> LevelsetCuttedQuadliteral::GetExactCritsQBound2D(){
+      if(SCR_DEBUG_OUTPUT) cout << "Calculating the exact Crits Q bound in " << q.D << " dims" << endl;
       bool allowance_array[] = {true, true};
       double h_root = -lset.c[1][0][0]/lset.c[1][1][0];
       if ((h_root > 0)&&(h_root < 1)) {
@@ -426,7 +427,11 @@ namespace xintegration
   }
 
   DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
-      if(!TRIGGER_MEMORY_LEAK) cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n" << q.points << endl;
+      if(!TRIGGER_MEMORY_LEAK) {
+          cout << "LevelsetCuttedQuadliteral::TransformGeometryIfNecessary on quad\n";
+          for(const auto& p : q.points) cout << p << endl;
+      }
+      //cout << "GetDimensionSwap called in " << q.D << " dimensions with policy " << pol << endl;
 
       if(pol == ALWAYS_NONE) return NONE;
       if(!consider_dim_swap) return ID;
@@ -505,7 +510,7 @@ namespace xintegration
       if(q.D == 2) sub_simplices = {{0,1,3}, {2,1,3}};
       else if(q.D == 3) sub_simplices = {{3,0,1,5}, {3,1,2,5}, {3,5,2,6}, {4,5,0,3}, {4,7,5,3}, {7,6,5,3}};
       for(auto pnts_idxs: sub_simplices){
-          Array<Vec<3>> pnt_list(pnts_idxs.size());
+          vector<Vec<3>> pnt_list(pnts_idxs.size());
           for(int i=0; i<pnts_idxs.size(); i++) pnt_list[i] = q.points[pnts_idxs[i]];
           SimpleX simpl(pnt_list);
           LevelsetWrapper lset_simpl = lset; lset_simpl.update_initial_coefs(simpl.points);
@@ -585,9 +590,9 @@ namespace xintegration
       return v;
   }
 
-  void LevelsetWrapper::update_initial_coefs(const Array<Vec<3>> &a_points){
-      initial_coefs.resize(a_points.Size());
-      for(int i=0; i<a_points.Size(); i++){
+  void LevelsetWrapper::update_initial_coefs(const vector<Vec<3>> &a_points){
+      initial_coefs.resize(a_points.size());
+      for(int i=0; i<a_points.size(); i++){
           double d = operator ()(a_points[i]);
           //initial_coefs[i]= d;
           if(abs(d) > 1e-16) initial_coefs[i]= d;
