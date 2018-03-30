@@ -84,7 +84,7 @@ def test_intcurved(quad_dominated, order):
         assert errors_curved[NEG][-1] < 1e-4
         assert errors_curved[POS][-1] < 1e-4
 
-    s = 2
+    s = 0
     if order == 1:
         s+=2
     assert sum(eoc_curved[IF][s:])/len(eoc_curved[IF][s:]) > order + 0.75
