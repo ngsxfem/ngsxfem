@@ -85,7 +85,6 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
     mean_eoc = sum(mean_eoc_array)/len(mean_eoc_array)
     assert mean_eoc > 1.75
 
-
 @pytest.mark.parametrize("order", [2,4])
 @pytest.mark.parametrize("domain", [POS, NEG])
 def test_new_integrateX_via_sphere_geom_quad(order, domain):
@@ -121,13 +120,14 @@ def test_new_integrateX_via_sphere_geom_quad(order, domain):
     mean_eoc_array = eoc[1:]
     mean_eoc = sum(mean_eoc_array)/len(mean_eoc_array)
     assert mean_eoc > 1.75
-
+    
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
+@pytest.mark.parametrize("N", [1,10,30])
 
-def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated):
-    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
+def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated, N):
+    mesh = MakeUniform2DGrid(quads = quad_dominated, N=N, P1=(0,0), P2=(1,1))
     
     levelset = 1 - 2*x - 2*y
     referencevals = {NEG: 7/8, POS: 1/8, IF: 1/sqrt(2)}
