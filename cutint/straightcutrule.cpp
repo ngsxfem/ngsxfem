@@ -370,8 +370,9 @@ namespace xintegration
   vector<double> LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
       double Vsq = 0;
       if(SCR_DEBUG_OUTPUT) cout << "Calculating the suff Crits Q bound in " << q.D << " dims" << endl;
-      auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
-      auto dim_idx_list = {0,1};
+      vector<Vec<3>> corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
+      //auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
+      vector<int> dim_idx_list = {0,1};
       if(q.D == 3) {
           corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0),
                      Vec<3>(0,0,1), Vec<3>(1,0,1), Vec<3>(0,1,1), Vec<3>(1,1,1)};
@@ -467,6 +468,7 @@ namespace xintegration
             cout << "3D Bounds: " << endl;
             for(auto b: Suff_Bound) cout << b << "\t";
           }
+          for(auto d : Suff_Bound) if ( isnan(d) ) throw Exception ("Sufficient Criterion calculated nan Bound!");
           if(pol == FIRST_ALLOWED){
               if(Suff_Bound[2] < c) return ID;
               else if(Suff_Bound[1] < c) return Y_Z;
