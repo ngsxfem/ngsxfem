@@ -115,48 +115,46 @@ def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
     else:
         assert abs(integral - 0.4825797907263282) < 0.75
 
-#test_new_integrateX_TPMC_case_quad3D(6, NEG, True)
+@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("order", [2,4])
+@pytest.mark.parametrize("high_order", [False, True])
 
-#@pytest.mark.parametrize("quad_dominated", [False])
-#@pytest.mark.parametrize("order", [2,4,6])
-#@pytest.mark.parametrize("domain", [NEG, POS, IF])
-
-#def test_new_integrateX_TPMC_case_quad3D2(order, domain, quad_dominated):
-    #if quad_dominated:
-        #mesh = MakeUniform3DGrid(quads = True, N=25, P1=(0,0,0),P2=(1,1,1))
-    #else:
-        #geom = CSGeometry()
-        #geom.Add (OrthoBrick(Pnt(0,0,0), Pnt(1,1,1)).bc(1))
-        #ngmesh = geom.GenerateMesh(maxh=0.2134981)
-        #for i in range(4):
-            #ngmesh.Refine()
-        #mesh = Mesh(ngmesh)
+def test_new_integrateX_TPMC_case_quad3D2(order, quad_dominated, high_order):
+    if quad_dominated:
+        mesh = MakeUniform3DGrid(quads = True, N=30, P1=(0,0,0),P2=(1,1,1))
+    else:
+        geom = CSGeometry()
+        geom.Add (OrthoBrick(Pnt(0,0,0), Pnt(1,1,1)).bc(1))
+        ngmesh = geom.GenerateMesh(maxh=0.2134981)
+        for i in range(4):
+            ngmesh.Refine()
+        mesh = Mesh(ngmesh)
     
     #phi = -4*(1-x)*(1-y)*(1-z) + 4*(1-x)*(1-y)*z -1*(1-x)*y*(1-z) - 1*(1-x)*y*z + 2*x*(1-y)*(1-z) -3 *x*(1-y)*z + 5 * x * y * (1-z) -1 *x *y*z
+    phi = x *((7*y - 13) *z + 6) + y *(3 - 8 *z) + 8 *z - 4
     
-    #lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
-    #lsetp1 = lsetmeshadap.lset_p1
+    if high_order:
+        print("Creating LevelSetMeshAdaptation class")
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
+        lsetp1 = lsetmeshadap.lset_p1
+        deformation = lsetmeshadap.CalcDeformation(phi)
     
-    ##lset_approx = GridFunction(H1(mesh,order=1))
-    ##lset_approx.Set(phi)
-    ###for i,v in enumerate([-4,4,-1,-1,2,-3,5,-1]):
-    ###    lset_approx.vec[i] = v
-    ###print(lset_approx.vec)
-    ##Draw(lset_approx, mesh, "phi")
-    #deformation = lsetmeshadap.CalcDeformation(phi)
+        mesh.SetDeformation(deformation)    
+    else:
+        lsetp1 = GridFunction(H1(mesh,order=1))
+        lsetp1.Set(phi)
     
-    #mesh.SetDeformation(deformation)    
-    #f = CoefficientFunction(1)
+    f = CoefficientFunction(1)
     
-    #integral = Integrate(levelset_domain = { "levelset" : lsetp1, "domain_type" : domain, "quad_dir_policy" : FIRST},
-                         #cf=f, mesh=mesh, order = order)
-    #print("Integral: ", integral)
+    print("Doing integration")
+    for domain in [POS, NEG, IF]:
+        integral = Integrate(levelset_domain = { "levelset" : lsetp1, "domain_type" : domain},
+                         cf=f, mesh=mesh, order = order)
+        print("Integral: ", integral, " ; domain = ", domain)
 
-    #if domain == IF:
-        #assert integral < 10
-    #elif domain == NEG:
-        #assert abs(integral - 0.5167820912197415) < 3.4e-3
-    #else:
-        #assert abs(integral - 0.4825797907263282) < 3.4e-3
-
-#test_new_integrateX_TPMC_case_quad3D2(2, IF, True)
+        if domain == IF:
+            assert abs( integral - 1.82169) < 5e-4
+        elif domain == NEG:
+            assert abs(integral - 0.51681) < 5e-4
+        else:
+            assert abs(integral - 0.48319) < 5e-4
