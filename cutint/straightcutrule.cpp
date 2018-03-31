@@ -249,8 +249,8 @@ namespace xintegration
           if(SCR_DEBUG_OUTPUT) cout << "Child quad successfully created." << endl;
       }
   }
-  const double C = 50;
-  const double c = sqrt(1-1./pow(C,2));
+  const double c = 0.999;
+  const double C = 1./sqrt(1- pow(c,2));
 
   void LevelsetCuttedQuadliteral::GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order){
       int xi = q.D ==2 ? 1 : 2;
@@ -272,8 +272,10 @@ namespace xintegration
           else if(q.D == 3){
               lsetproj[0] = lset(Vec<3>(q.points[0][0],q.points[0][1], xi_ast)); lsetproj[1] = lset(Vec<3>(q.points[2][0],q.points[0][1], xi_ast));
               lsetproj[2] = lset(Vec<3>(q.points[2][0],q.points[2][1], xi_ast)); lsetproj[3] = lset(Vec<3>(q.points[0][0],q.points[2][1], xi_ast));
+              if(SCR_DEBUG_OUTPUT) cout << "Investigating 2D quad with vals " << lsetproj[0] << ", " << lsetproj[1] << " , " << lsetproj[2] << " , " << lsetproj[3] << endl;
               LevelsetCuttedQuadliteral Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_QUAD), dt, Quadliteral(ET_QUAD), pol);
               Codim1ElemAtXast.GetIntegrationRule(new_intrule, order);
+              if(SCR_DEBUG_OUTPUT) cout << "2D subrule calculated " << endl;
           }
           for(const auto& p2 : new_intrule){
               Vec<3> ip(0.); ip[xi] = xi_ast;
@@ -286,8 +288,14 @@ namespace xintegration
                   if(q.D == 2) if_scale_factor = L2Norm(lset_grad)/abs(lset_grad[0]);
                   else if(q.D == 3) if_scale_factor = L2Norm(lset_grad)/sqrt(pow(lset_grad[0],2) + pow(lset_grad[1],2));
                   if( isnan(if_scale_factor) || if_scale_factor > C ){
+                      cout << "Straightcutrule WARNING: IF scaling factor larger than bound:" << endl;
                       cout << "IF scaling factor: " << if_scale_factor << endl;
-                      throw Exception("if_scale_factor larger than bound");
+                      cout << "dims: " << q.D << endl;
+                      cout << "c: " << c << endl;
+                      cout << "C: " << C << endl;
+                      cout << "This might happen in 3D if the child quad had a bad topology and called its fallback routine." << endl;
+                      cout << "If you haven't done so, maybe try POL= OPTIMAL to avoid this" << endl;
+                      //throw Exception("if_scale_factor larger than bound");
                   }
                   if(SCR_DEBUG_OUTPUT) cout << "IF scaling factor: " << if_scale_factor << endl;
               }
@@ -542,8 +550,8 @@ namespace xintegration
       if(!TRIGGER_MEMORY_LEAK) {
           cout << "\n -- LevelsetCuttedQuadliteral::GetIntegrationRule called" << endl;
           cout << "with the lset vals: " << endl;
-          //for(auto d: q.GetLsetVals(lset)) cout << d << endl;
-          //cout << "on Quad: " << q.points << endl;
+          for(auto d: q.GetLsetVals(lset)) cout << d << endl;
+          cout << "on Quad: " << q.points << endl;
           cout << " -- \n" << endl;
       }
 
