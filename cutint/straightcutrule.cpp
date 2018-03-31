@@ -604,8 +604,8 @@ namespace xintegration
       for(int i=0; i<a_points.Size(); i++){
           double d = operator ()(a_points[i]);
           //initial_coefs[i]= d;
-          if(abs(d) > 1e-16) initial_coefs[i]= d;
-          else initial_coefs[i] = 1e-16;
+          if(abs(d) > 1e-14) initial_coefs[i]= d;
+          else initial_coefs[i] = 1e-14;
       }
   }
 
