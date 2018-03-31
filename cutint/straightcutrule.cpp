@@ -123,6 +123,8 @@ namespace xintegration
   void LevelsetCuttedSimplex::Decompose(){
       static Timer t ("LevelsetCuttedSimplex::Decompose"); RegionTimer reg(t);
       vector<double> lsetvals = lset.initial_coefs;
+      cout << "Simplex decomposition @ lset vals: " << endl;
+      for(double d: lsetvals) cout << d << endl;
       PolytopE s_cut = s.CalcIFPolytopEUsingLset(lsetvals);
 
       if(dt == IF) {
@@ -221,14 +223,17 @@ namespace xintegration
           vals[1] = lset(q.points[get<0>(t)]); vals[0] = lset(q.points[get<1>(t)]);
           if(SCR_DEBUG_OUTPUT) cout << "Searching for xi along lset vals " << vals[1] << " , " << vals[0] << endl;
           SimpleX unit_line(ET_SEGM);
-          if(CheckIfStraightCut(vals) == IF)
+          if(CheckIfStraightCut(vals) == IF) {
               TopologyChangeXisS.insert((unit_line.CalcIFPolytopEUsingLset(vals)).points[0][0]);
+              if(SCR_DEBUG_OUTPUT) cout << "inserting cut point " << (unit_line.CalcIFPolytopEUsingLset(vals)).points[0][0] << endl;
+          }
       }
       vector<double> TopologyChangeXis(TopologyChangeXisS.begin(), TopologyChangeXisS.end());
       sort(TopologyChangeXis.begin(), TopologyChangeXis.end());
 
       for(int i=0; i<TopologyChangeXis.size() -1; i++){
           double xi0 = TopologyChangeXis[i]; double xi1 = TopologyChangeXis[i+1];
+          if(SCR_DEBUG_OUTPUT) cout << "My dim: " << q.D << endl;
           if(SCR_DEBUG_OUTPUT) cout << "Decomposition along interval [xi_0 , xi_1]: " << xi0 << " , " << xi1 << endl;
           //if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
           if(q.D == 2){
@@ -239,6 +244,7 @@ namespace xintegration
               array<tuple<double, double>, 3> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(q.points[0][1], q.points[2][1]), make_tuple(xi0,xi1)});
               QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals),pol));
           }
+          if(SCR_DEBUG_OUTPUT) cout << "Child quad successfully created." << endl;
       }
   }
   const double C = 50;
@@ -498,8 +504,14 @@ namespace xintegration
               Decompose();
               for(auto& sub_q : QuadliteralDecomposition){
                   DOMAIN_TYPE dt_decomp_quad = CheckIfStraightCut(sub_q->q.GetLsetVals(lset), 1e-15);
+                  if(SCR_DEBUG_OUTPUT){
+                      cout << "Found subquad of type " << dt_decomp_quad << endl;
+                      cout << ">>lset vals: " << endl;
+                      for(double d: sub_q->q.GetLsetVals(lset)) cout << d << endl;
+                  }
                   if (dt_decomp_quad == IF) sub_q->GetTensorProductAlongXiIntegrationRule(intrule, order);
                   else if (dt_decomp_quad == dt) sub_q->q.GetPlainIntegrationRule(intrule, order);
+                  cout << "Finished subquad treatment" << endl;
               }
           }
           else GetTensorProductAlongXiIntegrationRule(intrule, order);
