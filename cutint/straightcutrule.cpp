@@ -123,8 +123,10 @@ namespace xintegration
   void LevelsetCuttedSimplex::Decompose(){
       static Timer t ("LevelsetCuttedSimplex::Decompose"); RegionTimer reg(t);
       vector<double> lsetvals = lset.initial_coefs;
-      cout << "Simplex decomposition @ lset vals: " << endl;
-      for(double d: lsetvals) cout << d << endl;
+      if(SCR_DEBUG_OUTPUT){
+        cout << "Simplex decomposition @ lset vals: " << endl;
+        for(double d: lsetvals) cout << d << endl;
+      }
       PolytopE s_cut = s.CalcIFPolytopEUsingLset(lsetvals);
 
       if(dt == IF) {
@@ -295,9 +297,9 @@ namespace xintegration
   }
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order){
-      cout << "Permutating X and Y" << endl;
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
+          cout << "Permutating X and Y" << endl;
           cout << "Rotation procedure started:" << endl;
           cout << "My lset vals:" << endl;
           for(auto d: q.GetLsetVals(lset)) cout << d << endl;
@@ -322,9 +324,9 @@ namespace xintegration
 
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order){
-      cout << "Permutating X and Z" << endl;
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
+          cout << "Permutating X and Z" << endl;
           cout << "Rotation procedure started:" << endl;
           cout << "My lset vals:" << endl;
           for(auto d: q.GetLsetVals(lset)) cout << d << endl;
@@ -348,9 +350,9 @@ namespace xintegration
   }
 
   void LevelsetCuttedQuadliteral::GetIntegrationRuleOnYZPermutatedQuad(IntegrationRule &intrule, int order){
-      cout << "Permutating Y and Z" << endl;
       IntegrationRule intrule_rotated;
       if(SCR_DEBUG_OUTPUT) {
+          cout << "Permutating Y and Z" << endl;
           cout << "Rotation procedure started:" << endl;
           cout << "My lset vals:" << endl;
           for(auto d: q.GetLsetVals(lset)) cout << d << endl;
@@ -506,7 +508,7 @@ namespace xintegration
                   }
                   if (dt_decomp_quad == IF) sub_q->GetTensorProductAlongXiIntegrationRule(intrule, order);
                   else if (dt_decomp_quad == dt) sub_q->q.GetPlainIntegrationRule(intrule, order);
-                  cout << "Finished subquad treatment" << endl;
+                  if(SCR_DEBUG_OUTPUT) cout << "Finished subquad treatment" << endl;
               }
           }
           else GetTensorProductAlongXiIntegrationRule(intrule, order);
