@@ -44,6 +44,9 @@ make
 make install
 #+END_SRC
 
+**** Prerequisites on Ubuntu
+On Ubuntu you require =python3-dev= to build =ngsxfem= (and similar dependencies as NGSolve has, cf. [[www.ngsolve.org]])
+
 **** Fix of potential issues
 If you have compiling problems or at run time some NGSolve symbols are not found, it may be (happened in some configurations) that the NGSolve compiler and linker wrapper =ngscxx= and =ngsld= were not used. In this case you may add
 #+BEGIN_SRC shell
@@ -51,6 +54,12 @@ cmake ... -DCMAKE_CXX_COMPILER=ngscxx -DCMAKE_LINKER=ngsld
 #+END_SRC
 to the cmake configuration.
 
+**** =ngsxfem= on MacOSX
+On MacOSX, you need to add the location of the NGSolve cmake configuration files:
+#+BEGIN_SRC shell
+cmake ... -DNGSolve_DIR=/NGSOLVE_INSTALLATION_LOCATION/Resources/CMake
+#+END_SRC
+If NGSolve is installed from the dmg-file =NGSOLVE_INSTALLATION_LOCATION= is =/Applications/Netgen.app/=.
 *** Building the NGS-Suite and =ngsxfem= together 
 If you do not have Netgen/NGSolve installed, you may first call
 #+BEGIN_SRC shell
