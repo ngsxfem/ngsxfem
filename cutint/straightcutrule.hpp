@@ -66,16 +66,16 @@ namespace xintegration
       double GetVolume();
   };
 
-  class Quadliteral : public PolytopE { //A specific PolytopE: A quadliteral
+  class Quadrilateral : public PolytopE { //A specific PolytopE: A quadliteral
   public:
-      Quadliteral(array<tuple<double, double>, 2> bnds) {
+      Quadrilateral(array<tuple<double, double>, 2> bnds) {
           D = 2; points.SetSize(4);
           points[0] = {get<0>(bnds[0]), get<0>(bnds[1]), 0};
           points[1] = {get<1>(bnds[0]), get<0>(bnds[1]), 0};
           points[2] = {get<1>(bnds[0]), get<1>(bnds[1]), 0};
           points[3] = {get<0>(bnds[0]), get<1>(bnds[1]), 0};
       }
-      Quadliteral(array<tuple<double, double>, 3> bnds) {
+      Quadrilateral(array<tuple<double, double>, 3> bnds) {
           D = 3; points.SetSize(8);
           points[0] = {get<0>(bnds[0]), get<0>(bnds[1]), get<0>(bnds[2])};
           points[1] = {get<1>(bnds[0]), get<0>(bnds[1]), get<0>(bnds[2])};
@@ -86,37 +86,37 @@ namespace xintegration
           points[6] = {get<1>(bnds[0]), get<1>(bnds[1]), get<1>(bnds[2])};
           points[7] = {get<0>(bnds[0]), get<1>(bnds[1]), get<1>(bnds[2])};
       }
-      Quadliteral(ELEMENT_TYPE et) {
-          if(et == ET_QUAD) *this = Quadliteral(array<tuple<double, double>, 2>({make_tuple(0,1),make_tuple(0,1)}));
-          else if (et == ET_HEX) *this = Quadliteral(array<tuple<double, double>, 3>({make_tuple(0,1),make_tuple(0,1),make_tuple(0,1)}));
-          else throw Exception ("You tried to create an Quadliteral with wrong ET");
+      Quadrilateral(ELEMENT_TYPE et) {
+          if(et == ET_QUAD) *this = Quadrilateral(array<tuple<double, double>, 2>({make_tuple(0,1),make_tuple(0,1)}));
+          else if (et == ET_HEX) *this = Quadrilateral(array<tuple<double, double>, 3>({make_tuple(0,1),make_tuple(0,1),make_tuple(0,1)}));
+          else throw Exception ("You tried to create an Quadrilateral with wrong ET");
       }
 
       void GetPlainIntegrationRule(IntegrationRule &intrule, int order);
       double GetVolume();
   };
 
-  class LevelsetCuttedPolytopE {
+  class LevelsetCutPolytopE {
   public:
       virtual void GetIntegrationRule(IntegrationRule &intrule, int order) = 0;
       LevelsetWrapper lset;
       DOMAIN_TYPE dt;
 
-      LevelsetCuttedPolytopE(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt): lset(a_lset), dt(a_dt) {;}
+      LevelsetCutPolytopE(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt): lset(a_lset), dt(a_dt) {;}
   };
 
-  class LevelsetCuttedSimplex : public LevelsetCuttedPolytopE {
+  class LevelsetCutSimplex : public LevelsetCutPolytopE {
   public:
       virtual void GetIntegrationRule(IntegrationRule &intrule, int order);
       SimpleX s;
 
-      LevelsetCuttedSimplex(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, SimpleX a_s) : LevelsetCuttedPolytopE(a_lset, a_dt), s(a_s) { ;}
+      LevelsetCutSimplex(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, SimpleX a_s) : LevelsetCutPolytopE(a_lset, a_dt), s(a_s) { ;}
   private:
       void Decompose();
       Array<SimpleX> SimplexDecomposition; //TODO: Cf. line 117
   };
 
-  class LevelsetCuttedQuadliteral : public LevelsetCuttedPolytopE {
+  class LevelsetCutQuadrilateral : public LevelsetCutPolytopE {
   public:
       SWAP_DIMENSIONS_POLICY pol;
       bool consider_dim_swap;
@@ -125,9 +125,9 @@ namespace xintegration
       void GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order);
       DIMENSION_SWAP GetDimensionSwap();
 
-      Quadliteral q;
+      Quadrilateral q;
 
-      LevelsetCuttedQuadliteral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadliteral a_q, SWAP_DIMENSIONS_POLICY a_pol, bool a_consider_dim_swap = true) : LevelsetCuttedPolytopE(a_lset, a_dt), pol(a_pol), q(a_q), consider_dim_swap(a_consider_dim_swap) { ;}
+      LevelsetCutQuadrilateral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadrilateral a_q, SWAP_DIMENSIONS_POLICY a_pol, bool a_consider_dim_swap = true) : LevelsetCutPolytopE(a_lset, a_dt), pol(a_pol), q(a_q), consider_dim_swap(a_consider_dim_swap) { ;}
       void GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order);
   private:
       void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
@@ -140,7 +140,7 @@ namespace xintegration
 
       bool HasTopologyChangeAlongXi();
       void Decompose();
-      Array<unique_ptr<LevelsetCuttedQuadliteral>> QuadliteralDecomposition;
+      Array<unique_ptr<LevelsetCutQuadrilateral>> QuadrilateralDecomposition;
   };
 
   template<unsigned int D>

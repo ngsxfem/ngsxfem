@@ -65,7 +65,7 @@ namespace xintegration
       else throw Exception("Calc the Volume of this type of Simplex not implemented!");
   }
 
-  double Quadliteral::GetVolume(){
+  double Quadrilateral::GetVolume(){
       if( D == 2) return L2Norm(Cross( Vec<3>(points[3] - points[0]), Vec<3>(points[1] - points[0])));
       else if( D == 3) return abs(Determinant<3>(points[4] - points[0], points[3] - points[0], points[1] - points[0]));
   }
@@ -90,8 +90,8 @@ namespace xintegration
       }
   }
 
-  void Quadliteral::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
-      static Timer t ("Quadliteral::GetPlainIntegrationRule"); RegionTimer reg(t);
+  void Quadrilateral::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
+      static Timer t ("Quadrilateral::GetPlainIntegrationRule"); RegionTimer reg(t);
       double trafofac = GetVolume();
 
       const IntegrationRule * ir_ngs;
@@ -117,8 +117,8 @@ namespace xintegration
       }
   }
 
-  void LevelsetCuttedSimplex::Decompose(){
-      static Timer t ("LevelsetCuttedSimplex::Decompose"); RegionTimer reg(t);
+  void LevelsetCutSimplex::Decompose(){
+      static Timer t ("LevelsetCutSimplex::Decompose"); RegionTimer reg(t);
       vector<double> lsetvals = lset.initial_coefs;
       PolytopE s_cut = s.CalcIFPolytopEUsingLset(lsetvals);
 
@@ -182,13 +182,13 @@ namespace xintegration
       }
   }
 
-  void LevelsetCuttedSimplex::GetIntegrationRule(IntegrationRule &intrule, int order){
-      static Timer t ("LevelsetCuttedSimplex::GetIntegrationRule"); RegionTimer reg(t);
+  void LevelsetCutSimplex::GetIntegrationRule(IntegrationRule &intrule, int order){
+      static Timer t ("LevelsetCutSimplex::GetIntegrationRule"); RegionTimer reg(t);
       Decompose();
       for(auto s : SimplexDecomposition) s.GetPlainIntegrationRule(intrule, order);
   }
 
-  bool LevelsetCuttedQuadliteral::HasTopologyChangeAlongXi(){
+  bool LevelsetCutQuadrilateral::HasTopologyChangeAlongXi(){
       vector<tuple<int,int>> EdgesOfDimXi;
       if( q.D == 2) EdgesOfDimXi = {make_tuple(1,2),make_tuple(0,3)};
       else if (q.D == 3) EdgesOfDimXi = {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)};
@@ -201,14 +201,14 @@ namespace xintegration
       return false;
   }
 
-  void LevelsetCuttedQuadliteral::Decompose(){
-      static Timer t ("LevelsetCuttedQuadliteral::Decompose"); RegionTimer reg(t);
+  void LevelsetCutQuadrilateral::Decompose(){
+      static Timer t ("LevelsetCutQuadrilateral::Decompose"); RegionTimer reg(t);
       set<double> TopologyChangeXisS{0,1};
       int xi = q.D ==2 ? 1 : 2;
       vector<tuple<int,int>> EdgesOfDimXi;
       if( q.D == 2) EdgesOfDimXi = {make_tuple(1,2),make_tuple(0,3)};
       else if (q.D == 3) EdgesOfDimXi = {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)};
-      else throw Exception("Wrong dimensionality of q in LevelsetCuttedQuadliteral::Decompose");
+      else throw Exception("Wrong dimensionality of q in LevelsetCutQuadrilateral::Decompose");
       vector<double> vals(2);
       for (auto t : EdgesOfDimXi) {
           vals[1] = lset(q.points[get<0>(t)]); vals[0] = lset(q.points[get<1>(t)]);
@@ -225,18 +225,18 @@ namespace xintegration
           //if(xi1- xi0 < 1e-12) throw Exception("Orthogonal cut");
           if(q.D == 2){
               array<tuple<double, double>, 2> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(xi0,xi1)});
-              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals),pol));
+              QuadrilateralDecomposition.Append(make_unique<LevelsetCutQuadrilateral>(lset, dt, Quadrilateral(bnd_vals),pol));
           }
           else if(q.D == 3){
               array<tuple<double, double>, 3> bnd_vals({make_tuple(q.points[0][0], q.points[2][0]), make_tuple(q.points[0][1], q.points[2][1]), make_tuple(xi0,xi1)});
-              QuadliteralDecomposition.Append(make_unique<LevelsetCuttedQuadliteral>(lset, dt, Quadliteral(bnd_vals),pol));
+              QuadrilateralDecomposition.Append(make_unique<LevelsetCutQuadrilateral>(lset, dt, Quadrilateral(bnd_vals),pol));
           }
       }
   }
   const double c = 0.999;
   const double C = 1./sqrt(1- pow(c,2));
 
-  void LevelsetCuttedQuadliteral::GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order){
       int xi = q.D ==2 ? 1 : 2;
 
       double xi0 = q.points[0][xi]; double xi1;
@@ -250,13 +250,13 @@ namespace xintegration
           vector<double> lsetproj( q.D == 2 ? 2 : 4);
           if(q.D == 2) {
               lsetproj[1] = lset(Vec<3>(q.points[0][0],xi_ast,0)); lsetproj[0] = lset(Vec<3>(q.points[2][0], xi_ast,0));
-              LevelsetCuttedSimplex Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_SEGM), dt, SimpleX(ET_SEGM));
+              LevelsetCutSimplex Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_SEGM), dt, SimpleX(ET_SEGM));
               Codim1ElemAtXast.GetIntegrationRule(new_intrule, order);
           }
           else if(q.D == 3){
               lsetproj[0] = lset(Vec<3>(q.points[0][0],q.points[0][1], xi_ast)); lsetproj[1] = lset(Vec<3>(q.points[2][0],q.points[0][1], xi_ast));
               lsetproj[2] = lset(Vec<3>(q.points[2][0],q.points[2][1], xi_ast)); lsetproj[3] = lset(Vec<3>(q.points[0][0],q.points[2][1], xi_ast));
-              LevelsetCuttedQuadliteral Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_QUAD), dt, Quadliteral(ET_QUAD), pol);
+              LevelsetCutQuadrilateral Codim1ElemAtXast(LevelsetWrapper(lsetproj, ET_QUAD), dt, Quadrilateral(ET_QUAD), pol);
               Codim1ElemAtXast.GetIntegrationRule(new_intrule, order);
           }
           for(const auto& p2 : new_intrule){
@@ -284,56 +284,56 @@ namespace xintegration
       }
   }
 
-  void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order){
       IntegrationRule intrule_rotated;
       LevelsetWrapper lset_rotated = lset;
       for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[j][i][k];
-      Quadliteral q_rotated = q;
+      Quadrilateral q_rotated = q;
       for(int i=0; i<q.points.Size(); i++) {
           q_rotated.points[i][0] = q.points[i][1];
           q_rotated.points[i][1] = q.points[i][0];
       }
       Vec<3> tmp = q_rotated.points[1]; q_rotated.points[1] = q_rotated.points[3]; q_rotated.points[3] = tmp;
       if(q.D == 3){ tmp = q_rotated.points[5]; q_rotated.points[5] = q_rotated.points[7]; q_rotated.points[7] = tmp; }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol, false);
+      LevelsetCutQuadrilateral me_rotated(lset_rotated,dt, q_rotated, pol, false);
       me_rotated.GetIntegrationRuleAlongXi(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[1], ip.Point()[0], ip.Point()[2]}, ip.Weight()));
   }
 
 
-  void LevelsetCuttedQuadliteral::GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetIntegrationRuleOnXZPermutatedQuad(IntegrationRule &intrule, int order){
       IntegrationRule intrule_rotated;
       LevelsetWrapper lset_rotated = lset;
       for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[k][j][i];
-      Quadliteral q_rotated = q;
+      Quadrilateral q_rotated = q;
       for(int i=0; i<q.points.Size(); i++) {
           q_rotated.points[i][0] = q.points[i][2];
           q_rotated.points[i][2] = q.points[i][0];
       }
       Vec<3> tmp = q_rotated.points[1]; q_rotated.points[1] = q_rotated.points[4]; q_rotated.points[4] = tmp;
       if(q.D == 3) { tmp = q_rotated.points[2]; q_rotated.points[2] = q_rotated.points[7]; q_rotated.points[7] = tmp; }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol, false);
+      LevelsetCutQuadrilateral me_rotated(lset_rotated,dt, q_rotated, pol, false);
       me_rotated.GetIntegrationRule(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[2], ip.Point()[1], ip.Point()[0]}, ip.Weight()));
   }
 
-  void LevelsetCuttedQuadliteral::GetIntegrationRuleOnYZPermutatedQuad(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetIntegrationRuleOnYZPermutatedQuad(IntegrationRule &intrule, int order){
       IntegrationRule intrule_rotated;
       LevelsetWrapper lset_rotated = lset;
       for(int i : {0,1}) for(int j: {0,1}) for(int k : {0,1}) lset_rotated.c[i][j][k] = lset.c[i][k][j];
-      Quadliteral q_rotated = q;
+      Quadrilateral q_rotated = q;
       for(int i=0; i<q.points.Size(); i++) {
           q_rotated.points[i][1] = q.points[i][2];
           q_rotated.points[i][2] = q.points[i][1];
       }
       Vec<3> tmp = q_rotated.points[3]; q_rotated.points[3] = q_rotated.points[4]; q_rotated.points[4] = tmp;
       if(q.D == 3) { tmp = q_rotated.points[2]; q_rotated.points[2] = q_rotated.points[5]; q_rotated.points[5] = tmp; }
-      LevelsetCuttedQuadliteral me_rotated(lset_rotated,dt, q_rotated, pol, false);
+      LevelsetCutQuadrilateral me_rotated(lset_rotated,dt, q_rotated, pol, false);
       me_rotated.GetIntegrationRule(intrule_rotated, order);
       for(const auto& ip: intrule_rotated) intrule.Append(IntegrationPoint(Vec<3>{ip.Point()[0], ip.Point()[2], ip.Point()[1]}, ip.Weight()));
   }
 
-  vector<double> LevelsetCuttedQuadliteral::GetSufficientCritsQBound(){
+  vector<double> LevelsetCutQuadrilateral::GetSufficientCritsQBound(){
       double Vsq = 0;
       vector<Vec<3>> corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
       //auto corners = {Vec<3>(0,0,0), Vec<3>(1,0,0), Vec<3>(0,1,0), Vec<3>(1,1,0)};
@@ -366,7 +366,7 @@ namespace xintegration
       return q_max_of_dim;
   }
 
-  vector<double> LevelsetCuttedQuadliteral::GetExactCritsQBound2D(){
+  vector<double> LevelsetCutQuadrilateral::GetExactCritsQBound2D(){
       bool allowance_array[] = {true, true};
       double h_root = -lset.c[1][0][0]/lset.c[1][1][0];
       if ((h_root > 0)&&(h_root < 1)) {
@@ -389,7 +389,7 @@ namespace xintegration
       return q_max_of_dim;
   }
 
-  DIMENSION_SWAP LevelsetCuttedQuadliteral::GetDimensionSwap(){
+  DIMENSION_SWAP LevelsetCutQuadrilateral::GetDimensionSwap(){
       if(pol == ALWAYS_NONE) return NONE;
       if(!consider_dim_swap) return ID;
 
@@ -435,12 +435,12 @@ namespace xintegration
       }
   }
 
-  void LevelsetCuttedQuadliteral::GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order){
       DOMAIN_TYPE dt_quad = CheckIfStraightCut(q.GetLsetVals(lset));
       if(dt_quad == IF){
           if(HasTopologyChangeAlongXi()) {
               Decompose();
-              for(auto& sub_q : QuadliteralDecomposition){
+              for(auto& sub_q : QuadrilateralDecomposition){
                   DOMAIN_TYPE dt_decomp_quad = CheckIfStraightCut(sub_q->q.GetLsetVals(lset), 1e-15);
                   if (dt_decomp_quad == IF) sub_q->GetTensorProductAlongXiIntegrationRule(intrule, order);
                   else if (dt_decomp_quad == dt) sub_q->q.GetPlainIntegrationRule(intrule, order);
@@ -451,7 +451,7 @@ namespace xintegration
       else if (dt_quad == dt) q.GetPlainIntegrationRule(intrule, order);
   }
 
-  void LevelsetCuttedQuadliteral::GetFallbackIntegrationRule(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetFallbackIntegrationRule(IntegrationRule &intrule, int order){
       vector<vector<int>> sub_simplices;
       if(q.D == 2) sub_simplices = {{0,1,3}, {2,1,3}};
       else if(q.D == 3) sub_simplices = {{3,0,1,5}, {3,1,2,5}, {3,5,2,6}, {4,5,0,3}, {4,7,5,3}, {7,6,5,3}};
@@ -463,13 +463,13 @@ namespace xintegration
           DOMAIN_TYPE dt_simpl = CheckIfStraightCut(lset_simpl.initial_coefs);
           if((dt_simpl != IF)&&(dt_simpl == dt)) simpl.GetPlainIntegrationRule(intrule, order);
           else if(dt_simpl == IF) {
-              LevelsetCuttedSimplex trig_cut(lset_simpl, dt, simpl);
+              LevelsetCutSimplex trig_cut(lset_simpl, dt, simpl);
               trig_cut.GetIntegrationRule(intrule, order);
           }
       }
   }
 
-  void LevelsetCuttedQuadliteral::GetIntegrationRule(IntegrationRule &intrule, int order){
+  void LevelsetCutQuadrilateral::GetIntegrationRule(IntegrationRule &intrule, int order){
       DIMENSION_SWAP sw = GetDimensionSwap();
       if(sw == ID) GetIntegrationRuleAlongXi(intrule, order);
       else if (sw == X_Y) GetIntegrationRuleOnXYPermutatedQuad(intrule, order);
@@ -589,11 +589,11 @@ namespace xintegration
       static Timer timer1("StraightCutElementGeometry::Load+Cut");
       timer1.Start();
       if(!is_quad){
-          LevelsetCuttedSimplex s(lset, dt, SimpleX(et));
+          LevelsetCutSimplex s(lset, dt, SimpleX(et));
           s.GetIntegrationRule(quad_untrafo, intorder);
       }
       else{
-          LevelsetCuttedQuadliteral q(lset, dt, Quadliteral(et), quad_dir_policy);
+          LevelsetCutQuadrilateral q(lset, dt, Quadrilateral(et), quad_dir_policy);
           q.GetIntegrationRule(quad_untrafo, intorder);
       }
       timer1.Stop();
