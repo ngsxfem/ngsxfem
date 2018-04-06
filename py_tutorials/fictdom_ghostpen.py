@@ -16,11 +16,8 @@ square.AddRectangle([-1,-1],[1,1],bc=1)
 # mesh.Refine()
 
 #trig version:
-ngmesh = square.GenerateMesh(maxh=3, quad_dominated=True)
+ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)
-mesh.Refine()
-mesh.Refine()
-mesh.Refine()
 
 order = 3
 # stabilization parameter for ghost-penalty
@@ -46,12 +43,12 @@ gfu = GridFunction(Vh)
 n_outer = specialcf.normal(mesh.dim)
 h = specialcf.mesh_size   
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.05, discontinuous_qn=True)
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.1, discontinuous_qn=True)
 deformation = lsetmeshadap.CalcDeformation(levelset)
 lsetp1 = lsetmeshadap.lset_p1
 
-lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0, "quad_dir_policy" : FALLBACK}
-lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0, "quad_dir_policy" : FALLBACK}
+lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0}
+lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0}
 
 # element, facet and dof marking w.r.t. boundary approximation with lsetp1:
 ci = CutInfo(mesh,lsetp1)
