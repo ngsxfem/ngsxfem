@@ -18,7 +18,8 @@ namespace xintegration
                                                    DOMAIN_TYPE dt,
                                                    int intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl = 0);
+                                                   int subdivlvl = 0,
+                                                   SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL);
 
   std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
   
