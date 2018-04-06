@@ -121,7 +121,7 @@ def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
 
 def test_new_integrateX_TPMC_case_quad3D2(order, quad_dominated, high_order):
     if quad_dominated:
-        mesh = MakeUniform3DGrid(quads = True, N=30, P1=(0,0,0),P2=(1,1,1))
+        mesh = MakeUniform3DGrid(quads = True, N=10, P1=(0,0,0),P2=(1,1,1))
     else:
         geom = CSGeometry()
         geom.Add (OrthoBrick(Pnt(0,0,0), Pnt(1,1,1)).bc(1))
@@ -153,8 +153,8 @@ def test_new_integrateX_TPMC_case_quad3D2(order, quad_dominated, high_order):
         print("Integral: ", integral, " ; domain = ", domain)
 
         if domain == IF:
-            assert abs( integral - 1.82169) < 5e-4
+            assert abs( integral - 1.82169) < 5e-3
         elif domain == NEG:
-            assert abs(integral - 0.51681) < 5e-4
+            assert abs(integral - 0.51681) < 1e-3
         else:
-            assert abs(integral - 0.48319) < 5e-4
+            assert abs(integral - 0.48319) < 1e-3

@@ -292,7 +292,7 @@ def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad_dominated, di
 @pytest.mark.parametrize("quad_dominated", [False, True])
 @pytest.mark.parametrize("order", [2])
 @pytest.mark.parametrize("domain", [NEG, POS])
-@pytest.mark.parametrize("dim", [x]) #TODO: More dims after implementation of this feature
+@pytest.mark.parametrize("dim", [x,y,z])
 
 def test_new_integrateX_via_orth_cutted_quad3D(order, domain, quad_dominated, dim):
     if (quad_dominated):
