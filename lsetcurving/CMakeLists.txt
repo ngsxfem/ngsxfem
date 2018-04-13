@@ -26,3 +26,6 @@ install (FILES
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
         )
+
+add_subdirectory(py_demos)
+

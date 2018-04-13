@@ -15,3 +15,5 @@ set_target_properties(ngsxfem_cutint PROPERTIES SUFFIX ".so")
 target_link_libraries(ngsxfem_cutint ngsxfem_utils ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
 install( TARGETS ngsxfem_cutint ${ngs_install_dir})
 
+add_subdirectory(py_demos)
+
