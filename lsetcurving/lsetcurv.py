@@ -133,8 +133,8 @@ blending : None/string/CoefficientFunction
         self.v_def.Update()
         self.deform.Update()
         
-        self.lset_ho.Set(levelset,heapsize=self.heapsize)
-        self.qn.Set(self.lset_ho.Deriv(),heapsize=self.heapsize)
+        self.lset_ho.Set(levelset)
+        self.qn.Set(self.lset_ho.Deriv())
         InterpolateToP1(self.lset_ho,self.lset_p1)
         if blending == None or blending == "none":
             blending = CoefficientFunction(0.0)
