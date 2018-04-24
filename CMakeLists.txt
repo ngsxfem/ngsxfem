@@ -74,7 +74,7 @@ else(WIN32)
     set(NGS_LIB_TYPE SHARED)
 endif(WIN32)
 
-set(NETGEN_LIBS ngsolve)
+set(NETGEN_LIBS solve)
 
 
 if (ADDITIONAL_PATHS)
