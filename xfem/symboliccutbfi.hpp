@@ -37,6 +37,12 @@ namespace ngfem
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
     virtual void 
+    CalcElementMatrix     (const FiniteElement & fel,
+                          const ElementTransformation & trafo, 
+                          FlatMatrix<double> elmat,
+                          LocalHeap & lh) const;
+
+    virtual void 
     CalcElementMatrixAdd (const FiniteElement & fel,
                           const ElementTransformation & trafo, 
                           FlatMatrix<double> elmat,
