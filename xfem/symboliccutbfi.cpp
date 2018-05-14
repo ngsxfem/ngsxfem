@@ -32,6 +32,19 @@ namespace ngfem
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
   }
 
+
+  void 
+  SymbolicCutBilinearFormIntegrator ::
+  CalcElementMatrix (const FiniteElement & fel,
+                     const ElementTransformation & trafo, 
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+  {
+    elmat = 0.0;
+    T_CalcElementMatrixAdd<double,double> (fel, trafo, elmat, lh);
+  }
+
+  
   void
   SymbolicCutBilinearFormIntegrator ::
   CalcElementMatrixAdd (const FiniteElement & fel,
@@ -75,7 +88,6 @@ namespace ngfem
     static Timer tdb("symbolicCutBFI - CalcElementMatrix D * B", 2);
     static Timer tlapack("symbolicCutBFI - CalcElementMatrix lapack", 2);
     */
-
     // tstart.Start();
     if (element_vb != VOL)
       {
