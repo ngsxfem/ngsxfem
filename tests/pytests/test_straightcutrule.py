@@ -36,7 +36,7 @@ def test_polynomial_ET_Segm(domain, alpha):
     #InterpolateToP1(levelset,lset_approx)
     lset_approx.Set(levelset)
     
-    f = pow(x, alpha)
+    f = x**alpha
     
     integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
                              cf=f, mesh=mesh, order = order)
@@ -193,7 +193,7 @@ def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, qua
     lset_approx = GridFunction(H1(mesh,order=1))
     InterpolateToP1(levelset,lset_approx)
     
-    f = pow(dim,alpha)
+    f = dim**alpha
     
     integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
                          cf=f, mesh=mesh, order = order)
@@ -258,7 +258,7 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, qua
     lset_approx = GridFunction(H1(mesh,order=1))
     InterpolateToP1(levelset,lset_approx)
     
-    f = pow(dim,alpha)
+    f = dim**alpha
     
     integral = Integrate(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain},
                          cf=f, mesh=mesh, order = order)
