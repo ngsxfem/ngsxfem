@@ -132,7 +132,7 @@ class LevelSetMeshAdaptation_Spacetime:
         
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
-            self.qn.Set(self.lset_ho_node.Deriv(),heapsize=self.heapsize)
+            self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime, None, self.lset_lower_bound, 
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
