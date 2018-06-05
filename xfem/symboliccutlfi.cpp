@@ -121,10 +121,11 @@ namespace ngfem
     else
       ir = ir1;
 
+
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
     FlatVector<SCAL> elvec1(elvec.Size(), lh);
-    
+
     FlatMatrix<SCAL> values(ir->Size(), 1, lh);
 
     /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
@@ -137,8 +138,11 @@ namespace ngfem
           {
             ud.testfunction = proxy;
             ud.test_comp = k;
-            
-            cf -> Evaluate (mir, values);
+            cout << "everything working up to here: k = " << k << endl;
+            // cf -> Evaluate (mir, values);
+            for (int i=0; i < mir.Size(); i++)
+              values(i,0) = cf->Evaluate(mir[i]);
+            cout << "never arrive here" << endl;
             for (int i = 0; i < mir.Size(); i++)
               proxyvalues(i,k) = mir[i].GetWeight() * values(i,0);
           }
@@ -148,7 +152,7 @@ namespace ngfem
         // tb.Stop();
         elvec += elvec1;
       }
-      
+
   }
   
 }
