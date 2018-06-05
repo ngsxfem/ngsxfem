@@ -76,6 +76,8 @@ from xfem import *
 # basic geometry features (for the background mesh)
 from netgen.geom2d import SplineGeometry
 
+
+
 # We generate the background mesh of the domain and use a simplicial triangulation
 # To obtain a mesh with quadrilaterals use 'quad_dominated=True'
 square = SplineGeometry()
@@ -174,8 +176,8 @@ gfu = GridFunction(VhG)
 gfu.components[1].Set(solution[1], BND)
 
 # setting up matrix and vector
-a.Assemble();
-f.Assemble();
+a.Assemble()
+f.Assemble()
 
 # homogenization of boundary data and solution of linear system
 rhs = gfu.vec.CreateVector()

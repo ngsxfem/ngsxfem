@@ -138,11 +138,10 @@ namespace ngfem
           {
             ud.testfunction = proxy;
             ud.test_comp = k;
-            cout << "everything working up to here: k = " << k << endl;
             // cf -> Evaluate (mir, values);
             for (int i=0; i < mir.Size(); i++)
               values(i,0) = cf->Evaluate(mir[i]);
-            cout << "never arrive here" << endl;
+
             for (int i = 0; i < mir.Size(); i++)
               proxyvalues(i,k) = mir[i].GetWeight() * values(i,0);
           }
