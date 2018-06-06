@@ -30,8 +30,8 @@ namespace ngcomp
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
   : FESpace (ama, flags), Vh_ptr(aVh)
   {
-    cout << "Constructor of SpaceTimeFESpace" << endl;
-    cout << "Flags = " << flags << endl;
+    cout << IM(3) << "Constructor of SpaceTimeFESpace" << endl;
+    cout << IM(3) <<"Flags = " << flags << endl;
 
     dimension = aVh->GetDimension ();
 
@@ -42,9 +42,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     Vh = aVh.get();
     tfe = atfe.get();
 
-    cout << "Hello from SpaceTimeFESpace.cpp" << endl;
-    cout << "Order Space: " << order_s << endl;
-    cout << "Order Time: " << order_t << endl;
+    cout << IM(3) <<"Hello from SpaceTimeFESpace.cpp" << endl;
+    cout << IM(3) <<"Order Space: " << order_s << endl;
+    cout << IM(3) <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
@@ -87,11 +87,11 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     }
     FESpace::Update(lh);
     Vh->Update(lh);
-    cout << "Dofs in base: " << Vh->GetNDof() << endl;
+    cout << IM(3) << "Dofs in base: " << Vh->GetNDof() << endl;
 
     // number of dofs:
     ndof = (Vh->GetNDof()) * tfe->GetNDof();
-    cout << "Total number of Dofs: " << ndof << endl;
+    cout << IM(3) << "Total number of Dofs: " << ndof << endl;
 
 
   }
@@ -141,13 +141,13 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      // Using nodal property for special case
      for(int i= 0; i < nodes.Size(); i++) {
          if(time == nodes[i]) {
-             cout << "Nodal case" << endl;
+             cout << IM(3) <<"Nodal case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
                  restricted_vec[j] = st_vec[j+i*Vh->GetNDof()];
              return restricted_GF;
          }
      }
-     cout << "General case" << endl;
+     cout << IM(3) <<"General case" << endl;
      // General case
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
      for(int i= 0; i < nodes.Size(); i++) {
