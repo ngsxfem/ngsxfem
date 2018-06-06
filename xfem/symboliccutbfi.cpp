@@ -32,6 +32,17 @@ namespace ngfem
 
   void
   SymbolicCutBilinearFormIntegrator ::
+  CalcElementMatrix (const FiniteElement & fel,
+                     const ElementTransformation & trafo,
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+  {
+    elmat=0.0;
+    T_CalcElementMatrixAdd<double> (fel, trafo, elmat, lh);
+  }
+
+  void
+  SymbolicCutBilinearFormIntegrator ::
   CalcElementMatrixAdd (const FiniteElement & fel,
                         const ElementTransformation & trafo,
                         FlatMatrix<double> elmat,
