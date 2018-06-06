@@ -17,7 +17,8 @@ namespace xintegration
                                                    int intorder,
                                                    int time_intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl)
+                                                   int subdivlvl,
+                                                   SWAP_DIMENSIONS_POLICY quad_dir_policy)
   {
     // temporary fix for ET_SEGM
     /*
@@ -39,9 +40,9 @@ namespace xintegration
           if (!st_FE)
             throw Exception("not a space time FE");
           ScalarFiniteElement<1>* fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
-          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, lh);
+          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
       } else {
-          return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
+          return StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
       }
     }
     else if (cflset != nullptr)

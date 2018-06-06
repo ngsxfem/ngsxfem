@@ -25,6 +25,7 @@ void ExportNgsx_cutint(py::module &m)
            DOMAIN_TYPE dt,
            int subdivlvl,
            int time_order,
+           SWAP_DIMENSIONS_POLICY quad_dir_policy,
            int heapsize)
         {
           py::extract<PyCF> pycf(lset);
@@ -46,7 +47,7 @@ void ExportNgsx_cutint(py::module &m)
              {
                auto & trafo = ma->GetTrafo (el, lh);
 
-               const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl);
+               const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl, quad_dir_policy);
 
                if (ir != nullptr)
                {
@@ -72,6 +73,7 @@ void ExportNgsx_cutint(py::module &m)
         py::arg("domain_type")=IF,
         py::arg("subdivlvl")=0,
         py::arg("time_order")=-1,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Integrate on a level set domains. The accuracy of the integration is 'order' w.r.t. a (multi-)linear
@@ -110,6 +112,9 @@ time_order : int
 
 heapsize : int
   heapsize for local computations.
+
+quad_dir_policy : int
+  policy for the selection of the order of integration directions
 )raw_string"));
 
 }

@@ -18,5 +18,6 @@ namespace xintegration
                                                      DOMAIN_TYPE dt,
                                                      int order_time,
                                                      int order_space,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                      LocalHeap & lh);
 }

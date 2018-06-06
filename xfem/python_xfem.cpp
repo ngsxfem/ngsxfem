@@ -421,6 +421,7 @@ elnr : int
                              int order,
                              int time_order,
                              int subdivlvl,
+                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -450,7 +451,7 @@ elnr : int
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
           {
-            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
+            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb);
             bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
@@ -481,6 +482,7 @@ elnr : int
         py::arg("force_intorder")=-1,
         py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
@@ -565,6 +567,7 @@ time_order : int
                              int order,
                              int time_order,
                              int subdivlvl,
+                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -584,7 +587,7 @@ time_order : int
           if (element_boundary || skeleton)
             throw Exception("No Facet LFI with Symbolic cuts..");
 
-          auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
+          auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol,vb);
           lfime->SetTimeIntegrationOrder(time_order);
           shared_ptr<LinearFormIntegrator> lfi = lfime;
 
@@ -607,6 +610,7 @@ time_order : int
         py::arg("force_intorder")=-1,
         py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),

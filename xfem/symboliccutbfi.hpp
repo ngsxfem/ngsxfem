@@ -3,7 +3,7 @@
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <ngstd.hpp> // for Array
 
-#include "../cutint/xdecompose.hpp"
+#include "../cutint/xintegration.hpp"
 using namespace xintegration;
 
 // #include "xfiniteelement.hpp"
@@ -22,6 +22,7 @@ namespace ngfem
     int force_intorder = -1;
     int subdivlvl = 0;
     int time_order = -1;
+    SWAP_DIMENSIONS_POLICY pol;
   public:
     
     SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
@@ -29,6 +30,7 @@ namespace ngfem
                                        DOMAIN_TYPE adt,
                                        int aforce_intorder = -1,
                                        int asubdivlvl = 0,
+                                       SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL,
                                        VorB vb = VOL);
 
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
@@ -37,10 +39,10 @@ namespace ngfem
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
     virtual void 
-    CalcElementMatrix (const FiniteElement & fel,
-                       const ElementTransformation & trafo, 
-                       FlatMatrix<double> elmat,
-                       LocalHeap & lh) const;
+    CalcElementMatrix     (const FiniteElement & fel,
+                          const ElementTransformation & trafo, 
+                          FlatMatrix<double> elmat,
+                          LocalHeap & lh) const;
 
     virtual void 
     CalcElementMatrixAdd (const FiniteElement & fel,

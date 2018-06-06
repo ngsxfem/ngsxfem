@@ -20,25 +20,28 @@ namespace ngfem
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder,
                                      int asubdivlvl,
+                                     SWAP_DIMENSIONS_POLICY apol,
                                      VorB vb)
     : SymbolicBilinearFormIntegrator(acf,vb,VOL),
     cf_lset(acf_lset),
     dt(adt),
     force_intorder(aforce_intorder),
-    subdivlvl(asubdivlvl)
+    subdivlvl(asubdivlvl),
+    pol(apol)
   {
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
   }
 
-  void
+
+  void 
   SymbolicCutBilinearFormIntegrator ::
   CalcElementMatrix (const FiniteElement & fel,
-                     const ElementTransformation & trafo,
+                     const ElementTransformation & trafo, 
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
   {
-    elmat=0.0;
-    T_CalcElementMatrixAdd<double> (fel, trafo, elmat, lh);
+    elmat = 0.0;
+    T_CalcElementMatrixAdd<double,double> (fel, trafo, elmat, lh);
   }
 
   void
@@ -84,7 +87,6 @@ namespace ngfem
     static Timer tdb("symbolicCutBFI - CalcElementMatrix D * B", 2);
     static Timer tlapack("symbolicCutBFI - CalcElementMatrix lapack", 2);
     */
-
     // tstart.Start();
     if (element_vb != VOL)
       {
@@ -135,7 +137,7 @@ namespace ngfem
 
     // elmat = 0;
 
-    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl);
+    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
 
     if (ir1 == nullptr)
       return;

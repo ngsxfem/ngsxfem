@@ -97,6 +97,7 @@ namespace xintegration
                                                         DOMAIN_TYPE dt,
                                                         int order_time,
                                                         int order_space,
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                         LocalHeap & lh){
         ELEMENT_TYPE et_space = trafo.GetElementType();
         int lset_nfreedofs = cf_lset_at_element.Size();
@@ -124,9 +125,21 @@ namespace xintegration
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
 
-                IntegrationRule quad_untrafo;
                 auto element_domain = CheckIfStraightCut(cf_lset_at_t);
 
+                const int offset = ir->Size();
+                if (element_domain == IF)
+                    ir->Append(*StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh));
+                else if (element_domain == dt)
+                    ir->Append(SelectIntegrationRule (et_space, order_space));
+
+                const int newsize = ir->Size();                    
+                for(int k = offset; k < newsize; k++) {
+                    if(trafo.SpaceDim() == 1) (*ir)[k].Point()[1] = t;
+                    if(trafo.SpaceDim() == 2) (*ir)[k].Point()[2] = t;
+                    (*ir)[k].SetWeight((*ir)[k].Weight()*ip.Weight()*(t1-t0));
+                }
+                /*                                     
                 CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);
                 CutQuadElementGeometry geom_quad(cf_lset_at_t, et_space, lh);
 
@@ -162,7 +175,7 @@ namespace xintegration
                     ir->Append(*ir_interface);
                 }
                 else ir->Append(quad_untrafo);
-
+                */
             }
         }
         return ir;

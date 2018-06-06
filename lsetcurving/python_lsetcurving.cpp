@@ -29,7 +29,7 @@ void ExportNgsx_lsetcurving(py::module &m)
           interpol.Do(lh,eps_perturbation);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
 into a piecewise (multi-) linear function.
@@ -60,7 +60,7 @@ heapsize : int
           interpol.Do(lh,eps_perturbation);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.

@@ -25,7 +25,12 @@ void ExportNgsx(py::module &m)
     .export_values()
     ;
   
-  // empty now ;)
+  py::enum_<SWAP_DIMENSIONS_POLICY>(m, "QUAD_DIRECTION_POLICY")
+    .value("FIRST", FIRST_ALLOWED)
+    .value("OPTIMAL", FIND_OPTIMAL)
+    .value("FALLBACK", ALWAYS_NONE)
+    .export_values()
+    ;
 }
 
 PYBIND11_MODULE(ngsxfem_py, m)

@@ -3,7 +3,7 @@
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <ngstd.hpp> // for Array
 
-#include "../cutint/xdecompose.hpp"
+#include "../cutint/xintegration.hpp"
 using namespace xintegration;
 
 namespace ngfem
@@ -18,6 +18,7 @@ namespace ngfem
     int force_intorder = -1;
     int subdivlvl = 0;
     int time_order = -1;
+    SWAP_DIMENSIONS_POLICY pol;
 
   public:
 
@@ -26,6 +27,7 @@ namespace ngfem
                                      DOMAIN_TYPE adt,
                                      int aforce_intorder = -1,
                                      int asubdivlvl = 0,
+                                     SWAP_DIMENSIONS_POLICY apol = FIND_OPTIMAL,
                                      VorB vb = VOL);
 
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }

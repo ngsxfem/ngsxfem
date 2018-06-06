@@ -130,6 +130,11 @@ levelset_domain : dictionary
   * "force_intorder" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
+  * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
+    Integration direction policy for iterated integrals approach
+    * first direction is used unless not applicable (FIRST)
+    * best direction (in terms of transformation constant) is used (OPTIMAL)
+    * subdivision into simplices is always used (FALLBACK)
 
 Other Parameters :
 
@@ -166,11 +171,14 @@ Other Parameters :
             print("Please provide a level set function")
         if not "domain_type" in levelset_domain:
             print("Please provide a domain type (NEG,POS or IF)")
+        if not "quad_dir_policy" in levelset_domain:
+            levelset_domain["quad_dir_policy"] = OPTIMAL
         # print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
         return SymbolicCutBFI(lset=levelset_domain["levelset"],
                               domain_type=levelset_domain["domain_type"],
                               force_intorder=levelset_domain["force_intorder"],
                               subdivlvl=levelset_domain["subdivlvl"],
+                              quad_dir_policy=levelset_domain["quad_dir_policy"],
                               *args, **kwargs)
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
@@ -206,6 +214,11 @@ levelset_domain : dictionary
   * "force_intorder" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
+  * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
+    Integration direction policy for iterated integrals approach
+    * first direction is used unless not applicable (FIRST)
+    * best direction (in terms of transformation constant) is used (OPTIMAL)
+    * subdivision into simplices is always used (FALLBACK)
 
 Other Parameters :
 
@@ -242,11 +255,14 @@ Other Parameters :
             print("Please provide a level set function")
         if not "domain_type" in levelset_domain:
             print("Please provide a domain type (NEG,POS or IF)")
+        if not "quad_dir_policy" in levelset_domain:
+            levelset_domain["quad_dir_policy"] = OPTIMAL
         # print("SymbolicLFI-Wrapper: SymbolicCutLFI called")
         return SymbolicCutLFI(lset=levelset_domain["levelset"],
                               domain_type=levelset_domain["domain_type"],
                               force_intorder=levelset_domain["force_intorder"],
                               subdivlvl=levelset_domain["subdivlvl"],
+                              quad_dir_policy=levelset_domain["quad_dir_policy"],
                               *args, **kwargs)
     else:
         # print("SymbolicLFI-Wrapper: original SymbolicLFI called")
@@ -271,6 +287,8 @@ See documentation of Integrate.
         print("Please provide a level set function")
     if not "domain_type" in levelset_domain:
         print("Please provide a domain type (NEG,POS or IF)")
+    if not "quad_dir_policy" in levelset_domain:
+        levelset_domain["quad_dir_policy"] = OPTIMAL
 
     return IntegrateX(lset=levelset_domain["levelset"],
                       mesh=mesh, cf=cf,
@@ -278,6 +296,7 @@ See documentation of Integrate.
                       domain_type=levelset_domain["domain_type"],
                       subdivlvl=levelset_domain["subdivlvl"],
                       time_order=time_order,
+                      quad_dir_policy=levelset_domain["quad_dir_policy"],
                       heapsize=heapsize)
 
 
@@ -308,7 +327,14 @@ levelset_domain : dictionary
     constructed. Note: this argument only works on simplices.
   * "force_intorder" : int
     (default: entry does not exist or value -1)
-    overwrites "order"-arguments in the integration
+    overwrites "order"-arguments in the integration (affects only spatial integration)
+  * "time_order" : int 
+    defines integration order in time (for space-time integrals only)
+  * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
+    Integration direction policy for iterated integrals approach
+    * first direction is used unless not applicable (FIRST)
+    * best direction (in terms of transformation constant) is used (OPTIMAL)
+    * subdivision into simplices is always used (FALLBACK)
 
 mesh :
   Mesh to integrate on (on some part)
