@@ -28,10 +28,6 @@ k_t = 1
 k_s = 2
 # spatial FESpace for solution
 fes1 = H1(mesh, order=k_s, dirichlet=[],)
-# spatial FESpace for level set (reference configuration)
-#fes_lset_slice = H1(mesh, order=1, dirichlet=[])
-# spatial FESpace for deformation field
-fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 # polynomial order in time for level set approximation
 lset_order_time = 1
 # integration order in time
@@ -86,8 +82,7 @@ lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
 lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
 
 dfm = lset_adap_st.deform
-dfm_top = CreateTimeRestrictedGF(dfm,1.0) # doesn't work for vector-valued functions yet...
-#dfm_top = GridFunction(fes_dfm_slice)
+dfm_top = CreateTimeRestrictedGF(dfm,1.0)
 
 t_old = 0
 u0_ic.Set(u_exact)
