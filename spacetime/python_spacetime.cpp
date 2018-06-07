@@ -361,6 +361,20 @@ void ExportNgsx_spacetime(py::module &m)
    py::arg("space_gf"),
    "Extract Gridfunction corresponding to a fixed time from a space-time GridFunction.");
 
+   m.def("SpaceTimeInterpolateToP1", [](PyCF st_CF, PyCF tref, double t, double dt, PyGF st_GF)
+   {
+     FESpace* raw_FE = (st_GF->GetFESpace()).get();
+     SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+     if (!st_FES) throw Exception("not a spacetime gridfunction");
+     st_FES->InterpolateToP1(st_CF,tref,t,dt,st_GF);
+   }, 
+   py::arg("spacetime_cf"),
+   py::arg("time"),
+   py::arg("tstart"),
+   py::arg("dt"),
+   py::arg("spacetime_gf"),
+   "Interpolate nodal in time (possible high order) and nodal in space (P1).");
+
 }
 
 PYBIND11_MODULE(ngsxfem_spacetime_py,m)

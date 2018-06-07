@@ -16,6 +16,7 @@
 
 #include "SpaceTimeFE.hpp"
 #include "SpaceTimeFESpace.hpp"
+#include "../lsetcurving/p1interpol.hpp"
 
 /*
 #include <diffop_impl.hpp>
@@ -179,5 +180,27 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      return restricted_GF;
   }
 
+  void SpaceTimeFESpace ::InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> ctref, double t, double dt, shared_ptr<GridFunction> st_GF)
+  {
+    LocalHeapMem<100000> lh("SpacetimeInterpolateToP1");
+    auto node_gf = make_shared < T_GridFunction < double > >( Vh_ptr);
+    node_gf->Update();
+    auto gf_vec = st_GF->GetVectorPtr()->FV<double>();
+    auto node_gf_vec = node_gf->GetVectorPtr()->FV<double>();
+    shared_ptr<ParameterCoefficientFunction> coef_tref = dynamic_pointer_cast<ParameterCoefficientFunction>(ctref);
+    if (!coef_tref)
+      throw Exception("SpaceTimeFESpace ::InterpolateToP1 : tref is not a ParameterCF");
+    const double backup_tref = coef_tref->GetValue();
+    Vector<double> nodes(order_time() +1 );
+    TimeFE_nodes(nodes);
+    for(int i= 0; i < nodes.Size(); i++) {
+      coef_tref->SetValue(t+nodes[i]*dt);
+      InterpolateP1 iP1(st_CF, node_gf);
+      iP1.Do(lh);
+      for(int j = 0; j < Vh_ptr->GetNDof();j++)
+        gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);
+    }        
+    coef_tref->SetValue(backup_tref);
+  }
 
 }
