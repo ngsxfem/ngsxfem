@@ -340,12 +340,27 @@ void ExportNgsx_spacetime(py::module &m)
      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
    });
 
-   m.def("RestrictToTime", [](PyGF st_GF,double time) -> PyGF
+   m.def("CreateTimeRestrictedGF", [](PyGF st_GF,double time) -> PyGF
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
-     SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
-     return st_FE->CreateRestrictedGF(st_GF,time);
-   }, "Create spatial-only Gridfunction corresponding to a fixed time.");
+     SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+     return st_FES->CreateRestrictedGF(st_GF,time);
+   },
+   py::arg("gf"),
+   py::arg("reference_time") = 0.0,
+   "Create spatial-only Gridfunction corresponding to a fixed time.");
+
+   m.def("RestrictGFInTime", [](PyGF st_GF,double time,PyGF s_GF)
+   {
+     FESpace* raw_FE = (st_GF->GetFESpace()).get();
+     SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+     st_FES->RestrictGFInTime(st_GF,time,s_GF);
+   }, 
+   py::arg("spacetime_gf"),
+   py::arg("reference_time") = 0.0,
+   py::arg("space_gf"),
+   "Extract Gridfunction corresponding to a fixed time from a space-time GridFunction.");
+
 }
 
 PYBIND11_MODULE(ngsxfem_spacetime_py,m)

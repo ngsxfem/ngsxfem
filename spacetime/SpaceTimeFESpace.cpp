@@ -116,47 +116,67 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   {
 
      ScalarFiniteElement<2>* s_FE = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
-
      ScalarFiniteElement<1>* t_FE = tfe;
-
      SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(s_FE,t_FE,override_time,time);
 
      return *st_FE;
 
    }
 
-
-  shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
+  void SpaceTimeFESpace :: RestrictGFInTime(shared_ptr<GridFunction> st_GF, double time, shared_ptr<GridFunction> s_GF)
   {
-
-     auto restricted_GF =  make_shared < T_GridFunction < double > >( Vh_ptr);
-     restricted_GF->Update();
      auto st_vec = st_GF->GetVectorPtr()->FV<double>();   
-     auto restricted_vec = restricted_GF->GetVectorPtr()->FV<double>();
+     auto restricted_vec = s_GF->GetVectorPtr()->FV<double>();
      restricted_vec = 0.0;
 
      Vector<double> nodes(order_time() +1 );
      TimeFE_nodes(nodes);
 
+     //cout << "Vhdim = " << Vh->GetDimension() << endl;
      // Using nodal property for special case
      for(int i= 0; i < nodes.Size(); i++) {
          if(time == nodes[i]) {
-             cout << IM(3) <<"Nodal case" << endl;
+             cout << IM(3) <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
                  restricted_vec[j] = st_vec[j+i*Vh->GetNDof()];
-             return restricted_GF;
+             return;
          }
      }
+     
      cout << IM(3) <<"General case" << endl;
      // General case
+     cout << GetTimeFE() << endl;
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
+     const int dim = Vh->GetDimension();     
      for(int i= 0; i < nodes.Size(); i++) {
          double weight_time = time_FE->Lagrange_Pol(time,nodes,i);
          for(int j = 0; j < Vh->GetNDof();j++)
-             restricted_vec[j] += weight_time * st_vec[j+i*Vh->GetNDof()];
+             for(int d = 0; d < dim;d++)
+                 restricted_vec[dim*j+d] += weight_time * st_vec[dim*(j+i*Vh->GetNDof())+d];
      }
-     return restricted_GF;
+  }
 
+
+  shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
+  {
+     shared_ptr<GridFunction> restricted_GF = nullptr;
+     
+     switch (Vh->GetDimension())
+     {
+       case 1:
+         restricted_GF = make_shared < T_GridFunction < double > >( Vh_ptr);
+         break;
+       case 2:
+         restricted_GF = make_shared < T_GridFunction < Vec<2> > >( Vh_ptr);
+         break;
+     
+       default:
+         throw Exception("cannot handle GridFunction type (dimension too large?).");
+         break;
+     }
+     restricted_GF->Update();
+     RestrictGFInTime(st_GF, time, restricted_GF);
+     return restricted_GF;
   }
 
 

@@ -51,13 +51,17 @@ namespace ngcomp
     void SetOverrideTime(bool a) {override_time = a;}
     // Provide Info for Python
     int order_time()
-    {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
-         return time_FE->order_time();
+    {    
+      NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      return time_FE->order_time();
     }
     void TimeFE_nodes(Vector<>& intp_pts)
-    {    NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
-         time_FE->GetIntpPts (intp_pts);
+    { 
+      NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      time_FE->GetIntpPts (intp_pts);
     }
+
+    void RestrictGFInTime(shared_ptr<GridFunction> st_GF, double time, shared_ptr<GridFunction> s_GF);
     shared_ptr<GridFunction> CreateRestrictedGF( shared_ptr<GridFunction> st_GF, double time);
   };
 
