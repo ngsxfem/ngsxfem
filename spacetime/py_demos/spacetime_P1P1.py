@@ -19,6 +19,8 @@ square.AddRectangle([-1,-0.75],[1,1.5])
 ngmesh = square.GenerateMesh(maxh=0.125, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
+raise Exception("this example is not working yet")
+
 # polynomial order in time
 k_t = 1
 # polynomial order in space
