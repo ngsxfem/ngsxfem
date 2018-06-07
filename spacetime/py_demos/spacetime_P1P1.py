@@ -98,22 +98,14 @@ ci = CutInfo(mesh,time_order=time_order)
 hasneg_integrators_a = []
 hasneg_integrators_f = []
 patch_integrators_a = []
-print("a")
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
-print("b")
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
-print("c")
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*grad(u)*grad(v)))
-print("d")
 hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
-print("e")
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()),
                                                  skeleton=False, time_order=time_order))
-print("f")
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
-print("g")
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
-print("h")
 
 
 a = BilinearForm(st_fes,check_unused=False,symmetric=False)
