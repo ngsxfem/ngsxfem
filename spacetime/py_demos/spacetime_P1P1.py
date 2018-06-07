@@ -16,7 +16,7 @@ ngsglobals.msg_level = 1
 
 square = SplineGeometry()
 square.AddRectangle([-1,-0.75],[1,1.5])
-ngmesh = square.GenerateMesh(maxh=0.5, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.125, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 # polynomial order in time
@@ -35,8 +35,8 @@ tfe = ScalarTimeFE(k_t)
 st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Fitted heat equation example
-tend = 0.1
-delta_t = tend/1
+tend = 0.5
+delta_t = tend/16
 tnew = 0
 told = 0
 
