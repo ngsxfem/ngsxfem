@@ -16,10 +16,8 @@ ngsglobals.msg_level = 1
 
 square = SplineGeometry()
 square.AddRectangle([-1,-0.75],[1,1.5])
-ngmesh = square.GenerateMesh(maxh=0.125, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)
-
-raise Exception("this example is not working yet")
 
 # polynomial order in time
 k_t = 1
@@ -38,7 +36,7 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Fitted heat equation example
 tend = 0.5
-delta_t = tend/16
+delta_t = tend/32
 tnew = 0
 told = 0
 
@@ -62,6 +60,7 @@ r = sqrt(x**2+(y-rho)**2)
 levelset= r - r0
 
 lset_p1 = GridFunction(st_fes)
+
 SpaceTimeInterpolateToP1(levelset,coef_told,0.0,delta_t,lset_p1)
 
 lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
@@ -82,10 +81,10 @@ u,v = st_fes.TnT()
 h = specialcf.mesh_size
 
 Draw(lset_top,mesh,"lset")
-Draw(IfPos(-lset_top,u_exact,float('nan')),mesh,"u_exact")
-Draw(IfPos(-lset_top,u_last,float('nan')),mesh,"u")
-
+Draw(IfPos(-lset_top,CoefficientFunction((0,0)),CoefficientFunction((float('nan'),float('nan')))),mesh,"filter")
 visoptions.deformation = 1
+Draw(u_last, mesh,"u", sd=2, autoscale=False, min = -1, max = 1)
+
 
 lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
 lset_neg_bottom = { "levelset" : lset_bottom, "domain_type" : NEG, "subdivlvl" : 0}
@@ -120,7 +119,6 @@ for integrator in hasneg_integrators_f:
     f += integrator
 
 while tend - told > delta_t/2:
-    # update lset geometry to new time slab (also changes lset_p1 !)
     SpaceTimeInterpolateToP1(levelset,coef_told,told,delta_t,lset_p1)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)

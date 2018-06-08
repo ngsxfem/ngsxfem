@@ -146,7 +146,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      
      cout << IM(3) <<"General case" << endl;
      // General case
-     cout << GetTimeFE() << endl;
+     //cout << IM(3) <<"time fe:" << GetTimeFE() << endl;
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
      const int dim = Vh->GetDimension();     
      for(int i= 0; i < nodes.Size(); i++) {
@@ -198,7 +198,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       InterpolateP1 iP1(st_CF, node_gf);
       iP1.Do(lh);
       for(int j = 0; j < Vh_ptr->GetNDof();j++)
+      {
         gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);
+      }
     }        
     coef_tref->SetValue(backup_tref);
   }
