@@ -19,6 +19,10 @@ To obtain higher order accuracy, we offer a mesh transformation technique in the
 #+attr_html: :width 175px
 #+html: <p align="center"><img src="doc/graphics/lsetcurv.jpg" height="175"/></p>
 
+*** Space-Time Finite Elements for the treatment of moving domain problems
+To obtain robust method for PDEs on unfitted moving domain we can formulate space-time discretization. =ngsxfem= provides necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Further, it extends the tools for higher order accurate geometry handling to the space-time setting.
+#+html: <p align="center"><img src="doc/graphics/spacetime1.png" height="175"/><img src="doc/graphics/spacetime2.png" height="175"/></p> 
+
 ** Applications
 This section is to be added soon ...
 
@@ -122,4 +126,4 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * =py_tutorials/stokesxfem.py= : stationary Stokes interface problem with an isoparametric (P2X/P1X) Taylor-Hood-Nitsche-XFEM discretization
  * =py_tutorials/tracefem.py= : stationary 2D surface PDE problem with a TraceFEM discretization (low order)
  * =py_tutorials/tracefem3d.py= : stationary 3D surface PDE problem with a TraceFEM discretization (higher order)
- * =py_tutorials/moving_domain.py= : moving fictitous domain problem using a space time unfitted FEM (cf. corresponding tutorial at [[https://github.com/ngsxfem/ngsxfem-jupyter]] )
+ * =spacetime/py_tutorials/spacetimeP1P1.py= : moving fictitous domain problem using a space time unfitted FEM
