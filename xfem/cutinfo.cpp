@@ -51,7 +51,7 @@ namespace ngcomp
     }
   }
 
-  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, LocalHeap & lh)
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset,int time_order, LocalHeap & lh)
   {
     shared_ptr<GridFunction> gf_lset;
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
@@ -79,14 +79,14 @@ namespace ngcomp
         double part_vol [] = {0.0, 0.0};
         for (DOMAIN_TYPE np : {POS, NEG})
         {
-          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0, lh, subdivlvl);
-
+          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,time_order, lh, subdivlvl);
+          // If(time_order > -1 && vb == BND) should have part_vol[NEG] == 0, which will lead to
+          // the BND element being marked as POS.
           if (ir_np)
             for (auto ip : *ir_np)
               part_vol[np] += ip.Weight();
         }
-        (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);
-
+        (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);                 
         if (vb == VOL)
         {
           if (part_vol[NEG] > 0.0)

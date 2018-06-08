@@ -17,6 +17,7 @@ namespace ngfem
     DOMAIN_TYPE dt = NEG;
     int force_intorder = -1;
     int subdivlvl = 0;
+    int time_order = -1;
     SWAP_DIMENSIONS_POLICY pol;
 
   public:
@@ -29,7 +30,8 @@ namespace ngfem
                                      SWAP_DIMENSIONS_POLICY apol = FIND_OPTIMAL,
                                      VorB vb = VOL);
 
-    // virtual VorB VB () const { return vb; }
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    virtual VorB VB () const { return VOL; }
     virtual string Name () const { return string ("Symbolic Cut LFI"); }
 
 

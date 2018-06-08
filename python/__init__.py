@@ -16,6 +16,7 @@ from xfem.ngsxfem_xfem_py import *
 from xfem.ngsxfem_utils_py import *
 from xfem.ngsxfem_cutint_py import *
 from xfem.ngsxfem_lsetcurving_py import *
+from xfem.ngsxfem_spacetime_py import *
 
 def extend(func):
     """
@@ -156,6 +157,10 @@ Other Parameters :
   definedonelements: BitArray
     BitArray that allows integration only on elements or facets (if skeleton=True) that are marked
     True.
+
+  time_order : int
+    order in time that is used in the space-time integration. time_order=-1 means that no space-time
+    rule will be applied. This is only relevant for space-time discretizations.
 """
     if levelset_domain != None and type(levelset_domain)==dict:
         if not "force_intorder" in levelset_domain:
@@ -236,6 +241,10 @@ Other Parameters :
   definedonelements: BitArray
     BitArray that allows integration only on elements or facets (if skeleton=True) that are marked
     True.
+
+  time_order : int
+    order in time that is used in the space-time integration. time_order=-1 means that no space-time
+    rule will be applied. This is only relevant for space-time discretizations.
 """
     if levelset_domain != None and type(levelset_domain)==dict:
         if not "force_intorder" in levelset_domain:
@@ -262,7 +271,7 @@ Other Parameters :
         else:
             return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
-def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, region_wise=False, element_wise = False, heapsize=1000000):
+def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000):
     """
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
@@ -286,6 +295,7 @@ See documentation of Integrate.
                       order=order,
                       domain_type=levelset_domain["domain_type"],
                       subdivlvl=levelset_domain["subdivlvl"],
+                      time_order=time_order,
                       quad_dir_policy=levelset_domain["quad_dir_policy"],
                       heapsize=heapsize)
 
@@ -317,7 +327,9 @@ levelset_domain : dictionary
     constructed. Note: this argument only works on simplices.
   * "force_intorder" : int
     (default: entry does not exist or value -1)
-    overwrites "order"-arguments in the integration
+    overwrites "order"-arguments in the integration (affects only spatial integration)
+  * "time_order" : int 
+    defines integration order in time (for space-time integrals only)
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
     Integration direction policy for iterated integrals approach
     * first direction is used unless not applicable (FIRST)
@@ -332,6 +344,9 @@ cf : ngsolve.CoefficientFunction
 
 order : int (default = 5)
   integration order. Can be overruled by "force_intorder"-entry of the levelset_domain dictionary.
+
+time_order : int (default = -1)
+  integration order in time (for space-time integration), default: -1 (no space-time integrals)
 
 region_wise : bool
   (only active for non-levelset version)

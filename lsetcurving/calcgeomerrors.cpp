@@ -107,9 +107,8 @@ namespace ngcomp
 
       if (ElementInRelevantBand(lset_vals_p1, 0.0, 0.0))
       {
-
         const IntegrationRule * ir = CreateCutIntegrationRule(nullptr, gf_lset_p1, *eltrans,
-                                                              IF, 2*order, lh, 0);
+                                                              IF, 2*order, -1, lh, 0);
         const IntegrationRule & fquad_if(*ir);
         
         bool mark_this_el = false;

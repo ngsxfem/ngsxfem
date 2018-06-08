@@ -184,16 +184,23 @@ This is an internal function (and should be removed after some refactoring at so
   //       py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   //   ;
 
-  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, PyCF blending,
+  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn,
+                             py::object active_elems_in,
+                             PyCF blending,
                              double lower, double upper, double threshold, int heapsize)
         {
+          shared_ptr<BitArray> active_elems = nullptr;
+          if (py::extract<PyBA> (active_elems_in).check())
+            active_elems = py::extract<PyBA>(active_elems_in)();
+          
           LocalHeap lh (heapsize, "ProjectShift-Heap");
-          ProjectShift(lset_ho, lset_p1, deform, qn, blending, lower, upper, threshold, lh);
+          ProjectShift(lset_ho, lset_p1, deform, qn, active_elems, blending, lower, upper, threshold, lh);
         } ,
         py::arg("lset_ho")=NULL,
         py::arg("lset_p1")=NULL,
         py::arg("deform")=NULL,
         py::arg("qn")=NULL,
+        py::arg("active_elements")=DummyArgument(),
         py::arg("blending")=NULL,
         py::arg("lower")=0.0,
         py::arg("upper")=0.0,
@@ -233,6 +240,10 @@ lset_p1 : ngsolve.GridFunction
 
 deform : ngsolve.GridFunction
   vector valued GridFunction to store the resulting deformation
+
+active_elements : ngsolve.BitArray / None
+  explicit marking of elements on which the transformation should be applied. If this is not None
+  lower and upper will be ignored.
 
 blending : ngsolve.CoefficientFunction
   Option to apply the mesh deformation more localized on cut elements. Setting blending function to

@@ -21,6 +21,7 @@ namespace ngfem
     DOMAIN_TYPE dt = NEG;
     int force_intorder = -1;
     int subdivlvl = 0;
+    int time_order = -1;
     SWAP_DIMENSIONS_POLICY pol;
   public:
     
@@ -32,7 +33,8 @@ namespace ngfem
                                        SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL,
                                        VorB vb = VOL);
 
-    // virtual VorB VB () const { return vb; }
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    virtual VorB VB () const { return VOL; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
@@ -174,16 +176,74 @@ namespace ngfem
     }
 
   };
+  class SymbolicFacetBilinearFormIntegrator2 : public SymbolicFacetBilinearFormIntegrator
+  {
+  protected:
+    int force_intorder = -1;
+    int time_order = -1;
+  public:
+    SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
+                                          int aforce_intorder);
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+
+    virtual VorB VB () const { return vb; }
+    virtual xbool IsSymmetric() const { return maybe; }
+    
+    virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
+                                                                          element_boundary); }
+    
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const;
+
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
+                     const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
+                     const ElementTransformation & seltrans,  
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+    {
+      throw Exception("SymbolicFacetBilinearFormIntegrator2::CalcFacetMatrix on boundary not yet implemented");
+    }
+
+    virtual void
+    ApplyFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                      const FiniteElement & volumefel2, int LocalFacetNr2,
+                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                      FlatVector<double> elx, FlatVector<double> ely,
+                      LocalHeap & lh) const
+    {
+      throw Exception("SymbolicFacetBilinearFormIntegrator2::ApplyFacetMatrix not yet implemented");
+    }
+
+
+    virtual void
+    ApplyFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
+                      const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
+                      const ElementTransformation & seltrans, FlatArray<int> & SElVertices,
+                      FlatVector<double> elx, FlatVector<double> ely,
+                      LocalHeap & lh) const
+    {
+      throw Exception("SymbolicFacetBilinearFormIntegrator2::ApplyFacetMatrix not yet implemented");
+    }
+
+  };
+
 
   class SymbolicFacetPatchBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
     int force_intorder = -1;
-    //int time_order = -1;
+    int time_order = -1;
   public:
     SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf,
                                           int aforce_intorder);
-    //void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
 
     virtual VorB VB () const { return vb; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
@@ -232,5 +292,6 @@ namespace ngfem
     }
 
   };
+
 
 }

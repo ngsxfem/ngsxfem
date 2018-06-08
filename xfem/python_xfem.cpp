@@ -57,6 +57,7 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
     .def("__init__",  [] (CutInformation *instance,
                           shared_ptr<MeshAccess> ma,
                           py::object lset,
+                          int time_order,
                           int heapsize)
          {
            new (instance) CutInformation (ma);
@@ -64,23 +65,51 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
            {
              PyCF cflset = py::extract<PyCF>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-             instance->Update(cflset,lh);
+             instance->Update(cflset, time_order, lh);
            }
          },
          py::arg("mesh"),
          py::arg("levelset") = DummyArgument(),
-         py::arg("heapsize") = 1000000
+         py::arg("time_order") = -1,
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Creates a CutInfo based on a level set function and a mesh.
+
+Parameters
+
+mesh : Mesh
+
+levelset : ngsolve.CoefficientFunction / None
+  level set funciton w.r.t. which the CutInfo is created
+
+time_order : int
+  order in time that is used in the integration in time to check for cuts and the ratios. This is
+  only relevant for space-time discretizations.
+)raw_string")
       )
     .def("Update", [](CutInformation & self,
                       PyCF lset,
+                      int time_order,
                       int heapsize)
          {
            LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-           self.Update(lset,lh);
+           self.Update(lset,time_order,lh);
          },
          py::arg("levelset"),
+         py::arg("time_order") = -1,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
-Updates a CutInfo based on a level set function.)raw_string")
+Updates a CutInfo based on a level set function.
+
+Parameters
+
+levelset : ngsolve.CoefficientFunction
+  level set function w.r.t. which the CutInfo is generated
+
+time_order : int
+  order in time that is used in the integration in time to check for cuts and the ratios. This is
+  only relevant for space-time discretizations.
+
+
+)raw_string")
       )
     .def("Mesh", [](CutInformation & self)
          {
@@ -390,6 +419,7 @@ elnr : int
   m.def("SymbolicCutBFI", [](PyCF lset,
                              DOMAIN_TYPE dt,
                              int order,
+                             int time_order,
                              int subdivlvl,
                              SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
@@ -420,9 +450,15 @@ elnr : int
 
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
-            bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol, vb);
+          {
+            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb);
+            bfime->SetTimeIntegrationOrder(time_order);
+            bfi = bfime;
+          }
           else
           {
+            if (time_order >= 0)
+              throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
             if (vb == BND)
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
             bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
@@ -444,6 +480,7 @@ elnr : int
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
         py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
@@ -458,7 +495,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
 
   m.def("SymbolicFacetPatchBFI", [](PyCF cf,
                                     int order,
-                                    //int time_order,
+                                    int time_order,
                                     bool skeleton,
                                     py::object definedonelem)
         -> PyBFI
@@ -478,15 +515,15 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
           shared_ptr<BilinearFormIntegrator> bfi;
           if (skeleton)
           {
-            auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator> (cf, VOL, false);
-            //bfime->SetTimeIntegrationOrder(time_order);
+            auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator2> (cf, order);
+            bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
           else
           {
             // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
             auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf, order);
-            //bfime->SetTimeIntegrationOrder(time_order);
+            bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
 
@@ -497,7 +534,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
         },
         py::arg("form"),
         py::arg("force_intorder")=-1,
-        //py::arg("time_order")=-1,
+        py::arg("time_order")=-1,
         py::arg("skeleton") = true,
         py::arg("definedonelements")=DummyArgument(),
         docu_string(R"raw_string(
@@ -518,12 +555,17 @@ skeleton : boolean
 
 definedonelements : ngsolve.BitArray/None
   array which decides on which facets the integrator should be applied
+
+time_order : int
+  order in time that is used in the space-time integration. time_order=-1 means that no space-time
+  rule will be applied. This is only relevant for space-time discretizations.
 )raw_string")
     );
 
   m.def("SymbolicCutLFI", [](PyCF lset,
                              DOMAIN_TYPE dt,
                              int order,
+                             int time_order,
                              int subdivlvl,
                              SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
@@ -545,8 +587,9 @@ definedonelements : ngsolve.BitArray/None
           if (element_boundary || skeleton)
             throw Exception("No Facet LFI with Symbolic cuts..");
 
-          shared_ptr<LinearFormIntegrator> lfi
-            = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol, vb);
+          auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol,vb);
+          lfime->SetTimeIntegrationOrder(time_order);
+          shared_ptr<LinearFormIntegrator> lfi = lfime;
 
           if (py::extract<py::list> (definedon).check())
             lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -565,6 +608,7 @@ definedonelements : ngsolve.BitArray/None
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
         py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),

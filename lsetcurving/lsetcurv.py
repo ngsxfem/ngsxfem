@@ -105,7 +105,7 @@ The computed deformation depends on different options:
         self.deform = GridFunction(self.v_def, "deform")
         self.heapsize = heapsize
 
-    def CalcDeformation(self, levelset, blending=None):
+    def CalcDeformation(self, levelset, ba =None, blending=None):
         """
 Compute the mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise linear
 approximation) are mapped towards the corresponding isolines of a given function
@@ -154,6 +154,7 @@ blending : None/string/CoefficientFunction
                      self.lset_p1,
                      self.deform,
                      self.qn,
+                     ba,
                      blending,
                      lower=self.lset_lower_bound,
                      upper=self.lset_upper_bound,

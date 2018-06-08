@@ -8,11 +8,12 @@ add_library(ngsxfem_cutint ${NGS_LIB_TYPE}
   xintegration.hpp xintegration.cpp
   xdecompose.cpp xdecompose.hpp  
   straightcutrule.hpp straightcutrule.cpp
+  spacetimecutrule.hpp spacetimecutrule.cpp
         )
 
 set_target_properties(ngsxfem_cutint PROPERTIES SUFFIX ".so")
 
-target_link_libraries(ngsxfem_cutint ngsxfem_utils ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
+target_link_libraries(ngsxfem_cutint ngsxfem_utils ngsxfem_spacetime ${PYTHON_LIBS} ${LAPACK_LIBRARIES} ${NETGEN_LIBS})
 install( TARGETS ngsxfem_cutint ${ngs_install_dir})
 
 add_subdirectory(py_demos)

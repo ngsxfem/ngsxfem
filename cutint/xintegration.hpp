@@ -17,6 +17,7 @@ namespace xintegration
                                                    const ElementTransformation & trafo,
                                                    DOMAIN_TYPE dt,
                                                    int intorder,
+                                                   int time_intorder,
                                                    LocalHeap & lh,
                                                    int subdivlvl = 0,
                                                    SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL);

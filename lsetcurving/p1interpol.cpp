@@ -46,10 +46,10 @@ namespace ngcomp
         {
           Vec<2> point;
           ma->GetPoint<2>(vnr,point);
-          IntegrationPoint ip(0.0);
+          IntegrationPoint ip(0,0,0,0);
           MappedIntegrationPoint<2,2> mip(ip,eltrans);
           Vec<2> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
-          IntegrationPoint ip_f(refpoint,0.0);
+          IntegrationPoint ip_f(refpoint[0],refpoint[1],0.0,0.0);
           MappedIntegrationPoint<2,2> mip_f(ip_f,eltrans);
           val_lset = coef->Evaluate(mip_f);
         }
@@ -57,7 +57,7 @@ namespace ngcomp
         {
           Vec<3> point;
           ma->GetPoint<3>(vnr,point);
-          IntegrationPoint ip(0.0);
+          IntegrationPoint ip(0,0,0,0);
           MappedIntegrationPoint<3,3> mip(ip,eltrans);
           Vec<3> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint,0.0);
