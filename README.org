@@ -20,8 +20,8 @@ To obtain higher order accuracy, we offer a mesh transformation technique in the
 #+html: <p align="center"><img src="doc/graphics/lsetcurv.jpg" height="175"/></p>
 
 *** Space-Time Finite Elements for the treatment of moving domain problems
-To obtain robust method for PDEs on unfitted moving domain we can formulate space-time discretization. =ngsxfem= provides necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains.
-#+html: <p align="center"><img src="doc/graphics/spacetime1.png" height="175"/> <img src="doc/graphics/spacetime1.png" height="175"/></p> 
+To obtain robust method for PDEs on unfitted moving domain we can formulate space-time discretization. =ngsxfem= provides necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Further, it extends the tools for higher order accurate geometry handling to the space-time setting.
+#+html: <p align="center"><img src="doc/graphics/spacetime1.png" height="175"/><img src="doc/graphics/spacetime2.png" height="175"/></p> 
 
 ** Applications
 This section is to be added soon ...
