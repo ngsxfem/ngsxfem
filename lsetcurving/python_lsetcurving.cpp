@@ -5,7 +5,6 @@
 #include <comp.hpp>
 #include <fem.hpp>
 
-#include "../utils/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
@@ -22,67 +21,6 @@ void ExportNgsx_lsetcurving(py::module &m)
   typedef shared_ptr<BitArray> PyBA;
 
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
-        {
-          InterpolateP1 interpol(gf_ho, gf_p1);
-          LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
-        } ,
-        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
-        docu_string(R"raw_string(
-Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
-into a piecewise (multi-) linear function.
-
-Parameters
-
-gf_ho : ngsolve.GridFunction
-  Function to interpolate
-
-gf_p1 : ngsolve.GridFunction
-  Function to interpolate to (should be P1)
-
-eps_perturbation : float
-  If the absolute value if the function is smaller than eps_perturbation, it will be set to
-  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
-  configurations for level set based methods).
-
-heapsize : int
-  heapsize of local computations.
-)raw_string")
-    )
-    ;
-
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
-        {
-          InterpolateP1 interpol(coef, gf_p1);
-          LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
-        } ,
-        py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
-        docu_string(R"raw_string(
-Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
-function.
-
-Parameters
-
-coef : ngsolve.CoefficientFunction
-  Function to interpolate
-
-gf_p1 : ngsolve.GridFunction
-  Function to interpolate to (should be P1)
-
-eps_perturbation : float
-  If the absolute value if the function is smaller than eps_perturbation, it will be set to
-  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
-  configurations for level set based methods).
-
-heapsize : int
-  heapsize of local computations.
-)raw_string")
-    )
-    ;
 
   // py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
   //   .def(py::init<>())
