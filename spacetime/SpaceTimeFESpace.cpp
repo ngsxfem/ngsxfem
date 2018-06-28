@@ -16,7 +16,7 @@
 
 #include "SpaceTimeFE.hpp"
 #include "SpaceTimeFESpace.hpp"
-#include "../lsetcurving/p1interpol.hpp"
+#include "../utils/p1interpol.hpp"
 
 /*
 #include <diffop_impl.hpp>

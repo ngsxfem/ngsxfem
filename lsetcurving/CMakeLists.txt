@@ -4,13 +4,13 @@ install(TARGETS ngsxfem_lsetcurving_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}
 target_link_libraries(ngsxfem_lsetcurving_py ngsxfem_lsetcurving)
 
 add_library(ngsxfem_lsetcurving ${NGS_LIB_TYPE}
-  p1interpol.cpp shiftintegrators.cpp calcpointshift.cpp calcgeomerrors.cpp lsetrefine.cpp
+  shiftintegrators.cpp calcpointshift.cpp calcgeomerrors.cpp lsetrefine.cpp
   projshift.cpp shiftedevaluate.cpp
   )
 
 
 install( FILES
-  p1interpol.hpp shiftintegrators.hpp calcpointshift.hpp calcgeomerrors.hpp lsetrefine.hpp
+  shiftintegrators.hpp calcpointshift.hpp calcgeomerrors.hpp lsetrefine.hpp
   projshift.hpp shiftedevaluate.hpp
   DESTINATION include
   )

@@ -5,7 +5,7 @@
 #include <comp.hpp>
 #include <fem.hpp>
 
-#include "../lsetcurving/p1interpol.hpp"
+#include "../utils/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
