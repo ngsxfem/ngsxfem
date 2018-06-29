@@ -1,0 +1,137 @@
+beforescript:
+  stage: build
+  script:
+    - echo " before script "
+    - rm -rf /home/gitlab-runner/inst/netgen
+    - mkdir -p /home/gitlab-runner/inst/netgen
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "echo \"nix-shell test\" "
+
+build:
+  stage: build
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - mkdir -p build
+    - mkdir -p /home/gitlab-runner/ngsxfem-reports
+    - mkdir -p /home/gitlab-runner/inst
+    - mkdir -p /home/gitlab-runner/inst/netgen
+    - touch /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - git submodule update --init --recursive
+    - export NGS_VERSION=`git submodule | awk '{print $1;}'`
+    - export NGS_INSTALLED_VERSION=`cat /home/gitlab-runner/ngsxfem-reports/lastngs.version | awk '{print $1;}'`
+    - echo NGS_VERSION is $NGS_VERSION
+    - echo NGS_INSTALLED_VERSION is $NGS_INSTALLED_VERSION
+    - export BUILD_NGS="ON"
+    - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && [ -d /home/gitlab-runner/ngsxfem-reports/last-inst ] && export BUILD_NGS="OFF" && cp -rv /home/gitlab-runner/ngsxfem-reports/last-inst/* /home/gitlab-runner/inst/netgen/
+    - test "$NGS_VERSION" != "$NGS_INSTALLED_VERSION" && echo "versions do not match"
+    - cd build
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DCMAKE_INSTALL_PREFIX=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DUSE_GUI=OFF -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "ninja install"
+    - echo $NGS_VERSION > /home/gitlab-runner/ngsxfem-reports/lastngs.version
+    - rm -rf /home/gitlab-runner/ngsxfem-reports/last-inst
+    - cp -r /home/gitlab-runner/inst/netgen /home/gitlab-runner/ngsxfem-reports/last-inst
+    - chmod 755 /home/gitlab-runner/ngsxfem-reports/lastngs.version
+
+ctests-tutorials:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'py_tutorial'"
+  when: always
+  allow_failure: false
+
+ctests-mayfail:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'pymayfailtests'"
+  when: always
+  allow_failure: true
+        
+ctests-remaining:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
+  script:
+    - cat /home/gitlab-runner/inst/netgen/bin/ngscxx
+    - cat `which ngscxx`
+    - echo "cmake-tests"
+    - cd build
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'pytests'"
+  when: always
+  allow_failure: false
+  
+go4quads-tests:
+  stage: test
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+    - build/
+  script:
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - cd cutint/py_demos/
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 area_of_a_circle_quads.py"
+  when: always
+  allow_failure: false
+
+ngsxfem-report:
+  stage: deploy
+  script:
+    - cd /home/gitlab-runner/inst/netgen/share/ngsxfem/report
+    - mkdir -p /home/gitlab-runner/ngsxfem-reports
+    - touch /home/gitlab-runner/ngsxfem-reports/log
+    - echo "" >> /home/gitlab-runner/ngsxfem-reports/log
+    - date >> /home/gitlab-runner/ngsxfem-reports/log
+    - echo pipeline-id $CI_PIPELINE_ID build $CI_BUILD_ID $CI_BUILD_TAG $CI_BUILD_REF >> /home/gitlab-runner/ngsxfem-reports/log
+    - export NETGENDIR="/home/gitlab-runner/inst/netgen/bin"
+    - export PATH="${NETGENDIR}:${PATH}"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
+    - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
+    - mkdir /home/gitlab-runner/ngsxfem-reports/$CI_BUILD_REF_NAME/ -p
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py /home/gitlab-runner/ngsxfem-reports/$CI_BUILD_REF_NAME/ $CI_PIPELINE_ID"
+  when: always
+  allow_failure: true
+        
+deploy:
+  stage: deploy
+  script:
+  - echo " deploy"
+
+cleanup:
+  stage: deploy
+  script:
+    - echo " cleanup "
