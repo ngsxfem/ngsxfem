@@ -165,7 +165,7 @@ while tend - told > delta_t/2:
     f.Assemble()
 
     # solve linear system
-    inv = a.mat.Inverse(active_dofs,inverse="pardiso")
+    inv = a.mat.Inverse(active_dofs,inverse="umfpack")
     gfu.vec.data =  inv * f.vec
        
 
