@@ -10,6 +10,8 @@ add_library(ngsxfem_spacetime ${NGS_LIB_TYPE}
   timecf.cpp
 )
 
+target_link_libraries(ngsxfem_spacetime_py ngsxfem_utils)
+
 set_target_properties(ngsxfem_spacetime PROPERTIES SUFFIX ".so")
 
 if(NOT WIN32)
