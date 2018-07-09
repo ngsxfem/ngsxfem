@@ -301,5 +301,30 @@ namespace ngcomp
     return ret;
   }
 
+  shared_ptr<BitArray> GetDofsOfFacets(shared_ptr<FESpace> fes,
+                                       shared_ptr<BitArray> a,
+                                       LocalHeap & lh)
+  {
+    int nf = fes->GetMeshAccess()->GetNFacets();
+    int ndof = fes->GetNDof();
+    shared_ptr<BitArray> ret = make_shared<BitArray> (ndof);
+    ret->Clear();
+
+    IterateRange
+      (nf, lh,
+      [&] (int fanr, LocalHeap & lh)
+    {
+      NodeId nodeid(NT_FACET,fanr);
+      if (a->Test(fanr))
+      {
+        Array<int> dnums(0,lh);
+        fes->GetDofNrs(nodeid,dnums);
+        for (auto dof : dnums)
+          ret->Set(dof);
+      }
+    });
+    return ret;
+  }
+
 
 }

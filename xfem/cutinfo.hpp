@@ -106,5 +106,9 @@ namespace ngcomp
                                          shared_ptr<BitArray> a,
                                          LocalHeap & lh);
 
+  shared_ptr<BitArray> GetDofsOfFacets(shared_ptr<FESpace> fes,
+                                       shared_ptr<BitArray> a,
+                                       LocalHeap & lh);
+
 
 }
