@@ -22,7 +22,7 @@ namespace ngfem
                                    int asubdivlvl,
                                    SWAP_DIMENSIONS_POLICY apol,
                                    VorB vb)
-    : SymbolicLinearFormIntegrator(acf,vb,false), cf_lset(acf_lset), dt(adt),
+    : SymbolicLinearFormIntegrator(acf,vb,VOL), cf_lset(acf_lset), dt(adt),
       force_intorder(aforce_intorder), subdivlvl(asubdivlvl), pol(apol)
   {
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
@@ -61,7 +61,7 @@ namespace ngfem
     
     // tstart.Start();
     
-    if (element_boundary)
+    if (element_vb != VOL)
       {
         switch (trafo.SpaceDim())
           {
