@@ -286,6 +286,37 @@ heapsize : int
 
     );
 
+  m.def("GetDofsOfFacets",
+        [] (PyFES fes,
+            PyBA a,
+            int heapsize)
+        {
+          LocalHeap lh (heapsize, "GetDofsOfFacets-heap", true);
+          return GetDofsOfFacets(fes,a,lh);
+        } ,
+        py::arg("space"),
+        py::arg("a"),
+        py::arg("heapsize") = 1000000,
+        docu_string(R"raw_string(
+Given a BitArray marking some facets in a
+mesh extract all unknowns that are associated
+to these facets as a BitArray.
+
+Parameters:
+
+space : ngsolve.FESpace
+  finite element space from which the 
+  corresponding dofs should be extracted
+
+a : ngsolve.BitArray
+  BitArray for marked Facets
+
+heapsize : int
+  heapsize of local computations.
+)raw_string")
+
+    );
+
 
 //   .def("__init__",  [] (XFESpace *instance,
   m.def("XFESpace", [] (
