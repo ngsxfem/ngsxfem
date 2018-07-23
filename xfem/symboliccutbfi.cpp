@@ -420,7 +420,7 @@ namespace ngfem
       IntegrationRule cut(2,lh);
       IntegrationRule tetcut(2,lh);
       int ncut = 0;
-      int edges[3][2] = {{0,1},{1,2},{2,0}};
+      auto edges = ElementTopology::GetEdges(etfacet);
       for (int edge = 0; edge < 3; edge++)
       {
         int node1 = edges[edge][0];
@@ -432,6 +432,7 @@ namespace ngfem
           cutpoint += lset[node1] / (lset[node1]-lset[node2]) * verts[node2];
           
           cut[ncut] = IntegrationPoint(cutpoint);
+          cut[ncut].Point()[2] = 0.0;
           tetcut[ncut] = transform1( LocalFacetNr1, cut[ncut]);
           ncut++;
         }
@@ -510,11 +511,16 @@ namespace ngfem
     }
 
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_facet), lh);
-    BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
 
     Facet2ElementTrafo transform2(eltype2, ElVertices2); 
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_facet), lh);
+
+    BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
+
+    // For debugging purposes only:
+    // MappedIntegrationRule<3,3> mir1(ir_facet_vol1,trafo1,lh);
+    // MappedIntegrationRule<3,3> mir2(ir_facet_vol2,trafo2,lh);
 
     mir1.SetOtherMIR (&mir2);
     mir2.SetOtherMIR (&mir1);
