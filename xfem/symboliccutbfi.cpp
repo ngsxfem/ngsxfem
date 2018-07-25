@@ -456,7 +456,8 @@ namespace ngfem
         ip.Point() = (1-s) * cut[0].Point() + s * cut[1].Point();
       }
 
-      MappedIntegrationRule<3,3> mir(*ir_facet,trafo1,lh);
+      IntegrationRule & ir_facet_intet = transform1( LocalFacetNr1, (*ir_facet), lh);
+      MappedIntegrationRule<3,3> mir(ir_facet_intet,trafo1,lh);
       for (int i = 0; i < npoints; i++)
       {
         IntegrationPoint & ip = (*ir_facet)[i];
