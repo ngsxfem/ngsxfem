@@ -30,7 +30,7 @@ namespace ngfem
                                     BareSliceVector<> shape) const
     {
 
-       if (tFE->GetNDof() == 1)
+       if (tFE->Order() == 0)
           sFE->CalcShape(ip,shape);
        else
        {
@@ -58,7 +58,7 @@ namespace ngfem
     {
       // matrix of derivatives:
 
-         if (tFE->GetNDof() == 1)
+         if (tFE->Order() == 0)
             sFE->CalcDShape(ip,dshape);
          else {
 
