@@ -198,7 +198,7 @@ while tend - t_old > delta_t/2:
     # Setting boundary values (temporary solution)
     u0.vec[:] = 0
    
-    times = [t_old + delta_t * xi for xi in st_fes.TimeFE_nodes().NumPy()]
+    times = [t_old + delta_t * xi for xi in st_fes.TimeFE_nodes()]
     u_bnd = GridFunction(fes1)
     for i,ti in enumerate(times):
         rho_ti = (1/(4*pi))*sin(2*pi*ti)

@@ -82,7 +82,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.kappa = GridFunction(self.v_kappa, "kappa")        
         
     def interpol_ho(self,levelset,t,tstart,delta_t):
-        times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes().NumPy()]
+        times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):
             t.Set(ti)
             self.lset_ho_node.Set(levelset)
@@ -114,7 +114,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.interpol_ho(levelset,t,tstart,delta_t)
         self.interpol_p1()
                 
-        for i in  range(len(self.v_ho_st.TimeFE_nodes().NumPy())):
+        for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             self.ci.Update(self.lset_p1_node)
             if calc_kappa:
@@ -146,7 +146,7 @@ class LevelSetMeshAdaptation_Spacetime:
         if given_pts:
             time_quad = given_pts
         else:
-            time_quad = self.v_ho_st.TimeFE_nodes().NumPy()  
+            time_quad = self.v_ho_st.TimeFE_nodes() 
         times = [tstart + delta_t * xi for xi in time_quad]
         max_dists = []
         for ti,xi in zip(times,time_quad):

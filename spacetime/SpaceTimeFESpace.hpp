@@ -50,16 +50,24 @@ namespace ngcomp
     void SetTime(double a) {time = a; override_time = true;}
     void SetOverrideTime(bool a) {override_time = a;}
     // Provide Info for Python
-    int order_time()
+    int order_time() const
     {    
       NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
       return time_FE->order_time();
     }
-    void TimeFE_nodes(Vector<>& intp_pts)
+
+    Array<double>& TimeFE_nodes() const
     { 
       NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
-      time_FE->GetIntpPts (intp_pts);
+      return time_FE->GetNodes();
     }
+
+    bool IsTimeNodeActive(int i) const
+    {
+      NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      return time_FE->IsNodeActive(i);
+    }
+
 
     void RestrictGFInTime(shared_ptr<GridFunction> st_GF, double time, shared_ptr<GridFunction> s_GF);
     shared_ptr<GridFunction> CreateRestrictedGF( shared_ptr<GridFunction> st_GF, double time);

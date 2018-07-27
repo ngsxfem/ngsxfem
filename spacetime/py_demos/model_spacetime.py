@@ -20,7 +20,7 @@ tfe = ScalarTimeFE(k_t)
 st_fes = SpaceTimeFESpace(fes1,tfe)
 st_fes_ic = SpaceTimeFESpace(fes1,tfe)
 print("k_t = {0}".format(st_fes.k_t()))
-print("Nodes of TimeFE: {0}".format(st_fes.TimeFE_nodes().NumPy()))
+print("Nodes of TimeFE: {0}".format(st_fes.TimeFE_nodes()))
 #visoptions.autoscale = False
 #visoptions.mminval=0.0
 #visoptions.mmaxval=1.0
