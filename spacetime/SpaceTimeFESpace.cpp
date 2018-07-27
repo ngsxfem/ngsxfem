@@ -134,18 +134,17 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      //cout << "Vhdim = " << Vh->GetDimension() << endl;
      // Using nodal property for special case
+     int cnt = 0;
      for(int i= 0; i < nodes.Size(); i++) {
+         if (!IsTimeNodeActive(i))
+           continue;
          if(time == nodes[i]) {
-             if (!IsTimeNodeActive(i))
-             {
-               cout << IM(3) <<"Inactive node case" << endl;
-               return;
-             }
              cout << IM(3) <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
-                 restricted_vec[j] = st_vec[j+i*Vh->GetNDof()];
+                 restricted_vec[j] = st_vec[j+cnt*Vh->GetNDof()];
              return;
          }
+         cnt++;
      }
      
      cout << IM(3) <<"General case" << endl;
