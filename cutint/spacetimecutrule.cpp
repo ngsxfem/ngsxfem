@@ -178,7 +178,10 @@ namespace xintegration
                 */
             }
         }
-        return ir;
+        if (ir->Size() == 0)
+            return nullptr;
+        else
+            return ir;
     }
 
     void DebugSpaceTimeCutIntegrationRule(){
