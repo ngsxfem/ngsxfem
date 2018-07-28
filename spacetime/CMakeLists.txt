@@ -34,6 +34,6 @@ install (FILES
 
 
 install( FILES
-  py_demos/spacetime_P1P1.py
+  py_demos/spaceP1_timeDGP1.py
   DESTINATION share/ngsxfem
 )
