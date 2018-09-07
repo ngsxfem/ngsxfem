@@ -10,14 +10,17 @@
 namespace ngmg
 {
 
-  class P1Prolongation : public LinearProlongation
+  class P1Prolongation : public Prolongation
   {
     shared_ptr<MeshAccess> ma;
     Array<size_t> nvlevel;
-    shared_ptr<FESpace> fes;
+    //Array<size_t> ndoflevel;
+    Array<shared_ptr<BaseVector>> tmp_vecs;
+    const FESpace* fes;
+    Array<shared_ptr<Array<int>>> v2d_on_lvl;
   public:
     P1Prolongation(shared_ptr<MeshAccess> ama)
-      : LinearProlongation(ama) { ; }
+      : ma(ama), fes(nullptr) { ; }
     
     virtual ~P1Prolongation() { ; }
 

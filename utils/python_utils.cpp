@@ -8,6 +8,7 @@
 #include "../utils/bitarraycf.hpp"
 #include "../utils/restrictedblf.hpp"
 #include "../utils/p1interpol.hpp"
+#include "../utils/xprolongation.hpp"
 
 using namespace ngcomp;
 
@@ -200,6 +201,32 @@ Similar functionality (also for facets) can be obtained with IndicatorCF.
          },
          py::arg("bitarray")
       );
+
+
+
+  typedef shared_ptr<P1Prolongation> PyP1P;
+  py::class_<P1Prolongation, PyP1P, Prolongation>
+    (m, "P1Prolongation",
+        docu_string(R"raw_string(
+Prolongation for P1-type spaces (with possibly inactive dofs) --- 
+As is asks the fespace for dofs to vertices at several occasions the 
+current implementation is not very fast and should be primarily used
+for prototype and testing...
+)raw_string"))
+    .def("__init__",
+         [](P1Prolongation *instance, shared_ptr<MeshAccess> ma)
+         {
+           new (instance) P1Prolongation (ma);
+         },
+         py::arg("mesh"))
+    .def("Update",
+         [](shared_ptr<P1Prolongation> p1p, shared_ptr<FESpace> fes)
+         {
+           p1p -> Update(*fes);
+         },
+         py::arg("space")
+      );
+
 
 }
 
