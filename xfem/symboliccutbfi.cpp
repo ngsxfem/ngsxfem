@@ -51,7 +51,7 @@ namespace ngfem
                         FlatMatrix<double> elmat,
                         LocalHeap & lh) const
   {
-    T_CalcElementMatrixAdd<double> (fel, trafo, elmat, lh);
+    T_CalcElementMatrixAdd<double,double,double> (fel, trafo, elmat, lh);
   }
 
   void
@@ -67,51 +67,30 @@ namespace ngfem
       T_CalcElementMatrixAdd<Complex,double> (fel, trafo, elmat, lh);
   }
 
-  template <typename SCAL, typename SCAL_SHAPES>
+
+  template <typename SCAL, typename SCAL_SHAPES, typename SCAL_RES>
   void SymbolicCutBilinearFormIntegrator ::
   T_CalcElementMatrixAdd (const FiniteElement & fel,
-                          const ElementTransformation & trafo,
-                          FlatMatrix<SCAL> elmat,
+                          const ElementTransformation & trafo, 
+                          FlatMatrix<SCAL_RES> elmat,
                           LocalHeap & lh) const
-
+    
   {
-    static Timer t("symbolicCutBFI - CalcElementMatrix", 2);
-    HeapReset hr(lh);
-    // static Timer tstart("symbolicCutBFI - CalcElementMatrix startup", 2);
-    // static Timer tstart1("symbolicCutBFI - CalcElementMatrix startup 1", 2);
-    // static Timer tmain("symbolicCutBFI - CalcElementMatrix main", 2);
+    static Timer t(string("SymbolicCutBFI::CalcElementMatrixAdd")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), 2);
+    ThreadRegionTimer reg(t, TaskManager::GetThreadId());
 
-    /*
-    static Timer td("symbolicCutBFI - CalcElementMatrix dmats", 2);
-    static Timer tb("symbolicCutBFI - CalcElementMatrix diffops", 2);
-    static Timer tdb("symbolicCutBFI - CalcElementMatrix D * B", 2);
-    static Timer tlapack("symbolicCutBFI - CalcElementMatrix lapack", 2);
-    */
-    // tstart.Start();
     if (element_vb != VOL)
       {
-        switch (trafo.SpaceDim())
-          {
-          // case 1:
-          //   T_CalcElementMatrixEB<1,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
-          //   return;
-          // case 2:
-          //   T_CalcElementMatrixEB<2,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
-          //   return;
-          // case 3:
-          //   T_CalcElementMatrixEB<3,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
-          //   return;
-          default:
-            throw Exception ("EB not yet implemented");
-            // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
-          }
+        throw Exception ("EB not yet implemented");        
+        T_CalcElementMatrixEBAdd<SCAL, SCAL_SHAPES, SCAL_RES> (fel, trafo, elmat, lh);
+        return;
       }
 
-    RegionTimer reg(t);
-
-    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
-    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
-    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+    bool is_mixedfe = typeid(fel) == typeid(const MixedFiniteElement&);
+    const MixedFiniteElement * mixedfe = static_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = is_mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = is_mixedfe ? mixedfe->FETest() : fel;
+    // size_t first_std_eval = 0;
 
     int trial_difforder = 99, test_difforder = 99;
     for (auto proxy : trial_proxies)
@@ -130,12 +109,6 @@ namespace ngfem
 
     if (force_intorder >= 0)
       intorder = force_intorder;
-
-
-    ProxyUserData ud;
-    const_cast<ElementTransformation&>(trafo).userdata = &ud;
-
-    // elmat = 0;
 
     const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
 
@@ -162,16 +135,19 @@ namespace ngfem
     }
     else
       ir = ir1;
-
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
-
-    bool symmetric_so_far = false; // not reasonable for the Add-version
-    /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
-
+    
+    ProxyUserData ud;
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    
+    // tstart.Stop();
+    bool symmetric_so_far = true;
     int k1 = 0;
+    int k1nr = 0;
     for (auto proxy1 : trial_proxies)
       {
         int l1 = 0;
+        int l1nr = 0;
         for (auto proxy2 : test_proxies)
           {
             bool is_diagonal = proxy1->Dimension() == proxy2->Dimension();
@@ -185,8 +161,7 @@ namespace ngfem
                     is_nonzero = true;
                   }
 
-
-            if (is_nonzero)
+            if (is_nonzero) //   && k1nr*test_proxies.Size()+l1nr >= first_std_eval)
               {
                 HeapReset hr(lh);
                 bool samediffop = *(proxy1->Evaluator()) == *(proxy2->Evaluator());
@@ -194,8 +169,8 @@ namespace ngfem
                 FlatTensor<3,SCAL> proxyvalues(lh, mir.Size(), proxy1->Dimension(), proxy2->Dimension());
                 FlatVector<SCAL> diagproxyvalues(mir.Size()*proxy1->Dimension(), lh);
                 FlatMatrix<SCAL> val(mir.Size(), 1, lh);
-
-
+                
+                
                 if (!is_diagonal)
                   for (int k = 0; k < proxy1->Dimension(); k++)
                     for (int l = 0; l < proxy2->Dimension(); l++)
@@ -208,7 +183,7 @@ namespace ngfem
                             ud.trial_comp = k;
                             ud.testfunction = proxy2;
                             ud.test_comp = l;
-
+                            
                             cf -> Evaluate (mir, val);
                             proxyvalues(STAR,k,l) = val.Col(0);
                           }
@@ -234,7 +209,7 @@ namespace ngfem
                           diagproxyvalues.Slice(k, proxy1->Dimension()) = val(0,0);
                         }
                     }
-
+            
                 // td.Stop();
 
                 if (!mir.IsComplex())
@@ -259,24 +234,25 @@ namespace ngfem
                   }
                 IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
                 IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
-                SliceMatrix<SCAL> part_elmat = elmat.Rows(r2).Cols(r1);
+                SliceMatrix<SCAL_RES> part_elmat = elmat.Rows(r2).Cols(r1);
                 FlatMatrix<SCAL_SHAPES,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
                 FlatMatrix<SCAL_SHAPES,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);
 
-
-                enum { BS = 16 };
-                for (int i = 0; i < mir.Size(); i+=BS)
+                
+                constexpr size_t BS = 16;
+                for (size_t i = 0; i < mir.Size(); i+=BS)
                   {
                     HeapReset hr(lh);
-                    int bs = min(int(BS), int(mir.Size())-i);
-
-                    AFlatMatrix<SCAL_SHAPES> bbmat1(elmat.Width(), bs*proxy1->Dimension(), lh);
-                    AFlatMatrix<SCAL> bdbmat1(elmat.Width(), bs*proxy2->Dimension(), lh);
-                    AFlatMatrix<SCAL_SHAPES> bbmat2 = samediffop ?
-                      bbmat1 : AFlatMatrix<SCAL_SHAPES>(elmat.Height(), bs*proxy2->Dimension(), lh);
+                    int bs = min2(size_t(BS), mir.Size()-i);
+                    
+                    FlatMatrix<SCAL_SHAPES> bbmat1(elmat.Width(), bs*proxy1->Dimension(), lh);
+                    FlatMatrix<SCAL> bdbmat1(elmat.Width(), bs*proxy2->Dimension(), lh);
+                    FlatMatrix<SCAL_SHAPES> bbmat2 = samediffop ?
+                      bbmat1 : FlatMatrix<SCAL_SHAPES>(elmat.Height(), bs*proxy2->Dimension(), lh);
 
                     // tb.Start();
                     BaseMappedIntegrationRule & bmir = mir.Range(i, i+bs, lh);
+
                     proxy1->Evaluator()->CalcMatrix(fel_trial, bmir, Trans(bbmat1), lh);
 
                     if (!samediffop)
@@ -286,14 +262,12 @@ namespace ngfem
                     // tdb.Start();
                     if (is_diagonal)
                       {
-                        AFlatVector<SCAL> diagd(bs*proxy1->Dimension(), lh);
+                        FlatVector<SCAL> diagd(bs*proxy1->Dimension(), lh);
                         diagd = diagproxyvalues.Range(i*proxy1->Dimension(),
                                                       (i+bs)*proxy1->Dimension());
-                        /*
-                        for (int i = 0; i < diagd.Size(); i++)
+                        for (size_t i = 0; i < diagd.Size(); i++)
                           bdbmat1.Col(i) = diagd(i) * bbmat1.Col(i);
-                        */
-                        MultMatDiagMat(bbmat1, diagd, bdbmat1);
+                        // MultMatDiagMat(bbmat1, diagd, bdbmat1);
                         // tdb.AddFlops (bbmat1.Height()*bbmat1.Width());
                       }
                     else
@@ -308,8 +282,7 @@ namespace ngfem
                           }
                         // tdb.AddFlops (proxy1->Dimension()*proxy2->Dimension()*bs*bbmat1.Height());
                       }
-                    //  tdb.Stop();
-
+                    // tdb.Stop();
                     // tlapack.Start();
                     // elmat.Rows(r2).Cols(r1) += bbmat2.Rows(r2) * Trans(bdbmat1.Rows(r1));
                     // AddABt (bbmat2.Rows(r2), bdbmat1.Rows(r1), elmat.Rows(r2).Cols(r1));
@@ -319,7 +292,6 @@ namespace ngfem
                       AddABtSym (bbmat2.Rows(r2), bdbmat1.Rows(r1), part_elmat);
                     else
                       AddABt (bbmat2.Rows(r2), bdbmat1.Rows(r1), part_elmat);
-
                     // tlapack.Stop();
                     // tlapack.AddFlops (r2.Size()*r1.Size()*bdbmat1.Width());
                   }
@@ -329,13 +301,14 @@ namespace ngfem
                     for (int j = i+1; j < part_elmat.Width(); j++)
                       part_elmat(i,j) = part_elmat(j,i);
               }
-
+            
             l1 += proxy2->Dimension();
+            l1nr++;
           }
         k1 += proxy1->Dimension();
+        k1nr++;
       }
   }
-
 
 
   SymbolicCutFacetBilinearFormIntegrator ::
