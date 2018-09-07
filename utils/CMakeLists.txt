@@ -7,6 +7,7 @@ target_link_libraries(ngsxfem_utils_py ngsxfem_utils)
 
 add_library(ngsxfem_utils ${NGS_LIB_TYPE}
   p1interpol.cpp 
+  xprolongation.cpp
   restrictedblf.cpp
   bitarraycf.cpp
   ngsxstd.cpp
@@ -20,6 +21,7 @@ install( TARGETS ngsxfem_utils ${ngs_install_dir})
 
 install( FILES
   p1interpol.hpp 
+  xprolongation.hpp
   restrictedblf.hpp
   ngsxstd.hpp
   bitarraycf.hpp
