@@ -126,7 +126,7 @@ namespace ngcomp
     if (!fespace2)
       {
         auto table = creator.MoveTable();
-        graph = new MatrixGraph (ndof, table, table, symmetric);
+        graph = new MatrixGraph (ndof, ndof, table, table, symmetric);
       }
     else
       {

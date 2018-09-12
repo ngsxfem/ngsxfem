@@ -130,18 +130,21 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      auto restricted_vec = s_GF->GetVectorPtr()->FV<double>();
      restricted_vec = 0.0;
 
-     Vector<double> nodes(order_time() +1 );
-     TimeFE_nodes(nodes);
+     Array<double> & nodes = TimeFE_nodes();
 
      //cout << "Vhdim = " << Vh->GetDimension() << endl;
      // Using nodal property for special case
+     int cnt = 0;
      for(int i= 0; i < nodes.Size(); i++) {
+         if (!IsTimeNodeActive(i))
+           continue;
          if(time == nodes[i]) {
              cout << IM(3) <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
-                 restricted_vec[j] = st_vec[j+i*Vh->GetNDof()];
+                 restricted_vec[j] = st_vec[j+cnt*Vh->GetNDof()];
              return;
          }
+         cnt++;
      }
      
      cout << IM(3) <<"General case" << endl;
@@ -150,10 +153,13 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
      const int dim = Vh->GetDimension();     
      for(int i= 0; i < nodes.Size(); i++) {
-         double weight_time = time_FE->Lagrange_Pol(time,nodes,i);
+       if (IsTimeNodeActive(i))
+       {
+         double weight_time = time_FE->Lagrange_Pol(time,i);
          for(int j = 0; j < Vh->GetNDof();j++)
              for(int d = 0; d < dim;d++)
                  restricted_vec[dim*j+d] += weight_time * st_vec[dim*(j+i*Vh->GetNDof())+d];
+       }
      }
   }
 
@@ -191,15 +197,17 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     if (!coef_tref)
       throw Exception("SpaceTimeFESpace ::InterpolateToP1 : tref is not a ParameterCF");
     const double backup_tref = coef_tref->GetValue();
-    Vector<double> nodes(order_time() +1 );
-    TimeFE_nodes(nodes);
+    Array<double> & nodes = TimeFE_nodes();
     for(int i= 0; i < nodes.Size(); i++) {
-      coef_tref->SetValue(t+nodes[i]*dt);
-      InterpolateP1 iP1(st_CF, node_gf);
-      iP1.Do(lh);
-      for(int j = 0; j < Vh_ptr->GetNDof();j++)
+      if (IsTimeNodeActive(i))
       {
-        gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);
+        coef_tref->SetValue(t+nodes[i]*dt);
+        InterpolateP1 iP1(st_CF, node_gf);
+        iP1.Do(lh);
+        for(int j = 0; j < Vh_ptr->GetNDof();j++)
+        {
+          gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);
+        }
       }
     }        
     coef_tref->SetValue(backup_tref);

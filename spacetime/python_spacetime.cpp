@@ -109,24 +109,34 @@ void ExportNgsx_spacetime(py::module &m)
      "Return order of the time FE")
   .def("TimeFE_nodes", [](PySTFES self)
   {
-      Vector<double> intp_pts(self->order_time() + 1);
-      self->TimeFE_nodes(intp_pts);
-      return intp_pts;
+      Array<double> & nodesr = self->TimeFE_nodes();
+      py::list nodes (nodesr.Size());
+      for (int i = 0; i < nodesr.Size(); i++)
+        nodes[i] = nodesr[i];
+      return nodes;
    },
-     "Return nodes of the time FE")
+     "Return nodes of time FE")
+  .def("IsTimeNodeActive", [](PySTFES self, int i)
+  {
+      return self->IsTimeNodeActive(i);
+   },
+     "Return bool whether node is active")
   ;
 
-  m.def("ScalarTimeFE", []( int order)
+  m.def("ScalarTimeFE", []( int order, bool skip_first_node, bool only_first_node)
   {
     BaseScalarFiniteElement * fe = nullptr;
 
-    fe = new NodalTimeFE(order);
-
-
+    if (skip_first_node && only_first_node)
+      throw Exception("can't skip and keep first node at the same time.");
+    fe = new NodalTimeFE(order, skip_first_node, only_first_node);
     return shared_ptr<BaseScalarFiniteElement>(fe);
   },
-        "creates nodal FE in time based on Gauss-Lobatto integration points"
-        )
+  py::arg("order") = 0,
+  py::arg("skip_first_node") = false,
+  py::arg("only_first_node") = false,
+  "creates nodal FE in time based on Gauss-Lobatto integration points"
+  )
    ;
 
 

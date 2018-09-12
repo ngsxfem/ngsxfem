@@ -23,7 +23,6 @@ namespace ngfem
         double time;
         bool override_time = false;
 
-
     public:
       // constructor
       SpaceTimeFE (ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
@@ -52,8 +51,12 @@ namespace ngfem
       {
         int vnums[2];
         int k_t;
+        bool skip_first_node = false;
+        bool only_first_node = false;
+        Array<double> nodes;
+
       public:
-        NodalTimeFE (int order);
+        NodalTimeFE (int order, bool askip_first_node, bool aonly_first_node);
         virtual ELEMENT_TYPE ElementType() const { return ET_SEGM; }
         void SetVertexNumber (int i, int v) { vnums[i] = v; }
 
@@ -63,16 +66,29 @@ namespace ngfem
         virtual void CalcDShape (const IntegrationPoint & ip,
                                  BareSliceMatrix<> dshape) const;
 
-        void GetIntpPts (Vector<>& intp_pts) const;
+        bool IsNodeActive(int i) const
+        {
+          if (i<0 || i > k_t+1)
+            throw Exception("node outside node range");
+          if (i==0 && skip_first_node) 
+            return false;
+          else if (i!=0 && only_first_node)
+            return false;
+          else
+            return true;
+        }
+
+        void CalcInterpolationPoints ();
+        Array<double> & GetNodes() { return nodes; }
         int order_time() const { return k_t; }
 
         template <class T>
-        T Lagrange_Pol (T x, Vector<> intp_pts, int i) const
+        T Lagrange_Pol (T x, int i) const
         {
            T result  = 1;
-           for (int j = 0; j < intp_pts.Size(); j++) {
+           for (int j = 0; j < nodes.Size(); j++) {
                if ( j != i)
-                    result *= ( x-intp_pts(j) ) / ( intp_pts(i) - intp_pts(j) );
+                    result *= ( x-nodes[j] ) / ( nodes[i] - nodes[j] );
            }
 
            return result;

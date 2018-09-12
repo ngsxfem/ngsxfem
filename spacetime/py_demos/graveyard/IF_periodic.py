@@ -131,7 +131,7 @@ m_reg = BilinearForm(VhG,symmetric=False)
 epsilon = 1e-8
 #epsilon = 0
 m_reg.Assemble()
-for ti in st_fes.TimeFE_nodes().NumPy():
+for ti in st_fes.TimeFE_nodes():
     m_tmp = BilinearForm(VhG,symmetric=False)
     m_tmp += SymbolicBFI(form = u[0]*v[0] + u[1]*v[1]) 
     st_fes.SetTime(ti)

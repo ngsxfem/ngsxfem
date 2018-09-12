@@ -30,7 +30,7 @@ namespace ngfem
                                     BareSliceVector<> shape) const
     {
 
-       if (tFE->GetNDof() == 1)
+       if (tFE->Order() == 0)
           sFE->CalcShape(ip,shape);
        else
        {
@@ -58,7 +58,7 @@ namespace ngfem
     {
       // matrix of derivatives:
 
-         if (tFE->GetNDof() == 1)
+         if (tFE->Order() == 0)
             sFE->CalcDShape(ip,dshape);
          else {
 
@@ -107,21 +107,24 @@ namespace ngfem
     }
 
 
-    NodalTimeFE :: NodalTimeFE (int order)
-        : ScalarFiniteElement<1> (order+1, order)
+    NodalTimeFE :: NodalTimeFE (int order, bool askip_first_node, bool aonly_first_node)
+        : ScalarFiniteElement<1> (askip_first_node ? order : (aonly_first_node ? 1 : order + 1), order), 
+        skip_first_node(askip_first_node), only_first_node(aonly_first_node)
       {
-       k_t = order;
+         k_t = order;
+         CalcInterpolationPoints ();
       }
 
 
       void NodalTimeFE :: CalcShape (const IntegrationPoint & ip,
                                      BareSliceVector<> shape) const
       {
-         Vector<double> intp_pts(k_t+1);
-         GetIntpPts (intp_pts);
          AutoDiff<1> adx (ip(0), 0);
-         for(int i = 0; i < k_t+1; i++) {
-             shape(i) = Lagrange_Pol (adx, intp_pts , i).Value() ;
+         int begin = skip_first_node ? 1 : 0;
+         int end = only_first_node ? 1 : ndof+begin;
+         int cnt = 0;
+         for(int i = begin; i < end; i++) {
+             shape(cnt++) = Lagrange_Pol (adx, i).Value() ;
          }
       }
 
@@ -129,32 +132,34 @@ namespace ngfem
       void NodalTimeFE :: CalcDShape (const IntegrationPoint & ip,
                                       BareSliceMatrix<> dshape) const
       {
-         Vector<double> intp_pts(k_t+1);
-         GetIntpPts (intp_pts);
          AutoDiff<1> adx (ip(0), 0);
-         for(int i = 0; i < k_t+1; i++) {
-             dshape(i,0) = Lagrange_Pol(adx, intp_pts , i).DValue(0);
+         int begin = skip_first_node ? 1 : 0;
+         int end = only_first_node ? 1 : ndof+begin;
+         int cnt = 0;
+         for(int i = begin; i < end; i++) {
+             dshape(cnt++,0) = Lagrange_Pol(adx, i).DValue(0);
           }
       }
 
-      void NodalTimeFE :: GetIntpPts (Vector<>& intp_pts) const
+      void NodalTimeFE :: CalcInterpolationPoints ()
       {
-         switch (intp_pts.Size())
+         nodes.SetSize(order+1);
+         switch (order)
          {
           // Gauss-Lobatto integration points (Spectral FE)
-          case 1 : intp_pts(0) = 0.0;  break;
-          case 2 : intp_pts(0) = 0.0; intp_pts(1) = 1.0;  break;
-          case 3 : intp_pts(0) = 0.0; intp_pts(1) = 0.5; intp_pts(2) = 1.0;  break;
-          case 4 : intp_pts(0) = 0.0; intp_pts(1) = 0.5*(1.0-1.0/sqrt(5.0));
-                   intp_pts(2) = 0.5*(1.0+1.0/sqrt(5.0)); intp_pts(3) = 1.0;  break;
-          case 5 : intp_pts(0) = 0.0; intp_pts(1) = 0.5*(1.0-sqrt(3.0/7.0)); intp_pts(2) = 0.5;
-                   intp_pts(3) = 0.5*(1.0+sqrt(3.0/7.0)); intp_pts(4) = 1.0;  break;
-          case 6 : intp_pts(0) = 0.0;
-                   intp_pts(1) = 0.5*(1.0 - sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
-                   intp_pts(2) = 0.5*(1.0 - sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
-                   intp_pts(3) = 0.5*(1.0 + sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
-                   intp_pts(4) = 0.5*(1.0 + sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
-                   intp_pts(5) = 1.0;  break;
+          case 0 : nodes[0] = 0.0;  break;
+          case 1 : nodes[0] = 0.0; nodes[1] = 1.0;  break;
+          case 2 : nodes[0] = 0.0; nodes[1] = 0.5; nodes[2] = 1.0;  break;
+          case 3 : nodes[0] = 0.0; nodes[1] = 0.5*(1.0-1.0/sqrt(5.0));
+                   nodes[2] = 0.5*(1.0+1.0/sqrt(5.0)); nodes[3] = 1.0;  break;
+          case 4 : nodes[0] = 0.0; nodes[1] = 0.5*(1.0-sqrt(3.0/7.0)); nodes[2] = 0.5;
+                   nodes[3] = 0.5*(1.0+sqrt(3.0/7.0)); nodes[4] = 1.0;  break;
+          case 5 : nodes[0] = 0.0;
+                   nodes[1] = 0.5*(1.0 - sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
+                   nodes[2] = 0.5*(1.0 - sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
+                   nodes[3] = 0.5*(1.0 + sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
+                   nodes[4] = 0.5*(1.0 + sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
+                   nodes[5] = 1.0;  break;
           default : throw Exception("Requested TimeFE not implemented yet.");
          }
       }
