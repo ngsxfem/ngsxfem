@@ -43,7 +43,7 @@ namespace xintegration
             static bool first = true;
             if (first)
             {
-              cout << "Calling bisection ..." << endl;
+              cout << "Calling bisection for root finding ..." << endl;
               first = false;
             }
             vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
