@@ -124,11 +124,12 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
    }
 
+  template<typename SCAL>
   void SpaceTimeFESpace :: RestrictGFInTime(shared_ptr<GridFunction> st_GF, double time, shared_ptr<GridFunction> s_GF)
   {
-     auto st_vec = st_GF->GetVectorPtr()->FV<double>();   
-     auto restricted_vec = s_GF->GetVectorPtr()->FV<double>();
-     restricted_vec = 0.0;
+     auto st_vec = st_GF->GetVectorPtr()->FV<SCAL>();   
+     auto restricted_vec = s_GF->GetVectorPtr()->FV<SCAL>();
+     //restricted_vec = SCAL(0.0);
 
      Array<double> & nodes = TimeFE_nodes();
 
@@ -146,7 +147,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
          }
          cnt++;
      }
-     
      cout << IM(3) <<"General case" << endl;
      // General case
      //cout << IM(3) <<"time fe:" << GetTimeFE() << endl;
@@ -163,7 +163,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      }
   }
 
-
+  
   shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
   {
      shared_ptr<GridFunction> restricted_GF = nullptr;
@@ -172,17 +172,20 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      {
        case 1:
          restricted_GF = make_shared < T_GridFunction < double > >( Vh_ptr);
+         restricted_GF->Update();
+         RestrictGFInTime<double>(st_GF, time, restricted_GF);
          break;
        case 2:
          restricted_GF = make_shared < T_GridFunction < Vec<2> > >( Vh_ptr);
+         restricted_GF->Update();
+         RestrictGFInTime<Vec<2>>(st_GF, time, restricted_GF);
          break;
      
        default:
          throw Exception("cannot handle GridFunction type (dimension too large?).");
          break;
      }
-     restricted_GF->Update();
-     RestrictGFInTime(st_GF, time, restricted_GF);
+
      return restricted_GF;
   }
 
