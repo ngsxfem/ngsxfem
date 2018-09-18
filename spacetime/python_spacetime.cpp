@@ -71,9 +71,9 @@ void ExportNgsx_spacetime(py::module &m)
     }
 
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
-    cout << tfe << endl;
+    //cout << tfe << endl;
     if(tfe == nullptr)
-      cout << "Warning!" << endl;
+      cout << "Warning! tfe == nullptr" << endl;
 
     ret = make_shared<SpaceTimeFESpace> (ma, basefes,tfe, flags);
 
@@ -364,7 +364,18 @@ void ExportNgsx_spacetime(py::module &m)
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
-     st_FES->RestrictGFInTime(st_GF,time,s_GF);
+     switch (st_FES->GetDimension())
+     {
+       case 1:
+         st_FES->RestrictGFInTime<double>(st_GF,time,s_GF);
+         break;
+       case 2:
+         st_FES->RestrictGFInTime<Vec<2>>(st_GF,time,s_GF);
+         break;
+       default:
+         throw Exception("cannot handle GridFunction type (dimension too large?).");
+         break;
+     }
    }, 
    py::arg("spacetime_gf"),
    py::arg("reference_time") = 0.0,
