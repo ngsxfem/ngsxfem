@@ -141,7 +141,7 @@ namespace ngfem
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
     
     // tstart.Stop();
-    bool symmetric_so_far = true;
+    bool symmetric_so_far = false; //we don't check for symmetry in the formulatin so far (TODO)!
     int k1 = 0;
     int k1nr = 0;
     for (auto proxy1 : trial_proxies)

@@ -1,4 +1,5 @@
 # unfitted Heat equation with Neumann b.c.
+# solved with a P1-DG-in-time space-time discretization
 from ngsolve import *
 from time import sleep
 from netgen.geom2d import unit_square
@@ -80,7 +81,7 @@ tfe = ScalarTimeFE(k_t)
 # space-time finite element space
 st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
-#Fitted heat equation example
+#Unfitted heat equation example
 tend = 1
 delta_t = tend/32
 coef_delta_t.Set(delta_t)
@@ -121,10 +122,10 @@ ci = CutInfo(mesh,time_order=time_order)
 hasneg_integrators_a = []
 hasneg_integrators_f = []
 patch_integrators_a = []
-hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
-hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*alpha*grad(u)*grad(v)))
 hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()),
                                                  skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 

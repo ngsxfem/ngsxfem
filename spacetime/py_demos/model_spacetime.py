@@ -1,3 +1,5 @@
+# Heat equation (fitted) with Dirichlet b.c.
+# solved with a P1-DG-in-time space-time discretization
 from ngsolve import *
 from time import sleep
 from netgen.geom2d import unit_square
@@ -67,9 +69,9 @@ lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0}
 
 
 a = BilinearForm(st_fes,symmetric=False)
-a += SymbolicBFI(levelset_domain = lset_neg, form = dt(u)*v, time_order=2)
 a += SymbolicBFI(levelset_domain = lset_neg, form = delta_t*grad(u)*grad(v), time_order=2)
 a += SymbolicBFI(form = fix_t(u,0)*fix_t(v,0) )
+a += SymbolicBFI(levelset_domain = lset_neg, form = dt(u)*v, time_order=2)
 a.Assemble()
 
 t_old = 0

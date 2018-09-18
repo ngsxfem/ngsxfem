@@ -37,9 +37,19 @@ namespace xintegration
       if (time_intorder >= 0) {
           FESpace* raw_FE = (gflset->GetFESpace()).get();
           SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+          ScalarFiniteElement<1>* fe_time = nullptr;
           if (!st_FE)
-            throw Exception("not a space time FE");
-          ScalarFiniteElement<1>* fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
+          {
+            static bool warned = false;
+            if (!warned)
+            { 
+              warned = true;
+              cout << IM(2) << "WARNING: You are using a space-time integration rule with an only spatial gridfunction (not a space time FE). This gridfunction will be treated as a constant-in-time function.\n" << endl;
+            }
+            fe_time = new (lh) L2HighOrderFE<ET_SEGM>(0);
+          }
+          else
+            fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
           return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
       } else {
           return StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
