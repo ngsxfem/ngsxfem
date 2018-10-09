@@ -1,5 +1,9 @@
 #include "xintegration.hpp"
 #include "straightcutrule.hpp"
+#include "spacetimecutrule.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
+
 
 namespace xintegration
 {
@@ -11,13 +15,17 @@ namespace xintegration
                                                    const ElementTransformation & trafo,
                                                    DOMAIN_TYPE dt,
                                                    int intorder,
+                                                   int time_intorder,
                                                    LocalHeap & lh,
-                                                   int subdivlvl)
+                                                   int subdivlvl,
+                                                   SWAP_DIMENSIONS_POLICY quad_dir_policy)
   {
     // temporary fix for ET_SEGM
     /*
     if (trafo.GetElementType() == ET_SEGM)
       return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
+
+    //cout << "time_intorder = " << time_intorder << endl;
     */
 
     if (gflset != nullptr)
@@ -26,11 +34,32 @@ namespace xintegration
       gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
       FlatVector<> elvec(dnums.Size(),lh);
       gflset->GetVector().GetIndirect(dnums,elvec);
-      return StraightCutIntegrationRule(elvec, trafo, dt, intorder, lh);
+      if (time_intorder >= 0) {
+          FESpace* raw_FE = (gflset->GetFESpace()).get();
+          SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+          ScalarFiniteElement<1>* fe_time = nullptr;
+          if (!st_FE)
+          {
+            static bool warned = false;
+            if (!warned)
+            { 
+              warned = true;
+              cout << IM(2) << "WARNING: You are using a space-time integration rule with an only spatial gridfunction (not a space time FE). This gridfunction will be treated as a constant-in-time function.\n" << endl;
+            }
+            fe_time = new (lh) L2HighOrderFE<ET_SEGM>(0);
+          }
+          else
+            fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
+          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
+      } else {
+          return StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
+      }
     }
     else if (cflset != nullptr)
     {
-      return CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+      if (time_intorder < 0)
+          return CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+      else throw Exception("Space-time requires the levelset as a GridFunction!");
     }
     else throw Exception("Only null information provided, null integration rule served!");
   }
@@ -51,7 +80,7 @@ namespace xintegration
     else
     {
       shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
-      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace"))
+      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && ( (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace") || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")))
         return make_tuple(nullptr, ret);
       else
         return make_tuple(cflset, nullptr);

@@ -19,6 +19,10 @@ To obtain higher order accuracy, we offer a mesh transformation technique in the
 #+attr_html: :width 175px
 #+html: <p align="center"><img src="doc/graphics/lsetcurv.jpg" height="175"/></p>
 
+*** Space-Time Finite Elements for the treatment of moving domain problems
+To obtain robust method for PDEs on unfitted moving domain we can formulate space-time discretization. =ngsxfem= provides necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Further, it extends the tools for higher order accurate geometry handling to the space-time setting.
+#+html: <p align="center"><img src="doc/graphics/spacetime1.png" height="175"/><img src="doc/graphics/spacetime2.png" height="175"/></p> 
+
 ** Applications
 This section is to be added soon ...
 
@@ -39,11 +43,27 @@ You have Netgen/NGSolve installed? Perfect. Then let INSTLOCATION be the locatio
 Netgen/NGSolve is already installed to. To install xfem make sure that you have 
 write access to that same directory. Then build =ngsxfem= with 
 #+BEGIN_SRC shell
-cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=OFF
+cmake ../ -DCMAKE_INSTALL_PREFIX=INSTLOCATION -DBUILD_NGSOLVE=OFF
 make
 make install
 #+END_SRC
 
+**** Prerequisites on Ubuntu
+On Ubuntu you require =python3-dev= to build =ngsxfem= (and similar dependencies as NGSolve has, cf. [[www.ngsolve.org]])
+
+**** Fix of potential issues
+If you have compiling problems or at run time some NGSolve symbols are not found, it may be (happened in some configurations) that the NGSolve compiler and linker wrapper =ngscxx= and =ngsld= were not used. In this case you may add
+#+BEGIN_SRC shell
+cmake ... -DCMAKE_CXX_COMPILER=ngscxx -DCMAKE_LINKER=ngsld
+#+END_SRC
+to the cmake configuration.
+
+**** =ngsxfem= on MacOSX
+On MacOSX, you need to add the location of the NGSolve cmake configuration files:
+#+BEGIN_SRC shell
+cmake ... -DNGSolve_DIR=/NGSOLVE_INSTALLATION_LOCATION/Resources/CMake
+#+END_SRC
+If NGSolve is installed from the dmg-file =NGSOLVE_INSTALLATION_LOCATION= is =/Applications/Netgen.app/=.
 *** Building the NGS-Suite and =ngsxfem= together 
 If you do not have Netgen/NGSolve installed, you may first call
 #+BEGIN_SRC shell
@@ -51,7 +71,7 @@ git submodule update --init
 #+END_SRC
 which pulls Netgen/NGSolve as external dependencies. Then, just call
 #+BEGIN_SRC shell
-cmake ../ -DINSTALL_DIR=INSTLOCATION -DBUILD_NGSOLVE=ON
+cmake ../ -DCMAKE_INSTALL_PREFIX=INSTLOCATION -DBUILD_NGSOLVE=ON
 make
 make install
 #+END_SRC
@@ -73,6 +93,7 @@ git submodule update --init --recursive
 Otherwise update your NGSolve version manually. 
 As a rule we try to be compatible to the latest release of NGSolve. 
 To be sure check the version in external_dependencies/ngsolve
+
 
 ** Examples
 To run the python examples be sure to follow the build steps above.
@@ -105,4 +126,4 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * =py_tutorials/stokesxfem.py= : stationary Stokes interface problem with an isoparametric (P2X/P1X) Taylor-Hood-Nitsche-XFEM discretization
  * =py_tutorials/tracefem.py= : stationary 2D surface PDE problem with a TraceFEM discretization (low order)
  * =py_tutorials/tracefem3d.py= : stationary 3D surface PDE problem with a TraceFEM discretization (higher order)
- * =py_tutorials/moving_domain.py= : moving fictitous domain problem using a space time unfitted FEM (cf. corresponding tutorial at [[https://github.com/ngsxfem/ngsxfem-jupyter]] )
+ * =spacetime/py_tutorials/spacetimeP1P1.py= : moving fictitous domain problem using a space time unfitted FEM

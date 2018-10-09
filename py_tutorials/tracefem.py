@@ -51,7 +51,7 @@ lset_if  = { "levelset" : lset_approx, "domain_type" : IF , "subdivlvl" : subdiv
 
 a = BilinearForm(VhG, symmetric = True)
 a += SymbolicBFI(levelset_domain = lset_if , form = P(grad(u)) * P(grad(v)) + u * v)
-a += SymbolicBFI(form = 1.0/h*(cf_IF * grad(u)*n) * (grad(v)*n))
+a += SymbolicBFI(form = 1.0/h*( InnerProduct(grad(u),n) * InnerProduct(grad(v),n)), definedonelements = ba_IF)
 a.Assemble()
 
 f = LinearForm(VhG)

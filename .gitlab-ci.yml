@@ -4,6 +4,7 @@ beforescript:
     - echo " before script "
     - rm -rf /home/gitlab-runner/inst/netgen
     - mkdir -p /home/gitlab-runner/inst/netgen
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "echo \"nix-shell test\" "
 
 build:
   stage: build
@@ -27,8 +28,8 @@ build:
     - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && [ -d /home/gitlab-runner/ngsxfem-reports/last-inst ] && export BUILD_NGS="OFF" && cp -rv /home/gitlab-runner/ngsxfem-reports/last-inst/* /home/gitlab-runner/inst/netgen/
     - test "$NGS_VERSION" != "$NGS_INSTALLED_VERSION" && echo "versions do not match"
     - cd build
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter ninja --run "cmake -DCMAKE_INSTALL_PREFIX=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter ninja --run "ninja install"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DCMAKE_INSTALL_PREFIX=/home/gitlab-runner/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DUSE_GUI=OFF -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "ninja install"
     - echo $NGS_VERSION > /home/gitlab-runner/ngsxfem-reports/lastngs.version
     - rm -rf /home/gitlab-runner/ngsxfem-reports/last-inst
     - cp -r /home/gitlab-runner/inst/netgen /home/gitlab-runner/ngsxfem-reports/last-inst
@@ -49,7 +50,7 @@ ctests-tutorials:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter python35Packages.pytest --run "ctest -V -R 'py_tutorial'"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'py_tutorial'"
   when: always
   allow_failure: false
 
@@ -68,7 +69,7 @@ ctests-mayfail:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter python35Packages.pytest --run "ctest -V -R 'pymayfailtests'"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'pymayfailtests'"
   when: always
   allow_failure: true
         
@@ -87,7 +88,7 @@ ctests-remaining:
     - export PATH="${NETGENDIR}:${PATH}"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter python35Packages.pytest --run "ctest -V -R 'pytests'"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.pytest --run "ctest -V -R 'pytests'"
   when: always
   allow_failure: false
   
@@ -103,7 +104,7 @@ go4quads-tests:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
     - cd cutint/py_demos/
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter --run "python3 area_of_a_circle_quads.py"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 --run "python3 area_of_a_circle_quads.py"
   when: always
   allow_failure: false
 
@@ -121,7 +122,7 @@ ngsxfem-report:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/home/gitlab-runner/inst/netgen/lib"
     - export PYTHONPATH="${PYTHONPATH}:/home/gitlab-runner/inst/netgen/lib/python3.5/site-packages"
     - mkdir /home/gitlab-runner/ngsxfem-reports/$CI_BUILD_REF_NAME/ -p
-    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 python35Packages.tkinter ninja --run "python3 ngsxfem_report.py /home/gitlab-runner/ngsxfem-reports/$CI_BUILD_REF_NAME/ $CI_PIPELINE_ID"
+    - nix-shell -p blas liblapack gcc5 xorg.libXmu zlib cmake ccache ccacheWrapper mesa_glu mesa icu python35 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py /home/gitlab-runner/ngsxfem-reports/$CI_BUILD_REF_NAME/ $CI_PIPELINE_ID"
   when: always
   allow_failure: true
         

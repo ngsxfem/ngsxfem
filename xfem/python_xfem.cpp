@@ -57,6 +57,7 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
     .def("__init__",  [] (CutInformation *instance,
                           shared_ptr<MeshAccess> ma,
                           py::object lset,
+                          int time_order,
                           int heapsize)
          {
            new (instance) CutInformation (ma);
@@ -64,23 +65,51 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
            {
              PyCF cflset = py::extract<PyCF>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-             instance->Update(cflset,lh);
+             instance->Update(cflset, time_order, lh);
            }
          },
          py::arg("mesh"),
          py::arg("levelset") = DummyArgument(),
-         py::arg("heapsize") = 1000000
+         py::arg("time_order") = -1,
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Creates a CutInfo based on a level set function and a mesh.
+
+Parameters
+
+mesh : Mesh
+
+levelset : ngsolve.CoefficientFunction / None
+  level set funciton w.r.t. which the CutInfo is created
+
+time_order : int
+  order in time that is used in the integration in time to check for cuts and the ratios. This is
+  only relevant for space-time discretizations.
+)raw_string")
       )
     .def("Update", [](CutInformation & self,
                       PyCF lset,
+                      int time_order,
                       int heapsize)
          {
            LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-           self.Update(lset,lh);
+           self.Update(lset,time_order,lh);
          },
          py::arg("levelset"),
+         py::arg("time_order") = -1,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
-Updates a CutInfo based on a level set function.)raw_string")
+Updates a CutInfo based on a level set function.
+
+Parameters
+
+levelset : ngsolve.CoefficientFunction
+  level set function w.r.t. which the CutInfo is generated
+
+time_order : int
+  order in time that is used in the integration in time to check for cuts and the ratios. This is
+  only relevant for space-time discretizations.
+
+
+)raw_string")
       )
     .def("Mesh", [](CutInformation & self)
          {
@@ -89,25 +118,41 @@ Updates a CutInfo based on a level set function.)raw_string")
 Returns mesh of CutInfo)raw_string")
       )
     .def("GetElementsOfType", [](CutInformation & self,
-                                 DOMAIN_TYPE dt,
+                                 py::object dt,
                                  VorB vb)
          {
-           return self.GetElementsOfDomainType(dt,vb);
+           COMBINED_DOMAIN_TYPE cdt = CDOM_NO;
+           if (py::extract<COMBINED_DOMAIN_TYPE> (dt).check())
+             cdt = py::extract<COMBINED_DOMAIN_TYPE>(dt)();
+           else if (py::extract<DOMAIN_TYPE> (dt).check())
+             cdt = TO_CDT(py::extract<DOMAIN_TYPE>(dt)());
+           else
+             throw Exception(" unknown type for dt ");
+           return self.GetElementsOfDomainType(cdt,vb);
          },
          py::arg("domain_type") = IF,
          py::arg("VOL_or_BND") = VOL,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-corresponding type (NEG/POS/IF))raw_string")
+corresponding combined domain type 
+(NO/NEG/POS/UNCUT/IF/HASNEG/HASPOS/ANY))raw_string")
       )
     .def("GetFacetsOfType", [](CutInformation & self,
-                               DOMAIN_TYPE dt)
+                               py::object dt)
          {
-           return self.GetFacetsOfDomainType(dt);
+           COMBINED_DOMAIN_TYPE cdt = CDOM_NO;
+           if (py::extract<COMBINED_DOMAIN_TYPE> (dt).check())
+             cdt = py::extract<COMBINED_DOMAIN_TYPE>(dt)();
+           else if (py::extract<DOMAIN_TYPE> (dt).check())
+             cdt = TO_CDT(py::extract<DOMAIN_TYPE>(dt)());
+           else
+             throw Exception(" unknown type for dt ");
+           return self.GetFacetsOfDomainType(cdt);
          },
          py::arg("domain_type") = IF,docu_string(R"raw_string(
-Returns BitArray that is true for every facet that has the corresponding type (NEG/POS/IF)
-)raw_string"))
-
+Returns BitArray that is true for every facet that has the 
+corresponding combined domain type 
+(NO/NEG/POS/UNCUT/IF/HASNEG/HASPOS/ANY))raw_string")
+      )
     .def("GetCutRatios", [](CutInformation & self,
                             VorB vb)
          {
@@ -234,6 +279,37 @@ space : ngsolve.FESpace
 
 a : ngsolve.BitArray
   BitArray for marked elements
+
+heapsize : int
+  heapsize of local computations.
+)raw_string")
+
+    );
+
+  m.def("GetDofsOfFacets",
+        [] (PyFES fes,
+            PyBA a,
+            int heapsize)
+        {
+          LocalHeap lh (heapsize, "GetDofsOfFacets-heap", true);
+          return GetDofsOfFacets(fes,a,lh);
+        } ,
+        py::arg("space"),
+        py::arg("a"),
+        py::arg("heapsize") = 1000000,
+        docu_string(R"raw_string(
+Given a BitArray marking some facets in a
+mesh extract all unknowns that are associated
+to these facets as a BitArray.
+
+Parameters:
+
+space : ngsolve.FESpace
+  finite element space from which the 
+  corresponding dofs should be extracted
+
+a : ngsolve.BitArray
+  BitArray for marked Facets
 
 heapsize : int
   heapsize of local computations.
@@ -374,7 +450,9 @@ elnr : int
   m.def("SymbolicCutBFI", [](PyCF lset,
                              DOMAIN_TYPE dt,
                              int order,
+                             int time_order,
                              int subdivlvl,
+                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -403,9 +481,15 @@ elnr : int
 
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
-            bfi = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,vb);
+          {
+            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb);
+            bfime->SetTimeIntegrationOrder(time_order);
+            bfi = bfime;
+          }
           else
           {
+            if (time_order >= 0)
+              throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
             if (vb == BND)
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
             bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
@@ -427,7 +511,9 @@ elnr : int
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
@@ -440,7 +526,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
 
   m.def("SymbolicFacetPatchBFI", [](PyCF cf,
                                     int order,
-                                    //int time_order,
+                                    int time_order,
                                     bool skeleton,
                                     py::object definedonelem)
         -> PyBFI
@@ -460,15 +546,15 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
           shared_ptr<BilinearFormIntegrator> bfi;
           if (skeleton)
           {
-            auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator> (cf, VOL, false);
-            //bfime->SetTimeIntegrationOrder(time_order);
+            auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator2> (cf, order);
+            bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
           else
           {
             // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
             auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf, order);
-            //bfime->SetTimeIntegrationOrder(time_order);
+            bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
 
@@ -479,7 +565,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
         },
         py::arg("form"),
         py::arg("force_intorder")=-1,
-        //py::arg("time_order")=-1,
+        py::arg("time_order")=-1,
         py::arg("skeleton") = true,
         py::arg("definedonelements")=DummyArgument(),
         docu_string(R"raw_string(
@@ -500,13 +586,19 @@ skeleton : boolean
 
 definedonelements : ngsolve.BitArray/None
   array which decides on which facets the integrator should be applied
+
+time_order : int
+  order in time that is used in the space-time integration. time_order=-1 means that no space-time
+  rule will be applied. This is only relevant for space-time discretizations.
 )raw_string")
     );
 
   m.def("SymbolicCutLFI", [](PyCF lset,
                              DOMAIN_TYPE dt,
                              int order,
+                             int time_order,
                              int subdivlvl,
+                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -526,8 +618,9 @@ definedonelements : ngsolve.BitArray/None
           if (element_boundary || skeleton)
             throw Exception("No Facet LFI with Symbolic cuts..");
 
-          shared_ptr<LinearFormIntegrator> lfi
-            = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, vb);
+          auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol,vb);
+          lfime->SetTimeIntegrationOrder(time_order);
+          shared_ptr<LinearFormIntegrator> lfi = lfime;
 
           if (py::extract<py::list> (definedon).check())
             lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -546,7 +639,9 @@ definedonelements : ngsolve.BitArray/None
         py::arg("lset"),
         py::arg("domain_type")=NEG,
         py::arg("force_intorder")=-1,
+        py::arg("time_order")=-1,
         py::arg("subdivlvl")=0,
+        py::arg("quad_dir_policy")=FIND_OPTIMAL,
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),
@@ -633,7 +728,7 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
             diffopdudnk = make_shared<CompoundDifferentialOperator> (diffopdudnk, comparr[i]);
           }
 
-          auto adddiffop = make_shared<ProxyFunction> (self->IsTestFunction(), self->IsComplex(),
+          auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(),self->IsTestFunction(), self->IsComplex(),
                                                        diffopdudnk, nullptr, nullptr, nullptr, nullptr, nullptr);
 
           if (self->IsOther())

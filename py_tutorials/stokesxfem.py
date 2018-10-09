@@ -184,12 +184,9 @@ lset_pos = { "levelset" : lsetp1, "domain_type" : POS, "subdivlvl" : 0}
 lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0}
 
 # element, facet and dof marking w.r.t. boundary approximation with lsetp1:
-hasneg = BitArray(ci.GetElementsOfType(NEG))
-hasneg |= ci.GetElementsOfType(IF)
-haspos = BitArray(ci.GetElementsOfType(POS))
-haspos |= ci.GetElementsOfType(IF)
-hasif = BitArray(ci.GetElementsOfType(IF))
-hasif |= ci.GetElementsOfType(IF) 
+hasneg = ci.GetElementsOfType(HASNEG)
+haspos = ci.GetElementsOfType(HASPOS)
+hasif = ci.GetElementsOfType(IF)
 ba_facets = [GetFacetsWithNeighborTypes(mesh,a=hasneg,b=hasif),GetFacetsWithNeighborTypes(mesh,a=haspos,b=hasif)]
 
 n_lset = 1.0/Norm(grad(lsetp1)) * grad(lsetp1)

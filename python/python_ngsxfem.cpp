@@ -12,8 +12,25 @@ void ExportNgsx(py::module &m)
     .value("IF", IF)
     .export_values()
     ;
+
+  py::enum_<COMBINED_DOMAIN_TYPE>(m, "COMBINED_DOMAIN_TYPE")
+    .value("NO", CDOM_NO)
+    .value("CDOM_NEG", CDOM_NEG)
+    .value("CDOM_POS", CDOM_POS)
+    .value("UNCUT", CDOM_UNCUT)
+    .value("CDOM_IF", CDOM_IF)
+    .value("HASNEG", CDOM_HASNEG)
+    .value("HASPOS", CDOM_HASPOS)
+    .value("ANY", CDOM_ANY)
+    .export_values()
+    ;
   
-  // empty now ;)
+  py::enum_<SWAP_DIMENSIONS_POLICY>(m, "QUAD_DIRECTION_POLICY")
+    .value("FIRST", FIRST_ALLOWED)
+    .value("OPTIMAL", FIND_OPTIMAL)
+    .value("FALLBACK", ALWAYS_NONE)
+    .export_values()
+    ;
 }
 
 PYBIND11_MODULE(ngsxfem_py, m)

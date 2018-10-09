@@ -46,7 +46,7 @@ function) (and options).
     order_qn = 2
     order_lset = 2
 
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000):
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, eps_perturbation = 1e-14, heapsize=1000000):
         """
 The computed deformation depends on different options:
 
@@ -73,6 +73,9 @@ The computed deformation depends on different options:
     level set approximation) depending on the discontinuous_qn flag this normal field will be
     projected onto a continuous finite element space or not.
 
+  eps_perturbation: float
+    epsilon perturbation that is used to interpolate to P1
+
   heapsize : int
     heapsize for local computations.
         """
@@ -83,6 +86,8 @@ The computed deformation depends on different options:
         self.lset_lower_bound = lset_lower_bound
         self.lset_upper_bound = lset_upper_bound
         self.threshold = threshold
+
+        self.eps_perturbation = eps_perturbation
         
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho = GridFunction (self.v_ho, "lset_ho")
@@ -100,7 +105,7 @@ The computed deformation depends on different options:
         self.deform = GridFunction(self.v_def, "deform")
         self.heapsize = heapsize
 
-    def CalcDeformation(self, levelset, blending=None):
+    def CalcDeformation(self, levelset, ba =None, blending=None):
         """
 Compute the mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise linear
 approximation) are mapped towards the corresponding isolines of a given function
@@ -133,9 +138,9 @@ blending : None/string/CoefficientFunction
         self.v_def.Update()
         self.deform.Update()
         
-        self.lset_ho.Set(levelset,heapsize=self.heapsize)
-        self.qn.Set(self.lset_ho.Deriv(),heapsize=self.heapsize)
-        InterpolateToP1(self.lset_ho,self.lset_p1)
+        self.lset_ho.Set(levelset)
+        self.qn.Set(self.lset_ho.Deriv())
+        InterpolateToP1(self.lset_ho,self.lset_p1,eps_perturbation=self.eps_perturbation)
         if blending == None or blending == "none":
             blending = CoefficientFunction(0.0)
         elif blending == "quadratic":
@@ -149,6 +154,7 @@ blending : None/string/CoefficientFunction
                      self.lset_p1,
                      self.deform,
                      self.qn,
+                     ba,
                      blending,
                      lower=self.lset_lower_bound,
                      upper=self.lset_upper_bound,

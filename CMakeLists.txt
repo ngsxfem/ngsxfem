@@ -10,6 +10,7 @@ endif(NOT CMAKE_INSTALL_PREFIX)
 set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
+set(USE_GUI ON CACHE BOOL "use Netgen GUI")
 
 if(CMAKE_GENERATOR STREQUAL "Ninja")
   set(ADDNINJA "-GNinja")
@@ -32,6 +33,7 @@ if(BUILD_NGSOLVE)
     -DINSTALL_DIR=${CMAKE_INSTALL_PREFIX}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DUSE_GUI=${USE_GUI}
     -DUSE_CCACHE=${USE_CCACHE}
     -DUSE_UMFPACK=${USE_UMFPACK}
     -DTCL_INCLUDE_PATH=${TCL_INCLUDE_PATH} ${ADDNINJA}
@@ -74,7 +76,7 @@ else(WIN32)
     set(NGS_LIB_TYPE SHARED)
 endif(WIN32)
 
-set(NETGEN_LIBS ngsolve)
+set(NETGEN_LIBS solve)
 
 
 if (ADDITIONAL_PATHS)
@@ -109,6 +111,7 @@ add_subdirectory(xfem)
 add_subdirectory(py_tutorials)
 add_subdirectory(lsetcurving)
 add_subdirectory(tests)
+add_subdirectory(spacetime)
 
 # get_directory_property( DirDefs COMPILE_DEFINITIONS )
 

@@ -248,7 +248,7 @@ namespace ngcomp
     if (private_cutinfo)
     {
       cout << IM(4) << " Calling cutinfo-Update from within XFESpace-Update " << endl;
-      cutinfo->Update(coef_lset,lh);
+      cutinfo->Update(coef_lset,-1,lh);
     }
 
     static Timer timer ("XFESpace::Update");

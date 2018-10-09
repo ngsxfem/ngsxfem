@@ -12,11 +12,11 @@ namespace ngcomp
     : ma(ama)
   {
 
-    for (auto dt : {NEG,POS,IF})
+    for (auto cdt : all_cdts)
     {
-      elems_of_domain_type[dt] = make_shared<BitArray>(ma->GetNE(VOL));
-      selems_of_domain_type[dt] = make_shared<BitArray>(ma->GetNE(BND));
-      facets_of_domain_type[dt] = make_shared<BitArray>(ma->GetNFacets());
+      elems_of_domain_type[cdt] = make_shared<BitArray>(ma->GetNE(VOL));
+      selems_of_domain_type[cdt] = make_shared<BitArray>(ma->GetNE(BND));
+      facets_of_domain_type[cdt] = make_shared<BitArray>(ma->GetNFacets());
     }
     facets_of_domain_type[NEG]->Set();
     facets_of_domain_type[POS]->Clear();
@@ -51,16 +51,18 @@ namespace ngcomp
     }
   }
 
-  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, LocalHeap & lh)
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset,int time_order, LocalHeap & lh)
   {
     shared_ptr<GridFunction> gf_lset;
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
 
-    for (auto dt : {NEG,POS,IF})
+    for (auto cdt : all_cdts)
     {
-      elems_of_domain_type[dt]->Clear();
-      selems_of_domain_type[dt]->Clear();
+      elems_of_domain_type[cdt]->Clear();
+      selems_of_domain_type[cdt]->Clear();
     }
+    elems_of_domain_type[CDOM_ANY]->Set();
+    selems_of_domain_type[CDOM_ANY]->Set();
 
     for (VorB vb : {VOL,BND})
     {
@@ -77,36 +79,42 @@ namespace ngcomp
         double part_vol [] = {0.0, 0.0};
         for (DOMAIN_TYPE np : {POS, NEG})
         {
-          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0, lh, subdivlvl);
-
+          const IntegrationRule * ir_np = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,time_order, lh, subdivlvl);
+          // If(time_order > -1 && vb == BND) should have part_vol[NEG] == 0, which will lead to
+          // the BND element being marked as POS.
           if (ir_np)
             for (auto ip : *ir_np)
               part_vol[np] += ip.Weight();
         }
-        (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);
-
+        (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);                 
         if (vb == VOL)
         {
           if (part_vol[NEG] > 0.0)
             if (part_vol[POS] > 0.0)
-              (*elems_of_domain_type[IF]).Set(elnr);
+              (*elems_of_domain_type[CDOM_IF]).Set(elnr);
             else
-              (*elems_of_domain_type[NEG]).Set(elnr);
+              (*elems_of_domain_type[CDOM_NEG]).Set(elnr);
           else
-            (*elems_of_domain_type[POS]).Set(elnr);
+            (*elems_of_domain_type[CDOM_POS]).Set(elnr);
         }
         else
         {
           if (part_vol[NEG] > 0.0)
             if (part_vol[POS] > 0.0)
-              (*selems_of_domain_type[IF]).Set(elnr);
+              (*selems_of_domain_type[CDOM_IF]).Set(elnr);
             else
-              (*selems_of_domain_type[NEG]).Set(elnr);
+              (*selems_of_domain_type[CDOM_NEG]).Set(elnr);
           else
-            (*selems_of_domain_type[POS]).Set(elnr);
+            (*selems_of_domain_type[CDOM_POS]).Set(elnr);
         }
 
       });
+      *elems_of_domain_type[CDOM_UNCUT] = *elems_of_domain_type[CDOM_NEG] | *elems_of_domain_type[CDOM_POS];
+      *elems_of_domain_type[CDOM_HASNEG] = *elems_of_domain_type[CDOM_NEG] | *elems_of_domain_type[CDOM_IF];
+      *elems_of_domain_type[CDOM_HASPOS] = *elems_of_domain_type[CDOM_POS] | *elems_of_domain_type[CDOM_IF];
+      *selems_of_domain_type[CDOM_UNCUT] = *selems_of_domain_type[CDOM_NEG] | *selems_of_domain_type[CDOM_POS];
+      *selems_of_domain_type[CDOM_HASNEG] = *selems_of_domain_type[CDOM_NEG] | *selems_of_domain_type[CDOM_IF];
+      *selems_of_domain_type[CDOM_HASPOS] = *selems_of_domain_type[CDOM_POS] | *selems_of_domain_type[CDOM_IF];
     }
 
     int ne = ma -> GetNE();
@@ -114,7 +122,7 @@ namespace ngcomp
       (ne, lh,
       [&] (int elnr, LocalHeap & lh)
     {
-      if ((*elems_of_domain_type[IF]).Test(elnr))
+      if ((*elems_of_domain_type[CDOM_IF]).Test(elnr))
       {
         ElementId elid(VOL,elnr);
 
@@ -145,12 +153,12 @@ namespace ngcomp
       (ne, lh,
       [&] (int elnr, LocalHeap & lh)
     {
-      if (! elems_of_domain_type[IF]->Test(elnr))
+      if (elems_of_domain_type[CDOM_UNCUT]->Test(elnr))
       {
         ElementId elid(VOL,elnr);
         Array<int> nodenums(0,lh);
 
-        DOMAIN_TYPE dt = elems_of_domain_type[NEG]->Test(elnr) ? NEG : POS;
+        DOMAIN_TYPE dt = elems_of_domain_type[CDOM_NEG]->Test(elnr) ? NEG : POS;
 
         nodenums = ma->GetElVertices(elid);
         for (int node : nodenums)
@@ -286,6 +294,31 @@ namespace ngcomp
       {
         Array<int> dnums(0,lh);
         fes->GetDofNrs(elid,dnums);
+        for (auto dof : dnums)
+          ret->Set(dof);
+      }
+    });
+    return ret;
+  }
+
+  shared_ptr<BitArray> GetDofsOfFacets(shared_ptr<FESpace> fes,
+                                       shared_ptr<BitArray> a,
+                                       LocalHeap & lh)
+  {
+    int nf = fes->GetMeshAccess()->GetNFacets();
+    int ndof = fes->GetNDof();
+    shared_ptr<BitArray> ret = make_shared<BitArray> (ndof);
+    ret->Clear();
+
+    IterateRange
+      (nf, lh,
+      [&] (int fanr, LocalHeap & lh)
+    {
+      NodeId nodeid(NT_FACET,fanr);
+      if (a->Test(fanr))
+      {
+        Array<int> dnums(0,lh);
+        fes->GetDofNrs(nodeid,dnums);
         for (auto dof : dnums)
           ret->Set(dof);
       }

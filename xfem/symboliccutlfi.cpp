@@ -20,9 +20,10 @@ namespace ngfem
                                    DOMAIN_TYPE adt,
                                    int aforce_intorder,
                                    int asubdivlvl,
+                                   SWAP_DIMENSIONS_POLICY apol,
                                    VorB vb)
-    : SymbolicLinearFormIntegrator(acf,vb,false), cf_lset(acf_lset), dt(adt),
-    force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
+    : SymbolicLinearFormIntegrator(acf,vb,VOL), cf_lset(acf_lset), dt(adt),
+      force_intorder(aforce_intorder), subdivlvl(asubdivlvl), pol(apol)
   {
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
   }
@@ -60,7 +61,7 @@ namespace ngfem
     
     // tstart.Start();
     
-    if (element_boundary)
+    if (element_vb != VOL)
       {
         switch (trafo.SpaceDim())
           {
@@ -96,15 +97,36 @@ namespace ngfem
 
     elvec = 0;
 
-    const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, lh, subdivlvl);
-    if (ir == nullptr)
+    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    if (ir1 == nullptr)
       return;
     ///
+    const IntegrationRule * ir = nullptr;
+    if (false && time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
+    {
+       static bool warned = false;
+       if (!warned)
+       {
+         cout << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
+         cout << "         A mapped integration rule of this will not see the time,\n";
+         cout << "         but the underlying integration rule will." << endl;
+         warned = true;
+       }
+       auto ir1D = SelectIntegrationRule (ET_SEGM, time_order);
+       ir = new (lh) IntegrationRule(ir1->Size()*ir1D.Size(),lh);
+       for (int i = 0; i < ir1D.Size(); i ++)
+         for (int j = 0; j < ir1->Size(); j ++)
+           (*ir)[i*ir1->Size()+j] = IntegrationPoint((*ir1)[j](0),(*ir1)[j](1),ir1D[i](0),(*ir1)[j].Weight()*ir1D[i].Weight());
+       // cout << *ir<< endl;
+    }
+    else
+      ir = ir1;
+
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
     FlatVector<SCAL> elvec1(elvec.Size(), lh);
-    
+
     FlatMatrix<SCAL> values(ir->Size(), 1, lh);
 
     /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
@@ -112,13 +134,15 @@ namespace ngfem
     for (auto proxy : proxies)
       {
         // td.Start();
-        FlatMatrix<SCAL> proxyvalues(ir->Size(), proxy->Dimension(), lh);
+        FlatMatrix<SCAL> proxyvalues(mir.Size(), proxy->Dimension(), lh);
         for (int k = 0; k < proxy->Dimension(); k++)
           {
             ud.testfunction = proxy;
             ud.test_comp = k;
-            
-            cf -> Evaluate (mir, values);
+            // cf -> Evaluate (mir, values);
+            for (int i=0; i < mir.Size(); i++)
+              values(i,0) = cf->Evaluate(mir[i]);
+
             for (int i = 0; i < mir.Size(); i++)
               proxyvalues(i,k) = mir[i].GetWeight() * values(i,0);
           }
@@ -128,7 +152,7 @@ namespace ngfem
         // tb.Stop();
         elvec += elvec1;
       }
-      
+
   }
   
 }

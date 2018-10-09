@@ -22,7 +22,6 @@ add_test(NAME py_tutorial_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 
 add_test(NAME py_tutorial_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_dg_ghostpen.py" "testmode")
-
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
@@ -44,13 +43,14 @@ add_test(NAME pytests_nxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_shifteval COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_shifteval.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
-add_test(NAME pymayfailtests_quadchallenges COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+add_test(NAME pytests_quadchallenges COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_quadchallenges.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
-
 
 add_test(NAME pytests_num_nxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_num_nxfem.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
-
+  
+add_test(NAME pytests_spacetimecutrule COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetimecutrule.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 install( FILES
   ngsxfem_report.py

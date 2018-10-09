@@ -5,7 +5,6 @@
 #include <comp.hpp>
 #include <fem.hpp>
 
-#include "../lsetcurving/p1interpol.hpp"
 #include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
@@ -22,67 +21,6 @@ void ExportNgsx_lsetcurving(py::module &m)
   typedef shared_ptr<BitArray> PyBA;
 
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
-        {
-          InterpolateP1 interpol(gf_ho, gf_p1);
-          LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
-        } ,
-        py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000,
-        docu_string(R"raw_string(
-Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
-into a piecewise (multi-) linear function.
-
-Parameters
-
-gf_ho : ngsolve.GridFunction
-  Function to interpolate
-
-gf_p1 : ngsolve.GridFunction
-  Function to interpolate to (should be P1)
-
-eps_perturbation : float
-  If the absolute value if the function is smaller than eps_perturbation, it will be set to
-  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
-  configurations for level set based methods).
-
-heapsize : int
-  heapsize of local computations.
-)raw_string")
-    )
-    ;
-
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
-        {
-          InterpolateP1 interpol(coef, gf_p1);
-          LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
-        } ,
-        py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=1e-16,py::arg("heapsize")=1000000,
-        docu_string(R"raw_string(
-Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
-function.
-
-Parameters
-
-coef : ngsolve.CoefficientFunction
-  Function to interpolate
-
-gf_p1 : ngsolve.GridFunction
-  Function to interpolate to (should be P1)
-
-eps_perturbation : float
-  If the absolute value if the function is smaller than eps_perturbation, it will be set to
-  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
-  configurations for level set based methods).
-
-heapsize : int
-  heapsize of local computations.
-)raw_string")
-    )
-    ;
 
   // py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
   //   .def(py::init<>())
@@ -184,16 +122,23 @@ This is an internal function (and should be removed after some refactoring at so
   //       py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
   //   ;
 
-  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, PyCF blending,
+  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn,
+                             py::object active_elems_in,
+                             PyCF blending,
                              double lower, double upper, double threshold, int heapsize)
         {
+          shared_ptr<BitArray> active_elems = nullptr;
+          if (py::extract<PyBA> (active_elems_in).check())
+            active_elems = py::extract<PyBA>(active_elems_in)();
+          
           LocalHeap lh (heapsize, "ProjectShift-Heap");
-          ProjectShift(lset_ho, lset_p1, deform, qn, blending, lower, upper, threshold, lh);
+          ProjectShift(lset_ho, lset_p1, deform, qn, active_elems, blending, lower, upper, threshold, lh);
         } ,
         py::arg("lset_ho")=NULL,
         py::arg("lset_p1")=NULL,
         py::arg("deform")=NULL,
         py::arg("qn")=NULL,
+        py::arg("active_elements")=DummyArgument(),
         py::arg("blending")=NULL,
         py::arg("lower")=0.0,
         py::arg("upper")=0.0,
@@ -233,6 +178,10 @@ lset_p1 : ngsolve.GridFunction
 
 deform : ngsolve.GridFunction
   vector valued GridFunction to store the resulting deformation
+
+active_elements : ngsolve.BitArray / None
+  explicit marking of elements on which the transformation should be applied. If this is not None
+  lower and upper will be ignored.
 
 blending : ngsolve.CoefficientFunction
   Option to apply the mesh deformation more localized on cut elements. Setting blending function to

@@ -76,6 +76,8 @@ from xfem import *
 # basic geometry features (for the background mesh)
 from netgen.geom2d import SplineGeometry
 
+
+
 # We generate the background mesh of the domain and use a simplicial triangulation
 # To obtain a mesh with quadrilaterals use 'quad_dominated=True'
 square = SplineGeometry()
@@ -119,10 +121,8 @@ ci = CutInfo(mesh, lsetp1)
 
 # Overwrite freedofs (degrees of freedoms that should be solved for) of VhG to mark only dofs that
 # are involved in the cut problem. Use cut information of ci here:
-hasneg = BitArray(ci.GetElementsOfType(NEG))  # <- "hasneg": has (also) negative level set values
-hasneg |= ci.GetElementsOfType(IF)
-haspos = BitArray(ci.GetElementsOfType(POS))  # <- "haspos": has (also) positive level set values
-haspos |= ci.GetElementsOfType(IF)
+hasneg = ci.GetElementsOfType(HASNEG)  # <- "hasneg": has (also) negative level set values
+haspos = ci.GetElementsOfType(HASPOS)  # <- "haspos": has (also) positive level set values
 freedofs = VhG.FreeDofs()
 freedofs &= CompoundBitArray([GetDofsOfElements(Vh,hasneg),GetDofsOfElements(Vh,haspos)])
 
@@ -176,8 +176,8 @@ gfu = GridFunction(VhG)
 gfu.components[1].Set(solution[1], BND)
 
 # setting up matrix and vector
-a.Assemble();
-f.Assemble();
+a.Assemble()
+f.Assemble()
 
 # homogenization of boundary data and solution of linear system
 rhs = gfu.vec.CreateVector()

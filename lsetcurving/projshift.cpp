@@ -7,6 +7,7 @@ namespace ngcomp
 
   void ProjectShift (shared_ptr<GridFunction> lset_ho, shared_ptr<GridFunction> lset_p1,
                      shared_ptr<GridFunction> deform, shared_ptr<CoefficientFunction> qn,
+                     shared_ptr<BitArray> ba,
                      shared_ptr<CoefficientFunction> blending,
                      double lower_lset_bound, double upper_lset_bound, double threshold,
                      LocalHeap & clh)
@@ -60,7 +61,9 @@ namespace ngcomp
          lset_p1->GetVector().GetIndirect(p1_dofs,vals);
          const ElementTransformation & eltrans = el.GetTrafo();
       
-         if (!ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound))
+         if ( (ba) && ( !(ba->Test(elnr)) ))
+           return;
+         if ( (!ba) && !ElementInRelevantBand(vals, lower_lset_bound, upper_lset_bound) )
            return;
 
          int ndofs = el.GetDofs().Size();
