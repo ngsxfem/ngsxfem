@@ -232,7 +232,7 @@ a += SymbolicBFI(lset_neg, form = 0.5 * mu1 * InnerProduct(Du[0],Dv[0]) )
 a += SymbolicBFI(lset_pos, form = 0.5 * mu2 * InnerProduct(Du[1],Dv[1]) )
 a += SymbolicBFI(lset_if,  form = InnerProduct( average_flux_u, v[0]-v[1]))
 a += SymbolicBFI(lset_if,  form = InnerProduct( average_flux_v, u[0]-u[1]))
-a += SymbolicBFI(lset_if,  form = lambda_nitsche * InnerProduct(u[0]-u[1],v[0]-v[1]))
+a += SymbolicBFI(lset_if,  form = lambda_nitsche/h * InnerProduct(u[0]-u[1],v[0]-v[1]))
 # pressure stuff
 a += SymbolicBFI(lset_neg, form = - divu[0] * q[0] - divv[0] * p[0]
                                   + n * q[0] + m * p[0])
