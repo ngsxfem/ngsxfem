@@ -37,8 +37,6 @@ coeff_f = CoefficientFunction( -20*( (r1+r2)/sqrt(x*x+y*y) -4) )
 # for monitoring the error
 exact = CoefficientFunction(20*(r2-sqrt(x*x+y*y))*(sqrt(x*x+y*y)-r1)).Compile()
 
-Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)    
-gfu = GridFunction(Vh)
 
 n_outer = specialcf.normal(mesh.dim)
 h = specialcf.mesh_size   
@@ -53,8 +51,13 @@ lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0}
 # element, facet and dof marking w.r.t. boundary approximation with lsetp1:
 ci = CutInfo(mesh,lsetp1)
 hasneg = ci.GetElementsOfType(HASNEG)
+
+Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)    
 active_dofs = GetDofsOfElements(Vh,hasneg)
-active_dofs &= Vh.FreeDofs()
+Vh = Compress(Vh,active_dofs)
+active_dofs = GetDofsOfElements(Vh,hasneg)
+
+gfu = GridFunction(Vh)
 
 hasif = ci.GetElementsOfType(IF)
               

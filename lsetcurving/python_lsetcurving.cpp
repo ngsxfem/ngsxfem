@@ -22,29 +22,29 @@ void ExportNgsx_lsetcurving(py::module &m)
 
 
 
-  // py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
-  //   .def(py::init<>())
-  //   .def("Print", [](StatisticContainer & self, string label, string select)
-  //        {
-  //          if (select == "L1")
-  //            PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
-  //          if (select == "L2")
-  //            PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
-  //          if (select == "max")
-  //            PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
-  //          if (select == "misc")
-  //            PrintConvergenceTable(self.ErrorMisc,label+"_misc");
-  //          if (select == "all")
-  //          {
-  //            PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
-  //            PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
-  //            PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
-  //            PrintConvergenceTable(self.ErrorMisc,label+"_misc");
-  //          }
-  //        },
-  //        py::arg("label")="something",py::arg("select")="all"
-  //     )
-  //   ;
+  py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
+    .def(py::init<>())
+    .def("Print", [](StatisticContainer & self, string label, string select)
+         {
+           if (select == "L1")
+             PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
+           if (select == "L2")
+             PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
+           if (select == "max")
+             PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
+           if (select == "misc")
+             PrintConvergenceTable(self.ErrorMisc,label+"_misc");
+           if (select == "all")
+           {
+             PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
+             PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
+             PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
+             PrintConvergenceTable(self.ErrorMisc,label+"_misc");
+           }
+         },
+         py::arg("label")="something",py::arg("select")="all"
+      )
+    ;
 
   m.def("CalcMaxDistance",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, int heapsize)
         {
