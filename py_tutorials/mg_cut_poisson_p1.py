@@ -13,7 +13,7 @@ square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
 mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
 
-mu = [1e-5, 1]
+mu = [1e-1, 1]
 order = 1
 
 
@@ -23,12 +23,12 @@ distsq = x*x + y*y - 1
 solution = [ mu[1]* distsq, mu[0] * distsq ]
 
 levelset = ( sqrt(x*x + y*y) - 1 )
+subdivlvl = 0
 
 def main():
     print('hallo')
     gamma_stab = 10
-    nref = 2
-    subdivlvl = 0
+    nref = 1
 
     params =    {  
                     "order"     : order,
@@ -161,6 +161,8 @@ def main():
 
     usol = GridFunction(CutVh) 
     usol.vec[:] = 0.
+    #set boundary condiitions
+    #usol.components[1].Set(solution[1], BND)
 
     #usol.vec.data = mats[0] * usol.vec
 
@@ -169,31 +171,35 @@ def main():
     projres = usol.vec.CreateVector()
     tol = 1e-6
     proj = Projector(mask=CutVh.FreeDofs(),range=True) #projectors[nref]
-    fnew = f.vec.data 
+    fnew = f.vec.data     
 
-    projf = usol.vec.CreateVector()
-    projf.data = proj* fnew
-    fnorm = Norm( projf )
-    
-
-    projres.data = proj*f.vec
+    projres.data = proj*fnew #f.vec
     normf = Norm(projres)
+
     for it in range(1,20):
         usol.vec.data = MGpre*fnew
         res.data = fnew - a.mat*usol.vec
         projres.data = proj*res
-        res_norm = Norm(projres) / fnorm
+        res_norm = Norm(projres) / normf
         print("it =", it, " ||res||_2 =", res_norm)
-        if res_norm < tol*normf:
+        if res_norm < tol:
             break
 
+    udraw = GridFunction( CutVh )
+    udraw.components[1].Set( solution[1], BND )
+    udraw.vec.data += usol.vec
 
-    #Draw (usol,mesh,'u')
+    # Computation of L2 error:
+    err_sqr_coefs = [(udraw.components[i]-solution[i])*(udraw.components[i]-solution[i]) for i in [0,1] ]
+    lset_doms = LsetDoms( levelset, lsetp1, subdivlvl )
+    l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh, order=2*order, heapsize=1000000) for i in [0,1] ]))   
+    print("L2 error : ",l2error)
 
-    #exact = 16*x*(1-x)*y*(1-y)
-    #print ("L2-error:", sqrt (Integrate ( (usol-exact)*(usol-exact), mesh)))
-
-
+    # pretty printing    
+    ucoef = IfPos( lsetp1, udraw.components[1], udraw.components[0] )    
+    #ucoef = IfPos( lsetp1, solution[1], solution[0] )    
+    Draw (ucoef,mesh,'u')
+    
 
 class GaussSeid(BaseMatrix):
     def __init__ (self, smoother):
@@ -213,6 +219,7 @@ def GetActiveDof(mesh,HASPOSNEG):
         InterpolateToP1(levelset,lsetp1)
         ci = CutInfo(mesh,lsetp1)
         return GetDofsOfElements(Vh,ci.GetElementsOfType(HASPOSNEG))
+
 
 def CutFESpace( V, ci, flags=None ):    
     hasneg = ci.GetElementsOfType(HASNEG)  
@@ -293,13 +300,9 @@ def AssembleCutPoisson(**kwargs):
     average_flux_v = sum([- kappa[i] * mu[i] * gradv[i] * n_lset for i in [0,1]])
 
     # integration domains
-    lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0}
-    lset_pos = { "levelset" : lsetp1, "domain_type" : POS, "subdivlvl" : 0}
-    lset_if  = { "levelset" : lsetp1, "domain_type" : IF , "subdivlvl" : 0}
+    lset_doms = LsetDoms( levelset, lsetp1, subdivlvl )
 
-    lset_doms = [ lset_neg, lset_pos,  lset_if ]
-
-    coef_f = [ x*y, x*y]
+    #coef_f = [ x*y, x*y]
 
     # bilinear forms:
 
@@ -329,9 +332,15 @@ def AssembleCutPoisson(**kwargs):
     # if( doDeform ):   
     #     mesh.SetDeformation(deformation)
 
-        # setting up matrix and vector
+    # setting up matrix and vector
     a.Assemble()
     f.Assemble()
+
+    #updating with non-homogeneous boundary conditions
+    gfu = GridFunction( CutVh )
+    #boundary lies in positive part
+    gfu.components[1].Set( solution[1], BND )
+    f.vec.data -= a.mat * gfu.vec
 
     return (a,f)
 
