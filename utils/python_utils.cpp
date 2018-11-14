@@ -227,6 +227,24 @@ for prototype and testing...
          py::arg("space")
       );
 
+    typedef shared_ptr<CompoundProlongation> PyCProl;
+    py::class_< CompoundProlongation, PyCProl, Prolongation>
+    ( m, "CompoundProlongation", 
+     docu_string(R"raw_string(prolongation for compound spaces)raw_string"))
+     .def("__init__",
+          [](CompoundProlongation *instance, const FESpace *fes)
+          {
+            new (instance) CompoundProlongation( dynamic_cast<const CompoundFESpace*>(fes) );
+          },
+          py::arg("compoundFESpace"))
+      .def("Update", &CompoundProlongation::Update, py::arg("fespace"))
+      .def ("Prolongate", &CompoundProlongation::ProlongateInline, py::arg("finelevel"), py::arg("vec"))
+      .def ("Restrict", &CompoundProlongation::RestrictInline, py::arg("finelevel"), py::arg("vec"))
+      .def ("AddProlongation", [](shared_ptr<CompoundProlongation> cprol, shared_ptr<Prolongation> prol )
+            { cprol -> AddProlongation( prol ); }, py::arg("p1prol")
+          );
+      //.def ("AddProlongation" &CompoundProlongation::AddProlongation, py::arg("prol"));
+
 
 }
 

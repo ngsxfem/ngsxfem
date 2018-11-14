@@ -87,7 +87,7 @@ for i in range(len(gf[0].vec)):
 for i in range(nref+1):
     if i > 0:
        p1prolong.Prolongate(i,w) 
-    print(w)
+    #print(w)
     nmesh = meshonlvl(i)
     gfvis = GridFunction(Compress(H1(nmesh,order=1),active_dofs=GetActiveDof(nmesh)))
     for i in range(len(gfvis.vec)):
@@ -96,27 +96,27 @@ for i in range(nref+1):
     input(i)
     
     
-# v = gfu.vec.CreateVector()    
-# w = gfu.vec.CreateVector()
+v = gfu.vec.CreateVector()    
+w = gfu.vec.CreateVector()
 
-# Pv = gfu.vec.CreateVector()    
-# Rw = gfu.vec.CreateVector()
+Pv = gfu.vec.CreateVector()    
+Rw = gfu.vec.CreateVector()
 
-# for i in range(len(v)):
-#     v[i] = i
-# for i in range(len(w)):
-#     w[i] = 1.0/(i+1)
+for i in range(len(v)):
+    v[i] = i
+for i in range(len(w)):
+    w[i] = 1.0/(i+1)
 
-# Rw.data = w    
-# p1prolong.Restrict(2,Rw)
-# p1prolong.Restrict(1,Rw)
+Rw.data = w    
+p1prolong.Restrict(2,Rw)
+p1prolong.Restrict(1,Rw)
 
-# Pv.data = v
-# p1prolong.Prolongate(1,Pv)
-# p1prolong.Prolongate(2,Pv)
+Pv.data = v
+p1prolong.Prolongate(1,Pv)
+p1prolong.Prolongate(2,Pv)
 
-# print(InnerProduct(Pv,w))
-# print(InnerProduct(v,Rw))
+print(InnerProduct(Pv,w))
+print(InnerProduct(v,Rw))
     
 # # gfu.vec[:] = 1.0 
 
