@@ -2,6 +2,7 @@
 # with Dirichlet boundary condition u = 0
 
 from ngsolve import *
+from ngsolve.krylovspace import CG
 from netgen.geom2d import unit_square
 from netgen.geom2d import SplineGeometry
 from xfem import *
@@ -13,7 +14,7 @@ square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
 mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
 
-mu = [1e-1, 1]
+mu = [1e-5, 1]
 order = 1
 
 
@@ -28,7 +29,7 @@ subdivlvl = 0
 def main():
     print('hallo')
     gamma_stab = 10
-    nref = 1
+    nref = 2
 
     params =    {  
                     "order"     : order,
@@ -44,31 +45,17 @@ def main():
     InterpolateToP1(levelset,lsetp1)
     ci = CutInfo(mesh, lsetp1)   
     
-
+    # cut fe space
     Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
     VhNeg = Compress( Vh, active_dofs = GetActiveDof(mesh, HASNEG) )
     VhPos = Compress( Vh, active_dofs = GetActiveDof(mesh, HASPOS) )
 
     CutVh = FESpace( [VhNeg, VhPos], flags={"dgjumps": True} )
 
-    # diffplot = GridFunction(CutVh)
-
-    # ifdofs = IfaceUnks(CutVh,ci)
-
-    # for i in range(len(diffplot.vec)):
-    #     if ( ifdofs[i] ):
-    #         diffplot.vec[i] = 1
-    # ucoef = IfPos( lsetp1, diffplot.components[1], diffplot.components[0] )
-    # Draw(ucoef, mesh, "diff")
-    # print(ifdofs)
-    # ifdofs &= CutVh.FreeDofs()
-    # print(ifdofs)
-
-
-    # return
-
+    # construct prolongation for neg/pos space
     prolongNeg = P1Prolongation(mesh)
     prolongPos = P1Prolongation(mesh)
+    # create cut prolongation
     CutProl = CompoundProlongation( CutVh )
     CutProl.AddProlongation(prolongNeg)
     CutProl.AddProlongation(prolongPos)
@@ -76,22 +63,21 @@ def main():
     prolongPos.Update(VhPos)
     
 
+    #create coarse level bilinear/linear form
     a,f = AssembleCutPoisson( CutVh=CutVh, ci=ci, lsetp1=lsetp1, params=params )
 
-    preJ = a.mat.CreateSmoother(CutVh.FreeDofs())
-    GSpre = GaussSeid(preJ)
-
-    #usol = solvers.PreconditionedRichardson(a,f.vec,pre=GSpre,maxit=500,tol=1e-6)
-
+    
     #list of coarse grid matrices
     mats = {}
     mats[0] = a.mat
     #list of smoothers
     smoothers = {}
-    smoothers[0] = CutFemSmoother(a, CutVh, ci) #preJ#GSpre
+    smoothers[0] = CutFemSmoother(a, CutVh, ci) 
     #coarse grid solver
     inv = a.mat.Inverse(CutVh.FreeDofs(), inverse="sparsecholesky")
     
+
+    # create multilevel hierarchy
     for i in range(nref):
         mesh.Refine()
         #levelset update
@@ -109,68 +95,24 @@ def main():
         a,f = AssembleCutPoisson( CutVh=CutVh, ci=ci, lsetp1=lsetp1, params=params )        
         mats[i+1] = a.mat
 
-        #preJ = a.mat.CreateSmoother(CutVh.FreeDofs())
-        #GSpre = GaussSeid(preJ)
-        smoothers[i+1] = CutFemSmoother(a, CutVh, ci) #preJ#GSpre        
+        smoothers[i+1] = CutFemSmoother(a, CutVh, ci)
 
-    errors = [f.vec.CreateVector() for i in range(nref+1)]
-    defects = [f.vec.CreateVector() for i in range(nref+1)]
+    
 
-    def MultiGridIter(rhs,nu,u,level):
-        error = errors[level]
-        defect = defects[level]
+    # create multigrid solver
+    MGpre = MultiGridCL ( level=nref, prol=CutProl, 
+                          matrices=mats, smoothers=smoothers,
+                          coarsegridsolver=inv, f=f 
+                        )
 
-        if level == 0 :
-            u.data = inv*rhs
-            return
-    #smoothing
-        for i in range(nu):
-            smoothers[level].Smooth(u,rhs)
-    #compute defect
-        defect.data = rhs - mats[level]*u
-    #restrict defect
-        CutProl.Restrict(level,defect)
-
-        error[:] = 0
-        MultiGridIter(defect,nu,error,level-1)
-
-        CutProl.Prolongate(level,error)
-
-        u.data += error
-    #smoothing
-        for i in range(nu):
-            smoothers[level].Smooth(u,rhs)
-        return u
-
-    class MultiGridCL(BaseMatrix):
-        def __init__(self,nu,l):
-            super(MultiGridCL,self).__init__()
-            self.nu = nu
-            self.l = l
-        def Mult(self,w,z):
-            #z[:] = 0.0
-            #z.data = w
-            #z.data = 
-            MultiGridIter(w,self.nu,z,self.l)
-        def Height(self):
-            return a.mat.height
-        def Width(self):
-            return a.mat.height
-
-    MGpre = MultiGridCL(2,nref)
-
+    # start (richardson) iteration process with multigrid preconditioner
     usol = GridFunction(CutVh) 
     usol.vec[:] = 0.
-    #set boundary condiitions
-    #usol.components[1].Set(solution[1], BND)
-
-    #usol.vec.data = mats[0] * usol.vec
-
 
     res = usol.vec.CreateVector()
     projres = usol.vec.CreateVector()
     tol = 1e-6
-    proj = Projector(mask=CutVh.FreeDofs(),range=True) #projectors[nref]
+    proj = Projector(mask=CutVh.FreeDofs(),range=True) 
     fnew = f.vec.data     
 
     projres.data = proj*fnew #f.vec
@@ -185,33 +127,36 @@ def main():
         if res_norm < tol:
             break
 
+    # input('w')
+
     udraw = GridFunction( CutVh )
     udraw.components[1].Set( solution[1], BND )
     udraw.vec.data += usol.vec
 
+    # input('w1')
+
     # Computation of L2 error:
     err_sqr_coefs = [(udraw.components[i]-solution[i])*(udraw.components[i]-solution[i]) for i in [0,1] ]
     lset_doms = LsetDoms( levelset, lsetp1, subdivlvl )
-    l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh, order=2*order, heapsize=1000000) for i in [0,1] ]))   
+    # input('w2')
+    #l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh, order=2*order, heapsize=1000000) for i in [0,1] ]))   
+    l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh) for i in [0,1] ]))   
     print("L2 error : ",l2error)
 
-    # pretty printing    
-    ucoef = IfPos( lsetp1, udraw.components[1], udraw.components[0] )    
-    #ucoef = IfPos( lsetp1, solution[1], solution[0] )    
-    Draw (ucoef,mesh,'u')
-    
+    input('draw?\n')
 
-class GaussSeid(BaseMatrix):
-    def __init__ (self, smoother):
-        super(GaussSeid, self).__init__()
-        self.smoother = smoother
-    def Mult (self, x, y):
-        self.smoother.Smooth(y, x)
-        #self.smoother.SmoothBack(y,x)
-    def Height (self):
-        return self.smoother.height
-    def Width (self):
-        return self.smoother.height
+    # if( nref > 2):
+    #     print('nref too large')
+    #     return
+    #     print('test')
+
+    print('drawing')
+    # pretty printing    
+    ucoef = IfPos( lsetp1, udraw.components[1], udraw.components[0] )
+    Draw (ucoef,mesh,'u')
+
+    input('finish? - seg fault\n')
+    
 
 def GetActiveDof(mesh,HASPOSNEG):
         Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)
@@ -220,24 +165,6 @@ def GetActiveDof(mesh,HASPOSNEG):
         ci = CutInfo(mesh,lsetp1)
         return GetDofsOfElements(Vh,ci.GetElementsOfType(HASPOSNEG))
 
-
-def CutFESpace( V, ci, flags=None ):    
-    hasneg = ci.GetElementsOfType(HASNEG)  
-    haspos = ci.GetElementsOfType(HASPOS)
-
-    if isinstance(V,list):
-        if len(V) != 2:
-            raise ValueError("you need to provide a list of two FE spaces")
-        else:
-            return FESpace( [   Compress(V[0],active_dofs=GetDofsOfElements(V[0],hasneg) ), 
-                                Compress(V[1],active_dofs=GetDofsOfElements(V[1],haspos) ) 
-                            ], flags=flags
-                          ) 
-    else:
-        return FESpace( [   Compress(V,active_dofs=GetDofsOfElements(V,hasneg) ), 
-                            Compress(V,active_dofs=GetDofsOfElements(V,haspos) ) 
-                        ], flags=flags
-                      ) 
 
 def LsetDoms( levelset, lsetp1, subdivlvl ):
     if (subdivlvl == 0):
@@ -301,11 +228,8 @@ def AssembleCutPoisson(**kwargs):
 
     # integration domains
     lset_doms = LsetDoms( levelset, lsetp1, subdivlvl )
-
-    #coef_f = [ x*y, x*y]
-
+    
     # bilinear forms:
-
     a = BilinearForm(CutVh, symmetric = False)
     f = LinearForm(CutVh)
 
@@ -353,27 +277,95 @@ def IfaceUnks(CutVh, ci):
         if( hasif[el.nr] ):
             verts = el.vertices
             for v in verts:
+                # print( CutVh.GetDofNrs(v) )
+                # print( CutVh.components[0].GetDofNrs(v) )
+                # print( CutVh.components[1].GetDofNrs(v) )
+                # print( CutVh.components[0].ndof )
+                # print('-------------------------------')
                 for unk in CutVh.GetDofNrs(v):                    
                     ifdofs[unk] = True
 
     ifdofs &= CutVh.FreeDofs()
+    #print(ifdofs)
+    #input('weiter')
     return ifdofs
 
 class CutFemSmoother:     
-    def __init__(self,a,CutVh,ci):
-        self.ifdofs = IfaceUnks(CutVh,ci)
+    def __init__(self,a,CutVh,ci):        
         self.a = a
-        self.inv = a.mat.Inverse(self.ifdofs, inverse="sparsecholesky")
+        ifdofs = IfaceUnks(CutVh,ci)
+        #self.proj = Projector(mask=self.ifdofs,range=True)
+        ifdofslst = [ [i] for i in range(len(ifdofs)) if ifdofs[i]==True ]
+        self.proj = a.mat.CreateBlockSmoother(ifdofslst)
+        #self.inv = a.mat.Inverse(self.ifdofs, inverse="sparsecholesky")
         self.preJ = a.mat.CreateSmoother( CutVh.FreeDofs() )
+    def __del__(self):
+            print('smoother dying')
+            input('destruktor')
     def Smooth( self, u,rhs ):
         self.preJ.Smooth(u, rhs)
+        #return
         update = u.CreateVector()
         # this needs to be more efficient 
         # with help of ifdofs ...
         update.data = self.a.mat * u - rhs
-        u.data -= self.inv * update
+        cgoutput = u.CreateVector()
+        cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
+        #u.data -= self.inv * update
+        u.data -= cgoutput
+
+class MultiGridCL(BaseMatrix):
+        def __init__(self,**kwargs):
+            super(MultiGridCL,self).__init__()
+            self.nu     = kwargs.get('nu',2)            
+            self.l      = kwargs['level']
+            self.prol   = kwargs['prol']
+            self.mats   = kwargs['matrices']
+            self.smoothers  = kwargs['smoothers']
+            self.inv    = kwargs["coarsegridsolver"]
+            f = kwargs["f"]
+            nref = self.l
+            self.errors     = [f.vec.CreateVector() for i in range(nref+1)]
+            self.defects    = [f.vec.CreateVector() for i in range(nref+1)]
+        
+        def __del__(self):
+            print('mg dying')
+            input('destruktor')
 
 
+        def MultiGridIter(self,rhs,u,level):
+            error   = self.errors[level]
+            defect  = self.defects[level]
+
+            if level == 0 :
+                u.data = self.inv*rhs
+                return
+        #smoothing
+            for i in range(self.nu):
+                self.smoothers[level].Smooth(u,rhs)
+        #compute defect
+            defect.data = rhs - self.mats[level]*u
+        #restrict defect
+            self.prol.Restrict(level,defect)
+            error[:] = 0
+            #v-cycle
+            self.MultiGridIter(defect,error,level-1)
+            self.prol.Prolongate(level,error)
+            u.data += error
+        #smoothing
+            for i in range(self.nu):
+                self.smoothers[level].Smooth(u,rhs)
+            return u
+
+        def Mult(self,w,z):
+            #z[:] = 0.0
+            #z.data = w
+            #z.data = 
+            self.MultiGridIter(w,z,self.l)
+        def Height(self):
+            return a.mat.height
+        def Width(self):
+            return a.mat.height
 
 
 if __name__ == '__main__':
