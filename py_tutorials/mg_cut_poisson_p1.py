@@ -29,7 +29,7 @@ subdivlvl = 0
 def main():
     print('hallo')
     gamma_stab = 10
-    nref = 3
+    nref = 2
 
     params =    {  
                     "order"     : order,
@@ -70,6 +70,8 @@ def main():
     #list of coarse grid matrices
     mats = {}
     mats[0] = a.mat
+    fvecs = {}
+    fvecs[0] = f.vec
     #list of smoothers
     smoothers = {}
     smoothers[0] = CutFemSmoother(a=a, CutVh=CutVh, ci=ci) 
@@ -94,6 +96,7 @@ def main():
         #reassemble
         a,f = AssembleCutPoisson( CutVh=CutVh, ci=ci, lsetp1=lsetp1, params=params )        
         mats[i+1] = a.mat
+        fvecs[i+1] = f.vec
 
         smoothflag = (i == nref-1) #or (i==nref-2)
         smoothers[i+1] = CutFemSmoother(a=a, CutVh=CutVh, ci=ci, finest=smoothflag) 
@@ -103,12 +106,14 @@ def main():
     # create multigrid solver
     MGpre = MultiGridCL ( level=nref, prol=CutProl, 
                           matrices=mats, smoothers=smoothers,
-                          coarsegridsolver=inv, f=f 
+                          coarsegridsolver=inv, f=f, tau=2 
                         )
 
     # start (richardson) iteration process with multigrid preconditioner
     usol = GridFunction(CutVh) 
     usol.vec[:] = 0.
+
+    usol.vec.Data = NestedIteration( MGpre, fvecs, usol.vec, nref )
 
     res = usol.vec.CreateVector()
     projres = usol.vec.CreateVector()
@@ -116,7 +121,9 @@ def main():
     proj = Projector(mask=CutVh.FreeDofs(),range=True) 
     fnew = f.vec.data     
 
-    projres.data = proj*fnew #f.vec
+    res.data = fnew - a.mat*usol.vec
+    projres.data = proj*res
+    #projres.data = proj*fnew #f.vec
     normf = Norm(projres)
 
     oldres = normf
@@ -127,7 +134,7 @@ def main():
         usol.vec.data = MGpre*fnew
         res.data = fnew - a.mat*usol.vec
         projres.data = proj*res
-        res_norm = Norm(projres) / normf
+        res_norm = Norm(projres) #/ normf
         #print("it =", it, " ||res||_2 =", res_norm)
         print("mg-it =", it, "\t ||res||_2 = {0:.2E}".format(res_norm), "\t reduction: {0:.2f}".format(res_norm/oldres))
         oldres = res_norm
@@ -163,6 +170,7 @@ def main():
     Draw (ucoef,mesh,'u')
 
     input('finish? - seg fault\n')
+    del MGpre
     
 
 def GetActiveDof(mesh,HASPOSNEG):
@@ -304,7 +312,7 @@ class CutFemSmoother:
         #self.proj = Projector(mask=self.ifdofs,range=True)
         ifdofslst = [ [i] for i in range(len(ifdofs)) if ifdofs[i]==True ]
         self.proj = self.a.mat.CreateBlockSmoother(ifdofslst)
-        self.inv =  self.a.mat.Inverse(ifdofs, inverse="sparsecholesky")
+        #self.inv =  self.a.mat.Inverse(ifdofs, inverse="sparsecholesky")
         self.preJ = self.a.mat.CreateSmoother( kwargs["CutVh"].FreeDofs() )
         self.finest = kwargs.get('finest',False)
     def __del__(self):
@@ -317,15 +325,15 @@ class CutFemSmoother:
         # this needs to be more efficient 
         # with help of ifdofs ...
         update.data = self.a.mat * u - rhs
-        #cgoutput = u.CreateVector()
-        #cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
-        u.data -= self.inv * update
-        #u.data -= cgoutput
+        cgoutput = u.CreateVector()
+        cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-4,printrates=False)
+        #u.data -= self.inv * update
+        u.data -= cgoutput
 
     def Smooth( self, u,rhs, nu ):
         for k in range(nu):
             self.preJ.Smooth(u, rhs)
-            self.IfCorr(u,rhs)
+        self.IfCorr(u,rhs)
         
         
 
@@ -342,10 +350,17 @@ class MultiGridCL(BaseMatrix):
             nref = self.l
             self.errors     = [f.vec.CreateVector() for i in range(nref+1)]
             self.defects    = [f.vec.CreateVector() for i in range(nref+1)]
+
+            self.cycles = kwargs.get('tau',1) #v-cycle per default
         
         def __del__(self):
             print('mg dying')
             input('destruktor')
+            del self.mats
+            print('somehow this is crashing ...')
+            del self.prol
+            del self.smoothers
+            
 
 
         def MultiGridIter(self,rhs,u,level):
@@ -364,7 +379,8 @@ class MultiGridCL(BaseMatrix):
             self.prol.Restrict(level,defect)
             error[:] = 0
             #v-cycle
-            self.MultiGridIter(defect,error,level-1)
+            for k in range( self.cycles ):
+                self.MultiGridIter(defect,error,level-1)
             self.prol.Prolongate(level,error)
             u.data += error
         #smoothing
@@ -382,6 +398,17 @@ class MultiGridCL(BaseMatrix):
         def Width(self):
             return a.mat.height
 
+def NestedIteration( mgcl, fvecs, u0, lastlevel):
+    u0.Data = mgcl.inv * fvecs[0]
+
+    for i in range(1,lastlevel+1):
+        mgcl.prol.Prolongate(i,u0)
+        ftmp = u0.CreateVector()
+        ftmp[:] = 0.
+        ftmp.Range( 0, len(fvecs[i]) ).data = fvecs[i]        
+        u0.Data = mgcl.MultiGridIter(ftmp,u0,i)
+
+    return u0
 
 if __name__ == '__main__':
     main()   
