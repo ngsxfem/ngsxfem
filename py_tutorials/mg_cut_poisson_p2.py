@@ -14,10 +14,10 @@ ngsglobals.msg_level = 1
 # generate a triangular mesh of mesh-size 0.2
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.5, quad_dominated=False))
 
 mu = [1e-5, 1]
-order = 1
+order = 2
 kappac="harmonic"
 gamma_stab = 10
 
@@ -33,7 +33,7 @@ subdivlvl = 0
 def main():
     print('hallo')
     
-    nref = 2
+    nref = 3
 
     params =    {  
                     "order"     : order,
@@ -42,20 +42,38 @@ def main():
                     "kappa"     : "harmonic" # hansbo, highorder
                 }
 
-    mgiter = LinearMGIterator(nref=nref,nu=2)
+    mgiter = LinearMGIterator(nref=nref,nu=1)    
+    #lsetp1 = mgiter.getLset()            
 
-    rhs = mgiter.getRhs()
+    Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+    (lsetmeshadap, deformation, lsetp1 ) = CreateLsetMeshAdapt(order)
+    ci = CutInfo(mesh,lsetp1)
 
-    udraw = mgiter.iterate(rhs)
+    HoCutFes = CutFESpace( Vh, ci, flags={"dgjumps": True} )
 
-    lsetp1 = mgiter.getLset()
+
+    # VhNeg = Compress( Vh, active_dofs = GetActiveDof(mesh, HASNEG, order) )
+    # VhPos = Compress( Vh, active_dofs = GetActiveDof(mesh, HASPOS, order) )
+
+    # HoCutFes = FESpace( [VhNeg, VhPos], flags={"dgjumps": True} )
+
+    
+
+    a, f = AssembleCutPoisson( CutVh=HoCutFes, ci=ci, lsetp1=lsetp1, highorder=True, deformation=deformation )
+
+    
+    tgiter = HoTwoGridCL(a=a,f=f,mgiter=mgiter,fes=HoCutFes,ci=ci)
+
+    #rhs = mgiter.getRhs()
+
+    udraw = tgiter.iterate(nu=3,tol=1e-8) #udraw = mgiter.iterate(rhs)    
 
     # Computation of L2 error:
     err_sqr_coefs = [(udraw.components[i]-solution[i])*(udraw.components[i]-solution[i]) for i in [0,1] ]
     lset_doms = LsetDoms( levelset, lsetp1, subdivlvl )
     # input('w2')
-    #l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh, order=2*order, heapsize=1000000) for i in [0,1] ]))   
-    l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh) for i in [0,1] ]))   
+    l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh, order=2*order, heapsize=1000000) for i in [0,1] ]))   
+    #l2error = sqrt( sum( [Integrate(lset_doms[i], cf=err_sqr_coefs[i], mesh=mesh) for i in [0,1] ]))   
     print("L2 error : ",l2error)
 
     input('draw?\n')
@@ -68,12 +86,14 @@ def main():
     print('drawing')
     # pretty printing    
     ucoef = IfPos( lsetp1, udraw.components[1], udraw.components[0] )
+    if order>1 :
+        mesh.UnsetDeformation()
     Draw (ucoef,mesh,'u')
 
     input('finish? - seg fault\n')
     
 
-def GetActiveDof(mesh,HASPOSNEG):
+def GetActiveDof(mesh,HASPOSNEG,order):
         Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)
         lsetp1 = GridFunction(Vh)
         InterpolateToP1(levelset,lsetp1)
@@ -148,11 +168,7 @@ def AssembleCutPoisson(**kwargs):
     # integration domains
     lset_doms = LsetDoms( levelset, lsetp1, subdivlvl )
     
-    if( kwargs['highorder'] ):
-        mesh.SetDeformation( kwargs['deformation'] )
-
-
-    # bilinear forms:
+        # bilinear forms:
     a = BilinearForm(CutVh, symmetric = False)
     f = LinearForm(CutVh)
 
@@ -179,6 +195,10 @@ def AssembleCutPoisson(**kwargs):
     # if( doDeform ):   
     #     mesh.SetDeformation(deformation)
 
+    if( kwargs['highorder'] ):
+        print('setting deformation')
+        mesh.SetDeformation( kwargs['deformation'] )
+
     # setting up matrix and vector
     a.Assemble()
     f.Assemble()
@@ -197,45 +217,101 @@ def IfaceUnks(CutVh, ci):
     hasif = BitArray( ci.GetElementsOfType(IF) )
 
     for el in CutVh.Elements():
-        if( hasif[el.nr] ):
-            verts = el.vertices
-            for v in verts:
-                # print( CutVh.GetDofNrs(v) )
-                # print( CutVh.components[0].GetDofNrs(v) )
-                # print( CutVh.components[1].GetDofNrs(v) )
-                # print( CutVh.components[0].ndof )
-                # print('-------------------------------')
-                for unk in CutVh.GetDofNrs(v):                    
-                    ifdofs[unk] = True
+        if( hasif[el.nr] ):            
+            for unk in CutVh.GetDofNrs(el):
+                if unk >=0:
+                    ifdofs[abs(unk)] = True
 
-    ifdofs &= CutVh.FreeDofs()
-    #print(ifdofs)
-    #input('weiter')
+    ifdofs &= CutVh.FreeDofs()    
     return ifdofs
 
+# def IfaceUnks(CutVh, ci):
+#     ifdofs = BitArray(CutVh.ndof)
+#     ifdofs[:] = False
+#     hasif = BitArray( ci.GetElementsOfType(IF) )
+
+#     for el in CutVh.Elements():
+#         if( hasif[el.nr] ):
+#             verts = el.vertices
+#             for v in verts:
+#                 # print( CutVh.GetDofNrs(v) )
+#                 # print( CutVh.components[0].GetDofNrs(v) )
+#                 # print( CutVh.components[1].GetDofNrs(v) )
+#                 # print( CutVh.components[0].ndof )
+#                 # print('-------------------------------')
+#                 for unk in CutVh.GetDofNrs(v):                    
+#                     ifdofs[unk] = True
+
+#     ifdofs &= CutVh.FreeDofs()
+#     #print(ifdofs)
+#     #input('weiter')
+#     return ifdofs
+
 class CutFemSmoother:     
-    def __init__(self,a,CutVh,ci):        
-        self.a = a
-        ifdofs = IfaceUnks(CutVh,ci)
+    def __init__(self,**kwargs):
+        self.a = kwargs["a"]
+        ifdofs = IfaceUnks(kwargs["CutVh"],kwargs["ci"])
         #self.proj = Projector(mask=self.ifdofs,range=True)
         ifdofslst = [ [i] for i in range(len(ifdofs)) if ifdofs[i]==True ]
-        self.proj = a.mat.CreateBlockSmoother(ifdofslst)
+        self.proj = self.a.mat.CreateBlockSmoother(ifdofslst)
         #self.inv = a.mat.Inverse(self.ifdofs, inverse="sparsecholesky")
-        self.preJ = a.mat.CreateSmoother( CutVh.FreeDofs() )
+        self.blksm = False
+        if "blocks" in kwargs:
+            self.preJ = self.a.mat.CreateBlockSmoother( kwargs["blocks"] )
+            self.blksm = True
+        else:
+            self.preJ = self.a.mat.CreateSmoother( kwargs["CutVh"].FreeDofs() )
+        
+        self.finestsm = kwargs.get('finest',False)
+        self.loworder = kwargs.get('loworder',True)
     def __del__(self):
             print('smoother dying')
             input('destruktor')
-    def Smooth( self, u,rhs ):
-        self.preJ.Smooth(u, rhs)
-        #return
+
+    def IfCorr(self, u, rhs,k,nu):
+        if self.loworder:
+            return
+        if not(self.finestsm or k==nu-1):
+            #don't do interface correction
+            #not last smoothing step
+            return
         update = u.CreateVector()
         # this needs to be more efficient 
         # with help of ifdofs ...
         update.data = self.a.mat * u - rhs
         cgoutput = u.CreateVector()
-        cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
+        if self.blksm:
+            cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
+        else:
+            cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
         #u.data -= self.inv * update
         u.data -= cgoutput
+
+    def Smooth( self, u,rhs, nu ):
+        for k in range(nu):
+            self.preJ.Smooth(u, rhs)        
+            self.IfCorr(u,rhs,k,nu)
+
+    
+
+def CutFESpace( V, ci, flags=None ):    
+    hasneg = ci.GetElementsOfType(HASNEG)  
+    haspos = ci.GetElementsOfType(HASPOS)
+
+    if isinstance(V,list):
+        if len(V) != 2:
+            raise ValueError("you need to provide a list of two FE spaces")
+        else:
+            return FESpace( [   Compress(V[0],active_dofs=GetDofsOfElements(V[0],hasneg) ), 
+                                Compress(V[1],active_dofs=GetDofsOfElements(V[1],haspos) ) 
+                            ], flags=flags
+                          ) 
+    else:
+        return FESpace( [   Compress(V,active_dofs=GetDofsOfElements(V,hasneg) ), 
+                            Compress(V,active_dofs=GetDofsOfElements(V,haspos) ) 
+                        ], flags=flags
+                      ) 
+
 
 class MultiGridCL(BaseMatrix):
         def __init__(self,**kwargs):
@@ -264,8 +340,8 @@ class MultiGridCL(BaseMatrix):
                 u.data = self.inv*rhs
                 return
         #smoothing
-            for i in range(self.nu):
-                self.smoothers[level].Smooth(u,rhs)
+            #for i in range(self.nu):
+            self.smoothers[level].Smooth(u,rhs,self.nu)
         #compute defect
             defect.data = rhs - self.mats[level]*u
         #restrict defect
@@ -276,8 +352,8 @@ class MultiGridCL(BaseMatrix):
             self.prol.Prolongate(level,error)
             u.data += error
         #smoothing
-            for i in range(self.nu):
-                self.smoothers[level].Smooth(u,rhs)
+            #for i in range(self.nu):
+            self.smoothers[level].Smooth(u,rhs,self.nu)
             return u
 
         def Mult(self,w,z):
@@ -310,8 +386,8 @@ class LinearMGIterator:
         
         # cut fe space
         Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
-        VhNeg = Compress( Vh, active_dofs = GetActiveDof(mesh, HASNEG) )
-        VhPos = Compress( Vh, active_dofs = GetActiveDof(mesh, HASPOS) )
+        VhNeg = Compress( Vh, active_dofs = GetActiveDof(mesh, HASNEG, order=1) )
+        VhPos = Compress( Vh, active_dofs = GetActiveDof(mesh, HASPOS, order=1) )
 
         CutVh = FESpace( [VhNeg, VhPos], flags={"dgjumps": True} )
 
@@ -337,7 +413,7 @@ class LinearMGIterator:
         self.mats[0] = self.a.mat
         #list of smoothers
         self.smoothers = {}
-        self.smoothers[0] = CutFemSmoother(self.a, CutVh, ci) 
+        self.smoothers[0] = CutFemSmoother(a=self.a, CutVh=CutVh, ci=ci) 
         #coarse grid solver
         inv = self.a.mat.Inverse(CutVh.FreeDofs(), inverse="sparsecholesky")
         
@@ -353,15 +429,17 @@ class LinearMGIterator:
             ci = CutInfo(mesh,lsetp1)
             #cut space update
             Vh.Update()
-            CutVh.components[0].SetActiveDofs( GetActiveDof(mesh,HASNEG) )
-            CutVh.components[1].SetActiveDofs( GetActiveDof(mesh,HASPOS) )
+            CutVh.components[0].SetActiveDofs( GetActiveDof(mesh,HASNEG,order=1) )
+            CutVh.components[1].SetActiveDofs( GetActiveDof(mesh,HASPOS,order=1) )
             CutVh.Update()
             CutProl.Update(CutVh)
             #reassemble
             self.a,self.f = AssembleCutPoisson( CutVh=CutVh, ci=ci, lsetp1=lsetp1, highorder=False )        
             self.mats[i+1] = self.a.mat
 
-            self.smoothers[i+1] = CutFemSmoother(self.a, CutVh, ci)
+            smootherflag = (i == self.nref-1)
+            print("refinement: ", i+1, ", smootherflag: ", smootherflag)
+            self.smoothers[i+1] = CutFemSmoother(a=self.a, CutVh=CutVh, ci=ci, loworder=smootherflag)
 
         
         self.lsetp1 = lsetp1
@@ -377,6 +455,9 @@ class LinearMGIterator:
 
     def createVec(self):
         return self.f.vec.CreateVector()
+
+    def getSpaceDim(self):
+        return [ self.CutVh.components[i].ndof for i in [0,1] ]
 
     def getLset(self):
         return self.lsetp1                
@@ -399,15 +480,126 @@ class LinearMGIterator:
             res.data = fnew - self.a.mat*usol.vec
             projres.data = proj*res
             res_norm = Norm(projres) / normf
-            print("it =", it+1, " ||res||_2 =", res_norm)
+            if printinfo:
+                print("it =", it+1, " ||res||_2 =", res_norm)
             if res_norm < tol:
                 break        
 
-        udraw = GridFunction( self.CutVh )
+        #udraw = GridFunction( self.CutVh )
+        #udraw.components[1].Set( solution[1], BND )
+        #udraw.vec.data += usol.vec
+
+        return usol
+
+def VertPatches(fes):
+    blocks = []
+    freedofs = fes.FreeDofs()
+    for v in mesh.vertices:
+        vdofs = set()
+        for el in mesh[v].elements:
+            #print( fes.GetDofNrs(el) )
+            #input('w')
+            vdofs |= set(d for d in fes.GetDofNrs(el) if (freedofs[abs(d)] and d >=0) )
+        #print(vdofs)
+        blocks.append (vdofs)
+    return blocks
+
+def ElemPatches(fes):
+    blocks = []
+    freedofs = fes.FreeDofs()
+    for el in fes.Elements():
+        eldofs = set(d for d in fes.GetDofNrs(el) if (freedofs[abs(d)] and d >=0) )        
+        blocks.append (eldofs)
+    return blocks
+
+class HoTwoGridCL:
+    def __init__(self,**kwargs):
+        self.a = kwargs['a']
+        self.f = kwargs['f']
+        self.fes = kwargs['fes']
+        blocks = ElemPatches(self.fes)
+        self.blockjac = CutFemSmoother( a=self.a, CutVh=self.fes, 
+                                        ci=kwargs["ci"], blocks=blocks, 
+                                        finest=True, loworder=False )
+        #self.a.mat.CreateBlockSmoother(blocks)
+        #self.smoother = GaussSeid(self.blockjac)
+        self.mgiter = kwargs['mgiter']
+
+    def iterate(self,nu=2,maxit=20,tol=1e-6):
+        vertexdofs = BitArray(self.fes.ndof)
+        vertexdofs[:] = False
+
+        for v in mesh.vertices:
+            #print( self.fes.GetDofNrs(v) )
+            for d in self.fes.GetDofNrs(v):
+                if d>=0:
+                    vertexdofs[d] = True
+                
+        vertexdofs &= self.fes.FreeDofs()
+
+        coarseProj = Projector( mask= vertexdofs, range=True)
+        
+        proj = Projector(mask=self.fes.FreeDofs(),range=True)
+        usol = GridFunction(self.fes)
+        usol.vec[:] = 0.
+
+        projres = usol.vec.CreateVector()
+        projres.data = proj*self.f.vec
+        normf = Norm(projres)
+
+        LinDof = self.mgiter.getSpaceDim()
+        HOdof  = [ self.fes.components[i].ndof for i in [0,1] ]
+
+        oldres = Norm(projres)
+
+        for it in range(maxit):
+            # initial smoothing 
+            #for sm in range(nu):
+            self.blockjac.Smooth(usol.vec, self.f.vec,nu)
+
+            res = usol.vec.CreateVector()
+            # perform multiplication more efficiently ...
+            # only 'upper' part (vertex dofs) needed 
+            res.data = self.f.vec -self.a.mat * usol.vec
+            
+            projres.data = coarseProj*res
+
+            # print(projres.Range(0, LinDof[0] ))
+            # input('weiter')
+            # print(projres.Range(HOdof[0], HOdof[0] + LinDof[1] ))
+            # input('weiter')
+
+            mgrhs = self.mgiter.createVec()
+            # copy data from two domains 
+            # ... should be done in combination with vertexdofs ...
+            mgrhs.Range(0, LinDof[0]).data = projres.Range(0, LinDof[0] )
+            mgrhs.Range( LinDof[0], len(mgrhs) ).data = projres.Range(HOdof[0], HOdof[0] + LinDof[1] )
+            #print('lens: ', len(mgrhs), LinDof[0], LinDof[1], LinDof[0]+LinDof[1])
+
+            # coarse grid correction: multigrid on linears
+            cup = self.mgiter.iterate(mgrhs,maxit=1,printinfo=False)
+
+            # update solution
+            # ... should be done in combination with vertexdofs ...
+            usol.vec.Range(0, LinDof[0] ).data += cup.vec.Range(0, LinDof[0])
+            usol.vec.Range( HOdof[0], HOdof[0] + LinDof[1]).data += cup.vec.Range( LinDof[0], len(mgrhs) )
+
+            # compute residual for measurement
+            res.data = self.f.vec - self.a.mat*usol.vec
+            projres.data = proj*res
+            res_norm = Norm(projres)
+            
+            print("tg-it =", it+1, "\t ||res||_2 = {0:.2E}".format(res_norm), "\t reduction: {0:.2f}".format(res_norm/oldres))
+            if res_norm < tol*normf:
+                break
+            oldres = res_norm
+
+        udraw = GridFunction( self.fes )
         udraw.components[1].Set( solution[1], BND )
         udraw.vec.data += usol.vec
+        return udraw
 
-        return udraw    
+
 
 if __name__ == '__main__':
     main()   

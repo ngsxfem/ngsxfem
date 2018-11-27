@@ -14,7 +14,7 @@ square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
 mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
 
-mu = [1e-5, 1]
+mu = [1e-0, 1e-7]
 order = 1
 
 
@@ -29,7 +29,7 @@ subdivlvl = 0
 def main():
     print('hallo')
     gamma_stab = 10
-    nref = 2
+    nref = 3
 
     params =    {  
                     "order"     : order,
@@ -72,7 +72,7 @@ def main():
     mats[0] = a.mat
     #list of smoothers
     smoothers = {}
-    smoothers[0] = CutFemSmoother(a, CutVh, ci) 
+    smoothers[0] = CutFemSmoother(a=a, CutVh=CutVh, ci=ci) 
     #coarse grid solver
     inv = a.mat.Inverse(CutVh.FreeDofs(), inverse="sparsecholesky")
     
@@ -95,7 +95,8 @@ def main():
         a,f = AssembleCutPoisson( CutVh=CutVh, ci=ci, lsetp1=lsetp1, params=params )        
         mats[i+1] = a.mat
 
-        smoothers[i+1] = CutFemSmoother(a, CutVh, ci)
+        smoothflag = (i == nref-1) #or (i==nref-2)
+        smoothers[i+1] = CutFemSmoother(a=a, CutVh=CutVh, ci=ci, finest=smoothflag) 
 
     
 
@@ -118,13 +119,19 @@ def main():
     projres.data = proj*fnew #f.vec
     normf = Norm(projres)
 
-    for it in range(1,20):
+    oldres = normf
+
+    print( "norm rhs: {0:.2E}".format(normf) )
+
+    for it in range(1,50):
         usol.vec.data = MGpre*fnew
         res.data = fnew - a.mat*usol.vec
         projres.data = proj*res
         res_norm = Norm(projres) / normf
-        print("it =", it, " ||res||_2 =", res_norm)
-        if res_norm < tol:
+        #print("it =", it, " ||res||_2 =", res_norm)
+        print("mg-it =", it, "\t ||res||_2 = {0:.2E}".format(res_norm), "\t reduction: {0:.2f}".format(res_norm/oldres))
+        oldres = res_norm
+        if res_norm < tol*normf:
             break
 
     # input('w')
@@ -291,28 +298,36 @@ def IfaceUnks(CutVh, ci):
     return ifdofs
 
 class CutFemSmoother:     
-    def __init__(self,a,CutVh,ci):        
-        self.a = a
-        ifdofs = IfaceUnks(CutVh,ci)
+    def __init__(self,**kwargs):
+        self.a = kwargs["a"]
+        ifdofs = IfaceUnks(kwargs["CutVh"],kwargs["ci"])
         #self.proj = Projector(mask=self.ifdofs,range=True)
         ifdofslst = [ [i] for i in range(len(ifdofs)) if ifdofs[i]==True ]
-        self.proj = a.mat.CreateBlockSmoother(ifdofslst)
-        #self.inv = a.mat.Inverse(self.ifdofs, inverse="sparsecholesky")
-        self.preJ = a.mat.CreateSmoother( CutVh.FreeDofs() )
+        self.proj = self.a.mat.CreateBlockSmoother(ifdofslst)
+        self.inv =  self.a.mat.Inverse(ifdofs, inverse="sparsecholesky")
+        self.preJ = self.a.mat.CreateSmoother( kwargs["CutVh"].FreeDofs() )
+        self.finest = kwargs.get('finest',False)
     def __del__(self):
             print('smoother dying')
             input('destruktor')
-    def Smooth( self, u,rhs ):
-        self.preJ.Smooth(u, rhs)
-        #return
+    def IfCorr( self, u, rhs):
+        #if not self.finest:
+        #    return
         update = u.CreateVector()
         # this needs to be more efficient 
         # with help of ifdofs ...
         update.data = self.a.mat * u - rhs
-        cgoutput = u.CreateVector()
-        cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
-        #u.data -= self.inv * update
-        u.data -= cgoutput
+        #cgoutput = u.CreateVector()
+        #cgoutput.data = CG(self.a.mat, update, pre=self.proj, tol=1e-2,printrates=False)
+        u.data -= self.inv * update
+        #u.data -= cgoutput
+
+    def Smooth( self, u,rhs, nu ):
+        for k in range(nu):
+            self.preJ.Smooth(u, rhs)
+            self.IfCorr(u,rhs)
+        
+        
 
 class MultiGridCL(BaseMatrix):
         def __init__(self,**kwargs):
@@ -341,8 +356,8 @@ class MultiGridCL(BaseMatrix):
                 u.data = self.inv*rhs
                 return
         #smoothing
-            for i in range(self.nu):
-                self.smoothers[level].Smooth(u,rhs)
+            #for i in range(self.nu):
+            self.smoothers[level].Smooth(u,rhs,self.nu)
         #compute defect
             defect.data = rhs - self.mats[level]*u
         #restrict defect
@@ -353,8 +368,8 @@ class MultiGridCL(BaseMatrix):
             self.prol.Prolongate(level,error)
             u.data += error
         #smoothing
-            for i in range(self.nu):
-                self.smoothers[level].Smooth(u,rhs)
+            #for i in range(self.nu):
+            self.smoothers[level].Smooth(u,rhs,self.nu)
             return u
 
         def Mult(self,w,z):

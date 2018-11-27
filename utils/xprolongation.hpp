@@ -22,7 +22,7 @@ namespace ngmg
     P1Prolongation(shared_ptr<MeshAccess> ama)
       : ma(ama), fes(nullptr) { ; }
     
-    virtual ~P1Prolongation() { ; }
+    virtual ~P1Prolongation() { cout << "p1prolongation dying"; }
 
     virtual void Update (const FESpace & fes) override;
 
