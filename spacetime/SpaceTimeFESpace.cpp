@@ -216,4 +216,8 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     coef_tref->SetValue(backup_tref);
   }
 
+
+  template void SpaceTimeFESpace :: RestrictGFInTime<double>(shared_ptr<GridFunction>, double, shared_ptr<GridFunction>);
+  template void SpaceTimeFESpace :: RestrictGFInTime<Vec<2>>(shared_ptr<GridFunction>, double, shared_ptr<GridFunction>);
+  
 }
