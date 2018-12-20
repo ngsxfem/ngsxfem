@@ -64,10 +64,7 @@ namespace ngmg
       throw Exception("P2Prolongation::CreateProlongationMatrix not implemented!");
     }
     virtual void ProlongateInline (int finelevel, BaseVector & v) const override;
-    virtual void RestrictInline (int finelevel, BaseVector & v) const override
-    {
-      throw Exception("P2Prolongation::RestrictInline not implemented!");
-    }
+    virtual void RestrictInline (int finelevel, BaseVector & v) const override;
   };
 
 }

@@ -197,18 +197,76 @@ namespace ngmg
         // cout << "single edge connection" << endl;
         int parentEdge = ma->GetParentEdge( edgeconn[0] );       
         fv( unk ) = 0.25 * fw( edgeconn[0] );
+        
       }
       else
       {
         //special case inner edge in uniform refinement
         double fac[3] = {-0.25,0.5,0.5};
         for (auto j: Range(3) )
+        {
           fv( unk ) += fac[j] * fw( edgeconn[j] );
+        }
       }
       
     }
+  }
+
+  void P2Prolongation :: RestrictInline (int finelevel, BaseVector & v) const
+  {
+    size_t nvC = nVertLevel[finelevel-1];
+    size_t nvF = nVertLevel[finelevel];
+
+    size_t neC = nEdgeLevel[finelevel-1];
+    size_t neF = nEdgeLevel[finelevel];
+
+    size_t nedges = neF - neC;
+
+    FlatVector<> fv = v.FV<double>();
+    FlatVector<> fw = tmp_vecs[finelevel]->FV<double>();
+
+    
+    fw = fv;
+    fv = 0.0;
 
 
+    for (size_t i = 0; i < nvC; ++i)
+      fv(i) = fw(i);
+
+    for(size_t i = nvC; i < nvF; ++i)
+    {
+      auto parents = ma->GetParentNodes(i);
+      int edgeParent = ma->GetParentEdge( i ); 
+
+      for (auto j : Range(2))
+        fv( parents[j] ) += 0.5 * fw( i );
+      
+      fv( edgeParent ) -= 0.125 * fw( i );
+    }
+
+
+    // edge factors
+    double fac[3] = {-0.25,0.5,0.5};
+    // update new edges
+    for ( size_t i = 0; i < nedges; i++ )
+    {
+
+      size_t edgenum = neC + i;
+      size_t unk = nvF + i;
+
+      auto edgeconn = ma->GetEdgeConn( edgenum );
+
+      if( edgeconn[2] == -1 )
+      {
+        fv( edgeconn[0] ) += 0.25 * fw( unk );
+      }
+      else
+        for (auto j: Range(3) )
+        {
+          fv( edgeconn[j] ) += fac[j] * fw( unk );
+        }
+
+    }
 
   }
 
