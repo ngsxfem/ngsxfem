@@ -227,6 +227,29 @@ for prototype and testing...
          py::arg("space")
       );
 
+      typedef shared_ptr<P2Prolongation> PyP2P;
+  py::class_<P2Prolongation, PyP2P, Prolongation>
+    (m, "P2Prolongation",
+        docu_string(R"raw_string(
+Prolongation for P2 spaces (with possibly inactive dofs) --- 
+As is asks the fespace for dofs to vertices at several occasions the 
+current implementation is not very fast and should be primarily used
+for prototype and testing...
+)raw_string"))
+    .def("__init__",
+         [](P2Prolongation *instance, shared_ptr<MeshAccess> ma)
+         {
+           new (instance) P2Prolongation (ma);
+         },
+         py::arg("mesh"))
+    .def("Update",
+         [](shared_ptr<P2Prolongation> p2p, shared_ptr<FESpace> fes)
+         {
+           p2p -> Update(*fes);
+         },
+         py::arg("space")
+      );
+
     typedef shared_ptr<CompoundProlongation> PyCProl;
     py::class_< CompoundProlongation, PyCProl, Prolongation>
     ( m, "CompoundProlongation", 

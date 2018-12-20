@@ -20,7 +20,11 @@ namespace ngmg
     Array<shared_ptr<Array<int>>> v2d_on_lvl;
   public:
     P1Prolongation(shared_ptr<MeshAccess> ama)
-      : ma(ama), fes(nullptr) { ; }
+      : ma(ama), fes(nullptr) 
+      { 
+        tmp_vecs.SetSize(0); 
+        nvlevel.SetSize(0);
+      }
     
     virtual ~P1Prolongation() { cout << "p1prolongation dying"; }
 
@@ -32,6 +36,38 @@ namespace ngmg
     }
     virtual void ProlongateInline (int finelevel, BaseVector & v) const override;
     virtual void RestrictInline (int finelevel, BaseVector & v) const override;
+  };
+
+  class P2Prolongation : public Prolongation
+  {
+    shared_ptr<MeshAccess> ma;
+    Array<size_t> nVertLevel;
+    Array<size_t> nEdgeLevel;
+    //Array<size_t> ndoflevel;
+    Array<shared_ptr<BaseVector>> tmp_vecs;
+    const FESpace* fes;
+    // Array<shared_ptr<Array<int>>> v2d_on_lvl;
+  public:
+    P2Prolongation(shared_ptr<MeshAccess> ama)
+      : ma(ama), fes(nullptr) 
+      { 
+        // tmp_vecs.SetSize(0); 
+        nVertLevel.SetSize(0);
+      }
+    
+    virtual ~P2Prolongation() { cout << "p2prolongation dying"; }
+
+    virtual void Update (const FESpace & fes) override;
+
+    virtual SparseMatrix< double >* CreateProlongationMatrix( int finelevel ) const override
+    {
+      throw Exception("P2Prolongation::CreateProlongationMatrix not implemented!");
+    }
+    virtual void ProlongateInline (int finelevel, BaseVector & v) const override;
+    virtual void RestrictInline (int finelevel, BaseVector & v) const override
+    {
+      throw Exception("P2Prolongation::RestrictInline not implemented!");
+    }
   };
 
 }
