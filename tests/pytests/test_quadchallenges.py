@@ -1,20 +1,16 @@
 import pytest
 from ngsolve import *
+from ngsolve.meshes import *
 from xfem import *
-from netgen.geom2d import SplineGeometry
-from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from xfem.lsetcurv import *
 from math import pi
-import netgen.meshing as ngm
-from make_uniform2D_grid import MakeUniform2DGrid
-from make_uniform3D_grid import MakeUniform3DGrid
 
 @pytest.mark.parametrize("quad_dominated", [True])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
 def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated):
-    mesh = MakeUniform3DGrid(quads = True, N=2, P1=(0,0,0),P2=(1,1,1))
+    mesh = MakeStructured3DMesh(hexes = True, nx=2, ny=2, nz=2)    
     
     levelset = 1 - 2*x - 2*y - 2*z
     referencevals = { POS : 1./48, NEG : 47./48, IF : sqrt(3)/8 }
@@ -43,18 +39,10 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
 # http://www.wolframalpha.com/input/?i=integrate+from+0+to+1%2F2+from+0+to+(1%2F2-x)+from+0+to+(1%2F2-x-y)+x%5Ealpha+dz+dy+dx
 def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad_dominated, alpha, dim):
     #ngsglobals.msg_level = 0
+    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=5, ny=5, nz = 5)    
 
-    if (quad_dominated):
-        mesh = MakeUniform3DGrid(quads = True, N=5, P1=(0,0,0),P2=(1,1,1))
-    else:
-        cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
-        geom = CSGeometry()
-        geom.Add (cube)
-        ngmesh = geom.GenerateMesh(maxh=1.3, quad_dominated=quad_dominated)
-        mesh = Mesh(ngmesh)
-        
     levelset = 1 - 2*x- 2*y - 2*z
-    val_pos = pow(2,-alpha-3)/(pow(alpha,3)+6*alpha*alpha + 11*alpha+6)
+    val_pos = 2**(-alpha-3)/(alpha**3+6*alpha*alpha + 11*alpha+6)
     referencevals = {POS: val_pos, NEG: 1./(alpha+1) - val_pos}
     print("Val_pos: ", val_pos)
     
@@ -73,10 +61,10 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, qua
 def test_new_integrateX_via_straight_cutted_quad3D_polynomial_zero_val_challenge(order=4, domain=POS, alpha=2, dim=x):
     ngsglobals.msg_level = 0
 
-    mesh = MakeUniform3DGrid(quads = True, N=2, P1=(0,0,0),P2=(1,1,1))
+    mesh = MakeStructured3DMesh(hexes = True, nx=2, ny=2, nz= 2)    
         
     levelset = 1 - 2*x- 2*y - 2*z
-    val_pos = pow(2,-alpha-3)/(pow(alpha,3)+6*alpha*alpha + 11*alpha+6)
+    val_pos = 2**(-alpha-3)/(alpha**3+6*alpha*alpha + 11*alpha+6)
     referencevals = {POS: val_pos, NEG: 1./(alpha+1) - val_pos}
     print("Val_pos: ", val_pos)
     
@@ -97,7 +85,7 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial_zero_val_challenge
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
 def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
-    mesh = MakeUniform3DGrid(quads = True, N=1, P1=(0,0,0),P2=(1,1,1))
+    mesh = MakeStructured3DMesh(hexes = True, nx=1, ny=1, nz = 1)    
     lset_approx = GridFunction(H1(mesh,order=1))
     for i,v in enumerate([-4,4,-1,-1,2,-3,5,-1]):
         lset_approx.vec[i] = v
@@ -120,15 +108,8 @@ def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
 @pytest.mark.parametrize("high_order", [False, True])
 
 def test_new_integrateX_TPMC_case_quad3D2(order, quad_dominated, high_order):
-    if quad_dominated:
-        mesh = MakeUniform3DGrid(quads = True, N=10, P1=(0,0,0),P2=(1,1,1))
-    else:
-        geom = CSGeometry()
-        geom.Add (OrthoBrick(Pnt(0,0,0), Pnt(1,1,1)).bc(1))
-        ngmesh = geom.GenerateMesh(maxh=0.2134981)
-        for i in range(4):
-            ngmesh.Refine()
-        mesh = Mesh(ngmesh)
+
+    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=10, ny=10, nz = 10)    
     
     #phi = -4*(1-x)*(1-y)*(1-z) + 4*(1-x)*(1-y)*z -1*(1-x)*y*(1-z) - 1*(1-x)*y*z + 2*x*(1-y)*(1-z) -3 *x*(1-y)*z + 5 * x * y * (1-z) -1 *x *y*z
     phi = x *((7*y - 13) *z + 6) + y *(3 - 8 *z) + 8 *z - 4
