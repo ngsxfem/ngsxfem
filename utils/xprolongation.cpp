@@ -160,27 +160,20 @@ namespace ngmg
     fw = fv;
     fv = 0.0;
 
-    cout << "update coarse verts" << endl;
+    // update coarse verts
     for (size_t i = 0; i < nvC; i++)
-    {
         fv(i) = fw(i);
-        cout << "vert i: " << i << ", val c: " << fw(i) << ", val f: " << fv(i) << endl << endl;
-    }
 
-    cout << "update fine verts" << endl;
+    // update fine verts
     for (size_t i = nvC; i < nvF; i++)
       {        
-        auto parents = ma->GetParentNodes (i);
-        cout << "vert i: " << i << ", parents: " << parents[0] << ", " << parents[1] << endl;
-        cout << "val p1: " << fw(parents[0]) << ", val p2" << fw(parents[1]) << endl;
+        auto parents = ma->GetParentNodes (i);        
         for (auto j : Range(2))
           fv( i ) += 0.5 * fw( parents[j] );
         
-        int edgeParent = ma->GetParentEdge( i );
-        cout << "   edgeparent: " << edgeParent << endl;
-        cout << "   val edgeparent: " << fw(edgeParent) << endl;
+        // p2 edge update
+        int edgeParent = ma->GetParentEdge( i );        
         fv( i ) -= 0.125 * fw( edgeParent );
-        cout << "updated node: " << fv(i) << endl << endl;
       }
 
     size_t neC = nEdgeLevel[finelevel-1];
@@ -188,74 +181,31 @@ namespace ngmg
 
     size_t nedges = nEdgeLevel[finelevel] - nEdgeLevel[finelevel-1];
 
-    cout << "update fine edges, num: " << nedges << endl;
+    // update new edges
     for ( size_t i = 0; i < nedges; i++ )
     {
+      // loca edge number: i
+      // global edge number: coarse level edges + i
+      // dof num: first vertices, then edges: nvF + i
       size_t edgenum = neC + i;
-      size_t unk = nvF + i;
-
-      cout << "edge i: " << i << ", global edge num: " << edgenum << ", dof nr: " << unk << endl;
+      size_t unk = nvF + i;      
 
       auto edgeconn = ma->GetEdgeConn( edgenum );
-      cout << "edgeconn: " << edgeconn[0] << ", " << edgeconn[1] << ", " << edgeconn[2] << endl;
 
       if( edgeconn[2] == -1 )
       {
-        // cout << "single edge connection" << endl;        
-        int parentEdge = ma->GetParentEdge( edgeconn[0] );
-        // cout << "parent edge" << parentEdge << endl;
-        // fv(unk) = 0.25 * fw( parentEdge );
-        fv( unk ) = 0.25 * fw( edgeconn[0] );
-
-        continue;
-        cout << endl << endl << endl << "----------------------------------------------------" << endl;
-        /*fv( unk ) = 0.25 * fw( edgeconn[0] );*/
-        auto everts = ma->GetEdgePNums( edgenum );
-        int newvert =1;
-        int oldvert =0;
-        if ( edgeconn[0] == everts[0] )
-        {
-          newvert = 0;
-          oldvert = 1;
-        }
-        auto coarseparent = ma->GetParentNodes( edgeconn[0] );
-        int commonVert = coarseparent[0];
-        int detachedVert = coarseparent[1];
-
-        if( commonVert != everts[oldvert] )
-        {
-          commonVert = coarseparent[1];
-          detachedVert = coarseparent[0];
-        }
-
-
-        //int parentEdge = ma->GetParentEdge( edgeconn[0] );
-
-        cout << "commonVert: " << commonVert << ", detached vert: " << detachedVert
-             << ", earlier edge: " << parentEdge << endl;
-        
-
-        double val = -3./32 * fw( parentEdge ) + 0.75 * fw( commonVert ) + 0.25 * fw( detachedVert );
-        val -= 0.5*( fv( everts[0]) + fv( everts[1] ) );
-        fv(unk) = -8 * val;
-        cout << "coarse val: " << fw( edgeconn[0] ) <<", fine val: " << fv(unk) << endl;
-      }
-      else if ( edgeconn[2] == -2 )
-      {
-        cout << "inner single edge" << endl;
+        // cout << "single edge connection" << endl;
+        int parentEdge = ma->GetParentEdge( edgeconn[0] );       
         fv( unk ) = 0.25 * fw( edgeconn[0] );
       }
       else
       {
+        //special case inner edge in uniform refinement
         double fac[3] = {-0.25,0.5,0.5};
         for (auto j: Range(3) )
-        {
-          cout << "edgeconn: " << edgeconn[j] << ", fac: " << fac[j] << endl;
           fv( unk ) += fac[j] * fw( edgeconn[j] );
-          cout << "val coarse: " << fw( edgeconn[j] ) << endl;
-        }
       }
-      cout << endl;
+      
     }
 
 
