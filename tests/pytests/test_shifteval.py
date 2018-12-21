@@ -2,14 +2,14 @@
 # with Dirichlet boundary condition u = 0
 
 from ngsolve import *
+from ngsolve.meshes import *
 from netgen.geom2d import unit_square
 from xfem import *
 
 ngsglobals.msg_level = 1
-from make_uniform2D_grid import MakeUniform2DGrid
 
 def test_shifteval():
-  mesh = MakeUniform2DGrid(quads = False, N=8, P1=(0,0), P2=(1,1))
+  mesh = MakeStructured2DMesh(quads = False, nx=8, ny=8)
   
   # H1-conforming finite element space
   fes = H1(mesh, order=3, dirichlet=[1,2,3,4])

@@ -1,12 +1,9 @@
 import pytest
 from ngsolve import *
+from ngsolve.meshes import *
 from xfem import *
-from netgen.geom2d import SplineGeometry
-from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
 import netgen.meshing as ngm
-from make_uniform2D_grid import MakeUniform2DGrid
-from make_uniform3D_grid import MakeUniform3DGrid
 
 tref = ReferenceTimeVariable()
 
@@ -17,7 +14,7 @@ tref = ReferenceTimeVariable()
                                         (x,0.5,1,0),
                                         (tref*tref*(x*x+y*y),2/9,2,2)])
 def test_spacetime_integrate_no_cut(quad_dominated, integrands):
-    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
+    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
 
     f,ref_value, space_order, time_order = integrands
     
@@ -39,7 +36,7 @@ def test_spacetime_integrate_no_cut(quad_dominated, integrands):
 @pytest.mark.parametrize("quad_dominated", [True, False])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad_dominated):
-    mesh = MakeUniform2DGrid(quads = quad_dominated, N=1, P1=(0,0), P2=(1,1))
+    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
 
     tref = ReferenceTimeVariable()
     
@@ -53,9 +50,9 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad_domi
     lset_approx = GridFunction(fes)
 
     InterpolateToP1(levelset(0),lset_approx_h1)
-    lset_approx.vec[0:h1fes.ndof] = lset_approx_h1.vec
+    lset_approx.vec[0:h1fes.ndof].data = lset_approx_h1.vec
     InterpolateToP1(levelset(1),lset_approx_h1)
-    lset_approx.vec[h1fes.ndof:2*h1fes.ndof] = lset_approx_h1.vec
+    lset_approx.vec[h1fes.ndof:2*h1fes.ndof].data = lset_approx_h1.vec
 
     print(lset_approx.vec)
     

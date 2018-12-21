@@ -7,7 +7,7 @@ from xfem import *
 # For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 
-from make_uniform2D_grid import MakeUniform2DGrid
+from ngsolve.meshes import *
 
 import pytest
 
@@ -18,10 +18,7 @@ def test_intcurved(quad_dominated, order):
     levelset = sqrt(x*x+y*y)-0.5
     referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
-    mesh = MakeUniform2DGrid(quads = quad_dominated, N=4, P1=(-1,-1), P2=(1,1))
-    
-    lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
-    lsetp1 = lsetmeshadap.lset_p1
+    N=4
     errors_uncurved = dict()
     errors_curved = dict()
     eoc_uncurved = dict()
@@ -38,8 +35,10 @@ def test_intcurved(quad_dominated, order):
         refinements += 2
     for reflevel in range(refinements):
 
-        if(reflevel > 0):
-            mesh.Refine()
+        mesh = MakeStructured2DMesh(quads = quad_dominated, nx=N*2**reflevel, ny=N*2**reflevel,
+                                    mapping = lambda x,y : (2*x-1,2*y-1))    
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
+        lsetp1 = lsetmeshadap.lset_p1
 
         f = CoefficientFunction (1.0)
 
@@ -59,8 +58,8 @@ def test_intcurved(quad_dominated, order):
             errors_curved[key].append(abs(integrals_curved - referencevals[key]))
             errors_uncurved[key].append(abs(integrals_uncurved - referencevals[key]))
         # refine cut elements:
-        if not quad_dominated:
-            RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
+        # if not quad_dominated:
+        #     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
 
     for key in [NEG,POS,IF]:
         eoc_curved[key] = [log(a/b)/log(2) for (a,b) in zip (errors_curved[key][0:-1],errors_curved[key][1:]) ]

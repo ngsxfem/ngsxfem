@@ -2,20 +2,18 @@ import pytest
 # the constant pi
 from math import pi
 # ngsolve stuff
+from ngsolve.meshes import *
 from ngsolve import *
 # basic xfem functionality
 from xfem import *
 from xfem.lsetcurv import *
 # basic geometry features (for the background mesh)
-from netgen.geom2d import SplineGeometry
-
-from make_uniform2D_grid import *
 
 @pytest.mark.parametrize("quad_dominated", [True,False])
 @pytest.mark.parametrize("order", [1,2,3])
 
 def test_nxfem(quad_dominated, order):
-  mesh = MakeUniform2DGrid(quads = quad_dominated, N=40, P1=(-1.5,-1.5),P2=(1.5,1.5))
+  mesh = MakeStructured2DMesh(quads = quad_dominated, nx=40, ny=40, mapping = lambda x,y : (3*x-1.5,3*y-1.5))
       
   # manufactured solution and corresponding r.h.s. data CoefficientFunctions:
   r44 = (x*x*x*x+y*y*y*y)
