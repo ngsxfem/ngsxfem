@@ -68,6 +68,7 @@ namespace xintegration
   double Quadrilateral::GetVolume(){
       if( D == 2) return L2Norm(Cross( Vec<3>(points[3] - points[0]), Vec<3>(points[1] - points[0])));
       else if( D == 3) return abs(Determinant<3>(points[4] - points[0], points[3] - points[0], points[1] - points[0]));
+      else throw Exception("can only handle 2/3 D");
   }
 
   void SimpleX::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
@@ -410,6 +411,7 @@ namespace xintegration
             else if(Exact_Bound[0] < c) return X_Y;
             else return NONE;
         }
+        else return NONE;        
       }
       else if (q.D == 3){
           auto Suff_Bound = GetSufficientCritsQBound();
@@ -432,7 +434,10 @@ namespace xintegration
               }
               else return NONE;
           }
+          else return NONE;
       }
+      else throw Exception("can only handle 2/3 D.");
+      return NONE;
   }
 
   void LevelsetCutQuadrilateral::GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order){

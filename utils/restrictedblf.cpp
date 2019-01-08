@@ -63,7 +63,7 @@ namespace ngcomp
                                       continue;
 				    
 				    if (vb == VOL && eliminate_internal)
-				      fespace->GetDofNrs (i, dnums, EXTERNAL_DOF);
+				      fespace->GetDofNrs (eid, dnums, EXTERNAL_DOF);
 				    else
 				      fespace->GetDofNrs (eid, dnums);
 				    int shift = (vb==VOL) ? 0 : ((vb==BND) ? neV : neV+neB);
