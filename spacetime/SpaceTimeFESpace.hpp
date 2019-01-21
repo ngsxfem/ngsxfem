@@ -9,7 +9,10 @@
 /* Date:   26. Apr. 2009                                             */
 /*********************************************************************/
 
-#include <comp.hpp>
+#include <comp.hpp>    // provides FESpace, ...
+#include <h1lofe.hpp>
+
+#include <fem.hpp>
 
 namespace ngcomp
 {

@@ -311,7 +311,7 @@ namespace ngcomp
     Array<int> elfacets;
     for (int i = 0; i < ne; ++i)
     {
-      ma->GetElFacets(i,elfacets);
+      elfacets = ma->GetElFacets(ElementId(VOL,i));
       for (int j=0; j<elfacets.Size(); j++)
         fine_facet.Set(elfacets[j]);
     }
@@ -341,11 +341,11 @@ namespace ngcomp
 
       if(!el_curved.Test(el1) || !el_curved.Test(el2)) continue;
 
-      ma->GetElFacets(el1,fnums);
+      fnums = ma->GetElFacets(ElementId(VOL,el1));
       for (int k=0; k<fnums.Size(); k++)
         if(facnr==fnums[k]) facnr1 = k;
 
-      ma->GetElFacets(el2,fnums);
+      fnums = ma->GetElFacets(ElementId(VOL,el2));
       for (int k=0; k<fnums.Size(); k++)
         if(facnr==fnums[k]) facnr2 = k;
 
@@ -353,8 +353,8 @@ namespace ngcomp
       ElementTransformation & eltrans2 = ma->GetTrafo (ElementId(VOL,el2), lh);
       Array<int> vnums1, vnums2;
 
-      ma->GetElVertices (el1, vnums1);
-      ma->GetElVertices (el2, vnums2);
+      vnums1 = ma->GetElVertices (ElementId(VOL,el1));
+      vnums2 = ma->GetElVertices (ElementId(VOL,el2));
 
       ELEMENT_TYPE eltype1 = deform->GetFESpace()->GetFE(ElementId(VOL,el1),lh).ElementType();
       ELEMENT_TYPE eltype2 = deform->GetFESpace()->GetFE(ElementId(VOL,el2),lh).ElementType();

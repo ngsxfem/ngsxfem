@@ -6,6 +6,7 @@
 #pragma once
 
 #include <ngstd.hpp> // for Array
+#include <nginterface.h>
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <comp.hpp>
 #include <solve.hpp>
