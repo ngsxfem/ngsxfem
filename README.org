@@ -127,3 +127,18 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * =py_tutorials/tracefem.py= : stationary 2D surface PDE problem with a TraceFEM discretization (low order)
  * =py_tutorials/tracefem3d.py= : stationary 3D surface PDE problem with a TraceFEM discretization (higher order)
  * =spacetime/py_tutorials/spacetimeP1P1.py= : moving fictitous domain problem using a space time unfitted FEM
+
+
+* Literature
+=ngsxfem= has been used in the following scientific articles (that we are aware of):
+ * E. N. Karatzas, F. Ballarin, G. Rozza. Projection-based reduced order models for a cut finite element method in parametrized domains [[https://arxiv.org/pdf/1901.03846][pdf]] 
+ * C. Lehrenfeld, M. A. Olshanskii. An Eulerian finite element method for PDEs in time-dependent domains [[https://arxiv.org/pdf/1803.01779.pdf][pdf]]
+ * F. Heimann, C. Lehrenfeld. Numerical integration on hyperrectangles in isoparametric unfitted finite elements. [[https://link.springer.com/chapter/10.1007/978-3-319-96415-7_16][link]]
+ * C. Lehrenfeld, A. Reusken. L2-estimates for a high order unfitted finite element method for elliptic interface problems. [[https://www.degruyter.com/view/j/jnma.just-accepted/jnma-2017-0109/jnma-2017-0109.xml?format=INT][http]]
+ * J. Grande, C. Lehrenfeld, A. Reusken. Analysis of a high-order trace finite element method for PDEs on level set surfaces [[http://epubs.siam.org/doi/abs/10.1137/16M1102203][http]]
+ * C. Lehrenfeld, A. Reusken. Analysis of a high order unfitted finite element method for an elliptic interface problem. [[https://academic.oup.com/imajna/article-abstract/doi/10.1093/imanum/drx041/4084723/Analysis-of-a-highorder-unfitted-finite-element][http]]
+ * C. Lehrenfeld, A. Reusken. Optimal preconditioners for Nitsche-XFEM discretizations of interface problems. [[https://link.springer.com/article/10.1007/s00211-016-0801-6][http]]
+ * C. Lehrenfeld. High order unfitted finite element methods on level set domains using isoparametric mappings. [[http://www.sciencedirect.com/science/article/pii/S0045782515004004][http]]
+ * C. Lehrenfeld. A higher order isoparametric fictitious domain method for level set domains. [[https://link.springer.com/chapter/10.1007/978-3-319-71431-8_3][http]]
+ * P. Lederer, C.-M. Pfeiler, C. Wintersteiger, C. Lehrenfeld. Higher order unfitted FEM for Stokes interface problems. [[https://onlinelibrary.wiley.com/doi/abs/10.1002/pamm.201610003][http]]
+ * C. Lehrenfeld. Removing the stabilization parameter in fitted and unfitted symmetric Nitsche formulations. [[https://www.eccomas2016.org/proceedings/pdf/4573.pdf][http]]
