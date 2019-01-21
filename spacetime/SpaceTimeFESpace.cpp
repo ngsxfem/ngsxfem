@@ -7,15 +7,10 @@
 /* Date:   26. Apr. 2009                                             */
 /*********************************************************************/
 
-
-#include <comp.hpp>    // provides FESpace, ...
-#include <h1lofe.hpp>
-
-#include <fem.hpp>
-
-
 #include "SpaceTimeFE.hpp"
+#include <nginterface.h>
 #include "SpaceTimeFESpace.hpp"
+
 #include "../utils/p1interpol.hpp"
 
 /*
