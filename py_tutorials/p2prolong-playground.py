@@ -27,9 +27,9 @@ def meshonlvl(lvl):
 #trig version:
 ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)
-p1prolong = P1Prolongation(mesh)
+p1prolong = P2CutProlongation(mesh)
 
-polorder = 1
+polorder = 2
 
 order = 1
 nref = 2
@@ -51,6 +51,10 @@ gfu = GridFunction(Vhc)
 print("ndof",Vhc.ndof)
 gf = []
 gf.append(GridFunction(Compress(H1(mesh,order=polorder),active_dofs=GetActiveDof(mesh))))
+gf[0].Set(x*x*x*y)
+vc = gf[0].vec.CreateVector()
+vc.data = gf[0].vec
+
 for i in range(nref):
     mesh.Refine()
     Vh.Update()
@@ -68,20 +72,20 @@ for i in range(nref):
     nmesh = meshonlvl(i)
     gf.append(GridFunction(Compress(H1(nmesh,order=polorder),active_dofs=GetActiveDof(nmesh))))
     
-
+input('mesh updated')
     
 v = gfu.vec.CreateVector()    
 w = gfu.vec.CreateVector()
 
-for i in range(len(v)):
-    v[i] = i
+for i in range(len(vc)):
+    v[i] = vc[i]
 w.data = v
 # Pv = gfu.vec.CreateVector()    
 # Rw = gfu.vec.CreateVector()
 
 
-for i in range(len(gf[0].vec)):
-    gf[0].vec[i] = i
+# for i in range(len(gf[0].vec)):
+#     gf[0].vec[i] = i
 
 
 for i in range(nref+1):

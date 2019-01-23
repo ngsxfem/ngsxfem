@@ -33,7 +33,7 @@ subdivlvl = 0
 def main():
     print('hallo')
     
-    nref = 3
+    nref = 1
 
     params =    {  
                     "order"     : order,
@@ -512,12 +512,35 @@ def ElemPatches(fes):
         blocks.append (eldofs)
     return blocks
 
+def EdgePatches(fes):
+    blocks = []
+    freedofs = fes.FreeDofs()
+    for edge in mesh.edges:
+        edofs = fes.GetDofNrs(edge)
+
+        if( len(edofs) == 0 ): continue
+        
+        # print('found edge dof: ', edofs)
+        elcntr = 0
+        edofs = set()
+        for el in mesh[edge].elements:
+            elcntr += 1
+            # print('  with element ', elcntr, ' el: ', fes.GetDofNrs(el) )
+            # print('  with element ', elcntr, ' el: ', el.nr )
+            edofs |= set( d for d in fes.GetDofNrs(el) if(freedofs[abs(d)] and d>=0) )
+    
+        # input('next edge')
+        blocks.append (edofs)
+    return blocks
+
 class HoTwoGridCL:
     def __init__(self,**kwargs):
         self.a = kwargs['a']
         self.f = kwargs['f']
         self.fes = kwargs['fes']
-        blocks = ElemPatches(self.fes)
+        # blocks = ElemPatches(self.fes)
+        blocks = EdgePatches(self.fes)
+        # blocks = VertPatches(self.fes)
         self.blockjac = CutFemSmoother( a=self.a, CutVh=self.fes, 
                                         ci=kwargs["ci"], blocks=blocks, 
                                         finest=True, loworder=False )
@@ -562,7 +585,7 @@ class HoTwoGridCL:
             # only 'upper' part (vertex dofs) needed 
             res.data = self.f.vec -self.a.mat * usol.vec
             
-            projres.data = coarseProj*res
+            projres.data = coarseProj*res # i don't think this is really needed... data copied anyways ...
 
             # print(projres.Range(0, LinDof[0] ))
             # input('weiter')
