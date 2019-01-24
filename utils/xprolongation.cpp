@@ -144,6 +144,8 @@ namespace ngmg
 
   void P2Prolongation :: ProlongateInline (int finelevel, BaseVector & v) const
   {
+    #ifdef __HASP2PROL__
+
     if (fes == nullptr)
       throw Exception("call Update before prolongating");
     if (v.EntrySize() > 1)
@@ -210,10 +212,12 @@ namespace ngmg
       }
       
     }
+    #endif
   }
 
   void P2Prolongation :: RestrictInline (int finelevel, BaseVector & v) const
   {
+    #ifdef __HASP2PROL__
     size_t nvC = nVertLevel[finelevel-1];
     size_t nvF = nVertLevel[finelevel];
 
@@ -267,6 +271,7 @@ namespace ngmg
         }
 
     }
+    #endif
 
   }
 
@@ -335,6 +340,7 @@ namespace ngmg
 
   void P2CutProlongation :: ProlongateInline (int finelevel, BaseVector & v) const
   {
+    #ifdef __HASP2PROL__
     if (fes == nullptr)
       throw Exception("call Update before prolongating");
     if (v.EntrySize() > 1)
@@ -400,11 +406,13 @@ namespace ngmg
         for (auto j: Range(3) )        
           fv( vert2dof_fine[unk] ) += fac[j] * fw( vert2dof_coarse[ edgeconn[j] ] );
     }
+    #endif
 
   }
 
 void P2CutProlongation :: RestrictInline (int finelevel, BaseVector & v) const
   {
+    #ifdef __HASP2PROL__
     if (fes == nullptr)
       throw Exception("call Update before restricting");
     if (v.EntrySize() > 1)
@@ -476,8 +484,9 @@ void P2CutProlongation :: RestrictInline (int finelevel, BaseVector & v) const
         }
 
     }
-
+    #endif
   }
+  
 
 
 }

@@ -24,6 +24,7 @@ namespace ngmg
       { 
         tmp_vecs.SetSize(0); 
         nvlevel.SetSize(0);
+        v2d_on_lvl.SetSize(0);
       }
     
     virtual ~P1Prolongation() { cout << "p1prolongation dying"; }
