@@ -489,5 +489,10 @@ void P2CutProlongation :: RestrictInline (int finelevel, BaseVector & v) const
   
 
 
+        //if (IsRegularDof(vert2dof_coarse[parents[j]])) // not necessary
+        fv(vert2dof_coarse[parents[j]]) += 0.5 * fw(vert2dof_fine[i]);
+    } 
+  }
+
 }
 

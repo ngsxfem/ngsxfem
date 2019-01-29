@@ -27,7 +27,7 @@ namespace ngmg
         v2d_on_lvl.SetSize(0);
       }
     
-    virtual ~P1Prolongation() { cout << "p1prolongation dying"; }
+    virtual ~P1Prolongation() { ; }
 
     virtual void Update (const FESpace & fes) override;
 
