@@ -54,13 +54,7 @@ namespace ngmg
     fv = 0.0;
     for (size_t i = 0; i < nc; i++)
       if (IsRegularDof(vert2dof_fine[i]))
-      {
-        size_t readval = vert2dof_coarse[i];
-        size_t writeval = vert2dof_fine[i];
-        double arrval = fw(readval);
-        fv(writeval) = fw(readval);
-        //fv(vert2dof_fine[i]) = fw(vert2dof_coarse[i]);
-      }
+        fv(vert2dof_fine[i]) = fw(vert2dof_coarse[i]);
 
     for (size_t i = nc; i < nf; i++)
       {
@@ -70,13 +64,7 @@ namespace ngmg
         auto parents = ma->GetParentNodes (i);
         for (auto j : Range(2))
           //if (IsRegularDof(vert2dof_coarse[parents[j]])) //not necessary
-          {
-            size_t writeval = vert2dof_fine[i];
-            size_t readval = vert2dof_coarse[parents[j]];
-            double arrval = fw( readval );
-            fv(writeval) += 0.5*arrval;
-            // fv(vert2dof_fine[i]) += 0.5 * fw(vert2dof_coarse[parents[j]]);
-          }
+          fv(vert2dof_fine[i]) += 0.5 * fw(vert2dof_coarse[parents[j]]);
       }
 
   }
@@ -114,14 +102,8 @@ namespace ngmg
       if (!IsRegularDof(vert2dof_fine[i]))
         continue;
       for (auto j : Range(2))
-        if (IsRegularDof(vert2dof_coarse[parents[j]])) // not necessary
-        {
-          size_t readval = vert2dof_fine[i];
-          size_t writeval = vert2dof_coarse[parents[j]];
-          double arrval = fw( readval );
-          fv( writeval ) += 0.5 * arrval;
-        }
-        //fv(vert2dof_coarse[parents[j]]) += 0.5 * fw(vert2dof_fine[i]);
+        if (IsRegularDof(vert2dof_coarse[parents[j]])) // not necessary... apperently it is!
+        	fv(vert2dof_coarse[parents[j]]) += 0.5 * fw(vert2dof_fine[i]);
     } 
   }
 
