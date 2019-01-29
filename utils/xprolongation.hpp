@@ -15,7 +15,7 @@ namespace ngmg
     shared_ptr<MeshAccess> ma;
     Array<size_t> nvlevel;
     //Array<size_t> ndoflevel;
-    Array<shared_ptr<BaseVector>> tmp_vecs;
+    Array<shared_ptr<VVector<double> > > tmp_vecs;
     const FESpace* fes;
     Array<shared_ptr<Array<int>>> v2d_on_lvl;
   public:
