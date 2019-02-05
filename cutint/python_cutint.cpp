@@ -60,7 +60,8 @@ void ExportNgsx_cutint(py::module &m)
 
                  double lsum = 0.0;
                  for (int i = 0; i < mir.Size(); i++)
-                   lsum += mir[i].GetWeight()*val(i,0);
+                   lsum += mir[i].GetMeasure()*wei_arr[i]*val(i,0);
+                   //lsum += mir[i].GetWeight()*val(i,0);
 
                  AsAtomic(sum) += lsum;
                }

@@ -109,6 +109,8 @@ namespace ngcomp
       {
         const IntegrationRule * ir = get<0> (CreateCutIntegrationRule(nullptr, gf_lset_p1, *eltrans,
                                                               IF, 2*order, -1, lh, 0) );
+        //We don't consider the second argument here since for timeorder=-1 CreateCutIntegrationRule
+        // is consistent with StraightcutRule and one can trust the weights
         const IntegrationRule & fquad_if(*ir);
         
         bool mark_this_el = false;

@@ -85,8 +85,8 @@ namespace ngcomp
           // If(time_order > -1 && vb == BND) should have part_vol[NEG] == 0, which will lead to
           // the BND element being marked as POS.
           if (ir_np)
-            for (auto ip : *ir_np)
-              part_vol[np] += ip.Weight();
+            for (auto w : wei_arr) //for (auto ip : *ir_np)
+              part_vol[np] += w; // ... += ip.Weight();
         }
         (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);                 
         if (vb == VOL)
