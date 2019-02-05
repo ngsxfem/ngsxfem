@@ -36,7 +36,7 @@ namespace ngfem
        {
 
             Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip(2));
+            IntegrationPoint z(override_time ? time : ip.Weight());
             tFE->CalcShape(z,time_shape);
 
             Vector<> space_shape(sFE->GetNDof());
@@ -63,7 +63,7 @@ namespace ngfem
          else {
 
             Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip(2));
+            IntegrationPoint z(override_time ? time : ip.Weight());
             tFE->CalcShape(z,time_shape);
 
             Matrix<double> space_dshape(sFE->GetNDof(),2);
@@ -91,7 +91,7 @@ namespace ngfem
         // matrix of derivatives:
 
            Matrix<double> time_dshape(tFE->GetNDof(),1);
-           IntegrationPoint z(override_time ? time : ip(2));
+           IntegrationPoint z(override_time ? time : ip.Weight());
            tFE->CalcDShape(z,time_dshape);
 
            Vector<> space_shape(sFE->GetNDof());
