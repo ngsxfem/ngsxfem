@@ -50,7 +50,7 @@ namespace xintegration
           }
           else
             fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
-          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
+          return get<0>( SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh) );
       } else {
           return StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
       }

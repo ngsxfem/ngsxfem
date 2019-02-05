@@ -91,7 +91,7 @@ namespace xintegration
         }
     }
 
-    const IntegrationRule * SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
+    tuple<const IntegrationRule *, Array<double>> SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
                                                         const ElementTransformation &trafo,
                                                         ScalarFiniteElement<1>* fe_time,
                                                         DOMAIN_TYPE dt,
@@ -115,6 +115,7 @@ namespace xintegration
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         auto ir = new (lh) IntegrationRule();
+        Array<double> wei_arr;
 
         for(int i=0; i<cut_points.size() -1; i++){
             double t0 = cut_points[i], t1 = cut_points[i+1];
@@ -133,11 +134,12 @@ namespace xintegration
                 else if (element_domain == dt)
                     ir->Append(SelectIntegrationRule (et_space, order_space));
 
-                const int newsize = ir->Size();                    
+                const int newsize = ir->Size(); wei_arr.SetSize(newsize);
                 for(int k = offset; k < newsize; k++) {
                     if(trafo.SpaceDim() == 1) (*ir)[k].Point()[1] = t;
                     if(trafo.SpaceDim() == 2) (*ir)[k].Point()[2] = t;
                     (*ir)[k].SetWeight((*ir)[k].Weight()*ip.Weight()*(t1-t0));
+                    wei_arr[k] = (*ir)[k].Weight()*ip.Weight()*(t1-t0);
                 }
                 /*                                     
                 CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);
@@ -179,9 +181,9 @@ namespace xintegration
             }
         }
         if (ir->Size() == 0)
-            return nullptr;
+            return make_tuple(nullptr, wei_arr);
         else
-            return ir;
+            return make_tuple(ir, wei_arr);
     }
 
     void DebugSpaceTimeCutIntegrationRule(){
