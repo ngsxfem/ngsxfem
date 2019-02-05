@@ -139,9 +139,11 @@ namespace xintegration
                 for(int k = offset; k < newsize; k++) {
                     if(trafo.SpaceDim() == 1) (*ir)[k].Point()[1] = t;
                     if(trafo.SpaceDim() == 2) (*ir)[k].Point()[2] = t;
+
                     double new_weight = (*ir)[k].Weight()*ip.Weight()*(t1-t0);
-                    (*ir)[k].SetWeight(new_weight );
                     wei_arr[k] = new_weight;
+
+                    (*ir)[k].SetWeight(t);
                 }
                 /*                                     
                 CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);
