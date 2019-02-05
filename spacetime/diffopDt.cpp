@@ -70,7 +70,7 @@ namespace ngfem
       const int ndof = scafe.GetNDof();
 
       FlatVector<> shape (ndof,lh);
-      IntegrationPoint ip(mip.IP()(0),mip.IP()(1),time);
+      IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
       scafe.CalcShape(ip,shape);
       mat = 0.0;
       mat.Row(0) = shape;
@@ -96,7 +96,7 @@ namespace ngfem
     const int ndof = scafe.GetNDof();
 
     FlatVector<> shape (ndof,lh);
-    IntegrationPoint ip(mip.IP()(0),mip.IP()(1),time);
+    IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
     scafe.CalcShape(ip,shape);
     mat = 0.0;
     mat.Row(0) = shape;
