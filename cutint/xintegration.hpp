@@ -12,7 +12,7 @@ using ngfem::ELEMENT_TYPE;
 namespace xintegration
 {
   /// struct which defines the relation a < b for Point4DCL 
-  const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
+  tuple<const IntegrationRule *, Array<double> > CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
                                                    shared_ptr<GridFunction> gflset,
                                                    const ElementTransformation & trafo,
                                                    DOMAIN_TYPE dt,

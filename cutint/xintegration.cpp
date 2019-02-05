@@ -10,7 +10,7 @@ namespace xintegration
   using ngfem::INT;
 
 
-  const IntegrationRule * CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
+  tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
                                                    shared_ptr<GridFunction> gflset,
                                                    const ElementTransformation & trafo,
                                                    DOMAIN_TYPE dt,
@@ -50,15 +50,22 @@ namespace xintegration
           }
           else
             fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
-          return get<0>( SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh) );
+          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
       } else {
-          return StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
+          const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
+          Array<double> wei_arr (ir->Size());
+          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+          return make_tuple(ir, wei_arr);
       }
     }
     else if (cflset != nullptr)
     {
-      if (time_intorder < 0)
-          return CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+      if (time_intorder < 0) {
+          const IntegrationRule * ir = CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
+          Array<double> wei_arr (ir->Size());
+          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+          return make_tuple(ir, wei_arr);
+      }
       else throw Exception("Space-time requires the levelset as a GridFunction!");
     }
     else throw Exception("Only null information provided, null integration rule served!");
