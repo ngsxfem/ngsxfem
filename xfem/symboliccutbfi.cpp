@@ -218,21 +218,21 @@ namespace ngfem
                   {
                     if (!is_diagonal)
                       for (int i = 0; i < mir.Size(); i++)
-                        proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+                        proxyvalues(i,STAR,STAR) *= mir[i].GetMeasure()*wei_arr[i];
                     else
                       for (int i = 0; i < mir.Size(); i++)
-                        diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].GetWeight();
+                        diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].GetMeasure()*wei_arr[i];
                   }
                 else
                   { // pml
                     throw Exception("not treated yet (interface-weights!)");
                     if (!is_diagonal)
                       for (int i = 0; i < mir.Size(); i++)
-                        proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+                        proxyvalues(i,STAR,STAR) *= mir[i].GetMeasure()*wei_arr[i];
                     else
                       for (int i = 0; i < mir.Size(); i++)
                         diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *=
-                          static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*(*ir)[i].Weight();
+                          static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*wei_arr[i];
                   }
                 IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
                 IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
