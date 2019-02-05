@@ -53,18 +53,24 @@ namespace xintegration
           return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
       } else {
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
-          Array<double> wei_arr (ir->Size());
-          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-          return make_tuple(ir, wei_arr);
+          if(ir != nullptr) {
+              Array<double> wei_arr (ir->Size());
+              for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+              return make_tuple(ir, wei_arr);
+          }
+          else return make_tuple(nullptr, Array<double>());
       }
     }
     else if (cflset != nullptr)
     {
       if (time_intorder < 0) {
           const IntegrationRule * ir = CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
-          Array<double> wei_arr (ir->Size());
-          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-          return make_tuple(ir, wei_arr);
+          if(ir != nullptr) {
+              Array<double> wei_arr (ir->Size());
+              for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+              return make_tuple(ir, wei_arr);
+          }
+          else return make_tuple(nullptr, Array<double>());
       }
       else throw Exception("Space-time requires the levelset as a GridFunction!");
     }
