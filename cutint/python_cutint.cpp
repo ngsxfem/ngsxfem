@@ -47,7 +47,9 @@ void ExportNgsx_cutint(py::module &m)
              {
                auto & trafo = ma->GetTrafo (el, lh);
 
-               const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl, quad_dir_policy);
+               const IntegrationRule * ir;
+               Array<double> wei_arr;
+               tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl, quad_dir_policy);
 
                if (ir != nullptr)
                {

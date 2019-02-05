@@ -110,7 +110,9 @@ namespace ngfem
     if (force_intorder >= 0)
       intorder = force_intorder;
 
-    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    const IntegrationRule * ir1;
+    Array<double> wei_arr;
+    tie (ir1, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
 
     if (ir1 == nullptr)
       return;
