@@ -82,7 +82,7 @@ while tend - t_old > delta_t/2:
     # clear storage
     f = LinearForm(st_fes)
     f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
-    f += SymbolicLFI(form = u0_ic*v )
+    f += SymbolicLFI(form = u0_ic*fix_t(v,0) )
     f.Assemble()
 
     u0.vec.data = a.mat.Inverse(st_fes.FreeDofs(),"umfpack") * f.vec
