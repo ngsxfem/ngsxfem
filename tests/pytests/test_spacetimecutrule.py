@@ -66,7 +66,11 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad_domi
     
     assert error < 5e-15
 
-def test_spacetime_model_spacetime():
+@pytest.mark.parametrize("pitfal1", [False])
+@pytest.mark.parametrize("pitfal2", [False])
+@pytest.mark.parametrize("pitfal3", [False])
+
+def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
     ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
@@ -112,7 +116,8 @@ def test_spacetime_model_spacetime():
 
     t_old = 0
     u0_ic.Set(u_exact(0))
-    #u0_ic.Set(u_exact(t))
+    if pitfal1:
+        u0_ic.Set(u_exact(t))
     
     while tend - t_old > delta_t/2:
         f = LinearForm(st_fes)
@@ -136,3 +141,16 @@ def test_spacetime_model_spacetime():
         print("t = {0}, l2error = {1}".format(t_old,l2error))
         assert l2error < 5e-3
     assert l2error < 2e-4
+
+def test_spacetime_model_spacetime_caller():
+    try:
+        test_spacetime_model_spacetime(True, False, False)
+    except Exception as e:
+        if(str(e) == "TimeVariableCoefficientFunction::Evaluate called with a mere space IR"):
+            print("Failed properly")
+        else:
+            print('Unexpected exception raised:', e)
+            raise Exception("Wrong kind of failure")
+    except:
+        raise Exception("No failure at all")
+    
