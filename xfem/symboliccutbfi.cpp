@@ -943,10 +943,12 @@ namespace ngfem
                 proxyvalues(STAR,l,k) = val.Col(0);
               }
 
-          for (int i = 0; i < mir1.Size(); i++)
+          for (int i = 0; i < mir1.Size(); i++){
             // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
             // proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
-            proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
+            if(time_order >=0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
+            else proxyvalues(i,STAR,STAR) *= mir1[i].GetWeight();
+          }
 
           IntRange trial_range  = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());
