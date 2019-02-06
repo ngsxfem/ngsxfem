@@ -50,6 +50,9 @@ namespace ngcomp
           MappedIntegrationPoint<2,2> mip(ip,eltrans);
           Vec<2> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint[0],refpoint[1],0.0,0.0);
+          //In the space-time case, we set Weight = t to zero, since in the SpaceTimeInterpolateToP1 function told is varied...
+          //... therefore time = 0 is the consistent choice.
+          ip_f.SetPrecomputedGeometry(true);
           MappedIntegrationPoint<2,2> mip_f(ip_f,eltrans);
           val_lset = coef->Evaluate(mip_f);
         }
@@ -61,6 +64,9 @@ namespace ngcomp
           MappedIntegrationPoint<3,3> mip(ip,eltrans);
           Vec<3> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint,0.0);
+          //In the space-time case, we set Weight = t to zero, since in the SpaceTimeInterpolateToP1 function told is varied...
+          //... therefore time = 0 is the consistent choice.
+          ip_f.SetPrecomputedGeometry(true);
           MappedIntegrationPoint<3,3> mip_f(ip_f,eltrans);
           val_lset = coef->Evaluate(mip_f);
         }
