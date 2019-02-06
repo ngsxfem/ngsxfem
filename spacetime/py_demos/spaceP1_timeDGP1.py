@@ -35,13 +35,16 @@ if True:
     ### case 1: analytical solution:
     # position shift of the geometry in time
     rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
+    rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
     #convection velocity:
     d_rho = CoefficientFunction(2*cos(2*pi*t))
     w = CoefficientFunction((0,d_rho)) 
 
     # level set
     r = sqrt(x**2+(y-rho)**2)
+    
     levelset= r - r0
+    levelsetL = lambda t: sqrt(x**2+(y-rhoL(t))**2) - r0
 
     # diffusion coefficient
     alpha = 1
@@ -49,6 +52,7 @@ if True:
     # solution and r.h.s.
     Q = pi/r0   
     u_exact = cos(Q*r) * sin(pi*t)
+    u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
     coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
     u_init = u_exact
 else:
@@ -98,16 +102,16 @@ lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
 gfu = GridFunction(st_fes)
 
 u_last = CreateTimeRestrictedGF(gfu,0)
-u_last.Set(u_init) 
+u_last.Set(u_exactL(0.))
 
 u,v = st_fes.TnT()
 
 h = specialcf.mesh_size
 
-Draw(lset_top,mesh,"lset")
-Draw(IfPos(-lset_top,CoefficientFunction((0,0)),CoefficientFunction((float('nan'),float('nan')))),mesh,"filter")
-visoptions.deformation = 1
-Draw(u_last, mesh,"u", sd=2, autoscale=False, min = -1, max = 1)
+#Draw(lset_top,mesh,"lset")
+#Draw(IfPos(-lset_top,CoefficientFunction((0,0)),CoefficientFunction((float('nan'),float('nan')))),mesh,"filter")
+#visoptions.deformation = 1
+#Draw(u_last, mesh,"u", sd=2, autoscale=False, min = -1, max = 1)
 
 lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
 lset_neg_bottom = { "levelset" : lset_bottom, "domain_type" : NEG, "subdivlvl" : 0}
@@ -181,12 +185,12 @@ while tend - told > delta_t/2:
     
     if u_exact != None:
         # compute error at end of time slab
-        l2error = sqrt(Integrate(lset_neg_top,(u_exact-u_last)*(u_exact-u_last),mesh))
+        l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)*( u_exactL(told) -u_last),mesh))
         # print time and error
-        print("\rt = {0:10}, l2error = {1:20}".format(told,l2error),end="")
+        print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
     else:
-        print("\rt = {0:10}".format(told), end="")
+        print("t = {0:10}".format(told), end="\n")
     # Redraw:
-    Redraw(blocking=True)
+    #Redraw(blocking=True)
 
 print("")       
