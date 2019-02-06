@@ -867,22 +867,27 @@ namespace ngfem
     IntegrationRule * ir1 = nullptr;
     IntegrationRule * ir2 = nullptr;
 
-    
+    Array<double> ir_st1_wei_arr;
+
     if (time_order >= 0)
     {
       FlatVector<> st_point(3,lh);
       const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_order);
 
       auto ir_spacetime1 = new (lh) IntegrationRule (ir_patch1.Size()*ir_time.Size(),lh);
+      ir_st1_wei_arr.SetSize(ir_spacetime1->Size());
       for (int i = 0; i < ir_time.Size(); i++)
       {
         for (int j = 0; j < ir_patch1.Size(); j++)
         {
           const int ij = i*ir_patch1.Size()+j;
           (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_patch1[j].Weight() );
+          ir_st1_wei_arr[ij] = (*ir_spacetime1)[ij].Weight();
+
           st_point = ir_patch1[j].Point();
-          st_point(2) = ir_time[i](0);
           (*ir_spacetime1)[ij].Point() = st_point;
+          (*ir_spacetime1)[ij].SetWeight( ir_time[i](0));
+          (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_patch2.Size()*ir_time.Size(),lh);
@@ -891,10 +896,10 @@ namespace ngfem
         for (int j = 0; j < ir_patch2.Size(); j++)
         {
           const int ij = i*ir_patch2.Size()+j;
-          (*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_patch2[j].Weight() );
           st_point = ir_patch2[j].Point();
-          st_point(2) = ir_time[i](0);
           (*ir_spacetime2)[ij].Point() = st_point;
+          (*ir_spacetime2)[ij].SetWeight(ir_time[i](0));
+          (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
         }
       }
       ir1 = ir_spacetime1;
@@ -941,7 +946,7 @@ namespace ngfem
           for (int i = 0; i < mir1.Size(); i++)
             // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
             // proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
-            proxyvalues(i,STAR,STAR) *= mir1[i].GetWeight();
+            proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
 
           IntRange trial_range  = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());
