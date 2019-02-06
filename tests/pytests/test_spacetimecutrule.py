@@ -123,7 +123,8 @@ def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
         f = LinearForm(st_fes)
         f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
         f += SymbolicLFI(form = u0_ic*fix_t(v,0))
-        #f += SymbolicLFI(form = u0_ic*v)
+        if pitfal2:
+            f += SymbolicLFI(form = u0_ic*v)
         f.Assemble()
         
         u0.vec.data = a.mat.Inverse(st_fes.FreeDofs(),"umfpack") * f.vec
@@ -136,7 +137,8 @@ def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
         told.Set(t_old)
         
         l2error = sqrt (Integrate ( (u_exact(t_old) -u0_ic)**2, mesh))
-        #l2error = sqrt (Integrate ( (u_exact(t) -u0_ic)**2, mesh))
+        if pitfal3:
+            l2error = sqrt (Integrate ( (u_exact(t) -u0_ic)**2, mesh))
                 
         print("t = {0}, l2error = {1}".format(t_old,l2error))
         assert l2error < 5e-3
@@ -146,11 +148,32 @@ def test_spacetime_model_spacetime_caller():
     try:
         test_spacetime_model_spacetime(True, False, False)
     except Exception as e:
-        if(str(e) == "TimeVariableCoefficientFunction::Evaluate called with a mere space IR"):
+        if("TimeVariableCoefficientFunction::Evaluate called with a mere space IR" in str(e)):
             print("Failed properly")
         else:
             print('Unexpected exception raised:', e)
             raise Exception("Wrong kind of failure")
-    except:
+    else:
         raise Exception("No failure at all")
     
+    try:
+        test_spacetime_model_spacetime(False, True, False)
+    except Exception as e:
+        if("SpaceTimeFE :: CalcShape called with a mere space IR" in str(e)):
+            print("Failed properly")
+        else:
+            print('Unexpected exception raised:', e)
+            raise Exception("Wrong kind of failure")
+    else:
+        raise Exception("No failure at all")
+    
+    try:
+        test_spacetime_model_spacetime(False, False, True)
+    except Exception as e:
+        if("TimeVariableCoefficientFunction::Evaluate called with a mere space IR" in str(e)):
+            print("Failed properly")
+        else:
+            print('Unexpected exception raised:', e)
+            raise Exception("Wrong kind of failure")
+    else:
+        raise Exception("No failure at all")
