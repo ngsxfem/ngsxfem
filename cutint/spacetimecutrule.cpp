@@ -144,6 +144,7 @@ namespace xintegration
                     wei_arr[k] = new_weight;
 
                     (*ir)[k].SetWeight(t);
+                    //(*ir)[k].SetPrecomputedGeometry(true);
                 }
                 /*                                     
                 CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);

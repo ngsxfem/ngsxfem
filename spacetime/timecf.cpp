@@ -9,7 +9,11 @@ namespace ngfem
   ///
   double TimeVariableCoefficientFunction::Evaluate (const BaseMappedIntegrationPoint & mip) const
   {
-    return mip.IP().Weight();
+    //if(abs(mip.IP()(2) - mip.IP().Weight() ) > 1e-8) cout << "TimeVariableCoefficientFunction::Evaluate IP:" << mip.IP() << endl;
+    //if(mip.IP().GetPrecomputedGeometry())
+      return mip.IP().Weight();
+    //else
+        //return mip.IP()(2);
   }
 
   double TimeVariableCoefficientFunction::EvaluateConst () const
