@@ -71,6 +71,7 @@ namespace ngfem
 
       FlatVector<> shape (ndof,lh);
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
+      ip.SetPrecomputedGeometry(true);
       scafe.CalcShape(ip,shape);
       mat = 0.0;
       mat.Row(0) = shape;
@@ -97,6 +98,7 @@ namespace ngfem
 
     FlatVector<> shape (ndof,lh);
     IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
+    ip.SetPrecomputedGeometry(true);
     scafe.CalcShape(ip,shape);
     mat = 0.0;
     mat.Row(0) = shape;
