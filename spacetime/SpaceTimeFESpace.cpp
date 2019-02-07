@@ -12,6 +12,7 @@
 #include "SpaceTimeFESpace.hpp"
 
 #include "../utils/p1interpol.hpp"
+#include "timecf.hpp"
 
 /*
 #include <diffop_impl.hpp>
@@ -191,15 +192,17 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     node_gf->Update();
     auto gf_vec = st_GF->GetVectorPtr()->FV<double>();
     auto node_gf_vec = node_gf->GetVectorPtr()->FV<double>();
-    shared_ptr<ParameterCoefficientFunction> coef_tref = dynamic_pointer_cast<ParameterCoefficientFunction>(ctref);
+    shared_ptr<TimeVariableCoefficientFunction> coef_tref = dynamic_pointer_cast<TimeVariableCoefficientFunction>(ctref);
     if (!coef_tref)
-      throw Exception("SpaceTimeFESpace ::InterpolateToP1 : tref is not a ParameterCF");
-    const double backup_tref = coef_tref->GetValue();
+      throw Exception("SpaceTimeFESpace ::InterpolateToP1 : tref is not a TimeVariableCoefficientFunction");
+    //const double backup_tref = coef_tref->GetValue();
     Array<double> & nodes = TimeFE_nodes();
     for(int i= 0; i < nodes.Size(); i++) {
       if (IsTimeNodeActive(i))
       {
-        coef_tref->SetValue(t+nodes[i]*dt);
+        //coef_tref->SetValue(t+nodes[i]*dt);
+          coef_tref->fixed_time = nodes[i];
+
         InterpolateP1 iP1(st_CF, node_gf);
         iP1.Do(lh);
         for(int j = 0; j < Vh_ptr->GetNDof();j++)
@@ -208,7 +211,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
         }
       }
     }        
-    coef_tref->SetValue(backup_tref);
+    //coef_tref->SetValue(backup_tref);
   }
 
 

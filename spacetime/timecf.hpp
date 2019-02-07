@@ -21,5 +21,6 @@ namespace ngfem
 //                           FlatArray<AFlatMatrix<double>*> input,
 //                           AFlatMatrix<double> values) const;
     virtual void PrintReport (ostream & ost) const;
+    double fixed_time;
   };
 }

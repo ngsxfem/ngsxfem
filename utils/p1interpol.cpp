@@ -52,7 +52,7 @@ namespace ngcomp
           IntegrationPoint ip_f(refpoint[0],refpoint[1],0.0,0.0);
           //In the space-time case, we set Weight = t to zero, since in the SpaceTimeInterpolateToP1 function told is varied...
           //... therefore time = 0 is the consistent choice.
-          ip_f.SetPrecomputedGeometry(true);
+          //ip_f.SetPrecomputedGeometry(true);
           MappedIntegrationPoint<2,2> mip_f(ip_f,eltrans);
           val_lset = coef->Evaluate(mip_f);
         }
@@ -66,7 +66,7 @@ namespace ngcomp
           IntegrationPoint ip_f(refpoint,0.0);
           //In the space-time case, we set Weight = t to zero, since in the SpaceTimeInterpolateToP1 function told is varied...
           //... therefore time = 0 is the consistent choice.
-          ip_f.SetPrecomputedGeometry(true);
+          //ip_f.SetPrecomputedGeometry(true);
           MappedIntegrationPoint<3,3> mip_f(ip_f,eltrans);
           val_lset = coef->Evaluate(mip_f);
         }
