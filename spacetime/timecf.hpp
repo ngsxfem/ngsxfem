@@ -7,6 +7,9 @@ namespace ngfem
   /// The coefficient evaluates random between two bounds (default: 0 and 1) pointwise
   class NGS_DLL_HEADER TimeVariableCoefficientFunction : public CoefficientFunction
   {
+  private:
+    double time;
+    bool time_is_fixed;
   public:
     ///
     TimeVariableCoefficientFunction ();
@@ -21,6 +24,7 @@ namespace ngfem
 //                           FlatArray<AFlatMatrix<double>*> input,
 //                           AFlatMatrix<double> values) const;
     virtual void PrintReport (ostream & ost) const;
-    double fixed_time;
+    virtual void FixTime(double t);
+    virtual void UnfixTime();
   };
 }

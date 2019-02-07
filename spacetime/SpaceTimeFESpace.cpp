@@ -201,7 +201,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       if (IsTimeNodeActive(i))
       {
         //coef_tref->SetValue(t+nodes[i]*dt);
-          coef_tref->fixed_time = nodes[i];
+          coef_tref->FixTime(nodes[i]);
 
         InterpolateP1 iP1(st_CF, node_gf);
         iP1.Do(lh);
@@ -211,6 +211,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
         }
       }
     }        
+    coef_tref->UnfixTime();
     //coef_tref->SetValue(backup_tref);
   }
 
