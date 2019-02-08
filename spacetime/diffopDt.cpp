@@ -70,6 +70,9 @@ namespace ngfem
   template class T_DifferentialOperator<DiffOpDtVec<2>>;
   template class T_DifferentialOperator<DiffOpDtVec<3>>;
 
+  template void DiffOpDtVec<3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
+     SliceMatrix<double, (ORDERING)0> >(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
+                                        SliceMatrix<double, (ORDERING)0>&, LocalHeap&);
 
   template <int time>
   template <typename FEL, typename MIP, typename MAT>
