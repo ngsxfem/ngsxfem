@@ -430,3 +430,8 @@ combined with BitArrayCF).
     # cut = vectorize(cut)
     # kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
     return kappa1
+
+def SpaceTimeWeakSet(gfu_e, cf, space_fes):
+    gfu_e_repl = GridFunction(space_fes)
+    gfu_e_repl.Set( cf )
+    gfu_e.vec[:].data = gfu_e_repl.vec
