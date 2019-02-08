@@ -182,28 +182,12 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      shared_ptr<GridFunction> restricted_GF = nullptr;
      restricted_GF = make_shared < S_GridFunction < double > >( Vh_ptr);
      restricted_GF->Update();
-
      switch (Vh->GetDimension())
      {
-       /*case 1:
-         restricted_GF = make_shared < T_GridFunction < double > >( Vh_ptr);
-         restricted_GF->Update();
-         RestrictGFInTime<double>(st_GF, time, restricted_GF);
-         break;
-       case 2:
-         restricted_GF = make_shared < T_GridFunction < Vec<2> > >( Vh_ptr);
-         restricted_GF->Update();
-         RestrictGFInTime<Vec<2>>(st_GF, time, restricted_GF);
-         break;
-     
-       default:
-         throw Exception("cannot handle GridFunction type (dimension too large?).");
-         break; */
-      case 1: RestrictGFInTime<double>(st_GF, time, restricted_GF); break;
-      case 2: RestrictGFInTime<Vec<2>>(st_GF, time, restricted_GF); break;
-      case 3: RestrictGFInTime<Vec<3>>(st_GF, time, restricted_GF); break;
-      default: throw Exception("cannot handle GridFunction type (dimension too large?)."); break;
-
+       case 1: RestrictGFInTime<double>(st_GF, time, restricted_GF); break;
+       case 2: RestrictGFInTime<Vec<2>>(st_GF, time, restricted_GF); break;
+       case 3: RestrictGFInTime<Vec<3>>(st_GF, time, restricted_GF); break;
+       default: throw Exception("cannot handle GridFunction type (dimension too large?)."); break;
      }
 
      return restricted_GF;
