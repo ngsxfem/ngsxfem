@@ -225,7 +225,8 @@ void ExportNgsx_spacetime(py::module &m)
      {
        case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
        case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
-       default : throw Exception("Diffop dt only implemented for dim <= 2 so far.");
+       case 3 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3>>> (); break;
+       default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
      }
 
      for (int i = comparr.Size() - 1; i >= 0; --i)
@@ -252,7 +253,8 @@ void ExportNgsx_spacetime(py::module &m)
      {
        case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
        case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
-       default : throw Exception("Diffop dt only implemented for dim <= 2 so far.");
+       case 3 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3>>> (); break;
+       default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
      }
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdtvec,nullptr,nullptr,0));
@@ -371,6 +373,9 @@ void ExportNgsx_spacetime(py::module &m)
          break;
        case 2:
          st_FES->RestrictGFInTime<Vec<2>>(st_GF,time,s_GF);
+         break;
+       case 3:
+         st_FES->RestrictGFInTime<Vec<3>>(st_GF,time,s_GF);
          break;
        default:
          throw Exception("cannot handle GridFunction type (dimension too large?).");
