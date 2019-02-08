@@ -11,17 +11,26 @@ namespace ngfem
   void DiffOpDt::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
-
-      const SpaceTimeFE & scafe =
-              dynamic_cast<const SpaceTimeFE & > (bfel);
-      const int ndof = scafe.GetNDof();
-
-      FlatVector<> dtshape (ndof,lh);
       IntegrationPoint ip(mip.IP());
-      scafe.CalcDtShape(ip,dtshape);
       mat = 0.0;
-      mat.Row(0) = dtshape;
 
+      const SpaceTimeFE<2>* scafe2 =
+              dynamic_cast<const SpaceTimeFE<2> * > (& bfel);
+      if(scafe2) {
+          FlatVector<> dtshape (scafe2->GetNDof(),lh);
+          scafe2->CalcDtShape(ip,dtshape);
+          mat.Row(0) = dtshape;
+          return;
+      }
+
+      const SpaceTimeFE<3>* scafe3 =
+              dynamic_cast<const SpaceTimeFE<3> * > (& bfel);
+      if(scafe3) {
+          FlatVector<> dtshape (scafe3->GetNDof(),lh);
+          scafe3->CalcDtShape(ip,dtshape);
+          mat.Row(0) = dtshape;
+          return;
+      }
 
     }
 
@@ -32,31 +41,34 @@ namespace ngfem
   void DiffOpDtVec<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
-
-      const SpaceTimeFE & scafe =
-              dynamic_cast<const SpaceTimeFE & > (bfel);
-      const int ndof = scafe.GetNDof();
-
-
-      FlatVector<> dtshape (ndof,lh);
       IntegrationPoint ip(mip.IP());
-      scafe.CalcDtShape(ip,dtshape);
       mat = 0.0;
 
-      for (int j = 0; j < D; j++)
-        for (int k = 0; k < dtshape.Size(); k++)
-          mat(j,k*D+j) = dtshape(k);
+      const SpaceTimeFE<2> * scafe2 =
+              dynamic_cast<const SpaceTimeFE<2> * > (& bfel);
+      if(scafe2){
+        FlatVector<> dtshape (scafe2->GetNDof(),lh);
+        scafe2->CalcDtShape(ip,dtshape);
+        for (int j = 0; j < D; j++)
+          for (int k = 0; k < dtshape.Size(); k++)
+            mat(j,k*D+j) = dtshape(k);
+      }
 
-      /*
-      for (int j = 0; j < D; j++)
-        for (int k = 0; k < dtshape.Size(); k++)
-          mat(j) = dtshape(k);
-      */
+      const SpaceTimeFE<3> * scafe3 =
+              dynamic_cast<const SpaceTimeFE<3> * > (& bfel);
+      if(scafe3){
+        FlatVector<> dtshape (scafe3->GetNDof(),lh);
+        scafe3->CalcDtShape(ip,dtshape);
+        for (int j = 0; j < D; j++)
+          for (int k = 0; k < dtshape.Size(); k++)
+            mat(j,k*D+j) = dtshape(k);
+      }
 
     }
 
   template class T_DifferentialOperator<DiffOpDtVec<1>>;
   template class T_DifferentialOperator<DiffOpDtVec<2>>;
+  template class T_DifferentialOperator<DiffOpDtVec<3>>;
 
 
   template <int time>
@@ -65,17 +77,25 @@ namespace ngfem
                                              MAT & mat, LocalHeap & lh)
   {
 
-      const SpaceTimeFE & scafe =
-              dynamic_cast<const SpaceTimeFE & > (bfel);
-      const int ndof = scafe.GetNDof();
-
-      FlatVector<> shape (ndof,lh);
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
       ip.SetPrecomputedGeometry(true);
-      scafe.CalcShape(ip,shape);
       mat = 0.0;
-      mat.Row(0) = shape;
 
+      const SpaceTimeFE<2> * scafe2 =
+              dynamic_cast<const SpaceTimeFE<2> * > (&bfel);
+      if(scafe2){
+          FlatVector<> shape (scafe2->GetNDof(),lh);
+          scafe2->CalcShape(ip,shape);
+          mat.Row(0) = shape;
+      }
+
+      const SpaceTimeFE<3> * scafe3 =
+              dynamic_cast<const SpaceTimeFE<3> * > (&bfel);
+      if(scafe3){
+          FlatVector<> shape (scafe3->GetNDof(),lh);
+          scafe3->CalcShape(ip,shape);
+          mat.Row(0) = shape;
+      }
 
    }
 
@@ -89,19 +109,28 @@ namespace ngfem
               SliceMatrix<double,ColMajor> mat,
               LocalHeap & lh) const
   {
-    const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE> & mip =
+
+      mat = 0.0;
+      const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE> & mip =
       static_cast<const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE>&> (bmip);
 
-    const SpaceTimeFE & scafe =
-            dynamic_cast<const SpaceTimeFE & > (bfel);
-    const int ndof = scafe.GetNDof();
+      IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
+      ip.SetPrecomputedGeometry(true);
 
-    FlatVector<> shape (ndof,lh);
-    IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
-    ip.SetPrecomputedGeometry(true);
-    scafe.CalcShape(ip,shape);
-    mat = 0.0;
-    mat.Row(0) = shape;
+      const SpaceTimeFE<2> * scafe2 =
+            dynamic_cast<const SpaceTimeFE<2> *> (&bfel);
+      if(scafe2){
+        FlatVector<> shape (scafe2->GetNDof(),lh);
+        scafe2->CalcShape(ip,shape);
+        mat.Row(0) = shape;
+      }
+      const SpaceTimeFE<3> * scafe3 =
+            dynamic_cast<const SpaceTimeFE<3> *> (&bfel);
+      if(scafe3){
+        FlatVector<> shape (scafe3->GetNDof(),lh);
+        scafe3->CalcShape(ip,shape);
+        mat.Row(0) = shape;
+      }
   }
 
   void DiffOpFixAnyTime ::

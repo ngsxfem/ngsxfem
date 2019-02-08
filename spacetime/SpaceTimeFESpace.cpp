@@ -27,6 +27,7 @@ namespace ngcomp
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
   : FESpace (ama, flags), Vh_ptr(aVh)
   {
+    cout << IM(3) << "AMA DIM: " << ama->GetDimension() << endl;
     cout << IM(3) << "Constructor of SpaceTimeFESpace" << endl;
     cout << IM(3) <<"Flags = " << flags << endl;
 
@@ -44,11 +45,21 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     cout << IM(3) <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
-    evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
-    flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<2>>>();
-    evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<2>>>();
+    if(ama->GetDimension() == 2) {
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<2>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<2>>>();
+    }
+    else if (ama->GetDimension() == 3){
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<3>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<3>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<3>>>();
+    }
+    else {
+        throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
+    }
 
-    integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
+     integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
 
     if (dimension > 1)
@@ -111,13 +122,19 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
   FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
-
-     ScalarFiniteElement<2>* s_FE = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
      ScalarFiniteElement<1>* t_FE = tfe;
-     SpaceTimeFE * st_FE =  new (alloc) SpaceTimeFE(s_FE,t_FE,override_time,time);
-
-     return *st_FE;
-
+     ScalarFiniteElement<2>* s_FE2 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
+     if(s_FE2){
+       //cout << "SpaceTimeFESpace :: GetFE for 2D called" << endl;
+       SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE2,t_FE,override_time,time);
+       return *st_FE;
+     }
+     ScalarFiniteElement<3>* s_FE3 = dynamic_cast<ScalarFiniteElement<3>*>(&(Vh->GetFE(ei,alloc)));
+     if(s_FE3){
+         //cout << "SpaceTimeFESpace :: GetFE for 3D called" << endl;
+       SpaceTimeFE<3> * st_FE =  new (alloc) SpaceTimeFE<3>(s_FE3,t_FE,override_time,time);
+       return *st_FE;
+     }
    }
 
   template<typename SCAL>
@@ -225,5 +242,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
   template void SpaceTimeFESpace :: RestrictGFInTime<double>(shared_ptr<GridFunction>, double, shared_ptr<GridFunction>);
   template void SpaceTimeFESpace :: RestrictGFInTime<Vec<2>>(shared_ptr<GridFunction>, double, shared_ptr<GridFunction>);
-  
+  template void SpaceTimeFESpace :: RestrictGFInTime<Vec<3>>(shared_ptr<GridFunction>, double, shared_ptr<GridFunction>);
+
 }

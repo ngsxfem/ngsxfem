@@ -11,13 +11,13 @@
 namespace ngfem
 {
 
-
-   SpaceTimeFE :: SpaceTimeFE (ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
+   template <int D>
+   SpaceTimeFE<D> :: SpaceTimeFE (ScalarFiniteElement<D>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
     /*
       Call constructor for base class:
       number of dofs is (dofs in space) * (Dofs in time), maximal order is order
      */
-      : ScalarFiniteElement<2> ((s_FE->GetNDof())*(t_FE->GetNDof()), s_FE->Order())
+      : ScalarFiniteElement<D> ((s_FE->GetNDof())*(t_FE->GetNDof()), s_FE->Order())
     {
 
         sFE = s_FE;
@@ -26,7 +26,8 @@ namespace ngfem
         override_time = aoverride_time;
     }
 
-    void SpaceTimeFE :: CalcShape (const IntegrationPoint & ip,
+   template <int D>
+    void SpaceTimeFE<D> :: CalcShape (const IntegrationPoint & ip,
                                     BareSliceVector<> shape) const
     {
 
@@ -54,7 +55,8 @@ namespace ngfem
        }
      }
 
-    void SpaceTimeFE :: CalcDShape (const IntegrationPoint & ip,
+    template <int D>
+    void SpaceTimeFE<D> :: CalcDShape (const IntegrationPoint & ip,
                                     BareSliceMatrix<> dshape) const
 
     {
@@ -88,7 +90,8 @@ namespace ngfem
 
     // for time derivatives
 
-    void SpaceTimeFE :: CalcDtShape (const IntegrationPoint & ip,
+    template <int D>
+    void SpaceTimeFE<D> :: CalcDtShape (const IntegrationPoint & ip,
                                      BareSliceVector<> dshape) const
 
     {
@@ -170,5 +173,6 @@ namespace ngfem
          }
       }
 
-
+    template class SpaceTimeFE<2>;
+    template class SpaceTimeFE<3>;
 }
