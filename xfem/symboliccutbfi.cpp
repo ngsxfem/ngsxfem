@@ -670,8 +670,9 @@ namespace ngfem
           const int ij = i*ir_facet_vol1_tmp.Size()+j;
           (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol1_tmp[j].Weight() );
           st_point = ir_facet_vol1_tmp[j].Point();
-          st_point(2) = ir_time[i](0);
           (*ir_spacetime1)[ij].Point() = st_point;
+          (*ir_spacetime1)[ij].SetWeight(ir_time[i](0));
+          (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_facet_vol2_tmp.Size()*ir_time.Size(),lh);
@@ -682,8 +683,9 @@ namespace ngfem
           const int ij = i*ir_facet_vol2_tmp.Size()+j;
           (*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol2_tmp[j].Weight() );
           st_point = ir_facet_vol2_tmp[j].Point();
-          st_point(2) = ir_time[i](0);
           (*ir_spacetime2)[ij].Point() = st_point;
+          (*ir_spacetime2)[ij].SetWeight(ir_time[i](0));
+          (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
         }
       }
       ir_facet_vol1 = ir_spacetime1;
