@@ -124,22 +124,20 @@ print("L2 Error: {0}".format(l2error))
 # mesh.UnsetDeformation()
 
 #visualization:
-import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
-  Draw(deformation,mesh,"deformation")
-  Draw(levelset,mesh,"levelset")
-  Draw(lsetp1,mesh,"lsetp1")
-  Draw(gfu,mesh,"extu")
-  Draw(IfPos(-lsetp1,gfu,float('nan')),mesh,"u")
-  warped_u = CoefficientFunction((deformation[0],
-                           deformation[1],
-                           IfPos(-lsetp1,0.2*gfu,float('nan'))))
-  Draw(warped_u,mesh,"warped_u",sd=4)
-  
-  from ngsolve.internal import *
-  visoptions.autoscale = False
-  visoptions.mminval=0
-  visoptions.mmaxval=1.25
-  visoptions.deformation = 1
+Draw(deformation,mesh,"deformation")
+Draw(levelset,mesh,"levelset")
+Draw(lsetp1,mesh,"lsetp1")
+Draw(gfu,mesh,"extu")
+Draw(IfPos(-lsetp1,gfu,float('nan')),mesh,"u")
+warped_u = CoefficientFunction((deformation[0],
+                         deformation[1],
+                         IfPos(-lsetp1,0.2*gfu,float('nan'))))
+Draw(warped_u,mesh,"warped_u",sd=4)
+
+from ngsolve.internal import *
+visoptions.autoscale = False
+visoptions.mminval=0
+visoptions.mmaxval=1.25
+visoptions.deformation = 1
   
   

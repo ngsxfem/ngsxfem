@@ -274,14 +274,12 @@ pl2error = sqrt(  Integrate(lset_neg,(pres_neg-pres_sol_neg)*(pres_neg-pres_sol_
                  +Integrate(lset_pos,(pres_pos-pres_sol_pos)*(pres_pos-pres_sol_pos),mesh=mesh) )
 print("L2 Error of pressure: {0}".format(pl2error))
 
-import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
-  # # unset mesh adaptation
-  mesh.UnsetDeformation()
+# # unset mesh adaptation
+mesh.UnsetDeformation()
 
-  # #visualization:
-  Draw(deformation,mesh,"deformation")
-  Draw(levelset,mesh,"levelset")
-  Draw(lsetp1,mesh,"lsetp1")
-  Draw(pres_coef,mesh,"pressure")
-  Draw(vel_coef,mesh,"vel")
+# #visualization:
+Draw(deformation,mesh,"deformation")
+Draw(levelset,mesh,"levelset")
+Draw(lsetp1,mesh,"lsetp1")
+Draw(pres_coef,mesh,"pressure")
+Draw(vel_coef,mesh,"vel")

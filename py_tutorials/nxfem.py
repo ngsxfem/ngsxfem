@@ -133,11 +133,9 @@ u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 # visualize levelset, interpolated levelset and discrete solution:
 # (Note that the visualization does not respect the discontinuities. They are smeared out. To see
 #  kinks or jumps more clearly increase the subdivision option in the visualization.)
-import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
-    Draw(levelset,mesh,"levelset")
-    Draw(lsetp1,mesh,"levelset_P1")
-    Draw(u_coef,mesh,"u")
+Draw(levelset,mesh,"levelset")
+Draw(lsetp1,mesh,"levelset_P1")
+Draw(u_coef,mesh,"u")
 
 err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
 

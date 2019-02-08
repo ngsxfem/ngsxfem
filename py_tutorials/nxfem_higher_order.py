@@ -177,14 +177,12 @@ u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 #  kinks or jumps more clearly increase the subdivision option in the visualization.)
 # drawing deformation allows to deform the mesh to obtain the geometry that is used
 # in the computations:
-import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
-    Draw(levelset,mesh,"levelset")
-    Draw(lsetp1,mesh,"lsetp1")
-    Draw(lsetmeshadap.deform,mesh,"deformation")
-    Draw(u_coef,mesh,"u")
-    Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"graph_of_u",sd=3)
-    visoptions.deformation = 1
+Draw(levelset,mesh,"levelset")
+Draw(lsetp1,mesh,"lsetp1")
+Draw(lsetmeshadap.deform,mesh,"deformation")
+Draw(u_coef,mesh,"u")
+Draw(CoefficientFunction((lsetmeshadap.deform[0],lsetmeshadap.deform[1],u_coef)),mesh,"graph_of_u",sd=3)
+visoptions.deformation = 1
 
 err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
 
