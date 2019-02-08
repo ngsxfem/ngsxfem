@@ -26,7 +26,7 @@ if(BUILD_NGSOLVE)
 
   set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
   set(USE_UMFPACK ON CACHE BOOL "use umfpack library (only if ngsolve is build)")
-  set(USE_MKL ON CACHE BOOL "use mkl library (only if ngsolve is build)")
+  set(USE_MKL OFF CACHE BOOL "use mkl library (only if ngsolve is build)")
   set(MKL_ROOT "/opt/intel/mkl" CACHE STRING "mkl root dir (only if ngsolve is build)")
   set(TCL_INCLUDE_PATH "/usr/include" CACHE STRING "tcl include path")
 
