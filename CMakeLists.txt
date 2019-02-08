@@ -25,7 +25,9 @@ if(BUILD_NGSOLVE)
   execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
-  set(USE_UMFPACK ON CACHE BOOL "use umfpack library")
+  set(USE_UMFPACK ON CACHE BOOL "use umfpack library (only if ngsolve is build)")
+  set(USE_MKL ON CACHE BOOL "use mkl library (only if ngsolve is build)")
+  set(MKL_ROOT "/opt/intel/mkl" CACHE STRING "mkl root dir (only if ngsolve is build)")
   set(TCL_INCLUDE_PATH "/usr/include" CACHE STRING "tcl include path")
 
   execute_process(COMMAND mkdir -p ngsolve)
@@ -34,10 +36,13 @@ if(BUILD_NGSOLVE)
     -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DUSE_GUI=${USE_GUI}
     -DUSE_CCACHE=${USE_CCACHE}
     -DUSE_UMFPACK=${USE_UMFPACK}
+    -DUSE_MKL=${USE_MKL}
+    -DMKL_ROOT=${MKL_ROOT}
     -DTCL_INCLUDE_PATH=${TCL_INCLUDE_PATH} ${ADDNINJA}
     ${CMAKE_CURRENT_SOURCE_DIR}/external_dependencies/ngsolve/ WORKING_DIRECTORY ngsolve)
 
