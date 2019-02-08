@@ -108,7 +108,7 @@ mesh.UnsetDeformation()
 
 print ("l2error : ", l2error)
 import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
    Draw(deformation,mesh,"deformation")
    Draw(gfu,mesh,"u")
 

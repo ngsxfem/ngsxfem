@@ -125,7 +125,7 @@ print("L2 Error: {0}".format(l2error))
 
 #visualization:
 import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
   Draw(deformation,mesh,"deformation")
   Draw(levelset,mesh,"levelset")
   Draw(lsetp1,mesh,"lsetp1")

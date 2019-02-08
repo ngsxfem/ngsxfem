@@ -194,7 +194,7 @@ u_coef = IfPos(lsetp1, gfu.components[1], gfu.components[0])
 # (Note that the visualization does not respect the discontinuities. They are smeared out. To see
 #  kinks or jumps more clearly increase the subdivision option in the visualization.)
 import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
     Draw(levelset,mesh,"levelset")
     Draw(lsetp1,mesh,"levelset_P1")
     Draw(u_coef,mesh,"u")

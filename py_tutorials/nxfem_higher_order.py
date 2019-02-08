@@ -178,7 +178,7 @@ u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 # drawing deformation allows to deform the mesh to obtain the geometry that is used
 # in the computations:
 import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
     Draw(levelset,mesh,"levelset")
     Draw(lsetp1,mesh,"lsetp1")
     Draw(lsetmeshadap.deform,mesh,"deformation")
@@ -195,7 +195,7 @@ l2error = sqrt( Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=m
 
 print("L2 error : ",l2error)
 # for later refinements etc. its always a good idea to deactivate the mesh deformation
-if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
+if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
     mesh.UnsetDeformation()
 
 
