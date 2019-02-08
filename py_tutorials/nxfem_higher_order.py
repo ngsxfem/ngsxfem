@@ -193,8 +193,7 @@ l2error = sqrt( Integrate( levelset_domain=lset_neg, cf=err_sqr_coefs[0], mesh=m
 
 print("L2 error : ",l2error)
 # for later refinements etc. its always a good idea to deactivate the mesh deformation
-if not hasattr(sys, 'argv') or len(sys.argv) == 0 or sys.argv[1] != "testmode":
-    mesh.UnsetDeformation()
+mesh.UnsetDeformation()
 
 
 
