@@ -796,8 +796,6 @@ namespace ngfem
                    LocalHeap & lh) const
   {
     elmat = 0.0;
-    if (trafo1.SpaceDim () > 2)
-      throw Exception ("Patch integrator only implemented for 2D right now");
     if (LocalFacetNr2==-1) throw Exception ("SymbolicFacetPatchBFI: LocalFacetNr2==-1");
 
     int maxorder = max2 (fel1.Order(), fel2.Order());
@@ -811,10 +809,10 @@ namespace ngfem
     IntegrationRule ir_patch1 (ir_vol1.Size()+ir_vol2.Size(),lh);
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
 
+    if(trafo1.SpaceDim() == 2) {
     Vec<2> vec;
     Vec<2> diff;
     Vec<2> update;
-
     
     for (int l = 0; l < ir_patch1.Size(); l++)
     { /// TODO : D == 2 or D == 3
@@ -864,6 +862,64 @@ namespace ngfem
         ir_patch1[l] = ip_x0;
         ir_patch1[l].SetWeight(mip.GetWeight()/w);
       }
+    }
+    }
+    if(trafo1.SpaceDim() == 3) {
+    Vec<3> vec;
+    Vec<3> diff;
+    Vec<3> update;
+
+    for (int l = 0; l < ir_patch1.Size(); l++)
+    {
+      if (l<ir_vol1.Size())
+      {
+        ir_patch1[l] = ir_vol1[l];
+        MappedIntegrationPoint<3,3> mip(ir_vol1[l], trafo1);
+        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
+        const double h = cbrt(mip.GetJacobiDet());
+        IntegrationPoint ip_x0;
+        vec = mip.GetPoint();
+        int its = 0;
+        double w = 0;
+        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 50))
+        {
+          MappedIntegrationPoint<2,2> mip_x0(ip_x0,trafo2);
+          diff = vec - mip_x0.GetPoint();
+          update = mip_x0.GetJacobianInverse() * diff;
+          for (int d = 0; d < 2; ++d)
+            ip_x0(d) += update(d);
+          its++;
+          w = mip_x0.GetMeasure();
+          //cout << "its (1): " << its << endl;
+        }
+        ir_patch2[l] = ip_x0;
+        ir_patch2[l].SetWeight(mip.GetWeight()/w);
+      }
+      else
+      {
+        ir_patch2[l] = ir_vol2[l-ir_vol1.Size()];
+        MappedIntegrationPoint<3,3> mip(ir_vol2[l-ir_vol1.Size()], trafo2);
+        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
+        const double h = cbrt(mip.GetJacobiDet());
+        IntegrationPoint ip_x0;
+        vec = mip.GetPoint();
+        int its = 0;
+        double w = 0;
+        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 50))
+        {
+          MappedIntegrationPoint<3,3> mip_x0(ip_x0,trafo1);
+          diff = vec - mip_x0.GetPoint();
+          update = mip_x0.GetJacobianInverse() * diff;
+          for (int d = 0; d < 2; ++d)
+            ip_x0(d) += update(d);
+          its++;
+          w = mip_x0.GetMeasure();
+          //cout << "its (2): " << its << endl;
+        }
+        ir_patch1[l] = ip_x0;
+        ir_patch1[l].SetWeight(mip.GetWeight()/w);
+      }
+    }
     }
     
     IntegrationRule * ir1 = nullptr;
