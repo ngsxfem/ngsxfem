@@ -9,11 +9,11 @@ from math import pi
 from xfem.lset_spacetime import *
 from time import sleep
 
-ngsglobals.msg_level = 4
+ngsglobals.msg_level = 1
 
 cube = CSGeometry()
 cube.Add (OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)))
-ngmesh = cube.GenerateMesh(maxh=0.3, quad_dominated=False)
+ngmesh = cube.GenerateMesh(maxh=0.4, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 coef_told = Parameter(0)
@@ -61,7 +61,7 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Unfitted heat equation example
 tend = 1
-delta_t = tend/32
+delta_t = tend/64
 coef_delta_t.Set(delta_t)
 tnew = 0
 told = 0
@@ -100,7 +100,7 @@ hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = f
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
 
-patch_integrators_a.append(SymbolicFacetPatchBFI( InnerProduct(grad(u) - grad(u.Other()), n_F) * InnerProduct(grad(v) - grad(v.Other()), n_F), skeleton=True, time_order=time_order))
+patch_integrators_a.append(SymbolicFacetPatchBFI(20*h*InnerProduct(grad(u) - grad(u.Other()), n_F) * InnerProduct(grad(v) - grad(v.Other()), n_F), skeleton=True, time_order=time_order))
 
 #patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()),
                                                 #skeleton=False, time_order=time_order))
@@ -117,17 +117,13 @@ f = LinearForm(st_fes)
 for integrator in hasneg_integrators_f:
     f += integrator
 
-print("Starting with the loop")
-
 while tend - told > delta_t/2:
     SpaceTimeInterpolateToP1(levelset,tref,told,delta_t,lset_p1)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
     
-    print("RestrictGFInTimes done")
     # update markers in (space-time) mesh
     ci.Update(lset_p1,time_order=time_order)
-    print("ci.Update done")
 
     # re-compute the facets for stabilization:
     ba_facets = GetFacetsWithNeighborTypes(mesh,a=ci.GetElementsOfType(HASNEG),
@@ -135,24 +131,19 @@ while tend - told > delta_t/2:
     # re-evaluate the "active dofs" in the space time slab
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
     
-    print("GetDofsOfElements done")
     # re-set definedonelements-markers according to new markings:
     for integrator in hasneg_integrators_a + hasneg_integrators_f:
         integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
     for integrator in patch_integrators_a:
         integrator.SetDefinedOnElements(ba_facets)
-    print("Integrators installed")
     
     # assemble linear system
     a.Assemble()
-    print("a Assemble done")
     f.Assemble()
-    
     
     # solve linear system
     inv = a.mat.Inverse(active_dofs,inverse="umfpack")
     gfu.vec.data =  inv * f.vec
-       
 
     # evaluate upper trace of solution for
     #  * for error evaluation 
