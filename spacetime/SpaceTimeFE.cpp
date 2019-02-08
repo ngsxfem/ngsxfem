@@ -72,7 +72,7 @@ namespace ngfem
               throw Exception("SpaceTimeFE :: CalcDShape called with a mere space IR");
             tFE->CalcShape(z,time_shape);
 
-            Matrix<double> space_dshape(sFE->GetNDof(),2);
+            Matrix<double> space_dshape(sFE->GetNDof(),D);
             sFE->CalcDShape(ip,space_dshape);
 
 
@@ -81,6 +81,7 @@ namespace ngfem
                 for(int i=0; i< sFE->GetNDof(); i++) {
                     dshape(ii,0) = space_dshape(i,0)*time_shape(j);
                     dshape(ii,1) = space_dshape(i,1)*time_shape(j);
+                    if(D == 3) dshape(ii,2) = space_dshape(i,2)*time_shape(j);
                     ii++;
                 }
             }
