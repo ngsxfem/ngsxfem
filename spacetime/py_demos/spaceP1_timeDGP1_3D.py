@@ -41,7 +41,7 @@ alpha = 1
 Q = pi/r0   
 u_exact = cos(Q*r) * sin(pi*t)
 u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2 + z**2)) * sin(pi*t)
-coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
+coeff_f = (2*Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
 u_init = u_exact
 
 # polynomial order in time
