@@ -3,6 +3,7 @@
 /* Author: Janosch Preuss                                            */
 /* Date:   June 2017                                                 */
 /*********************************************************************/
+#define FILE_SPACETIMEFE_CPP
 
 #include <fem.hpp>
 #include "SpaceTimeFE.hpp"
