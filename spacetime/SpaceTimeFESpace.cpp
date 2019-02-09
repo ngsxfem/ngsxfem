@@ -49,7 +49,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
         evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
         flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<2>>>();
         evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<2>>>();
-        throw Exception("Nonono 2D");
     }
     else if (ma->GetDimension() == 3){
         evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<3>>>();
@@ -128,7 +127,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
        ScalarFiniteElement<2>* s_FE2 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
        //cout << "SpaceTimeFESpace :: GetFE for 2D called" << endl;
        SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE2,t_FE,override_time,time);
-       throw Exception("Nonono 2D");
        return *st_FE;
      }
      else if(ma->GetDimension() == 3){
