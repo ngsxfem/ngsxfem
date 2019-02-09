@@ -75,7 +75,6 @@ namespace ngfem
             Matrix<double> space_dshape(sFE->GetNDof(),D);
             sFE->CalcDShape(ip,space_dshape);
 
-
             int ii = 0;
             for(int j = 0; j < tFE->GetNDof(); j++) {
                 for(int i=0; i< sFE->GetNDof(); i++) {
