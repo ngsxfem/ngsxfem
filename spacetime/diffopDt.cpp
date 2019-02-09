@@ -73,22 +73,6 @@ namespace ngfem
   template class T_DifferentialOperator<DiffOpDtVec<3, 2>>;
   template class T_DifferentialOperator<DiffOpDtVec<3, 3>>;
 
-  /*
-  template void DiffOpDtVec<2, 3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
-     SliceMatrix<double, (ORDERING)0> >(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
-                                        SliceMatrix<double, (ORDERING)0>&, LocalHeap&);
-  template void DiffOpDtVec<2, 3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
-     SliceMatrix<double, (ORDERING)0> const>(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
-                                        SliceMatrix<double, (ORDERING)0> const&, LocalHeap&);
-
-  template void DiffOpDtVec<3, 3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
-     SliceMatrix<double, (ORDERING)0> >(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
-                                        SliceMatrix<double, (ORDERING)0>&, LocalHeap&);
-  template void DiffOpDtVec<3, 3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
-     SliceMatrix<double, (ORDERING)0> const>(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
-                                        SliceMatrix<double, (ORDERING)0> const&, LocalHeap&);
- */
-
   template <int SpaceD, int time>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpFixt<SpaceD, time>::GenerateMatrix (const FEL & bfel, const MIP & mip,
