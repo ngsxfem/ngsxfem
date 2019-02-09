@@ -164,8 +164,12 @@ void ExportNgsx_spacetime(py::module &m)
     }
 
     shared_ptr<DifferentialOperator> diffopdt;
-    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
-
+    if ( self->GetFESpace()->GetSpatialDimension() == 2) {
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<2>>> ();
+    }
+    else if( self->GetFESpace()->GetSpatialDimension() == 3) {
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
+    }
     for (int i = comparr.Size() - 1; i >= 0; --i)
     {
       diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
@@ -185,7 +189,10 @@ void ExportNgsx_spacetime(py::module &m)
   m.def("dt", [](PyGF self) -> PyCF
   {
     shared_ptr<DifferentialOperator> diffopdt;
-    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+    if ( self->GetFESpace()->GetSpatialDimension() == 2)
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<2>>> ();
+    else if ( self->GetFESpace()->GetSpatialDimension() == 3)
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
 
     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdt));
   });
@@ -220,12 +227,24 @@ void ExportNgsx_spacetime(py::module &m)
      }
 
      shared_ptr<DifferentialOperator> diffopdtvec;
-
+     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
      switch (self->Dimension())
      {
-       case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
-       case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
-       case 3 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3>>> (); break;
+       case 1 : {
+         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 1>>> ();
+         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 1>>> ();
+         break;
+     }
+       case 2 : {
+         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 2>>> ();
+         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 2>>> ();
+         break;
+     }
+       case 3 : {
+         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 3>>> ();
+         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 3>>> ();
+         break;
+     }
        default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
      }
 
@@ -247,15 +266,27 @@ void ExportNgsx_spacetime(py::module &m)
 
    m.def("dt_vec", [](PyGF self) -> PyCF
    {
-     shared_ptr<DifferentialOperator> diffopdtvec;
-
-     switch (self->Dimension())
-     {
-       case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
-       case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
-       case 3 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3>>> (); break;
-       default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
-     }
+       shared_ptr<DifferentialOperator> diffopdtvec;
+       const int SpaceD = self->GetFESpace()->GetSpatialDimension();
+       switch (self->Dimension())
+       {
+         case 1 : {
+           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 1>>> ();
+           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 1>>> ();
+           break;
+       }
+         case 2 : {
+           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 2>>> ();
+           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 2>>> ();
+           break;
+       }
+         case 3 : {
+           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 3>>> ();
+           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 3>>> ();
+           break;
+       }
+         default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
+       }
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdtvec,nullptr,nullptr,0));
    });
@@ -291,19 +322,28 @@ void ExportNgsx_spacetime(py::module &m)
     }
 
     shared_ptr<DifferentialOperator> diffopfixt;
-
+    const int SpaceD = self->GetFESpace()->GetSpatialDimension();
     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
     {
       switch (int(time))
       {
-        case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-        case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+        case 0 : {
+          if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 0>>> ();
+          else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 0>>> ();
+          break;
+      }
+        case 1 : {
+          if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 1>>> ();
+          else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 1>>> ();
+          break;
+      }
         default : throw Exception("Requested time not implemented yet.");
       }
     }
     else {
       cout << "Calling DiffOpFixAnyTime" << endl;
-      diffopfixt = make_shared<DiffOpFixAnyTime> (time);
+      if(SpaceD == 2) diffopfixt = make_shared<DiffOpFixAnyTime<2>> (time);
+      else if(SpaceD == 3) diffopfixt = make_shared<DiffOpFixAnyTime<3>> (time);
     }
 
 
@@ -328,19 +368,28 @@ void ExportNgsx_spacetime(py::module &m)
    m.def("fix_t", [](PyGF self, double time, bool use_FixAnyTime) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
-
+     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
      if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
      {
        switch (int(time))
        {
-         case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-         case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+         case 0 : {
+           if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 0>>> ();
+           else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 0>>> ();
+           break;
+       }
+         case 1 : {
+           if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 1>>> ();
+           else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 1>>> ();
+           break;
+       }
          default : throw Exception("Requested time not implemented yet.");
        }
      }
      else {
        cout << "Calling DiffOpFixAnyTime" << endl;
-       diffopfixt = make_shared<DiffOpFixAnyTime> (time);
+       if(SpaceD == 2) diffopfixt = make_shared<DiffOpFixAnyTime<2>> (time);
+       else if(SpaceD == 3) diffopfixt = make_shared<DiffOpFixAnyTime<3>> (time);
      }
 
 

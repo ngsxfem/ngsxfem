@@ -7,109 +7,107 @@
 namespace ngfem
 {
 
-  template <typename FEL, typename MIP, typename MAT>
-  void DiffOpDt::GenerateMatrix (const FEL & bfel, const MIP & mip,
+  template <int SpaceD>
+    template<typename FEL, typename MIP, typename MAT>
+  void DiffOpDt<SpaceD>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
       IntegrationPoint ip(mip.IP());
       mat = 0.0;
 
-      const SpaceTimeFE<2>* scafe2 =
-              dynamic_cast<const SpaceTimeFE<2> * > (& bfel);
-      if(scafe2) {
-          FlatVector<> dtshape (scafe2->GetNDof(),lh);
-          scafe2->CalcDtShape(ip,dtshape);
+      if (SpaceD == 2){
+          const SpaceTimeFE<2>& scafe2 =
+                  dynamic_cast<const SpaceTimeFE<2>& > ( bfel);
+          FlatVector<> dtshape (scafe2.GetNDof(),lh);
+          scafe2.CalcDtShape(ip,dtshape);
           mat.Row(0) = dtshape;
           return;
       }
-
-      const SpaceTimeFE<3>* scafe3 =
-              dynamic_cast<const SpaceTimeFE<3> * > (& bfel);
-      if(scafe3) {
-          FlatVector<> dtshape (scafe3->GetNDof(),lh);
-          scafe3->CalcDtShape(ip,dtshape);
+      else if(SpaceD == 3){
+          const SpaceTimeFE<3>& scafe3 =
+              dynamic_cast<const SpaceTimeFE<3> & > ( bfel);
+          FlatVector<> dtshape (scafe3.GetNDof(),lh);
+          scafe3.CalcDtShape(ip,dtshape);
           mat.Row(0) = dtshape;
           return;
       }
-
     }
 
-  template class T_DifferentialOperator<DiffOpDt>;
+  template class T_DifferentialOperator<DiffOpDt<2>>;
+  template class T_DifferentialOperator<DiffOpDt<3>>;
 
-  template <int D>
+  template <int SpaceD, int D>
   template <typename FEL, typename MIP, typename MAT>
-  void DiffOpDtVec<D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+  void DiffOpDtVec<SpaceD, D>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
       IntegrationPoint ip(mip.IP());
       mat = 0.0;
 
-      const SpaceTimeFE<2> * scafe2 =
-              dynamic_cast<const SpaceTimeFE<2> * > (& bfel);
-      if(scafe2){
-        FlatVector<> dtshape (scafe2->GetNDof(),lh);
-        scafe2->CalcDtShape(ip,dtshape);
-        for (int j = 0; j < D; j++)
-          for (int k = 0; k < dtshape.Size(); k++)
-            mat(j,k*D+j) = dtshape(k);
+      if(SpaceD == 2) {
+          const SpaceTimeFE<2>& scafe2 =
+              dynamic_cast<const SpaceTimeFE<2>& > (bfel);
+          FlatVector<> dtshape (scafe2.GetNDof(),lh);
+          scafe2.CalcDtShape(ip,dtshape);
+          for (int j = 0; j < D; j++)
+            for (int k = 0; k < dtshape.Size(); k++)
+              mat(j,k*D+j) = dtshape(k);
       }
+      else if(SpaceD == 3){
+          const SpaceTimeFE<3>& scafe3 =
+              dynamic_cast<const SpaceTimeFE<3> & > (bfel);
 
-      const SpaceTimeFE<3> * scafe3 =
-              dynamic_cast<const SpaceTimeFE<3> * > (& bfel);
-      if(scafe3){
-        FlatVector<> dtshape (scafe3->GetNDof(),lh);
-        scafe3->CalcDtShape(ip,dtshape);
-        for (int j = 0; j < D; j++)
-          for (int k = 0; k < dtshape.Size(); k++)
-            mat(j,k*D+j) = dtshape(k);
+          FlatVector<> dtshape (scafe3.GetNDof(),lh);
+          scafe3.CalcDtShape(ip,dtshape);
+          for (int j = 0; j < D; j++)
+            for (int k = 0; k < dtshape.Size(); k++)
+              mat(j,k*D+j) = dtshape(k);
       }
-
     }
 
-  template class T_DifferentialOperator<DiffOpDtVec<1>>;
-  template class T_DifferentialOperator<DiffOpDtVec<2>>;
-  template class T_DifferentialOperator<DiffOpDtVec<3>>;
+  template class T_DifferentialOperator<DiffOpDtVec<2, 1>>;
+  template class T_DifferentialOperator<DiffOpDtVec<2, 2>>;
+  template class T_DifferentialOperator<DiffOpDtVec<2, 3>>;
 
-  template void DiffOpDtVec<3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
-     SliceMatrix<double, (ORDERING)0> >(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
-                                        SliceMatrix<double, (ORDERING)0>&, LocalHeap&);
-  template void DiffOpDtVec<3>::GenerateMatrix<FiniteElement, MappedIntegrationPoint<2, 2, double>,
-     SliceMatrix<double, (ORDERING)0> const>(FiniteElement const&, MappedIntegrationPoint<2, 2, double> const&,
-                                        SliceMatrix<double, (ORDERING)0> const&, LocalHeap&);
+  template class T_DifferentialOperator<DiffOpDtVec<3, 1>>;
+  template class T_DifferentialOperator<DiffOpDtVec<3, 2>>;
+  template class T_DifferentialOperator<DiffOpDtVec<3, 3>>;
 
-  template <int time>
+  template <int SpaceD, int time>
   template <typename FEL, typename MIP, typename MAT>
-  void DiffOpFixt<time>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+  void DiffOpFixt<SpaceD, time>::GenerateMatrix (const FEL & bfel, const MIP & mip,
                                              MAT & mat, LocalHeap & lh)
   {
 
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
       ip.SetPrecomputedGeometry(true);
       mat = 0.0;
+      if(SpaceD == 2) {
+          const SpaceTimeFE<2>& scafe2 =
+              dynamic_cast<const SpaceTimeFE<2> & > (bfel);
 
-      const SpaceTimeFE<2> * scafe2 =
-              dynamic_cast<const SpaceTimeFE<2> * > (&bfel);
-      if(scafe2){
-          FlatVector<> shape (scafe2->GetNDof(),lh);
-          scafe2->CalcShape(ip,shape);
+          FlatVector<> shape (scafe2.GetNDof(),lh);
+          scafe2.CalcShape(ip,shape);
           mat.Row(0) = shape;
       }
-
-      const SpaceTimeFE<3> * scafe3 =
-              dynamic_cast<const SpaceTimeFE<3> * > (&bfel);
-      if(scafe3){
-          FlatVector<> shape (scafe3->GetNDof(),lh);
-          scafe3->CalcShape(ip,shape);
+      else if(SpaceD == 3){
+          const SpaceTimeFE<3>& scafe3 =
+              dynamic_cast<const SpaceTimeFE<3> & > (bfel);
+          FlatVector<> shape (scafe3.GetNDof(),lh);
+          scafe3.CalcShape(ip,shape);
           mat.Row(0) = shape;
       }
 
    }
 
-  template class T_DifferentialOperator<DiffOpFixt<0>>;
-  template class T_DifferentialOperator<DiffOpFixt<1>>;
+  template class T_DifferentialOperator<DiffOpFixt<2, 0>>;
+  template class T_DifferentialOperator<DiffOpFixt<2, 1>>;
 
+  template class T_DifferentialOperator<DiffOpFixt<3, 0>>;
+  template class T_DifferentialOperator<DiffOpFixt<3, 1>>;
 
-  void DiffOpFixAnyTime ::
+  template<int SpaceD>
+  void DiffOpFixAnyTime<SpaceD> ::
   CalcMatrix (const FiniteElement & bfel,
               const BaseMappedIntegrationPoint & bmip,
               SliceMatrix<double,ColMajor> mat,
@@ -123,23 +121,25 @@ namespace ngfem
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
       ip.SetPrecomputedGeometry(true);
 
-      const SpaceTimeFE<2> * scafe2 =
-            dynamic_cast<const SpaceTimeFE<2> *> (&bfel);
-      if(scafe2){
-        FlatVector<> shape (scafe2->GetNDof(),lh);
-        scafe2->CalcShape(ip,shape);
-        mat.Row(0) = shape;
+      if(SpaceD == 2) {
+          const SpaceTimeFE<2>& scafe2 =
+            dynamic_cast<const SpaceTimeFE<2> &> (bfel);
+
+          FlatVector<> shape (scafe2.GetNDof(),lh);
+          scafe2.CalcShape(ip,shape);
+          mat.Row(0) = shape;
       }
-      const SpaceTimeFE<3> * scafe3 =
-            dynamic_cast<const SpaceTimeFE<3> *> (&bfel);
-      if(scafe3){
-        FlatVector<> shape (scafe3->GetNDof(),lh);
-        scafe3->CalcShape(ip,shape);
-        mat.Row(0) = shape;
+      else if(SpaceD == 3){
+          const SpaceTimeFE<3> & scafe3 =
+            dynamic_cast<const SpaceTimeFE<3> &> (bfel);
+          FlatVector<> shape (scafe3.GetNDof(),lh);
+          scafe3.CalcShape(ip,shape);
+          mat.Row(0) = shape;
       }
   }
 
-  void DiffOpFixAnyTime ::
+  template<int SpaceD>
+  void DiffOpFixAnyTime<SpaceD> ::
   ApplyTrans (const FiniteElement & fel,
               const BaseMappedIntegrationPoint & mip,
               FlatVector<double> flux,
@@ -152,7 +152,8 @@ namespace ngfem
     x = Trans(mat) * flux;
   }
 
-
+  template class DiffOpFixAnyTime<2>;
+  template class DiffOpFixAnyTime<3>;
 
 }
 
