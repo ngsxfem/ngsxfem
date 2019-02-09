@@ -96,8 +96,6 @@ namespace ngfem
 
       };
 
-    template class SpaceTimeFE<2>;
-    template class SpaceTimeFE<3>;
  }
 
 
