@@ -79,9 +79,7 @@ namespace ngfem
             int ii = 0;
             for(int j = 0; j < tFE->GetNDof(); j++) {
                 for(int i=0; i< sFE->GetNDof(); i++) {
-                    dshape(ii,0) = space_dshape(i,0)*time_shape(j);
-                    dshape(ii,1) = space_dshape(i,1)*time_shape(j);
-                    if(D == 3) dshape(ii,2) = space_dshape(i,2)*time_shape(j);
+                    for(int dimi = 0; dimi<D; dimi++) dshape(ii,dimi) = space_dshape(i,dimi)*time_shape(j);
                     ii++;
                 }
             }
