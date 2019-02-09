@@ -14,6 +14,8 @@
 #include "../utils/p1interpol.hpp"
 #include "timecf.hpp"
 
+const double EPS = 1e-9;
+
 /*
 #include <diffop_impl.hpp>
 #ifdef WIN32
@@ -152,7 +154,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      for(int i= 0; i < nodes.Size(); i++) {
          if (!IsTimeNodeActive(i))
            continue;
-         if(time == nodes[i]) {
+         if(abs(time - nodes[i]) < EPS) {
              cout << IM(3) <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
                  restricted_vec[j] = st_vec[j+cnt*Vh->GetNDof()];
