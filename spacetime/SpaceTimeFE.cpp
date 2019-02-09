@@ -3,8 +3,6 @@
 /* Author: Janosch Preuss                                            */
 /* Date:   June 2017                                                 */
 /*********************************************************************/
-#define FILE_SPACETIMEFE_CPP
-
 #include <fem.hpp>
 #include "SpaceTimeFE.hpp"
 
@@ -171,5 +169,8 @@ namespace ngfem
           default : throw Exception("Requested TimeFE not implemented yet.");
          }
       }
+
+      template class SpaceTimeFE<2>;
+      template class SpaceTimeFE<3>;
 
 }

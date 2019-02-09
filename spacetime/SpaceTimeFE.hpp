@@ -96,10 +96,6 @@ namespace ngfem
 
       };
 
-#ifndef FILE_SPACETIMEFE_CPP
-    template class SpaceTimeFE<2>;
-    template class SpaceTimeFE<3>;
-#endif
  }
 
 
