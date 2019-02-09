@@ -27,7 +27,7 @@ namespace ngfem
       // constructor
       SpaceTimeFE (ScalarFiniteElement<D>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
 
-      virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
+      virtual ELEMENT_TYPE ElementType() const { return sFE->ElementType(); }
 
 
       virtual void CalcShape (const IntegrationPoint & ip,
