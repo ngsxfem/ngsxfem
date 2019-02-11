@@ -100,10 +100,10 @@ hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = f
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
 
-patch_integrators_a.append(SymbolicFacetPatchBFI(20*h*InnerProduct(grad(u) - grad(u.Other()), n_F) * InnerProduct(grad(v) - grad(v.Other()), n_F), skeleton=True, time_order=time_order))
+#patch_integrators_a.append(SymbolicFacetPatchBFI(20*h*InnerProduct(grad(u) - grad(u.Other()), n_F) * InnerProduct(grad(v) - grad(v.Other()), n_F), skeleton=True, time_order=time_order))
 
-#patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()),
-                                                #skeleton=False, time_order=time_order))
+patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
+
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
 

@@ -787,6 +787,91 @@ namespace ngfem
     simd_evaluate=false;
   }
 
+  // maps an integration point from inside one element to an integration point of the neighbor element
+  // (integration point will be outside), so that the mapped points have the same coordinate
+  template<int D>
+  void MapPatchIntegrationPoint(IntegrationPoint & from_ip, const ElementTransformation & from_trafo,
+                                const ElementTransformation & to_trafo, IntegrationPoint & to_ip,
+                                LocalHeap & lh)
+  {
+    // cout << " ------------------------------------------- " << endl;
+    const int max_its = 200;
+    const double eps_acc = 1e-8;
+
+    HeapReset hr(lh);
+
+    FlatVector<double> vec(D,lh);
+    FlatVector<double> diff(D,lh);
+    FlatVector<double> update(D,lh);
+
+    MappedIntegrationPoint<D,D> mip(from_ip, from_trafo);
+    const double h = sqrt(mip.GetJacobiDet());
+
+    IntegrationPoint * ip_x0 = new(lh) IntegrationPoint();
+    IntegrationPoint * ip_x00 = new(lh) IntegrationPoint();
+
+    vec = mip.GetPoint();
+    double w00 = 0;
+    double first_diffnorm = 0;
+
+    {
+      HeapReset hr(lh);
+      auto ip_a0 = new (lh) IntegrationPoint(0,0,0);
+      auto mip_a0 = new (lh) MappedIntegrationPoint<D,D>(*ip_a0,to_trafo);
+      FlatMatrix<double> A(D,D,lh);
+      FlatMatrix<double> Ainv(D,D,lh);
+      FlatVector<double> f(D,lh);
+      f = vec - mip_a0->GetPoint();
+      for (int d = 0; d < D ;  d++)
+      {
+        FlatVector<double> xhat(D,lh);
+        for (int di = 0; di < D;  di++)
+        {
+          if (di == d)
+            xhat(di) = 1;
+          else
+            xhat(di) = 0;
+        }
+        auto ip_ai = new (lh) IntegrationPoint(xhat,0.);
+        auto mip_ai = new (lh) MappedIntegrationPoint<D,D>(*ip_ai,to_trafo);
+        A.Col(d) = mip_ai->GetPoint() - mip_a0->GetPoint();
+      }
+      Ainv = Inv(A);
+      w00 = abs(Det(A));
+      ip_x00->Point() = Ainv * f;
+      ip_x0->Point() = ip_x00->Point();
+    }
+
+    int its = 0;
+    double w = 0;
+    while (its==0 || (L2Norm(diff) > eps_acc*h && its < max_its))
+    {
+      MappedIntegrationPoint<D,D> mip_x0(*ip_x0,to_trafo);
+      diff = vec - mip_x0.GetPoint();
+      if (its==0)
+        first_diffnorm = L2Norm(diff);
+      update = mip_x0.GetJacobianInverse() * diff;
+      ip_x0->Point() += update;
+      its++;
+      w = mip_x0.GetMeasure();
+    }
+
+    if(its >= max_its){
+      cout << "MapPatchIntegrationPoint: Newton did not converge after "
+           << its <<" iterations! (" << D <<"D)" << endl;
+      cout << "taking a low order guess" << endl;
+      cout << "diff = " << first_diffnorm << endl;
+      to_ip = *ip_x00;
+      to_ip.SetWeight(mip.GetWeight()/w00);
+    }
+    else
+    {
+      to_ip = *ip_x0;
+      to_ip.SetWeight(mip.GetWeight()/w);
+    }
+  }
+
+
   void SymbolicFacetPatchBilinearFormIntegrator ::
   CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
                    const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
@@ -798,6 +883,7 @@ namespace ngfem
     elmat = 0.0;
     if (LocalFacetNr2==-1) throw Exception ("SymbolicFacetPatchBFI: LocalFacetNr2==-1");
 
+    int D = trafo1.SpaceDim();
     int maxorder = max2 (fel1.Order(), fel2.Order());
 
     auto eltype1 = trafo1.GetElementType();
@@ -809,117 +895,17 @@ namespace ngfem
     IntegrationRule ir_patch1 (ir_vol1.Size()+ir_vol2.Size(),lh);
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
 
-    if(trafo1.SpaceDim() == 2) {
-    Vec<2> vec;
-    Vec<2> diff;
-    Vec<2> update;
-    
-    for (int l = 0; l < ir_patch1.Size(); l++)
-    { /// TODO : D == 2 or D == 3
-      if (l<ir_vol1.Size())
-      {
-        ir_patch1[l] = ir_vol1[l];
-        MappedIntegrationPoint<2,2> mip(ir_vol1[l], trafo1);
-        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
-        const double h = sqrt(mip.GetJacobiDet());
-        IntegrationPoint ip_x0;
-        vec = mip.GetPoint();
-        int its = 0;
-        double w = 0;
-        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 20))
-        {
-          MappedIntegrationPoint<2,2> mip_x0(ip_x0,trafo2);
-          diff = vec - mip_x0.GetPoint();
-          update = mip_x0.GetJacobianInverse() * diff;
-          for (int d = 0; d < 2; ++d)
-            ip_x0(d) += update(d);
-          its++;
-          w = mip_x0.GetMeasure();
+    for (int l = 0; l < ir_patch1.Size(); l++) {
+        if (l<ir_vol1.Size()) {
+            ir_patch1[l] = ir_vol1[l];
+            if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+            else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
         }
-        ir_patch2[l] = ip_x0;
-        ir_patch2[l].SetWeight(mip.GetWeight()/w);
-      }
-      else
-      {
-        ir_patch2[l] = ir_vol2[l-ir_vol1.Size()];
-        MappedIntegrationPoint<2,2> mip(ir_vol2[l-ir_vol1.Size()], trafo2);
-        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
-        const double h = sqrt(mip.GetJacobiDet());
-        IntegrationPoint ip_x0;
-        vec = mip.GetPoint();
-        int its = 0;
-        double w = 0;
-        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 20))
-        {
-          MappedIntegrationPoint<2,2> mip_x0(ip_x0,trafo1);
-          diff = vec - mip_x0.GetPoint();
-          update = mip_x0.GetJacobianInverse() * diff;
-          for (int d = 0; d < 2; ++d)
-            ip_x0(d) += update(d);
-          its++;
-          w = mip_x0.GetMeasure();
+        else {
+            ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
+            if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+            else MapPatchIntegrationPoint<3>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
         }
-        ir_patch1[l] = ip_x0;
-        ir_patch1[l].SetWeight(mip.GetWeight()/w);
-      }
-    }
-    }
-    if(trafo1.SpaceDim() == 3) {
-    Vec<3> vec;
-    Vec<3> diff;
-    Vec<3> update;
-
-    for (int l = 0; l < ir_patch1.Size(); l++)
-    {
-      if (l<ir_vol1.Size())
-      {
-        ir_patch1[l] = ir_vol1[l];
-        MappedIntegrationPoint<3,3> mip(ir_vol1[l], trafo1);
-        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
-        const double h = cbrt(mip.GetJacobiDet());
-        IntegrationPoint ip_x0;
-        vec = mip.GetPoint();
-        int its = 0;
-        double w = 0;
-        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 50))
-        {
-          MappedIntegrationPoint<2,2> mip_x0(ip_x0,trafo2);
-          diff = vec - mip_x0.GetPoint();
-          update = mip_x0.GetJacobianInverse() * diff;
-          for (int d = 0; d < 2; ++d)
-            ip_x0(d) += update(d);
-          its++;
-          w = mip_x0.GetMeasure();
-          //cout << "its (1): " << its << endl;
-        }
-        ir_patch2[l] = ip_x0;
-        ir_patch2[l].SetWeight(mip.GetWeight()/w);
-      }
-      else
-      {
-        ir_patch2[l] = ir_vol2[l-ir_vol1.Size()];
-        MappedIntegrationPoint<3,3> mip(ir_vol2[l-ir_vol1.Size()], trafo2);
-        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
-        const double h = cbrt(mip.GetJacobiDet());
-        IntegrationPoint ip_x0;
-        vec = mip.GetPoint();
-        int its = 0;
-        double w = 0;
-        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 50))
-        {
-          MappedIntegrationPoint<3,3> mip_x0(ip_x0,trafo1);
-          diff = vec - mip_x0.GetPoint();
-          update = mip_x0.GetJacobianInverse() * diff;
-          for (int d = 0; d < 2; ++d)
-            ip_x0(d) += update(d);
-          its++;
-          w = mip_x0.GetMeasure();
-          //cout << "its (2): " << its << endl;
-        }
-        ir_patch1[l] = ip_x0;
-        ir_patch1[l].SetWeight(mip.GetWeight()/w);
-      }
-    }
     }
     
     IntegrationRule * ir1 = nullptr;
