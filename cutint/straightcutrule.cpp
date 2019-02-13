@@ -40,7 +40,11 @@ namespace xintegration
 
   PolytopE SimpleX::CalcIFPolytopEUsingLset(vector<double> lset_on_points){
       static Timer t ("SimpleX::CalcIFPolytopEUsingLset"); RegionTimer reg(t);
-      if(CheckIfStraightCut(lset_on_points) != IF) throw Exception ("You tried to cut a simplex with a plain geometry lset function");
+      if(CheckIfStraightCut(lset_on_points) != IF) {
+          cout << "Lsetvals: ";
+          for(auto d: lset_on_points) cout << d << endl;
+          throw Exception ("You tried to cut a simplex with a plain geometry lset function");
+      }
       if(D == 1) return SimpleX({Vec<3>(points[0] +(lset_on_points[0]/(lset_on_points[0]-lset_on_points[1]))*(points[1]-points[0]))});
       else {
           Array<Vec<3>> cut_points;
