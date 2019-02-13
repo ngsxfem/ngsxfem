@@ -1,6 +1,7 @@
 import pytest
 from ngsolve import *
 from ngsolve.meshes import *
+from netgen.csg import *
 from xfem import *
 from math import pi
 import netgen.meshing as ngm
@@ -504,3 +505,170 @@ def test_spacetime_spaceP1_timeDGP1():
         # print time and error
         print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
         assert(l2error < 0.085)
+
+def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
+    if structured_mesh:
+        length = 1
+        mesh = MakeStructured2DMesh(quads=False,nx=2**(i),ny=2**(i),mapping= lambda x,y : (2*length*x-length,2*length*y-length))
+    else:
+        square = SplineGeometry()
+        square.AddRectangle([-1,-1],[1,1])
+        ngmesh = square.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
+        mesh = Mesh (ngmesh)
+
+    coef_told = Parameter(0)
+    coef_delta_t = Parameter(0)
+    tref = ReferenceTimeVariable()
+    t = coef_told + coef_delta_t*tref
+    
+    r0 = 0.9
+    r = sqrt(x**2+y**2+t**2)
+    
+    # level set
+    levelset= r - r0
+    grad_lset = CoefficientFunction(( x/r, y/r, t/r))
+    
+    f = sqrt(grad_lset**2)/sqrt(grad_lset**2- (grad_lset[2])**2)
+    
+    time_order = 1
+    fes1 = H1(mesh, order=1)
+    tfe = ScalarTimeFE(time_order)
+    st_fes = SpaceTimeFESpace(fes1,tfe)
+    
+    tend = 1
+    delta_t = tend/n_steps
+    coef_delta_t.Set(delta_t)
+    told = 0
+
+    lset_p1 = GridFunction(st_fes)
+    
+    sum_vol = 0
+    sum_int = 0
+    for i in range(n_steps):
+        SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
+    
+        val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, f, mesh, time_order = time_order)
+        #print(val_vol, val_int)
+        sum_vol += val_vol*delta_t
+        sum_int += val_int*delta_t
+        
+        told = told + delta_t
+        coef_told.Set(told)
+
+    print("SUM VOL: ", sum_vol)
+    print("VOL: ", 2/3*pi*r0**3)
+    vol_err = abs(sum_vol - 2/3*pi*r0**3)
+    print("\t\tDIFF: ", vol_err)
+    
+    print("SUM INT: ", sum_int)
+    print("AREA: ", 2*pi*r0**2)
+    int_err = abs(sum_int - 2*pi*r0**2)
+    print("\t\tDIFF: ",int_err)
+    return (vol_err, int_err)
+
+@pytest.mark.parametrize("structured", [True, False])
+def test_spacetime_area_of_a_sphere(structured):
+    
+    l2errors_vol = []
+    l2errors_int = []
+    for i in range(6):
+        (n_steps,i) =  (2**(i+2), i+1)
+        (vol_err, int_err) = area_of_a_sphere_ST_error(n_steps, i, structured)
+        l2errors_vol.append(vol_err)
+        l2errors_int.append(int_err)
+    
+    eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
+    print("EOCS (VOL): ", eocs_vol)
+    avg = sum(eocs_vol)/len(eocs_vol)
+    print("Average: ", avg)
+    assert avg > 1.75
+    
+    eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
+    print("EOCS (INT): ", eocs_int)
+    avg = sum(eocs_int)/len(eocs_int)
+    print("Average: ", avg)
+    assert avg > 1.75
+
+def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
+    if structured_mesh:
+        length = 1
+        mesh = MakeStructured3DMesh(hexes=False,nx=2**(i),ny=2**(i), nz=2**(i),mapping= lambda x,y,z : (2*length*x-length,2*length*y-length, 2*length*z - length))
+    else:
+        cube = CSGeometry()
+        cube.Add (OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)))
+        ngmesh = cube.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
+        mesh = Mesh (ngmesh)
+
+    coef_told = Parameter(0)
+    coef_delta_t = Parameter(0)
+    tref = ReferenceTimeVariable()
+    t = coef_told + coef_delta_t*tref
+    
+    r0 = 0.9
+    r = sqrt(x**2+y**2+z**2+t**2)
+    
+    # level set
+    levelset= r - r0
+    
+    grad_lset = CoefficientFunction(( x/r, y/r, z/r, t/r))
+    f = sqrt(grad_lset**2)/sqrt(grad_lset**2- (grad_lset[3])**2)
+    
+    time_order = 1
+    fes1 = H1(mesh, order=1)
+    tfe = ScalarTimeFE(time_order)
+    st_fes = SpaceTimeFESpace(fes1,tfe)
+
+    tend = 1
+    delta_t = tend/n_steps
+    coef_delta_t.Set(delta_t)
+    told = 0
+    
+    lset_p1 = GridFunction(st_fes)
+    
+    sum_vol = 0
+    sum_int = 0
+    for i in range(n_steps):
+        SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
+    
+        val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, f, mesh, time_order = time_order)
+        #print(val_vol, val_int)
+        sum_vol += val_vol*delta_t
+        sum_int += val_int*delta_t
+        
+        told = told + delta_t
+        coef_told.Set(told)
+
+    print("SUM VOL: ", sum_vol)
+    print("VOL: ", pi**2/4*r0**4)
+    vol_err = abs(sum_vol - pi**2/4*r0**4)
+    print("\t\tDIFF: ", vol_err)
+    
+    print("SUM INT: ", sum_int)
+    print("AREA: ", pi**2*r0**3)
+    int_err = abs(sum_int - pi**2*r0**3)
+    print("\t\tDIFF: ", int_err)
+    return (vol_err, int_err)
+
+@pytest.mark.parametrize("structured", [True, False])
+def test_spacetime_area_of_a_hypersphere(structured):
+    l2errors_vol = []
+    l2errors_int = []
+    for i in range(4):
+        (n_steps,i) =  (2**(i+2), i+1)
+        (vol_err, int_err) = area_of_a_hypersphere_ST_error(n_steps, i, True)
+        l2errors_vol.append(vol_err)
+        l2errors_int.append(int_err)
+    
+    eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
+    print("EOCS (VOL): ", eocs_vol)
+    avg = sum(eocs_vol)/len(eocs_vol)
+    print("Average: ", avg)
+    assert avg > 1.75
+    
+    eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
+    print("EOCS (INT): ", eocs_int)
+    avg = sum(eocs_int)/len(eocs_int)
+    print("Average: ", avg)
+    assert avg > 1.75
