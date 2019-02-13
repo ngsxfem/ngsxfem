@@ -1,5 +1,6 @@
 from ngsolve import *
 from netgen.csg import *
+from ngsolve.meshes import *
 
 from xfem import *
 from math import pi
@@ -11,7 +12,7 @@ ngsglobals.msg_level = 1
 def area_of_a_hypersphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
     if structured_mesh:
         length = 1
-        mesh = MakeStructured3DMesh(quads=False,nx=2**(i),ny=2**(i), nz=2**(i),mapping= lambda x,y,z : (2*length*x-length,2*length*y-length, 2*length*z - length))
+        mesh = MakeStructured3DMesh(hexes=False,nx=2**(i),ny=2**(i), nz=2**(i),mapping= lambda x,y,z : (2*length*x-length,2*length*y-length, 2*length*z - length))
     else:
         cube = CSGeometry()
         cube.Add (OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)))
@@ -73,7 +74,7 @@ l2errors_vol = []
 l2errors_int = []
 for i in range(4):
     (n_steps,i) =  (2**(i+2), i+1)
-    (vol_err, int_err) = area_of_a_hypersphere_ST_error(n_steps, i, False)
+    (vol_err, int_err) = area_of_a_hypersphere_ST_error(n_steps, i, True)
     l2errors_vol.append(vol_err)
     l2errors_int.append(int_err)
 
