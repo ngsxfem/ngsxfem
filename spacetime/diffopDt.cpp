@@ -15,22 +15,10 @@ namespace ngfem
       IntegrationPoint ip(mip.IP());
       mat = 0.0;
 
-      if (SpaceD == 2){
-          const SpaceTimeFE<2>& scafe2 =
-                  dynamic_cast<const SpaceTimeFE<2>& > ( bfel);
-          FlatVector<> dtshape (scafe2.GetNDof(),lh);
-          scafe2.CalcDtShape(ip,dtshape);
-          mat.Row(0) = dtshape;
-          return;
-      }
-      else if(SpaceD == 3){
-          const SpaceTimeFE<3>& scafe3 =
-              dynamic_cast<const SpaceTimeFE<3> & > ( bfel);
-          FlatVector<> dtshape (scafe3.GetNDof(),lh);
-          scafe3.CalcDtShape(ip,dtshape);
-          mat.Row(0) = dtshape;
-          return;
-      }
+      const SpaceTimeFE<SpaceD>* scafed = dynamic_cast<const SpaceTimeFE<SpaceD> * > (& bfel);
+      FlatVector<> dtshape (scafed->GetNDof(),lh);
+      scafed->CalcDtShape(ip,dtshape);
+      mat.Row(0) = dtshape;
     }
 
   template class T_DifferentialOperator<DiffOpDt<2>>;
@@ -44,25 +32,12 @@ namespace ngfem
       IntegrationPoint ip(mip.IP());
       mat = 0.0;
 
-      if(SpaceD == 2) {
-          const SpaceTimeFE<2>& scafe2 =
-              dynamic_cast<const SpaceTimeFE<2>& > (bfel);
-          FlatVector<> dtshape (scafe2.GetNDof(),lh);
-          scafe2.CalcDtShape(ip,dtshape);
-          for (int j = 0; j < D; j++)
-            for (int k = 0; k < dtshape.Size(); k++)
-              mat(j,k*D+j) = dtshape(k);
-      }
-      else if(SpaceD == 3){
-          const SpaceTimeFE<3>& scafe3 =
-              dynamic_cast<const SpaceTimeFE<3> & > (bfel);
-
-          FlatVector<> dtshape (scafe3.GetNDof(),lh);
-          scafe3.CalcDtShape(ip,dtshape);
-          for (int j = 0; j < D; j++)
-            for (int k = 0; k < dtshape.Size(); k++)
-              mat(j,k*D+j) = dtshape(k);
-      }
+      const SpaceTimeFE<SpaceD>& scafed = dynamic_cast<const SpaceTimeFE<SpaceD>& > (bfel);
+      FlatVector<> dtshape (scafed.GetNDof(),lh);
+      scafed.CalcDtShape(ip,dtshape);
+      for (int j = 0; j < D; j++)
+        for (int k = 0; k < dtshape.Size(); k++)
+            mat(j,k*D+j) = dtshape(k);
     }
 
   template class T_DifferentialOperator<DiffOpDtVec<2, 1>>;
@@ -82,22 +57,11 @@ namespace ngfem
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
       ip.SetPrecomputedGeometry(true);
       mat = 0.0;
-      if(SpaceD == 2) {
-          const SpaceTimeFE<2>& scafe2 =
-              dynamic_cast<const SpaceTimeFE<2> & > (bfel);
+      const SpaceTimeFE<SpaceD>& scafed = dynamic_cast<const SpaceTimeFE<SpaceD> & > (bfel);
 
-          FlatVector<> shape (scafe2.GetNDof(),lh);
-          scafe2.CalcShape(ip,shape);
-          mat.Row(0) = shape;
-      }
-      else if(SpaceD == 3){
-          const SpaceTimeFE<3>& scafe3 =
-              dynamic_cast<const SpaceTimeFE<3> & > (bfel);
-          FlatVector<> shape (scafe3.GetNDof(),lh);
-          scafe3.CalcShape(ip,shape);
-          mat.Row(0) = shape;
-      }
-
+      FlatVector<> shape (scafed.GetNDof(),lh);
+      scafed.CalcShape(ip,shape);
+      mat.Row(0) = shape;
    }
 
   template class T_DifferentialOperator<DiffOpFixt<2, 0>>;
@@ -121,21 +85,11 @@ namespace ngfem
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
       ip.SetPrecomputedGeometry(true);
 
-      if(SpaceD == 2) {
-          const SpaceTimeFE<2>& scafe2 =
-            dynamic_cast<const SpaceTimeFE<2> &> (bfel);
+      const SpaceTimeFE<SpaceD>& scafed = dynamic_cast<const SpaceTimeFE<SpaceD> &> (bfel);
 
-          FlatVector<> shape (scafe2.GetNDof(),lh);
-          scafe2.CalcShape(ip,shape);
-          mat.Row(0) = shape;
-      }
-      else if(SpaceD == 3){
-          const SpaceTimeFE<3> & scafe3 =
-            dynamic_cast<const SpaceTimeFE<3> &> (bfel);
-          FlatVector<> shape (scafe3.GetNDof(),lh);
-          scafe3.CalcShape(ip,shape);
-          mat.Row(0) = shape;
-      }
+      FlatVector<> shape (scafed.GetNDof(),lh);
+      scafed.CalcShape(ip,shape);
+      mat.Row(0) = shape;
   }
 
   template<int SpaceD>
