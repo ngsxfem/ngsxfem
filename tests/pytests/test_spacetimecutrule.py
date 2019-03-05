@@ -659,7 +659,7 @@ def test_spacetime_area_of_a_hypersphere(structured):
     l2errors_int = []
     for i in range(4):
         (n_steps,i) =  (2**(i+2), i+1)
-        (vol_err, int_err) = area_of_a_hypersphere_ST_error(n_steps, i, True)
+        (vol_err, int_err) = area_of_a_hypersphere_ST_error(n_steps, i, structured)
         l2errors_vol.append(vol_err)
         l2errors_int.append(int_err)
     
