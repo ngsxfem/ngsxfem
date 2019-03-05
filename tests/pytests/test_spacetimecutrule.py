@@ -578,12 +578,14 @@ def test_spacetime_area_of_a_sphere(structured):
         l2errors_vol.append(vol_err)
         l2errors_int.append(int_err)
     
+    print("L2 (VOL): ", l2errors_vol)
     eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
     print("EOCS (VOL): ", eocs_vol)
     avg = sum(eocs_vol)/len(eocs_vol)
     print("Average: ", avg)
     assert avg > 1.75
     
+    print("L2 (INT): ", l2errors_int)
     eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
     print("EOCS (INT): ", eocs_int)
     avg = sum(eocs_int)/len(eocs_int)
@@ -661,12 +663,14 @@ def test_spacetime_area_of_a_hypersphere(structured):
         l2errors_vol.append(vol_err)
         l2errors_int.append(int_err)
     
+    print("L2 (VOL): ", l2errors_vol)
     eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
     print("EOCS (VOL): ", eocs_vol)
     avg = sum(eocs_vol)/len(eocs_vol)
     print("Average: ", avg)
     assert avg > 1.75
     
+    print("L2 (INT): ", l2errors_int)
     eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
     print("EOCS (INT): ", eocs_int)
     avg = sum(eocs_int)/len(eocs_int)
