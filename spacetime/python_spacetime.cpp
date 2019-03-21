@@ -40,8 +40,6 @@ void ExportNgsx_spacetime(py::module &m)
   typedef shared_ptr<SpaceTimeFESpace> PySTFES;
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
 
-  m.def("DebugSpaceTimeCutIntegrationRule", [](){ DebugSpaceTimeCutIntegrationRule(); });
-
   m.def("SpaceTimeFESpace", [] (
                                         PyFES basefes,
                                         shared_ptr<FiniteElement> fe,
