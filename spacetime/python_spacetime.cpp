@@ -291,13 +291,6 @@ void ExportNgsx_spacetime(py::module &m)
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdtvec,nullptr,nullptr,0));
    });
 
-
-    m.def("ReferenceTimeVariable", []() -> PyCF
-    {
-      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-    });
-
-
    // DiffOpFixt
 
   m.def("fix_t", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
@@ -394,11 +387,6 @@ void ExportNgsx_spacetime(py::module &m)
 
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
-   });
-
-   m.def("ReferenceTimeVariable", []() -> PyCF
-   {
-     return PyCF(make_shared<TimeVariableCoefficientFunction> ());
    });
 
    m.def("CreateTimeRestrictedGF", [](PyGF st_GF,double time) -> PyGF
