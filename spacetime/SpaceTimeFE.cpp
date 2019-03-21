@@ -153,6 +153,8 @@ namespace ngfem
          switch (order)
          {
           // Gauss-Lobatto integration points (Spectral FE)
+          // The maximum order implemented here is mentioned in python_spacetime.cpp
+          // in a documentation string. Please update that after inserting higher orders here.
           case 0 : nodes[0] = 0.0;  break;
           case 1 : nodes[0] = 0.0; nodes[1] = 1.0;  break;
           case 2 : nodes[0] = 0.0; nodes[1] = 0.5; nodes[2] = 1.0;  break;

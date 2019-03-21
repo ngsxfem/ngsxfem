@@ -86,7 +86,39 @@ void ExportNgsx_spacetime(py::module &m)
        py::arg("timefe"),
        py::arg("dirichlet") = DummyArgument(),
        py::arg("flags") = py::dict(),
-        py::arg("heapsize") = 1000000);
+       py::arg("heapsize") = 1000000,
+       docu_string(R"raw_string(
+This function creates a SpaceTimeFiniteElementSpace based on a spacial FE space and a time Finite element
+Roughly, this is the tensor product between those two arguments. Further arguments specify several details.
+
+Parameters
+
+spacefes : ngsolve.FESpace
+  This is the spacial finite element used for the space-time discretisation.
+  Both scalar and vector valued spaces might be used. An example would be
+  spacefes = H1(mesh, order=order) for given mesh and order.
+
+timefe : ngsolve.FiniteElement
+  This is the time finite element for the space-time discretisation. That is
+  essentially a simple finite element on the unit interval. There is a class
+  ScalarTimeFE to create something fitting here. For example, one could call
+  timefe = ScalarTimeFE(order) to create a time finite element of order order.
+
+dirichlet : list or string
+  The boundary of the space domain which should have Dirichlet boundary values.
+  Specification policy is the same as with the usual space finite element spaces.
+
+flags : dict
+  Dictionary of additional flags for the finite element space. In the constructor
+  of the SpaceTimeFESpace, those will be forwarded to the contructor of the general
+  base class FESpace. An example would be flags = {"dgjumps": True}.
+
+heapsize : int
+  Size of the local heap of this class. Increase this if you observe errors which look
+  like a heap overflow.
+
+       )raw_string")
+               );
 
   py::class_<SpaceTimeFESpace, PySTFES, FESpace>
     (m, "CSpaceTimeFESpace")
@@ -133,9 +165,28 @@ void ExportNgsx_spacetime(py::module &m)
   py::arg("order") = 0,
   py::arg("skip_first_node") = false,
   py::arg("only_first_node") = false,
-  "creates nodal FE in time based on Gauss-Lobatto integration points"
-  )
-   ;
+  docu_string(R"raw_string(
+Creates a nodal Finite element in time on the interval [0,1].
+Internally, Gauss-Lobatto integration points are exploited for that.
+
+Parameters
+
+order : int
+The polynomial order of the discretisation. That controlls the number of
+points in the time interval. See Gauss-Lobatto points for further details.
+Currently, orders up to 5 are available.
+
+skip_first_node : bool
+This will create the time finite element without the first node at t=0.
+That feature comes in handy for several CG like implementations in time.
+Also see only_first_node.
+
+only_first_node : bool
+This will create the time finite element with only the first node at t=0.
+That feature comes in handy for several CG like implementations in time.
+Also see skip_first_node.
+  )raw_string")
+   );
 
 
   // DiffOpDt
@@ -190,7 +241,7 @@ Parameters
 proxy : ngsolve.ProxyFunction
   Function to differentiate
   
-comp: int or list
+comp : int or list
   ??
   
 )raw_string")
