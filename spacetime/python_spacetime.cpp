@@ -200,7 +200,13 @@ void ExportNgsx_spacetime(py::module &m)
    m.def("ReferenceTimeVariable", []() -> PyCF
    {
      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-   });
+   }, docu_string(R"raw_string(
+This is the time variable. Call tref = ReferenceTimeVariable() to have a symbolic variable
+for the time like x,y,z for space. That can be used e.g. in lset functions for unfitted methods.
+Note that one would typically use tref in [0,1] as one time slab, leading to a call like
+t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
+)raw_string")
+);
 
 
    // DiffOpDtVec
