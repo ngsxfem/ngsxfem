@@ -415,7 +415,27 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
 
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
-   });
+   },
+    docu_string(R"raw_string(
+fix_t fixes the time (ReferenceTimeVariable) of a given expression.
+This is the variant for a gridfunction.
+
+Parameters
+
+self: ngsolve.GridFunction
+  Gridfunction in which the time should be fixed
+  
+time: double
+  Value the time should become
+  
+use_FixAnyTime: bool
+  Bool flag to control whether the time value should be expected to be
+  a node of the time scalar finite element or interpolation should be used.
+  use_FixAnyTime = True means interpolation is used. use_FixAnyTime = False
+  currently only supports time 0 and 1.
+
+)raw_string")
+);
 
    m.def("CreateTimeRestrictedGF", [](PyGF st_GF,double time) -> PyGF
    {
