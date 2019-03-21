@@ -183,7 +183,19 @@ void ExportNgsx_spacetime(py::module &m)
     return PyProxyFunction(adddiffop);
     },
           py::arg("proxy"),
-          py::arg("comp") = -1
+          py::arg("comp") = -1,
+        docu_string(R"raw_string(
+dt is the differential operator in time. This is the variant for a proxy function.
+
+Parameters
+
+proxy : ngsolve.ProxyFunction
+  Function to differentiate
+  
+comp: int or list
+  ??
+  
+)raw_string")
           );
 
   m.def("dt", [](PyGF self) -> PyCF
@@ -195,7 +207,17 @@ void ExportNgsx_spacetime(py::module &m)
         diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
 
     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdt));
-  });
+  }, docu_string(R"raw_string(
+dt is the differential operator in time. For a given GridFunction gfu,
+dt (gfu) will be its time derivative
+
+Parameters
+
+self : ngsolve.GridFunction
+  Function to differentiate
+
+)raw_string")
+);
 
    m.def("ReferenceTimeVariable", []() -> PyCF
    {
