@@ -86,14 +86,13 @@ class LevelSetMeshAdaptation_Spacetime:
         for i,ti in enumerate(times):
             t.Set(ti)
             self.lset_ho_node.Set(levelset)
-            self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.lset_ho_node.vec[:] 
-        t.Set(tstart)
+            self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.lset_ho_node.vec[:]
 
     def interpol_p1(self):
         for i in range(self.order_time + 1):
-            self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
+            self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
-            self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1] = self.lset_p1_node.vec[:]
+            self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = self.lset_p1_node.vec[:]
             
     def CalcDeformation(self, levelset,t,tstart,delta_t,calc_kappa = False):
         """
@@ -113,9 +112,9 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.interpol_ho(levelset,t,tstart,delta_t)
         self.interpol_p1()
-                
+        
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
-            self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
+            self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             self.ci.Update(self.lset_p1_node)
             if calc_kappa:
                 self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof] = self.ci.GetCutRatios(VOL)
@@ -131,12 +130,12 @@ class LevelSetMeshAdaptation_Spacetime:
         
         
         for i in range(self.order_time + 1):
-            self.lset_ho_node.vec[:] = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
+            self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
-            self.lset_p1_node.vec[:] = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
+            self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime, None, self.lset_lower_bound, 
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
-            self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node] = self.deform_node.vec[:]
+            self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
         return self.deform
             
     def CalcMaxDistance(self, levelset,t,tstart,delta_t, given_pts = []):
