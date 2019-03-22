@@ -51,6 +51,10 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
 
     lset_p1 = lset_adap_st.lset_p1
     
+    deformation_Vh = H1(mesh, order=time_order, dim=mesh.dim)
+    test_deformation = GridFunction(deformation_Vh)
+    test_deformation.Set(CoefficientFunction((0.004,0.)))
+    
     sum_vol = 0
     sum_int = 0
     for i in range(n_steps):
@@ -58,7 +62,8 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
         
         deformation = lset_adap_st.CalcDeformation(levelset,tref,told, delta_t)
         
-        mesh.SetDeformation(deformation)
+        #mesh.SetDeformation(deformation)
+        mesh.SetDeformation(test_deformation)
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
         val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, f, mesh, time_order = time_order)
         #print(val_vol, val_int)
@@ -83,7 +88,7 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
 
 l2errors_vol = []
 l2errors_int = []
-for i in range(5):
+for i in [1,2,3,4]:
     (n_steps,i) =  (2**(i+2), i+1)
     (vol_err, int_err) = area_of_a_sphere_ST_error(n_steps, i, False)
     l2errors_vol.append(vol_err)
