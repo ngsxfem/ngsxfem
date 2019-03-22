@@ -268,9 +268,24 @@ self : ngsolve.GridFunction
 )raw_string")
 );
 
-   m.def("ReferenceTimeVariable", []() -> PyCF
+  typedef shared_ptr<TimeVariableCoefficientFunction> PyTimeVariableCF;
+
+  py::class_<TimeVariableCoefficientFunction, PyTimeVariableCF, CoefficientFunction>(m, "TimeVariableCoefficientFunction")
+          .def("__init__", [] () -> PyTimeVariableCF { return make_shared<TimeVariableCoefficientFunction>(); })
+          .def("FixTime", &TimeVariableCoefficientFunction::FixTime)
+          .def("UnfixTime", &TimeVariableCoefficientFunction::UnfixTime)
+          .def("IsFixed", [] (PyTimeVariableCF self) -> bool {
+            try {
+                self->Evaluate(BaseMappedIntegrationPoint());
+            } catch (...) {
+                 return false;
+            }
+            return true;
+          });
+
+   m.def("ReferenceTimeVariable", []() -> PyTimeVariableCF
    {
-     return PyCF(make_shared<TimeVariableCoefficientFunction> ());
+     return make_shared<TimeVariableCoefficientFunction> ();
    }, docu_string(R"raw_string(
 This is the time variable. Call tref = ReferenceTimeVariable() to have a symbolic variable
 for the time like x,y,z for space. That can be used e.g. in lset functions for unfitted methods.
@@ -278,7 +293,6 @@ Note that one would typically use tref in [0,1] as one time slab, leading to a c
 t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
 )raw_string")
 );
-
 
    // DiffOpDtVec
 
