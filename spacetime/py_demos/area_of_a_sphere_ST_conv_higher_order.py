@@ -56,7 +56,7 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
     for i in range(n_steps):
         #SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
         
-        deformation = lset_adap_st.CalcDeformation(levelset,coef_told,told, delta_t)
+        deformation = lset_adap_st.CalcDeformation(levelset,tref,told, delta_t)
         
         mesh.SetDeformation(deformation)
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
