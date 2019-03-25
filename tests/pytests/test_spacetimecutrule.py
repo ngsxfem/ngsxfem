@@ -526,9 +526,6 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     
     # level set
     levelset= r - r0
-    grad_lset = CoefficientFunction(( x/r, y/r, t/r))
-    
-    f = sqrt(grad_lset**2)/sqrt(grad_lset**2- (grad_lset[2])**2)
     
     time_order = 1
     fes1 = H1(mesh, order=1)
@@ -548,7 +545,7 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
         SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
     
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
-        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, f, mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
         #print(val_vol, val_int)
         sum_vol += val_vol*delta_t
         sum_int += val_int*delta_t
@@ -562,8 +559,8 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     print("\t\tDIFF: ", vol_err)
     
     print("SUM INT: ", sum_int)
-    print("AREA: ", 2*pi*r0**2)
-    int_err = abs(sum_int - 2*pi*r0**2)
+    print("AREA: ", 0.5*pi**2*r0**2)
+    int_err = abs(sum_int - 0.5*pi**2*r0**2)
     print("\t\tDIFF: ",int_err)
     return (vol_err, int_err)
 
@@ -583,14 +580,14 @@ def test_spacetime_area_of_a_sphere(structured):
     print("EOCS (VOL): ", eocs_vol)
     avg = sum(eocs_vol)/len(eocs_vol)
     print("Average: ", avg)
-    assert avg > 1.75
+    assert avg > 1.9
     
     print("L2 (INT): ", l2errors_int)
     eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
     print("EOCS (INT): ", eocs_int)
     avg = sum(eocs_int)/len(eocs_int)
     print("Average: ", avg)
-    assert avg > 1.75
+    assert avg > 1.9
 
 def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     if structured_mesh:
@@ -613,9 +610,6 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     # level set
     levelset= r - r0
     
-    grad_lset = CoefficientFunction(( x/r, y/r, z/r, t/r))
-    f = sqrt(grad_lset**2)/sqrt(grad_lset**2- (grad_lset[3])**2)
-    
     time_order = 1
     fes1 = H1(mesh, order=1)
     tfe = ScalarTimeFE(time_order)
@@ -634,7 +628,7 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
         SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
     
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
-        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, f, mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
         #print(val_vol, val_int)
         sum_vol += val_vol*delta_t
         sum_int += val_int*delta_t
@@ -648,8 +642,8 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     print("\t\tDIFF: ", vol_err)
     
     print("SUM INT: ", sum_int)
-    print("AREA: ", pi**2*r0**3)
-    int_err = abs(sum_int - pi**2*r0**3)
+    print("AREA: ", 8/3*pi*r0**3)
+    int_err = abs(sum_int - 8/3*pi*r0**3)
     print("\t\tDIFF: ", int_err)
     return (vol_err, int_err)
 
@@ -657,8 +651,8 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
 def test_spacetime_area_of_a_hypersphere(structured):
     l2errors_vol = []
     l2errors_int = []
-    for i in range(4):
-        (n_steps,i) =  (2**(i+2), i+1)
+    for i in range(3):
+        (n_steps,i) =  (2**(i+3), i+2)
         (vol_err, int_err) = area_of_a_hypersphere_ST_error(n_steps, i, structured)
         l2errors_vol.append(vol_err)
         l2errors_int.append(int_err)
@@ -668,11 +662,11 @@ def test_spacetime_area_of_a_hypersphere(structured):
     print("EOCS (VOL): ", eocs_vol)
     avg = sum(eocs_vol)/len(eocs_vol)
     print("Average: ", avg)
-    assert avg > 1.75
+    assert avg > 1.9
     
     print("L2 (INT): ", l2errors_int)
     eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
     print("EOCS (INT): ", eocs_int)
     avg = sum(eocs_int)/len(eocs_int)
     print("Average: ", avg)
-    assert avg > 1.75
+    assert avg > 1.9

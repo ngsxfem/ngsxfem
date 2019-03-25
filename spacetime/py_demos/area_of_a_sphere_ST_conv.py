@@ -29,9 +29,6 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
     
     # level set
     levelset= r - r0
-    grad_lset = CoefficientFunction(( x/r, y/r, t/r))
-    
-    f = sqrt(grad_lset**2)/sqrt(grad_lset**2- (grad_lset[2])**2)
     
     time_order = 1
     fes1 = H1(mesh, order=1)
@@ -51,7 +48,7 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
         SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
     
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
-        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, f, mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
         #print(val_vol, val_int)
         sum_vol += val_vol*delta_t
         sum_int += val_int*delta_t
@@ -65,8 +62,8 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
     print("\t\tDIFF: ", vol_err)
     
     print("SUM INT: ", sum_int)
-    print("AREA: ", 2*pi*r0**2)
-    int_err = abs(sum_int - 2*pi*r0**2)
+    print("AREA: ", 0.5*pi**2*r0**2)
+    int_err = abs(sum_int - 0.5*pi**2*r0**2)
     print("\t\tDIFF: ",int_err)
     return (vol_err, int_err)
 
