@@ -51,7 +51,7 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
 
     lset_p1 = lset_adap_st.lset_p1
     
-    deformation_Vh = H1(mesh, order=time_order, dim=mesh.dim)
+    deformation_Vh = SpaceTimeFESpace( H1(mesh, order=space_order, dim=mesh.dim), ScalarTimeFE(time_order) )
     test_deformation = GridFunction(deformation_Vh)
     test_deformation.Set(CoefficientFunction((0.004,0.)))
     
