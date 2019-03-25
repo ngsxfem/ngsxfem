@@ -132,7 +132,7 @@ namespace xintegration
 
                 const int offset = ir->Size();
                 if (element_domain == IF)
-                    ir->Append(*StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh));
+                    ir->Append(*StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh, true, t));
                 else if (element_domain == dt)
                     ir->Append(SelectIntegrationRule (et_space, order_space));
 

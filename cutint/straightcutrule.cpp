@@ -544,14 +544,20 @@ namespace xintegration
   }
 
   template<unsigned int D>
-  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper &lset, IntegrationRule * ir_interface){
+  void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper &lset, IntegrationRule * ir_interface, bool spacetime_mode, double tval){
       for (int i = 0; i < quad_untrafo.Size(); ++i)
       {
+          double myweight = quad_untrafo[i].Weight();
+          if(spacetime_mode) {
+              quad_untrafo[i].SetWeight(tval);
+              quad_untrafo[i].SetPrecomputedGeometry(true);
+          }
+
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
           Mat<D,D> Finv = mip.GetJacobianInverse();
 
           Vec<D> normal = Trans(Finv) * lset.GetNormal(quad_untrafo[i].Point());
-          const double weight = quad_untrafo[i].Weight() * L2Norm(normal);
+          const double weight = myweight * L2Norm(normal);
 
           (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
       }
@@ -564,7 +570,9 @@ namespace xintegration
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
                                                      SWAP_DIMENSIONS_POLICY quad_dir_policy,
-                                                     LocalHeap & lh)
+                                                     LocalHeap & lh,
+                                                     bool spacetime_mode,
+                                                     double tval)
   {
     static Timer t ("NewStraightCutIntegrationRule");
     static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
@@ -617,9 +625,9 @@ namespace xintegration
       if (dt == IF)
       {
         auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface);
-        else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface);
-        else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, lset, ir_interface);
+        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
+        else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
+        else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         ir = ir_interface;
       }
       else {
