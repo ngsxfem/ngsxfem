@@ -61,8 +61,8 @@ def area_of_a_sphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
         
         deformation = lset_adap_st.CalcDeformation(levelset,tref,told, delta_t)
         
-        #mesh.SetDeformation(deformation)
-        mesh.SetDeformation(test_deformation)
+        mesh.SetDeformation(deformation)
+        #mesh.SetDeformation(test_deformation)
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
         val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
         #print(val_vol, val_int)
