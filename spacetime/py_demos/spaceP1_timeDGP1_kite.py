@@ -8,11 +8,16 @@ from math import pi
 
 from xfem.lset_spacetime import *
 
+use_sympy = True
+
+if use_sympy:
+    from kite_in_sympy import get_Laplace_u_str, get_dt_rho
+
 ngsglobals.msg_level = 1
 
 square = SplineGeometry()
 square.AddRectangle([-3.5,-1.5],[3.5,1.5])
-ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.2, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 coef_told = Parameter(0)
@@ -22,28 +27,41 @@ t = coef_told + coef_delta_t*tref
 
 r0 = 1
 
-rho =  CoefficientFunction( (1 - y**2)*t )
-rhoL = lambda t:CoefficientFunction( (1-y**2)*t )
+rho =  (1 - 3*y**2)*t*sin(pi*t)
+rhoL = lambda t: (1- 3*y**2)*t*sin(pi*t)
+rho_str = "(1 - 3*y**2)*t*sin(pi*t)"
+
 #convection velocity:
-d_rho = CoefficientFunction (1 - y**2)
+if use_sympy:
+    d_rho = eval(get_dt_rho(rho_str))
+else:
+    d_rho = CoefficientFunction (1 - y**2)
+
 w = CoefficientFunction((d_rho,0))
 
 # level set
 r = sqrt((x- rho)**2+y**2)
 levelset= r - r0
+levelsetL = lambda t: sqrt((x- rhoL(t))**2+y**2) - r0
+
+Draw(levelsetL(0.), mesh,"lset", autoscale=False, min = 0, max = 0)
 
 Q = pi/r0   
 u_exact = cos(Q*r) * sin(pi*t)
 u_exactL = lambda t: cos(Q*sqrt((x- rhoL(t))**2+y**2)) * sin(pi*t)
+u_str = "cos(Q*r) * sin(pi*t)"
 
-drdx = (x-rho)/r
-#dr2dx2 = (r**2 - (x - rho)**2 )/r**3
-dr2dx2 = y**2/r**3
+if use_sympy:
+    Laplaceu = eval(get_Laplace_u_str(rho_str, u_str))
+else:
+    drdx = (x-rho)/r
+    dr2dx2 = y**2/r**3
 
-drdy = y/r*(1 + 2*(x-rho)*t)
-dr2dy2 = (r - y*drdy)/r**2*(1+2*(x-rho)*t) + 4*t**2*y**2/r
+    drdy = y/r*(1 + 2*(x-rho)*t)
+    dr2dy2 = (r - y*drdy)/r**2*(1+2*(x-rho)*t) + 4*t**2*y**2/r
 
-Laplaceu = - Q*sin(pi*t)*(cos(Q*r)*Q* ( drdx**2 + drdy**2) + sin(Q*r)*( dr2dx2 + dr2dy2 ))
+    Laplaceu = - Q*sin(pi*t)*(cos(Q*r)*Q* ( drdx**2 + drdy**2) + sin(Q*r)*( dr2dx2 + dr2dy2 ))
+
 coeff_f = -Laplaceu + pi * cos(Q*r) * cos(pi*t)
 u_init = u_exact
 
@@ -63,8 +81,8 @@ tfe = ScalarTimeFE(k_t)
 st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Unfitted heat equation example
-tend = 0.5
-delta_t = tend/16
+tend = 1
+delta_t = tend/64
 coef_delta_t.Set(delta_t)
 tnew = 0
 told = 0
@@ -155,6 +173,9 @@ while tend - told > delta_t/2:
     # update time variable (float and ParameterCL)
     told = told + delta_t
     coef_told.Set(told)
+    
+    Draw(levelsetL(told), mesh,"lset", autoscale=False, min = 0, max = 0)
+    #Draw(IfPos(-levelsetL(told), u_exactL(told) ,float('nan')),mesh,"u", autoscale = False, min = -1, max = 1)
     
     # compute error at end of time slab
     l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)**2,mesh))
