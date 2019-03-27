@@ -17,7 +17,7 @@ ngsglobals.msg_level = 1
 
 square = SplineGeometry()
 square.AddRectangle([-3.5,-1.5],[3.5,1.5])
-ngmesh = square.GenerateMesh(maxh=0.2, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 coef_told = Parameter(0)
@@ -82,7 +82,7 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Unfitted heat equation example
 tend = 1
-delta_t = tend/64
+delta_t = tend/128
 coef_delta_t.Set(delta_t)
 tnew = 0
 told = 0
@@ -176,6 +176,8 @@ while tend - told > delta_t/2:
     
     Draw(levelsetL(told), mesh,"lset", autoscale=False, min = 0, max = 0)
     #Draw(IfPos(-levelsetL(told), u_exactL(told) ,float('nan')),mesh,"u", autoscale = False, min = -1, max = 1)
+    #Draw(IfPos(-levelsetL(told), u_exactL(told) ,float('nan')),mesh,"u", autoscale = False, min = -1, max = 1)
+    #Draw(IfPos(-levelsetL(told), u_exactL(told)-u_last, float('nan')),mesh,"error")
     
     # compute error at end of time slab
     l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)**2,mesh))
