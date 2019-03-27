@@ -35,6 +35,9 @@ rho_str = "(1 - 3*y**2)*t*sin(pi*t)"
 if use_sympy:
     d_rho = eval(get_dt_rho(rho_str))
 else:
+    rho = (1 - y**2)*t
+    rhoL = lambda t: (1 - y**2)*t
+    rho_str = "(1 - y**2)*t"
     d_rho = CoefficientFunction (1 - y**2)
 
 w = CoefficientFunction((d_rho,0))
