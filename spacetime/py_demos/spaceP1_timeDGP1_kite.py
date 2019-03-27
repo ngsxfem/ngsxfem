@@ -12,7 +12,7 @@ ngsglobals.msg_level = 1
 
 square = SplineGeometry()
 square.AddRectangle([-3.5,-1.5],[3.5,1.5])
-ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 coef_told = Parameter(0)
@@ -20,18 +20,32 @@ coef_delta_t = Parameter(0)
 tref = ReferenceTimeVariable()
 t = coef_told + coef_delta_t*tref
 
-w = CoefficientFunction((1-y**2,0))
+r0 = 1
+
+rho =  CoefficientFunction( (1 - y**2)*t )
+rhoL = lambda t:CoefficientFunction( (1-y**2)*t )
+#convection velocity:
+d_rho = CoefficientFunction (1 - y**2)
+w = CoefficientFunction((d_rho,0))
 
 # level set
-levelset= sqrt( (x - (1-y**2)*t)**2+y**2) - 1
-levelsetL= lambda t: sqrt( (x - (1-y**2)*t)**2+y**2) - 1
+r = sqrt((x- rho)**2+y**2)
+levelset= r - r0
 
-# solution and r.h.s.
-u_exact = x * sin(pi*t)
-u_exactL = lambda t: x * sin(pi*t)
+Q = pi/r0   
+u_exact = cos(Q*r) * sin(pi*t)
+u_exactL = lambda t: cos(Q*sqrt((x- rhoL(t))**2+y**2)) * sin(pi*t)
 
-coeff_f = x*cos(pi*t)*pi + (1-y**2)*sin(pi*t)
-#u_init = u_exact
+drdx = (x-rho)/r
+#dr2dx2 = (r**2 - (x - rho)**2 )/r**3
+dr2dx2 = y**2/r**3
+
+drdy = y/r*(1 + 2*(x-rho)*t)
+dr2dy2 = (r - y*drdy)/r**2*(1+2*(x-rho)*t) + 4*t**2*y**2/r
+
+Laplaceu = - Q*sin(pi*t)*(cos(Q*r)*Q* ( drdx**2 + drdy**2) + sin(Q*r)*( dr2dx2 + dr2dy2 ))
+coeff_f = -Laplaceu + pi * cos(Q*r) * cos(pi*t)
+u_init = u_exact
 
 # polynomial order in time
 k_t = 1
@@ -50,7 +64,7 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Unfitted heat equation example
 tend = 0.5
-delta_t = tend/64
+delta_t = tend/16
 coef_delta_t.Set(delta_t)
 tnew = 0
 told = 0
