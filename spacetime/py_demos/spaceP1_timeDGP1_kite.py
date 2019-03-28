@@ -5,6 +5,7 @@ from netgen.geom2d import unit_square
 
 from xfem import *
 from math import pi
+import sys
 
 from xfem.lset_spacetime import *
 
@@ -15,9 +16,18 @@ if use_sympy:
 
 ngsglobals.msg_level = 1
 
+i = 3
+
+if hasattr(sys, 'argv') and len(sys.argv) == 3 and sys.argv[1] == "i":
+    i = int(sys.argv[2])
+    print("Sys argv :", sys.argv)
+    print("Loading manual val for i: ", i)
+else:
+    print("Loading default val for i: ", i)
+
 square = SplineGeometry()
 square.AddRectangle([-3.5,-1.5],[3.5,1.5])
-ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=(1/2)**i, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 coef_told = Parameter(0)
@@ -85,7 +95,7 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Unfitted heat equation example
 tend = 1
-delta_t = tend/128
+delta_t = tend/(2**(i+2))
 coef_delta_t.Set(delta_t)
 tnew = 0
 told = 0
