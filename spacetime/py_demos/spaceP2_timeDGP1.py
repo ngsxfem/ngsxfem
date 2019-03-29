@@ -52,6 +52,7 @@ r0 = 0.5
 
 # position shift of the geometry in time
 rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
+rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
 # velocity of position shift
 d_rho = CoefficientFunction(2*cos(2*pi*t))
 #convection velocity:
@@ -64,6 +65,7 @@ levelset= r - r0
 # solution and r.h.s.
 Q = pi/r0   
 u_exact = cos(Q*r) * sin(pi*t)
+u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
 coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
 
 
@@ -111,6 +113,7 @@ ci = CutInfo(mesh,time_order=time_order)
 
     
 hasneg_integrators_a = []
+hasneg_integrators_a_TR = []
 hasneg_integrators_f = []
 patch_integrators_a = []
 
@@ -118,11 +121,11 @@ patch_integrators_a = []
 hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + dt_vec(dfm)*grad(v))
                                             + delta_t*grad(u)*grad(v)
                                             - delta_t*u*InnerProduct(w,grad(v))))
-hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+hasneg_integrators_a_TR.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
 
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*0.5*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
-hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0)))
+hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0), time_order=2))
 
 f = LinearForm(st_fes)
 
@@ -131,8 +134,9 @@ for integrator in hasneg_integrators_f:
 
 while tend - t_old > delta_t/2:
     # update lset geometry to new time slab (also changes lset_p1 !)
-    dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t)
-
+    #dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t)
+    dfm = lset_adap_st.CalcDeformation(levelset,tref,t_old,delta_t)
+    
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
     RestrictGFInTime(spacetime_gf=dfm,reference_time=0.0,space_gf=dfm_current_bottom)   
@@ -140,7 +144,7 @@ while tend - t_old > delta_t/2:
 
     if t_old == 0:
         mesh.SetDeformation(dfm_current_bottom)
-        u_ic.Set(CoefficientFunction(u_exact)) 
+        u_ic.Set(CoefficientFunction(u_exactL(0.)))
         mesh.UnsetDeformation()
     else:
         u_ic.Set(shifted_eval(u_last, back = dfm_last_top, forth = dfm_current_bottom))
@@ -156,7 +160,7 @@ while tend - t_old > delta_t/2:
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
 
     # re-set definedonelements-markers according to new markings:
-    for integrator in hasneg_integrators_a + hasneg_integrators_f:
+    for integrator in hasneg_integrators_a + hasneg_integrators_a_TR + hasneg_integrators_f:
         integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
     for integrator in patch_integrators_a:
         integrator.SetDefinedOnElements(ba_facets)
@@ -166,13 +170,22 @@ while tend - t_old > delta_t/2:
     for integrator in hasneg_integrators_a + patch_integrators_a:
         a += integrator
 
-        
+    aTR = RestrictedBilinearForm(st_fes,"aTR", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
+    for integrator in hasneg_integrators_a_TR:
+        aTR += integrator
+    
     # update mesh deformation and assemble linear system
     mesh.SetDeformation(dfm)
     a.Assemble()
     f.Assemble()
     mesh.UnsetDeformation()
-
+    
+    mesh.SetDeformation(dfm_current_top)
+    aTR.Assemble()
+    mesh.UnsetDeformation()
+    
+    a.mat.AsVector().data = a.mat.AsVector() + aTR.mat.AsVector()
+    
     # solve linear system
     inv = a.mat.Inverse(active_dofs,inverse="pardiso")
     gfu.vec.data =  inv * f.vec
@@ -188,7 +201,7 @@ while tend - t_old > delta_t/2:
     
     # compute error at final time
     mesh.SetDeformation(dfm_current_top)
-    l2error = sqrt(Integrate(lset_neg_top,(u_exact-u_last)*(u_exact-u_last),mesh,order=2*k_s))
+    l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told)-u_last)**2,mesh,order=2*k_s))
     mesh.UnsetDeformation()
 
     # print time and error
