@@ -124,7 +124,7 @@ hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = f
 
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*0.5*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
-hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0), time_order=2))
+hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom, form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
 
 f = LinearForm(st_fes)
 
