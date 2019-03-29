@@ -33,11 +33,11 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=3, structured_mesh= True):
     r0 = 0.9
     r = sqrt(x**2+y**2+z**2+t**2)
     
-    #ref_vals = { IF: 11/6*pi*r0**3, NEG: pi/48*(9*sqrt(3) + 4*pi)*r0**4}
-    #tend = r0/2
+    ref_vals = { IF: 11/6*pi*r0**3, NEG: pi/48*(9*sqrt(3) + 4*pi)*r0**4}
+    tend = r0/2
     
-    ref_vals = { IF: 8/3*pi*r0**3, NEG: pi**2/4*r0**4}
-    tend = 1
+    #ref_vals = { IF: 8/3*pi*r0**3, NEG: pi**2/4*r0**4}
+    #tend = 1
     
     # level set
     levelset= r - r0
