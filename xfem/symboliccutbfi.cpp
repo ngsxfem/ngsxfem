@@ -792,7 +792,7 @@ namespace ngfem
   template<int D>
   void MapPatchIntegrationPoint(IntegrationPoint & from_ip, const ElementTransformation & from_trafo,
                                 const ElementTransformation & to_trafo, IntegrationPoint & to_ip,
-                                LocalHeap & lh)
+                                LocalHeap & lh, bool spacetime_mode = false, double from_ip_weight =0.)
   {
     // cout << " ------------------------------------------- " << endl;
     const int max_its = 200;
@@ -817,6 +817,7 @@ namespace ngfem
     {
       HeapReset hr(lh);
       auto ip_a0 = new (lh) IntegrationPoint(0,0,0);
+      if(spacetime_mode) { ip_a0->SetWeight(from_ip.Weight()); ip_a0->SetPrecomputedGeometry(true); }
       auto mip_a0 = new (lh) MappedIntegrationPoint<D,D>(*ip_a0,to_trafo);
       FlatMatrix<double> A(D,D,lh);
       FlatMatrix<double> Ainv(D,D,lh);
@@ -833,6 +834,7 @@ namespace ngfem
             xhat(di) = 0;
         }
         auto ip_ai = new (lh) IntegrationPoint(xhat,0.);
+        if(spacetime_mode) { ip_ai->SetWeight(from_ip.Weight()); ip_ai->SetPrecomputedGeometry(true); }
         auto mip_ai = new (lh) MappedIntegrationPoint<D,D>(*ip_ai,to_trafo);
         A.Col(d) = mip_ai->GetPoint() - mip_a0->GetPoint();
       }
@@ -846,6 +848,7 @@ namespace ngfem
     double w = 0;
     while (its==0 || (L2Norm(diff) > eps_acc*h && its < max_its))
     {
+      if(spacetime_mode) { ip_x0->SetWeight(from_ip.Weight()); ip_x0->SetPrecomputedGeometry(true); }
       MappedIntegrationPoint<D,D> mip_x0(*ip_x0,to_trafo);
       diff = vec - mip_x0.GetPoint();
       if (its==0)
@@ -862,12 +865,14 @@ namespace ngfem
       cout << "taking a low order guess" << endl;
       cout << "diff = " << first_diffnorm << endl;
       to_ip = *ip_x00;
-      to_ip.SetWeight(mip.GetWeight()/w00);
+      if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
+      else to_ip.SetWeight(mip.GetWeight()/w00);
     }
     else
     {
       to_ip = *ip_x0;
-      to_ip.SetWeight(mip.GetWeight()/w);
+      if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w);
+      else to_ip.SetWeight(mip.GetWeight()/w);
     }
   }
 
@@ -894,17 +899,20 @@ namespace ngfem
 
     IntegrationRule ir_patch1 (ir_vol1.Size()+ir_vol2.Size(),lh);
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
-
-    for (int l = 0; l < ir_patch1.Size(); l++) {
-        if (l<ir_vol1.Size()) {
-            ir_patch1[l] = ir_vol1[l];
-            if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-            else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-        }
-        else {
-            ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
-            if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
-            else MapPatchIntegrationPoint<3>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+    //In the non-space time case, the result of the mapping to the other element does not depend on the time
+    //Therefore it is sufficient to do it once here.
+    if(time_order == 0){
+        for (int l = 0; l < ir_patch1.Size(); l++) {
+            if (l<ir_vol1.Size()) {
+                ir_patch1[l] = ir_vol1[l];
+                if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+            }
+            else {
+                ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
+                if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                else MapPatchIntegrationPoint<3>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+            }
         }
     }
     
@@ -913,6 +921,8 @@ namespace ngfem
 
     Array<double> ir_st1_wei_arr;
 
+    //Here we create approximately (up to the possible change in the element transformation due to the deformation)
+    //tensor product quadrature rules for the space-time case
     if (time_order >= 0)
     {
       FlatVector<> st_point(3,lh);
@@ -922,27 +932,52 @@ namespace ngfem
       ir_st1_wei_arr.SetSize(ir_spacetime1->Size());
       for (int i = 0; i < ir_time.Size(); i++)
       {
+        double tval = ir_time[i](0);
         for (int j = 0; j < ir_patch1.Size(); j++)
         {
           const int ij = i*ir_patch1.Size()+j;
-          (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_patch1[j].Weight() );
-          ir_st1_wei_arr[ij] = (*ir_spacetime1)[ij].Weight();
+
+          //Task now: Calculate ir_patch1[j] in the spacetime setting at tval
+          if(j< ir_vol1.Size()) ir_patch1[j] = ir_vol1[j];
+          else {
+            ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
+            double physical_weight = ir_patch2[j].Weight();
+            ir_patch2[j].SetWeight(tval);
+            ir_patch2[j].SetPrecomputedGeometry(true);
+            if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[j], trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+            else MapPatchIntegrationPoint<3>(ir_patch2[j], trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+          }
+
+          ir_st1_wei_arr[ij] = ir_time[i].Weight() * ir_patch1[j].Weight();
 
           st_point = ir_patch1[j].Point();
           (*ir_spacetime1)[ij].Point() = st_point;
-          (*ir_spacetime1)[ij].SetWeight( ir_time[i](0));
+          (*ir_spacetime1)[ij].SetWeight( tval);
           (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_patch2.Size()*ir_time.Size(),lh);
       for (int i = 0; i < ir_time.Size(); i++)
       {
+        double tval = ir_time[i](0);
         for (int j = 0; j < ir_patch2.Size(); j++)
         {
           const int ij = i*ir_patch2.Size()+j;
+
+          //Task now: Calculate ir_patch2[j] in the spacetime setting at tval
+          if(j< ir_vol1.Size()) {
+            ir_patch1[j] = ir_vol1[j];
+            double physical_weight = ir_patch1[j].Weight();
+            ir_patch1[j].SetWeight(tval);
+            ir_patch1[j].SetPrecomputedGeometry(true);
+            if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[j], trafo2, trafo1 ,ir_patch2[j], lh, true, physical_weight);
+            else MapPatchIntegrationPoint<3>(ir_patch1[j], trafo2, trafo1 ,ir_patch2[j], lh, true, physical_weight);
+          }
+          else ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
+
           st_point = ir_patch2[j].Point();
           (*ir_spacetime2)[ij].Point() = st_point;
-          (*ir_spacetime2)[ij].SetWeight(ir_time[i](0));
+          (*ir_spacetime2)[ij].SetWeight(tval);
           (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
         }
       }
