@@ -158,6 +158,9 @@ Other Parameters :
     BitArray that allows integration only on elements or facets (if skeleton=True) that are marked
     True.
 
+  deformation : GridFunction
+    Specify a specific mesh deformation for a bilinear form
+
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
     rule will be applied. This is only relevant for space-time discretizations.
@@ -241,6 +244,9 @@ Other Parameters :
   definedonelements: BitArray
     BitArray that allows integration only on elements or facets (if skeleton=True) that are marked
     True.
+
+  deformation : GridFunction
+      Specify a specific mesh deformation for a linear form
 
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
