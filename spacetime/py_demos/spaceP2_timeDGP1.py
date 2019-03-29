@@ -113,7 +113,6 @@ ci = CutInfo(mesh,time_order=time_order)
 
     
 hasneg_integrators_a = []
-hasneg_integrators_a_TR = []
 hasneg_integrators_f = []
 patch_integrators_a = []
 
@@ -121,7 +120,7 @@ patch_integrators_a = []
 hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + dt_vec(dfm)*grad(v))
                                             + delta_t*grad(u)*grad(v)
                                             - delta_t*u*InnerProduct(w,grad(v))))
-hasneg_integrators_a_TR.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1), deformation = dfm_current_top))
 
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*0.5*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
@@ -160,7 +159,7 @@ while tend - t_old > delta_t/2:
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
 
     # re-set definedonelements-markers according to new markings:
-    for integrator in hasneg_integrators_a + hasneg_integrators_a_TR + hasneg_integrators_f:
+    for integrator in hasneg_integrators_a + hasneg_integrators_f:
         integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
     for integrator in patch_integrators_a:
         integrator.SetDefinedOnElements(ba_facets)
@@ -169,22 +168,12 @@ while tend - t_old > delta_t/2:
     a = RestrictedBilinearForm(st_fes,"a", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
     for integrator in hasneg_integrators_a + patch_integrators_a:
         a += integrator
-
-    aTR = RestrictedBilinearForm(st_fes,"aTR", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
-    for integrator in hasneg_integrators_a_TR:
-        aTR += integrator
     
     # update mesh deformation and assemble linear system
     mesh.SetDeformation(dfm)
     a.Assemble()
     f.Assemble()
     mesh.UnsetDeformation()
-    
-    mesh.SetDeformation(dfm_current_top)
-    aTR.Assemble()
-    mesh.UnsetDeformation()
-    
-    a.mat.AsVector().data = a.mat.AsVector() + aTR.mat.AsVector()
     
     # solve linear system
     inv = a.mat.Inverse(active_dofs,inverse="pardiso")
