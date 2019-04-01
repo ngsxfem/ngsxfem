@@ -126,7 +126,7 @@ namespace xintegration
                 FlatVector<> shape(time_nfreedofs, lh);
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
-                for(auto &d : cf_lset_at_t) if(abs(d) < 1e-10) d = 1e-10;
+                for(auto &d : cf_lset_at_t) if(abs(d) < 1e-14) d = 1e-14;
 
                 auto element_domain = CheckIfStraightCut(cf_lset_at_t);
 
