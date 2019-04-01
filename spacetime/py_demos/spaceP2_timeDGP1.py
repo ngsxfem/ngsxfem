@@ -126,10 +126,7 @@ patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*0.
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom, form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
 
-f = LinearForm(st_fes)
 
-for integrator in hasneg_integrators_f:
-    f += integrator
 
 while tend - t_old > delta_t/2:
     # update lset geometry to new time slab (also changes lset_p1 !)
@@ -169,11 +166,20 @@ while tend - t_old > delta_t/2:
     for integrator in hasneg_integrators_a + patch_integrators_a:
         a += integrator
     
+    f = LinearForm(st_fes)
+    for integrator in hasneg_integrators_f:
+        f += integrator
+
     # update mesh deformation and assemble linear system
     mesh.SetDeformation(dfm)
     a.Assemble()
     f.Assemble()
     mesh.UnsetDeformation()
+    
+    #mesh.SetDeformation(dfm_current_bottom)
+    #f2.Assemble()
+    #mesh.UnsetDeformation()    
+    #f.vec.data = f.vec + f2.vec
     
     # solve linear system
     inv = a.mat.Inverse(active_dofs,inverse="pardiso")
