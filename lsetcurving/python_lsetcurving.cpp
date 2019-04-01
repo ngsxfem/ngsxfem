@@ -254,12 +254,35 @@ heapsize : int
 
           shared_ptr<DifferentialOperator> diffop  = nullptr;
           
-          if (self->GetFESpace()->GetDimension() == 1)
-            diffop = make_shared<DiffOpShiftedEval<1>> (back,forth);
-          else if (self->GetFESpace()->GetDimension() == 2)
-            diffop = make_shared<DiffOpShiftedEval<2>> (back,forth);
+          if (self->GetFESpace()->GetDimension() == 1) {
+              if (self->GetFESpace()->GetSpatialDimension() == 1)
+                diffop = make_shared<DiffOpShiftedEval<1,1>> (back,forth);
+              else if (self->GetFESpace()->GetSpatialDimension() == 2)
+                diffop = make_shared<DiffOpShiftedEval<1,2>> (back,forth);
+              else if (self->GetFESpace()->GetSpatialDimension() == 3)
+                diffop = make_shared<DiffOpShiftedEval<1,3>> (back,forth);
+              else throw Exception("shifted_eval only for space dim = 1,2,3 so far");
+          }
+          else if (self->GetFESpace()->GetDimension() == 2) {
+              if (self->GetFESpace()->GetSpatialDimension() == 1)
+                diffop = make_shared<DiffOpShiftedEval<2,1>> (back,forth);
+              else if (self->GetFESpace()->GetSpatialDimension() == 2)
+                diffop = make_shared<DiffOpShiftedEval<2,2>> (back,forth);
+              else if (self->GetFESpace()->GetSpatialDimension() == 3)
+                diffop = make_shared<DiffOpShiftedEval<2,3>> (back,forth);
+              else throw Exception("shifted_eval only for space dim = 1,2,3 so far");
+          }
+          else if (self->GetFESpace()->GetDimension() == 3) {
+              if (self->GetFESpace()->GetSpatialDimension() == 1)
+                diffop = make_shared<DiffOpShiftedEval<3,1>> (back,forth);
+              else if (self->GetFESpace()->GetSpatialDimension() == 2)
+                diffop = make_shared<DiffOpShiftedEval<3,2>> (back,forth);
+              else if (self->GetFESpace()->GetSpatialDimension() == 3)
+                diffop = make_shared<DiffOpShiftedEval<3,3>> (back,forth);
+              else throw Exception("shifted_eval only for space dim = 1,2,3 so far");
+          }
           else
-            throw Exception("shifted_eval only for dim <= 2 so far");
+            throw Exception("shifted_eval only for dim <= 3 so far");
 
           return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop));
         },

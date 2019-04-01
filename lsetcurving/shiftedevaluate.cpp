@@ -7,8 +7,8 @@ namespace ngfem
 {
 
 
-  template <int D>
-  void DiffOpShiftedEval<D> ::
+  template <int D, int SpaceD>
+  void DiffOpShiftedEval<D, SpaceD> ::
   CalcMatrix (const FiniteElement & bfel,
               const BaseMappedIntegrationPoint & bmip,
               SliceMatrix<double,ColMajor> mat,
@@ -17,8 +17,8 @@ namespace ngfem
     const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE> & mip =
       static_cast<const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE>&> (bmip);
 
-    const ScalarFiniteElement<2> & scafe =
-            dynamic_cast<const ScalarFiniteElement<2> & > (bfel);
+    const ScalarFiniteElement<SpaceD> & scafe =
+            dynamic_cast<const ScalarFiniteElement<SpaceD> & > (bfel);
     const int ndof = scafe.GetNDof();
 
     FlatVector<> shape (ndof,lh);
@@ -27,21 +27,21 @@ namespace ngfem
     auto elid = mip.GetTransformation().GetElementId();
     Array<int> dnums;
 
-    Vec<2> z = mip.GetPoint();
+    Vec<SpaceD> z = mip.GetPoint();
 
     if (forth)
     {
       forth->GetFESpace()->GetDofNrs(elid,dnums);
       FlatVector<> values_forth(dnums.Size()*DIM_SPACE,lh);
-      FlatMatrixFixWidth<2> vector_forth(dnums.Size(),&(values_forth(0)));
+      FlatMatrixFixWidth<SpaceD> vector_forth(dnums.Size(),&(values_forth(0)));
       forth->GetVector().GetIndirect(dnums,values_forth);
 
       FiniteElement& fe_forth = forth->GetFESpace()->GetFE(elid,lh);
-      const ScalarFiniteElement<2> & scafe_forth =
-        dynamic_cast<const ScalarFiniteElement<2> & > (fe_forth);
+      const ScalarFiniteElement<SpaceD> & scafe_forth =
+        dynamic_cast<const ScalarFiniteElement<SpaceD> & > (fe_forth);
       FlatVector<> shape_forth(dnums.Size(),lh);
       scafe_forth.CalcShape(ip,shape_forth);
-      Vec<2> dvec_forth = Trans(vector_forth)*shape_forth;
+      Vec<SpaceD> dvec_forth = Trans(vector_forth)*shape_forth;
       z += dvec_forth;
     }
       
@@ -53,12 +53,12 @@ namespace ngfem
       
       back->GetFESpace()->GetDofNrs(elid,dnums);
       FlatVector<> values_back(dnums.Size()*DIM_SPACE,lh);
-      FlatMatrixFixWidth<2> vector_back(dnums.Size(),&(values_back(0)));
+      FlatMatrixFixWidth<SpaceD> vector_back(dnums.Size(),&(values_back(0)));
       back->GetVector().GetIndirect(dnums,values_back);
     
       FiniteElement& fe_back = back->GetFESpace()->GetFE(elid,lh);
-      const ScalarFiniteElement<2> & scafe_back =
-        dynamic_cast<const ScalarFiniteElement<2> & > (fe_back);
+      const ScalarFiniteElement<SpaceD> & scafe_back =
+        dynamic_cast<const ScalarFiniteElement<SpaceD> & > (fe_back);
       FlatVector<> shape_back(dnums.Size(),lh);
       scafe_back.CalcShape(ip,shape_back);
       Vec<2> dvec_back = Trans(vector_back)*shape_back;
@@ -66,12 +66,12 @@ namespace ngfem
 
       int its = 0;
       const double h = sqrt(mip.GetJacobiDet());
-      Vec<2> diff;
+      Vec<SpaceD> diff;
       IntegrationPoint ipx(ip);
 
       IntegrationPoint ipx0(0,0,0);
-      MappedIntegrationPoint<2,2> mip_x0(ipx0,mip.GetTransformation());
-      Vec<2> zdiff = z-mip_x0.GetPoint();
+      MappedIntegrationPoint<SpaceD,SpaceD> mip_x0(ipx0,mip.GetTransformation());
+      Vec<SpaceD> zdiff = z-mip_x0.GetPoint();
     
       // static atomic<int> cnt_its(0);
       // static atomic<int> cnt_calls(0);
@@ -184,11 +184,11 @@ namespace ngfem
     {
       int its = 0;
       const double h = sqrt(mip.GetJacobiDet());
-      Vec<2> diff;
+      Vec<SpaceD> diff;
       IntegrationPoint ipx(ip);
       IntegrationPoint ipx0(0,0,0);
-      MappedIntegrationPoint<2,2> mip_x0(ipx0,mip.GetTransformation());
-      Vec<2> zdiff = z-mip_x0.GetPoint();
+      MappedIntegrationPoint<SpaceD,SpaceD> mip_x0(ipx0,mip.GetTransformation());
+      Vec<SpaceD> zdiff = z-mip_x0.GetPoint();
     
       // Fixed point iteration
       while (its < 100)
@@ -211,8 +211,8 @@ namespace ngfem
   }
 
 
-  template <int D>
-  void DiffOpShiftedEval<D> ::
+  template <int D, int SpaceD>
+  void DiffOpShiftedEval<D, SpaceD> ::
   Apply (const FiniteElement & fel,
          const BaseMappedIntegrationPoint & mip,
          FlatVector<double> x, 
@@ -225,8 +225,8 @@ namespace ngfem
     flux = mat * x;
   }
   
-  template <int D>
-  void DiffOpShiftedEval<D> ::
+  template <int D, int SpaceD>
+  void DiffOpShiftedEval<D, SpaceD> ::
   ApplyTrans (const FiniteElement & fel,
               const BaseMappedIntegrationPoint & mip,
               FlatVector<double> flux,
@@ -239,8 +239,15 @@ namespace ngfem
     x = Trans(mat) * flux;
   }
 
-  template class DiffOpShiftedEval<1>;
-  template class DiffOpShiftedEval<2>;
+  template class DiffOpShiftedEval<1, 1>;
+  template class DiffOpShiftedEval<2, 1>;
+  template class DiffOpShiftedEval<3, 1>;
+  template class DiffOpShiftedEval<1, 2>;
+  template class DiffOpShiftedEval<2, 2>;
+  template class DiffOpShiftedEval<3, 2>;
+  template class DiffOpShiftedEval<1, 3>;
+  template class DiffOpShiftedEval<2, 3>;
+  template class DiffOpShiftedEval<3, 3>;
 
 }
 
