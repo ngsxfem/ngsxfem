@@ -28,7 +28,7 @@ else:
     print("Loading default val for i, gamma: ", i, gamma)
 
 square = SplineGeometry()
-square.AddRectangle([-1,-1],[1,1])
+square.AddRectangle([-0.6,-1],[0.6,1])
 ngmesh = square.GenerateMesh(maxh=0.5**(i+1), quad_dominated=False)
 mesh = Mesh (ngmesh)
 
@@ -138,7 +138,7 @@ patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*ga
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom, form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
 
-outfile = open("error_dev_i"+str(i)+"_gamma"+str(gamma)+".dat", "w")
+outfile = open("errorp"+str(k_t)+"_dev_i"+str(i)+"_gamma"+str(gamma)+".dat", "w")
 
 l2max = 0
 
