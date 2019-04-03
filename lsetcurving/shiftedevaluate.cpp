@@ -6,6 +6,7 @@
 namespace ngfem
 {
 
+  const int NEWTON_ITER_TRESHOLD = 100;
 
   template <int D, int SpaceD>
   void DiffOpShiftedEval<D, SpaceD> ::
@@ -77,7 +78,7 @@ namespace ngfem
       // static atomic<int> cnt_calls(0);
       
       // Fixed point iteration
-      while (its < 100)
+      while (its < NEWTON_ITER_TRESHOLD)
       {
         scafe_back.CalcShape(ipx,shape_back);
         dvec_back = Trans(vector_back)*shape_back;
@@ -91,8 +92,8 @@ namespace ngfem
         // cnt_its++;
       
       }
-      if (its == 50)
-        throw Exception(" shifted eval took 50 iterations and didn't (yet?) converge! ");
+      if (its == NEWTON_ITER_TRESHOLD)
+        throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
     
       // cnt_calls++;
       // cout << "cnt/calls = " << cnt_its/cnt_calls << endl;
@@ -198,8 +199,8 @@ namespace ngfem
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
         its++;
       }
-      if (its == 50)
-        throw Exception(" shifted eval took 50 iterations and didn't (yet?) converge! ");
+      if (its == NEWTON_ITER_TRESHOLD)
+        throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
 
       scafe.CalcShape(ipx,shape);
       mat = 0.0;
