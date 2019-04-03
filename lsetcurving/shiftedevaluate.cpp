@@ -62,7 +62,7 @@ namespace ngfem
         dynamic_cast<const ScalarFiniteElement<SpaceD> & > (fe_back);
       FlatVector<> shape_back(dnums.Size(),lh);
       scafe_back.CalcShape(ip,shape_back);
-      Vec<2> dvec_back = Trans(vector_back)*shape_back;
+      Vec<SpaceD> dvec_back = Trans(vector_back)*shape_back;
     
 
       int its = 0;
