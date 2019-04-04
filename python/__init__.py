@@ -10,6 +10,7 @@ xfem.lsetcuving ... isoparametric unfitted FEM
 
 from ngsolve.comp import *
 from ngsolve.fem import *
+from ngsolve import BitArray
 from ngsolve.utils import L2
 from xfem.ngsxfem_py import *
 from xfem.ngsxfem_utils_py import *
