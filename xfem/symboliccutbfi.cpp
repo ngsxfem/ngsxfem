@@ -796,7 +796,7 @@ namespace ngfem
   {
     // cout << " ------------------------------------------- " << endl;
     const int max_its = 200;
-    const double eps_acc = 1e-8;
+    const double eps_acc = 1e-12;
 
     HeapReset hr(lh);
 
