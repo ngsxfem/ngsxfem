@@ -34,7 +34,7 @@ else:
 #mesh = Mesh (ngmesh)
 
 x_len = 0.6
-y_len = 1.0
+y_len = 1.2
 mesh = MakeStructured2DMesh(quads=False,nx=2**(i+1),ny=2**(i+2),mapping= lambda x,y : (2*x_len*x-x_len,2*y_len*y-y_len))
 
 # polynomial order in time
