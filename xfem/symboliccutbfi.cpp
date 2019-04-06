@@ -951,6 +951,7 @@ namespace ngfem
           ir_st1_wei_arr[ij] = ir_time[i].Weight() * ir_patch1[j].Weight();
 
           st_point = ir_patch1[j].Point();
+          (*ir_spacetime1)[ij].SetFacetNr(-1, VOL);
           (*ir_spacetime1)[ij].Point() = st_point;
           (*ir_spacetime1)[ij].SetWeight( tval);
           (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
@@ -976,6 +977,7 @@ namespace ngfem
           else ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
 
           st_point = ir_patch2[j].Point();
+          (*ir_spacetime2)[ij].SetFacetNr(-1, VOL);
           (*ir_spacetime2)[ij].Point() = st_point;
           (*ir_spacetime2)[ij].SetWeight(tval);
           (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
