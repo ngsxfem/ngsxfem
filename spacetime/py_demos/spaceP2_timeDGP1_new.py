@@ -17,8 +17,8 @@ from xfem.lset_spacetime import *
 
 ngsglobals.msg_level = 1
 
-i = 5
-gamma = 2.5
+i = 3
+gamma = 0.05
 
 if hasattr(sys, 'argv') and len(sys.argv) == 5 and sys.argv[1] == "i" and sys.argv[3] == "stab":
     i = int(sys.argv[2])
@@ -147,7 +147,7 @@ hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + InnerProduct( dt
 #hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1), deformation = dfm_current_top))
 hasneg_integrators_a_top.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
 
-patch_integrators_a.append(SymbolicFacetPatchBFI(form = 4**(i-4)*delta_t*(1+delta_t/h)*gamma*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
+patch_integrators_a.append(SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
 #hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom, form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
 hasneg_integrators_f_bottom.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0)))
