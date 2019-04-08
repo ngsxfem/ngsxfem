@@ -192,7 +192,7 @@ namespace ngfem
       Vec<SpaceD> zdiff = z-mip_x0.GetPoint();
     
       // Fixed point iteration
-      while (its < 100)
+      while (its < NEWTON_ITER_TRESHOLD)
       {
         diff = zdiff - mip.GetJacobian() * ipx.Point();
         if ( L2Norm(diff) < 1e-8*h ) break;
