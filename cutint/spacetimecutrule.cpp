@@ -63,12 +63,13 @@ namespace xintegration
             for(auto interval : sign_change_intervals){
                 double a = get<0>(interval), b = get<1>(interval); double x_mid;
                 double aval = eval(a), bval = eval(b);
-                for(int j=0; j<bisection_iterations; j++){
+                int j;
+                for(j=0; j<bisection_iterations; j++){
                   
                   //secant rule stopping criteria
                   const double x_lin = a - aval*(b-a)/(bval-aval);
                   double val = eval(x_lin);
-                  if (2*abs(val) < 1e-12)
+                  if (2*abs(val) < 1e-15)
                   {
                     a=b=x_lin;
                     break;
@@ -85,6 +86,8 @@ namespace xintegration
                     }
                     else throw Exception("Strange sign structure during bisection!");
                 }
+                if(j == bisection_iterations)
+                    cout << "WARNING: Bisection search did not converge. Resiual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
             return roots;
