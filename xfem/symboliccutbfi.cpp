@@ -903,8 +903,7 @@ namespace ngfem
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
     //In the non-space time case, the result of the mapping to the other element does not depend on the time
     //Therefore it is sufficient to do it once here.
-    // if(time_order == -1){
-    if(true){
+    if(time_order == -1){
         for (int l = 0; l < ir_patch1.Size(); l++) {
             if (l<ir_vol1.Size()) {
                 ir_patch1[l] = ir_vol1[l];
