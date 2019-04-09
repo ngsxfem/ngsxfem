@@ -17,7 +17,7 @@ if use_sympy:
 ngsglobals.msg_level = 1
 
 i = 4
-gamma = 1.
+gamma = 0.05
 
 if hasattr(sys, 'argv') and len(sys.argv) == 5 and sys.argv[1] == "i" and sys.argv[3] == "stab":
     i = int(sys.argv[2])
@@ -138,17 +138,20 @@ ci = CutInfo(mesh,time_order=time_order)
 #n_F = specialcf.normal(mesh.dim)
 
 hasneg_integrators_a = []
+hasneg_integrators_a_top = []
 hasneg_integrators_f = []
+hasneg_integrators_f_bottom = []
 patch_integrators_a = []
+
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*grad(u)*grad(v)))
-hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1),  deformation = dfm_current_top))
-hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
+hasneg_integrators_a_top.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*(dt(v) + InnerProduct( dt_vec(dfm) , grad(v)) ) ))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*gamma*h**(-2)*(u-u.Other())*(v-v.Other()),
                                                  skeleton=False, time_order=time_order))
 #patch_integrators_a.append(SymbolicFacetPatchBFI( InnerProduct(grad(u) - grad(u.Other()), n_F) * InnerProduct(grad(v) - grad(v.Other()), n_F), skeleton=True, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
-hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
+hasneg_integrators_f_bottom.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0)))
 
 outfile = open("error_kitep"+str(k_t)+"_dev_i"+str(i)+"_gamma"+str(gamma)+".dat", "w")
 
@@ -156,14 +159,24 @@ a = BilinearForm(st_fes,check_unused=False,symmetric=False)
 for integrator in hasneg_integrators_a + patch_integrators_a:
     a += integrator
 
+a_top = BilinearForm(st_fes,check_unused=False,symmetric=False)
+for integrator in hasneg_integrators_a_top:
+    a_top += integrator
+
 f = LinearForm(st_fes)
 
 for integrator in hasneg_integrators_f:
     f += integrator
 
+f_bottom = LinearForm(st_fes)
+for integrator in hasneg_integrators_f_bottom:
+    f_bottom += integrator
+
+l2max = 0
+
 while tend - told > delta_t/2:
-    with TaskManager():
-        dfm = lset_adap_st.CalcDeformation(levelset,tref,told,delta_t)
+    #with TaskManager():
+    dfm = lset_adap_st.CalcDeformation(levelset,tref,told,delta_t)
 
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
@@ -187,20 +200,30 @@ while tend - told > delta_t/2:
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
 
     # re-set definedonelements-markers according to new markings:
-    for integrator in hasneg_integrators_a + hasneg_integrators_f:
+    for integrator in hasneg_integrators_a + hasneg_integrators_f + hasneg_integrators_a_top + hasneg_integrators_f_bottom:
         integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
     for integrator in patch_integrators_a:
         integrator.SetDefinedOnElements(ba_facets)
 
+    mesh.SetDeformation(dfm_current_bottom)
+    f_bottom.Assemble()
+    mesh.UnsetDeformation()
+    
+    mesh.SetDeformation(dfm_current_top)
+    a_top.Assemble()
+    mesh.UnsetDeformation()
+    
     # assemble linear system
     mesh.SetDeformation(dfm)
-    with TaskManager():
-        a.Assemble()
-        f.Assemble()
+    a.Assemble()
+    f.Assemble()
     mesh.UnsetDeformation()
+    
+    a.mat.AsVector().data = a.mat.AsVector() + a_top.mat.AsVector() #+ a_no_dfm.mat.AsVector()
+    f.vec.data = f.vec + f_bottom.vec
 
     # solve linear system
-    inv = a.mat.Inverse(active_dofs,inverse="pardiso")
+    inv = a.mat.Inverse(active_dofs,inverse="umfpack")
     gfu.vec.data =  inv * f.vec
        
     # evaluate upper trace of solution for
@@ -224,8 +247,13 @@ while tend - told > delta_t/2:
     
     outfile.write(str(told)+"\t"+str(l2error)+"\n")
     
+    if l2error > l2max:
+        l2max = l2error
+    
     # print time and error
     #print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
     print("t = ",told, " l2error = ",l2error)
     
     dfm_last_top.vec.data = dfm_current_top.vec
+
+print("L2 max: ", l2max)
