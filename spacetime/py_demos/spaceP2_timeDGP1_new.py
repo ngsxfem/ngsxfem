@@ -259,7 +259,7 @@ while tend - t_old > delta_t/2:
     mesh.UnsetDeformation()
     
     mesh.SetDeformation(dfm)
-    l2error_time_int = sqrt(Integrate({ "levelset" : lset_top, "domain_type" : NEG}, (u_exactL(t) - gfu)**2, mesh, order=2*k_s, time_order=time_order))
+    l2error_time_int = sqrt(Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, (u_exactL(t) - gfu)**2, mesh, order=2*k_s, time_order=time_order))
     mesh.UnsetDeformation()
     
     # update time variable (float and ParameterCL)
