@@ -166,14 +166,18 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      // General case
      //cout << IM(3) <<"time fe:" << GetTimeFE() << endl;
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
-     const int dim = Vh->GetDimension();     
+
+     const int dim = Vh->GetDimension();
+     for(int j=0; j< Vh->GetNDof(); j++) restricted_vec[j] = 0.;
+
      for(int i= 0; i < nodes.Size(); i++) {
        if (IsTimeNodeActive(i))
        {
          double weight_time = time_FE->Lagrange_Pol(time,i);
          for(int j = 0; j < Vh->GetNDof();j++)
-             for(int d = 0; d < dim;d++)
-                 restricted_vec[dim*j+d] += weight_time * st_vec[dim*(j+i*Vh->GetNDof())+d];
+             //for(int d = 0; d < dim;d++)
+                 //restricted_vec[dim*j+d] += weight_time * st_vec[dim*(j+i*Vh->GetNDof())+d];
+             restricted_vec[j] += weight_time * st_vec[j+i*Vh->GetNDof()];
        }
      }
   }
