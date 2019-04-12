@@ -17,7 +17,7 @@ from xfem.lset_spacetime import *
 
 ngsglobals.msg_level = 1
 
-i = 3
+i = 2
 gamma = 0.05
 
 if hasattr(sys, 'argv') and len(sys.argv) == 5 and sys.argv[1] == "i" and sys.argv[3] == "stab":
@@ -28,17 +28,19 @@ if hasattr(sys, 'argv') and len(sys.argv) == 5 and sys.argv[1] == "i" and sys.ar
 else:
     print("Loading default val for i, gamma: ", i, gamma)
 
-#square = SplineGeometry()
-#square.AddRectangle([-0.6,-1],[0.6,1])
-#ngmesh = square.GenerateMesh(maxh=0.5**(i+1), quad_dominated=False)
-#mesh = Mesh (ngmesh)
+Patchint_sliced = False # Only for p4 right now...
 
-x_len = 0.6
-y_len = 1.2
-mesh = MakeStructured2DMesh(quads=False,nx=2**(i+1),ny=2**(i+2),mapping= lambda x,y : (2*x_len*x-x_len,2*y_len*y-y_len))
+square = SplineGeometry()
+square.AddRectangle([-0.6,-1],[0.6,1])
+ngmesh = square.GenerateMesh(maxh=0.5**(i+1), quad_dominated=False)
+mesh = Mesh (ngmesh)
+
+#x_len = 0.6
+#y_len = 1.2
+#mesh = MakeStructured2DMesh(quads=False,nx=2**(i+1),ny=2**(i+2),mapping= lambda x,y : (2*x_len*x-x_len,2*y_len*y-y_len))
 
 # polynomial order in time
-k_t = 2
+k_t = 4
 # polynomial order in space
 k_s = k_t
 # spatial FESpace for solution
@@ -54,8 +56,8 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Fitted heat equation example
 tstart = 0
-tend = 1
-delta_t = (tend - tstart)/(2**(i+2))
+tend = 0.5
+delta_t = (tend - tstart)/(2**(i+1))
 tnew = 0
 
 told = Parameter(tstart)
@@ -63,7 +65,7 @@ tref = ReferenceTimeVariable()
 t = told + delta_t*tref
 
 lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = lset_order_time,
-                                                threshold=0.05, discontinuous_qn=True)
+                                                threshold=0.5, discontinuous_qn=True)
 
 # radius of disk (the geometry)
 r0 = 0.5
@@ -106,6 +108,7 @@ dfm = lset_adap_st.deform
 dfm_last_top = CreateTimeRestrictedGF(dfm,1.0)
 dfm_current_top = CreateTimeRestrictedGF(dfm,1.0)
 dfm_current_bottom = CreateTimeRestrictedGF(dfm,0.0)
+dfm_time_node = CreateTimeRestrictedGF(dfm,0.)
 
 t_old = tstart
 
@@ -139,16 +142,21 @@ hasneg_integrators_f = []
 hasneg_integrators_f_bottom = []
 patch_integrators_a = []
 
-
-hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + InnerProduct( dt_vec(dfm) , grad(v)) )
-                                            + delta_t*grad(u)*grad(v)
-                                            - delta_t*u*InnerProduct(w,grad(v))))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + InnerProduct( dt_vec(dfm) , grad(v)) )))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t* InnerProduct( grad(u), grad(v)) ))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = - delta_t*u*InnerProduct(w,grad(v))))
 #hasneg_integrators_a.append(SpaceTimeNegBFI(form = u*v))
 #hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1), deformation = dfm_current_top))
 hasneg_integrators_a_top.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
 
-patch_integrators_a.append(SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
-hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
+patch_integrators_a.append(SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u - u.Other() )*(v - v.Other()), skeleton=False, time_order=time_order))
+
+timerule = [(0.0469101, 0.118463), (0.230765, 0.239314), (0.5, 0.284444), (0.769235, 0.239314), (0.95309, 0.118463) ]
+
+def getFacetPatchatTime(tval):
+    return SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(fix_t(u,tval) - fix_t(u.Other(), tval) )*( fix_t(v,tval) - fix_t( v.Other(), tval)), skeleton=False)
+
+hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order))
 #hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom, form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
 hasneg_integrators_f_bottom.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0)))
 
@@ -195,16 +203,15 @@ while tend - t_old > delta_t/2:
 
     #a = BilinearForm(st_fes,check_unused=False,symmetric=False)
     a = RestrictedBilinearForm(st_fes,"a", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
-    for integrator in hasneg_integrators_a + patch_integrators_a:
+    for integrator in hasneg_integrators_a: # + patch_integrators_a:
         a += integrator
+    if not Patchint_sliced:
+        for integrator in patch_integrators_a:
+            a += integrator
     
     a_top = RestrictedBilinearForm(st_fes,"a_top", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
     for integrator in hasneg_integrators_a_top:
         a_top += integrator
-    
-    #a_no_dfm = RestrictedBilinearForm(st_fes,"a_no_dfm", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
-    #for integrator in patch_integrators_a:
-        #a_no_dfm += integrator
     
     f = LinearForm(st_fes)
     for integrator in hasneg_integrators_f:
@@ -214,7 +221,6 @@ while tend - t_old > delta_t/2:
     for integrator in hasneg_integrators_f_bottom:
         f_bottom += integrator
     
-    #a_no_dfm.Assemble()
     
     # update mesh deformation and assemble linear system
     mesh.SetDeformation(dfm)
@@ -233,6 +239,23 @@ while tend - t_old > delta_t/2:
     
     a.mat.AsVector().data = a.mat.AsVector() + a_top.mat.AsVector() #+ a_no_dfm.mat.AsVector()
     f.vec.data = f.vec + f_bottom.vec
+    
+    if Patchint_sliced:
+        for (tval, weight) in timerule:
+            print("tval, weight = ", tval, weight)
+            
+            a_patch_time_node = RestrictedBilinearForm(st_fes,"a_no_dfm", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
+            integrator = getFacetPatchatTime(tval)
+            integrator.SetDefinedOnElements(ba_facets)
+            a_patch_time_node += integrator
+            
+            RestrictGFInTime(spacetime_gf=dfm,reference_time=tval,space_gf=dfm_time_node)
+            
+            mesh.SetDeformation(dfm_time_node)
+            a_patch_time_node.Assemble()
+            mesh.UnsetDeformation()
+            
+            a.mat.AsVector().data = a.mat.AsVector() + weight* a_patch_time_node.mat.AsVector()
     
     # solve linear system
     #pre = a.mat.Inverse(active_dofs,"umfpack")
