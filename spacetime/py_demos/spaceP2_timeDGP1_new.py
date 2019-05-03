@@ -40,7 +40,7 @@ mesh = Mesh (ngmesh)
 #mesh = MakeStructured2DMesh(quads=False,nx=2**(i+1),ny=2**(i+2),mapping= lambda x,y : (2*x_len*x-x_len,2*y_len*y-y_len))
 
 # polynomial order in time
-k_t = 4
+k_t = 3
 # polynomial order in space
 k_s = k_t
 # spatial FESpace for solution
@@ -75,8 +75,21 @@ rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
 rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
 # velocity of position shift
 d_rho = CoefficientFunction(2*cos(2*pi*t))
+
+# rho =  CoefficientFunction(1*t)
+# rhoL = lambda t:CoefficientFunction(1*t)
+# # velocity of position shift
+# d_rho = CoefficientFunction(1)
+
+# rho =  CoefficientFunction(0)
+# rhoL = lambda t:CoefficientFunction(0)
+# # velocity of position shift
+# d_rho = CoefficientFunction(1)
+
+alpha = 1
 #convection velocity:
 w = CoefficientFunction((0,d_rho)) 
+# w = 10*CoefficientFunction((-y,x)) 
 
 # level set
 r = sqrt(x**2+(y-rho)**2)
@@ -124,6 +137,9 @@ h = specialcf.mesh_size
 
 #visoptions.deformation = 1
 
+# Draw(u_last-u_exactL(told+delta_t),mesh,"ulast")
+Draw(IfPos(lset_top,0,u_last),mesh,"ulast")
+
 #Draw(h, mesh, "h")
 
 lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
@@ -143,7 +159,7 @@ hasneg_integrators_f_bottom = []
 patch_integrators_a = []
 
 hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + InnerProduct( dt_vec(dfm) , grad(v)) )))
-hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t* InnerProduct( grad(u), grad(v)) ))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = alpha * delta_t* InnerProduct( grad(u), grad(v)) ))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = - delta_t*u*InnerProduct(w,grad(v))))
 #hasneg_integrators_a.append(SpaceTimeNegBFI(form = u*v))
 #hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1), deformation = dfm_current_top))
@@ -164,12 +180,15 @@ outfile = open("errorp"+str(k_t)+"_dev_i"+str(i)+"_gamma"+str(gamma)+".dat", "w"
 
 l2max = 0
 l2_timeintmax = 0
-
+maxdists = []
 while tend - t_old > delta_t/2:
     # update lset geometry to new time slab (also changes lset_p1 !)
     #dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t)
     #with TaskManager():
     dfm = lset_adap_st.CalcDeformation(levelset,tref,t_old,delta_t)
+    maxdist = lset_adap_st.CalcMaxDistance(levelset,tref,t_old,delta_t)
+    #print("maxdist=",maxdist) #, given_pts = [])
+    maxdists.append(maxdist)
     
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
@@ -192,6 +211,11 @@ while tend - t_old > delta_t/2:
     # re-compute the facets for stabilization:
     ba_facets = GetFacetsWithNeighborTypes(mesh,a=ci.GetElementsOfType(HASNEG),
                                                 b=ci.GetElementsOfType(IF))
+    
+    # Draw(BitArrayCF(ci.GetElementsOfType(NEG)),mesh,"NEG")
+    # Draw(BitArrayCF(ci.GetElementsOfType(IF)),mesh,"IF")
+    # Draw(BitArrayCF(GetElementsWithNeighborFacets(mesh,ba_facets)),mesh,"stabilized")
+    # input("")
     # re-evaluate the "active dofs" in the space time slab
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
 
@@ -265,11 +289,11 @@ while tend - t_old > delta_t/2:
     gfu.vec.data = inv* f.vec.data
     #gfu.vec.data = GMRes( a.mat, f.vec, pre, tol=1e-20, printrates=True)
     
-    #tmp = f.vec.CreateVector()
-    #for it in range(5):
-    #tmp.data = f.vec.data - a.mat * gfu.vec.data
-    #print("Norm of tmp: ", Norm(tmp))
-        #gfu.vec.data = gfu.vec.data + inv * tmp.data
+    # tmp = f.vec.CreateVector()
+    # for it in range(5):
+    #     tmp.data = f.vec.data - a.mat * gfu.vec.data
+    #     print("Norm of tmp: ", Norm(tmp))
+    #     gfu.vec.data = gfu.vec.data + inv * tmp.data
     
     # evaluate upper trace of solution for
     #  * for error evaluation 
@@ -298,7 +322,8 @@ while tend - t_old > delta_t/2:
     
     # print time and error
     #print("\rt = {0:10}, l2error = {1:20}".format(t_old,l2error),end="")
-    print("t = ",t_old, " l2error = ",l2error, " time int L2: ", l2error_time_int)
+    # print("t = ",t_old, " l2error = ",l2error, " time int L2: ", l2error_time_int)
+    print("\rt = ",t_old,"            ",end="")
     #outfile.write(str(t_old)+"\t"+str(l2error)+"\t"+str(Norm(tmp))+"\n")
     outfile.write(str(t_old)+"\t"+str(l2error)+"\t"+str(l2error_time_int)+"\n")
     
@@ -319,5 +344,6 @@ while tend - t_old > delta_t/2:
 
     # store deformation at top level of for next time step
     dfm_last_top.vec.data = dfm_current_top.vec
-
-print("L2 max: ", l2max, " Time int: ", l2_timeintmax)
+    Redraw()
+print("\nL2 max: ", l2max, " Time int: ", l2_timeintmax)
+print("\ndist max: ", max(maxdists))
