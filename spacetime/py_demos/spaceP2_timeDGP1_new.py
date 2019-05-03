@@ -57,7 +57,7 @@ st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 #Fitted heat equation example
 tstart = 0
 tend = 0.5
-delta_t = (tend - tstart)/(2**(i+1))
+delta_t = (tend - tstart)/(2**(i))
 tnew = 0
 
 told = Parameter(tstart)
@@ -69,6 +69,7 @@ lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_t
 
 # radius of disk (the geometry)
 r0 = 0.5
+r1 = 0.5*pi/r0                                        
 
 # position shift of the geometry in time
 rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
@@ -93,13 +94,29 @@ w = CoefficientFunction((0,d_rho))
 
 # level set
 r = sqrt(x**2+(y-rho)**2)
-levelset= r - r0
+rL = lambda t : sqrt(x**2+(y-rhoL(t))**2)
+# levelset= r - r0
+
+levelset= CoefficientFunction(r -r0)
 
 # solution and r.h.s.
-Q = pi/r0   
+Q = pi/r0
+
+# coeff_f = CoefficientFunction(  -(pi/r0)*r1*( sin(r1*r)**2 - cos(r1*r)**2 )  + (pi/r0)*cos(r1*r)*sin(r1*r)*(1/r) )
+# u_exact = CoefficientFunction(cos(r1*r)*cos(r1*r) ) - 1
+# u_exactL = lambda t: CoefficientFunction(cos(r1*rL(t))*cos(r1*rL(t))) - 1
+
+coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
 u_exact = cos(Q*r) * sin(pi*t)
 u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
-coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
+
+# coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r))
+# u_exact = cos(Q*r) + 1
+# u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) + 1
+
+# coeff_f = 0
+# u_exact = 1
+# u_exactL = lambda t: 1
 
 
 gfu = GridFunction(st_fes)
@@ -158,12 +175,13 @@ hasneg_integrators_f = []
 hasneg_integrators_f_bottom = []
 patch_integrators_a = []
 
-hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + InnerProduct( dt_vec(dfm) , grad(v)) )))
+# hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + InnerProduct( dt_vec(dfm) , grad(v)) )))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form =  v*(dt(u) + InnerProduct( dt_vec(dfm) , grad(u)) )))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = alpha * delta_t* InnerProduct( grad(u), grad(v)) ))
-hasneg_integrators_a.append(SpaceTimeNegBFI(form = - delta_t*u*InnerProduct(w,grad(v))))
+hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*v*InnerProduct(w,grad(u))))
 #hasneg_integrators_a.append(SpaceTimeNegBFI(form = u*v))
 #hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1), deformation = dfm_current_top))
-hasneg_integrators_a_top.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+hasneg_integrators_a_top.append(SymbolicBFI(levelset_domain = lset_neg_bottom, form = fix_t(u,0)*fix_t(v,0)))
 
 patch_integrators_a.append(SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u - u.Other() )*(v - v.Other()), skeleton=False, time_order=time_order))
 
@@ -257,7 +275,7 @@ while tend - t_old > delta_t/2:
     f_bottom.Assemble()
     mesh.UnsetDeformation()
     
-    mesh.SetDeformation(dfm_current_top)
+    mesh.SetDeformation(dfm_current_bottom)
     a_top.Assemble()
     mesh.UnsetDeformation()
     
@@ -285,7 +303,9 @@ while tend - t_old > delta_t/2:
     #pre = a.mat.Inverse(active_dofs,"umfpack")
     #inv = CGSolver(a.mat, pre, printrates=True, precision=1e-10, maxsteps=15)
     #inv = GMRESSolver(mat=a.mat,pre=pre,printrates=True,precision=1e-8,maxsteps=15)
-    inv = a.mat.Inverse(active_dofs,inverse="umfpack")
+    pre = a.mat.Inverse(active_dofs,"pardiso")
+    inv = CGSolver(a.mat,pre,printrates=True,maxsteps=5)
+    # inv = a.mat.Inverse(active_dofs,inverse="pardiso")
     gfu.vec.data = inv* f.vec.data
     #gfu.vec.data = GMRes( a.mat, f.vec, pre, tol=1e-20, printrates=True)
     
@@ -303,6 +323,9 @@ while tend - t_old > delta_t/2:
     # compute error at final time
     mesh.SetDeformation(dfm_current_top)
     l2error = sqrt(Integrate({ "levelset" : lset_top, "domain_type" : NEG}, (u_exactL(t_old + delta_t) - u_last)**2, mesh, order=2*k_s))
+
+    mass = Integrate({ "levelset" : lset_top, "domain_type" : NEG}, u_last, mesh, order=2*k_s)
+    # print("mass=",mass)
     mesh.UnsetDeformation()
     
     mesh.SetDeformation(dfm)
