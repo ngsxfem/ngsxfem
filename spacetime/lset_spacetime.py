@@ -117,7 +117,7 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.interpol_ho(levelset,t,tstart,delta_t)
         self.interpol_p1()
-        
+
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             self.ci.Update(self.lset_p1_node)
@@ -151,17 +151,23 @@ class LevelSetMeshAdaptation_Spacetime:
             time_quad = given_pts
         else:
             time_quad = self.v_ho_st.TimeFE_nodes() 
-        times = [tstart + delta_t * xi for xi in time_quad]
+        # times = [tstart + delta_t * xi for xi in time_quad]
         max_dists = []
-        for ti,xi in zip(times,time_quad):
-            t.Set(ti) 
+        # for ti,xi in zip(times,time_quad):
+        for xi in time_quad:
+        
+            RestrictGFInTime(self.lset_p1,xi,self.lset_p1_node)
+            RestrictGFInTime(self.deform,xi,self.deform_node)
+            t.FixTime(xi)
+            # t.Set(ti) 
             self.v_def_st.SetTime(xi)
             self.v_ho_st.SetTime(xi)
-            max_dists.append(CalcMaxDistance(levelset,RestrictToTime(self.lset_p1,xi),self.deform,heapsize=self.heapsize))
+            max_dists.append(CalcMaxDistance(levelset,self.lset_p1_node,self.deform_node,heapsize=self.heapsize))
             #max_dists.append(CalcMaxDistance(self.lset_ho,self.lset_p1,self.deform,heapsize=self.heapsize))
+        t.UnfixTime()
         self.v_def_st.SetOverrideTime(False)
         self.v_ho_st.SetOverrideTime(False)
-        t.Set(tstart)
+        # t.Set(tstart)
         return max(max_dists)
       
        
