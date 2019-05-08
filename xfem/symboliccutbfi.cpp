@@ -836,6 +836,7 @@ namespace ngfem
         }
         ir_patch2[l] = ip_x0;
         ir_patch2[l].SetWeight(mip.GetWeight()/w);
+        ir_patch2[l].SetFacetNr(-1,VOL);
       }
       else
       {
@@ -859,6 +860,7 @@ namespace ngfem
         }
         ir_patch1[l] = ip_x0;
         ir_patch1[l].SetWeight(mip.GetWeight()/w);
+        ir_patch1[l].SetFacetNr(-1,VOL);
       }
     }
     

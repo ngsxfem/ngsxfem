@@ -107,19 +107,17 @@ l2error = sqrt( Integrate( levelset_domain=lset_if, cf=err_sqr_coefs[0], mesh=me
 mesh.UnsetDeformation()
 
 print ("l2error : ", l2error)
-import sys
-if not hasattr(sys, 'argv') or len(sys.argv) == 1 or sys.argv[1] != "testmode":
-   Draw(deformation,mesh,"deformation")
-   Draw(gfu,mesh,"u")
+Draw(deformation,mesh,"deformation")
+Draw(gfu,mesh,"u")
 
-   visoptions.mminval = -1
-   visoptions.mmaxval = 1
-   visoptions.deformation = 1
-   visoptions.autoscale = 0
+visoptions.mminval = -1
+visoptions.mmaxval = 1
+visoptions.deformation = 1
+visoptions.autoscale = 0
 
-   input("Continue (press enter) to create a VTK-Output to tracefem3d.vtk")
-   
-   vtk = VTKOutput(ma=mesh,coefs=[deformation,lset_approx,gfu],names=["deformation","P1-levelset","u"],filename="tracefem3d",subdivision=2)
-   vtk.Do()
+input("Continue (press enter) to create a VTK-Output to tracefem3d.vtk")
+
+vtk = VTKOutput(ma=mesh,coefs=[deformation,lset_approx,gfu],names=["deformation","P1-levelset","u"],filename="tracefem3d",subdivision=2)
+vtk.Do()
 
 
