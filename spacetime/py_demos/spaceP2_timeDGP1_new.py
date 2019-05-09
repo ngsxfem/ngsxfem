@@ -203,8 +203,8 @@ while tend - t_old > delta_t/2:
     # update lset geometry to new time slab (also changes lset_p1 !)
     #dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t)
     #with TaskManager():
-    dfm = lset_adap_st.CalcDeformation(levelset,tref,t_old,delta_t)
-    maxdist = lset_adap_st.CalcMaxDistance(levelset,tref,t_old,delta_t)
+    dfm = lset_adap_st.CalcDeformation(levelset,tref)
+    maxdist = lset_adap_st.CalcMaxDistance(levelset,tref)
     #print("maxdist=",maxdist) #, given_pts = [])
     maxdists.append(maxdist)
     

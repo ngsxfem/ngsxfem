@@ -81,7 +81,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_kappa = SpaceTimeFESpace(self.v_kappa_node,self.tfe)
         self.kappa = GridFunction(self.v_kappa, "kappa")        
         
-    def interpol_ho(self,levelset,t,tstart,delta_t):
+    def interpol_ho(self,levelset,t): #,tstart,delta_t):
         #times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes()]
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):
@@ -99,7 +99,7 @@ class LevelSetMeshAdaptation_Spacetime:
             InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = self.lset_p1_node.vec[:]
             
-    def CalcDeformation(self, levelset,t,tstart,delta_t,calc_kappa = False):
+    def CalcDeformation(self, levelset,t,calc_kappa = False):
         """
         Compute the deformation
         """
@@ -115,7 +115,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_kappa.Update()
         self.kappa.Update()
         
-        self.interpol_ho(levelset,t,tstart,delta_t)
+        self.interpol_ho(levelset,t) #,tstart,delta_t)
         self.interpol_p1()
 
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
@@ -143,7 +143,7 @@ class LevelSetMeshAdaptation_Spacetime:
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
         return self.deform
             
-    def CalcMaxDistance(self, levelset,t,tstart,delta_t, given_pts = []):
+    def CalcMaxDistance(self, levelset,t, given_pts = []):
         """
         Compute largest distance
         """
