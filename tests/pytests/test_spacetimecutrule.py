@@ -246,7 +246,7 @@ def test_spacetime_spaceP1_timeCGP1():
 
     lset_p1 = GridFunction(st_fes)
 
-    SpaceTimeInterpolateToP1(levelset,tref,0.0,delta_t,lset_p1)
+    SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
 
     lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
     lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
@@ -309,7 +309,7 @@ def test_spacetime_spaceP1_timeCGP1():
         f += integrator
 
     while tend - told > delta_t/2:
-        SpaceTimeInterpolateToP1(levelset,tref,told,delta_t,lset_p1)
+        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
         RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
         RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
 
@@ -416,7 +416,7 @@ def test_spacetime_spaceP1_timeDGP1():
 
     lset_p1 = GridFunction(st_fes)
 
-    SpaceTimeInterpolateToP1(levelset,tref,0.0,delta_t,lset_p1)
+    SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
 
     lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
     lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
@@ -463,7 +463,7 @@ def test_spacetime_spaceP1_timeDGP1():
         f += integrator
 
     while tend - told > delta_t/2:
-        SpaceTimeInterpolateToP1(levelset,tref,told,delta_t,lset_p1)
+        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
         RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
         RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
 
@@ -542,7 +542,7 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     sum_vol = 0
     sum_int = 0
     for i in range(n_steps):
-        SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
+        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
     
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
         val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
@@ -625,7 +625,7 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     sum_vol = 0
     sum_int = 0
     for i in range(n_steps):
-        SpaceTimeInterpolateToP1(levelset,tref,0.,delta_t,lset_p1) # call for the master spacetime_weihack -- 0 and tend are ununsed parameter
+        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
     
         val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
         val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
