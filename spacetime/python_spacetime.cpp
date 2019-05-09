@@ -535,17 +535,15 @@ use_FixAnyTime: bool
    py::arg("space_gf"),
    "Extract Gridfunction corresponding to a fixed time from a space-time GridFunction.");
 
-   m.def("SpaceTimeInterpolateToP1", [](PyCF st_CF, PyCF tref, double t, double dt, PyGF st_GF)
+   m.def("SpaceTimeInterpolateToP1", [](PyCF st_CF, PyCF tref, PyGF st_GF)
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
      if (!st_FES) throw Exception("not a spacetime gridfunction");
-     st_FES->InterpolateToP1(st_CF,tref,t,dt,st_GF);
+     st_FES->InterpolateToP1(st_CF,tref,st_GF);
    }, 
    py::arg("spacetime_cf"),
    py::arg("time"),
-   py::arg("tstart"),
-   py::arg("dt"),
    py::arg("spacetime_gf"),
    "Interpolate nodal in time (possible high order) and nodal in space (P1).");
 

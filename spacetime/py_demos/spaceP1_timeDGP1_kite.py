@@ -102,7 +102,7 @@ told = 0
 
 lset_p1 = GridFunction(st_fes)
 
-SpaceTimeInterpolateToP1(levelset,tref,0.0,delta_t,lset_p1)
+SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
 
 lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
 lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
@@ -151,7 +151,7 @@ for integrator in hasneg_integrators_f:
     f += integrator
 
 while tend - told > delta_t/2:
-    SpaceTimeInterpolateToP1(levelset,tref,told,delta_t,lset_p1)
+    SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
 

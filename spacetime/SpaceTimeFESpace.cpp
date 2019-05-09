@@ -199,7 +199,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      return restricted_GF;
   }
 
-  void SpaceTimeFESpace ::InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> ctref, double t, double dt, shared_ptr<GridFunction> st_GF)
+  void SpaceTimeFESpace ::InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> ctref, shared_ptr<GridFunction> st_GF)
   {
     LocalHeapMem<100000> lh("SpacetimeInterpolateToP1");
     auto node_gf = make_shared < S_GridFunction < double > >( Vh_ptr);
