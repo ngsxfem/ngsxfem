@@ -176,7 +176,7 @@ l2max = 0
 
 while tend - told > delta_t/2:
     #with TaskManager():
-    dfm = lset_adap_st.CalcDeformation(levelset,tref,told,delta_t)
+    dfm = lset_adap_st.CalcDeformation(levelset,tref)
 
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
