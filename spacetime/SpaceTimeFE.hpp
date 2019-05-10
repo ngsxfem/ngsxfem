@@ -15,19 +15,19 @@
 namespace ngfem
 {
 
-
-    class SpaceTimeFE : public ScalarFiniteElement<2>
+  template <int D>
+    class SpaceTimeFE : public ScalarFiniteElement<D>
    {
-        ScalarFiniteElement<2>* sFE = nullptr;
+        ScalarFiniteElement<D>* sFE = nullptr;
         ScalarFiniteElement<1>* tFE = nullptr;
         double time;
         bool override_time = false;
 
     public:
       // constructor
-      SpaceTimeFE (ScalarFiniteElement<2>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
+      SpaceTimeFE (ScalarFiniteElement<D>* s_FE,ScalarFiniteElement<1>*t_FE, bool override_time, double time );
 
-      virtual ELEMENT_TYPE ElementType() const { return ET_TRIG; }
+      virtual ELEMENT_TYPE ElementType() const { return sFE->ElementType(); }
 
 
       virtual void CalcShape (const IntegrationPoint & ip,

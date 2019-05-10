@@ -34,6 +34,7 @@ if True:
     ### case 1: analytical solution:
     # position shift of the geometry in time
     rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
+    rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
     #convection velocity:
     d_rho = CoefficientFunction(2*cos(2*pi*t))
     w = CoefficientFunction((0,d_rho)) 
@@ -48,6 +49,7 @@ if True:
     # solution and r.h.s.
     Q = pi/r0   
     u_exact = cos(Q*r) * sin(pi*t)
+    u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
     coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
     u_init = u_exact
     
@@ -105,7 +107,7 @@ told = 0
 
 lset_p1 = GridFunction(st_fes)
 
-SpaceTimeInterpolateToP1(levelset,coef_told,0.0,delta_t,lset_p1)
+SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
 
 lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
 lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
@@ -115,8 +117,8 @@ gfu_e = GridFunction(st_fes_e)
 
 #
 u_last = CreateTimeRestrictedGF(gfu_e,0)
-gfu_e.Set(u_init) 
-
+#gfu_e.Set(u_init)
+SpaceTimeWeakSet(gfu_e, u_exactL(0.0), fes1)
 
 Draw(gfu_e,mesh,"gfu_e")
 
@@ -177,7 +179,7 @@ for integrator in hasneg_integrators_f:
     f += integrator
 
 while tend - told > delta_t/2:
-    SpaceTimeInterpolateToP1(levelset,coef_told,told,delta_t,lset_p1)
+    SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
 
@@ -215,15 +217,17 @@ while tend - told > delta_t/2:
     #  * for error evaluation 
     #  * upwind-coupling to next time slab
     RestrictGFInTime(spacetime_gf=gfu_i,reference_time=1.0,space_gf=u_last)   
-
-    gfu_e.Set(u_last)
+    
+    # gfu_e.Set(u_last)
+    SpaceTimeWeakSet(gfu_e, u_last, fes1)
+    
     # update time variable (float and ParameterCL)
     told = told + delta_t
     coef_told.Set(told)
     
     if u_exact != None:
         # compute error at end of time slab
-        l2error = sqrt(Integrate(lset_neg_top,(u_exact-u_last)**2,mesh))
+        l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)**2,mesh))
         # print time and error
         print("\rt = {0:10}, l2error = {1:20}".format(told,l2error),end="")
     else:

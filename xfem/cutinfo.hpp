@@ -31,7 +31,7 @@ namespace ngcomp
                                                      nullptr, nullptr, nullptr};
     shared_ptr<Array<DOMAIN_TYPE>> dom_of_node [6] = {nullptr, nullptr, nullptr,
                                                       nullptr, nullptr, nullptr};
-    double subdivlvl = 0;
+    int subdivlvl = 0;
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
     void Update(shared_ptr<CoefficientFunction> lset, int time_order, LocalHeap & lh);
