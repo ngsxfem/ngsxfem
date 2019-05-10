@@ -117,12 +117,12 @@ class LevelSetMeshAdaptation_Spacetime:
         
         self.interpol_ho(levelset,t) #,tstart,delta_t)
         self.interpol_p1()
-
+                
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             self.ci.Update(self.lset_p1_node)
             if calc_kappa:
-                self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof] = self.ci.GetCutRatios(VOL)
+                self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof].data = self.ci.GetCutRatios(VOL)
         
         
         self.ci.Update(self.lset_p1,self.order_time)
