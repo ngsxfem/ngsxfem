@@ -97,7 +97,9 @@ namespace ngfem
 
     elvec = 0;
 
-    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    const IntegrationRule * ir1;
+    Array<double> wei_arr;
+    tie (ir1, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
     if (ir1 == nullptr)
       return;
     ///
@@ -144,7 +146,7 @@ namespace ngfem
               values(i,0) = cf->Evaluate(mir[i]);
 
             for (int i = 0; i < mir.Size(); i++)
-              proxyvalues(i,k) = mir[i].GetWeight() * values(i,0);
+              proxyvalues(i,k) = mir[i].GetMeasure() * wei_arr[i] * values(i,0);
           }
         // td.Stop();
         // tb.Start();

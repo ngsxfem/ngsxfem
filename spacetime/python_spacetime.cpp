@@ -40,8 +40,6 @@ void ExportNgsx_spacetime(py::module &m)
   typedef shared_ptr<SpaceTimeFESpace> PySTFES;
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
 
-  m.def("DebugSpaceTimeCutIntegrationRule", [](){ DebugSpaceTimeCutIntegrationRule(); });
-
   m.def("SpaceTimeFESpace", [] (
                                         PyFES basefes,
                                         shared_ptr<FiniteElement> fe,
@@ -88,7 +86,39 @@ void ExportNgsx_spacetime(py::module &m)
        py::arg("timefe"),
        py::arg("dirichlet") = DummyArgument(),
        py::arg("flags") = py::dict(),
-        py::arg("heapsize") = 1000000);
+       py::arg("heapsize") = 1000000,
+       docu_string(R"raw_string(
+This function creates a SpaceTimeFiniteElementSpace based on a spacial FE space and a time Finite element
+Roughly, this is the tensor product between those two arguments. Further arguments specify several details.
+
+Parameters
+
+spacefes : ngsolve.FESpace
+  This is the spacial finite element used for the space-time discretisation.
+  Both scalar and vector valued spaces might be used. An example would be
+  spacefes = H1(mesh, order=order) for given mesh and order.
+
+timefe : ngsolve.FiniteElement
+  This is the time finite element for the space-time discretisation. That is
+  essentially a simple finite element on the unit interval. There is a class
+  ScalarTimeFE to create something fitting here. For example, one could call
+  timefe = ScalarTimeFE(order) to create a time finite element of order order.
+
+dirichlet : list or string
+  The boundary of the space domain which should have Dirichlet boundary values.
+  Specification policy is the same as with the usual space finite element spaces.
+
+flags : dict
+  Dictionary of additional flags for the finite element space. In the constructor
+  of the SpaceTimeFESpace, those will be forwarded to the contructor of the general
+  base class FESpace. An example would be flags = {"dgjumps": True}.
+
+heapsize : int
+  Size of the local heap of this class. Increase this if you observe errors which look
+  like a heap overflow.
+
+       )raw_string")
+               );
 
   py::class_<SpaceTimeFESpace, PySTFES, FESpace>
     (m, "CSpaceTimeFESpace")
@@ -135,9 +165,28 @@ void ExportNgsx_spacetime(py::module &m)
   py::arg("order") = 0,
   py::arg("skip_first_node") = false,
   py::arg("only_first_node") = false,
-  "creates nodal FE in time based on Gauss-Lobatto integration points"
-  )
-   ;
+  docu_string(R"raw_string(
+Creates a nodal Finite element in time on the interval [0,1].
+Internally, Gauss-Lobatto integration points are exploited for that.
+
+Parameters
+
+order : int
+The polynomial order of the discretisation. That controlls the number of
+points in the time interval. See Gauss-Lobatto points for further details.
+Currently, orders up to 5 are available.
+
+skip_first_node : bool
+This will create the time finite element without the first node at t=0.
+That feature comes in handy for several CG like implementations in time.
+Also see only_first_node.
+
+only_first_node : bool
+This will create the time finite element with only the first node at t=0.
+That feature comes in handy for several CG like implementations in time.
+Also see skip_first_node.
+  )raw_string")
+   );
 
 
   // DiffOpDt
@@ -164,8 +213,12 @@ void ExportNgsx_spacetime(py::module &m)
     }
 
     shared_ptr<DifferentialOperator> diffopdt;
-    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
-
+    if ( self->GetFESpace()->GetSpatialDimension() == 2) {
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<2>>> ();
+    }
+    else if( self->GetFESpace()->GetSpatialDimension() == 3) {
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
+    }
     for (int i = comparr.Size() - 1; i >= 0; --i)
     {
       diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
@@ -179,22 +232,67 @@ void ExportNgsx_spacetime(py::module &m)
     return PyProxyFunction(adddiffop);
     },
           py::arg("proxy"),
-          py::arg("comp") = -1
+          py::arg("comp") = -1,
+        docu_string(R"raw_string(
+dt is the differential operator in time. This is the variant for a proxy function.
+
+Parameters
+
+proxy : ngsolve.ProxyFunction
+  Function to differentiate
+  
+comp : int or list
+  ??
+  
+)raw_string")
           );
 
   m.def("dt", [](PyGF self) -> PyCF
   {
     shared_ptr<DifferentialOperator> diffopdt;
-    diffopdt = make_shared<T_DifferentialOperator<DiffOpDt>> ();
+    if ( self->GetFESpace()->GetSpatialDimension() == 2)
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<2>>> ();
+    else if ( self->GetFESpace()->GetSpatialDimension() == 3)
+        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
 
     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdt));
-  });
+  }, docu_string(R"raw_string(
+dt is the differential operator in time. For a given GridFunction gfu,
+dt (gfu) will be its time derivative
 
-   m.def("ReferenceTimeVariable", []() -> PyCF
+Parameters
+
+self : ngsolve.GridFunction
+  Function to differentiate
+
+)raw_string")
+);
+
+  typedef shared_ptr<TimeVariableCoefficientFunction> PyTimeVariableCF;
+
+  py::class_<TimeVariableCoefficientFunction, PyTimeVariableCF, CoefficientFunction>(m, "TimeVariableCoefficientFunction")
+          .def("__init__", [] () -> PyTimeVariableCF { return make_shared<TimeVariableCoefficientFunction>(); })
+          .def("FixTime", &TimeVariableCoefficientFunction::FixTime)
+          .def("UnfixTime", &TimeVariableCoefficientFunction::UnfixTime)
+          .def("IsFixed", [] (PyTimeVariableCF self) -> bool {
+            try {
+                self->Evaluate(BaseMappedIntegrationPoint());
+            } catch (...) {
+                 return false;
+            }
+            return true;
+          });
+
+   m.def("ReferenceTimeVariable", []() -> PyTimeVariableCF
    {
-     return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-   });
-
+     return make_shared<TimeVariableCoefficientFunction> ();
+   }, docu_string(R"raw_string(
+This is the time variable. Call tref = ReferenceTimeVariable() to have a symbolic variable
+for the time like x,y,z for space. That can be used e.g. in lset functions for unfitted methods.
+Note that one would typically use tref in [0,1] as one time slab, leading to a call like
+t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
+)raw_string")
+);
 
    // DiffOpDtVec
 
@@ -220,12 +318,25 @@ void ExportNgsx_spacetime(py::module &m)
      }
 
      shared_ptr<DifferentialOperator> diffopdtvec;
-
+     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
      switch (self->Dimension())
      {
-       case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
-       case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
-       default : throw Exception("Diffop dt only implemented for dim <= 2 so far.");
+       case 1 : {
+         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 1>>> ();
+         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 1>>> ();
+         break;
+     }
+       case 2 : {
+         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 2>>> ();
+         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 2>>> ();
+         break;
+     }
+       case 3 : {
+         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 3>>> ();
+         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 3>>> ();
+         break;
+     }
+       default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
      }
 
      for (int i = comparr.Size() - 1; i >= 0; --i)
@@ -246,24 +357,30 @@ void ExportNgsx_spacetime(py::module &m)
 
    m.def("dt_vec", [](PyGF self) -> PyCF
    {
-     shared_ptr<DifferentialOperator> diffopdtvec;
-
-     switch (self->Dimension())
-     {
-       case 1 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<1>>> (); break;
-       case 2 : diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2>>> (); break;
-       default : throw Exception("Diffop dt only implemented for dim <= 2 so far.");
-     }
+       shared_ptr<DifferentialOperator> diffopdtvec;
+       const int SpaceD = self->GetFESpace()->GetSpatialDimension();
+       switch (self->Dimension())
+       {
+         case 1 : {
+           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 1>>> ();
+           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 1>>> ();
+           break;
+       }
+         case 2 : {
+           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 2>>> ();
+           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 2>>> ();
+           break;
+       }
+         case 3 : {
+           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 3>>> ();
+           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 3>>> ();
+           break;
+       }
+         default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
+       }
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdtvec,nullptr,nullptr,0));
    });
-
-
-    m.def("ReferenceTimeVariable", []() -> PyCF
-    {
-      return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-    });
-
 
    // DiffOpFixt
 
@@ -289,19 +406,28 @@ void ExportNgsx_spacetime(py::module &m)
     }
 
     shared_ptr<DifferentialOperator> diffopfixt;
-
+    const int SpaceD = self->GetFESpace()->GetSpatialDimension();
     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
     {
       switch (int(time))
       {
-        case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-        case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+        case 0 : {
+          if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 0>>> ();
+          else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 0>>> ();
+          break;
+      }
+        case 1 : {
+          if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 1>>> ();
+          else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 1>>> ();
+          break;
+      }
         default : throw Exception("Requested time not implemented yet.");
       }
     }
     else {
       cout << "Calling DiffOpFixAnyTime" << endl;
-      diffopfixt = make_shared<DiffOpFixAnyTime> (time);
+      if(SpaceD == 2) diffopfixt = make_shared<DiffOpFixAnyTime<2>> (time);
+      else if(SpaceD == 3) diffopfixt = make_shared<DiffOpFixAnyTime<3>> (time);
     }
 
 
@@ -326,29 +452,53 @@ void ExportNgsx_spacetime(py::module &m)
    m.def("fix_t", [](PyGF self, double time, bool use_FixAnyTime) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
-
+     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
      if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
      {
        switch (int(time))
        {
-         case 0 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<0>>> (); break;
-         case 1 : diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1>>> (); break;
+         case 0 : {
+           if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 0>>> ();
+           else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 0>>> ();
+           break;
+       }
+         case 1 : {
+           if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 1>>> ();
+           else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 1>>> ();
+           break;
+       }
          default : throw Exception("Requested time not implemented yet.");
        }
      }
      else {
        cout << "Calling DiffOpFixAnyTime" << endl;
-       diffopfixt = make_shared<DiffOpFixAnyTime> (time);
+       if(SpaceD == 2) diffopfixt = make_shared<DiffOpFixAnyTime<2>> (time);
+       else if(SpaceD == 3) diffopfixt = make_shared<DiffOpFixAnyTime<3>> (time);
      }
 
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
-   });
+   },
+    docu_string(R"raw_string(
+fix_t fixes the time (ReferenceTimeVariable) of a given expression.
+This is the variant for a gridfunction.
 
-   m.def("ReferenceTimeVariable", []() -> PyCF
-   {
-     return PyCF(make_shared<TimeVariableCoefficientFunction> ());
-   });
+Parameters
+
+self: ngsolve.GridFunction
+  Gridfunction in which the time should be fixed
+  
+time: double
+  Value the time should become
+  
+use_FixAnyTime: bool
+  Bool flag to control whether the time value should be expected to be
+  a node of the time scalar finite element or interpolation should be used.
+  use_FixAnyTime = True means interpolation is used. use_FixAnyTime = False
+  currently only supports time 0 and 1.
+
+)raw_string")
+);
 
    m.def("CreateTimeRestrictedGF", [](PyGF st_GF,double time) -> PyGF
    {
@@ -372,6 +522,9 @@ void ExportNgsx_spacetime(py::module &m)
        case 2:
          st_FES->RestrictGFInTime<Vec<2>>(st_GF,time,s_GF);
          break;
+       case 3:
+         st_FES->RestrictGFInTime<Vec<3>>(st_GF,time,s_GF);
+         break;
        default:
          throw Exception("cannot handle GridFunction type (dimension too large?).");
          break;
@@ -382,17 +535,15 @@ void ExportNgsx_spacetime(py::module &m)
    py::arg("space_gf"),
    "Extract Gridfunction corresponding to a fixed time from a space-time GridFunction.");
 
-   m.def("SpaceTimeInterpolateToP1", [](PyCF st_CF, PyCF tref, double t, double dt, PyGF st_GF)
+   m.def("SpaceTimeInterpolateToP1", [](PyCF st_CF, PyCF tref, PyGF st_GF)
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
      if (!st_FES) throw Exception("not a spacetime gridfunction");
-     st_FES->InterpolateToP1(st_CF,tref,t,dt,st_GF);
+     st_FES->InterpolateToP1(st_CF,tref,st_GF);
    }, 
    py::arg("spacetime_cf"),
    py::arg("time"),
-   py::arg("tstart"),
-   py::arg("dt"),
    py::arg("spacetime_gf"),
    "Interpolate nodal in time (possible high order) and nodal in space (P1).");
 

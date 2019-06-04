@@ -151,5 +151,7 @@ namespace xintegration
                                                      DOMAIN_TYPE dt,
                                                      int intorder,
                                                      SWAP_DIMENSIONS_POLICY quad_dir_policy,
-                                                     LocalHeap & lh);
+                                                     LocalHeap & lh,
+                                                     bool spacetime_mode = false,
+                                                     double tval = 0.);
 }

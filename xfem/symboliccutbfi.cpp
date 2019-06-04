@@ -110,7 +110,9 @@ namespace ngfem
     if (force_intorder >= 0)
       intorder = force_intorder;
 
-    const IntegrationRule * ir1 = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    const IntegrationRule * ir1;
+    Array<double> wei_arr;
+    tie (ir1, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
 
     if (ir1 == nullptr)
       return;
@@ -164,7 +166,7 @@ namespace ngfem
             if (is_nonzero) //   && k1nr*test_proxies.Size()+l1nr >= first_std_eval)
               {
                 HeapReset hr(lh);
-                bool samediffop = *(proxy1->Evaluator()) == *(proxy2->Evaluator());
+                bool samediffop = (*(proxy1->Evaluator()) == *(proxy2->Evaluator())) && !is_mixedfe;
                 // td.Start();
                 FlatTensor<3,SCAL> proxyvalues(lh, mir.Size(), proxy1->Dimension(), proxy2->Dimension());
                 FlatVector<SCAL> diagproxyvalues(mir.Size()*proxy1->Dimension(), lh);
@@ -216,21 +218,21 @@ namespace ngfem
                   {
                     if (!is_diagonal)
                       for (int i = 0; i < mir.Size(); i++)
-                        proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+                        proxyvalues(i,STAR,STAR) *= mir[i].GetMeasure()*wei_arr[i];
                     else
                       for (int i = 0; i < mir.Size(); i++)
-                        diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].GetWeight();
+                        diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *= mir[i].GetMeasure()*wei_arr[i];
                   }
                 else
                   { // pml
                     throw Exception("not treated yet (interface-weights!)");
                     if (!is_diagonal)
                       for (int i = 0; i < mir.Size(); i++)
-                        proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+                        proxyvalues(i,STAR,STAR) *= mir[i].GetMeasure()*wei_arr[i];
                     else
                       for (int i = 0; i < mir.Size(); i++)
                         diagproxyvalues.Range(proxy1->Dimension()*IntRange(i,i+1)) *=
-                          static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*(*ir)[i].Weight();
+                          static_cast<const ScalMappedIntegrationPoint<SCAL>&> (mir[i]).GetJacobiDet()*wei_arr[i];
                   }
                 IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
                 IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
@@ -668,8 +670,9 @@ namespace ngfem
           const int ij = i*ir_facet_vol1_tmp.Size()+j;
           (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol1_tmp[j].Weight() );
           st_point = ir_facet_vol1_tmp[j].Point();
-          st_point(2) = ir_time[i](0);
           (*ir_spacetime1)[ij].Point() = st_point;
+          (*ir_spacetime1)[ij].SetWeight(ir_time[i](0));
+          (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_facet_vol2_tmp.Size()*ir_time.Size(),lh);
@@ -680,8 +683,9 @@ namespace ngfem
           const int ij = i*ir_facet_vol2_tmp.Size()+j;
           (*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol2_tmp[j].Weight() );
           st_point = ir_facet_vol2_tmp[j].Point();
-          st_point(2) = ir_time[i](0);
           (*ir_spacetime2)[ij].Point() = st_point;
+          (*ir_spacetime2)[ij].SetWeight(ir_time[i](0));
+          (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
         }
       }
       ir_facet_vol1 = ir_spacetime1;
@@ -783,6 +787,95 @@ namespace ngfem
     simd_evaluate=false;
   }
 
+  // maps an integration point from inside one element to an integration point of the neighbor element
+  // (integration point will be outside), so that the mapped points have the same coordinate
+  template<int D>
+  void MapPatchIntegrationPoint(IntegrationPoint & from_ip, const ElementTransformation & from_trafo,
+                                const ElementTransformation & to_trafo, IntegrationPoint & to_ip,
+                                LocalHeap & lh, bool spacetime_mode = false, double from_ip_weight =0.)
+  {
+    // cout << " ------------------------------------------- " << endl;
+    const int max_its = 200;
+    const double eps_acc = 1e-12;
+
+    HeapReset hr(lh);
+
+    FlatVector<double> vec(D,lh);
+    FlatVector<double> diff(D,lh);
+    FlatVector<double> update(D,lh);
+
+    MappedIntegrationPoint<D,D> mip(from_ip, from_trafo);
+    const double h = sqrt(mip.GetJacobiDet());
+
+    IntegrationPoint * ip_x0 = new(lh) IntegrationPoint(0,0,0);
+    IntegrationPoint * ip_x00 = new(lh) IntegrationPoint(0,0,0);
+    vec = mip.GetPoint();
+    double w00 = 0;
+    double first_diffnorm = 0;
+
+    {
+      HeapReset hr(lh);
+      auto ip_a0 = new (lh) IntegrationPoint(0,0,0);
+      if(spacetime_mode) { ip_a0->SetWeight(from_ip.Weight()); ip_a0->SetPrecomputedGeometry(true); }
+      auto mip_a0 = new (lh) MappedIntegrationPoint<D,D>(*ip_a0,to_trafo);
+      FlatMatrix<double> A(D,D,lh);
+      FlatMatrix<double> Ainv(D,D,lh);
+      FlatVector<double> f(D,lh);
+      f = vec - mip_a0->GetPoint();
+      auto ip_ai = new (lh) IntegrationPoint(0.,0.,0.);
+      for (int d = 0; d < D ;  d++)
+      {
+        FlatVector<double> xhat(D,lh);
+        for (int di = 0; di < 3;  di++)
+        {
+          if (di == d)
+            ip_ai->Point()[di] = 1;
+          else
+            ip_ai->Point()[di] = 0;
+        }
+        if(spacetime_mode) { ip_ai->SetWeight(from_ip.Weight()); ip_ai->SetPrecomputedGeometry(true); }
+        auto mip_ai = new (lh) MappedIntegrationPoint<D,D>(*ip_ai,to_trafo);
+        A.Col(d) = mip_ai->GetPoint() - mip_a0->GetPoint();
+      }
+      Ainv = Inv(A);
+      w00 = abs(Det(A));
+      ip_x00->Point().Range(0,D) = Ainv * f;
+      ip_x0->Point().Range(0,D) = ip_x00->Point();
+    }
+
+    int its = 0;
+    double w = 0;
+    while (its==0 || (L2Norm(diff) > eps_acc*h && its < max_its))
+    {
+      if(spacetime_mode) { ip_x0->SetWeight(from_ip.Weight()); ip_x0->SetPrecomputedGeometry(true); }
+      MappedIntegrationPoint<D,D> mip_x0(*ip_x0,to_trafo);
+      diff = vec - mip_x0.GetPoint();
+      if (its==0)
+        first_diffnorm = L2Norm(diff);
+      update = mip_x0.GetJacobianInverse() * diff;
+      ip_x0->Point().Range(0,D) += update;
+      its++;
+      w = mip_x0.GetMeasure();
+    }
+
+    if(its >= max_its){
+      cout << "MapPatchIntegrationPoint: Newton did not converge after "
+           << its <<" iterations! (" << D <<"D)" << endl;
+      cout << "taking a low order guess" << endl;
+      cout << "diff = " << first_diffnorm << endl;
+      to_ip = *ip_x00;
+      if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
+      else to_ip.SetWeight(mip.GetWeight()/w00);
+    }
+    else
+    {
+      to_ip = *ip_x0;
+      if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w);
+      else to_ip.SetWeight(mip.GetWeight()/w);
+    }
+  }
+
+
   void SymbolicFacetPatchBilinearFormIntegrator ::
   CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
                    const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
@@ -792,10 +885,9 @@ namespace ngfem
                    LocalHeap & lh) const
   {
     elmat = 0.0;
-    if (trafo1.SpaceDim () > 2)
-      throw Exception ("Patch integrator only implemented for 2D right now");
     if (LocalFacetNr2==-1) throw Exception ("SymbolicFacetPatchBFI: LocalFacetNr2==-1");
 
+    int D = trafo1.SpaceDim();
     int maxorder = max2 (fel1.Order(), fel2.Order());
 
     auto eltype1 = trafo1.GetElementType();
@@ -804,101 +896,108 @@ namespace ngfem
     IntegrationRule ir_vol1(eltype1, 2*maxorder);
     IntegrationRule ir_vol2(eltype2, 2*maxorder);
 
+    // cout << " ir_vol1 = " << ir_vol1 << endl;
+    // cout << " ir_vol2 = " << ir_vol2 << endl;
+    
     IntegrationRule ir_patch1 (ir_vol1.Size()+ir_vol2.Size(),lh);
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
-
-    Vec<2> vec;
-    Vec<2> diff;
-    Vec<2> update;
-
-    
-    for (int l = 0; l < ir_patch1.Size(); l++)
-    { /// TODO : D == 2 or D == 3
-      if (l<ir_vol1.Size())
-      {
-        ir_patch1[l] = ir_vol1[l];
-        MappedIntegrationPoint<2,2> mip(ir_vol1[l], trafo1);
-        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
-        const double h = sqrt(mip.GetJacobiDet());
-        IntegrationPoint ip_x0;
-        vec = mip.GetPoint();
-        int its = 0;
-        double w = 0;
-        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 20))
-        {
-          MappedIntegrationPoint<2,2> mip_x0(ip_x0,trafo2);
-          diff = vec - mip_x0.GetPoint();
-          update = mip_x0.GetJacobianInverse() * diff;
-          for (int d = 0; d < 2; ++d)
-            ip_x0(d) += update(d);
-          its++;
-          w = mip_x0.GetMeasure();
+    //In the non-space time case, the result of the mapping to the other element does not depend on the time
+    //Therefore it is sufficient to do it once here.
+    if(time_order == -1){
+        for (int l = 0; l < ir_patch1.Size(); l++) {
+            if (l<ir_vol1.Size()) {
+                ir_patch1[l] = ir_vol1[l];
+                if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+            }
+            else {
+                ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
+                if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                else MapPatchIntegrationPoint<3>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+            }
+            ir_patch1[l].SetNr(l);
+            ir_patch2[l].SetNr(l);
         }
-        ir_patch2[l] = ip_x0;
-        ir_patch2[l].SetWeight(mip.GetWeight()/w);
-        ir_patch2[l].SetFacetNr(-1,VOL);
-      }
-      else
-      {
-        ir_patch2[l] = ir_vol2[l-ir_vol1.Size()];
-        MappedIntegrationPoint<2,2> mip(ir_vol2[l-ir_vol1.Size()], trafo2);
-        // const double h = D==2 ? sqrt(mip.GetJacobiDet()) : cbrt(mip.GetJacobiDet());
-        const double h = sqrt(mip.GetJacobiDet());
-        IntegrationPoint ip_x0;
-        vec = mip.GetPoint();
-        int its = 0;
-        double w = 0;
-        while (its==0 || (L2Norm(diff) > 1e-8*h && its < 20))
-        {
-          MappedIntegrationPoint<2,2> mip_x0(ip_x0,trafo1);
-          diff = vec - mip_x0.GetPoint();
-          update = mip_x0.GetJacobianInverse() * diff;
-          for (int d = 0; d < 2; ++d)
-            ip_x0(d) += update(d);
-          its++;
-          w = mip_x0.GetMeasure();
-        }
-        ir_patch1[l] = ip_x0;
-        ir_patch1[l].SetWeight(mip.GetWeight()/w);
-        ir_patch1[l].SetFacetNr(-1,VOL);
-      }
     }
+
+    // cout << " ir_patch1 = " << ir_patch1 << endl;
+    // cout << " ir_patch2 = " << ir_patch2 << endl;
     
     IntegrationRule * ir1 = nullptr;
     IntegrationRule * ir2 = nullptr;
 
-    
+    Array<double> ir_st1_wei_arr;
+
+    //Here we create approximately (up to the possible change in the element transformation due to the deformation)
+    //tensor product quadrature rules for the space-time case
     if (time_order >= 0)
     {
       FlatVector<> st_point(3,lh);
       const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_order);
 
       auto ir_spacetime1 = new (lh) IntegrationRule (ir_patch1.Size()*ir_time.Size(),lh);
+      ir_st1_wei_arr.SetSize(ir_spacetime1->Size());
       for (int i = 0; i < ir_time.Size(); i++)
       {
+        double tval = ir_time[i](0);
         for (int j = 0; j < ir_patch1.Size(); j++)
         {
           const int ij = i*ir_patch1.Size()+j;
-          (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_patch1[j].Weight() );
+
+          //Task now: Calculate ir_patch1[j] in the spacetime setting at tval
+          if(j< ir_vol1.Size()) ir_patch1[j] = ir_vol1[j];
+          else {
+            IntegrationPoint tmp = ir_vol2[j - ir_vol1.Size()];
+            // ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
+            double physical_weight = tmp.Weight();
+            tmp.SetWeight(tval);
+            tmp.SetPrecomputedGeometry(true);
+            if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+            else MapPatchIntegrationPoint<3>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+          }
+
+          ir_st1_wei_arr[ij] = ir_time[i].Weight() * ir_patch1[j].Weight();
+
           st_point = ir_patch1[j].Point();
-          st_point(2) = ir_time[i](0);
+          (*ir_spacetime1)[ij].SetFacetNr(-1, VOL);
           (*ir_spacetime1)[ij].Point() = st_point;
+          (*ir_spacetime1)[ij].SetWeight( tval);
+          (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
+          (*ir_spacetime1)[ij].SetNr(ij);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_patch2.Size()*ir_time.Size(),lh);
       for (int i = 0; i < ir_time.Size(); i++)
       {
+        double tval = ir_time[i](0);
         for (int j = 0; j < ir_patch2.Size(); j++)
         {
           const int ij = i*ir_patch2.Size()+j;
-          (*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_patch2[j].Weight() );
+
+          //Task now: Calculate ir_patch2[j] in the spacetime setting at tval
+          if(j< ir_vol1.Size()) {
+            IntegrationPoint tmp = ir_vol1[j];
+            // ir_patch1[j] = ir_vol1[j];
+            double physical_weight = tmp.Weight();
+            tmp.SetWeight(tval);
+            tmp.SetPrecomputedGeometry(true);
+            if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
+            else MapPatchIntegrationPoint<3>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
+          }
+          else ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
+
           st_point = ir_patch2[j].Point();
-          st_point(2) = ir_time[i](0);
+          (*ir_spacetime2)[ij].SetFacetNr(-1, VOL);
           (*ir_spacetime2)[ij].Point() = st_point;
+          (*ir_spacetime2)[ij].SetWeight(tval);
+          (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
+          (*ir_spacetime2)[ij].SetNr(ij);
         }
       }
       ir1 = ir_spacetime1;
       ir2 = ir_spacetime2;
+      // cout << " *ir_spacetime1 = " << *ir_spacetime1 << endl;
+      // cout << " *ir_spacetime2 = " << *ir_spacetime2 << endl;
     }
     else
     {
@@ -906,6 +1005,9 @@ namespace ngfem
       ir2 = &ir_patch2;
     }
 
+
+    // getchar();
+    
     BaseMappedIntegrationRule & mir1 = trafo1(*ir1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(*ir2, lh);
 
@@ -938,10 +1040,12 @@ namespace ngfem
                 proxyvalues(STAR,l,k) = val.Col(0);
               }
 
-          for (int i = 0; i < mir1.Size(); i++)
+          for (int i = 0; i < mir1.Size(); i++){
             // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
             // proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
-            proxyvalues(i,STAR,STAR) *= mir1[i].GetWeight();
+            if(time_order >=0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
+            else proxyvalues(i,STAR,STAR) *= mir1[i].GetWeight();
+          }
 
           IntRange trial_range  = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());

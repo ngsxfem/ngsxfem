@@ -10,20 +10,32 @@ from ngsolve.internal import *
 from ngsolve.solvers import *
 from xfem import *
 from math import pi
+import sys
 
 from xfem.lset_spacetime import *
 
 ngsglobals.msg_level = 1
 
+i = 5
+gamma = 0.5
+
+if hasattr(sys, 'argv') and len(sys.argv) == 5 and sys.argv[1] == "i" and sys.argv[3] == "stab":
+    i = int(sys.argv[2])
+    gamma = float(sys.argv[4])
+    print("Sys argv :", sys.argv)
+    print("Loading manual val for i, gamma: ", i, gamma)
+else:
+    print("Loading default val for i, gamma: ", i, gamma)
+
 square = SplineGeometry()
-square.AddRectangle([-1,-0.75],[1,1.5])
-ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
+square.AddRectangle([-0.6,-1],[0.6,1])
+ngmesh = square.GenerateMesh(maxh=0.5**(i+1), quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 # polynomial order in time
-k_t = 1
+k_t = 2
 # polynomial order in space
-k_s = 2
+k_s = k_t
 # spatial FESpace for solution
 fes1 = H1(mesh, order=k_s)
 # polynomial order in time for level set approximation
@@ -36,8 +48,8 @@ tfe = ScalarTimeFE(k_t)
 st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Fitted heat equation example
-tend = 0.5
-delta_t = tend/64
+tend = 1
+delta_t = tend/(2**(i+2))
 tnew = 0
 
 told = Parameter(0)
@@ -52,6 +64,7 @@ r0 = 0.5
 
 # position shift of the geometry in time
 rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
+rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
 # velocity of position shift
 d_rho = CoefficientFunction(2*cos(2*pi*t))
 #convection velocity:
@@ -64,6 +77,7 @@ levelset= r - r0
 # solution and r.h.s.
 Q = pi/r0   
 u_exact = cos(Q*r) * sin(pi*t)
+u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
 coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
 
 
@@ -91,7 +105,7 @@ t_old = 0
 h = specialcf.mesh_size
 
 Draw(lset_top,mesh,"lset")
-Draw(IfPos(-lset_top,u_exact,float('nan')),mesh,"u_exact")
+Draw(IfPos(-lset_top,u_exactL(told),float('nan')),mesh,"u_exact")
 Draw(IfPos(-lset_top,u_ic,float('nan')),mesh,"u")
 
 Draw(dfm,mesh,"dfm")
@@ -118,21 +132,22 @@ patch_integrators_a = []
 hasneg_integrators_a.append(SpaceTimeNegBFI(form =  -u*(dt(v) + dt_vec(dfm)*grad(v))
                                             + delta_t*grad(u)*grad(v)
                                             - delta_t*u*InnerProduct(w,grad(v))))
-hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1), deformation = dfm_current_top))
 
-patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*0.5*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
+patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*(1+delta_t/h)*gamma*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
-hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_ic*fix_t(v,0)))
+hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom, form = u_ic*fix_t(v,0), deformation = dfm_current_bottom))
 
-f = LinearForm(st_fes)
+outfile = open("errorp"+str(k_t)+"_dev_i"+str(i)+"_gamma"+str(gamma)+".dat", "w")
 
-for integrator in hasneg_integrators_f:
-    f += integrator
+l2max = 0
 
 while tend - t_old > delta_t/2:
     # update lset geometry to new time slab (also changes lset_p1 !)
-    dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t)
-
+    #dfm = lset_adap_st.CalcDeformation(levelset,told,t_old,delta_t)
+    with TaskManager():
+        dfm = lset_adap_st.CalcDeformation(levelset,tref)
+    
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
     RestrictGFInTime(spacetime_gf=dfm,reference_time=0.0,space_gf=dfm_current_bottom)   
@@ -140,7 +155,7 @@ while tend - t_old > delta_t/2:
 
     if t_old == 0:
         mesh.SetDeformation(dfm_current_bottom)
-        u_ic.Set(CoefficientFunction(u_exact)) 
+        u_ic.Set(CoefficientFunction(u_exactL(0.)))
         mesh.UnsetDeformation()
     else:
         u_ic.Set(shifted_eval(u_last, back = dfm_last_top, forth = dfm_current_bottom))
@@ -165,14 +180,23 @@ while tend - t_old > delta_t/2:
     a = RestrictedBilinearForm(st_fes,"a", ci.GetElementsOfType(HASNEG), ba_facets, check_unused=False)
     for integrator in hasneg_integrators_a + patch_integrators_a:
         a += integrator
+    
+    f = LinearForm(st_fes)
+    for integrator in hasneg_integrators_f:
+        f += integrator
 
-        
     # update mesh deformation and assemble linear system
     mesh.SetDeformation(dfm)
-    a.Assemble()
-    f.Assemble()
+    with TaskManager():
+        a.Assemble()
+        f.Assemble()
     mesh.UnsetDeformation()
-
+    
+    #mesh.SetDeformation(dfm_current_bottom)
+    #f2.Assemble()
+    #mesh.UnsetDeformation()    
+    #f.vec.data = f.vec + f2.vec
+    
     # solve linear system
     inv = a.mat.Inverse(active_dofs,inverse="pardiso")
     gfu.vec.data =  inv * f.vec
@@ -188,11 +212,16 @@ while tend - t_old > delta_t/2:
     
     # compute error at final time
     mesh.SetDeformation(dfm_current_top)
-    l2error = sqrt(Integrate(lset_neg_top,(u_exact-u_last)*(u_exact-u_last),mesh,order=2*k_s))
+    l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told)-u_last)**2,mesh,order=2*k_s))
     mesh.UnsetDeformation()
 
     # print time and error
-    print("\rt = {0:10}, l2error = {1:20}".format(t_old,l2error),end="")
+    #print("\rt = {0:10}, l2error = {1:20}".format(t_old,l2error),end="")
+    print("t = ",t_old, " l2error = ",l2error)
+    outfile.write(str(t_old)+"\t"+str(l2error)+"\n")
+    
+    if l2error > l2max:
+        l2max = l2error
     
     # Redraw:
     Redraw(blocking=True)
@@ -200,4 +229,4 @@ while tend - t_old > delta_t/2:
     # store deformation at top level of for next time step
     dfm_last_top.vec.data = dfm_current_top.vec
 
-print("")       
+print("L2 max: ", l2max)
