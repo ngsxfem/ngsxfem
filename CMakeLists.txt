@@ -111,14 +111,14 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_subdirectory(cutint)
+#add_subdirectory(cutint)
 add_subdirectory(python)
-add_subdirectory(utils)
-add_subdirectory(xfem)
-add_subdirectory(py_tutorials)
-add_subdirectory(lsetcurving)
-add_subdirectory(tests)
-add_subdirectory(spacetime)
+#add_subdirectory(utils)
+#add_subdirectory(xfem)
+#add_subdirectory(py_tutorials)
+#add_subdirectory(lsetcurving)
+#add_subdirectory(tests)
+#add_subdirectory(spacetime)
 
 # get_directory_property( DirDefs COMPILE_DEFINITIONS )
 
