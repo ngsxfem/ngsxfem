@@ -14,7 +14,6 @@ add_library(ngsxfem_xfem ${NGS_LIB_TYPE}
   xfiniteelement.cpp
   symboliccutbfi.cpp
   symboliccutlfi.cpp
-  python_xfem.cpp
   )
 
 set_target_properties(ngsxfem_xfem PROPERTIES SUFFIX ".so")
