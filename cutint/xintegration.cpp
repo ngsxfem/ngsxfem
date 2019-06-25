@@ -21,7 +21,7 @@ namespace xintegration
                                                    SWAP_DIMENSIONS_POLICY quad_dir_policy)
   {
     static Timer t ("CreateCutIntegrationRule");
-    ThreadRegionTimer reg (t, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
     // temporary fix for ET_SEGM
     /*
     if (trafo.GetElementType() == ET_SEGM)
@@ -107,7 +107,7 @@ namespace xintegration
   {
 
     static Timer timer ("PointContainer::operator()");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
 
     typename SetOfPoints::iterator it;
@@ -564,7 +564,7 @@ namespace xintegration
     //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
 
     bool haspos = false;
@@ -860,7 +860,7 @@ namespace xintegration
       if (!refine_space && !refine_time) // already on finest level: deal with cut situation
       {
         static Timer timer ("MakeQuadRule::DecomposeAndFillCutSimplex");
-        ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+        // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
         // RegionTimer reg (timer);
         // Generate list of vertices corresponding to simplex/prism
         Array<Simplex<SD> *> simplices;
@@ -935,7 +935,7 @@ namespace xintegration
     {
       static Timer timer ("MakeQuadRule::FillUnCutSimplex");
       //RegionTimer reg (timer);
-      ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
 
       double trafofac = 1.0;
       if (D==2)
@@ -1052,7 +1052,7 @@ namespace xintegration
       // }
 
       static Timer timer ("CutSimplex<3>::MakeQuad");
-      ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
       // RegionTimer reg (timer);
 
       static Timer timer1 ("CutSimplex<3>::MakeQuad1",2);
@@ -1163,7 +1163,7 @@ namespace xintegration
       if (ncutpoints == 3) // three intersections: prism + tetra
       {
         static Timer timer ("CutSimplex<3>::cutpoints.Size=3");
-        ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+        // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
         // RegionTimer reg3 (timer);
 
         Array< const Vec<SD> *> & minorgroup ( nnegpoints > npospoints ?
@@ -1209,7 +1209,7 @@ namespace xintegration
       else if (ncutpoints == 4) // four intersections: prism + prism
       {
         static Timer timer ("CutSimplex<3>::cutpoints.Size=4");
-        ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+        // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
         // RegionTimer reg4 (timer);
         //pos domain
         {
@@ -1364,7 +1364,7 @@ namespace xintegration
       enum { SD = 2};
 
       static Timer timer ("CutSimplex<2>::MakeQuad");
-      ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
       // RegionTimer reg (timer);
 
       // cout << " simplex = " << s << endl;
@@ -1525,7 +1525,7 @@ namespace xintegration
       enum { SD = 1};
 
       static Timer timer ("CutSimplex<1>::MakeQuad");
-      ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
       // RegionTimer reg (timer);
 
       const Vec<1> & left = *(s.p[0]);
@@ -1581,7 +1581,7 @@ namespace xintegration
                                 const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
   {
     static Timer timer ("MakeQuadRuleOnCutSimplex");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
     // std::cout << " from here MakeQuadRuleOnCutSimplex "<< D << " " << ET_SPACE << " " << ET_TIME  << std::endl;
     // std::cout << " simplex s = " << s << std::endl;
@@ -1611,7 +1611,7 @@ namespace xintegration
     static Timer t ("CutIntegrationRule");
     static Timer timercutgeom ("CutIntegrationRule::MakeQuadRule",2);
 
-    ThreadRegionTimer reg (t, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
     // RegionTimer reg(t);
 
     int DIM = trafo.SpaceDim();

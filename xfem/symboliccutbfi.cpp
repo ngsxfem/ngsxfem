@@ -77,7 +77,7 @@ namespace ngfem
     
   {
     static Timer t(string("SymbolicCutBFI::CalcElementMatrixAdd")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), 2);
-    ThreadRegionTimer reg(t, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg(t, TaskManager::GetThreadId());
 
     if (element_vb != VOL)
       {
