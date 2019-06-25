@@ -118,8 +118,9 @@ template<int SpaceD>
   extern template class T_DifferentialOperator<DiffOpFixt<2, 1>>;
   extern template class T_DifferentialOperator<DiffOpFixt<3, 0>>;
   extern template class T_DifferentialOperator<DiffOpFixt<3, 1>>;
-  extern template class T_DifferentialOperator<DiffOpFixAnyTime<2>>;
-  extern template class T_DifferentialOperator<DiffOpFixAnyTime<3>>;
+  extern template class DiffOpFixAnyTime<2>;
+  extern template class DiffOpFixAnyTime<3>;
+
 #endif
 
 }

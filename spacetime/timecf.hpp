@@ -5,7 +5,7 @@
 namespace ngfem
 {
   /// The coefficient evaluates random between two bounds (default: 0 and 1) pointwise
-  class NGS_DLL_HEADER TimeVariableCoefficientFunction : public CoefficientFunction
+  class TimeVariableCoefficientFunction : public CoefficientFunction
   {
   private:
     double time;
