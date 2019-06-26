@@ -10,6 +10,7 @@ xfem.lsetcuving ... isoparametric unfitted FEM
 
 from ngsolve.comp import *
 from ngsolve.fem import *
+from ngsolve import BitArray
 from ngsolve.utils import L2
 from xfem.ngsxfem_py import *
 from xfem.ngsxfem_utils_py import *
@@ -158,6 +159,9 @@ Other Parameters :
     BitArray that allows integration only on elements or facets (if skeleton=True) that are marked
     True.
 
+  deformation : GridFunction
+    Specify a specific mesh deformation for a bilinear form
+
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
     rule will be applied. This is only relevant for space-time discretizations.
@@ -241,6 +245,9 @@ Other Parameters :
   definedonelements: BitArray
     BitArray that allows integration only on elements or facets (if skeleton=True) that are marked
     True.
+
+  deformation : GridFunction
+      Specify a specific mesh deformation for a linear form
 
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
@@ -430,3 +437,8 @@ combined with BitArrayCF).
     # cut = vectorize(cut)
     # kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
     return kappa1
+
+def SpaceTimeWeakSet(gfu_e, cf, space_fes):
+    gfu_e_repl = GridFunction(space_fes)
+    gfu_e_repl.Set( cf )
+    gfu_e.vec[:].data = gfu_e_repl.vec

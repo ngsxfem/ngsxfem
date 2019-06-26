@@ -74,7 +74,7 @@ namespace ngcomp
     template<typename SCAL>
     void RestrictGFInTime(shared_ptr<GridFunction> st_GF, double time, shared_ptr<GridFunction> s_GF);
     shared_ptr<GridFunction> CreateRestrictedGF( shared_ptr<GridFunction> st_GF, double time);
-    void InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> tref, double t, double dt, shared_ptr<GridFunction> st_GF);
+    void InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> tref, shared_ptr<GridFunction> st_GF);
 
   };
 

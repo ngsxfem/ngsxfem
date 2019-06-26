@@ -3,6 +3,8 @@
 /// from ngsolve
 #include <comp.hpp>
 
+using namespace ngbla;
+
 enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL, ALWAYS_NONE};
 
 // /// domain types: two domains: POS/NEG and the diving interface IF

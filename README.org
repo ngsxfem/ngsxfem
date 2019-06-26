@@ -131,6 +131,8 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
 
 * Literature
 =ngsxfem= has been used in the following scientific articles (that we are aware of):
+ * T. Jankuhn, A. Reusken. Trace Finite Element Methods for Surface
+Vector-Laplace Equations [[https://arxiv.org/pdf/1904.12494][pdf]] 
  * E. N. Karatzas, F. Ballarin, G. Rozza. Projection-based reduced order models for a cut finite element method in parametrized domains [[https://arxiv.org/pdf/1901.03846][pdf]] 
  * C. Lehrenfeld, M. A. Olshanskii. An Eulerian finite element method for PDEs in time-dependent domains [[https://arxiv.org/pdf/1803.01779.pdf][pdf]]
  * F. Heimann, C. Lehrenfeld. Numerical integration on hyperrectangles in isoparametric unfitted finite elements. [[https://link.springer.com/chapter/10.1007/978-3-319-96415-7_16][link]]

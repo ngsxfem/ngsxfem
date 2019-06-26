@@ -28,6 +28,7 @@ void ExportNgsx_cutint(py::module &m)
            SWAP_DIMENSIONS_POLICY quad_dir_policy,
            int heapsize)
         {
+          static Timer t ("IntegrateX"); RegionTimer reg(t);
           py::extract<PyCF> pycf(lset);
           if (!pycf.check())
             throw Exception("cast failed... need new candidates..");
@@ -47,7 +48,9 @@ void ExportNgsx_cutint(py::module &m)
              {
                auto & trafo = ma->GetTrafo (el, lh);
 
-               const IntegrationRule * ir = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl, quad_dir_policy);
+               const IntegrationRule * ir;
+               Array<double> wei_arr;
+               tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl, quad_dir_policy);
 
                if (ir != nullptr)
                {
@@ -58,7 +61,8 @@ void ExportNgsx_cutint(py::module &m)
 
                  double lsum = 0.0;
                  for (int i = 0; i < mir.Size(); i++)
-                   lsum += mir[i].GetWeight()*val(i,0);
+                     lsum += mir[i].GetMeasure()*wei_arr[i]*val(i,0);
+                   //lsum += mir[i].GetWeight()*val(i,0);
 
                  AsAtomic(sum) += lsum;
                }

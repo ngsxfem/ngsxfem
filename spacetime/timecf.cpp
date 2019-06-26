@@ -4,17 +4,31 @@ namespace ngfem
 {
   TimeVariableCoefficientFunction::TimeVariableCoefficientFunction ()
     : CoefficientFunction(1)
-  {; }
+  { time_is_fixed = false ; }
 
   ///
   double TimeVariableCoefficientFunction::Evaluate (const BaseMappedIntegrationPoint & mip) const
   {
-    return mip.IP()(2);
+    //if(abs(mip.IP()(2) - mip.IP().Weight() ) > 1e-8) cout << "TimeVariableCoefficientFunction::Evaluate IP:" << mip.IP() << endl;
+    if(time_is_fixed) return time;
+    else {
+        if(mip.IP().GetPrecomputedGeometry()) return mip.IP().Weight();
+        else throw Exception("TimeVariableCoefficientFunction::Evaluate called with a mere space IR");
+        //return mip.IP()(2);
+    }
   }
 
   double TimeVariableCoefficientFunction::EvaluateConst () const
   {
     throw Exception("not constant");
+  }
+
+  void TimeVariableCoefficientFunction::FixTime(double t){
+      time = t; time_is_fixed = true;
+  }
+
+  void TimeVariableCoefficientFunction::UnfixTime(){
+      time_is_fixed = false;
   }
 
 /*

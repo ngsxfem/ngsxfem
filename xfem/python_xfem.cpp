@@ -458,7 +458,8 @@ elnr : int
                              bool element_boundary,
                              bool skeleton,
                              py::object definedon,
-                             py::object definedonelem)
+                             py::object definedonelem,
+                             py::object deformation)
         -> PyBFI
         {
 
@@ -506,6 +507,9 @@ elnr : int
           if (! py::extract<DummyArgument> (definedonelem).check())
             bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
+          if (! py::extract<DummyArgument> (deformation).check())
+            bfi->SetDeformation(py::extract<PyGF>(deformation)());
+
           return PyBFI(bfi);
         },
         py::arg("lset"),
@@ -520,6 +524,7 @@ elnr : int
         py::arg("skeleton")=false,
         py::arg("definedon")=DummyArgument(),
         py::arg("definedonelements")=DummyArgument(),
+        py::arg("deformation")=DummyArgument(),
         docu_string(R"raw_string(
 see documentation of SymbolicBFI (which is a wrapper))raw_string")
     );
@@ -528,7 +533,8 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
                                     int order,
                                     int time_order,
                                     bool skeleton,
-                                    py::object definedonelem)
+                                    py::object definedonelem,
+                                    py::object deformation)
         -> PyBFI
         {
           // check for DG terms
@@ -561,6 +567,9 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
           if (! py::extract<DummyArgument> (definedonelem).check())
             bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
+          if (! py::extract<DummyArgument> (deformation).check())
+            bfi->SetDeformation(py::extract<PyGF>(deformation)());
+
           return PyBFI(bfi);
         },
         py::arg("form"),
@@ -568,6 +577,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
         py::arg("time_order")=-1,
         py::arg("skeleton") = true,
         py::arg("definedonelements")=DummyArgument(),
+        py::arg("deformation")=DummyArgument(),
         docu_string(R"raw_string(
 Integrator on facet patches. Two versions are possible:
 * Either (skeleton=False) an integration on the element patch consisting of two neighboring elements is applied, 
@@ -604,7 +614,8 @@ time_order : int
                              bool element_boundary,
                              bool skeleton,
                              py::object definedon,
-                             py::object definedonelem)
+                             py::object definedonelem,
+                             py::object deformation)
         -> PyLFI
         {
 
@@ -634,6 +645,9 @@ time_order : int
           if (! py::extract<DummyArgument> (definedonelem).check())
             lfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
+          if (! py::extract<DummyArgument> (deformation).check())
+            lfi->SetDeformation(py::extract<PyGF>(deformation)());
+
           return PyLFI(lfi);
         },
         py::arg("lset"),
@@ -648,6 +662,7 @@ time_order : int
         py::arg("skeleton")=py::bool_(false),
         py::arg("definedon")=DummyArgument(),
         py::arg("definedonelements")=DummyArgument(),
+        py::arg("deformation")=DummyArgument(),
         docu_string(R"raw_string(
 see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );

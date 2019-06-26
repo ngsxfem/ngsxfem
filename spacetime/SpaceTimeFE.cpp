@@ -3,7 +3,6 @@
 /* Author: Janosch Preuss                                            */
 /* Date:   June 2017                                                 */
 /*********************************************************************/
-
 #include <fem.hpp>
 #include "SpaceTimeFE.hpp"
 
@@ -11,13 +10,13 @@
 namespace ngfem
 {
 
-
-   SpaceTimeFE :: SpaceTimeFE (ScalarFiniteElement<2>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
+   template <int D>
+   SpaceTimeFE<D> :: SpaceTimeFE (ScalarFiniteElement<D>* s_FE, ScalarFiniteElement<1>* t_FE, bool aoverride_time, double atime)
     /*
       Call constructor for base class:
       number of dofs is (dofs in space) * (Dofs in time), maximal order is order
      */
-      : ScalarFiniteElement<2> ((s_FE->GetNDof())*(t_FE->GetNDof()), s_FE->Order())
+      : ScalarFiniteElement<D> ((s_FE->GetNDof())*(t_FE->GetNDof()), s_FE->Order())
     {
 
         sFE = s_FE;
@@ -26,7 +25,8 @@ namespace ngfem
         override_time = aoverride_time;
     }
 
-    void SpaceTimeFE :: CalcShape (const IntegrationPoint & ip,
+   template <int D>
+    void SpaceTimeFE<D> :: CalcShape (const IntegrationPoint & ip,
                                     BareSliceVector<> shape) const
     {
 
@@ -36,7 +36,9 @@ namespace ngfem
        {
 
             Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip(2));
+            IntegrationPoint z(override_time ? time : ip.Weight());
+            if(! ip.GetPrecomputedGeometry())
+              throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
             tFE->CalcShape(z,time_shape);
 
             Vector<> space_shape(sFE->GetNDof());
@@ -52,7 +54,8 @@ namespace ngfem
        }
      }
 
-    void SpaceTimeFE :: CalcDShape (const IntegrationPoint & ip,
+    template <int D>
+    void SpaceTimeFE<D> :: CalcDShape (const IntegrationPoint & ip,
                                     BareSliceMatrix<> dshape) const
 
     {
@@ -63,18 +66,18 @@ namespace ngfem
          else {
 
             Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip(2));
+            IntegrationPoint z(override_time ? time : ip.Weight());
+            if(! ip.GetPrecomputedGeometry())
+              throw Exception("SpaceTimeFE :: CalcDShape called with a mere space IR");
             tFE->CalcShape(z,time_shape);
 
-            Matrix<double> space_dshape(sFE->GetNDof(),2);
+            Matrix<double> space_dshape(sFE->GetNDof(),D);
             sFE->CalcDShape(ip,space_dshape);
-
 
             int ii = 0;
             for(int j = 0; j < tFE->GetNDof(); j++) {
                 for(int i=0; i< sFE->GetNDof(); i++) {
-                    dshape(ii,0) = space_dshape(i,0)*time_shape(j);
-                    dshape(ii,1) = space_dshape(i,1)*time_shape(j);
+                    for(int dimi = 0; dimi<D; dimi++) dshape(ii,dimi) = space_dshape(i,dimi)*time_shape(j);
                     ii++;
                 }
             }
@@ -84,14 +87,17 @@ namespace ngfem
 
     // for time derivatives
 
-    void SpaceTimeFE :: CalcDtShape (const IntegrationPoint & ip,
+    template <int D>
+    void SpaceTimeFE<D> :: CalcDtShape (const IntegrationPoint & ip,
                                      BareSliceVector<> dshape) const
 
     {
         // matrix of derivatives:
 
            Matrix<double> time_dshape(tFE->GetNDof(),1);
-           IntegrationPoint z(override_time ? time : ip(2));
+           IntegrationPoint z(override_time ? time : ip.Weight());
+           if(! ip.GetPrecomputedGeometry())
+             throw Exception("SpaceTimeFE :: CalcDtShape called with a mere space IR");
            tFE->CalcDShape(z,time_dshape);
 
            Vector<> space_shape(sFE->GetNDof());
@@ -147,6 +153,8 @@ namespace ngfem
          switch (order)
          {
           // Gauss-Lobatto integration points (Spectral FE)
+          // The maximum order implemented here is mentioned in python_spacetime.cpp
+          // in a documentation string. Please update that after inserting higher orders here.
           case 0 : nodes[0] = 0.0;  break;
           case 1 : nodes[0] = 0.0; nodes[1] = 1.0;  break;
           case 2 : nodes[0] = 0.0; nodes[1] = 0.5; nodes[2] = 1.0;  break;
@@ -164,5 +172,7 @@ namespace ngfem
          }
       }
 
+      template class SpaceTimeFE<2>;
+      template class SpaceTimeFE<3>;
 
 }

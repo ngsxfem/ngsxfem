@@ -123,6 +123,6 @@ def test_nxfem(integration_quadtrig_newold,order):
     if (order == 1):
         assert l2error < 0.06
     if (order == 2):
-        assert l2error < 0.003
+        assert l2error < 0.004
     if (order == 3):
         assert l2error < 0.0004

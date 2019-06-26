@@ -63,12 +63,13 @@ namespace xintegration
             for(auto interval : sign_change_intervals){
                 double a = get<0>(interval), b = get<1>(interval); double x_mid;
                 double aval = eval(a), bval = eval(b);
-                for(int j=0; j<bisection_iterations; j++){
+                int j;
+                for(j=0; j<bisection_iterations; j++){
                   
                   //secant rule stopping criteria
                   const double x_lin = a - aval*(b-a)/(bval-aval);
                   double val = eval(x_lin);
-                  if (2*abs(val) < 1e-12)
+                  if (2*abs(val) < 1e-15)
                   {
                     a=b=x_lin;
                     break;
@@ -85,13 +86,15 @@ namespace xintegration
                     }
                     else throw Exception("Strange sign structure during bisection!");
                 }
+                if(j == bisection_iterations)
+                    cout << "WARNING: Bisection search did not converge. Resiual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
             return roots;
         }
     }
 
-    const IntegrationRule * SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
+    tuple<const IntegrationRule *, Array<double>> SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
                                                         const ElementTransformation &trafo,
                                                         ScalarFiniteElement<1>* fe_time,
                                                         DOMAIN_TYPE dt,
@@ -99,6 +102,7 @@ namespace xintegration
                                                         int order_space,
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                         LocalHeap & lh){
+        //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
         int lset_nfreedofs = cf_lset_at_element.Size();
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
@@ -115,6 +119,7 @@ namespace xintegration
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         auto ir = new (lh) IntegrationRule();
+        Array<double> wei_arr;
 
         for(int i=0; i<cut_points.size() -1; i++){
             double t0 = cut_points[i], t1 = cut_points[i+1];
@@ -124,20 +129,26 @@ namespace xintegration
                 FlatVector<> shape(time_nfreedofs, lh);
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
+                for(auto &d : cf_lset_at_t) if(abs(d) < 1e-14) d = 1e-14;
 
                 auto element_domain = CheckIfStraightCut(cf_lset_at_t);
 
                 const int offset = ir->Size();
                 if (element_domain == IF)
-                    ir->Append(*StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh));
+                    ir->Append(*StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh, true, t));
                 else if (element_domain == dt)
                     ir->Append(SelectIntegrationRule (et_space, order_space));
 
-                const int newsize = ir->Size();                    
+                const int newsize = ir->Size(); wei_arr.SetSize(newsize);
                 for(int k = offset; k < newsize; k++) {
-                    if(trafo.SpaceDim() == 1) (*ir)[k].Point()[1] = t;
-                    if(trafo.SpaceDim() == 2) (*ir)[k].Point()[2] = t;
-                    (*ir)[k].SetWeight((*ir)[k].Weight()*ip.Weight()*(t1-t0));
+                    //if(trafo.SpaceDim() == 1) (*ir)[k].Point()[1] = t;
+                    //if(trafo.SpaceDim() == 2) (*ir)[k].Point()[2] = t;
+
+                    double new_weight = (*ir)[k].Weight()*ip.Weight()*(t1-t0);
+                    wei_arr[k] = new_weight;
+
+                    (*ir)[k].SetWeight(t);
+                    (*ir)[k].SetPrecomputedGeometry(true);
                 }
                 /*                                     
                 CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);
@@ -179,9 +190,9 @@ namespace xintegration
             }
         }
         if (ir->Size() == 0)
-            return nullptr;
+            return make_tuple(nullptr, wei_arr);
         else
-            return ir;
+            return make_tuple(ir, wei_arr);
     }
 
     void DebugSpaceTimeCutIntegrationRule(){

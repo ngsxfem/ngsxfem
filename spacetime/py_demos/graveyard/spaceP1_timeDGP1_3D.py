@@ -1,74 +1,48 @@
 # unfitted Heat equation with Neumann b.c.
 # solved with a P1-DG-in-time space-time discretization
 from ngsolve import *
-from time import sleep
-from netgen.geom2d import unit_square
-from netgen.geom2d import SplineGeometry
-from netgen.meshing import MeshingParameters
+from netgen.csg import *
 
-from ngsolve.internal import *
-from ngsolve.solvers import *
 from xfem import *
 from math import pi
 
 from xfem.lset_spacetime import *
+from time import sleep
 
 ngsglobals.msg_level = 1
 
-square = SplineGeometry()
-square.AddRectangle([-1,-1],[1,1])
-ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
+cube = CSGeometry()
+cube.Add (OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)))
+ngmesh = cube.GenerateMesh(maxh=0.4, quad_dominated=False)
 mesh = Mesh (ngmesh)
-
-#### expression for the time variable: 
 
 coef_told = Parameter(0)
 coef_delta_t = Parameter(0)
 tref = ReferenceTimeVariable()
 t = coef_told + coef_delta_t*tref
 
-#### the data: 
-# radius of disk (the geometry)
 r0 = 0.5
 
-if True:
-    ### case 1: analytical solution:
-    # position shift of the geometry in time
-    rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
-    rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
-    #convection velocity:
-    d_rho = CoefficientFunction(2*cos(2*pi*t))
-    w = CoefficientFunction((0,d_rho)) 
+# position shift of the geometry in time
+rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
+rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
+#convection velocity:
+d_rho = CoefficientFunction(2*cos(2*pi*t))
+w = CoefficientFunction((0,d_rho,0))
 
-    # level set
-    r = sqrt(x**2+(y-rho)**2)
-    
-    levelset= r - r0
-    levelsetL = lambda t: sqrt(x**2+(y-rhoL(t))**2) - r0
+# level set
+r = sqrt(x**2+(y-rho)**2+z**2)
+levelset= r - r0
 
-    # diffusion coefficient
-    alpha = 1
+# diffusion coefficient
+alpha = 1
 
-    # solution and r.h.s.
-    Q = pi/r0   
-    u_exact = cos(Q*r) * sin(pi*t)
-    u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
-    coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
-    u_init = u_exact
-else:
-    ### case 2: no analytical solution
-    xy = CoefficientFunction((x,y))
-    center = r0 * CoefficientFunction((cos(2*pi*t),sin(2*pi*t)))
-    #convection velocity:
-    w = 2 * pi * CoefficientFunction((-y,x))
-    levelset = Norm(xy-center) - r0
-    u_init = exp(-(Norm(xy-1.5*center)))
-    u_exact = None
-    # diffusion coefficient
-    alpha = 0.05
-    coeff_f = CoefficientFunction(0)
-
-#### the discretization
+# solution and r.h.s.
+Q = pi/r0   
+u_exact = cos(Q*r) * sin(pi*t)
+u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2 + z**2)) * sin(pi*t)
+coeff_f = (2*Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
+u_init = u_exact
 
 # polynomial order in time
 k_t = 1
@@ -81,13 +55,13 @@ lset_order_time = 1
 # integration order in time
 time_order = 2
 # time finite element (nodal!)
-tfe = ScalarTimeFE(k_t) 
+tfe = ScalarTimeFE(k_t)
 # space-time finite element space
 st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
 
 #Unfitted heat equation example
 tend = 1
-delta_t = tend/32
+delta_t = tend/64
 coef_delta_t.Set(delta_t)
 tnew = 0
 told = 0
@@ -108,11 +82,6 @@ u,v = st_fes.TnT()
 
 h = specialcf.mesh_size
 
-#Draw(lset_top,mesh,"lset")
-#Draw(IfPos(-lset_top,CoefficientFunction((0,0)),CoefficientFunction((float('nan'),float('nan')))),mesh,"filter")
-#visoptions.deformation = 1
-#Draw(u_last, mesh,"u", sd=2, autoscale=False, min = -1, max = 1)
-
 lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
 lset_neg_bottom = { "levelset" : lset_bottom, "domain_type" : NEG, "subdivlvl" : 0}
 lset_neg_top = { "levelset" : lset_top, "domain_type" : NEG, "subdivlvl" : 0}
@@ -121,8 +90,8 @@ def SpaceTimeNegBFI(form):
     return SymbolicBFI(levelset_domain = lset_neg, form = form, time_order=time_order)
 
 ci = CutInfo(mesh,time_order=time_order)
+n_F = specialcf.normal(mesh.dim)
 
-    
 hasneg_integrators_a = []
 hasneg_integrators_f = []
 patch_integrators_a = []
@@ -130,8 +99,11 @@ hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*alpha*grad(u)*grad(v)
 hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
 hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
-patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()),
-                                                 skeleton=False, time_order=time_order))
+
+#patch_integrators_a.append(SymbolicFacetPatchBFI(20*h*InnerProduct(grad(u) - grad(u.Other()), n_F) * InnerProduct(grad(v) - grad(v.Other()), n_F), skeleton=True, time_order=time_order))
+
+patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()), skeleton=False, time_order=time_order))
+
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
 
@@ -149,7 +121,7 @@ while tend - told > delta_t/2:
     SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
     RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
-
+    
     # update markers in (space-time) mesh
     ci.Update(lset_p1,time_order=time_order)
 
@@ -158,21 +130,20 @@ while tend - told > delta_t/2:
                                                 b=ci.GetElementsOfType(IF))
     # re-evaluate the "active dofs" in the space time slab
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
-
+    
     # re-set definedonelements-markers according to new markings:
     for integrator in hasneg_integrators_a + hasneg_integrators_f:
         integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
     for integrator in patch_integrators_a:
         integrator.SetDefinedOnElements(ba_facets)
-
+    
     # assemble linear system
     a.Assemble()
     f.Assemble()
-
+    
     # solve linear system
     inv = a.mat.Inverse(active_dofs,inverse="umfpack")
     gfu.vec.data =  inv * f.vec
-       
 
     # evaluate upper trace of solution for
     #  * for error evaluation 
@@ -183,14 +154,7 @@ while tend - told > delta_t/2:
     told = told + delta_t
     coef_told.Set(told)
     
-    if u_exact != None:
-        # compute error at end of time slab
-        l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)*( u_exactL(told) -u_last),mesh))
-        # print time and error
-        print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
-    else:
-        print("t = {0:10}".format(told), end="\n")
-    # Redraw:
-    #Redraw(blocking=True)
-
-print("")       
+    # compute error at end of time slab
+    l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)**2,mesh))
+    # print time and error
+    print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
