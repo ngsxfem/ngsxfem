@@ -2,7 +2,7 @@
 
 using namespace ngcomp;
 
-#define __HASP2PROL__
+//#define __HASP2PROL__
 
 namespace ngmg
 {
