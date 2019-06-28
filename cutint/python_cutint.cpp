@@ -28,6 +28,7 @@ void ExportNgsx_cutint(py::module &m)
            SWAP_DIMENSIONS_POLICY quad_dir_policy,
            int heapsize)
         {
+          static Timer t ("IntegrateX"); RegionTimer reg(t);
           py::extract<PyCF> pycf(lset);
           if (!pycf.check())
             throw Exception("cast failed... need new candidates..");
