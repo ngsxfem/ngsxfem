@@ -21,6 +21,7 @@ if(NETGEN_USE_PYTHON)
       ../utils/ngsxstd.cpp
       ../utils/p1interpol.cpp
       ../utils/restrictedblf.cpp
+      ../utils/xprolongation.cpp
       ../xfem/cutinfo.cpp
       ../xfem/ghostpenalty.cpp
       ../xfem/sFESpace.cpp
@@ -39,7 +40,7 @@ if(NETGEN_USE_PYTHON)
 
 
     install (FILES
-        __init__.py 
+        __init__.py cutmg.py
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
     )

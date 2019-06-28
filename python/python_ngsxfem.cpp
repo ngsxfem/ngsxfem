@@ -24,6 +24,7 @@
 #include "../utils/bitarraycf.hpp"
 #include "../utils/restrictedblf.hpp"
 #include "../utils/p1interpol.hpp"
+#include "../utils/xprolongation.hpp"
 
 #include "../xfem/sFESpace.hpp"
 #include "../xfem/cutinfo.hpp"
@@ -1965,6 +1966,96 @@ order : int
   order of derivative (in normal direction)
 )raw_string")
 );
+
+
+  typedef shared_ptr<P1Prolongation> PyP1P;
+  py::class_<P1Prolongation, PyP1P, Prolongation>
+    (m, "P1Prolongation",
+        docu_string(R"raw_string(
+Prolongation for P1-type spaces (with possibly inactive dofs) --- 
+As is asks the fespace for dofs to vertices at several occasions the 
+current implementation is not very fast and should be primarily used
+for prototype and testing...
+)raw_string"))
+    .def("__init__",
+         [](P1Prolongation *instance, shared_ptr<MeshAccess> ma)
+         {
+           new (instance) P1Prolongation (ma);
+         },
+         py::arg("mesh"))
+    .def("Update",
+         [](shared_ptr<P1Prolongation> p1p, shared_ptr<FESpace> fes)
+         {
+           p1p -> Update(*fes);
+         },
+         py::arg("space")
+      );
+
+      typedef shared_ptr<P2Prolongation> PyP2P;
+  py::class_<P2Prolongation, PyP2P, Prolongation>
+    (m, "P2Prolongation",
+        docu_string(R"raw_string(
+Prolongation for P2 spaces (with possibly inactive dofs) --- 
+As is asks the fespace for dofs to vertices at several occasions the 
+current implementation is not very fast and should be primarily used
+for prototype and testing...
+)raw_string"))
+    .def("__init__",
+         [](P2Prolongation *instance, shared_ptr<MeshAccess> ma)
+         {
+           new (instance) P2Prolongation (ma);
+         },
+         py::arg("mesh"))
+    .def("Update",
+         [](shared_ptr<P2Prolongation> p2p, shared_ptr<FESpace> fes)
+         {
+           p2p -> Update(*fes);
+         },
+         py::arg("space")
+      );
+
+
+      typedef shared_ptr<P2CutProlongation> PyP2CutP;
+  py::class_<P2CutProlongation, PyP2CutP, Prolongation>
+    (m, "P2CutProlongation",
+        docu_string(R"raw_string(
+Prolongation for P2 spaces (with possibly inactive dofs) --- 
+As is asks the fespace for dofs to vertices at several occasions the 
+current implementation is not very fast and should be primarily used
+for prototype and testing...
+)raw_string"))
+    .def("__init__",
+         [](P2CutProlongation *instance, shared_ptr<MeshAccess> ma)
+         {
+           new (instance) P2CutProlongation (ma);
+         },
+         py::arg("mesh"))
+    .def("Update",
+         [](shared_ptr<P2CutProlongation> p2p, shared_ptr<FESpace> fes)
+         {
+           p2p -> Update(*fes);
+         },
+         py::arg("space")
+      );
+
+    typedef shared_ptr<CompoundProlongation> PyCProl;
+    py::class_< CompoundProlongation, PyCProl, Prolongation>
+    ( m, "CompoundProlongation", 
+     docu_string(R"raw_string(prolongation for compound spaces)raw_string"))
+     .def("__init__",
+          [](CompoundProlongation *instance, const FESpace *fes)
+          {
+            new (instance) CompoundProlongation( dynamic_cast<const CompoundFESpace*>(fes) );
+          },
+          py::arg("compoundFESpace"))
+      .def("Update", &CompoundProlongation::Update, py::arg("fespace"))
+      .def ("Prolongate", &CompoundProlongation::ProlongateInline, py::arg("finelevel"), py::arg("vec"))
+      .def ("Restrict", &CompoundProlongation::RestrictInline, py::arg("finelevel"), py::arg("vec"))
+      .def ("AddProlongation", [](shared_ptr<CompoundProlongation> cprol, shared_ptr<Prolongation> prol )
+            { cprol -> AddProlongation( prol ); }, py::arg("p1prol")
+          );
+      //.def ("AddProlongation" &CompoundProlongation::AddProlongation, py::arg("prol"));
+  
 
 }
 

@@ -1,5 +1,6 @@
 install( FILES
   p1interpol.hpp 
+  xprolongation.hpp
   restrictedblf.hpp
   ngsxstd.hpp
   bitarraycf.hpp
