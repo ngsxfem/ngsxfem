@@ -6,7 +6,7 @@ install( FILES
 
 install (FILES
         lsetcurv.py 
-        DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
+        DESTINATION xfem
         COMPONENT xfem
         )
 
