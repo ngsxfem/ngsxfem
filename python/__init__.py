@@ -438,6 +438,19 @@ combined with BitArrayCF).
     # kappa1.vec.FV().NumPy()[:] = cut(kappa1.vec.FV().NumPy())
     return kappa1
 
+all_domain_types = [ DOMAIN_TYPE.NEG,
+                     DOMAIN_TYPE.POS,
+                     DOMAIN_TYPE.IF ]            
+
+all_combined_domain_types = [ COMBINED_DOMAIN_TYPE.NO,
+                              COMBINED_DOMAIN_TYPE.CDOM_NEG,
+                              COMBINED_DOMAIN_TYPE.CDOM_POS,
+                              COMBINED_DOMAIN_TYPE.UNCUT,
+                              COMBINED_DOMAIN_TYPE.CDOM_IF,
+                              COMBINED_DOMAIN_TYPE.HASNEG,
+                              COMBINED_DOMAIN_TYPE.HASPOS,
+                              COMBINED_DOMAIN_TYPE.ANY ]            
+
 def SpaceTimeWeakSet(gfu_e, cf, space_fes):
     gfu_e_repl = GridFunction(space_fes)
     gfu_e_repl.Set( cf )

@@ -1,3 +1,4 @@
+
 #include <regex>
 #include <python_ngstd.hpp>
 
@@ -921,6 +922,10 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
    },
+          py::arg("gridfunction"),
+          py::arg("time"),
+          py::arg("use_FixAnyTime") = false
+          ,
     docu_string(R"raw_string(
 fix_t fixes the time (ReferenceTimeVariable) of a given expression.
 This is the variant for a gridfunction.
