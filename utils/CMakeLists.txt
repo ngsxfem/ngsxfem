@@ -11,7 +11,7 @@ install( FILES
 if(USE_PYTHON)
     install (FILES
             utils.py 
-            DESTINATION xfem
+            DESTINATION ${INST_DIR}
             COMPONENT xfem
             )
 endif(USE_PYTHON)

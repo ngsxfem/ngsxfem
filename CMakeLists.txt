@@ -7,6 +7,8 @@ set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 set(USE_GUI ON CACHE BOOL "use Netgen GUI")
 
+set(INST_DIR xfem CACHE PATH "Install dir appended to prefix")
+
 if(BUILD_NGSOLVE)
   message(STATUS "Use NGSolve from submodule, updating modules...")
   execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

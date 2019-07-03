@@ -6,7 +6,7 @@ install( FILES
 
 install (FILES
         lsetcurv.py 
-        DESTINATION xfem
+        DESTINATION ${INST_DIR}
         COMPONENT xfem
         )
 

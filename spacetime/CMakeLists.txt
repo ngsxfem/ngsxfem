@@ -8,7 +8,7 @@ install( FILES
 
 install (FILES
         lset_spacetime.py
-        DESTINATION xfem
+        DESTINATION ${INST_DIR}
         COMPONENT xfem
         )
 
