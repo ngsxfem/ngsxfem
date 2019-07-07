@@ -11,6 +11,7 @@ set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 set(USE_GUI ON CACHE BOOL "use Netgen GUI")
+set(BUILD_STUB_FILES BOOL "Build stub files for better autocompletion")
 
 if(CMAKE_GENERATOR STREQUAL "Ninja")
   set(ADDNINJA "-GNinja")
