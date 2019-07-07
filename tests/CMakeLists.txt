@@ -54,5 +54,5 @@ add_test(NAME pytests_spacetimecutrule COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m py
 
 install( FILES
   ngsxfem_report.py
-  DESTINATION share/ngsxfem/report
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/report
 )

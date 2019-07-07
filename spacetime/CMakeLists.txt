@@ -15,5 +15,5 @@ install (FILES
 
 install( FILES
   py_demos/spaceP1_timeDGP1.py
-  DESTINATION share/ngsxfem
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
 )

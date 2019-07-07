@@ -1,5 +1,7 @@
+
+
 install( FILES
   integrate.py
   lsetgeoms.py
-  DESTINATION share/ngsxfem/lsetcurv
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/lsetcurv
 )
