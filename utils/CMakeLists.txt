@@ -4,7 +4,7 @@ install( FILES
   restrictedblf.hpp
   ngsxstd.hpp
   bitarraycf.hpp
-  DESTINATION include
+  DESTINATION ${NGSOLVE_INSTALL_DIR_INCLUDE}
 )
 
 

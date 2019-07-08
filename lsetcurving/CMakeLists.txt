@@ -1,7 +1,7 @@
 install( FILES
   shiftintegrators.hpp calcpointshift.hpp calcgeomerrors.hpp lsetrefine.hpp
   projshift.hpp shiftedevaluate.hpp
-  DESTINATION include
+  DESTINATION ${NGSOLVE_INSTALL_DIR_INCLUDE}
   )
 
 install (FILES

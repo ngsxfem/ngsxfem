@@ -59,11 +59,15 @@ cmake ... -DCMAKE_CXX_COMPILER=ngscxx -DCMAKE_LINKER=ngsld
 to the cmake configuration.
 
 **** =ngsxfem= on MacOSX
-On MacOSX, you need to add the location of the NGSolve cmake configuration files:
+On MacOSX, you need to add the location of the NGSolve cmake configuration files, i.e.:
 #+BEGIN_SRC shell
-cmake ... -DNGSolve_DIR=/NGSOLVE_INSTALLATION_LOCATION/Resources/CMake
+cmake \
+-DCMAKE_INSTALL_PREFIX=NGSOLVE_INSTALLATION_LOCATION \
+-DNGSolve_DIR=NGSOLVE_INSTALLATION_LOCATION/Contents/Resources/CMake \
+-DBUILD_NGSOLVE=OFF \
+..
 #+END_SRC
-If NGSolve is installed from the dmg-file =NGSOLVE_INSTALLATION_LOCATION= is =/Applications/Netgen.app/=.
+If NGSolve is installed from the dmg-file =NGSOLVE_INSTALLATION_LOCATION= is =/Applications/Netgen.app=.
 *** Building the NGS-Suite and =ngsxfem= together 
 If you do not have Netgen/NGSolve installed, you may first call
 #+BEGIN_SRC shell
