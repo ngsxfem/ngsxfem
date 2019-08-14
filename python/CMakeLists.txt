@@ -32,7 +32,7 @@ if(NETGEN_USE_PYTHON)
       ../xfem/xfiniteelement.cpp
     )
     set_target_properties(ngsxfem_py PROPERTIES INSTALL_RPATH "${NETGEN_RPATH_TOKEN}/../${NETGEN_PYTHON_RPATH}")
-    install(TARGETS ngsxfem_py DESTINATION ${INST_DIR})
+    install(TARGETS ngsxfem_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem)
 
     target_include_directories(ngsxfem_py PUBLIC ${NGSOLVE_INCLUDE_DIRS})
     # target_link_libraries(ngsxfem_py ngsxfem_lsetcurving ngsxfem_utils ngsxfem_cutint ngsxfem_xfem ngsxfem_spacetime)
@@ -41,7 +41,7 @@ if(NETGEN_USE_PYTHON)
 
     install (FILES
         __init__.py cutmg.py
-        DESTINATION xfem
+        DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
     )
 
