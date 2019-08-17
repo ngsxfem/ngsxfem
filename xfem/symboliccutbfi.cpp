@@ -758,12 +758,13 @@ namespace ngfem
         hasneg = lset[i] < 0 ? true : hasneg;
 
         if (!hasneg || !haspos) return;
-        FlatVector<double> lset_fv(nverts, lh);
+      }
+
+      FlatVector<double> lset_fv(nverts, lh);
         for(int i=0; i<nverts; i++){
             lset_fv[i] = lset[i];
                 if(abs(lset_fv[i]) < 1e-16) throw Exception("lset val 0 in SymbolicCutFacetBilinearFormIntegrator");
         }
-      }
 
       LevelsetWrapper lsw(lset, etfacet);
       ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, dt, 2*maxorder, FIND_OPTIMAL, lh);
