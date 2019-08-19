@@ -83,7 +83,7 @@ namespace ngfem
 
     if (element_vb != VOL)
       {
-        throw Exception ("EB not yet implemented");        
+        //throw Exception ("EB not yet implemented");
         T_CalcElementMatrixEBAdd<SCAL, SCAL_SHAPES, SCAL_RES> (fel, trafo, elmat, lh);
         return;
       }
