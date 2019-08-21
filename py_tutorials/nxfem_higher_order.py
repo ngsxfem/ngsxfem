@@ -42,10 +42,10 @@ from xfem.lsetcurv import *
 from netgen.geom2d import SplineGeometry
 
 # We generate the background mesh of the domain and use a simplicial triangulation
-# To obtain a mesh with quadrilaterals use 'quad_dominated=True'
+# To obtain a mesh with quadrilaterals use 'quad=True'
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.2, quad=False))
 
 # manufactured solution and corresponding r.h.s. data CoefficientFunctions:
 r44 = (x*x*x*x+y*y*y*y)

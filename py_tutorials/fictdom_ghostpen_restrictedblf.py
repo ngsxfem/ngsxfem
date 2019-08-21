@@ -10,13 +10,13 @@ square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1],bc=1)
 
 #quad version:
-# ngmesh = square.GenerateMesh(maxh=1/2, quad_dominated=True)
+# ngmesh = square.GenerateMesh(maxh=1/2, quad=True)
 # mesh = Mesh (ngmesh)
 # mesh.Refine()
 # mesh.Refine()
 
 #trig version:
-ngmesh = square.GenerateMesh(maxh=0.1, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.1, quad=False)
 mesh = Mesh (ngmesh)
 
 order = 3

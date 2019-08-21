@@ -20,10 +20,10 @@ from xfem import *
 from netgen.geom2d import SplineGeometry
 
 # We generate the background mesh of the domain and use a simplicial triangulation
-# To obtain a mesh with quadrilaterals use 'quad_dominated=True'
+# To obtain a mesh with quadrilaterals use 'quad=True'
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.2, quad=False))
 
 # manufactured solution and corresponding r.h.s. data CoefficientFunctions:
 r44 = (x*x*x*x+y*y*y*y)
@@ -141,7 +141,6 @@ err_sqr_coefs = [ (u[i] - solution[i])*(u[i] - solution[i]) for i in [0,1] ]
 
 l2error = sqrt(   Integrate(levelset_domain = lset_neg, cf=err_sqr_coefs[0], mesh=mesh, order=2)
                 + Integrate(levelset_domain = lset_pos, cf=err_sqr_coefs[1], mesh=mesh, order=2) )
-
 
 print("L2 error : ",l2error)
 

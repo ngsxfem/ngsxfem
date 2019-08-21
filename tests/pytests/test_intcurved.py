@@ -11,10 +11,10 @@ from ngsolve.meshes import *
 
 import pytest
 
-@pytest.mark.parametrize("quad_dominated", [False,True])
+@pytest.mark.parametrize("quad", [False,True])
 @pytest.mark.parametrize("order", [1,2,3])
 
-def test_intcurved(quad_dominated, order):
+def test_intcurved(quad, order):
     levelset = sqrt(x*x+y*y)-0.5
     referencevals = { POS : 4.0-0.25*pi, NEG : 0.25*pi, IF : pi }
 
@@ -35,7 +35,7 @@ def test_intcurved(quad_dominated, order):
         refinements += 2
     for reflevel in range(refinements):
 
-        mesh = MakeStructured2DMesh(quads = quad_dominated, nx=N*2**reflevel, ny=N*2**reflevel,
+        mesh = MakeStructured2DMesh(quads = quad, nx=N*2**reflevel, ny=N*2**reflevel,
                                     mapping = lambda x,y : (2*x-1,2*y-1))    
         lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
         lsetp1 = lsetmeshadap.lset_p1
@@ -58,7 +58,7 @@ def test_intcurved(quad_dominated, order):
             errors_curved[key].append(abs(integrals_curved - referencevals[key]))
             errors_uncurved[key].append(abs(integrals_uncurved - referencevals[key]))
         # refine cut elements:
-        # if not quad_dominated:
+        # if not quad:
         #     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
 
     for key in [NEG,POS,IF]:

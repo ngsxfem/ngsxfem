@@ -5,11 +5,11 @@ from xfem import *
 from xfem.lsetcurv import *
 from math import pi
 
-@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("quad", [True])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
-def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated):
+def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad):
     mesh = MakeStructured3DMesh(hexes = True, nx=2, ny=2, nz=2)    
     
     levelset = 1 - 2*x - 2*y - 2*z
@@ -28,7 +28,7 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     assert error < 5e-15*(order+1)*(order+1)
 
 
-@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("quad", [True])
 @pytest.mark.parametrize("order", [4])
 @pytest.mark.parametrize("domain", [NEG, POS])
 @pytest.mark.parametrize("alpha", [0,1,2])
@@ -37,9 +37,9 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
 #integrate f(x) = dim^alpha on the geometry implied by phi(x,y,z) = 1 - 2*x - 2*y - 2*z
 # for analytic solution see
 # http://www.wolframalpha.com/input/?i=integrate+from+0+to+1%2F2+from+0+to+(1%2F2-x)+from+0+to+(1%2F2-x-y)+x%5Ealpha+dz+dy+dx
-def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad_dominated, alpha, dim):
+def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad, alpha, dim):
     #ngsglobals.msg_level = 0
-    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=5, ny=5, nz = 5)    
+    mesh = MakeStructured3DMesh(hexes = quad, nx=5, ny=5, nz = 5)    
 
     levelset = 1 - 2*x- 2*y - 2*z
     val_pos = 2**(-alpha-3)/(alpha**3+6*alpha*alpha + 11*alpha+6)
@@ -80,11 +80,11 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial_zero_val_challenge
     
     assert error < 5e-15*(order+1)*(order+1)
     
-@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("quad", [True])
 @pytest.mark.parametrize("order", [2,4,6])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
-def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
+def test_new_integrateX_TPMC_case_quad3D(order, domain, quad):
     mesh = MakeStructured3DMesh(hexes = True, nx=1, ny=1, nz = 1)    
     lset_approx = GridFunction(H1(mesh,order=1))
     for i,v in enumerate([-4,4,-1,-1,2,-3,5,-1]):
@@ -103,13 +103,13 @@ def test_new_integrateX_TPMC_case_quad3D(order, domain, quad_dominated):
     else:
         assert abs(integral - 0.4825797907263282) < 0.75
 
-@pytest.mark.parametrize("quad_dominated", [True])
+@pytest.mark.parametrize("quad", [True])
 @pytest.mark.parametrize("order", [2,4])
 @pytest.mark.parametrize("high_order", [False, True])
 
-def test_new_integrateX_TPMC_case_quad3D2(order, quad_dominated, high_order):
+def test_new_integrateX_TPMC_case_quad3D2(order, quad, high_order):
 
-    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=10, ny=10, nz = 10)    
+    mesh = MakeStructured3DMesh(hexes = quad, nx=10, ny=10, nz = 10)    
     
     #phi = -4*(1-x)*(1-y)*(1-z) + 4*(1-x)*(1-y)*z -1*(1-x)*y*(1-z) - 1*(1-x)*y*z + 2*x*(1-y)*(1-z) -3 *x*(1-y)*z + 5 * x * y * (1-z) -1 *x *y*z
     phi = x *((7*y - 13) *z + 6) + y *(3 - 8 *z) + 8 *z - 4

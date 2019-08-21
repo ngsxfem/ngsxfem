@@ -30,11 +30,11 @@ def test_polynomial_ET_Segm(domain, alpha):
     
     assert error < 5e-15*(order+1)*(order+1)
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
-def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
+def test_new_integrateX_via_circle_geom(quad, order, domain):
     r=0.6
 
     levelset = sqrt(x*x+y*y)-r
@@ -44,7 +44,7 @@ def test_new_integrateX_via_circle_geom(quad_dominated, order, domain):
     errors = []
 
     for i in range(n_ref):
-        mesh = MakeStructured2DMesh(quads = quad_dominated, nx=2**i, ny=2**i)    
+        mesh = MakeStructured2DMesh(quads = quad, nx=2**i, ny=2**i)    
 
         V = H1(mesh,order=1)
         lset_approx = GridFunction(V)
@@ -103,13 +103,13 @@ def test_new_integrateX_via_sphere_geom_quad(order, domain):
     mean_eoc = sum(mean_eoc_array)/len(mean_eoc_array)
     assert mean_eoc > 1.75
     
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 @pytest.mark.parametrize("N", [1,10,30])
 
-def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated, N):
-    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=N, ny=N)    
+def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad, N):
+    mesh = MakeStructured2DMesh(quads = quad, nx=N, ny=N)    
     
     levelset = 1 - 2*x - 2*y
     referencevals = {NEG: 7/8, POS: 1/8, IF: 1/sqrt(2)}
@@ -125,14 +125,14 @@ def test_new_integrateX_via_straight_cutted_quad2D(order, domain, quad_dominated
     
     assert error < 5e-15*(order+1)*(order+1)
 
-@pytest.mark.parametrize("quad_dominated", [False, True])
+@pytest.mark.parametrize("quad", [False, True])
 @pytest.mark.parametrize("order", [2])
 @pytest.mark.parametrize("domain", [IF, NEG, POS])
 @pytest.mark.parametrize("dim", [x,y])
 @pytest.mark.parametrize("eps", [1e-1, 1e-2, 5e-3, 1e-3, 0])
 
-def test_new_integrateX_via_orth_cutted_quad2D_epsiloned(order, domain, quad_dominated, dim, eps):
-    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
+def test_new_integrateX_via_orth_cutted_quad2D_epsiloned(order, domain, quad, dim, eps):
+    mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
     
     if dim == x:
         levelset = 1 - 2*x + eps*(y-0.5)
@@ -154,7 +154,7 @@ def test_new_integrateX_via_orth_cutted_quad2D_epsiloned(order, domain, quad_dom
     assert error < 5e-15*(order+1)*(order+1)
 
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS])
 @pytest.mark.parametrize("alpha", [0,1,2])
@@ -163,11 +163,11 @@ def test_new_integrateX_via_orth_cutted_quad2D_epsiloned(order, domain, quad_dom
 #integrate f(x) = dim^alpha on the geometry implied by phi(x,y,z) = 1 - 2*x - 2*y
 # for analytic solution see
 # http://www.wolframalpha.com/input/?i=integrate+from+0+to+1%2F2+from+0+to+(1%2F2-x)+x%5Ealpha+dy+dx
-def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, quad_dominated, alpha, dim):
-    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
+def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, quad, alpha, dim):
+    mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
     # square = SplineGeometry()
     # square.AddRectangle([0,0],[1,1],bc=1)
-    # mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad_dominated))
+    # mesh = Mesh (square.GenerateMesh(maxh=100, quad=quad))
     
     levelset = 1 - 2*x - 2*y
     val_pos = 2**(-alpha-2)/(alpha*alpha + 3*alpha+2)
@@ -184,12 +184,12 @@ def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, qua
     
     assert error < 5e-15*(order+1)*(order+1)
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("order", [2,4,8])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 
-def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated):
-    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=1, ny=1, nz=1)    
+def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad):
+    mesh = MakeStructured3DMesh(hexes = quad, nx=1, ny=1, nz=1)    
     
     levelset = 1 - 2*x - 2*y - 2*z
     referencevals = { POS : 1./48, NEG : 47./48, IF : sqrt(3)/8 }
@@ -206,7 +206,7 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
     
     assert error < 5e-15*(order+1)*(order+1)
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("order", [4])
 @pytest.mark.parametrize("domain", [NEG, POS])
 @pytest.mark.parametrize("alpha", [0,1,2])
@@ -215,9 +215,9 @@ def test_new_integrateX_via_straight_cutted_quad3D(order, domain, quad_dominated
 #integrate f(x) = dim^alpha on the geometry implied by phi(x,y,z) = 1 - 2*x - 2*y - 2*z
 # for analytic solution see
 # http://www.wolframalpha.com/input/?i=integrate+from+0+to+1%2F2+from+0+to+(1%2F2-x)+from+0+to+(1%2F2-x-y)+x%5Ealpha+dz+dy+dx
-def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad_dominated, alpha, dim):
+def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, quad, alpha, dim):
     ngsglobals.msg_level = 0
-    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=1, ny=1, nz=1)    
+    mesh = MakeStructured3DMesh(hexes = quad, nx=1, ny=1, nz=1)    
         
     levelset = 1 - 2*x- 2*y - 2*z
     val_pos = 2**(-alpha-3)/(alpha**3+6*alpha*alpha + 11*alpha+6)
@@ -234,13 +234,13 @@ def test_new_integrateX_via_straight_cutted_quad3D_polynomial(order, domain, qua
     
     assert error < 5e-15*(order+1)*(order+1)
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("order", [2])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 @pytest.mark.parametrize("dim", [x,y])
 
-def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad_dominated, dim):
-    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
+def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad, dim):
+    mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
     
     levelset = 1 - 3*dim
     referencevals = {NEG: 2./3, POS: 1./3, IF: 1. }
@@ -257,13 +257,13 @@ def test_new_integrateX_via_orth_cutted_quad2D(order, domain, quad_dominated, di
     assert error < 5e-15*(order+1)*(order+1)
     
 
-@pytest.mark.parametrize("quad_dominated", [False, True])
+@pytest.mark.parametrize("quad", [False, True])
 @pytest.mark.parametrize("order", [2])
 @pytest.mark.parametrize("domain", [NEG, POS])
 @pytest.mark.parametrize("dim", [x,y,z])
 
-def test_new_integrateX_via_orth_cutted_quad3D(order, domain, quad_dominated, dim):
-    mesh = MakeStructured3DMesh(hexes = quad_dominated, nx=1, ny=1, nz=1)    
+def test_new_integrateX_via_orth_cutted_quad3D(order, domain, quad, dim):
+    mesh = MakeStructured3DMesh(hexes = quad, nx=1, ny=1, nz=1)    
     
     levelset = 1 - 2*dim
     referencevals = { POS : 1./2, NEG : 1./2, IF : 1. }
@@ -301,7 +301,7 @@ def test_eb_cut_integrator_2d():
     for i in [2,3,4]:
         square = SplineGeometry()
         square.AddRectangle([-len_box,-len_box],[len_box,len_box],bc=1)
-        mesh = Mesh (square.GenerateMesh(maxh=len_box/1.5*0.5**(i), quad_dominated=False))
+        mesh = Mesh (square.GenerateMesh(maxh=len_box/1.5*0.5**(i), quad=False))
         print("Max_h = ", len_box/1.5*0.5**(i))
 
         lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=10.25, discontinuous_qn=True)

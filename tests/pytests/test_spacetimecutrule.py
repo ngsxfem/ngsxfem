@@ -9,14 +9,14 @@ from netgen.geom2d import SplineGeometry
 
 tref = ReferenceTimeVariable()
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("integrands", [(tref,0.5,0,1),
                                         (tref**3,0.25,0,3),
                                         ((1-tref)**3,0.25,0,3),
                                         (x,0.5,1,0),
                                         (tref*tref*(x*x+y*y),2/9,2,2)])
-def test_spacetime_integrate_no_cut(quad_dominated, integrands):
-    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
+def test_spacetime_integrate_no_cut(quad, integrands):
+    mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
 
     f,ref_value, space_order, time_order = integrands
     
@@ -35,10 +35,10 @@ def test_spacetime_integrate_no_cut(quad_dominated, integrands):
     assert error < 5e-15
 
 
-@pytest.mark.parametrize("quad_dominated", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
-def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad_dominated):
-    mesh = MakeStructured2DMesh(quads = quad_dominated, nx=1, ny=1)    
+def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
+    mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
 
     tref = ReferenceTimeVariable()
     
@@ -74,7 +74,7 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad_domi
 def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
-    ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
+    ngmesh = square.GenerateMesh(maxh=0.05, quad=False)
     mesh = Mesh (ngmesh)
     
     fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])
@@ -184,7 +184,7 @@ def test_spacetime_spaceP1_timeCGP1():
 
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1])
-    ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
+    ngmesh = square.GenerateMesh(maxh=0.08, quad=False)
     mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)
@@ -361,7 +361,7 @@ def test_spacetime_spaceP1_timeDGP1():
 
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1])
-    ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
+    ngmesh = square.GenerateMesh(maxh=0.08, quad=False)
     mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)
@@ -513,7 +513,7 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     else:
         square = SplineGeometry()
         square.AddRectangle([-1,-1],[1,1])
-        ngmesh = square.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
+        ngmesh = square.GenerateMesh(maxh=(1/2)**(i-1), quad=False)
         mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)
@@ -596,7 +596,7 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     else:
         cube = CSGeometry()
         cube.Add (OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)))
-        ngmesh = cube.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
+        ngmesh = cube.GenerateMesh(maxh=(1/2)**(i-1), quad=False)
         mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)

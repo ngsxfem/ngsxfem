@@ -7,7 +7,7 @@ from xfem import *
 from netgen.geom2d import SplineGeometry
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.6, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.6, quad=False))
 
 levelset = sqrt(x*x+y*y)-0.7
 

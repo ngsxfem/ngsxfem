@@ -9,11 +9,11 @@ from xfem import *
 from xfem.lsetcurv import *
 # basic geometry features (for the background mesh)
 
-@pytest.mark.parametrize("quad_dominated", [True,False])
+@pytest.mark.parametrize("quad", [True,False])
 @pytest.mark.parametrize("order", [1,2,3])
 
-def test_nxfem(quad_dominated, order):
-  mesh = MakeStructured2DMesh(quads = quad_dominated, nx=40, ny=40, mapping = lambda x,y : (3*x-1.5,3*y-1.5))
+def test_nxfem(quad, order):
+  mesh = MakeStructured2DMesh(quads = quad, nx=40, ny=40, mapping = lambda x,y : (3*x-1.5,3*y-1.5))
       
   # manufactured solution and corresponding r.h.s. data CoefficientFunctions:
   r44 = (x*x*x*x+y*y*y*y)
@@ -162,7 +162,7 @@ def test_nxfem(quad_dominated, order):
   print("L2 error : ",l2error)
   print("dist error : ",disterror)
   
-  assert l2error < reference_error_l2[(quad_dominated,order)]
-  assert disterror < reference_error_dist[(quad_dominated,order)]
+  assert l2error < reference_error_l2[(quad,order)]
+  assert disterror < reference_error_dist[(quad,order)]
   
   mesh.UnsetDeformation()
