@@ -32,7 +32,7 @@ from netgen.csg import CSGeometry, OrthoBrick, Pnt
 # geometry
 cube = CSGeometry()
 cube.Add (OrthoBrick(Pnt(-1.41,-1.41,-1.41), Pnt(1.41,1.41,1.41)))
-mesh = Mesh (cube.GenerateMesh(maxh=0.6, quad_dominated=False))
+mesh = Mesh (cube.GenerateMesh(maxh=0.6, quad=False))
 
 levelset = sqrt(x*x+y*y+z*z)-1
 

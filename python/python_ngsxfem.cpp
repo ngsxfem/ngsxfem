@@ -1,6 +1,11 @@
 #include <python_ngstd.hpp>
 
-//using namespace ngcomp;
+#include "../cutint/python_cutint.cpp"
+#include "../utils/python_utils.cpp"
+#include "../xfem/python_xfem.cpp"
+#include "../spacetime/python_spacetime.cpp"
+#include "../lsetcurving/python_lsetcurving.cpp"
+
 #include "../utils/ngsxstd.hpp"
 
 void ExportNgsx(py::module &m)
@@ -31,10 +36,16 @@ void ExportNgsx(py::module &m)
     .value("FALLBACK", ALWAYS_NONE)
     .export_values()
     ;
+
 }
 
 PYBIND11_MODULE(ngsxfem_py, m)
 {
   cout << "importing ngs-xfem" << NGSXFEM_VERSION << endl;
   ExportNgsx(m);
+  ExportNgsx_cutint(m);
+  ExportNgsx_utils(m);
+  ExportNgsx_xfem(m);
+  ExportNgsx_spacetime(m);
+  ExportNgsx_lsetcurving(m);
 }

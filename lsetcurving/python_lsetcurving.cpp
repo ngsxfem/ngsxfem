@@ -322,8 +322,3 @@ ASSUMPTIONS:
   
 }
 
-PYBIND11_MODULE(ngsxfem_lsetcurving_py,m)
-{
-  cout << "importing ngsxfem-lsetcurving lib" << endl;
-  ExportNgsx_lsetcurving(m);
-}

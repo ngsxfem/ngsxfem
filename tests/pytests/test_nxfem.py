@@ -1,22 +1,25 @@
 import pytest
 from ngsolve import *
 from xfem import *
+from ngsolve.meshes import *
 from netgen.geom2d import SplineGeometry
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
-# For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
 
+from netgen import gui
 
 @pytest.mark.parametrize("integration_quadtrig_newold", [(False, True),(False, False),(True, True)])
 @pytest.mark.parametrize("order", [1,2,3])
 
 def test_nxfem(integration_quadtrig_newold,order):
-    quad_dominated, newintegration = integration_quadtrig_newold
-    square = SplineGeometry()
-    square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=quad_dominated))
-    
+    quad, newintegration = integration_quadtrig_newold
+    if quad:
+        mesh = MakeStructured2DMesh(quads = True, mapping = lambda x,y: (3*x-1.5,3*y-1.5), nx=15, ny=15)
+    else:
+        square = SplineGeometry()
+        square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
+        mesh = Mesh (square.GenerateMesh(maxh=0.2))
     r44 = (x*x*x*x+y*y*y*y)
     r41 = sqrt(sqrt(x*x*x*x+y*y*y*y))
     r4m3 = (1.0/(r41*r41*r41))
@@ -126,3 +129,9 @@ def test_nxfem(integration_quadtrig_newold,order):
         assert l2error < 0.004
     if (order == 3):
         assert l2error < 0.0004
+
+if __name__ == "__main__":
+    test_nxfem((False,False),1)
+    test_nxfem((True,True),2)
+    test_nxfem((False,True),3)
+    

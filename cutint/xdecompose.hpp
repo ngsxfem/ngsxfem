@@ -34,7 +34,7 @@ namespace xintegration
     DOMAIN_TYPE CheckIfCut(const ScalarFieldEvaluator & lset) const
     {
       static Timer timer ("Simplex::CheckifCut (the simplex check)");
-      ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
       // RegionTimer reg (timer);
 
       bool haspos = false;
@@ -135,7 +135,7 @@ namespace xintegration
                                     LocalHeap & lh)
   {
     static Timer timer ("DecomposePrismIntoSimplices");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
 
     ret.SetSize(SD);

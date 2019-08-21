@@ -79,7 +79,7 @@ from math import pi
 # 2D: circle configuration
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1],bcs=[1,2,3,4])
-mesh = Mesh (square.GenerateMesh(maxh=4, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=4, quad=False))
 for i in range(3):
     mesh.Refine()
 

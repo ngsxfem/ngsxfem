@@ -7,8 +7,8 @@ from xfem.lsetcurv import *
 
 square = SplineGeometry()
 square.AddRectangle([0,0],[1,1],bc=1)
-#mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
-mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
+#mesh = Mesh (square.GenerateMesh(maxh=100, quad=False))
+mesh = Mesh (square.GenerateMesh(maxh=100, quad=True))
 r=0.6
 
 #domains = [NEG,POS,IF]

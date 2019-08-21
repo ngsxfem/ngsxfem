@@ -14,7 +14,7 @@ from xfem.lset_spacetime import *
 
 square = SplineGeometry()
 square.AddRectangle([-0.6,-0.6],[0.6,1],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.5, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.5, quad=False)
 mesh = Mesh (ngmesh)
 
 for i in range(0):

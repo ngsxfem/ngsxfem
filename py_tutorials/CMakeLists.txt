@@ -11,5 +11,5 @@ install( FILES
   tracefem.py
   tracefem3d.py
   xfespaces.py
-  DESTINATION share/ngsxfem
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
 )

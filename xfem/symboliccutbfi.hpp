@@ -31,7 +31,8 @@ namespace ngfem
                                        int aforce_intorder = -1,
                                        int asubdivlvl = 0,
                                        SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL,
-                                       VorB vb = VOL);
+                                       VorB vb = VOL,
+                                       VorB element_vb = VOL);
 
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     virtual VorB VB () const { return VOL; }
@@ -67,10 +68,7 @@ namespace ngfem
     void T_CalcElementMatrixEBAdd (const FiniteElement & fel,
                                    const ElementTransformation & trafo, 
                                    FlatMatrix<SCAL_RES> elmat,
-                                   LocalHeap & lh) const
-    {
-      throw Exception("SymbolicCutBilinearFormIntegrator::T_CalcElementMatrixEB not yet implemented");
-    }
+                                   LocalHeap & lh) const;
 
     virtual void 
     CalcLinearizedElementMatrix (const FiniteElement & fel,

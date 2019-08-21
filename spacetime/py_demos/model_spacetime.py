@@ -12,7 +12,7 @@ from numpy import pi
 
 square = SplineGeometry()
 square.AddRectangle([0,0],[1,1],bc=1)
-ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
+ngmesh = square.GenerateMesh(maxh=0.05, quad=False)
 mesh = Mesh (ngmesh)
 
 fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])

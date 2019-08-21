@@ -63,8 +63,8 @@ void ExportNgsx_cutint(py::module &m)
                  for (int i = 0; i < mir.Size(); i++)
                      lsum += mir[i].GetMeasure()*wei_arr[i]*val(i,0);
                    //lsum += mir[i].GetWeight()*val(i,0);
-
-                 AsAtomic(sum) += lsum;
+                 AtomicAdd(sum,lsum);
+                 // AsAtomic(sum) += lsum;
                }
              });
 
@@ -121,10 +121,4 @@ quad_dir_policy : int
   policy for the selection of the order of integration directions
 )raw_string"));
 
-}
-
-PYBIND11_MODULE(ngsxfem_cutint_py,m)
-{
-  cout << "importing ngsxfem-cutint lib" << endl;
-  ExportNgsx_cutint(m);
 }

@@ -67,10 +67,10 @@ ij = 5
 l = []
 
 # We generate the background mesh of the domain and use a simplicial triangulation
-# To obtain a mesh with quadrilaterals use 'quad_dominated=True' 
+# To obtain a mesh with quadrilaterals use 'quad=True' 
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5], bc = 1)
-mesh = Mesh(square.GenerateMesh(maxh = 0.5, quad_dominated = False))
+mesh = Mesh(square.GenerateMesh(maxh = 0.5, quad = False))
 Draw(mesh)
 # generate a level set function of unit circle
 phi = sqrt(x*x + y*y) - 1.0

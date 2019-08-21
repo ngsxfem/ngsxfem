@@ -10,7 +10,7 @@ from netgen.csg import CSGeometry, OrthoBrick, Pnt
 cube = OrthoBrick( Pnt(0,0,0), Pnt(1,1,1) ).bc(1)
 geom = CSGeometry()
 geom.Add (cube)
-ngmesh = geom.GenerateMesh(maxh=1, quad_dominated=True)
+ngmesh = geom.GenerateMesh(maxh=1, quad=True)
 mesh = Mesh(ngmesh)
 
 def binary_pow(x,a):

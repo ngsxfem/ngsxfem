@@ -548,9 +548,3 @@ use_FixAnyTime: bool
    "Interpolate nodal in time (possible high order) and nodal in space (P1).");
 
 }
-
-PYBIND11_MODULE(ngsxfem_spacetime_py,m)
-{
-  cout << "importing ngsxfem-spacetime lib" << endl;
-  ExportNgsx_spacetime(m);
-}

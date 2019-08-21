@@ -294,9 +294,3 @@ for prototype and testing...
 
 
 }
-
-PYBIND11_MODULE(ngsxfem_utils_py,m)
-{
-  cout << "importing ngsxfem-utils lib" << endl;
-  ExportNgsx_utils(m);
-}

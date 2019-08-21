@@ -477,13 +477,15 @@ elnr : int
                             });
           if (has_other && !element_boundary && !skeleton)
             throw Exception("DG-facet terms need either skeleton=True or element_boundary=True");
-          if (element_boundary)
-            throw Exception("No Facet BFI with Symbolic cuts..");
+
+          VorB element_vb;
+          if (element_boundary) element_vb = BND;
+          else element_vb = VOL;
 
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
           {
-            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb);
+            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb,element_vb);
             bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
@@ -812,10 +814,4 @@ order : int
 )raw_string")
 );
   
-}
-
-PYBIND11_MODULE(ngsxfem_xfem_py,m)
-{
-  cout << "importing ngsxfem-xfem lib" << endl;
-  ExportNgsx_xfem(m);
 }

@@ -5,7 +5,7 @@ from xfem import *
 from math import pi
 from xfem.lset_spacetime import *
 
-ngmesh = unit_square.GenerateMesh(maxh=0.1, quad_dominated=False)
+ngmesh = unit_square.GenerateMesh(maxh=0.1, quad=False)
 mesh = Mesh (ngmesh)
 
 coef_told = Parameter(0)

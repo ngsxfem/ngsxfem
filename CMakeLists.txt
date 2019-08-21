@@ -1,28 +1,33 @@
 cmake_minimum_required(VERSION 2.8)
 
-if(NOT CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
-  if(NOT INSTALL_DIR)
-    message( FATAL_ERROR "Please provide an CMAKE_INSTALL_PREFIX, CMake will exit." )
-  endif(NOT INSTALL_DIR)
-endif(NOT CMAKE_INSTALL_PREFIX)
+project(xfem)
 
 set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 set(USE_GUI ON CACHE BOOL "use Netgen GUI")
+set(BUILD_STUB_FILES OFF CACHE BOOL "Build stub files for better autocompletion")
 
-if(CMAKE_GENERATOR STREQUAL "Ninja")
-  set(ADDNINJA "-GNinja")
-  set(BUILDEXE "ninja")
-else(CMAKE_GENERATOR STREQUAL "Ninja")         
-  set(ADDNINJA "")
-  set(BUILDEXE "make")
-endif(CMAKE_GENERATOR STREQUAL "Ninja")
+set(INST_DIR xfem CACHE PATH "Install dir appended to prefix")
 
 if(BUILD_NGSOLVE)
   message(STATUS "Use NGSolve from submodule, updating modules...")
   execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  if(NOT CMAKE_INSTALL_PREFIX)
+    set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+    if(NOT INSTALL_DIR)
+      message( FATAL_ERROR "Please provide an CMAKE_INSTALL_PREFIX, CMake will exit." )
+    endif(NOT INSTALL_DIR)
+  endif(NOT CMAKE_INSTALL_PREFIX)
+
+  if(CMAKE_GENERATOR STREQUAL "Ninja")
+    set(ADDNINJA "-GNinja")
+    set(BUILDEXE "ninja")
+  else(CMAKE_GENERATOR STREQUAL "Ninja")         
+    set(ADDNINJA "")
+    set(BUILDEXE "make")
+  endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
   set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
   set(USE_UMFPACK ON CACHE BOOL "use umfpack library (only if ngsolve is build)")
@@ -55,7 +60,18 @@ if(BUILD_NGSOLVE)
     execute_process(COMMAND make install WORKING_DIRECTORY ngsolve)
   endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
-
+else(BUILD_NGSOLVE)
+  find_package(PythonInterp 3 REQUIRED)
+  find_package(PythonLibs 3 REQUIRED)
+  # check if CMAKE_INSTALL_PREFIX is set by user, otherwise install to user-local python modules directory
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.USER_SITE)" OUTPUT_VARIABLE install_dir OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(CMAKE_INSTALL_PREFIX ${install_dir} CACHE PATH "Install dir" FORCE)
+    message(STATUS "install dir ${install_dir}")
+  endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  find_package(NGSolve CONFIG REQUIRED
+    HINTS $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen
+  )
 endif(BUILD_NGSOLVE)
 
 if(USE_CCACHE)
@@ -67,36 +83,18 @@ if(USE_CCACHE)
 endif(USE_CCACHE)
 
 
-project(xfem)
 find_package(NGSolve REQUIRED CONFIG)
 set(NGSXFEM_VERSION_MAJOR 1)
 set(NGSXFEM_VERSION_MINOR 1)
-set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
+set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-onelib-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 
 add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 
-if(WIN32)
-    set(NGS_LIB_TYPE STATIC)
-else(WIN32)
-    set(NGS_LIB_TYPE SHARED)
-endif(WIN32)
-
-set(NETGEN_LIBS solve)
-
-
-if (ADDITIONAL_PATHS)
-    list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
-    list(APPEND CMAKE_SYSTEM_PREFIX_PATH ${ADDITIONAL_PATHS})
-    list(REVERSE CMAKE_SYSTEM_PREFIX_PATH)
-endif (ADDITIONAL_PATHS)
-
 # use rpath
 set(CMAKE_MACOSX_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH "${NETGEN_RPATH_TOKEN};${NETGEN_RPATH_TOKEN}/${NETGEN_RPATH}")
-
-set(ADDITIONAL_PATHS "" CACHE PATH "List of paths to additional libraries in non-standard locations, seperated by ';'")
 
 #######################################################################
 # CTest
@@ -119,24 +117,6 @@ add_subdirectory(py_tutorials)
 add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 add_subdirectory(spacetime)
-
-# get_directory_property( DirDefs COMPILE_DEFINITIONS )
-
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION ${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev)
-
-set(CPACK_PACKAGE_NAME xfem)
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64) # TODO should be set via: dpkg --print-architecture
-
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER Christoph Lehrenfeld <christoph.lehrenfeld@gmail.com>)
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY Short description of xfem)
-set(CPACK_PACKAGE_DESCRIPTION Long description of xfem)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "ngsolve (>= 6.2)")
-# TODO (use dpkg -s <packagename> to retrieve version)
-
-set(CPACK_DEBIAN_PACKAGE_SECTION Science)
-set(CPACK_DEBIAN_PACKAGE_VERSION ${CPACK_PACKAGE_VERSION})
-include(CPack)
 
 # uninstall target
 configure_file(
