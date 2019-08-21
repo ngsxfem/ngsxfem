@@ -722,7 +722,7 @@ namespace ngfem
     IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
 
-    if (etfacet != ET_SEGM && dt == IF)
+    if (etfacet != ET_SEGM && dt == IF) // Codim 2 special case (3D -> 1D)
     {
       static Timer t("symbolicCutBFI - CoDim2-hack", 2);
       RegionTimer reg(t);
@@ -788,7 +788,7 @@ namespace ngfem
           ip.SetWeight((*ir_scr)[i].Weight() * ratio_meas1D);
       }
     }
-    else //ET_SEGM
+    else //Codim1 or 2D->0D
     {
       IntegrationPoint ipl(0,0,0,0);
       IntegrationPoint ipr(1,0,0,0);
@@ -886,7 +886,7 @@ namespace ngfem
                 cf -> Evaluate (mir1, val);
                 proxyvalues(STAR,l,k) = val.Col(0);
               }
-          if (dt == IF)
+          if (dt == IF) // either 2D->0D (no need for weight correction) or 3D->1D ( weights are already corrected)
               for (int i = 0; i < mir1.Size(); i++){
                     //proxyvalues(i,STAR,STAR) *= measure(i) * (*ir_scr)[i].Weight();
                     //proxyvalues(i,STAR,STAR) *= (*ir_facet)[i].Weight();
@@ -895,13 +895,13 @@ namespace ngfem
                     //cout << "(*ir_scr)[i].Weight(): " << (*ir_scr)[i].Weight() << endl;
               }
 
-          else
+          else // codim 1
           {
-             throw Exception("Foo!");
+             // throw Exception("Foo!");
              for (int i = 0; i < mir1.Size(); i++){
                  //proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
-                 // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
-                 proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_facet)[i].Weight();
+                 // proxyvalues(i,STAR,STAR) *= measure(i) * ir_scr[i].Weight();
+                 proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
              }
           }
 
