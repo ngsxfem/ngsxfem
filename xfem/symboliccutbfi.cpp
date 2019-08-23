@@ -23,8 +23,8 @@ namespace ngfem
                                      int aforce_intorder,
                                      int asubdivlvl,
                                      SWAP_DIMENSIONS_POLICY apol,
-                                     VorB vb, VorB element_vb)
-    : SymbolicBilinearFormIntegrator(acf,vb,element_vb),
+                                     VorB avb, VorB aelement_vb)
+    : SymbolicBilinearFormIntegrator(acf,avb,aelement_vb),
     cf_lset(acf_lset),
     dt(adt),
     force_intorder(aforce_intorder),
