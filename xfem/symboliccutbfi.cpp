@@ -23,8 +23,8 @@ namespace ngfem
                                      int aforce_intorder,
                                      int asubdivlvl,
                                      SWAP_DIMENSIONS_POLICY apol,
-                                     VorB vb, VorB element_vb)
-    : SymbolicBilinearFormIntegrator(acf,vb,element_vb),
+                                     VorB avb, VorB aelement_vb)
+    : SymbolicBilinearFormIntegrator(acf,avb,aelement_vb),
     cf_lset(acf_lset),
     dt(adt),
     force_intorder(aforce_intorder),
@@ -757,8 +757,8 @@ namespace ngfem
         haspos = lset[i] > 0 ? true : haspos;
         hasneg = lset[i] < 0 ? true : hasneg;
 
-        if (!hasneg || !haspos) return;
       }
+      if (!hasneg || !haspos) return;
 
       FlatVector<double> lset_fv(nverts, lh);
         for(int i=0; i<nverts; i++){
