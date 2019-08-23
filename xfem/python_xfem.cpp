@@ -28,8 +28,8 @@ void ExportNgsx_xfem(py::module &m)
           Flags flags = py::extract<Flags> (bpflags)();
           shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset, order, flags);
           LocalHeap lh (1000000, "SFESpace::Update-heap", true);
-          ret->Update(lh);
-          ret->FinalizeUpdate(lh);
+          ret->Update();
+          ret->FinalizeUpdate();
           return ret;
         },
         docu_string(R"raw_string(
@@ -356,7 +356,7 @@ heapsize : int
           else
             throw Exception("levelset and cutinfo are invalid");
           LocalHeap lh (heapsize, "XFESpace::Update-heap", true);
-          ret->Update(lh);
+          ret->Update();
           return ret;
         },
         py::arg("basefes"),

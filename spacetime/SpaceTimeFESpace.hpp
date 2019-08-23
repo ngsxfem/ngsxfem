@@ -42,7 +42,7 @@ namespace ngcomp
     }
 
 
-    virtual void Update(LocalHeap & lh);
+    virtual void Update();
     virtual size_t GetNDof () const { return ndof; }
     
     virtual void GetDofNrs (ElementId ei, Array<DofId> & dnums) const;

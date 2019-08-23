@@ -70,9 +70,9 @@ namespace ngcomp
     }
 
     /// update element coloring
-    virtual void FinalizeUpdate(LocalHeap & lh)
+    virtual void FinalizeUpdate()
     {
-      FESpace::FinalizeUpdate (lh);
+      FESpace::FinalizeUpdate ();
     }
 
     virtual size_t GetNDof () const { return ndof; }
@@ -193,7 +193,7 @@ namespace ngcomp
     // destructor
     virtual ~T_XFESpace ();
 
-    virtual void Update(LocalHeap & lh);
+    virtual void Update();
 
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
 

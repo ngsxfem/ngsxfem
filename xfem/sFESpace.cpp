@@ -62,11 +62,12 @@ namespace ngcomp
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
   }
 
-  void SFESpace::Update(LocalHeap & lh)
+  void SFESpace::Update()
   {
     // throw Exception ("nothing done yet...");
+    LocalHeapMem<100000> lh("SFESpace::Update");
 
-    FESpace::Update(lh);
+    FESpace::Update();
     int ne=ma->GetNE();
     activeelem.SetSize(ne);
 

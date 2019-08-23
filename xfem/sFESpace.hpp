@@ -33,14 +33,14 @@ namespace ngcomp
     }
 
     /// update element coloring
-    virtual void FinalizeUpdate(LocalHeap & lh)
+    virtual void FinalizeUpdate()
     {
       if ( coef_lset == NULL )
       {
         cout << " no lset, FinalizeUpdate postponed " << endl;
         return;
       }
-      FESpace::FinalizeUpdate (lh);
+      FESpace::FinalizeUpdate ();
     }
 
     virtual size_t GetNDof () const { return ndof; }
@@ -60,7 +60,7 @@ namespace ngcomp
     bool IsElementCut(int elnr) const { return activeelem.Test(elnr); }
     const BitArray & CutElements() const { return activeelem; }
 
-    virtual void Update(LocalHeap & lh);
+    virtual void Update();
 
 
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;

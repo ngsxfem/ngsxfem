@@ -241,20 +241,21 @@ namespace ngcomp
   }
 
   template <int D>
-  void T_XFESpace<D> :: Update(LocalHeap & lh)
+  void T_XFESpace<D> :: Update()
   {
     CleanUp();
 
     if (private_cutinfo)
     {
       cout << IM(4) << " Calling cutinfo-Update from within XFESpace-Update " << endl;
+      LocalHeapMem<100000> lh("T_XFESpace<D>::Update(private_cutinfo)");
       cutinfo->Update(coef_lset,-1,lh);
     }
 
     static Timer timer ("XFESpace::Update");
     RegionTimer reg (timer);
 
-    FESpace::Update(lh);
+    FESpace::Update();
 
     int ne=ma->GetNE();
     int nedges=ma->GetNEdges();
@@ -384,7 +385,7 @@ namespace ngcomp
     }
 
     UpdateCouplingDofArray();
-    FinalizeUpdate (lh);
+    FinalizeUpdate ();
 
     dirichlet_dofs.SetSize (GetNDof());
     dirichlet_dofs.Clear();

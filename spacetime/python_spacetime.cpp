@@ -78,8 +78,8 @@ void ExportNgsx_spacetime(py::module &m)
 
 
     LocalHeap lh (heapsize, "SpaceTimeFESpace::Update-heap", true);
-    ret->Update(lh);
-    ret->FinalizeUpdate(lh);
+    ret->Update();
+    ret->FinalizeUpdate();
     return ret;
   },
        py::arg("spacefes"),
