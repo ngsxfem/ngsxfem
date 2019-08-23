@@ -757,8 +757,8 @@ namespace ngfem
         haspos = lset[i] > 0 ? true : haspos;
         hasneg = lset[i] < 0 ? true : hasneg;
 
-        if (!hasneg || !haspos) return;
       }
+      if (!hasneg || !haspos) return;
 
       FlatVector<double> lset_fv(nverts, lh);
         for(int i=0; i<nverts; i++){
