@@ -167,7 +167,7 @@ def test_new_integrateX_via_straight_cutted_quad2D_polynomial(order, domain, qua
     mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
     # square = SplineGeometry()
     # square.AddRectangle([0,0],[1,1],bc=1)
-    # mesh = Mesh (square.GenerateMesh(maxh=100, quad=quad))
+    # mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=quad))
     
     levelset = 1 - 2*x - 2*y
     val_pos = 2**(-alpha-2)/(alpha*alpha + 3*alpha+2)
@@ -301,7 +301,7 @@ def test_eb_cut_integrator_2d():
     for i in [2,3,4]:
         square = SplineGeometry()
         square.AddRectangle([-len_box,-len_box],[len_box,len_box],bc=1)
-        mesh = Mesh (square.GenerateMesh(maxh=len_box/1.5*0.5**(i), quad=False))
+        mesh = Mesh (square.GenerateMesh(maxh=len_box/1.5*0.5**(i), quad_dominated=False))
         print("Max_h = ", len_box/1.5*0.5**(i))
 
         lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=10.25, discontinuous_qn=True)

@@ -74,7 +74,7 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
 def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
-    ngmesh = square.GenerateMesh(maxh=0.05, quad=False)
+    ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
     mesh = Mesh (ngmesh)
     
     fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])
@@ -184,7 +184,7 @@ def test_spacetime_spaceP1_timeCGP1():
 
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1])
-    ngmesh = square.GenerateMesh(maxh=0.08, quad=False)
+    ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
     mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)
@@ -361,7 +361,7 @@ def test_spacetime_spaceP1_timeDGP1():
 
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1])
-    ngmesh = square.GenerateMesh(maxh=0.08, quad=False)
+    ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
     mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)
@@ -513,7 +513,7 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     else:
         square = SplineGeometry()
         square.AddRectangle([-1,-1],[1,1])
-        ngmesh = square.GenerateMesh(maxh=(1/2)**(i-1), quad=False)
+        ngmesh = square.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
         mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)
@@ -596,7 +596,7 @@ def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     else:
         cube = CSGeometry()
         cube.Add (OrthoBrick(Pnt(-1,-1,-1), Pnt(1,1,1)))
-        ngmesh = cube.GenerateMesh(maxh=(1/2)**(i-1), quad=False)
+        ngmesh = cube.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
         mesh = Mesh (ngmesh)
 
     coef_told = Parameter(0)

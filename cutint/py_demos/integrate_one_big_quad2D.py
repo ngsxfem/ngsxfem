@@ -87,8 +87,8 @@ if __name__ == "__main__":
     from netgen.geom2d import SplineGeometry
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
-    #mesh = Mesh (square.GenerateMesh(maxh=100, quad=False))
-    mesh = Mesh (square.GenerateMesh(maxh=100, quad=True))
+    #mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
+    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=True))
 
     lsetvals_list = [ [-0.18687,0.324987, 0.765764,0.48983], [0.765764,0.324987, -0.18687, -0.48983], [1,2/3,-1,-2/3]]
     #lsetvals_list = [[1.,-1.,-3.,-1.]]
