@@ -4,6 +4,7 @@ beforescript:
     - echo " before script "
     - rm -rf ~/inst/netgen
     - mkdir -p ~/inst/netgen
+    - cd ~
     - singularity pull library://laevar/default/ngsolve
 
 build:
