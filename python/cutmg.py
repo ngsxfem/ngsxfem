@@ -2,6 +2,7 @@ from ngsolve.la import BaseMatrix
 from ngsolve import Projector, Norm
 from ngsolve.krylovspace import CG
 from xfem import *
+from ngsolve import *
 import ngsolve
 '''
 Below we implement a generic MultiGrid class based on the following (yet to be defined) objects:
@@ -89,8 +90,13 @@ class CutFemSmoother:
         # with help of ifdofs ...
         update.data = self.a.mat * u - rhs
         cgoutput = u.CreateVector()
+
+        E = Embedding(len(rhs), IntRange(0,self.a.mat.height))
         
-        cgoutput.data = CG(self.a.mat, update, pre=self.ifpre, tol=1e-2,printrates=False)
+        cgoutput.data = CG(E @ self.a.mat @ E.T,
+                           update,
+                           pre=E @ self.ifpre @ E.T,
+                           tol=1e-2,printrates=False)
         #u.data -= self.inv * update
         u.data -= cgoutput
 
