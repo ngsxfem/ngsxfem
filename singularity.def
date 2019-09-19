@@ -1,0 +1,21 @@
+Bootstrap: library
+From: ubuntu:18.10
+
+%post
+    apt-get -qyy update
+    apt-get -qyy install -o APT::Install-Recommends=false -o APT::Install-Suggests=false \
+        software-properties-common
+    add-apt-repository universe
+    #add-apt-repository ppa:ngsolve/ngsolve
+    apt-get -qyy update
+    env DEBIAN_FRONTEND=noninteractive apt-get -qyy install -o APT::Install-Recommends=false -o APT::Install-Suggests=false \
+        python3 python3-pip python3-venv python3-setuptools python3-wheel python3-pytest \
+        python3-numpy python3-scipy python3-matplotlib python3-pynfft \
+        libpython3-dev git cmake ninja-build libscalapack-openmpi-dev \
+        build-essential python3-dev libxmu-dev tk-dev tcl-dev libglu1-mesa-dev \
+        liboce-ocaf-dev libopenblas-dev libsuitesparse-dev g++ gcc
+    apt-get clean
+    pip3 install pdoc3
+
+%runscript
+    exec /usr/bin/python3 "$@"

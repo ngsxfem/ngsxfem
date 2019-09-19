@@ -4,7 +4,7 @@ beforescript:
     - echo " before script "
     - rm -rf ~/inst/netgen
     - mkdir -p ~/inst/netgen
-    - nix-shell -p blas liblapack gcc xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 ninja --run "echo \"nix-shell test\" "
+    - singularity pull library://laevar/default/ngsolve
 
 build:
   stage: build
@@ -13,27 +13,7 @@ build:
     paths:
       - build/
   script:
-    - mkdir -p build
-    - mkdir -p ~/ngsxfem-reports
-    - mkdir -p ~/inst
-    - mkdir -p ~/inst/netgen
-    - touch ~/ngsxfem-reports/lastngs.version
-    - chmod 755 ~/ngsxfem-reports/lastngs.version
-    - git submodule update --init --recursive
-    - export NGS_VERSION=`git submodule | awk '{print $1;}'`
-    - export NGS_INSTALLED_VERSION=`cat ~/ngsxfem-reports/lastngs.version | awk '{print $1;}'`
-    - echo NGS_VERSION is $NGS_VERSION
-    - echo NGS_INSTALLED_VERSION is $NGS_INSTALLED_VERSION
-    - export BUILD_NGS="ON"
-    - test "$NGS_VERSION" = "$NGS_INSTALLED_VERSION" && echo "versions match" && [ -d ~/ngsxfem-reports/last-inst ] && export BUILD_NGS="OFF" && cp -rv ~/ngsxfem-reports/last-inst/* ~/inst/netgen/
-    - test "$NGS_VERSION" != "$NGS_INSTALLED_VERSION" && echo "versions do not match"
-    - cd build
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 ninja --run "cmake -DCMAKE_INSTALL_PREFIX=~/inst/netgen -DCMAKE_BUILD_TYPE=RELEASE -DUSE_CCACHE=ON -DUSE_GUI=OFF -DTCL_INCLUDE_PATH=/usr/include/tcl8.5/ -DBUILD_NGSOLVE=$BUILD_NGS -DBUILD_NGSOLVE_THREADS=15 -GNinja ../."
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 ninja --run "ninja install"
-    - echo $NGS_VERSION > ~/ngsxfem-reports/lastngs.version
-    - rm -rf ~/ngsxfem-reports/last-inst
-    - cp -r ~/inst/netgen ~/ngsxfem-reports/last-inst
-    - chmod 755 ~/ngsxfem-reports/lastngs.version
+    - singularity exec ngsolve_latest.sif bash ci_build.sh
 
 ctests-tutorials:
   stage: test
@@ -42,15 +22,8 @@ ctests-tutorials:
     paths:
       - build/
   script:
-    - cat ~/inst/netgen/bin/ngscxx
-    - cat `which ngscxx`
-    - echo "cmake-tests"
-    - cd build
-    - export NETGENDIR="~/inst/netgen/bin"
-    - export PATH="${NETGENDIR}:${PATH}"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:~/inst/netgen/lib"
-    - export PYTHONPATH="${PYTHONPATH}:~/inst/netgen/lib/python3.6/site-packages"
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 python36Packages.pytest --run "ctest -V -R 'py_tutorial'"
+    - singularity exec ngsolve_latest.sif bash ci_ctests.sh tutorial
+
   when: always
   allow_failure: false
 
@@ -61,18 +34,10 @@ ctests-mayfail:
     paths:
       - build/
   script:
-    - cat ~/inst/netgen/bin/ngscxx
-    - cat `which ngscxx`
-    - echo "cmake-tests"
-    - cd build
-    - export NETGENDIR="~/inst/netgen/bin"
-    - export PATH="${NETGENDIR}:${PATH}"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:~/inst/netgen/lib"
-    - export PYTHONPATH="${PYTHONPATH}:~/inst/netgen/lib/python3.6/site-packages"
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 python36Packages.pytest --run "ctest -V -R 'pymayfailtests'"
+    - singularity exec ngsolve_latest.sif bash ci_ctests.sh mayfail
   when: always
   allow_failure: true
-        
+
 ctests-remaining:
   stage: test
   cache:
@@ -80,18 +45,10 @@ ctests-remaining:
     paths:
       - build/
   script:
-    - cat ~/inst/netgen/bin/ngscxx
-    - cat `which ngscxx`
-    - echo "cmake-tests"
-    - cd build
-    - export NETGENDIR="~/inst/netgen/bin"
-    - export PATH="${NETGENDIR}:${PATH}"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:~/inst/netgen/lib"
-    - export PYTHONPATH="${PYTHONPATH}:~/inst/netgen/lib/python3.6/site-packages"
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 python36Packages.pytest --run "ctest -V -R 'pytests'"
+    - singularity exec ngsolve_latest.sif bash ci_ctests.sh remaining
   when: always
   allow_failure: false
-  
+
 go4quads-tests:
   stage: test
   cache:
@@ -99,33 +56,17 @@ go4quads-tests:
     paths:
     - build/
   script:
-    - export NETGENDIR="~/inst/netgen/bin"
-    - export PATH="${NETGENDIR}:${PATH}"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:~/inst/netgen/lib"
-    - export PYTHONPATH="${PYTHONPATH}:~/inst/netgen/lib/python3.6/site-packages"
-    - cd cutint/py_demos/
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 --run "python3 area_of_a_circle_quads.py"
+    - singularity exec ngsolve_latest.sif bash ci_ctests.sh go4quads-tests
   when: always
   allow_failure: false
 
 ngsxfem-report:
   stage: deploy
   script:
-    - cd ~/inst/netgen/share/ngsxfem/report
-    - mkdir -p ~/ngsxfem-reports
-    - touch ~/ngsxfem-reports/log
-    - echo "" >> ~/ngsxfem-reports/log
-    - date >> ~/ngsxfem-reports/log
-    - echo pipeline-id $CI_PIPELINE_ID build $CI_BUILD_ID $CI_BUILD_TAG $CI_BUILD_REF >> ~/ngsxfem-reports/log
-    - export NETGENDIR="~/inst/netgen/bin"
-    - export PATH="${NETGENDIR}:${PATH}"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:~/inst/netgen/lib"
-    - export PYTHONPATH="${PYTHONPATH}:~/inst/netgen/lib/python3.6/site-packages"
-    - mkdir ~/ngsxfem-reports/$CI_BUILD_REF_NAME/ -p
-    - nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 ninja --run "python3 ngsxfem_report.py ~/ngsxfem-reports/$CI_BUILD_REF_NAME/ $CI_PIPELINE_ID"
+    - singularity exec ngsolve_latest.sif bash ci_ngsxfem-report.sh
   when: always
   allow_failure: true
-        
+
 deploy:
   stage: deploy
   script:
