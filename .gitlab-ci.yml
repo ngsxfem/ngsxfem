@@ -6,7 +6,9 @@ build:
     - rm -rf ~/inst/netgen
     - mkdir -p ~/inst/netgen
     - cd ~
-    - singularity pull library://laevar/default/ngsolve
+    - if [ -f ngsolve_latest.sif ]; then 
+        singularity pull library://laevar/default/ngsolve
+      fi
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
