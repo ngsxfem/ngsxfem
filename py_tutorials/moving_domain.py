@@ -160,7 +160,7 @@ def power(u,p):
 square = SplineGeometry()
 square.AddRectangle([-1,-0.75],[1,1.5],bc=1)
 maxh = 0.1
-mesh = Mesh (square.GenerateMesh(maxh=maxh, quad=False))
+mesh = Mesh (square.GenerateMesh(maxh=maxh, quad_dominated=False))
 
 # define quadrature rule
 qr= quad_rule("Gauss-Radau",4)

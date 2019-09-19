@@ -11,7 +11,7 @@ from netgen.geom2d import SplineGeometry
 # geometry
 square = SplineGeometry()
 square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.3, quad=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.3, quad_dominated=False))
 
 levelset = sqrt(x*x+y*y) - 0.7
 order = 1

@@ -12,7 +12,7 @@ def Make2DProblem(maxh=2):
     from netgen.geom2d import SplineGeometry
     square = SplineGeometry()
     square.AddRectangle([-1,-1],[1,1],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=maxh, quad=False))
+    mesh = Mesh (square.GenerateMesh(maxh=maxh, quad_dominated=False))
     return mesh;
 
 # circle with radius 0.5

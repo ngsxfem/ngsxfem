@@ -17,7 +17,7 @@ ngsglobals.msg_level = 1
 
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1])
-ngmesh = square.GenerateMesh(maxh=0.08, quad=False)
+ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
 mesh = Mesh (ngmesh)
 
 #### expression for the time variable: 

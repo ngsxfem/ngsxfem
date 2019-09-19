@@ -174,7 +174,7 @@ class LevelSetMeshAdaptation_Spacetime:
 ## geometry        
 #square = SplineGeometry()
 #square.AddRectangle([0,0],[2,2],bc=1)
-#ngmesh = square.GenerateMesh(maxh=0.03, quad=False)
+#ngmesh = square.GenerateMesh(maxh=0.03, quad_dominated=False)
 #mesh = Mesh (ngmesh)
 #
 ## data
