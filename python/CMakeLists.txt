@@ -17,6 +17,7 @@ if(NETGEN_USE_PYTHON)
       ../spacetime/SpaceTimeFE.cpp
       ../spacetime/SpaceTimeFESpace.cpp
       ../spacetime/timecf.cpp
+      ../spacetime/spacetime_vtk.cpp
       ../utils/bitarraycf.cpp
       ../utils/ngsxstd.cpp
       ../utils/p1interpol.cpp
