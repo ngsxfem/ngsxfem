@@ -179,182 +179,182 @@ def test_spacetime_model_spacetime_caller():
     else:
         raise Exception("No failure at all")
 
-def test_spacetime_spaceP1_timeCGP1():
-    ngsglobals.msg_level = 1
+# def test_spacetime_spaceP1_timeCGP1():
+#     ngsglobals.msg_level = 1
 
-    square = SplineGeometry()
-    square.AddRectangle([-1,-1],[1,1])
-    ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
-    mesh = Mesh (ngmesh)
+#     square = SplineGeometry()
+#     square.AddRectangle([-1,-1],[1,1])
+#     ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
+#     mesh = Mesh (ngmesh)
 
-    coef_told = Parameter(0)
-    coef_delta_t = Parameter(0)
-    tref = ReferenceTimeVariable()
-    t = coef_told + coef_delta_t*tref
+#     coef_told = Parameter(0)
+#     coef_delta_t = Parameter(0)
+#     tref = ReferenceTimeVariable()
+#     t = coef_told + coef_delta_t*tref
 
-    r0 = 0.5
+#     r0 = 0.5
 
-    # position shift of the geometry in time
-    rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
-    rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
-    #convection velocity:
-    d_rho = CoefficientFunction(2*cos(2*pi*t))
-    w = CoefficientFunction((0,d_rho)) 
+#     # position shift of the geometry in time
+#     rho =  CoefficientFunction((1/(pi))*sin(2*pi*t))
+#     rhoL = lambda t:CoefficientFunction((1/(pi))*sin(2*pi*t))
+#     #convection velocity:
+#     d_rho = CoefficientFunction(2*cos(2*pi*t))
+#     w = CoefficientFunction((0,d_rho)) 
 
-    # level set
-    r = sqrt(x**2+(y-rho)**2)
-    levelset= r - r0
+#     # level set
+#     r = sqrt(x**2+(y-rho)**2)
+#     levelset= r - r0
 
-    # diffusion coefficient
-    alpha = 1
+#     # diffusion coefficient
+#     alpha = 1
 
-    # solution and r.h.s.
-    Q = pi/r0   
-    u_exact = cos(Q*r) * sin(pi*t)
-    u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
-    coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
-    u_init = u_exact
+#     # solution and r.h.s.
+#     Q = pi/r0   
+#     u_exact = cos(Q*r) * sin(pi*t)
+#     u_exactL = lambda t: cos(Q*sqrt(x**2+(y-rhoL(t))**2)) * sin(pi*t)
+#     coeff_f = (Q/r * sin(Q*r) + (Q**2) * cos(Q*r)) * sin(pi*t) + pi * cos(Q*r) * cos(pi*t)
+#     u_init = u_exact
 
-    # polynomial order in time
-    k_t = 1
-    # polynomial order in space
-    k_s = 1
-    # spatial FESpace for solution
-    fes1 = H1(mesh, order=k_s)
-    # polynomial order in time for level set approximation
-    lset_order_time = k_t
-    # integration order in time
-    time_order = 2*k_t
-    # time finite element (nodal!)
-    tfe = ScalarTimeFE(k_t) 
-    tfe_i = ScalarTimeFE(k_t, skip_first_node=True) # interior
-    tfe_e = ScalarTimeFE(k_t, only_first_node=True) # exterior (inital values)
-    tfe_t = ScalarTimeFE(k_t-1)                     # test
+#     # polynomial order in time
+#     k_t = 1
+#     # polynomial order in space
+#     k_s = 1
+#     # spatial FESpace for solution
+#     fes1 = H1(mesh, order=k_s)
+#     # polynomial order in time for level set approximation
+#     lset_order_time = k_t
+#     # integration order in time
+#     time_order = 2*k_t
+#     # time finite element (nodal!)
+#     tfe = ScalarTimeFE(k_t) 
+#     tfe_i = ScalarTimeFE(k_t, skip_first_node=True) # interior
+#     tfe_e = ScalarTimeFE(k_t, only_first_node=True) # exterior (inital values)
+#     tfe_t = ScalarTimeFE(k_t-1)                     # test
 
-    # space-time finite element space
-    st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
-    st_fes_i = SpaceTimeFESpace(fes1,tfe_i, flags = {"dgjumps": True})
-    st_fes_e = SpaceTimeFESpace(fes1,tfe_e, flags = {"dgjumps": True})
-    st_fes_t = SpaceTimeFESpace(fes1,tfe_t, flags = {"dgjumps": True})
+#     # space-time finite element space
+#     st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
+#     st_fes_i = SpaceTimeFESpace(fes1,tfe_i, flags = {"dgjumps": True})
+#     st_fes_e = SpaceTimeFESpace(fes1,tfe_e, flags = {"dgjumps": True})
+#     st_fes_t = SpaceTimeFESpace(fes1,tfe_t, flags = {"dgjumps": True})
 
-    #Fitted heat equation example
-    tend = 1
-    delta_t = tend/64
-    coef_delta_t.Set(delta_t)
-    tnew = 0
-    told = 0
+#     #Fitted heat equation example
+#     tend = 1
+#     delta_t = tend/64
+#     coef_delta_t.Set(delta_t)
+#     tnew = 0
+#     told = 0
 
-    lset_p1 = GridFunction(st_fes)
+#     lset_p1 = GridFunction(st_fes)
 
-    SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
+#     SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
 
-    lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
-    lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
+#     lset_top = CreateTimeRestrictedGF(lset_p1,1.0)
+#     lset_bottom = CreateTimeRestrictedGF(lset_p1,0.0)
 
-    gfu_i = GridFunction(st_fes_i)
-    gfu_e = GridFunction(st_fes_e)
+#     gfu_i = GridFunction(st_fes_i)
+#     gfu_e = GridFunction(st_fes_e)
 
-    u_last = CreateTimeRestrictedGF(gfu_e,0)
-    SpaceTimeWeakSet(gfu_e, u_exactL(0.0), fes1)
+#     u_last = CreateTimeRestrictedGF(gfu_e,0)
+#     SpaceTimeWeakSet(gfu_e, u_exactL(0.0), fes1)
 
-    u_i = st_fes_i.TrialFunction()
-    u_e = st_fes_e.TrialFunction()
-    v_t = st_fes_t.TestFunction()
+#     u_i = st_fes_i.TrialFunction()
+#     u_e = st_fes_e.TrialFunction()
+#     v_t = st_fes_t.TestFunction()
 
-    h = specialcf.mesh_size
+#     h = specialcf.mesh_size
 
-    lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
-    lset_neg_bottom = { "levelset" : lset_bottom, "domain_type" : NEG, "subdivlvl" : 0}
-    lset_neg_top = { "levelset" : lset_top, "domain_type" : NEG, "subdivlvl" : 0}
+#     lset_neg = { "levelset" : lset_p1, "domain_type" : NEG, "subdivlvl" : 0}
+#     lset_neg_bottom = { "levelset" : lset_bottom, "domain_type" : NEG, "subdivlvl" : 0}
+#     lset_neg_top = { "levelset" : lset_top, "domain_type" : NEG, "subdivlvl" : 0}
 
-    def SpaceTimeNegBFI(form):
-        return SymbolicBFI(levelset_domain = lset_neg, form = form, time_order=time_order)
+#     def SpaceTimeNegBFI(form):
+#         return SymbolicBFI(levelset_domain = lset_neg, form = form, time_order=time_order)
 
-    ci = CutInfo(mesh,time_order=time_order)
+#     ci = CutInfo(mesh,time_order=time_order)
 
         
-    hasneg_integrators_a_i = []
-    hasneg_integrators_a_e = []
-    hasneg_integrators_f = []
-    patch_integrators_a_i = []
-    patch_integrators_a_e = []
+#     hasneg_integrators_a_i = []
+#     hasneg_integrators_a_e = []
+#     hasneg_integrators_f = []
+#     patch_integrators_a_i = []
+#     patch_integrators_a_e = []
 
-    for hasneg_integrators_a,u in [(hasneg_integrators_a_i,u_i),(hasneg_integrators_a_e,u_e)]:
-        hasneg_integrators_a.append(SpaceTimeNegBFI(form = -dt(v_t)*u))
-        hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*InnerProduct(w,grad(v_t))*u))
-        hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*alpha*grad(u)*grad(v_t)))
+#     for hasneg_integrators_a,u in [(hasneg_integrators_a_i,u_i),(hasneg_integrators_a_e,u_e)]:
+#         hasneg_integrators_a.append(SpaceTimeNegBFI(form = -dt(v_t)*u))
+#         hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*InnerProduct(w,grad(v_t))*u))
+#         hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*alpha*grad(u)*grad(v_t)))
 
-    for patch_integrators_a,u in [(patch_integrators_a_i,u_i),(patch_integrators_a_e,u_e)]:
-        patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v_t-v_t.Other()),
-                                                        skeleton=False, time_order=time_order))
+#     for patch_integrators_a,u in [(patch_integrators_a_i,u_i),(patch_integrators_a_e,u_e)]:
+#         patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v_t-v_t.Other()),
+#                                                         skeleton=False, time_order=time_order))
 
-    hasneg_integrators_a_i.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u_i,1)*fix_t(v_t,1)))
+#     hasneg_integrators_a_i.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u_i,1)*fix_t(v_t,1)))
 
-    hasneg_integrators_a_e.append(SymbolicBFI(levelset_domain = lset_neg_bottom, form = -fix_t(u_e,0)*fix_t(v_t,0)))
-    #hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
+#     hasneg_integrators_a_e.append(SymbolicBFI(levelset_domain = lset_neg_bottom, form = -fix_t(u_e,0)*fix_t(v_t,0)))
+#     #hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
 
-    hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v_t, time_order=time_order)) 
+#     hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v_t, time_order=time_order)) 
 
-    a_i = BilinearForm(trialspace = st_fes_i, testspace = st_fes_t, check_unused=False, symmetric=False)
-    for integrator in hasneg_integrators_a_i + patch_integrators_a_i:
-        a_i += integrator
+#     a_i = BilinearForm(trialspace = st_fes_i, testspace = st_fes_t, check_unused=False, symmetric=False)
+#     for integrator in hasneg_integrators_a_i + patch_integrators_a_i:
+#         a_i += integrator
 
-    a_e = BilinearForm(trialspace = st_fes_e, testspace = st_fes_t, check_unused=False, symmetric=False)
-    for integrator in hasneg_integrators_a_e + patch_integrators_a_e:
-        a_e += integrator
+#     a_e = BilinearForm(trialspace = st_fes_e, testspace = st_fes_t, check_unused=False, symmetric=False)
+#     for integrator in hasneg_integrators_a_e + patch_integrators_a_e:
+#         a_e += integrator
 
-    f = LinearForm(st_fes_t)
+#     f = LinearForm(st_fes_t)
 
-    for integrator in hasneg_integrators_f:
-        f += integrator
+#     for integrator in hasneg_integrators_f:
+#         f += integrator
 
-    while tend - told > delta_t/2:
-        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
-        RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
-        RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
+#     while tend - told > delta_t/2:
+#         SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
+#         RestrictGFInTime(spacetime_gf=lset_p1,reference_time=0.0,space_gf=lset_bottom)
+#         RestrictGFInTime(spacetime_gf=lset_p1,reference_time=1.0,space_gf=lset_top)
 
-        # update markers in (space-time) mesh
-        ci.Update(lset_p1,time_order=time_order)
+#         # update markers in (space-time) mesh
+#         ci.Update(lset_p1,time_order=time_order)
 
-        # re-compute the facets for stabilization:
-        ba_facets = GetFacetsWithNeighborTypes(mesh,a=ci.GetElementsOfType(HASNEG),
-                                                    b=ci.GetElementsOfType(IF))
-        # re-evaluate the "active dofs" in the space time slab
-        active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
+#         # re-compute the facets for stabilization:
+#         ba_facets = GetFacetsWithNeighborTypes(mesh,a=ci.GetElementsOfType(HASNEG),
+#                                                     b=ci.GetElementsOfType(IF))
+#         # re-evaluate the "active dofs" in the space time slab
+#         active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
 
-        # re-set definedonelements-markers according to new markings:
-        for integrator in hasneg_integrators_a_i + hasneg_integrators_a_e + hasneg_integrators_f:
-            integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
-        for integrator in patch_integrators_a:
-            integrator.SetDefinedOnElements(ba_facets)
+#         # re-set definedonelements-markers according to new markings:
+#         for integrator in hasneg_integrators_a_i + hasneg_integrators_a_e + hasneg_integrators_f:
+#             integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
+#         for integrator in patch_integrators_a:
+#             integrator.SetDefinedOnElements(ba_facets)
 
-        # assemble linear system
-        a_i.Assemble()
-        a_e.Assemble()
-        f.Assemble()
+#         # assemble linear system
+#         a_i.Assemble()
+#         a_e.Assemble()
+#         f.Assemble()
 
-        # solve linear system
-        inv = a_i.mat.Inverse(active_dofs,inverse="umfpack")
-        f.vec.data -= a_e.mat * gfu_e.vec
-        gfu_i.vec.data =  inv * f.vec
+#         # solve linear system
+#         inv = a_i.mat.Inverse(active_dofs,inverse="umfpack")
+#         f.vec.data -= a_e.mat * gfu_e.vec
+#         gfu_i.vec.data =  inv * f.vec
 
-        # evaluate upper trace of solution for
-        #  * for error evaluation 
-        #  * upwind-coupling to next time slab
-        RestrictGFInTime(spacetime_gf=gfu_i,reference_time=1.0,space_gf=u_last)   
+#         # evaluate upper trace of solution for
+#         #  * for error evaluation 
+#         #  * upwind-coupling to next time slab
+#         RestrictGFInTime(spacetime_gf=gfu_i,reference_time=1.0,space_gf=u_last)   
         
-        SpaceTimeWeakSet(gfu_e, u_last, fes1)
+#         SpaceTimeWeakSet(gfu_e, u_last, fes1)
         
-        # update time variable (float and ParameterCL)
-        told = told + delta_t
-        coef_told.Set(told)
+#         # update time variable (float and ParameterCL)
+#         told = told + delta_t
+#         coef_told.Set(told)
         
-        # compute error at end of time slab
-        l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)**2,mesh))
-        # print time and error
-        print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
-        assert(l2error < 0.3)
-    assert(l2error < 0.08)
+#         # compute error at end of time slab
+#         l2error = sqrt(Integrate(lset_neg_top,(u_exactL(told) -u_last)**2,mesh))
+#         # print time and error
+#         print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
+#         assert(l2error < 0.3)
+#     assert(l2error < 0.08)
 
 def test_spacetime_spaceP1_timeDGP1():
     ngsglobals.msg_level = 1
