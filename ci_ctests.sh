@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cat ~/inst/netgen/bin/ngscxx
 echo "cmake-tests"
 cd build
@@ -24,6 +26,7 @@ if [ $1 == "remaining" ]; then
     #nix-shell -p blas liblapack gcc gfortran gfortran.cc.lib xorg.libXmu zlib cmake mesa_noglu icu python36 suitesparse tcl-8_5 tk-8_5 python36Packages.pytest --run
     ctest -V -R 'pytests'
 fi
+
 
 
 if [ $1 == "go4quads-tests" ]; then
