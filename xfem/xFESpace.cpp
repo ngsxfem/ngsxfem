@@ -288,7 +288,7 @@ namespace ngcomp
           basefes->GetDofNrs(ElementId(vb,elnr),basednums);
           for (int k = 0; k < basednums.Size(); ++k)
           {
-            activedofs.Set(basednums[k]);
+            activedofs.SetBit(basednums[k]);
             creator.Add(elnr,basednums[k]);
           }
         }
@@ -380,7 +380,7 @@ namespace ngcomp
       for (int i = 0; i < dnums.Size(); ++i)
       {
         const int xdof = dnums[i];
-        dofs_with_cut_on_boundary.Set(xdof);
+        dofs_with_cut_on_boundary.SetBit(xdof);
       }
     }
 
@@ -395,7 +395,7 @@ namespace ngcomp
       const int dof = basedof2xdof[i];
       if (dof != -1 && basefes->IsDirichletDof(i))
         if (dofs_with_cut_on_boundary.Test(dof))
-          dirichlet_dofs.Set (dof);
+          dirichlet_dofs.SetBitAtomic (dof);
     }
 
     free_dofs->SetSize (GetNDof());
