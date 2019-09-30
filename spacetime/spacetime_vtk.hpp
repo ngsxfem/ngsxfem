@@ -11,10 +11,6 @@
 namespace ngcomp
 { 
 
-/* ---------------------------------------- 
-   numproc
-   ---------------------------------------- */
-
   class SpaceTimeVTKOutput
   {
   protected:

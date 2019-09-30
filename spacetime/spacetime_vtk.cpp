@@ -1,7 +1,7 @@
 /*********************************************************************/
-/* File:   spacetime_vtk.cpp                                             */
+/* File:   spacetime_vtk.hpp                                         */
 /* Author: Christoph Lehrenfeld                                      */
-/* Date:   1. June 2014                                              */
+/* Date:   28. September 2019 (based on vtkout.*pp from NGSOlve)     */
 /*********************************************************************/
 
 #include "spacetime_vtk.hpp"
@@ -40,33 +40,25 @@ namespace ngcomp
   /// Fill principil lattices (points and connections on subdivided reference hexahedron) in 3D
   void SpaceTimeVTKOutput::FillReferenceHex(Array<IntegrationPoint> & ref_coords,Array<INT<ELEMENT_MAXPOINTS+1>> & ref_elems)
   {
-    throw Exception("HEX not yet implemented");
     if(subdivisionx == 0 && subdivisiont == 0)
     {
-      ref_coords.Append(IntegrationPoint(0.0,0.0,0.0));
-      ref_coords.Append(IntegrationPoint(1.0,0.0,0.0));
-      ref_coords.Append(IntegrationPoint(1.0,1.0,0.0));
-      ref_coords.Append(IntegrationPoint(0.0,1.0,0.0));
-      ref_coords.Append(IntegrationPoint(0.0,0.0,1.0));
-      ref_coords.Append(IntegrationPoint(1.0,0.0,1.0));
-      ref_coords.Append(IntegrationPoint(1.0,1.0,1.0));
-      ref_coords.Append(IntegrationPoint(0.0,1.0,1.0));      
-      INT<ELEMENT_MAXPOINTS+1> hex;
-      hex[0] = 8;
-      hex[1] = 0;
-      hex[2] = 1;
-      hex[3] = 2;
-      hex[4] = 3;
-      hex[5] = 4;
-      hex[6] = 5;
-      hex[7] = 6;
-      hex[8] = 7;      
-      ref_elems.Append(hex);
+      double p[8][3] = { {0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}, {0,0,1}, {1,0,1}, {1,1,1}, {0,1,1} };
+      for (int i = 0; i < 8; i++)
+      {
+        auto tmp = IntegrationPoint(p[i][0],p[i][1],0.0,p[i][2]); tmp.SetPrecomputedGeometry(true);
+        ref_coords.Append(tmp);
+      }
+      INT<ELEMENT_MAXPOINTS+1> elem;
+      elem[0] = 8;
+      for(int i=0; i<ElementTopology::GetNVertices(ET_HEX); i++)
+        elem[i+1] = i;
+      ref_elems.Append(elem);
+      
     }
     else
     {
       const int rx = 1<<subdivisionx;
-      const int rt = 1<<subdivisionx;
+      const int rt = 1<<subdivisiont;
       // const int s = r + 1;
 
       const double hx = 1.0/rx;
@@ -77,7 +69,8 @@ namespace ngcomp
         for(int j = 0; j <= rx; ++j)
           for(int k = 0; k <= rt; ++k)
           {
-            ref_coords.Append(IntegrationPoint(k*hx,j*hx,i*ht));
+            auto tmp = IntegrationPoint(i*hx,j*hx,0.0,k*ht); tmp.SetPrecomputedGeometry(true);
+            ref_coords.Append(tmp);
           }
 
       for(int i = 0; i < rx; ++i)
@@ -109,9 +102,6 @@ namespace ngcomp
         auto tmp = IntegrationPoint(p[i][0],p[i][1],0.0,p[i][2]); tmp.SetPrecomputedGeometry(true);
         ref_coords.Append(tmp);
       }
-      
-      for (auto ref_c : ref_coords)
-        ref_c.SetPrecomputedGeometry(true);
       INT<ELEMENT_MAXPOINTS+1> elem;
       elem[0] = 6;
       for(int i=0; i<ElementTopology::GetNVertices(ET_PRISM); i++)
@@ -167,8 +157,6 @@ namespace ngcomp
     for (auto p : points)
     {
       *fileout << p;
-      // if (true) // (D==2) // TODO TIME
-      //   *fileout << "\t 0.0";
       *fileout << endl;
     }
   }
@@ -209,7 +197,6 @@ namespace ngcomp
       switch(ma->GetElType(e))
       {
       case ET_QUAD:
-        throw Exception("not yet QUAD->HEX");
         for(int i=0; i<factor; i++)
           *fileout << "12 " << endl;
         break;
@@ -249,13 +236,13 @@ namespace ngcomp
   {
     ostringstream filenamefinal;
     filenamefinal << filename;
-    if (output_cnt > 0)
-      filenamefinal << "_" << output_cnt;
+    // if (output_cnt > 0)
+    filenamefinal << "_" << output_cnt;
     filenamefinal << ".vtk";
     fileout = make_shared<ofstream>(filenamefinal.str());
     cout << IM(4) << " Writing SpaceTimeVTK-Output";
-    if (output_cnt > 0)
-      cout << IM(4) << " ( " << output_cnt << " )";
+    // if (output_cnt > 0)
+    cout << IM(4) << " ( " << output_cnt << " )";
     cout << IM(4) << ":" << flush;
     
     output_cnt++;
@@ -267,8 +254,7 @@ namespace ngcomp
     FlatArray<IntegrationPoint> ref_vertices;
     FlatArray<INT<ELEMENT_MAXPOINTS+1>> ref_elems;
     FillReferencePrism(ref_vertices_prism,ref_prisms);
-    
-    //FillReferenceHex(ref_vertices_hex,ref_hexes);
+    FillReferenceHex(ref_vertices_hex,ref_hexes);
       
     // header:
     *fileout << "# vtk DataFile Version 3.0" << endl;
@@ -298,7 +284,6 @@ namespace ngcomp
         ref_elems.Assign(ref_prisms);
         break;
       case ET_QUAD:
-        throw Exception("HEX not yet implemented");
         ref_vertices.Assign(ref_vertices_hex);
         ref_elems.Assign(ref_hexes);
         break;
