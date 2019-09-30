@@ -10,9 +10,9 @@ ngsglobals.msg_level = 1
 
 def test_fes_timing(dimension=2,stdfes=True,quad_dominated=False, order=1):
     if dimension == 2:
-        mesh = Mesh (unit_square.GenerateMesh(maxh=0.2,quad_dominated=quad))
+        mesh = Mesh (unit_square.GenerateMesh(maxh=0.2,quad_dominated=quad_dominated))
     else:
-        mesh = Mesh (unit_cube.GenerateMesh(maxh=0.2,quad_dominated=quad))
+        mesh = Mesh (unit_cube.GenerateMesh(maxh=0.2,quad_dominated=quad_dominated))
 
     Vhs = H1(mesh, order=order, dirichlet=[1,2,3,4])
 
