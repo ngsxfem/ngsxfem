@@ -26,5 +26,8 @@ namespace ngfem
     virtual void PrintReport (ostream & ost) const;
     virtual void FixTime(double t);
     virtual void UnfixTime();
+
+    shared_ptr<CoefficientFunction> Diff (const CoefficientFunction * var, shared_ptr<CoefficientFunction> dir) const;
+    
   };
 }
