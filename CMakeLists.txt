@@ -70,7 +70,7 @@ else(BUILD_NGSOLVE)
     message(STATUS "install dir ${install_dir}")
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   find_package(NGSolve CONFIG REQUIRED
-    HINTS $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen
+    HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen
   )
 endif(BUILD_NGSOLVE)
 
