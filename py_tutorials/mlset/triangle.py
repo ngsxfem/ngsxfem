@@ -36,7 +36,7 @@ inner = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
           "domain_type" : (NEG,NEG,NEG)}
 
 boundary = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
-             "domain_type" : (IF,NEG,NEG)&(NEG,IF,NEG)&(NEG,NEG,IF)}
+             "domain_type" : (IF,NEG,NEG) | (NEG,IF,NEG) | (NEG,NEG,IF)}
 
 outer = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
           "domain_type" : ~(NEG,NEG,NEG)}
