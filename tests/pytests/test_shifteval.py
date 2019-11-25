@@ -1,6 +1,7 @@
 # solve the Poisson equation -Delta u = f
 # with Dirichlet boundary condition u = 0
 
+import pytest
 from ngsolve import *
 from ngsolve.meshes import *
 from netgen.geom2d import unit_square
@@ -8,12 +9,16 @@ from xfem import *
 
 ngsglobals.msg_level = 1
 
-def test_shifteval():
-  mesh = MakeStructured2DMesh(quads = False, nx=8, ny=8)
-  
+@pytest.mark.parametrize("dimension", [2,3])
+def test_shifteval(dimension):
+  if dimension == 2:
+    mesh = MakeStructured2DMesh(quads = False, nx=8, ny=8)
+  else:
+    mesh = MakeStructured3DMesh(hexes = False, nx=8, ny=8, nz=8)
+    
   # H1-conforming finite element space
   fes = H1(mesh, order=3, dirichlet=[1,2,3,4])
-  fes_dfm = H1(mesh, order=3, dim=2)
+  fes_dfm = H1(mesh, order=3, dim=dimension)
   
   gfu_new = GridFunction(fes)
   
@@ -21,8 +26,12 @@ def test_shifteval():
   
   dfm_back = GridFunction(fes_dfm)
   #dfm_back.vec[37:] = 0.1
-  dfm_back.Set(CoefficientFunction((0.2*sin(5*y),0.2*cos(5*x))))
-  for i in range(2*mesh.nv):
+  if dimension == 2:
+    dfm_back.Set(CoefficientFunction((0.2*sin(5*y),0.2*cos(5*x))))
+  else:
+    dfm_back.Set(CoefficientFunction((0.15*sin(5*y),0.15*cos(5*z),0.15*sin(5*x))))
+    
+  for i in range(dimension*mesh.nv):
       dfm_back.vec[i] = 0.0
   dfm_forth = GridFunction(fes_dfm)
   
