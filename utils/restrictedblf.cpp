@@ -29,7 +29,7 @@ namespace ngcomp
     int neV = ma->GetNE(VOL);
     int neB = ma->GetNE(BND);
     int neBB = ma->GetNE(BBND);
-    const Array<SpecialElement*> & specialelements = GetSpecialElements();
+    const auto& specialelements = GetSpecialElements();
     int nspe = specialelements.Size();
 
     Array<DofId> dnums;
