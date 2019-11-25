@@ -19,7 +19,7 @@ gamma_n = 40                                    # Nitsche parameter
 gamma_gp = 0.01                                 # Ghost penalty parameter
 pReg = 1e-8                                     # Pressure regularisation
 
-inverse = "pardiso"                             # Direct linear solver used
+inverse = "umfpack"                             # Direct linear solver used
 condense = True                                 # Use static condensation 
 maxit_newt = 15                                 # Max. nr. of Newton iterations
 tol_newt = 1e-10                                # l2 Newton residual tolerance
