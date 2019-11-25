@@ -10,6 +10,14 @@ set(BUILD_STUB_FILES OFF CACHE BOOL "Build stub files for better autocompletion"
 
 set(INST_DIR xfem CACHE PATH "Install dir appended to prefix")
 
+if(CMAKE_GENERATOR STREQUAL "Ninja")
+  set(ADDNINJA "-GNinja")
+  set(BUILDEXE "ninja")
+else(CMAKE_GENERATOR STREQUAL "Ninja")         
+  set(ADDNINJA "")
+  set(BUILDEXE "make")
+endif(CMAKE_GENERATOR STREQUAL "Ninja")
+
 if(BUILD_NGSOLVE)
   message(STATUS "Use NGSolve from submodule, updating modules...")
   execute_process(COMMAND git submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -20,14 +28,6 @@ if(BUILD_NGSOLVE)
       message( FATAL_ERROR "Please provide an CMAKE_INSTALL_PREFIX, CMake will exit." )
     endif(NOT INSTALL_DIR)
   endif(NOT CMAKE_INSTALL_PREFIX)
-
-  if(CMAKE_GENERATOR STREQUAL "Ninja")
-    set(ADDNINJA "-GNinja")
-    set(BUILDEXE "ninja")
-  else(CMAKE_GENERATOR STREQUAL "Ninja")         
-    set(ADDNINJA "")
-    set(BUILDEXE "make")
-  endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
   set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
   set(USE_UMFPACK ON CACHE BOOL "use umfpack library (only if ngsolve is build)")
