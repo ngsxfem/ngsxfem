@@ -170,7 +170,7 @@ flags : ngsolve.Flags
             for (size_t i = 0; i < ba->Size(); ++i)
             {
               if (ba->Test(i))
-                res->Set(offset+i);
+                res->SetBit(offset+i);
             }
             offset += ba->Size();
           }

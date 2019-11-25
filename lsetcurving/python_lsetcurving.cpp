@@ -284,7 +284,7 @@ heapsize : int
           else
             throw Exception("shifted_eval only for dim <= 3 so far");
 
-          return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop));
+          return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
         },
         py::arg("gf"),
         py::arg("back") = DummyArgument(),
@@ -316,7 +316,7 @@ forth : ngsolve.GridFunction
 
 ASSUMPTIONS: 
 ============
-- 2D mesh
+- 2D or 3D mesh
 - Gridfunction of dim=1 or dim=2 (ScalarFE behind it)
 )raw_string"));
   

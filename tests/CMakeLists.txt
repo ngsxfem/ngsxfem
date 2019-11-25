@@ -52,6 +52,12 @@ add_test(NAME pytests_num_nxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_spacetimecutrule COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetimecutrule.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_spacetime_vtk COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetime_vtk.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
+add_test(NAME pytests_navier_stokes COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_navier_stokes_2d1.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 install( FILES
   ngsxfem_report.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/report

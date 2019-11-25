@@ -22,6 +22,7 @@
 #include "../spacetime/SpaceTimeFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
 #include "../spacetime/timecf.hpp"
+#include "../spacetime/spacetime_vtk.hpp"
 
 using namespace ngcomp;
 using namespace xintegration;
@@ -547,4 +548,54 @@ use_FixAnyTime: bool
    py::arg("spacetime_gf"),
    "Interpolate nodal in time (possible high order) and nodal in space (P1).");
 
+
+   py::class_<SpaceTimeVTKOutput, shared_ptr<SpaceTimeVTKOutput>>(m, "SpaceTimeVTKOutput")
+    .def(py::init([] (shared_ptr<MeshAccess> ma, py::list coefs_list,
+                      py::list names_list, string filename,
+                      int subdivisionx, int subdivisiont, int only_element)
+         -> shared_ptr<SpaceTimeVTKOutput>
+         {
+           Array<shared_ptr<CoefficientFunction> > coefs
+             = makeCArray<shared_ptr<CoefficientFunction>> (coefs_list);
+           Array<string > names
+             = makeCArray<string> (names_list);
+           shared_ptr<SpaceTimeVTKOutput> ret;
+           if (ma->GetDimension() == 2)
+             ret = make_shared<SpaceTimeVTKOutput> (ma, coefs, names, filename, subdivisionx, subdivisiont, only_element);
+           else
+             throw Exception("Space time VTK only for 2D(+time)");
+           return ret;
+         }),
+         py::arg("ma"),
+         py::arg("coefs")= py::list(),
+         py::arg("names") = py::list(),
+         py::arg("filename") = "vtkout",
+         py::arg("subdivision_x") = 0,
+         py::arg("subdivision_t") = 0,
+         py::arg("only_element") = -1
+         )
+     .def("Do", [](shared_ptr<SpaceTimeVTKOutput> self, VorB vb, double t_start, double t_end)
+          { 
+            size_t global_heapsize = 10000000;
+            LocalHeap glh(global_heapsize, "spacetime-lh", true);
+            self->Do(glh, vb, nullptr, t_start, t_end);
+          },
+          py::arg("vb")=VOL,
+          py::arg("t_start") = 0,
+          py::arg("t_end") = 1,
+          py::call_guard<py::gil_scoped_release>())
+     .def("Do", [](shared_ptr<SpaceTimeVTKOutput> self, VorB vb, double t_start, double t_end, const BitArray * drawelems)
+          { 
+            size_t global_heapsize = 10000000;
+            LocalHeap glh(global_heapsize, "spacetime-lh", true);
+            self->Do(glh, vb, drawelems, t_start, t_end);
+          },
+          py::arg("vb")=VOL,
+          py::arg("t_start") = 0,
+          py::arg("t_end") = 1,
+          py::arg("drawelems"),
+          py::call_guard<py::gil_scoped_release>())
+     ;
+
+   
 }

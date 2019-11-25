@@ -93,21 +93,21 @@ namespace ngcomp
         {
           if (part_vol[NEG] > 0.0)
             if (part_vol[POS] > 0.0)
-              (*elems_of_domain_type[CDOM_IF]).Set(elnr);
+              (*elems_of_domain_type[CDOM_IF]).SetBitAtomic(elnr);
             else
-              (*elems_of_domain_type[CDOM_NEG]).Set(elnr);
+              (*elems_of_domain_type[CDOM_NEG]).SetBitAtomic(elnr);
           else
-            (*elems_of_domain_type[CDOM_POS]).Set(elnr);
+            (*elems_of_domain_type[CDOM_POS]).SetBitAtomic(elnr);
         }
         else
         {
           if (part_vol[NEG] > 0.0)
             if (part_vol[POS] > 0.0)
-              (*selems_of_domain_type[CDOM_IF]).Set(elnr);
+              (*selems_of_domain_type[CDOM_IF]).SetBitAtomic(elnr);
             else
-              (*selems_of_domain_type[CDOM_NEG]).Set(elnr);
+              (*selems_of_domain_type[CDOM_NEG]).SetBitAtomic(elnr);
           else
-            (*selems_of_domain_type[CDOM_POS]).Set(elnr);
+            (*selems_of_domain_type[CDOM_POS]).SetBitAtomic(elnr);
         }
 
       });
@@ -132,19 +132,19 @@ namespace ngcomp
 
         nodenums = ma->GetElVertices(elid);
         for (int node : nodenums)
-          cut_neighboring_node[NT_VERTEX]->Set(node);
+          cut_neighboring_node[NT_VERTEX]->SetBitAtomic(node);
 
         nodenums = ma->GetElEdges(elid);
         for (int node : nodenums)
-          cut_neighboring_node[NT_EDGE]->Set(node);
+          cut_neighboring_node[NT_EDGE]->SetBitAtomic(node);
 
         if (ma->GetDimension() == 3)
         {
           nodenums = ma->GetElFaces(elid.Nr());
           for (int node : nodenums)
-            cut_neighboring_node[NT_FACE]->Set(node);
+            cut_neighboring_node[NT_FACE]->SetBitAtomic(node);
         }
-        cut_neighboring_node[NT_ELEMENT]->Set(elnr);
+        cut_neighboring_node[NT_ELEMENT]->SetBitAtomic(elnr);
       }
     });
 
@@ -209,7 +209,7 @@ namespace ngcomp
       Array<int> fanums(0,lh);
       fanums = ma->GetElFacets (ElementId(VOL,elnr));
       for (int j=0; j<fanums.Size(); j++)
-        fine_facet.Set(fanums[j]);
+        fine_facet.SetBitAtomic(fanums[j]);
     });
 
     IterateRange
@@ -242,12 +242,12 @@ namespace ngcomp
         if (ask_and)
         {
           if ((a_left && b_right) || (a_right && b_left))
-            ret->Set(facnr);
+            ret->SetBitAtomic(facnr);
         }
         else
         {
           if ((a_left || b_right) || (a_right || b_left))
-            ret->Set(facnr);
+            ret->SetBitAtomic(facnr);
         }
       }
     });
@@ -272,7 +272,7 @@ namespace ngcomp
         Array<int> elnums(0,lh);
         ma->GetFacetElements (facnr, elnums);
         for (auto elnr : elnums)
-          ret->Set(elnr);
+          ret->SetBitAtomic(elnr);
       }
     });
     return ret;
@@ -297,7 +297,7 @@ namespace ngcomp
         Array<int> dnums(0,lh);
         fes->GetDofNrs(elid,dnums);
         for (auto dof : dnums)
-          ret->Set(dof);
+          ret->SetBitAtomic(dof);
       }
     });
     return ret;
@@ -322,7 +322,7 @@ namespace ngcomp
         Array<int> dnums(0,lh);
         fes->GetDofNrs(nodeid,dnums);
         for (auto dof : dnums)
-          ret->Set(dof);
+          ret->SetBitAtomic(dof);
       }
     });
     return ret;

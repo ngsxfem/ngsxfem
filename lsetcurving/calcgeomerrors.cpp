@@ -220,7 +220,7 @@ namespace ngcomp
 
       if (ElementInRelevantBand(lset_vals_p1, lower_lset_bound, upper_lset_bound))
       {
-        el_curved.Set(elnr);
+        el_curved.SetBitAtomic(elnr);
 
         const ScalarFiniteElement<D> & scafe
           = dynamic_cast<const ScalarFiniteElement<D> &>(el.GetFE());
@@ -315,7 +315,7 @@ namespace ngcomp
     {
       elfacets = ma->GetElFacets(ElementId(VOL,i));
       for (int j=0; j<elfacets.Size(); j++)
-        fine_facet.Set(elfacets[j]);
+        fine_facet.SetBitAtomic(elfacets[j]);
     }
 
 

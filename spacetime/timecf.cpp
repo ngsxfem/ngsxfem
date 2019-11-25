@@ -31,6 +31,17 @@ namespace ngfem
       time_is_fixed = false;
   }
 
+
+  shared_ptr<CoefficientFunction> TimeVariableCoefficientFunction ::
+  Diff (const CoefficientFunction * var, shared_ptr<CoefficientFunction> dir) const
+  {
+    if (var == this)
+      return dir;
+    else
+      return make_shared<ConstantCoefficientFunction> (0.0);
+    // throw Exception(string("Deriv not implemented for CF ")+typeid(*this).name());
+  }
+  
 /*
    void TimeVariableCoefficientFunction::Evaluate (const BaseMappedIntegrationRule & ir, FlatMatrix<double> values) const
    {

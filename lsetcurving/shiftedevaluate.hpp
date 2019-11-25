@@ -38,7 +38,7 @@ namespace ngfem
     virtual bool Boundary() const { return int(DIM_SPACE) > int(DIM_ELEMENT); }
     virtual int DiffOrder() const { return DIFFORDER; }
     */
-    virtual string Name() const { return "Fix_time"; }
+    virtual string Name() const { return "shifted_evaluation"; }
 
     virtual bool operator== (const DifferentialOperator & diffop2) const
     { return typeid(*this) == typeid(diffop2); }
@@ -54,16 +54,16 @@ namespace ngfem
     virtual void
     Apply (const FiniteElement & fel,
            const BaseMappedIntegrationPoint & mip,
-           FlatVector<double> x, 
+           BareSliceVector<double> x, 
            FlatVector<double> flux,
            LocalHeap & lh) const;
     
     virtual void
     ApplyTrans (const FiniteElement & fel,
-        const BaseMappedIntegrationPoint & mip,
-        FlatVector<double> flux,
-        FlatVector<double> x,
-        LocalHeap & lh) const;
+                const BaseMappedIntegrationPoint & mip,
+                FlatVector<double> flux,
+                BareSliceVector<double> x,
+                LocalHeap & lh) const;
 
   };
 

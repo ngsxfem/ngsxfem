@@ -126,7 +126,7 @@ namespace ngcomp
       {
         if (cuts.Size() == 1)
           throw Exception("error: only one cut?!");
-        activeelem.Set(elnr);
+        activeelem.SetBitAtomic(elnr);
         ndof += order + 1;
         cuts_on_el[elnr].Col(0) = cuts[0];
         cuts_on_el[elnr].Col(1) = cuts[1];

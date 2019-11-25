@@ -92,7 +92,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       dirichlet_boundaries.Clear();
       for(int i = 0; i < ma->GetNBoundaries();i++) {
           if(Vh->IsDirichletBoundary(i))
-            dirichlet_boundaries.Set(i);
+            dirichlet_boundaries.SetBit(i);
        }
     }
     FESpace::Update();
@@ -131,12 +131,14 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
        SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE2,t_FE,override_time,time);
        return *st_FE;
      }
-     else if(ma->GetDimension() == 3){
+     else if (ma->GetDimension() == 3){
        ScalarFiniteElement<3>* s_FE3 = dynamic_cast<ScalarFiniteElement<3>*>(&(Vh->GetFE(ei,alloc)));
        //cout << "SpaceTimeFESpace :: GetFE for 3D called" << endl;
        SpaceTimeFE<3> * st_FE =  new (alloc) SpaceTimeFE<3>(s_FE3,t_FE,override_time,time);
        return *st_FE;
      }
+     else
+       throw Exception("SpaceTimeFESpace :: GetFE cannot help dimension != 2,3");
    }
 
   template<typename SCAL>
