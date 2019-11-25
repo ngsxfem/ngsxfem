@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 mkdir -p build
 mkdir -p ~/ngsxfem-reports
 mkdir -p ~/inst
