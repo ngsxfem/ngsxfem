@@ -192,6 +192,23 @@ Also see skip_first_node.
   )raw_string")
    );
 
+  m.def("GCC3FE", []( bool skip_first_node, bool only_first_node)
+  {
+    BaseScalarFiniteElement * fe = nullptr;
+
+    if (skip_first_node && only_first_node)
+      throw Exception("can't skip and keep first node at the same time.");
+    fe = new GCC3FE(skip_first_node, only_first_node);
+    return shared_ptr<BaseScalarFiniteElement>(fe);
+  },
+  // py::arg("order") = 0,
+  py::arg("skip_first_node") = false,
+  py::arg("only_first_node") = false,
+  docu_string(R"raw_string(
+docu missing
+  )raw_string")
+   );
+  
 
   // DiffOpDt
 

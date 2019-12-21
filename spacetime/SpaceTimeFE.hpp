@@ -96,6 +96,54 @@ namespace ngfem
 
       };
 
+    class GCC3FE : public ScalarFiniteElement<1>
+      {
+        int vnums[2];
+        bool skip_first_nodes = false;
+        bool only_first_nodes = false;
+        Array<double> nodes;
+
+      public:
+        GCC3FE (bool askip_first_nodes, bool aonly_first_nodes);
+        virtual ELEMENT_TYPE ElementType() const { return ET_SEGM; }
+        void SetVertexNumber (int i, int v) { vnums[i] = v; }
+
+        virtual void CalcShape (const IntegrationPoint & ip,
+                                BareSliceVector<> shape) const;
+
+        virtual void CalcDShape (const IntegrationPoint & ip,
+                                 BareSliceMatrix<> dshape) const;
+
+        bool IsNodeActive(int i) const
+        {
+          if (i<0 || i > 3+1 /*???*/)
+            throw Exception("node outside node range");
+          if (i<=1 && skip_first_nodes) 
+            return false;
+          else if (i>1 && only_first_nodes)
+            return false;
+          else
+            return true;
+        }
+
+        // void CalcInterpolationPoints ();
+        // Array<double> & GetNodes() { return nodes; }
+        int order_time() const { return 3; }
+
+      //   template <class T>
+      //   T Lagrange_Pol (T x, int i) const
+      //   {
+      //      T result  = 1;
+      //      for (int j = 0; j < nodes.Size(); j++) {
+      //          if ( j != i)
+      //               result *= ( x-nodes[j] ) / ( nodes[i] - nodes[j] );
+      //      }
+
+      //      return result;
+      //   }
+
+      };
+  
  }
 
 
