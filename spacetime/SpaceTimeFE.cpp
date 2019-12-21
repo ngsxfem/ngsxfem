@@ -194,16 +194,16 @@ namespace ngfem
          int begin = skip_first_nodes ? 1 : 0;
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
-         if (only_first_nodes)
+         if (!skip_first_nodes)
          {
            shape(cnt++) = ((1-x)*(1-x)*(1+2*x)).Value();
            shape(cnt++) = ((1-x)*(1-x)*x).Value();
          }
          
-         if (skip_first_nodes)
+         if (!only_first_nodes)
          {
            shape(cnt++) = (x*x*(3-2*x)).Value();
-           shape(cnt++) = (x*x*(1-x)).Value();
+           shape(cnt++) = (x*x*(x-1)).Value();
          }
       }
 
@@ -215,16 +215,16 @@ namespace ngfem
          int begin = skip_first_nodes ? 1 : 0;
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
-         if (only_first_nodes)
+         if (!skip_first_nodes)
          {
            dshape(cnt++,0) = ((1-x)*(1-x)*(1+2*x)).DValue(0);
            dshape(cnt++,0) = ((1-x)*(1-x)*x).DValue(0);
          }
          
-         if (skip_first_nodes)
+         if (!only_first_nodes)
          {
            dshape(cnt++,0) = (x*x*(3-2*x)).DValue(0);
-           dshape(cnt++,0) = (x*x*(1-x)).DValue(0);
+           dshape(cnt++,0) = (x*x*(x-1)).DValue(0);
          }
       }
 
