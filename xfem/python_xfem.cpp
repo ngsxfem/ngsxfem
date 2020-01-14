@@ -57,6 +57,7 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
     .def("__init__",  [] (CutInformation *instance,
                           shared_ptr<MeshAccess> ma,
                           py::object lset,
+                          int subdivlvl,
                           int time_order,
                           int heapsize)
          {
@@ -65,11 +66,12 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
            {
              PyCF cflset = py::extract<PyCF>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-             instance->Update(cflset, time_order, lh);
+             instance->Update(cflset, subdivlvl, time_order, lh);
            }
          },
          py::arg("mesh"),
          py::arg("levelset") = DummyArgument(),
+         py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Creates a CutInfo based on a level set function and a mesh.
@@ -88,13 +90,15 @@ time_order : int
       )
     .def("Update", [](CutInformation & self,
                       PyCF lset,
+                      int subdivlvl,
                       int time_order,
                       int heapsize)
          {
            LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-           self.Update(lset,time_order,lh);
+           self.Update(lset,subdivlvl,time_order,lh);
          },
          py::arg("levelset"),
+         py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Updates a CutInfo based on a level set function.
@@ -103,6 +107,9 @@ Parameters
 
 levelset : ngsolve.CoefficientFunction
   level set function w.r.t. which the CutInfo is generated
+
+subdivlvl : int
+  subdivision for numerical integration
 
 time_order : int
   order in time that is used in the integration in time to check for cuts and the ratios. This is
