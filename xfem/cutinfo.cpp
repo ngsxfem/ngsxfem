@@ -151,6 +151,53 @@ namespace ngcomp
     for (NODE_TYPE nt : {NT_VERTEX,NT_EDGE,NT_FACE,NT_CELL})
       *(dom_of_node[nt]) = IF;
 
+    Array<bool> neg_vertex;
+    Array<bool> neg_edge;
+    Array<bool> neg_face;
+    neg_vertex.SetSize (ma->GetNV());
+    neg_edge.SetSize (ma->GetNEdges());
+    if (ma->GetDimension() == 3)
+      neg_face.SetSize (ma->GetNFaces());
+    neg_vertex = false;
+    neg_edge = false;
+    neg_face = false;
+      
+    ma->IterateElements(VOL, lh,[&](auto el, LocalHeap& mlh) {
+      if (elems_of_domain_type[CDOM_NEG]->Test(el.Nr()))
+      {
+        for (auto v : el.Vertices())
+          neg_vertex[v] = true;
+        for (auto e : el.Edges())
+          neg_edge[e] = true;
+        if (ma->GetDimension() == 3)
+          for (auto f : el.Faces())
+            neg_face[f] = true;
+      }
+    });
+      
+    if (ma->GetCommunicator().Size() > 1)
+    {
+      ma->AllReduceNodalData (NT_VERTEX, neg_vertex, MPI_LOR);
+      ma->AllReduceNodalData (NT_EDGE, neg_edge, MPI_LOR);
+      ma->AllReduceNodalData (NT_FACE, neg_face, MPI_LOR);
+    }
+    
+    for (int i = 0; i < ma->GetNV(); i++)
+      (*dom_of_node[NT_VERTEX])[i] = neg_vertex[i] ? NEG : POS;
+    for (int i = 0; i < ma->GetNEdges(); i++)
+      (*dom_of_node[NT_EDGE])[i] = neg_edge[i] ? NEG : POS;
+    if (ma->GetDimension() == 3)
+    {
+      for (int i = 0; i < ma->GetNFaces(); i++)
+        (*dom_of_node[NT_FACE])[i] = neg_face[i] ? NEG : POS;
+      for (int i = 0; i < ma->GetNE(); i++)
+        (*dom_of_node[NT_CELL])[i] = (*cut_ratio_of_element[VOL])(i) > 0.5 ? NEG : POS;
+    }
+    else
+      for (int i = 0; i < ma->GetNE(); i++)
+        (*dom_of_node[NT_FACE])[i] = (*cut_ratio_of_element[VOL])(i) > 0.5 ? NEG : POS;
+        
+    /* old        
     IterateRange
       (ne, lh,
       [&] (int elnr, LocalHeap & lh)
@@ -184,7 +231,8 @@ namespace ngcomp
       }
 
     });
-
+    */
+        
   }
 
 
@@ -282,6 +330,10 @@ namespace ngcomp
                                          shared_ptr<BitArray> a,
                                          LocalHeap & lh)
   {
+    if (fes->GetMeshAccess()->GetCommunicator().Size() > 1)
+      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
+    
+    
     int ne = fes->GetMeshAccess()->GetNE();
     int ndof = fes->GetNDof();
     shared_ptr<BitArray> ret = make_shared<BitArray> (ndof);
