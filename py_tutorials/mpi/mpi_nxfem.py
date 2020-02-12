@@ -14,10 +14,9 @@ do_vtk = True
 
 geo = SplineGeometry()
 geo.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (geo.GenerateMesh(maxh=0.2, quad_dominated=False))
 
 if rank==0:
-    ngmesh = geo.GenerateMesh(maxh=0.125)
+    ngmesh = geo.GenerateMesh(maxh=0.2)
     ngmesh.Distribute(comm)
 else:
     ngmesh = netgen.meshing.Mesh.Receive(comm)
@@ -26,13 +25,13 @@ else:
 mesh = Mesh(ngmesh)
 
 V = H1(mesh,order=1)
-levelset = (sqrt(sqrt(x**4+y**4)) - 0.99)
+levelset = (sqrt(sqrt(x**4+y**4)) - 1)
 lsetp1 = GridFunction(V)
 InterpolateToP1(levelset,lsetp1)
 
 ci = CutInfo(mesh, lsetp1)
 
-Vh = H1(mesh,order=1, dirichlet=[1])
+Vh = H1(mesh,order=1, dirichlet=[1,2,3,4])
 Vhx = XFESpace(Vh,ci)
         
 VhG = FESpace([Vh,Vhx])
@@ -101,16 +100,37 @@ f += SymbolicLFI(levelset_domain = lset_pos, form = coef_f[1] * v[1])
 # # solution vector
 gfu = GridFunction(VhG)
 
+gfu.components[0].Set(solution[1], BND)
+
 # # setting up matrix and vector
-c = Preconditioner(a, 'hypre') # very good for low order but fine meshes
-#c = Preconditioner(a, 'bddc') # very good for high order but moderate meshes
+# c = Preconditioner(a, 'hypre') # very good for low order but fine meshes
+c = Preconditioner(a, 'bddc') # very good for high order but moderate meshes
 #c = Preconditioner(a, 'bddc', coarsetype="h1amg") # only for serial runs
 #c = Preconditioner(a, 'direct', inverse="masterinverse") # only for small runs
 
 a.Assemble();
 f.Assemble();
 
-gfu.vec.data = solvers.CG(mat=a.mat, pre=c.mat, rhs=f.vec, tol=1e-6, maxsteps=100, printrates=comm.rank==0)
+rhs = gfu.vec.CreateVector()
+rhs.data = f.vec - a.mat * gfu.vec
+update = gfu.vec.CreateVector()
+update.data = solvers.CG(mat=a.mat, pre=c.mat, rhs=rhs, tol=1e-6, maxsteps=100, printrates=comm.rank==0)
+gfu.vec.data += update
+
+uh = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
+err_sqr_coefs = [ (uh[i] - solution[i])*(uh[i] - solution[i]) for i in [0,1] ]
+#err_sqr_coefs = [ uh[i]**2 for i in [0,1] ]
+
+l2error = sqrt(   Integrate(levelset_domain = lset_neg, cf=err_sqr_coefs[0], mesh=mesh, order=2)
+                + Integrate(levelset_domain = lset_pos, cf=err_sqr_coefs[1], mesh=mesh, order=2) )
+
+# l2error = Integrate(cf=IfPos(lsetp1,err_sqr_coefs[1],err_sqr_coefs[0]), mesh=mesh, order=2)
+
+# print(Integrate(levelset_domain = lset_neg, cf=1, mesh=mesh, order=2))
+# print(Integrate(levelset_domain = lset_pos, cf=1, mesh=mesh, order=2))
+# print(Integrate(levelset_domain = lset_pos, cf=1, mesh=mesh, order=2)+Integrate(levelset_domain = lset_neg, cf=1, mesh=mesh, order=2))
+if rank == 0:
+    print("L2 error : ",l2error)
 
 
 import os
@@ -122,7 +142,9 @@ comm.Barrier() #wait until master has created the directory!!
 u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 
 if do_vtk:
-    vtk = VTKOutput(ma=mesh,coefs=[u[0],u[1],lsetp1],names=["u1","u2","lset"],filename=output_path+"/vtkout_p"+str(rank)+"_n0",subdivision=1)
+    vtk = VTKOutput(ma=mesh,coefs=[u[0]-solution[0],u[1]-solution[1],lsetp1],names=["u1","u2","lset"],filename=output_path+"/vtkout_p"+str(rank)+"_n0",subdivision=1)
     vtk.Do()
 comm.Barrier()
+
+
 
