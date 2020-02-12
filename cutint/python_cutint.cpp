@@ -68,6 +68,8 @@ void ExportNgsx_cutint(py::module &m)
                }
              });
 
+          sum = ma->GetCommunicator().AllReduce(sum, MPI_SUM);
+          
           return sum;
         },
         py::arg("lset"),
