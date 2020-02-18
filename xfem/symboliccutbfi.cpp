@@ -125,9 +125,9 @@ namespace ngfem
        static bool warned = false;
        if (!warned)
        {
-         cout << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
-         cout << "         A mapped integration rule of this will not see the time,\n";
-         cout << "         but the underlying integration rule will." << endl;
+         cout << IM(3) << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
+         cout << IM(3) << "         A mapped integration rule of this will not see the time,\n";
+         cout << IM(3) << "         but the underlying integration rule will." << endl;
          warned = true;
        }
        auto ir1D = SelectIntegrationRule (ET_SEGM, time_order);
@@ -729,8 +729,8 @@ namespace ngfem
       static bool first = true;
       if (first)
       {
-        cout << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
-        cout << "         (and not performance-tuned)" << endl;
+        cout << IM(2) << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
+        cout << IM(2) << "         (and not performance-tuned)" << endl;
       }
       first = false;
 
@@ -1182,10 +1182,10 @@ namespace ngfem
     }
 
     if(its >= max_its){
-      cout << "MapPatchIntegrationPoint: Newton did not converge after "
+      cout << IM(4) << "MapPatchIntegrationPoint: Newton did not converge after "
            << its <<" iterations! (" << D <<"D)" << endl;
-      cout << "taking a low order guess" << endl;
-      cout << "diff = " << first_diffnorm << endl;
+      cout << IM(4) << "taking a low order guess" << endl;
+      cout << IM(4) << "diff = " << first_diffnorm << endl;
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
