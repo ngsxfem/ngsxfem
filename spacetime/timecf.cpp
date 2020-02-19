@@ -12,8 +12,10 @@ namespace ngfem
     //if(abs(mip.IP()(2) - mip.IP().Weight() ) > 1e-8) cout << "TimeVariableCoefficientFunction::Evaluate IP:" << mip.IP() << endl;
     if(time_is_fixed) return time;
     else {
-        if(mip.IP().GetPrecomputedGeometry()) return mip.IP().Weight();
-        else throw Exception("TimeVariableCoefficientFunction::Evaluate called with a mere space IR");
+      if (IsSpaceTimeIntegrationPoint(mip.IP()))
+        return mip.IP().Weight();
+      else
+        throw Exception("TimeVariableCoefficientFunction::Evaluate called with a mere space IR");
         //return mip.IP()(2);
     }
   }

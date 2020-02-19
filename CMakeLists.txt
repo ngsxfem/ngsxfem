@@ -7,6 +7,7 @@ set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 set(USE_GUI ON CACHE BOOL "use Netgen GUI")
 set(BUILD_STUB_FILES OFF CACHE BOOL "Build stub files for better autocompletion")
+set(SPACETIME_SANITY_CHECKS ON CACHE BOOL "use space-time sanity checks (abuses ngsolve's intrule nr)")
 
 set(INST_DIR xfem CACHE PATH "Install dir appended to prefix")
 
@@ -81,6 +82,10 @@ if(USE_CCACHE)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
   endif(CCACHE_FOUND)
 endif(USE_CCACHE)
+
+if(SPACETIME_SANITY_CHECKS)
+  add_definitions(-DSPACETIME_SANITY_CHECKS)
+endif(SPACETIME_SANITY_CHECKS)
 
 
 find_package(NGSolve REQUIRED CONFIG)
@@ -158,8 +163,11 @@ message("
   Build Type:
     type = ${CMAKE_BUILD_TYPE}
 
+  Build with space-time quadrature sanity checks (abuses ngsolve's intrule nr): ${SPACETIME_SANITY_CHECKS}
+
   Build NGSolve from scratch: ${BUILD_NGSOLVE}
   Build xfem (and NGSolve) with ccache: ${USE_CCACHE}
+
 
   Building:
 

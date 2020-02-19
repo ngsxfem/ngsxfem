@@ -5,6 +5,7 @@
 /*********************************************************************/
 
 #include "spacetime_vtk.hpp"
+#include "../utils/ngsxstd.hpp"
 
 namespace ngcomp
 { 
@@ -45,7 +46,8 @@ namespace ngcomp
       double p[8][3] = { {0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}, {0,0,1}, {1,0,1}, {1,1,1}, {0,1,1} };
       for (int i = 0; i < 8; i++)
       {
-        auto tmp = IntegrationPoint(p[i][0],p[i][1],0.0,p[i][2]); tmp.SetPrecomputedGeometry(true);
+        auto tmp = IntegrationPoint(p[i][0],p[i][1],0.0,p[i][2]);
+        MarkAsSpaceTimeIntegrationPoint(tmp);
         ref_coords.Append(tmp);
       }
       INT<ELEMENT_MAXPOINTS+1> elem;
@@ -69,7 +71,8 @@ namespace ngcomp
         for(int j = 0; j <= rx; ++j)
           for(int k = 0; k <= rt; ++k)
           {
-            auto tmp = IntegrationPoint(i*hx,j*hx,0.0,k*ht); tmp.SetPrecomputedGeometry(true);
+            auto tmp = IntegrationPoint(i*hx,j*hx,0.0,k*ht);
+            MarkAsSpaceTimeIntegrationPoint(tmp);
             ref_coords.Append(tmp);
           }
 
@@ -99,7 +102,8 @@ namespace ngcomp
       double p[6][3] = { {0,0,0}, {1,0,0}, {0,1,0}, {0,0,1}, {1,0,1}, {0,1,1} };
       for (int i = 0; i < 6; i++)
       {
-        auto tmp = IntegrationPoint(p[i][0],p[i][1],0.0,p[i][2]); tmp.SetPrecomputedGeometry(true);
+        auto tmp = IntegrationPoint(p[i][0],p[i][1],0.0,p[i][2]);
+        MarkAsSpaceTimeIntegrationPoint(tmp);
         ref_coords.Append(tmp);
       }
       INT<ELEMENT_MAXPOINTS+1> elem;
@@ -122,7 +126,8 @@ namespace ngcomp
         for(int i = 0; i <= rx; ++i)
           for(int j = 0; i+j <= rx; ++j)
           {
-            auto tmp = IntegrationPoint(j*hx,i*hx,0.0,k*ht); tmp.SetPrecomputedGeometry(true);
+            auto tmp = IntegrationPoint(j*hx,i*hx,0.0,k*ht);
+            MarkAsSpaceTimeIntegrationPoint(tmp);
             ref_coords.Append(tmp);
           }
 
