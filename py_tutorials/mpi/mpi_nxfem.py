@@ -3,6 +3,7 @@ from netgen.geom2d import SplineGeometry
 from ngsolve import *
 from xfem import *
 from math import pi
+from xfem.lsetcurv import *
 
 comm = mpi_world
 rank = comm.rank
@@ -24,14 +25,19 @@ else:
     
 mesh = Mesh(ngmesh)
 
-V = H1(mesh,order=1)
+order = 2
 levelset = (sqrt(sqrt(x**4+y**4)) - 1)
-lsetp1 = GridFunction(V)
-InterpolateToP1(levelset,lsetp1)
+
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
+deformation = lsetmeshadap.CalcDeformation(levelset)
+lsetp1 = lsetmeshadap.lset_p1
+Draw(lsetp1,mesh,"lsetp1")
+
+mesh.SetDeformation(deformation)
 
 ci = CutInfo(mesh, lsetp1)
 
-Vh = H1(mesh,order=1, dirichlet=[1,2,3,4])
+Vh = H1(mesh,order=order, dirichlet=[1,2,3,4])
 Vhx = XFESpace(Vh,ci)
         
 VhG = FESpace([Vh,Vhx])
@@ -142,7 +148,7 @@ comm.Barrier() #wait until master has created the directory!!
 u = [gfu.components[0] + op(gfu.components[1]) for op in [neg,pos]]
 
 if do_vtk:
-    vtk = VTKOutput(ma=mesh,coefs=[u[0]-solution[0],u[1]-solution[1],lsetp1],names=["u1","u2","lset"],filename=output_path+"/vtkout_p"+str(rank)+"_n0",subdivision=1)
+    vtk = VTKOutput(ma=mesh,coefs=[u[0]-solution[0],u[1]-solution[1],lsetp1,deformation],names=["u1","u2","lset","deformation"],filename=output_path+"/vtkout_p"+str(rank)+"_n0",subdivision=1)
     vtk.Do()
 comm.Barrier()
 
