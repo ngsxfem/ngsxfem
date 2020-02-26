@@ -4,7 +4,7 @@ build:
     - echo " before script "
     - rm -rf ~/inst/netgen
     - mkdir -p ~/inst/netgen
-    - if [ ! -f ~/ngsolve_latest.sif ]; then singularity pull library://laevar/default/ngsolve:stable ; mv ngsolve_latest.sif ~/ ; fi
+    - if [ ! -f ~/ngsolve_stable.sif ]; then singularity pull library://laevar/default/ngsolve:stable ; mv ngsolve_stable.sif ~/ ; fi
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
