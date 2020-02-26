@@ -1,6 +1,10 @@
 include(CTest)
 
-add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
+if(APPLE)
+    add_test(NAME cpu_usage COMMAND top "-l 1")
+else(APPLE)
+    add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
+endif(APPLE)
 
 add_test(NAME py_tutorial_nxfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem.py" "testmode")
