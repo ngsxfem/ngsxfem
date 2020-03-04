@@ -18,13 +18,14 @@ namespace ngcomp
     shared_ptr<CoefficientFunction> coef_lset = NULL;
     Array<int> firstdof_of_el;
     Array<Mat<2>> cuts_on_el;
+    DummyFE<ET_TRIG> * dummy;
   public:
     SFESpace (shared_ptr<MeshAccess> ama,
               shared_ptr<CoefficientFunction> a_coef_lset,
               int aorder,
               const Flags & flags);
 
-    virtual ~SFESpace(){};
+    virtual ~SFESpace();
 
     // a name for our new fe-space
     virtual string GetClassName () const

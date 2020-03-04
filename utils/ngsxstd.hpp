@@ -79,3 +79,22 @@ INLINE DOMAIN_TYPE INVERT( DOMAIN_TYPE dt)
 
 
 void IterateRange (int ne, LocalHeap & clh, const function<void(int,LocalHeap&)> & func);
+
+const int SPACETIME_SANITY_CHECK_NR = -9;
+
+INLINE void MarkAsSpaceTimeIntegrationPoint(ngcomp::IntegrationPoint & ip)
+{
+#ifdef SPACETIME_SANITY_CHECKS                    
+  ip.SetNr(SPACETIME_SANITY_CHECK_NR);
+#endif  
+}
+
+INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
+{
+#ifdef SPACETIME_SANITY_CHECKS                    
+  return (ip.Nr() == SPACETIME_SANITY_CHECK_NR);
+#else
+  return true;
+#endif
+}
+

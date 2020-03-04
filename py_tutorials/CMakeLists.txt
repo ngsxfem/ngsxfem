@@ -13,3 +13,8 @@ install( FILES
   xfespaces.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
 )
+
+install( FILES
+  mpi/mpi_nxfem.py
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/mpi
+)

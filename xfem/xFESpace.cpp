@@ -249,7 +249,7 @@ namespace ngcomp
     {
       cout << IM(4) << " Calling cutinfo-Update from within XFESpace-Update " << endl;
       LocalHeapMem<100000> lh("T_XFESpace<D>::Update(private_cutinfo)");
-      cutinfo->Update(coef_lset,-1,lh);
+      cutinfo->Update(coef_lset,0,-1,lh);
     }
 
     static Timer timer ("XFESpace::Update");
@@ -257,6 +257,8 @@ namespace ngcomp
 
     FESpace::Update();
 
+    int dim = ma->GetDimension();
+    
     int ne=ma->GetNE();
     int nedges=ma->GetNEdges();
     int nf=ma->GetNFaces();
@@ -266,13 +268,65 @@ namespace ngcomp
     BitArray activedofs(basefes->GetNDof());
     activedofs.Clear();
 
-    static int first = -1;
-    first++;
+    // Array<bool> active_node [3]; 
+    Array<bool> active_vertex; //only for mpi consistency
+    Array<bool> active_edge;   //only for mpi consistency
+    Array<bool> active_face;   //only for mpi consistency
+    if (ma->GetCommunicator().Size() > 1)
+    {
+      active_vertex.SetSize (ma->GetNV());
+      active_edge.SetSize (ma->GetNEdges());
+      if (dim == 3)
+        active_face.SetSize (ma->GetNFaces());
+    
+      active_vertex = false;
+      active_edge = false;
+      active_face = false;
 
-    Array<double> kappa_pos(ne);
-    BitArray element_most_pos(ne);
-    element_most_pos.Clear();
+      LocalHeapMem<100000> lh("T_XFESpace<D>::Update()");
+      for ( VorB vb : {VOL,BND})
+      {
+        int ne = ma->GetNE(vb);
+        ma->IterateElements(vb, lh,[&](auto el, LocalHeap& mlh) {
+            if (cutinfo->GetElementsOfDomainType(IF,vb)->Test(el.Nr()))
+            {
+              // Ngs_Element ngel = ma->GetElement<ET_trait<ET>::DIM,VOL> (elnr);
+              for (auto v : el.Vertices())
+                active_vertex[v] = true;
+              for (auto e : el.Edges())
+                active_edge[e] = true;
+              if (dim == 3)
+                for (auto f : el.Faces())
+                  active_face[f] = true;
+            }
+        });
+      }
 
+      //for debug only (IM(4)):
+      // Array<bool> active_vertex_old(active_vertex);
+      // Array<bool> active_edge_old(active_edge);
+      // Array<bool> active_face_old(active_face);
+      
+      ma->AllReduceNodalData (NT_VERTEX, active_vertex, MPI_LOR);
+      ma->AllReduceNodalData (NT_EDGE, active_edge, MPI_LOR);
+      ma->AllReduceNodalData (NT_FACE, active_face, MPI_LOR);
+
+      // debug only:
+      // for (int i = 0; i < ma->GetNV(); i++)
+      //   if (active_vertex[i] != active_vertex_old[i])
+      //     cout << IM(5) << ma->GetCommunicator().Rank() << ": ghost_vertex[" << i << "] : " << active_vertex[i] << endl;
+      // for (int i = 0; i < ma->GetNEdges(); i++)
+      //   if (active_edge[i] != active_edge_old[i])
+      //     cout << IM(5) << ma->GetCommunicator().Rank() << ": ghost_edge[" << i << "] : " << active_edge[i] << endl;
+      // if (dim==3)
+      //   for (int i = 0; i < ma->GetNFaces(); i++)
+      //     if (active_face[i] != active_face_old[i])
+      //       cout << IM(5) << ma->GetCommunicator().Rank() << ": ghost_face[" << i << "] : " << active_face[i] << endl;
+    } 
+    
+    
+    activedofs.Clear();
+    
     for ( VorB vb : {VOL,BND})
     {
       int ne = ma->GetNE(vb);
@@ -299,6 +353,32 @@ namespace ngcomp
         sel2dofs = make_shared<Table<int>>(creator.MoveTable());
     }
 
+    if (ma->GetCommunicator().Size() > 1)
+    {
+      //note: ghost dofs (active only on a processor neighbor)
+      //      are not stored in (s)el2dofs array
+      Array<int> basednums;
+      for (int i = 0; i < ma->GetNV(); i++)
+        if (active_vertex[i])
+        {
+          basefes->GetVertexDofNrs(i,basednums);
+          for (auto d : basednums) activedofs.SetBit(d); 
+        }
+      for (int i = 0; i < ma->GetNEdges(); i++)
+        if (active_edge[i])
+        {
+          basefes->GetEdgeDofNrs(i,basednums);
+          for (auto d : basednums) activedofs.SetBit(d); 
+        }
+      if (dim==3)
+        for (int i = 0; i < ma->GetNFaces(); i++)
+          if (active_face[i])
+          {
+            basefes->GetFaceDofNrs(i,basednums);
+            for (auto d : basednums) activedofs.SetBit(d); 
+          }
+    }
+    
     int nbdofs = basefes->GetNDof();
     basedof2xdof.SetSize(nbdofs);
     basedof2xdof = -1;
@@ -386,7 +466,7 @@ namespace ngcomp
 
     UpdateCouplingDofArray();
     FinalizeUpdate ();
-
+    
     dirichlet_dofs.SetSize (GetNDof());
     dirichlet_dofs.Clear();
 

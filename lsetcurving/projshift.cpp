@@ -129,6 +129,11 @@ namespace ngcomp
        });
     
     progress.Done();
+
+    factor->SetParallelStatus(DISTRIBUTED);
+    factor->Cumulate(); 	 
+    deform->GetVector().SetParallelStatus(DISTRIBUTED);
+    deform->GetVector().Cumulate(); 	 
     
     if (task_manager)
     {

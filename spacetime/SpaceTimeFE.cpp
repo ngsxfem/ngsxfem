@@ -5,6 +5,7 @@
 /*********************************************************************/
 #include <fem.hpp>
 #include "SpaceTimeFE.hpp"
+#include "../utils/ngsxstd.hpp"
 
 
 namespace ngfem
@@ -37,8 +38,10 @@ namespace ngfem
 
             Vector<> time_shape(tFE->GetNDof());
             IntegrationPoint z(override_time ? time : ip.Weight());
-            if(! ip.GetPrecomputedGeometry())
+            
+            if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
               throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+            
             tFE->CalcShape(z,time_shape);
 
             Vector<> space_shape(sFE->GetNDof());
@@ -67,8 +70,10 @@ namespace ngfem
 
             Vector<> time_shape(tFE->GetNDof());
             IntegrationPoint z(override_time ? time : ip.Weight());
-            if(! ip.GetPrecomputedGeometry())
-              throw Exception("SpaceTimeFE :: CalcDShape called with a mere space IR");
+            
+            if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
+              throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+            
             tFE->CalcShape(z,time_shape);
 
             Matrix<double> space_dshape(sFE->GetNDof(),D);
@@ -96,8 +101,10 @@ namespace ngfem
 
            Matrix<double> time_dshape(tFE->GetNDof(),1);
            IntegrationPoint z(override_time ? time : ip.Weight());
-           if(! ip.GetPrecomputedGeometry())
-             throw Exception("SpaceTimeFE :: CalcDtShape called with a mere space IR");
+
+           if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
+             throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+           
            tFE->CalcDShape(z,time_dshape);
 
            Vector<> space_shape(sFE->GetNDof());

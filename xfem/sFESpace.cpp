@@ -28,7 +28,6 @@ namespace ngcomp
 
   FiniteElement & SFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
-    LocalHeap lh(10000000,"SFESpace::GetFE");
     if (ei.VB() == VOL)
     {
       int elnr = ei.Nr();
@@ -38,14 +37,16 @@ namespace ngcomp
         throw Exception("can only work with trigs...");
       if (activeelem.Test(elnr))
       {
-        return *(new (lh) SFiniteElement(cuts_on_el[elnr],order,lh));
+        return *(new (alloc) SFiniteElement(cuts_on_el[elnr],order,alloc));
       }
       else
-        return *(new (lh) DummyFE<ET_TRIG>());
+      {
+        return *dummy;
+      }
     }
     else if (ei.VB() == BND)
     {
-      return *(new (lh) DummyFE<ET_SEGM>());
+      return *dummy;
     }
     else
       throw Exception("only VB == VOL and VB == BND implemented");
@@ -60,8 +61,15 @@ namespace ngcomp
     type = "sfes";
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
+    dummy = new DummyFE<ET_TRIG>();
   }
 
+  SFESpace::~SFESpace()
+  {
+    delete dummy;
+  };
+
+  
   void SFESpace::Update()
   {
     // throw Exception ("nothing done yet...");
