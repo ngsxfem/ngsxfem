@@ -135,6 +135,7 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
 
 * Literature
 =ngsxfem= has been used in the following scientific articles (that we are aware of):
+ * P. Brandner, A. Reusken. Finite element error analysis of surface Stokes equations in stream function formulation. [[https://www.igpm.rwth-aachen.de/Download/reports/pdf/IGPM493.pdf][pdf]]         
  * T. Jankuhn, A. Reusken. Higher order Trace Finite Element Methods for the Surface Stokes Equation [[https://arxiv.org/pdf/1909.08327][pdf]] 
  * T. Jankuhn, A. Reusken. Trace Finite Element Methods for Surface Vector-Laplace Equations [[https://arxiv.org/pdf/1904.12494][pdf]] 
  * E. N. Karatzas, F. Ballarin, G. Rozza. Projection-based reduced order models for a cut finite element method in parametrized domains [[https://arxiv.org/pdf/1901.03846][pdf]] 

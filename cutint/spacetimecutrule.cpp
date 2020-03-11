@@ -148,7 +148,7 @@ namespace xintegration
                     wei_arr[k] = new_weight;
 
                     (*ir)[k].SetWeight(t);
-                    (*ir)[k].SetPrecomputedGeometry(true);
+                    MarkAsSpaceTimeIntegrationPoint((*ir)[k]);
                 }
                 /*                                     
                 CutSimplexElementGeometry geom(cf_lset_at_t, et_space, lh);

@@ -125,9 +125,9 @@ namespace ngfem
        static bool warned = false;
        if (!warned)
        {
-         cout << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
-         cout << "         A mapped integration rule of this will not see the time,\n";
-         cout << "         but the underlying integration rule will." << endl;
+         cout << IM(3) << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
+         cout << IM(3) << "         A mapped integration rule of this will not see the time,\n";
+         cout << IM(3) << "         but the underlying integration rule will." << endl;
          warned = true;
        }
        auto ir1D = SelectIntegrationRule (ET_SEGM, time_order);
@@ -729,8 +729,8 @@ namespace ngfem
       static bool first = true;
       if (first)
       {
-        cout << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
-        cout << "         (and not performance-tuned)" << endl;
+        cout << IM(2) << "WARNING: unfitted codim-2 integrals are experimental!" << endl;
+        cout << IM(2) << "         (and not performance-tuned)" << endl;
       }
       first = false;
 
@@ -999,7 +999,7 @@ namespace ngfem
           st_point = ir_facet_vol1_tmp[j].Point();
           (*ir_spacetime1)[ij].Point() = st_point;
           (*ir_spacetime1)[ij].SetWeight(ir_time[i](0));
-          (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
+          MarkAsSpaceTimeIntegrationPoint((*ir_spacetime1)[ij]);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_facet_vol2_tmp.Size()*ir_time.Size(),lh);
@@ -1012,7 +1012,7 @@ namespace ngfem
           st_point = ir_facet_vol2_tmp[j].Point();
           (*ir_spacetime2)[ij].Point() = st_point;
           (*ir_spacetime2)[ij].SetWeight(ir_time[i](0));
-          (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
+          MarkAsSpaceTimeIntegrationPoint((*ir_spacetime2)[ij]);
         }
       }
       ir_facet_vol1 = ir_spacetime1;
@@ -1139,7 +1139,11 @@ namespace ngfem
     {
       HeapReset hr(lh);
       auto ip_a0 = new (lh) IntegrationPoint(0,0,0);
-      if(spacetime_mode) { ip_a0->SetWeight(from_ip.Weight()); ip_a0->SetPrecomputedGeometry(true); }
+      if(spacetime_mode)
+      {
+        ip_a0->SetWeight(from_ip.Weight());
+        MarkAsSpaceTimeIntegrationPoint(*ip_a0);
+      }
       auto mip_a0 = new (lh) MappedIntegrationPoint<D,D>(*ip_a0,to_trafo);
       FlatMatrix<double> A(D,D,lh);
       FlatMatrix<double> Ainv(D,D,lh);
@@ -1156,7 +1160,11 @@ namespace ngfem
           else
             ip_ai->Point()[di] = 0;
         }
-        if(spacetime_mode) { ip_ai->SetWeight(from_ip.Weight()); ip_ai->SetPrecomputedGeometry(true); }
+        if(spacetime_mode)
+        {
+          ip_ai->SetWeight(from_ip.Weight());
+          MarkAsSpaceTimeIntegrationPoint(*ip_ai);
+        }
         auto mip_ai = new (lh) MappedIntegrationPoint<D,D>(*ip_ai,to_trafo);
         A.Col(d) = mip_ai->GetPoint() - mip_a0->GetPoint();
       }
@@ -1170,7 +1178,7 @@ namespace ngfem
     double w = 0;
     while (its==0 || (L2Norm(diff) > eps_acc*h && its < max_its))
     {
-      if(spacetime_mode) { ip_x0->SetWeight(from_ip.Weight()); ip_x0->SetPrecomputedGeometry(true); }
+      if(spacetime_mode) { ip_x0->SetWeight(from_ip.Weight()); MarkAsSpaceTimeIntegrationPoint(*ip_x0); }
       MappedIntegrationPoint<D,D> mip_x0(*ip_x0,to_trafo);
       diff = vec - mip_x0.GetPoint();
       if (its==0)
@@ -1182,10 +1190,10 @@ namespace ngfem
     }
 
     if(its >= max_its){
-      cout << "MapPatchIntegrationPoint: Newton did not converge after "
+      cout << IM(4) << "MapPatchIntegrationPoint: Newton did not converge after "
            << its <<" iterations! (" << D <<"D)" << endl;
-      cout << "taking a low order guess" << endl;
-      cout << "diff = " << first_diffnorm << endl;
+      cout << IM(4) << "taking a low order guess" << endl;
+      cout << IM(4) << "diff = " << first_diffnorm << endl;
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
@@ -1283,7 +1291,7 @@ namespace ngfem
             // ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
             double physical_weight = tmp.Weight();
             tmp.SetWeight(tval);
-            tmp.SetPrecomputedGeometry(true);
+            MarkAsSpaceTimeIntegrationPoint(tmp);
             if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
             else MapPatchIntegrationPoint<3>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
           }
@@ -1294,8 +1302,8 @@ namespace ngfem
           (*ir_spacetime1)[ij].SetFacetNr(-1, VOL);
           (*ir_spacetime1)[ij].Point() = st_point;
           (*ir_spacetime1)[ij].SetWeight( tval);
-          (*ir_spacetime1)[ij].SetPrecomputedGeometry(true);
           (*ir_spacetime1)[ij].SetNr(ij);
+          MarkAsSpaceTimeIntegrationPoint((*ir_spacetime1)[ij]);
         }
       }
       auto ir_spacetime2 = new (lh) IntegrationRule (ir_patch2.Size()*ir_time.Size(),lh);
@@ -1312,7 +1320,7 @@ namespace ngfem
             // ir_patch1[j] = ir_vol1[j];
             double physical_weight = tmp.Weight();
             tmp.SetWeight(tval);
-            tmp.SetPrecomputedGeometry(true);
+            MarkAsSpaceTimeIntegrationPoint(tmp);
             if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
             else MapPatchIntegrationPoint<3>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
           }
@@ -1322,8 +1330,8 @@ namespace ngfem
           (*ir_spacetime2)[ij].SetFacetNr(-1, VOL);
           (*ir_spacetime2)[ij].Point() = st_point;
           (*ir_spacetime2)[ij].SetWeight(tval);
-          (*ir_spacetime2)[ij].SetPrecomputedGeometry(true);
           (*ir_spacetime2)[ij].SetNr(ij);
+          MarkAsSpaceTimeIntegrationPoint((*ir_spacetime2)[ij]);
         }
       }
       ir1 = ir_spacetime1;

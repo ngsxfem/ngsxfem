@@ -1,5 +1,5 @@
 Bootstrap: library
-From: ubuntu:18.10
+From: ubuntu:18.04
 
 %post
     apt-get -qyy update

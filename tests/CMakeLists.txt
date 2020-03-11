@@ -1,6 +1,10 @@
 include(CTest)
 
-add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
+if(APPLE)
+    add_test(NAME cpu_usage COMMAND top "-l 1")
+else(APPLE)
+    add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
+endif(APPLE)
 
 add_test(NAME py_tutorial_nxfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem.py" "testmode")
@@ -54,6 +58,9 @@ add_test(NAME pytests_spacetimecutrule COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m py
 
 add_test(NAME pytests_spacetime_vtk COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetime_vtk.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
+add_test(NAME pytests_navier_stokes COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_navier_stokes_2d1.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 install( FILES
   ngsxfem_report.py

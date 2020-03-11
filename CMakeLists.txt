@@ -7,8 +7,17 @@ set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 set(USE_GUI ON CACHE BOOL "use Netgen GUI")
 set(BUILD_STUB_FILES OFF CACHE BOOL "Build stub files for better autocompletion")
+set(SPACETIME_SANITY_CHECKS ON CACHE BOOL "use space-time sanity checks (abuses ngsolve's intrule nr)")
 
 set(INST_DIR xfem CACHE PATH "Install dir appended to prefix")
+
+if(CMAKE_GENERATOR STREQUAL "Ninja")
+  set(ADDNINJA "-GNinja")
+  set(BUILDEXE "ninja")
+else(CMAKE_GENERATOR STREQUAL "Ninja")         
+  set(ADDNINJA "")
+  set(BUILDEXE "make")
+endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
 if(BUILD_NGSOLVE)
   message(STATUS "Use NGSolve from submodule, updating modules...")
@@ -20,14 +29,6 @@ if(BUILD_NGSOLVE)
       message( FATAL_ERROR "Please provide an CMAKE_INSTALL_PREFIX, CMake will exit." )
     endif(NOT INSTALL_DIR)
   endif(NOT CMAKE_INSTALL_PREFIX)
-
-  if(CMAKE_GENERATOR STREQUAL "Ninja")
-    set(ADDNINJA "-GNinja")
-    set(BUILDEXE "ninja")
-  else(CMAKE_GENERATOR STREQUAL "Ninja")         
-    set(ADDNINJA "")
-    set(BUILDEXE "make")
-  endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
   set(BUILD_NGSOLVE_THREADS "1" CACHE STRING "build NGSolve with n threads")
   set(USE_UMFPACK ON CACHE BOOL "use umfpack library (only if ngsolve is build)")
@@ -82,10 +83,14 @@ if(USE_CCACHE)
   endif(CCACHE_FOUND)
 endif(USE_CCACHE)
 
+if(SPACETIME_SANITY_CHECKS)
+  add_definitions(-DSPACETIME_SANITY_CHECKS)
+endif(SPACETIME_SANITY_CHECKS)
+
 
 find_package(NGSolve REQUIRED CONFIG)
 set(NGSXFEM_VERSION_MAJOR 1)
-set(NGSXFEM_VERSION_MINOR 1)
+set(NGSXFEM_VERSION_MINOR 2)
 set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
@@ -158,8 +163,11 @@ message("
   Build Type:
     type = ${CMAKE_BUILD_TYPE}
 
+  Build with space-time quadrature sanity checks (abuses ngsolve's intrule nr): ${SPACETIME_SANITY_CHECKS}
+
   Build NGSolve from scratch: ${BUILD_NGSOLVE}
   Build xfem (and NGSolve) with ccache: ${USE_CCACHE}
+
 
   Building:
 

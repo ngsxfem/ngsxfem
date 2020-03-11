@@ -31,11 +31,10 @@ namespace ngcomp
                                                      nullptr, nullptr, nullptr};
     shared_ptr<Array<DOMAIN_TYPE>> dom_of_node [6] = {nullptr, nullptr, nullptr,
                                                       nullptr, nullptr, nullptr};
-    int subdivlvl = 0;
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
-    void Update(shared_ptr<CoefficientFunction> lset, int time_order, LocalHeap & lh);
-
+    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, LocalHeap & lh);
+    
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
 
     shared_ptr<BaseVector> GetCutRatios (VorB vb) const

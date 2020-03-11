@@ -2,6 +2,7 @@
 #include "diffopDt.hpp"
 #include <diffop_impl.hpp>
 #include "SpaceTimeFE.hpp"
+#include "../utils/ngsxstd.hpp"
 
 
 namespace ngfem
@@ -55,7 +56,7 @@ namespace ngfem
   {
 
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
-      ip.SetPrecomputedGeometry(true);
+      MarkAsSpaceTimeIntegrationPoint(ip);
       mat = 0.0;
       const SpaceTimeFE<SpaceD>& scafed = dynamic_cast<const SpaceTimeFE<SpaceD> & > (bfel);
 
@@ -83,7 +84,7 @@ namespace ngfem
       static_cast<const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE>&> (bmip);
 
       IntegrationPoint ip(mip.IP()(0),mip.IP()(1),mip.IP()(2), time);
-      ip.SetPrecomputedGeometry(true);
+      MarkAsSpaceTimeIntegrationPoint(ip);
 
       const SpaceTimeFE<SpaceD>& scafed = dynamic_cast<const SpaceTimeFE<SpaceD> &> (bfel);
 

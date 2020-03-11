@@ -562,7 +562,7 @@ namespace xintegration
           double myweight = quad_untrafo[i].Weight();
           if(spacetime_mode) {
               quad_untrafo[i].SetWeight(tval);
-              quad_untrafo[i].SetPrecomputedGeometry(true);
+              MarkAsSpaceTimeIntegrationPoint(quad_untrafo[i]);
           }
 
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);

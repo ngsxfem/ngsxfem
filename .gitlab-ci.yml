@@ -1,17 +1,16 @@
-
 build:
   stage: build
   before_script:
     - echo " before script "
     - rm -rf ~/inst/netgen
     - mkdir -p ~/inst/netgen
-    - if [ ! -f ~/ngsolve_latest.sif ]; then singularity pull library://laevar/default/ngsolve ; mv ngsolve_latest.sif ~/ ; fi
+    - if [ ! -f ~/ngsolve_stable.sif ]; then singularity pull -U library://laevar/default/ngsolve:stable ; mv ngsolve_stable.sif ~/ ; fi
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_latest.sif bash .ci/ci_build.sh
+    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_build.sh
 
 ctests-tutorials:
   stage: test
@@ -20,7 +19,7 @@ ctests-tutorials:
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_latest.sif bash .ci/ci_ctests.sh tutorial
+    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh tutorial
 
   when: always
   allow_failure: false
@@ -32,7 +31,7 @@ ctests-mayfail:
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_latest.sif bash .ci/ci_ctests.sh mayfail
+    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
 
@@ -43,7 +42,7 @@ ctests-remaining:
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_latest.sif bash .ci/ci_ctests.sh remaining
+    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh remaining
   when: always
   allow_failure: false
 
@@ -54,14 +53,14 @@ go4quads-tests:
     paths:
     - build/
   script:
-    - singularity exec ~/ngsolve_latest.sif bash .ci/ci_ctests.sh go4quads-tests
+    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh go4quads-tests
   when: always
   allow_failure: false
 
 ngsxfem-report:
   stage: deploy
   script:
-    - singularity exec ~/ngsolve_latest.sif bash .ci/ci_ngsxfem-report.sh
+    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ngsxfem-report.sh
   when: always
   allow_failure: true
 

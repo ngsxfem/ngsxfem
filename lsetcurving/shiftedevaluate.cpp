@@ -216,12 +216,12 @@ namespace ngfem
   void DiffOpShiftedEval<D, SpaceD> ::
   Apply (const FiniteElement & fel,
          const BaseMappedIntegrationPoint & mip,
-         FlatVector<double> x, 
+         BareSliceVector<double> x, 
          FlatVector<double> flux,
          LocalHeap & lh) const
   {
     HeapReset hr(lh);
-    FlatMatrix<double,ColMajor> mat(Dim(), x.Size(), lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof(), lh);
     CalcMatrix (fel, mip, mat, lh);
     flux = mat * x;
   }
@@ -231,13 +231,13 @@ namespace ngfem
   ApplyTrans (const FiniteElement & fel,
               const BaseMappedIntegrationPoint & mip,
               FlatVector<double> flux,
-              FlatVector<double> x,
+              BareSliceVector<double> x,
               LocalHeap & lh) const
   {
     HeapReset hr(lh);
-    FlatMatrix<double,ColMajor> mat(Dim(), x.Size(), lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof(), lh);
     CalcMatrix (fel, mip, mat, lh);
-    x = Trans(mat) * flux;
+    x.Range(0,fel.GetNDof()) = Trans(mat) * flux;
   }
 
   template class DiffOpShiftedEval<1, 1>;
