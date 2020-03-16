@@ -96,10 +96,7 @@ namespace ngfem
 			const FlatVector<double> elx, 
 			FlatVector<double> ely,
 			void * precomputed,
-			LocalHeap & lh) const
-    {
-      throw Exception("SymbolicCutBilinearFormIntegrator::ApplyElementMatrix not yet implemented");
-    }
+			LocalHeap & lh) const;
 
       
     template <int D, typename SCAL, typename SCAL_SHAPES>

@@ -1427,4 +1427,94 @@ namespace ngfem
         }
   }
 
+
+
+  void SymbolicCutBilinearFormIntegrator ::
+  ApplyElementMatrix (const FiniteElement & fel, 
+                      const ElementTransformation & trafo, 
+                      const FlatVector<double> elx, 
+                      FlatVector<double> ely,
+                      void * precomputed,
+                      LocalHeap & lh) const
+  {
+    // THIS IS UGLY CODE DUPLICATION FROM SYMBOLICCUTBFI::T_CalcElementMatrixAdd
+    // and SymbolicBilinearFormIntegrator::ApplyElementMatrix (no simd)
+    // no simd
+
+    static bool warned = false;
+    if (!warned)
+    {
+      cout<<IM(3)<<"WARNING: The implementation of ApplyElementMatrix for cut elements is experimental.\n"<<endl;
+      warned = true;
+    }
+    
+    HeapReset hr(lh);
+    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+
+    int trial_difforder = 99, test_difforder = 99;
+    for (auto proxy : trial_proxies)
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
+    for (auto proxy : test_proxies)
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+
+    int intorder = fel_trial.Order()+fel_test.Order();
+
+    auto et = trafo.GetElementType();
+    if (et == ET_TRIG || et == ET_TET)
+      intorder -= test_difforder+trial_difforder;
+
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
+
+    if (force_intorder >= 0)
+      intorder = force_intorder;
+    
+    ProxyUserData ud(trial_proxies.Size(), lh);    
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
+
+
+    const IntegrationRule * ir;
+    Array<double> wei_arr;
+    tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    if (ir == nullptr)
+      return;
+    
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+
+    for (ProxyFunction * proxy : trial_proxies)
+      ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
+
+    for (ProxyFunction * proxy : trial_proxies)
+      proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
+    
+    ely = 0;
+    // FlatVector<> ely1(ely.Size(), lh);
+    FlatVector ely1(ely.Size(), lh);   // can we really skip the <>  ???
+
+    FlatMatrix<> val(mir.Size(), 1,lh);
+    for (auto proxy : test_proxies)
+    {
+      HeapReset hr(lh);
+      FlatMatrix<> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+      for (int k = 0; k < proxy->Dimension(); k++)
+      {
+        ud.testfunction = proxy;
+        ud.test_comp = k;
+        cf -> Evaluate (mir, val);
+        proxyvalues.Col(k) = val.Col(0);
+      }
+        
+      for (int i = 0; i < mir.Size(); i++)
+        proxyvalues.Row(i) *= mir[i].GetWeight();
+
+      proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
+      ely += ely1;
+    }
+    
+  }
+
+  
 }
