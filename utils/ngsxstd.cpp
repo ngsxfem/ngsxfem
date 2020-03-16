@@ -29,3 +29,14 @@ void IterateRange (int ne, LocalHeap & clh,
     }
   }
 }
+
+ostream & operator<< (ostream & ost, DOMAIN_TYPE dt)
+{
+  switch (dt)
+    {
+    case NEG: ost << "NEG"; break;
+    case POS:  ost << "POS"; break;
+    case IF:  ost << "IF"; break;
+    };
+  return ost;
+}
