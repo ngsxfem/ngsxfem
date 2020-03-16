@@ -1441,6 +1441,9 @@ namespace ngfem
     // and SymbolicBilinearFormIntegrator::ApplyElementMatrix (no simd)
     // no simd
 
+    if (element_vb != VOL)
+        throw Exception ("Apply for EB not yet implemented");
+    
     static bool warned = false;
     if (!warned)
     {
@@ -1471,16 +1474,17 @@ namespace ngfem
     if (force_intorder >= 0)
       intorder = force_intorder;
     
-    ProxyUserData ud(trial_proxies.Size(), lh);    
-    const_cast<ElementTransformation&>(trafo).userdata = &ud;
-    ud.fel = &fel;
-
 
     const IntegrationRule * ir;
     Array<double> wei_arr;
     tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    ely = 0;
     if (ir == nullptr)
       return;
+    
+    ProxyUserData ud(trial_proxies.Size(), lh);    
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
     
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
@@ -1490,7 +1494,6 @@ namespace ngfem
     for (ProxyFunction * proxy : trial_proxies)
       proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
     
-    ely = 0;
     // FlatVector<> ely1(ely.Size(), lh);
     FlatVector ely1(ely.Size(), lh);   // can we really skip the <>  ???
 
