@@ -26,12 +26,14 @@ namespace xintegration
 
     Array<DOMAIN_TYPE> lset_dts(M); //<- domain types corresponding to levelset
     bool compatible = true;
+    bool cut_element = false;
     for (int i = 0; i < M; i++)
     {
       gflsets[i]->GetVector().GetIndirect(dnums, elvec);
       elvecs.Col(i) = elvec;
       lset_dts[i] = CheckIfStraightCut(elvec);
       if ((lset_dts[i] != IF) && (lset_dts[i] != dts[i])) compatible = false; //loop could break here now
+      else if (lset_dts[i] == IF) cut_element = true;
     }
     
     cout << "currently on element with ID: " << trafo.GetElementId() << endl << endl;
@@ -45,9 +47,26 @@ namespace xintegration
       cout << "----------------------------------------------------------------------" << endl << endl;
       return make_tuple(nullptr, Array<double>());
     }
-    
+
+
+    const IntegrationRule* ir = nullptr;
+    if (!cut_element)
+    {
+        cout << "relevant, uncut element: standard integration rule" << endl;
+        cout << "--------------------------------------------------" << endl << endl;
+        
+        ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
+        Array<double> wei_arr (ir->Size());
+        for(int i=0; i< ir->Size(); i++)
+        {
+            wei_arr [i] = (*ir)[i].Weight();
+        } 
+        return make_tuple(ir, wei_arr);
+    }
+
+
     cout << "further implementation is missing!" << endl;
-    throw Exception("not yet implemented");
+    // throw Exception("not yet implemented");
     return make_tuple(nullptr, Array<double>());
   }
 
