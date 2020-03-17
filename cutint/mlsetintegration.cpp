@@ -27,6 +27,13 @@ namespace xintegration
     Array<DOMAIN_TYPE> lset_dts(M); //<- domain types corresponding to levelset
     bool compatible = true;
     bool cut_element = false;
+
+    const IntegrationRule* ir = nullptr;
+
+    Array<shared_ptr<GridFunction>> condense_gflsets;
+    Array<DOMAIN_TYPE> condense_dts;// only for debugging
+    Array<DOMAIN_TYPE> condense_target_dts;
+
     for (int i = 0; i < M; i++)
     {
       gflsets[i]->GetVector().GetIndirect(dnums, elvec);
@@ -47,9 +54,7 @@ namespace xintegration
       cout << "----------------------------------------------------------------------" << endl << endl;
       return make_tuple(nullptr, Array<double>());
     }
-
-
-    const IntegrationRule* ir = nullptr;
+ 
     if (!cut_element)
     {
       cout << "relevant, uncut element: standard integration rule" << endl;
@@ -60,6 +65,38 @@ namespace xintegration
       for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
       return make_tuple(ir, wei_arr);
     }
+    else
+    {
+      cout << "This element is cut and relevant";
+
+      //condense lset_dts
+      for (int i = 0; i < M; i++)
+      {
+        if ((lset_dts[i] == IF) || (lset_dts[i] != dts[i]))
+        {
+          condense_dts.Append(lset_dts[i]); // only for debugging
+          condense_target_dts.Append(dts[i]);
+          condense_gflsets.Append(gflsets[i]);
+        }
+      }
+      cout << "domain type after condensing\n" << condense_dts << endl;// only for debugging
+      cout << "target type after condensing\n" << condense_target_dts << endl;
+
+      // If only one cut remaining, use standard cut integration rule
+      if (condense_dts.Size() == 1)
+      {      
+        cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
+        cout << "-------------------------------------------------------------------------" << endl << endl;
+
+        const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
+        if(ir != nullptr) 
+        {
+          Array<double> wei_arr (ir->Size());
+          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+          return make_tuple(ir, wei_arr);
+        }
+      }
+    }
 
     cout << "further implementation is missing!" << endl;
     // throw Exception("not yet implemented");
@@ -68,5 +105,5 @@ namespace xintegration
 
 
   // Compute relevant codim 
-  
+
 } // end of namespace
