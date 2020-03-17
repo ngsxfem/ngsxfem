@@ -16,7 +16,7 @@ from netgen.geom2d import SplineGeometry
 
 square = SplineGeometry()
 square.AddRectangle([-1,-0.5], [1,1.5], bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.3, quad_dominated=False))
 
 lsetp1_a = GridFunction(H1(mesh,order=1))
 lsetp1_b = GridFunction(H1(mesh,order=1))
