@@ -32,12 +32,13 @@ Draw (lsetp1_c, mesh, "lset_c")
 
 Draw (lsetp1_a * lsetp1_b * lsetp1_c, mesh, "lset_mult")
 
-IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
+area = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                      mesh=mesh,
                      cf=1,
                      order=0,
                      domain_types=[NEG,NEG,NEG])
-                     
+print("area =", area)                     
+print("area error =", abs(area-0.5))                     
 # inner = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
 #           "domain_type" : (NEG,NEG,NEG)}
 
