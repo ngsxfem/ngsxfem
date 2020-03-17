@@ -97,9 +97,22 @@ namespace xintegration
           return make_tuple(ir, wei_arr);
         }
       }
-      else
-          cout << "Corner Case !!!" << endl;
-          //throw Exception("not yet implemented");
+      else { // At least for debugging, this else case should also be able to handle the "if case"
+          FlatMatrix<> elvecs_cond(dnums.Size(), condense_dts.Size(), lh);
+          for (int i = 0; i < condense_dts.Size(); i++)
+          {
+            condense_gflsets[i]->GetVector().GetIndirect(dnums, elvec);
+            elvecs_cond.Col(i) = elvec;
+          }
+
+          const IntegrationRule * ir = StraightCutsIntegrationRule( elvecs_cond, trafo, condense_target_dts, intorder, quad_dir_policy, lh);
+          if(ir != nullptr)
+          {
+            Array<double> wei_arr (ir->Size());
+            for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+            return make_tuple(ir, wei_arr);
+          }
+      }
     }
 
     cout << "further implementation is missing!" << endl;

@@ -660,6 +660,51 @@ namespace xintegration
     return ir;
   }
 
+  const IntegrationRule * StraightCutsIntegrationRule(const FlatMatrix<> & cf_lsets_at_element,
+                                                     const ElementTransformation & trafo,
+                                                     const Array<DOMAIN_TYPE> &dts,
+                                                     int intorder,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
+                                                     LocalHeap & lh,
+                                                     bool spacetime_mode,
+                                                     double tval)
+  {
+
+    int DIM = trafo.SpaceDim();
+
+    auto et = trafo.GetElementType();
+    int M = cf_lsets_at_element.Width();
+
+    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)){
+      cout << "Element Type: " << et << endl;
+      throw Exception("only trigs, tets for now");
+    }
+
+    IntegrationRule quad_untrafo;
+
+    //This is how to create all the Lset Wrappers ... Collecting them in vector<> or Array<> does not work as there is no empty constructor...
+    //Let's see later how we actually will exploit those wrappers...
+
+    //vector<LevelsetWrapper> lsets(M);
+
+    for (int i = 0; i<M; i++){
+        vector<double> lset_vals(cf_lsets_at_element.Height());
+        cout << "Creating local lset with vals: ";
+        for(int ii=0; ii<lset_vals.size(); ii++) {
+            lset_vals[ii] = cf_lsets_at_element(ii, i);
+            cout << lset_vals[ii] << endl;
+        }
+        LevelsetWrapper lset(lset_vals, et);
+        //lsets.push_back(lset);
+    }
+
+    const IntegrationRule* ir = nullptr;
+
+    cout << "TODO: Insert corner case rule creation here..." << endl;
+
+    return ir;
+  }
+
   const IntegrationRule * StraightCutIntegrationRuleUntransformed(const FlatVector<> & cf_lset_at_element,
                                                        ELEMENT_TYPE et,
                                                        DOMAIN_TYPE dt,

@@ -155,6 +155,15 @@ namespace xintegration
                                                      bool spacetime_mode = false,
                                                      double tval = 0.);
 
+  const IntegrationRule * StraightCutsIntegrationRule(const FlatMatrix<> & cf_lsets_at_element,
+                                                     const ElementTransformation & trafo,
+                                                     const Array<DOMAIN_TYPE> & dt,
+                                                     int intorder,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
+                                                     LocalHeap & lh,
+                                                     bool spacetime_mode = false,
+                                                     double tval = 0.);
+
   const IntegrationRule * StraightCutIntegrationRuleUntransformed(const FlatVector<> & cf_lset_at_element,
                                                      ELEMENT_TYPE et,
                                                      DOMAIN_TYPE dt,
