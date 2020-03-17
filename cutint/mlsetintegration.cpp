@@ -52,18 +52,14 @@ namespace xintegration
     const IntegrationRule* ir = nullptr;
     if (!cut_element)
     {
-        cout << "relevant, uncut element: standard integration rule" << endl;
-        cout << "--------------------------------------------------" << endl << endl;
-        
-        ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
-        Array<double> wei_arr (ir->Size());
-        for(int i=0; i< ir->Size(); i++)
-        {
-            wei_arr [i] = (*ir)[i].Weight();
-        } 
-        return make_tuple(ir, wei_arr);
+      cout << "relevant, uncut element: standard integration rule" << endl;
+      cout << "--------------------------------------------------" << endl << endl;
+      
+      ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
+      Array<double> wei_arr (ir->Size());
+      for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+      return make_tuple(ir, wei_arr);
     }
-
 
     cout << "further implementation is missing!" << endl;
     // throw Exception("not yet implemented");
