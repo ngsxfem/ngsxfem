@@ -88,7 +88,8 @@ namespace xintegration
         cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
         cout << "-------------------------------------------------------------------------" << endl << endl;
 
-        const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
+        condense_gflsets[0]->GetVector().GetIndirect(dnums, elvec);
+        const IntegrationRule * ir = StraightCutIntegrationRule( elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
         if(ir != nullptr) 
         {
           Array<double> wei_arr (ir->Size());
@@ -96,6 +97,9 @@ namespace xintegration
           return make_tuple(ir, wei_arr);
         }
       }
+      else
+          cout << "Corner Case !!!" << endl;
+          //throw Exception("not yet implemented");
     }
 
     cout << "further implementation is missing!" << endl;
