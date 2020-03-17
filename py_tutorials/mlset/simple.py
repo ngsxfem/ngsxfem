@@ -15,7 +15,7 @@ from netgen.geom2d import SplineGeometry
 # To obtain a mesh with quadrilaterals use 'quad_dominated=True'
 
 square = SplineGeometry()
-square.AddRectangle([-1,-0.5],[1,1.5],bc=1)
+square.AddRectangle([-1,-0.5], [1,1.5], bc=1)
 mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
 
 lsetp1_a = GridFunction(H1(mesh,order=1))

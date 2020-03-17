@@ -20,28 +20,28 @@ namespace xintegration
       throw Exception("no space-time integration with multiple level sets, yet.");
     
     Array<DofId> dnums(0,lh);
-    gflsets[0]->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
-    FlatVector<> elvec(dnums.Size(),lh);
+    gflsets[0]->GetFESpace()->GetDofNrs(trafo.GetElementId(), dnums);
+    FlatVector<> elvec(dnums.Size(), lh);
     FlatMatrix<> elvecs(dnums.Size(), M, lh);
 
     Array<DOMAIN_TYPE> lset_dts(M); //<- domain types corresponding to levelset
     bool compatible = true;
     for (int i = 0; i < M; i++)
     {
-      gflsets[i]->GetVector().GetIndirect(dnums,elvec);
+      gflsets[i]->GetVector().GetIndirect(dnums, elvec);
       elvecs.Col(i) = elvec;
       lset_dts[i] = CheckIfStraightCut(elvec);
       if ((lset_dts[i] != IF) && (lset_dts[i] != dts[i])) compatible = false; //loop could break here now
     }
     
-    cout << "currently on elemenet with ID: " << trafo.GetElementId() << endl << endl;
+    cout << "currently on element with ID: " << trafo.GetElementId() << endl << endl;
     cout << "level set vertex values (one column per lset):\n" << elvecs << endl;
     cout << "domain types current of element (corresp. to mlset): \n" << lset_dts << endl;
     cout << "domain types for integration: \n" << dts << endl;
 
     if (!compatible)
     {
-      cout << "levelset configuration no compatible with integration domain: skipping" << endl;
+      cout << "levelset configuration not compatible with integration domain: skipping" << endl;
       cout << "----------------------------------------------------------------------" << endl << endl;
       return make_tuple(nullptr, Array<double>());
     }
@@ -50,5 +50,8 @@ namespace xintegration
     throw Exception("not yet implemented");
     return make_tuple(nullptr, Array<double>());
   }
+
+
+  // Compute relevant codim 
   
 } // end of namespace
