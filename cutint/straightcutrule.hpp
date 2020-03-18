@@ -111,7 +111,7 @@ namespace xintegration
       SimpleX s;
 
       LevelsetCutSimplex(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, SimpleX a_s) : LevelsetCutPolytopE(a_lset, a_dt), s(a_s) { ;}
-  private:
+  //private:
       void Decompose();
       Array<SimpleX> SimplexDecomposition; //TODO: Cf. line 117
   };

@@ -685,22 +685,45 @@ namespace xintegration
     //This is how to create all the Lset Wrappers ... Collecting them in vector<> or Array<> does not work as there is no empty constructor...
     //Let's see later how we actually will exploit those wrappers...
 
-    //vector<LevelsetWrapper> lsets(M);
-
-    for (int i = 0; i<M; i++){
+    auto getLseti_onrefgeom = [&cf_lsets_at_element, &et](int i) {
         vector<double> lset_vals(cf_lsets_at_element.Height());
-        cout << "Creating local lset with vals: ";
-        for(int ii=0; ii<lset_vals.size(); ii++) {
+        for(int ii=0; ii<lset_vals.size(); ii++)
             lset_vals[ii] = cf_lsets_at_element(ii, i);
-            cout << lset_vals[ii] << endl;
-        }
         LevelsetWrapper lset(lset_vals, et);
-        //lsets.push_back(lset);
-    }
+        return lset;
+    };
 
     const IntegrationRule* ir = nullptr;
 
-    cout << "TODO: Insert corner case rule creation here..." << endl;
+    // outer level
+    LevelsetCutSimplex s(getLseti_onrefgeom(0), dts[0], SimpleX(et));
+    s.Decompose();
+    Array<SimpleX> simplices_at_last_level(s.SimplexDecomposition);
+
+    for (int i = 1; i < M; i++) // all levelset decompositions after the first
+    {
+      auto lset_on_refgeom = getLseti_onrefgeom(i);
+      Array<SimpleX> simplices_at_current_level(0);
+      for (auto s : simplices_at_last_level)
+      {
+        auto lset_on_s = lset_on_refgeom; lset_on_s.update_initial_coefs(s.points);
+        auto dt_of_s = CheckIfStraightCut(lset_on_s.initial_coefs);
+        if (dt_of_s == IF){
+            LevelsetCutSimplex sub_s(lset_on_s, dts[i], s);
+            sub_s.Decompose();
+            // put sub_s.SimplexDecomposition members to simplices_at_current_level
+            simplices_at_current_level.Append(sub_s.SimplexDecomposition);
+        }
+        else if(dt_of_s == dts[i])
+            simplices_at_current_level.Append(s);
+      }
+      simplices_at_last_level = simplices_at_current_level;
+    }
+
+    auto myir = new (lh) IntegrationRule;
+    for(auto final_sub_s : simplices_at_last_level)
+        final_sub_s.GetPlainIntegrationRule(*myir, intorder);
+    ir = myir;
 
     return ir;
   }
