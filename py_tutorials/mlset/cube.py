@@ -11,7 +11,7 @@ from xfem import *
 
 geo = CSGeometry()
 geo.Add(OrthoBrick(Pnt(-0.8,-0.8,-0.8), Pnt(0.8,0.8,0.8)))
-mesh = Mesh(geo.GenerateMesh(maxh=1))
+mesh = Mesh(geo.GenerateMesh(maxh=0.4))
 
 
 V = H1(mesh,order=1)
