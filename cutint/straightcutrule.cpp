@@ -662,7 +662,7 @@ namespace xintegration
 
   const IntegrationRule * StraightCutsIntegrationRule(const FlatMatrix<> & cf_lsets_at_element,
                                                      const ElementTransformation & trafo,
-                                                     const Array<DOMAIN_TYPE> &dts,
+                                                     const Array<DOMAIN_TYPE> & dts,
                                                      int intorder,
                                                      SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                      LocalHeap & lh,
@@ -675,7 +675,7 @@ namespace xintegration
     auto et = trafo.GetElementType();
     int M = cf_lsets_at_element.Width();
 
-    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)){
+    if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM)){
       cout << "Element Type: " << et << endl;
       throw Exception("only trigs, tets for now");
     }

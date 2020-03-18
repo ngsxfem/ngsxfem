@@ -34,6 +34,7 @@ namespace xintegration
     Array<DOMAIN_TYPE> condense_dts;// only for debugging
     Array<DOMAIN_TYPE> condense_target_dts;
 
+    // Check if element is relevant for the given integration domain
     for (int i = 0; i < M; i++)
     {
       gflsets[i]->GetVector().GetIndirect(dnums, elvec);
@@ -55,21 +56,24 @@ namespace xintegration
       return make_tuple(nullptr, Array<double>());
     }
  
+    
     if (!cut_element)
     {
       cout << "relevant, uncut element: standard integration rule" << endl;
       cout << "--------------------------------------------------" << endl << endl;
       
+      // Uncut elements simply return the standard integration rule
       ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
       Array<double> wei_arr (ir->Size());
       for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
       return make_tuple(ir, wei_arr);
     }
+
     else
     {
       cout << "This element is cut and relevant";
 
-      //condense lset_dts
+      // We reduce the domain type array to the necessary domain types and corresponding level sets 
       for (int i = 0; i < M; i++)
       {
         if ((lset_dts[i] == IF) || (lset_dts[i] != dts[i]))
@@ -82,14 +86,14 @@ namespace xintegration
       cout << "domain type after condensing\n" << condense_dts << endl;// only for debugging
       cout << "target type after condensing\n" << condense_target_dts << endl;
 
-      // If only one cut remaining, use standard cut integration rule
+      // If the element is cut by only one levelset, then we can use standard cut integration rules
       if (condense_dts.Size() == 1)
       {      
         cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
         cout << "-------------------------------------------------------------------------" << endl << endl;
 
         condense_gflsets[0]->GetVector().GetIndirect(dnums, elvec);
-        const IntegrationRule * ir = StraightCutIntegrationRule( elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
+        const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
         if(ir != nullptr) 
         {
           Array<double> wei_arr (ir->Size());
@@ -97,21 +101,24 @@ namespace xintegration
           return make_tuple(ir, wei_arr);
         }
       }
-      else { // At least for debugging, this else case should also be able to handle the "if case"
-          FlatMatrix<> elvecs_cond(dnums.Size(), condense_dts.Size(), lh);
-          for (int i = 0; i < condense_dts.Size(); i++)
-          {
-            condense_gflsets[i]->GetVector().GetIndirect(dnums, elvec);
-            elvecs_cond.Col(i) = elvec;
-          }
+      else 
+      { 
+        // An element cut by multiple level sets
+        // At least for debugging, this else case should also be able to handle the "if case"
+        FlatMatrix<> elvecs_cond(dnums.Size(), condense_dts.Size(), lh);
+        for (int i = 0; i < condense_dts.Size(); i++)
+        {
+          condense_gflsets[i]->GetVector().GetIndirect(dnums, elvec);
+          elvecs_cond.Col(i) = elvec;
+        }
 
-          const IntegrationRule * ir = StraightCutsIntegrationRule( elvecs_cond, trafo, condense_target_dts, intorder, quad_dir_policy, lh);
-          if(ir != nullptr)
-          {
-            Array<double> wei_arr (ir->Size());
-            for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-            return make_tuple(ir, wei_arr);
-          }
+        const IntegrationRule * ir = StraightCutsIntegrationRule(elvecs_cond, trafo, condense_target_dts, intorder, quad_dir_policy, lh);
+        if(ir != nullptr)
+        {
+          Array<double> wei_arr (ir->Size());
+          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+          return make_tuple(ir, wei_arr);
+        }
       }
     }
 
