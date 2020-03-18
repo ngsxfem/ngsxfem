@@ -34,8 +34,9 @@ area = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b],
                      cf=1,
                      order=0,
                      domain_types=[POS,NEG])
-print("area =", area)                     
-print("area error =", abs(area-0.25))
+
+print("area = {:10.8f}".format(area))                     
+print("area error = {:4.3e}".format(abs(area-0.25)))     
 # inner = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
 #           "domain_type" : (NEG,NEG,NEG)}
 
