@@ -79,7 +79,7 @@ point_val_y = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                              order=0,
                              domain_types=[NEG,IF,IF])
 print("point_val_y =", point_val_y)                     
-print("point_val_y =", abs(point_val_y-0))                     
+print("point_val_y error =", abs(point_val_y-0))
 
 input("")
 
@@ -89,7 +89,7 @@ point_val_yp = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                              order=0,
                              domain_types=[NEG,IF,IF])
 print("point_val_yp =", point_val_yp)                     
-print("point_val_yp =", abs(point_val_yp-1))                     
+print("point_val_yp error =", abs(point_val_yp-1))
 
 input("")
 
