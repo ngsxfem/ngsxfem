@@ -29,6 +29,8 @@ Draw (lsetp1_b, mesh, "lset_b")
 
 Draw (lsetp1_a * lsetp1_b, mesh, "lset_mult")
 
+##First test: A little square on the right bottom
+
 area = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b],
                      mesh=mesh,
                      cf=1,
@@ -48,3 +50,13 @@ print("area error =", abs(area-0.25))
 # triangle_area = Integrate( levelset_domain=inner, cf=1, mesh=mesh, order=2)
 # triangle_boundary_length = Integrate( levelset_domain=boundary, cf=1, mesh=mesh, order=2)
 # outer_area = Integrate( levelset_domain=outer, cf=1, mesh=mesh, order=2)
+
+##Second test: A line between (0.5,0.5) and (1,0.5)
+
+length = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b],
+                     mesh=mesh,
+                     cf=1,
+                     order=0,
+                     domain_types=[POS,IF])
+print("length =", length)                     
+print("length error =", abs(length-0.5))
