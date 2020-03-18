@@ -48,8 +48,8 @@ length1 = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                      cf=1,
                      order=0,
                      domain_types=[IF,NEG,NEG])
-print("length =", length1)                     
-print("length error =", abs(length1-1))                     
+print("length1 =", length1)                     
+print("length1 error =", abs(length1-1))                     
 
 input("")
 
@@ -58,8 +58,8 @@ length2 = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                      cf=1,
                      order=0,
                      domain_types=[NEG,IF,NEG])
-print("length =", length2)                     
-print("length error =", abs(length2-sqrt(5/2)))                     
+print("length2 =", length2)                     
+print("length2 error =", abs(length2-sqrt(5/2)))                     
 
 input("")
 
@@ -68,8 +68,8 @@ length3 = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                      cf=1,
                      order=0,
                      domain_types=[NEG,NEG,IF])
-print("length =", length3)                     
-print("length error =", abs(length3-sqrt(5/2)))                     
+print("length3 =", length3)                     
+print("length3 error =", abs(length3-sqrt(5/2)))                     
 
 input("")
 
