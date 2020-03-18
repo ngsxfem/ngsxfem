@@ -37,8 +37,62 @@ area = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
                      cf=1,
                      order=0,
                      domain_types=[NEG,NEG,NEG])
-print("area =", area)                     
-print("area error =", abs(area-0.5))                     
+
+print("area = {:10.8f}".format(area))                     
+print("area error = {:4.3e}".format(abs(area-0.5)))  
+                   
+input("")
+
+length1 = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
+                     mesh=mesh,
+                     cf=1,
+                     order=0,
+                     domain_types=[IF,NEG,NEG])
+print("length =", length1)                     
+print("length error =", abs(length1-1))                     
+
+input("")
+
+length2 = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
+                     mesh=mesh,
+                     cf=1,
+                     order=0,
+                     domain_types=[NEG,IF,NEG])
+print("length =", length2)                     
+print("length error =", abs(length2-sqrt(5/2)))                     
+
+input("")
+
+length3 = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
+                     mesh=mesh,
+                     cf=1,
+                     order=0,
+                     domain_types=[NEG,NEG,IF])
+print("length =", length3)                     
+print("length error =", abs(length3-sqrt(5/2)))                     
+
+input("")
+
+point_val_y = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
+                             mesh=mesh,
+                             cf=y,
+                             order=0,
+                             domain_types=[NEG,IF,IF])
+print("point_val_y =", point_val_y)                     
+print("point_val_y =", abs(point_val_y-0))                     
+
+input("")
+
+point_val_yp = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b,lsetp1_c],
+                             mesh=mesh,
+                             cf=1-y,
+                             order=0,
+                             domain_types=[NEG,IF,IF])
+print("point_val_yp =", point_val_yp)                     
+print("point_val_yp =", abs(point_val_yp-1))                     
+
+input("")
+
 # inner = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
 #           "domain_type" : (NEG,NEG,NEG)}
 
