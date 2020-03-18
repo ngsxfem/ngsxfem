@@ -720,7 +720,7 @@ namespace xintegration
       simplices_at_last_level = simplices_at_current_level;
     }
 
-    auto myir_untrafo = new (lh) IntegrationRule;
+    auto myir_untrafo = new (lh) IntegrationRule(0, lh);
     for(auto final_sub_s : simplices_at_last_level)
         final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
 
@@ -739,9 +739,21 @@ namespace xintegration
         else TransformQuadUntrafoToIRInterface<3>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
         ir = myir;
     }
-    else {
-        throw Exception("Codim > 1 not yet implemented");
+    else if(dt_is_if_indices.size() == 2) {
+        // Codim 2 for 2D
+        if(DIM != 2) throw Exception("Codim 2 only in 2D yet!");
+
+        auto myir = new (lh) IntegrationRule(0, lh);
+        for(int i=0; i < myir_untrafo->Size(); i++){
+            auto old_weight = (*myir_untrafo)[i].Weight();
+            MappedIntegrationPoint<2,2> mip( (*myir_untrafo)[i],trafo);
+            myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+        }
+
+        if(myir->Size() == 0) ir = nullptr;
+        else ir = myir;
     }
+    else throw Exception("Codim >2 not implemented!");
 
     return ir;
   }
