@@ -720,10 +720,28 @@ namespace xintegration
       simplices_at_last_level = simplices_at_current_level;
     }
 
-    auto myir = new (lh) IntegrationRule;
+    auto myir_untrafo = new (lh) IntegrationRule;
     for(auto final_sub_s : simplices_at_last_level)
-        final_sub_s.GetPlainIntegrationRule(*myir, intorder);
-    ir = myir;
+        final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
+
+    vector<int> dt_is_if_indices;
+    for(int i=0; i<M; i++) if ( dts[i] == IF) dt_is_if_indices.push_back(i);
+
+    if(dt_is_if_indices.size() == 0) //Plain volume case; simple
+        ir = myir_untrafo;
+    else if(dt_is_if_indices.size() == 1){
+        //Do the rescaling according to the one lset function
+        auto lset = getLseti_onrefgeom( dt_is_if_indices[0] );
+
+        auto myir = new (lh) IntegrationRule(myir_untrafo->Size(), lh);
+        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        else TransformQuadUntrafoToIRInterface<3>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        ir = myir;
+    }
+    else {
+        throw Exception("Codim > 1 not yet implemented");
+    }
 
     return ir;
   }
