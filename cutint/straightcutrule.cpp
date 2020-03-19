@@ -753,7 +753,21 @@ namespace xintegration
         if(myir->Size() == 0) ir = nullptr;
         else ir = myir;
     }
-    else throw Exception("Codim >2 not implemented!");
+    else if(dt_is_if_indices.size() == 3){
+        // Codim 3 for 3D
+        if(DIM != 3) throw Exception("Codim 3 only in 3D!");
+
+        auto myir = new (lh) IntegrationRule(0, lh);
+        for(int i=0; i < myir_untrafo->Size(); i++){
+            auto old_weight = (*myir_untrafo)[i].Weight();
+            MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
+            myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+        }
+
+        if(myir->Size() == 0) ir = nullptr;
+        else ir = myir;
+    }
+    else throw Exception("Codim possibilities available: 2D: 0,1,2; 3D: 0,1,3");
 
     return ir;
   }
