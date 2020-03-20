@@ -6,7 +6,7 @@ from xfem import *
 # import ngsolve
 import operator
 from copy import copy
-from itertools import permutations
+from itertools import permutations, product
 
 '''
 Below we draft objects for multi level set domains
@@ -134,13 +134,19 @@ class Combined_DomainType():
         if type(self.dtlist1) == DomainTypeArray and type(self.dtlist2) == DomainTypeArray:
             # Combine two DomainTypeArrays
             if self.operator == operator.and_:
+                dtl_out = list(self.dtlist1.dtlist)
                 for i, dt in enumerate(self.dtlist1):
                     if dt != self.dtlist2.dtlist[i]:
-                        return []
+                        if dt in [POS, NEG] and self.dtlist2.dtlist[i] in [POS, NEG]:
+                            # Empty intersection
+                            return []
+                        elif dt == IF or self.dtlist2.dtlist[i] == IF:
+                            # Increase codim, dtlist1 will be returned if non-empty intersection
+                            dtl_out[i] = IF
                 else:
-                    return self.dtlist1.unroll()
+                    return [tuple(dtl_out)]
             elif self.operator == operator.or_:
-                return list(set(self.dtlist1.unroll() + elf.dtlist2.unroll()))
+                return list(set(self.dtlist1.unroll() + self.dtlist2.unroll()))
             else:
                 raise Exception("Unexpected operator (1)...")
         elif self.dtlist2 == None:
@@ -162,8 +168,27 @@ class Combined_DomainType():
             # One Combined_TypeArray and one DomainTypeArray to unroll
             dtl1_unrolled, dtl2_unrolled = self.dtlist1.unroll(), self.dtlist2.unroll()
             if self.operator == operator.and_:
-                temp = set(dtl2_unrolled) 
-                return [dtt for dtt in dtl1_unrolled if dtt in temp] 
+                if self.codim == 0:
+                    temp = set(dtl2_unrolled) 
+                    return [dtt for dtt in dtl1_unrolled if dtt in temp]
+                else:
+                    dtl_out = []
+                    for dtt1, dtt2 in product(dtl1_unrolled, dtl2_unrolled):
+                        if dtt1 == dtt2 :
+                            dtl_out.append(dtt1)
+                            continue
+                        dtt_out = []
+                        for i, dt in enumerate(dtt1):
+                            if dt != dtt2[i]:
+                                if dt in [POS, NEG] and dtt2[i] in [POS, NEG]:
+                                    break
+                                else:
+                                    dtt_out.append(IF)
+                            else:
+                                dtt_out.append(dt)
+                        else:
+                            dtl_out.append(tuple(dtt_out))
+                    return list(set(dtl_out))
             elif self.operator == operator.or_:
                 return list(set(dtl1_unrolled + dtl2_unrolled))
             else:
@@ -247,4 +272,21 @@ if __name__ == "__main__":
     print("Combined_DomainType with or")
     print("Unrolled: ", cdta_5.unroll())
     print("Expected: ", [(NEG, POS), (POS, POS), (NEG, NEG)])
+    input("")
+
+    input("Test unroll for higher codim")
+
+
+    cdta_6 = DomainTypeArray((POS, IF, POS)) & DomainTypeArray((IF, NEG, POS))
+    print("Unrolled: ", cdta_6.unroll())
+    print("Expected: ", [(IF, IF, POS)])
+    input("")
+
+    cdta_7 = DomainTypeArray((IF, POS, NEG, NEG)) | DomainTypeArray((POS, IF, NEG, NEG))
+    cdta_8 = DomainTypeArray((POS, POS, IF, NEG)) | DomainTypeArray((POS, POS, NEG, IF))
+    cdta_9 = cdta_7 & cdta_8
+
+    print("Unrolled: ", cdta_9.unroll())
+    print("Expected: ", [(POS, IF, IF, NEG), (IF, POS, IF, NEG),
+                         (POS, IF, NEG, IF), (IF, POS, NEG, IF)])
     input("")
