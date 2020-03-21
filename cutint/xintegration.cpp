@@ -1,4 +1,5 @@
 #include "xintegration.hpp"
+#include "mlsetintegration.hpp"
 #include "straightcutrule.hpp"
 #include "spacetimecutrule.hpp"
 #include "../spacetime/SpaceTimeFE.hpp"
@@ -10,33 +11,32 @@ namespace xintegration
   using ngfem::INT;
 
 
-  tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
-                                                   shared_ptr<GridFunction> gflset,
-                                                   const ElementTransformation & trafo,
-                                                   DOMAIN_TYPE dt,
-                                                   int intorder,
-                                                   int time_intorder,
-                                                   LocalHeap & lh,
-                                                   int subdivlvl,
-                                                   SWAP_DIMENSIONS_POLICY quad_dir_policy)
+  tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
+                                                                         const ElementTransformation & trafo,
+                                                                         LocalHeap & lh)
   {
     static Timer t ("CreateCutIntegrationRule");
-    // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
-    // temporary fix for ET_SEGM
-    /*
-    if (trafo.GetElementType() == ET_SEGM)
-      return CutIntegrationRule(cflset != nullptr ? cflset : gflset, trafo, dt, intorder, subdivlvl, lh);
-
-    //cout << "time_intorder = " << time_intorder << endl;
-    */
-
-    if (gflset != nullptr)
+    if (lsetintdom.IsMultiLevelsetDomain())
     {
-      Array<DofId> dnums(0,lh);
-      gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
-      FlatVector<> elvec(dnums.Size(),lh);
-      gflset->GetVector().GetIndirect(dnums,elvec);
-      if (time_intorder >= 0) {
+      return CreateMultiLevelsetCutIntegrationRule(lsetintdom, trafo, lh);
+    }
+    else
+    {
+      auto gflset = lsetintdom.GetLevelsetGF();
+      auto cflset = lsetintdom.GetLevelsetCF();
+      int intorder = lsetintdom.GetIntegrationOrder();
+      int time_intorder = lsetintdom.GetTimeIntegrationOrder();
+      DOMAIN_TYPE dt = lsetintdom.GetDomainType();
+      SWAP_DIMENSIONS_POLICY quad_dir_policy = lsetintdom.GetSwapDimensionPolicy();
+      int subdivlvl = lsetintdom.GetNSubdivisionLevels();
+      
+      if (gflset != nullptr)
+      {
+        Array<DofId> dnums(0,lh);
+        gflset->GetFESpace()->GetDofNrs(trafo.GetElementId(),dnums);
+        FlatVector<> elvec(dnums.Size(),lh);
+        gflset->GetVector().GetIndirect(dnums,elvec);
+        if (time_intorder >= 0) {
           FESpace* raw_FE = (gflset->GetFESpace()).get();
           SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
           ScalarFiniteElement<1>* fe_time = nullptr;
@@ -53,31 +53,49 @@ namespace xintegration
           else
             fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
           return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
-      } else {
+        } else {
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
           if(ir != nullptr) {
-              Array<double> wei_arr (ir->Size());
-              for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-              return make_tuple(ir, wei_arr);
+            Array<double> wei_arr (ir->Size());
+            for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+            return make_tuple(ir, wei_arr);
           }
           else return make_tuple(nullptr, Array<double>());
+        }
       }
-    }
-    else if (cflset != nullptr)
-    {
-      if (time_intorder < 0) {
+      else if (cflset != nullptr)
+      {
+        if (time_intorder < 0) {
           const IntegrationRule * ir = CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
           if(ir != nullptr) {
-              Array<double> wei_arr (ir->Size());
-              for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-              return make_tuple(ir, wei_arr);
+            Array<double> wei_arr (ir->Size());
+            for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+            return make_tuple(ir, wei_arr);
           }
           else return make_tuple(nullptr, Array<double>());
+        }
+        else throw Exception("Space-time requires the levelset as a GridFunction!");
       }
-      else throw Exception("Space-time requires the levelset as a GridFunction!");
+      else throw Exception("Only null information provided, null integration rule served!");
+      
     }
-    else throw Exception("Only null information provided, null integration rule served!");
   }
+
+  // old style (before introduction of LevelsetIntegrationDomain):
+  tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
+                                                   shared_ptr<GridFunction> gflset,
+                                                   const ElementTransformation & trafo,
+                                                   DOMAIN_TYPE dt,
+                                                   int intorder,
+                                                   int time_intorder,
+                                                   LocalHeap & lh,
+                                                   int subdivlvl,
+                                                   SWAP_DIMENSIONS_POLICY quad_dir_policy)
+  {
+    LevelsetIntegrationDomain lsetintdom(cflset, gflset,dt,intorder,time_intorder,subdivlvl,quad_dir_policy);
+    return CreateCutIntegrationRule(lsetintdom, trafo, lh);
+  }
+  
   template<int SD>
   PointContainer<SD>::PointContainer()
   {

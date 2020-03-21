@@ -148,12 +148,19 @@ quad_dir_policy : int
             gf_lsets = makeCArray<shared_ptr<GridFunction>> (py::extract<py::list> (lsets)());
           else
             Exception("lsets not compatible");
-          Array<DOMAIN_TYPE> dts;
+          Array<DOMAIN_TYPE> dts_;
           if (py::extract<py::list> (dts_in).check())
-            dts = makeCArray<DOMAIN_TYPE> (py::extract<py::list> (dts_in)());
+            dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::list> (dts_in)());
           else
             Exception("dts not compatible");
 
+
+          Array<Array<DOMAIN_TYPE>> dts(1);
+          dts[0] = dts_;
+          LevelsetIntegrationDomain lsetintdom(gf_lsets,dts,order,time_order,0,quad_dir_policy);
+
+          
+          
           LocalHeap lh(heapsize, "IntegrateMLsetDomain");
 
           double sum = 0.0;
@@ -167,7 +174,9 @@ quad_dir_policy : int
 
                const IntegrationRule * ir;
                Array<double> wei_arr;
-               tie (ir, wei_arr) = CreateCutIntegrationRule(gf_lsets, trafo, dts, order, time_order, lh, quad_dir_policy);
+               tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom,trafo,lh);
+               // CreateCutIntegrationRule(gf_lsets, trafo, dts, order, time_order, lh, quad_dir_policy);
+               // tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, order, time_order, lh, subdivlvl, quad_dir_policy);
 
                if (ir != nullptr)
                {

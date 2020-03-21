@@ -1,6 +1,7 @@
 if(NETGEN_USE_PYTHON)
     add_ngsolve_python_module(ngsxfem_py 
       python_ngsxfem.cpp
+      ../cutint/lsetintdomain.cpp
       ../cutint/fieldeval.cpp
       ../cutint/spacetimecutrule.cpp
       ../cutint/straightcutrule.cpp

@@ -16,5 +16,9 @@ namespace xintegration
                                                                           int time_intorder,
                                                                           LocalHeap & lh,
                                                                           SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL);
+
+  tuple<const IntegrationRule *, Array<double> > CreateMultiLevelsetCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
+                                                                                       const ElementTransformation & trafo,
+                                                                                       LocalHeap & lh);
 }
 

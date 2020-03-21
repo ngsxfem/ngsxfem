@@ -6,15 +6,21 @@ namespace xintegration
   using ngfem::INT;
 
 
-  /// Mlset-integrationRule Factory
-  tuple<const IntegrationRule *, Array<double> > CreateCutIntegrationRule(Array<shared_ptr<GridFunction>> & gflsets,
-                                                                          const ElementTransformation & trafo,
-                                                                          Array<DOMAIN_TYPE> & dts,
-                                                                          int intorder,
-                                                                          int time_intorder,
-                                                                          LocalHeap & lh,
-                                                                          SWAP_DIMENSIONS_POLICY quad_dir_policy)
+  tuple<const IntegrationRule *, Array<double> > CreateMultiLevelsetCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
+                                                                                       const ElementTransformation & trafo,
+                                                                                       LocalHeap & lh)
   {
+    const Array<shared_ptr<GridFunction>> & gflsets (lsetintdom.GetLevelsetGFs());
+    int intorder = lsetintdom.GetIntegrationOrder();
+    int time_intorder = lsetintdom.GetTimeIntegrationOrder();
+    SWAP_DIMENSIONS_POLICY quad_dir_policy = lsetintdom.GetSwapDimensionPolicy();
+
+    Array<DOMAIN_TYPE> & dts (lsetintdom.GetDomainTypes()[0]);
+    // TODO
+    // const Array<Array<DOMAIN_TYPE>> & list_dts (lsetintdom.GetDomainTypes()); //TODO -> should yield in a loop...
+    // for (auto dts: list_dts) ... gather rules..
+
+    
     int M = gflsets.Size();
     if (time_intorder >= 0)
       throw Exception("no space-time integration with multiple level sets, yet.");
@@ -125,9 +131,22 @@ namespace xintegration
     cout << "further implementation is missing!" << endl;
     // throw Exception("not yet implemented");
     return make_tuple(nullptr, Array<double>());
+      
   }
-
-
-  // Compute relevant codim 
+  
+  /// Mlset-integrationRule Factory
+  tuple<const IntegrationRule *, Array<double> > CreateCutIntegrationRule(Array<shared_ptr<GridFunction>> & gflsets,
+                                                                          const ElementTransformation & trafo,
+                                                                          Array<DOMAIN_TYPE> & dts_in,
+                                                                          int intorder,
+                                                                          int time_intorder,
+                                                                          LocalHeap & lh,
+                                                                          SWAP_DIMENSIONS_POLICY quad_dir_policy)
+  {
+    Array<Array<DOMAIN_TYPE>> dts(1);
+    dts[0] = dts_in;
+    LevelsetIntegrationDomain lsetintdom(gflsets,dts,intorder,time_intorder,0,quad_dir_policy);
+    return CreateMultiLevelsetCutIntegrationRule(lsetintdom,trafo,lh);
+  }
 
 } // end of namespace
