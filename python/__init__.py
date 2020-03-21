@@ -285,8 +285,11 @@ See documentation of Integrate.
     """
     if not "force_intorder" in levelset_domain or levelset_domain["force_intorder"] == -1:
         levelset_domain["force_intorder"] = -1
+        levelset_domain["order"] = order
     else:
+        levelset_domain["order"] = levelset_domain["force_intorder"]
         order = levelset_domain["force_intorder"]
+    levelset_domain["time_order"] = time_order
 
     if not "subdivlvl" in levelset_domain:
         levelset_domain["subdivlvl"] = 0
@@ -297,13 +300,8 @@ See documentation of Integrate.
     if not "quad_dir_policy" in levelset_domain:
         levelset_domain["quad_dir_policy"] = OPTIMAL
 
-    return IntegrateX(lset=levelset_domain["levelset"],
+    return IntegrateX(levelset_domain = levelset_domain,
                       mesh=mesh, cf=cf,
-                      order=order,
-                      domain_type=levelset_domain["domain_type"],
-                      subdivlvl=levelset_domain["subdivlvl"],
-                      time_order=time_order,
-                      quad_dir_policy=levelset_domain["quad_dir_policy"],
                       heapsize=heapsize)
 
 
