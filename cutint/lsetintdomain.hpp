@@ -1,5 +1,6 @@
 #pragma once
 #include "../utils/ngsxstd.hpp"
+#include <python_ngstd.hpp>
 
 using namespace ngfem;
 using namespace ngcomp;
@@ -135,6 +136,10 @@ namespace xintegration
   private:
   };
 
+
+  std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
+  
+  shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomain(py::dict dictionary);
 
   
 }

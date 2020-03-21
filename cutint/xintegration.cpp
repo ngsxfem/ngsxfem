@@ -106,20 +106,6 @@ namespace xintegration
   };
 
 
-  std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl)
-  {
-    if (subdivlvl != 0)
-      return make_tuple(cflset, nullptr);
-    else
-    {
-      shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
-      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && ( (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace") || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")))
-        return make_tuple(nullptr, ret);
-      else
-        return make_tuple(cflset, nullptr);
-    }
-  }
-
   template<int SD>
   const Vec<SD>* PointContainer<SD>::operator()(const Vec<SD> & p)
   {

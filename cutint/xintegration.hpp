@@ -30,8 +30,6 @@ namespace xintegration
                                                    SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL);
 
   
-  std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
-  
   /// (in order to use std::set-features)
   template< int SD>
   struct Pointless {
