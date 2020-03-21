@@ -46,6 +46,13 @@ print("area error = {:4.3e}".format(abs(area-0.5)))
                    
 input("")
 
+area = Integrate(levelset_domain={"levelset" : [lsetp1_a,lsetp1_b,lsetp1_c], "domain_type": [[NEG,NEG,NEG]]},
+                         mesh=mesh, cf=1, order=0)
+print("[duplicate] area = {:10.8f}".format(area))                     
+print("[duplicate] area error = {:4.3e}".format(abs(area-0.5)))  
+                   
+input("")
+
 length1 = Integrate(levelset_domain={"levelset" : [lsetp1_a,lsetp1_b,lsetp1_c], "domain_type": [IF,NEG,NEG]},
                          mesh=mesh, cf=1, order=0)
 print("length1 =", length1)                     

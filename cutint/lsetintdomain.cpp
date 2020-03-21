@@ -195,22 +195,60 @@ namespace xintegration
     }
     else
     {
-      py::extract<py::list> dts_list(dt_in);
-      if (!dts_list.check())
+      if (subdivlvl > 0)
+        throw Exception("multi level sets don't work with subdivlvl > 0");
+      if (time_order > -1)
+        throw Exception("multi level sets don't work with time_order > 0");
+      
+      py::extract<py::list> dts_list_(dt_in);
+      if (!dts_list_.check())
         throw Exception("domain_type is neither a DOMAIN_TYPE nor a list ... need new candidates..");
-      //TODO: deal with Array<Array<DOMAIN_TYPE>> instead of Array<DOMAIN_TYPE> only
-      Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::list> (dt_in)());
+      auto dts_list(dts_list_());
+
+      int common_length = -1; //not a list
+      for (int i = 0; i < py::len(dts_list); i++)
+      {
+        auto dts_list_entry(dts_list[i]);
+        py::extract<py::list> dta(dts_list_entry);
+        if (!dta.check())
+        {
+          if (common_length != -1)
+            throw Exception("domain_type arrays are incompatible");
+        }
+        else
+        {
+          if ((i>0) && (common_length != py::len(dta())))
+            throw Exception("domain_type arrays have different length");
+          else
+            common_length = py::len(dta());
+        }
+      }
+
       py::extract<py::list> lset_list(lset);
       if (!lset_list.check())
         throw Exception("lset is neither a level set nor a list ... need new candidates..");
       Array<shared_ptr<GridFunction>> gf_lsets;
       gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_list());
-      //TODO: check if entries are GF or only CF
-      Array<Array<DOMAIN_TYPE>> dts(1);
-      dts[0] = dts_;
-      if (subdivlvl > 0)
-        throw Exception("multi level sets only work with grid functions and subdivlvl == 0.");
-      return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,0,quad_dir_policy);
+      
+      if (common_length == -1) // not a list of lists
+      {
+        Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (dts_list);
+        //TODO: check if entries are GF or only CF
+        Array<Array<DOMAIN_TYPE>> dts(1);
+        dts[0] = dts_;
+        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy);
+      }
+      else
+      {
+        Array<Array<DOMAIN_TYPE>> dtas(py::len(dts_list));
+        for (int i = 0; i < py::len(dts_list); i++)
+        {
+          py::extract<py::list> dta(dts_list[i]);
+          dtas[i] = makeCArray<DOMAIN_TYPE> (dta());
+        }
+        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy);
+        
+      }
     }
   }
   

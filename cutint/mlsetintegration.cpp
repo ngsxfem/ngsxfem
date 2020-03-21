@@ -10,16 +10,20 @@ namespace xintegration
                                                                                        const ElementTransformation & trafo,
                                                                                        LocalHeap & lh)
   {
+    bool debug_out = false;
+
+    Array<DOMAIN_TYPE> & dts (lsetintdom.GetDomainTypes()[0]);
+    if (lsetintdom.GetDomainTypes().Size() > 1)
+      throw Exception("not gathering the integration rules from the domain_type_arrays together, yet");
+    // TODO
+    // const Array<Array<DOMAIN_TYPE>> & list_dts (lsetintdom.GetDomainTypes()); //TODO -> should yield in a loop...
+    // for (auto dts: list_dts) ... gather rules..
+    
+
     const Array<shared_ptr<GridFunction>> & gflsets (lsetintdom.GetLevelsetGFs());
     int intorder = lsetintdom.GetIntegrationOrder();
     int time_intorder = lsetintdom.GetTimeIntegrationOrder();
     SWAP_DIMENSIONS_POLICY quad_dir_policy = lsetintdom.GetSwapDimensionPolicy();
-
-    Array<DOMAIN_TYPE> & dts (lsetintdom.GetDomainTypes()[0]);
-    // TODO
-    // const Array<Array<DOMAIN_TYPE>> & list_dts (lsetintdom.GetDomainTypes()); //TODO -> should yield in a loop...
-    // for (auto dts: list_dts) ... gather rules..
-
     
     int M = gflsets.Size();
     if (time_intorder >= 0)
@@ -49,25 +53,33 @@ namespace xintegration
       if ((lset_dts[i] != IF) && (lset_dts[i] != dts[i])) compatible = false; //loop could break here now
       else if (lset_dts[i] == IF) cut_element = true;
     }
-    
-    cout << "currently on element with ID: " << trafo.GetElementId() << endl << endl;
-    cout << "level set vertex values (one column per lset):\n" << elvecs << endl;
-    cout << "domain types current of element (corresp. to mlset): \n" << lset_dts << endl;
-    cout << "domain types for integration: \n" << dts << endl;
 
+    if (debug_out)
+    {
+      cout << "currently on element with ID: " << trafo.GetElementId() << endl << endl;
+      cout << "level set vertex values (one column per lset):\n" << elvecs << endl;
+      cout << "domain types current of element (corresp. to mlset): \n" << lset_dts << endl;
+      cout << "domain types for integration: \n" << dts << endl;
+    }
+    
     if (!compatible)
     {
-      cout << "levelset configuration not compatible with integration domain: skipping" << endl;
-      cout << "----------------------------------------------------------------------" << endl << endl;
+      if (debug_out)
+      {
+        cout << "levelset configuration not compatible with integration domain: skipping" << endl;
+        cout << "----------------------------------------------------------------------" << endl << endl;
+      }
       return make_tuple(nullptr, Array<double>());
     }
  
     
     if (!cut_element)
     {
-      cout << "relevant, uncut element: standard integration rule" << endl;
-      cout << "--------------------------------------------------" << endl << endl;
-      
+      if (debug_out)
+      {
+        cout << "relevant, uncut element: standard integration rule" << endl;
+        cout << "--------------------------------------------------" << endl << endl;
+      }      
       // Uncut elements simply return the standard integration rule
       ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
       Array<double> wei_arr (ir->Size());
@@ -77,7 +89,8 @@ namespace xintegration
 
     else
     {
-      cout << "This element is cut and relevant";
+      if (debug_out)
+        cout << "This element is cut and relevant";
 
       // We reduce the domain type array to the necessary domain types and corresponding level sets 
       for (int i = 0; i < M; i++)
@@ -89,15 +102,19 @@ namespace xintegration
           condense_gflsets.Append(gflsets[i]);
         }
       }
-      cout << "domain type after condensing\n" << condense_dts << endl;// only for debugging
-      cout << "target type after condensing\n" << condense_target_dts << endl;
-
+      if (debug_out)
+      {
+        cout << "domain type after condensing\n" << condense_dts << endl;// only for debugging
+        cout << "target type after condensing\n" << condense_target_dts << endl;
+      }
       // If the element is cut by only one levelset, then we can use standard cut integration rules
       if (condense_dts.Size() == 1)
       {      
-        cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
-        cout << "-------------------------------------------------------------------------" << endl << endl;
-
+        if (debug_out)
+        {
+          cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
+          cout << "-------------------------------------------------------------------------" << endl << endl;
+        }
         condense_gflsets[0]->GetVector().GetIndirect(dnums, elvec);
         const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
         if(ir != nullptr) 
@@ -128,8 +145,6 @@ namespace xintegration
       }
     }
 
-    cout << "further implementation is missing!" << endl;
-    // throw Exception("not yet implemented");
     return make_tuple(nullptr, Array<double>());
       
   }
