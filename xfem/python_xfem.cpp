@@ -612,12 +612,8 @@ time_order : int
 )raw_string")
     );
 
-  m.def("SymbolicCutLFI", [](PyCF lset,
-                             DOMAIN_TYPE dt,
-                             int order,
-                             int time_order,
-                             int subdivlvl,
-                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
+  
+  m.def("SymbolicCutLFI", [](py::dict lsetdom,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -638,9 +634,8 @@ time_order : int
           if (element_boundary || skeleton)
             throw Exception("No Facet LFI with Symbolic cuts..");
 
-          auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol,vb);
-          lfime->SetTimeIntegrationOrder(time_order);
-          shared_ptr<LinearFormIntegrator> lfi = lfime;
+          shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
+          auto lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, vb);
 
           if (py::extract<py::list> (definedon).check())
             lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -659,12 +654,7 @@ time_order : int
 
           return PyLFI(lfi);
         },
-        py::arg("lset"),
-        py::arg("domain_type")=NEG,
-        py::arg("force_intorder")=-1,
-        py::arg("time_order")=-1,
-        py::arg("subdivlvl")=0,
-        py::arg("quad_dir_policy")=FIND_OPTIMAL,
+        py::arg("levelset_domain"),
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),

@@ -15,33 +15,13 @@ namespace ngfem
 {
 
   SymbolicCutLinearFormIntegrator ::
-  SymbolicCutLinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
-                                   shared_ptr<CoefficientFunction> acf,
-                                   DOMAIN_TYPE adt,
-                                   int aforce_intorder,
-                                   int asubdivlvl,
-                                   SWAP_DIMENSIONS_POLICY apol,
-                                   VorB vb)
-    : SymbolicLinearFormIntegrator(acf,vb,VOL), cf_lset(acf_lset), dt(adt),
-      force_intorder(aforce_intorder), subdivlvl(asubdivlvl), pol(apol)
-  {
-    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
-    lsetintdom = make_shared<LevelsetIntegrationDomain>(cf_lset,gf_lset,adt,-1,-1,subdivlvl,pol);
-  }
-
-  SymbolicCutLinearFormIntegrator ::
   SymbolicCutLinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                    shared_ptr<CoefficientFunction> acf,
                                    VorB vb)
-    : SymbolicLinearFormIntegrator(acf,vb,VOL),
-      cf_lset(lsetintdom_in.GetLevelsetCF()),
-      gf_lset(lsetintdom_in.GetLevelsetGF()),
-      dt(lsetintdom_in.GetDomainType()),
-      force_intorder(-1),
-      subdivlvl(lsetintdom_in.GetNSubdivisionLevels()),
-      pol(lsetintdom_in.GetSwapDimensionPolicy())
+    : SymbolicLinearFormIntegrator(acf,vb,VOL),  
+      lsetintdom(lsetintdom_in)
   {
-    lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
+    ;
   }
 
   
@@ -103,8 +83,9 @@ namespace ngfem
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices right now");
 
-    if (lsetintdom->GetIntegrationOrder() < 0)
-      lsetintdom->SetIntegrationOrder(2*fel.Order());
+    LevelsetIntegrationDomain lsetintdom_local(lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(2*fel.Order());
         
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
@@ -113,8 +94,7 @@ namespace ngfem
 
     const IntegrationRule * ir;
     Array<double> wei_arr;
-    // tie (ir1, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
-    tie (ir, wei_arr) = CreateCutIntegrationRule(*lsetintdom, trafo, lh);
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
     
     if (ir == nullptr)
       return;

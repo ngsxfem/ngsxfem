@@ -81,7 +81,7 @@ namespace xintegration
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
-  : gfs_lset(0),
+  : gfs_lset(1),
     cfs_lset(1),
     dts(1),
     intorder(intorder_in),
@@ -89,7 +89,11 @@ namespace xintegration
     subdivlvl(subdivlvl_in),
     quad_dir_policy(quad_dir_policy_in)
   {
-    cfs_lset[0] = cf_lset_in;    
+    tie(cfs_lset[0],gfs_lset[0]) = CF2GFForStraightCutRule(cf_lset_in,subdivlvl);
+    if (cfs_lset[0] == nullptr)
+      cfs_lset.SetSize(0);
+    if (gfs_lset[0] == nullptr)
+      gfs_lset.SetSize(0);
     dts[0].SetSize(1); dts[0][0] = dt;    
   }
     
@@ -133,28 +137,53 @@ namespace xintegration
 
   shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomain(py::dict dictionary)
   {
+    if (!dictionary.contains("levelset"))
+      throw Exception("You need to provide (a) levelset(s).");
+    
+    if (!dictionary.contains("domain_type"))
+      throw Exception("You need to provide (a) domain type(s).");
+      
     py::object lset = dictionary["levelset"];
     py::object dt_in = dictionary["domain_type"];
-    auto subdivlvl_ = py::extract<int>(dictionary["subdivlvl"]);
-    if (!subdivlvl_.check())
-      throw Exception("data type for subdivlvl not admissible.");
-    int subdivlvl = subdivlvl_();
-    auto order_ = py::extract<int>(dictionary["order"]);
-    if (!order_.check())
-      throw Exception("data type for order not admissible.");
-    int order = order_();
-    auto time_order_ = py::extract<int>(dictionary["time_order"]);
-    if (!time_order_.check())
-      throw Exception("data type for time_order not admissible.");
-    int time_order = time_order_();
-    auto quad_dir_policy_ = py::extract<SWAP_DIMENSIONS_POLICY>(dictionary["quad_dir_policy"]);
-    if (!quad_dir_policy_.check())
-      throw Exception("data type for quad_dir_policy not admissible.");
-    SWAP_DIMENSIONS_POLICY quad_dir_policy = quad_dir_policy_();
 
+    int subdivlvl = 0;
+    if (dictionary.contains("subdivlvl"))
+    {
+      auto subdivlvl_ = py::extract<int>(dictionary["subdivlvl"]);
+      if (!subdivlvl_.check())
+        throw Exception("data type for subdivlvl not admissible.");
+      subdivlvl = subdivlvl_();
+    }
+    
+    int order = -1;
+    if (dictionary.contains("order"))
+    {
+      auto order_ = py::extract<int>(dictionary["order"]);
+      if (!order_.check())
+        throw Exception("data type for order not admissible.");
+      order = order_();
+    }
+    
+    int time_order = -1;
+    if (dictionary.contains("time_order"))
+    {
+      auto time_order_ = py::extract<int>(dictionary["time_order"]);
+      if (!time_order_.check())
+        throw Exception("data type for time_order not admissible.");
+      time_order= time_order_();
+    }
+
+    SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL;
+    if (dictionary.contains("quad_dir_policy"))
+    {
+      auto quad_dir_policy_ = py::extract<SWAP_DIMENSIONS_POLICY>(dictionary["quad_dir_policy"]);
+      if (!quad_dir_policy_.check())
+        throw Exception("data type for quad_dir_policy not admissible.");
+      quad_dir_policy = quad_dir_policy_();
+    }
+    
     if (py::extract<DOMAIN_TYPE> (dt_in).check())
     {
-      cout << "not a list" << endl;
       py::extract<PyCF> pycf(lset);
       py::extract<int> dt(dt_in);
       if (!dt.check())
@@ -166,7 +195,6 @@ namespace xintegration
     }
     else
     {
-      cout << " a list" << endl;
       py::extract<py::list> dts_list(dt_in);
       if (!dts_list.check())
         throw Exception("domain_type is neither a DOMAIN_TYPE nor a list ... need new candidates..");

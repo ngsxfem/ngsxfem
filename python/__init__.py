@@ -128,7 +128,7 @@ levelset_domain : dictionary
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
-  * "force_intorder" : int
+  * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
@@ -215,7 +215,7 @@ levelset_domain : dictionary
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
-  * "force_intorder" : int
+  * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
@@ -251,28 +251,17 @@ Other Parameters :
 
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
-    rule will be applied. This is only relevant for space-time discretizations.
+    rule will be applied. This is only relevant for space-time discretizations. Note that
+    time_order can only be active if the key "time_order" of the levelset_domain is not set (or -1)
 """
     if levelset_domain != None and type(levelset_domain)==dict:
-        if not "force_intorder" in levelset_domain:
-            levelset_domain["force_intorder"] = -1
-        if not "subdivlvl" in levelset_domain:
-            levelset_domain["subdivlvl"] = 0
-        if not "levelset" in levelset_domain:
-            print("Please provide a level set function")
-        if not "domain_type" in levelset_domain:
-            print("Please provide a domain type (NEG,POS or IF)")
-        if not "quad_dir_policy" in levelset_domain:
-            levelset_domain["quad_dir_policy"] = OPTIMAL
-        # print("SymbolicLFI-Wrapper: SymbolicCutLFI called")
-        return SymbolicCutLFI(lset=levelset_domain["levelset"],
-                              domain_type=levelset_domain["domain_type"],
-                              force_intorder=levelset_domain["force_intorder"],
-                              subdivlvl=levelset_domain["subdivlvl"],
-                              quad_dir_policy=levelset_domain["quad_dir_policy"],
+        if "time_order" in kwargs:
+            if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
+                levelset_domain["time_order"] = kwargs["time_order"]
+            del kwargs["time_order"]
+        return SymbolicCutLFI(levelset_domain=levelset_domain,
                               *args, **kwargs)
     else:
-        # print("SymbolicLFI-Wrapper: original SymbolicLFI called")
         if (levelset_domain == None):
             return SymbolicLFI_old(*args,**kwargs)
         else:
@@ -283,23 +272,10 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
     """
-    if not "force_intorder" in levelset_domain or levelset_domain["force_intorder"] == -1:
-        levelset_domain["force_intorder"] = -1
+    if not "order" in levelset_domain or levelset_domain["order"] == -1:
         levelset_domain["order"] = order
-    else:
-        levelset_domain["order"] = levelset_domain["force_intorder"]
-        order = levelset_domain["force_intorder"]
-    levelset_domain["time_order"] = time_order
-
-    if not "subdivlvl" in levelset_domain:
-        levelset_domain["subdivlvl"] = 0
-    if not "levelset" in levelset_domain:
-        print("Please provide a level set function (or a list of level set functions)")
-    if not "domain_type" in levelset_domain:
-        print("Please provide a domain type (NEG,POS or IF or a list)")
-    if not "quad_dir_policy" in levelset_domain:
-        levelset_domain["quad_dir_policy"] = OPTIMAL
-
+    if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
+        levelset_domain["time_order"] = time_order
     return IntegrateX(levelset_domain = levelset_domain,
                       mesh=mesh, cf=cf,
                       heapsize=heapsize)
