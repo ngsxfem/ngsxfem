@@ -20,6 +20,7 @@ namespace ngfem
     int time_order = -1;
     SWAP_DIMENSIONS_POLICY pol;
 
+    shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;    
   public:
 
     SymbolicCutLinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
@@ -30,7 +31,12 @@ namespace ngfem
                                      SWAP_DIMENSIONS_POLICY apol = FIND_OPTIMAL,
                                      VorB vb = VOL);
 
-    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    SymbolicCutLinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
+                                     shared_ptr<CoefficientFunction> acf,
+                                     VorB vb = VOL);
+    
+    // void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    void SetTimeIntegrationOrder(int tiorder) { lsetintdom->SetTimeIntegrationOrder(tiorder); }
     virtual VorB VB () const { return VOL; }
     virtual string Name () const { return string ("Symbolic Cut LFI"); }
 

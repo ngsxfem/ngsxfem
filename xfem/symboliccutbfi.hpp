@@ -114,6 +114,7 @@ namespace ngfem
     }
 
   };
+  
   class SymbolicCutFacetBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:

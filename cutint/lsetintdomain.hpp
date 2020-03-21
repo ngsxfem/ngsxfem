@@ -14,7 +14,8 @@ namespace xintegration
     Array<shared_ptr<GridFunction>> gfs_lset;
     Array<shared_ptr<CoefficientFunction>> cfs_lset;
     Array<Array<DOMAIN_TYPE>> dts;
-    int intorder;
+    int intorder = -1;
+    int force_intorder = -1;
     int time_intorder = -1;
     int subdivlvl = 0;
     SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL;
@@ -22,38 +23,38 @@ namespace xintegration
     LevelsetIntegrationDomain( const Array<shared_ptr<CoefficientFunction>> & cfs_lset_in,
                                const Array<shared_ptr<GridFunction>> & gfs_lset_in,
                                const Array<Array<DOMAIN_TYPE>> & dts_in,
-                               int intorder_in,
+                               int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
                                SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
     LevelsetIntegrationDomain( const Array<shared_ptr<GridFunction>> & gfs_lset_in,
                                const Array<Array<DOMAIN_TYPE>> & dts_in,
-                               int intorder_in,
+                               int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
                                SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
     LevelsetIntegrationDomain( const Array<shared_ptr<CoefficientFunction>> & cfs_lset_in,
                                const Array<Array<DOMAIN_TYPE>> & dts_in,
-                               int intorder_in,
+                               int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
                                SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
     LevelsetIntegrationDomain( const shared_ptr<CoefficientFunction> & cf_lset_in,
                                const shared_ptr<GridFunction> & gf_lset_in,
                                DOMAIN_TYPE dt_in,
-                               int intorder_in,
+                               int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
                                SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
     LevelsetIntegrationDomain( const shared_ptr<GridFunction> & gf_lset_in,
                                DOMAIN_TYPE dt_in,
-                               int intorder_in,
+                               int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
                                SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
     LevelsetIntegrationDomain( const shared_ptr<CoefficientFunction> & cf_lset_in,
                                DOMAIN_TYPE dt_in,
-                               int intorder_in,
+                               int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
                                SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
@@ -117,9 +118,19 @@ namespace xintegration
       return intorder;
     }
 
+    void SetIntegrationOrder (int order) 
+    {
+      intorder = order;
+    }
+    
     int GetTimeIntegrationOrder () const
     {
       return time_intorder;
+    }
+
+    void SetTimeIntegrationOrder (int tiorder) 
+    {
+      time_intorder = tiorder;
     }
 
     int GetNSubdivisionLevels () const
@@ -131,7 +142,6 @@ namespace xintegration
     {
       return quad_dir_policy;
     }
-    
     
   private:
   };
