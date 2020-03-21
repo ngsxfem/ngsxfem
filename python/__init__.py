@@ -291,9 +291,9 @@ See documentation of Integrate.
     if not "subdivlvl" in levelset_domain:
         levelset_domain["subdivlvl"] = 0
     if not "levelset" in levelset_domain:
-        print("Please provide a level set function")
+        print("Please provide a level set function (or a list of level set functions)")
     if not "domain_type" in levelset_domain:
-        print("Please provide a domain type (NEG,POS or IF)")
+        print("Please provide a domain type (NEG,POS or IF or a list)")
     if not "quad_dir_policy" in levelset_domain:
         levelset_domain["quad_dir_policy"] = OPTIMAL
 

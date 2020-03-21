@@ -24,13 +24,11 @@ InterpolateToP1( z - 0.5, lsetp1_z_upper)
 InterpolateToP1( z + 0.5, lsetp1_z_lower)
 
 input("Codim 0")
-volume = IntegrateMLsetDomain(lsets=[lsetp1_x_upper, lsetp1_x_lower, 
-                                     lsetp1_y_upper, lsetp1_y_lower, 
-                                     lsetp1_z_upper, lsetp1_z_lower],
-                              mesh=mesh,
-                              cf=1,
-                              order=0,
-                              domain_types=[NEG, POS, NEG, POS, NEG, POS])
+volume = Integrate(levelset_domain = {"levelset" : [lsetp1_x_upper, lsetp1_x_lower, 
+                                                    lsetp1_y_upper, lsetp1_y_lower, 
+                                                    lsetp1_z_upper, lsetp1_z_lower],
+                                      "domain_type" : [NEG, POS, NEG, POS, NEG, POS]},
+                              mesh=mesh, cf=1, order=0)
 
 print("volume = {:10.8f}".format(volume))            
 print("volume error = {:4.3e}".format(abs(volume - 1)))
@@ -41,13 +39,11 @@ for i in range(6):
     domian = [NEG, POS, NEG, POS, NEG, POS]
     domian[i] = IF
 
-    area = IntegrateMLsetDomain(lsets=[lsetp1_x_upper, lsetp1_x_lower, 
-                                     lsetp1_y_upper, lsetp1_y_lower, 
-                                     lsetp1_z_upper, lsetp1_z_lower],
-                                mesh=mesh,
-                                cf=1,
-                                order=0,
-                                domain_types=domian)
+    area = Integrate(levelset_domain = {"levelset" : [lsetp1_x_upper, lsetp1_x_lower, 
+                                                      lsetp1_y_upper, lsetp1_y_lower, 
+                                                      lsetp1_z_upper, lsetp1_z_lower],
+                                        "domain_type" : domian},
+                     mesh=mesh, cf=1, order=0)
 
     print("area{:d} = {:10.8f}".format(i, area))                     
     print("area{:d} error = {:4.2e}".format(i, abs(area-1)))
@@ -63,7 +59,7 @@ point_domains = {"ppp": [IF, POS, IF, POS, IF, POS],
                  "npp": [NEG, IF, IF, POS, IF, POS],
                  "pnn": [IF, POS, NEG, IF, NEG, IF],
                  "npn": [NEG, IF, IF, POS, NEG, IF],
-                 "nnp": [NEG, IF, NEG, IF, NEG, IF],
+                 "nnp": [NEG, IF, NEG, IF, IF, POS],
                  "nnn": [NEG, IF, NEG, IF, NEG, IF] }
 
 vals = {"ppp": 1.5,
@@ -78,16 +74,16 @@ vals = {"ppp": 1.5,
     
 
 
-for key, domain in point_domains.items():
+for i, (key, domain) in enumerate(point_domains.items()):
 
-    point = IntegrateMLsetDomain(lsets=[lsetp1_x_upper, lsetp1_x_lower, 
-                                     lsetp1_y_upper, lsetp1_y_lower, 
-                                     lsetp1_z_upper, lsetp1_z_lower],
-                                mesh=mesh,
-                                cf=x+y+z,
-                                order=0,
-                                domain_types=domain)
+    point = Integrate(levelset_domain = {"levelset" : [lsetp1_x_upper, lsetp1_x_lower, 
+                                                      lsetp1_y_upper, lsetp1_y_lower, 
+                                                      lsetp1_z_upper, lsetp1_z_lower],
+                                        "domain_type" : domain},
+                     mesh=mesh, cf=x+y+z, order=0)
 
+    
     print("point{:d} = {:10.8f}".format(i, point))                     
     print("point{:d} error = {:4.2e}".format(i, abs(point-vals[key])))
+    assert abs(point-vals[key]) < 1e-12
     input("")

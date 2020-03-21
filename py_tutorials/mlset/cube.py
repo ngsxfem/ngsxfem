@@ -28,12 +28,11 @@ Draw(lsetp1_1,mesh,"lsetp1_1")
 Draw(lsetp1_2,mesh,"lsetp1_2")
 Draw(lsetp1_3,mesh,"lsetp1_3")
 
+volume = Integrate(levelset_domain={"levelset" : [lsetp1_1, lsetp1_2, lsetp1_3], "domain_type" : [NEG,NEG,NEG]},
+                   mesh=mesh,
+                   cf=1,
+                   order=0)
 
-volume = IntegrateMLsetDomain(lsets=[lsetp1_1, lsetp1_2, lsetp1_3],
-                     mesh=mesh,
-                     cf=1,
-                     order=0,
-                     domain_types=[NEG,NEG,NEG])
 
 print("volume = {:10.8f}".format(volume))            
 print("volume error = {:4.3e}".format(abs(volume - 1)))  

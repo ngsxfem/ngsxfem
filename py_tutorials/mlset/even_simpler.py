@@ -31,11 +31,8 @@ Draw (lsetp1_a * lsetp1_b, mesh, "lset_mult")
 
 ##First test: A little square on the right bottom
 
-area = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b],
-                     mesh=mesh,
-                     cf=1,
-                     order=0,
-                     domain_types=[POS,NEG])
+area = Integrate(levelset_domain = {"levelset": [lsetp1_a,lsetp1_b], "domain_type" : [POS,NEG]},
+                 mesh=mesh, cf=1, order=0)
 
 print("area = {:10.8f}".format(area))                     
 print("area error = {:4.3e}".format(abs(area-0.25)))     
@@ -54,10 +51,8 @@ print("area error = {:4.3e}".format(abs(area-0.25)))
 
 ##Second test: A line between (0.5,0.5) and (1,0.5)
 
-length = IntegrateMLsetDomain(lsets=[lsetp1_a,lsetp1_b],
-                     mesh=mesh,
-                     cf=1,
-                     order=0,
-                     domain_types=[POS,IF])
+length = Integrate(levelset_domain = {"levelset": [lsetp1_a,lsetp1_b], "domain_type" : [POS,IF]},
+                 mesh=mesh, cf=1, order=0)
+
 print("length =", length)                     
 print("length error =", abs(length-0.5))
