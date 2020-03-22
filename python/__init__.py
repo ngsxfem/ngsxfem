@@ -167,23 +167,13 @@ Other Parameters :
     rule will be applied. This is only relevant for space-time discretizations.
 """
     if levelset_domain != None and type(levelset_domain)==dict:
-        if not "force_intorder" in levelset_domain:
-            levelset_domain["force_intorder"] = -1
-        if not "subdivlvl" in levelset_domain:
-            levelset_domain["subdivlvl"] = 0
-        if not "levelset" in levelset_domain:
-            print("Please provide a level set function")
-        if not "domain_type" in levelset_domain:
-            print("Please provide a domain type (NEG,POS or IF)")
-        if not "quad_dir_policy" in levelset_domain:
-            levelset_domain["quad_dir_policy"] = OPTIMAL
+        if "time_order" in kwargs:
+            if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
+                levelset_domain["time_order"] = kwargs["time_order"]
+            del kwargs["time_order"]
+        
         # print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
-        return SymbolicCutBFI(lset=levelset_domain["levelset"],
-                              domain_type=levelset_domain["domain_type"],
-                              force_intorder=levelset_domain["force_intorder"],
-                              subdivlvl=levelset_domain["subdivlvl"],
-                              quad_dir_policy=levelset_domain["quad_dir_policy"],
-                              *args, **kwargs)
+        return SymbolicCutBFI(levelset_domain=levelset_domain,*args, **kwargs)
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
         if (levelset_domain == None):
@@ -259,8 +249,7 @@ Other Parameters :
             if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
                 levelset_domain["time_order"] = kwargs["time_order"]
             del kwargs["time_order"]
-        return SymbolicCutLFI(levelset_domain=levelset_domain,
-                              *args, **kwargs)
+        return SymbolicCutLFI(levelset_domain=levelset_domain,*args, **kwargs)
     else:
         if (levelset_domain == None):
             return SymbolicLFI_old(*args,**kwargs)
@@ -306,7 +295,7 @@ levelset_domain : dictionary
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
-  * "force_intorder" : int
+  * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration (affects only spatial integration)
   * "time_order" : int 
@@ -324,7 +313,7 @@ cf : ngsolve.CoefficientFunction
   the integrand
 
 order : int (default = 5)
-  integration order. Can be overruled by "force_intorder"-entry of the levelset_domain dictionary.
+  integration order. Can be overruled by "order"-entry of the levelset_domain dictionary.
 
 time_order : int (default = -1)
   integration order in time (for space-time integration), default: -1 (no space-time integrals)

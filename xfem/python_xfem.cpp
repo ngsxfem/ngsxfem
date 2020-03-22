@@ -454,12 +454,7 @@ elnr : int
   typedef shared_ptr<BilinearFormIntegrator> PyBFI;
   typedef shared_ptr<LinearFormIntegrator> PyLFI;
 
-  m.def("SymbolicCutBFI", [](PyCF lset,
-                             DOMAIN_TYPE dt,
-                             int order,
-                             int time_order,
-                             int subdivlvl,
-                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
+  m.def("SymbolicCutBFI", [](py::dict lsetdom,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -489,20 +484,19 @@ elnr : int
           if (element_boundary) element_vb = BND;
           else element_vb = VOL;
 
+          shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
           {
-            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb,element_vb);
-            bfime->SetTimeIntegrationOrder(time_order);
-            bfi = bfime;
+            bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, vb, element_vb);
           }
           else
           {
-            if (time_order >= 0)
+            if (lsetintdom->GetTimeIntegrationOrder() >= 0)
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
             if (vb == BND)
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-            bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+            bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
           }
           if (py::extract<py::list> (definedon).check())
             bfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -521,12 +515,7 @@ elnr : int
 
           return PyBFI(bfi);
         },
-        py::arg("lset"),
-        py::arg("domain_type")=NEG,
-        py::arg("force_intorder")=-1,
-        py::arg("time_order")=-1,
-        py::arg("subdivlvl")=0,
-        py::arg("quad_dir_policy")=FIND_OPTIMAL,
+        py::arg("levelset_domain"),
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
