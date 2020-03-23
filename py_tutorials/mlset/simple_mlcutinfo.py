@@ -8,9 +8,10 @@ from xfem import *
 from xfem.mlset import *
 
 
-# Background meshsquare = SplineGeometry()
+# Background mesh
+square = SplineGeometry()
 square.AddRectangle([-1,-0.5], [1,1.5], bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.2, quad_dominated=False))
+mesh = Mesh (square.GenerateMesh(maxh=0.1, quad_dominated=False))
 
 # Level sets
 lsetp1_a = GridFunction(H1(mesh,order=1))
@@ -27,16 +28,28 @@ Draw (lsetp1_c, mesh, "lset_c")
 
 Draw (lsetp1_a * lsetp1_b * lsetp1_c, mesh, "lset_mult")
 
+# Shape of interest
+triangle = DomainTypeArray([(NEG,NEG,NEG)])
+
 # Show MultiLevelsetCutInfo functionality
-mlci = MultiLevelsetCutInfo(mesh,(lsetp1_a, lsetp1_b, lsetp1_c))
+mlci = MultiLevelsetCutInfo(mesh, (lsetp1_a, lsetp1_b, lsetp1_c))
 
-hasneg = mlci.GetElementsOfType((NEG,NEG,NEG))
+els_neg = mlci.GetElementsOfType(triangle.dtlist)
+els_not_neg = mlci.GetElementsOfType((~triangle).dtlist)
+els_outer = mlci.GetElementsOfType((~triangle).dtlist + (~(triangle.Boundary())).dtlist)
+els_if1 = mlci.GetElementsOfType(triangle.Boundary(element_marking=True)) 
+els_if2 = mlci.GetElementsOfType(triangle.Boundary(element_marking=False)) 
 
-Draw(BitArrayCF(hasneg),mesh,"hasneg")
+els_hasneg = BitArray(mesh.ne)
+els_hasneg.Clear()
+els_hasneg |= els_neg | els_if1
 
-hasif = mlci.GetElementsOfType([(IF,NEG,NEG),(NEG,IF,NEG),(NEG,NEG,IF),(IF,IF,NEG),(IF,NEG,IF),(NEG,IF,IF)])
-
-Draw(BitArrayCF(hasif),mesh,"hasif")
-
+# Draw BitArrays
+Draw(BitArrayCF(els_neg), mesh, "els_neg")
+Draw(BitArrayCF(els_if1), mesh, "els_if1")
+Draw(BitArrayCF(els_if2), mesh, "els_if2")
+Draw(BitArrayCF(els_not_neg), mesh, "els_not_neg")
+Draw(BitArrayCF(els_outer), mesh, "els_outer")
+Draw(BitArrayCF(els_hasneg), mesh, "els_hasneg")
 
 
