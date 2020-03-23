@@ -40,3 +40,19 @@ ostream & operator<< (ostream & ost, DOMAIN_TYPE dt)
     };
   return ost;
 }
+
+ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt)
+{
+  switch (cdt)
+    {
+    case CDOM_NO: ost << "NO"; break;
+    case CDOM_NEG: ost << "NEG"; break;
+    case CDOM_POS:  ost << "POS"; break;
+    case CDOM_UNCUT:  ost << "UNCUT"; break;
+    case CDOM_IF:  ost << "IF"; break;
+    case CDOM_HASNEG:  ost << "HASNEG"; break;
+    case CDOM_HASPOS:  ost << "HASPOS"; break;
+    case CDOM_ANY:  ost << "ANY"; break;
+    };
+  return ost;
+}
