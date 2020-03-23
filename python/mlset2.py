@@ -24,6 +24,14 @@ class DomainTypeArray():
         interest
     codim : int
         Co-dimension of the  region of interest.
+
+
+    Methods
+    -------
+    Boundary():
+        Generates a list describing the boundary the region described in 
+        the DomainTypeArray instance.
+
     """
 
     def __init__(self, dtlist):
@@ -131,6 +139,16 @@ class DomainTypeArray():
     def __iand__(self, dta_b):
         return self.__and__(dta_b)
 
+    def Boundary(self):
+        dtl_out = []
+        for dtt in self.dtlist:
+            for i, dt in in enumerate(dtt):
+                dtt_out = list(dtt)
+                if dt != IF:
+                    dtt_out[i] = IF
+                    dtl_out.append(tuple(dtt_out))
+        return dtl_out
+
 
 if __name__ == "__main__":
 
@@ -177,8 +195,19 @@ if __name__ == "__main__":
     print("Expected: ", [(NEG, POS), (NEG, NEG)])
     input("")
 
-    dta6 = DomainTypeArray([(IF, NEG, POS)]) & DomainTypeArray([(POS, IF, POS)])
+    dta6 = DomainTypeArray([(IF, NEG, POS)])
+    dta6 &= DomainTypeArray([(POS, IF, POS)])
     print(~dta6)
     print("Expected: ", [(IF, NEG, IF), (POS, IF, IF), (IF, POS, IF),
                          (NEG, IF, IF), (IF, IF, NEG)])
+    input("")
+
+    dta7 = DomainTypeArray([(NEG, NEG, NEG)])
+    print("Boundary: ", dta7.Boundary())
+    print("Expected: ", [(IF, NEG, NEG), (NEG, IF, NEG), (NEG, NEG, IF)])
+    input("")
+
+    dta8 = DomainTypeArray([(POS, IF, NEG)])
+    print("Boundary: ", dta8.Boundary())
+    print("Expected: ", [(IF, IF, NEG), (POS, IF, IF)])
     input("")
