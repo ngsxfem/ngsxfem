@@ -146,6 +146,7 @@ namespace xintegration
   private:
   };
 
+  ostream & operator<< (ostream & ost, const LevelsetIntegrationDomain & cdt);
 
   std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
   
