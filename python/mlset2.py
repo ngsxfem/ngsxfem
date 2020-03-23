@@ -34,15 +34,13 @@ class DomainTypeArray():
             dtlist_expand = []
             for dtt in dtlist:
                 if ANY in dtt:
-                    n = dtt.count(ANY)
+                    locations_expand = [i for i in range(len(dtt)) if dtt[i] == ANY]
+                    n = len(locations_expand)
                     dt_lists = [list(dtt) for i in range(2**n)]
                     dt_per = list(set(permutations([NEG] * n + [POS] * n, n)))
                     for i, dtl in enumerate(dt_lists):
-                        j = 0
-                        for k, dt in enumerate(dtl):
-                            if dt == ANY:
-                                dt_lists[i][k] = dt_per[i][j]
-                                j += 1
+                        for j, k in enumerate(locations_expand):
+                            dt_lists[i][k] = dt_per[i][j]
                         dtlist_expand.append(tuple(dt_lists[i]))
                 else:
                     dtlist_expand.append(dtt)
