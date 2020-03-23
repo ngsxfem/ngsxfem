@@ -43,7 +43,7 @@ if(NETGEN_USE_PYTHON)
 
 
     install (FILES
-        __init__.py cutmg.py
+        __init__.py cutmg.py mlset.py
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
     )
