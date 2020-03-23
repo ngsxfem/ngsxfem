@@ -12,14 +12,9 @@ namespace xintegration
   {
     bool debug_out = false;
 
-    Array<DOMAIN_TYPE> & dts (lsetintdom.GetDomainTypes()[0]);
-    if (lsetintdom.GetDomainTypes().Size() > 1)
-      throw Exception("not gathering the integration rules from the domain_type_arrays together, yet");
-    // TODO
-    // const Array<Array<DOMAIN_TYPE>> & list_dts (lsetintdom.GetDomainTypes()); //TODO -> should yield in a loop...
-    // for (auto dts: list_dts) ... gather rules..
-    
-
+    Array<double> sum_wei_arr (0);
+    IntegrationRule * sum_ir = new (lh) IntegrationRule(0 , lh);
+      
     const Array<shared_ptr<GridFunction>> & gflsets (lsetintdom.GetLevelsetGFs());
     int intorder = lsetintdom.GetIntegrationOrder();
     int time_intorder = lsetintdom.GetTimeIntegrationOrder();
@@ -35,14 +30,6 @@ namespace xintegration
     FlatMatrix<> elvecs(dnums.Size(), M, lh);
 
     Array<DOMAIN_TYPE> lset_dts(M); //<- domain types corresponding to levelset
-    bool compatible = true;
-    bool cut_element = false;
-
-    const IntegrationRule* ir = nullptr;
-
-    Array<shared_ptr<GridFunction>> condense_gflsets;
-    Array<DOMAIN_TYPE> condense_dts;// only for debugging
-    Array<DOMAIN_TYPE> condense_target_dts;
 
     // Check if element is relevant for the given integration domain
     for (int i = 0; i < M; i++)
@@ -50,103 +37,148 @@ namespace xintegration
       gflsets[i]->GetVector().GetIndirect(dnums, elvec);
       elvecs.Col(i) = elvec;
       lset_dts[i] = CheckIfStraightCut(elvec);
-      if ((lset_dts[i] != IF) && (lset_dts[i] != dts[i])) compatible = false; //loop could break here now
-      else if (lset_dts[i] == IF) cut_element = true;
     }
 
     if (debug_out)
     {
+      cout << "#########################################################################" << endl;
+      cout << "#########################################################################" << endl << endl;
       cout << "currently on element with ID: " << trafo.GetElementId() << endl << endl;
       cout << "level set vertex values (one column per lset):\n" << elvecs << endl;
       cout << "domain types current of element (corresp. to mlset): \n" << lset_dts << endl;
-      cout << "domain types for integration: \n" << dts << endl;
     }
     
-    if (!compatible)
+    for (const Array<DOMAIN_TYPE> & dts : lsetintdom.GetDomainTypes())
     {
-      if (debug_out)
-      {
-        cout << "levelset configuration not compatible with integration domain: skipping" << endl;
-        cout << "----------------------------------------------------------------------" << endl << endl;
-      }
-      return make_tuple(nullptr, Array<double>());
-    }
- 
+      bool compatible = true;
+      bool cut_element = false;
+
+      const IntegrationRule* ir = nullptr;
     
-    if (!cut_element)
-    {
-      if (debug_out)
-      {
-        cout << "relevant, uncut element: standard integration rule" << endl;
-        cout << "--------------------------------------------------" << endl << endl;
-      }      
-      // Uncut elements simply return the standard integration rule
-      ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
-      Array<double> wei_arr (ir->Size());
-      for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-      return make_tuple(ir, wei_arr);
-    }
-
-    else
-    {
-      if (debug_out)
-        cout << "This element is cut and relevant";
-
-      // We reduce the domain type array to the necessary domain types and corresponding level sets 
       for (int i = 0; i < M; i++)
       {
-        if ((lset_dts[i] == IF) || (lset_dts[i] != dts[i]))
-        {
-          condense_dts.Append(lset_dts[i]); // only for debugging
-          condense_target_dts.Append(dts[i]);
-          condense_gflsets.Append(gflsets[i]);
-        }
+        if ((lset_dts[i] != IF) && (lset_dts[i] != dts[i])) compatible = false; //loop could break here now
+        else if (lset_dts[i] == IF) cut_element = true;
       }
+
       if (debug_out)
       {
-        cout << "domain type after condensing\n" << condense_dts << endl;// only for debugging
-        cout << "target type after condensing\n" << condense_target_dts << endl;
+        cout << "###################################### " << endl;
+        cout << "domain types for integration: \n" << dts << endl;
       }
-      // If the element is cut by only one levelset, then we can use standard cut integration rules
-      if (condense_dts.Size() == 1)
-      {      
+
+      Array<shared_ptr<GridFunction>> condense_gflsets;
+      Array<DOMAIN_TYPE> condense_dts;// only for debugging
+      Array<DOMAIN_TYPE> condense_target_dts;
+      Array<int> condense_id_to_full_id(0);
+
+      if (!compatible)
+      {
         if (debug_out)
         {
-          cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
-          cout << "-------------------------------------------------------------------------" << endl << endl;
+          cout << "levelset configuration not compatible with integration domain: skipping" << endl;
+          cout << "----------------------------------------------------------------------" << endl << endl;
         }
-        condense_gflsets[0]->GetVector().GetIndirect(dnums, elvec);
-        const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, condense_target_dts[0], intorder, quad_dir_policy, lh);
-        if(ir != nullptr) 
-        {
-          Array<double> wei_arr (ir->Size());
-          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-          return make_tuple(ir, wei_arr);
-        }
+        continue;
       }
-      else 
-      { 
-        // An element cut by multiple level sets
-        // At least for debugging, this else case should also be able to handle the "if case"
-        FlatMatrix<> elvecs_cond(dnums.Size(), condense_dts.Size(), lh);
-        for (int i = 0; i < condense_dts.Size(); i++)
+ 
+    
+      if (!cut_element)
+      {
+        if (debug_out)
         {
-          condense_gflsets[i]->GetVector().GetIndirect(dnums, elvec);
-          elvecs_cond.Col(i) = elvec;
+          cout << "relevant, uncut element: standard integration rule" << endl;
+          cout << "--------------------------------------------------" << endl << endl;
+        }      
+        // Uncut elements simply return the standard integration rule
+        ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
+        for(int i=0; i< ir->Size(); i++)
+        {
+          sum_ir->Append((*ir)[i]);
+          sum_wei_arr.Append((*ir)[i].Weight());
         }
+        // Array<double> wei_arr (ir->Size());
+        // for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
+        // return make_tuple(ir, wei_arr);
+      }
 
-        const IntegrationRule * ir = StraightCutsIntegrationRule(elvecs_cond, trafo, condense_target_dts, intorder, quad_dir_policy, lh);
-        if(ir != nullptr)
+      else
+      {
+        if (debug_out)
+          cout << "This element is cut and relevant";
+
+        // We reduce the domain type array to the necessary domain types and corresponding level sets 
+        for (int i = 0; i < M; i++)
         {
-          Array<double> wei_arr (ir->Size());
-          for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-          return make_tuple(ir, wei_arr);
+          if ((lset_dts[i] == IF) || (lset_dts[i] != dts[i]))
+          {
+            condense_dts.Append(lset_dts[i]); // only for debugging
+            condense_target_dts.Append(dts[i]);
+            condense_gflsets.Append(gflsets[i]);
+            condense_id_to_full_id.Append(i);
+          }
+        }
+        if (debug_out)
+          cout << "condensed ids:\n" << condense_id_to_full_id << endl;// only for debugging
+        
+        // If the element is cut by only one levelset, then we can use standard cut integration rules
+        if (condense_id_to_full_id.Size() == 1)
+        {      
+          if (debug_out)
+          {
+            cout << "relevant element, cut by only one levelset: standard cut integration rule" << endl;
+            cout << "-------------------------------------------------------------------------" << endl << endl;
+          }
+          // condense_gflsets[0]->GetVector().GetIndirect(dnums, elvec);
+          int j = condense_id_to_full_id[0];
+          FlatVector elvec(dnums.Size(), &(elvecs.Col(j)[0]));
+          const IntegrationRule * ir = StraightCutIntegrationRule(elvec,
+                                                                  trafo, dts[j], intorder, quad_dir_policy, lh);
+          if(ir != nullptr) 
+          {
+            // Array<double> wei_arr (ir->Size());
+            for(int i=0; i< ir->Size(); i++)
+            {
+              sum_ir->Append((*ir)[i]);
+              sum_wei_arr.Append((*ir)[i].Weight());
+            }
+          }
+        }
+        else 
+        { 
+          // An element cut by multiple level sets
+          // At least for debugging, this else case should also be able to handle the "if case"
+          FlatMatrix<> elvecs_cond(dnums.Size(), condense_id_to_full_id.Size(), lh);
+          for (int i = 0; i < condense_id_to_full_id.Size(); i++)
+            elvecs_cond.Col(i) = elvecs.Col(condense_id_to_full_id[i]);
+
+          const IntegrationRule * ir = StraightCutsIntegrationRule(elvecs_cond, trafo, condense_target_dts, intorder, quad_dir_policy, lh);
+          if (debug_out)
+          {
+            cout << "relevant element, custom integration rule" << endl;
+            cout << "-------------------------------------------------------------------------" << endl << endl;
+          }
+          if(ir != nullptr)
+          {
+            for(int i=0; i< ir->Size(); i++)
+            {
+              sum_ir->Append((*ir)[i]);
+              sum_wei_arr.Append((*ir)[i].Weight());
+            }
+          }
         }
       }
     }
 
-    return make_tuple(nullptr, Array<double>());
-      
+    if (debug_out)
+    {
+      double sum = 0;
+      for (auto w : sum_wei_arr)
+        sum += w;
+    }
+    if (sum_ir->Size() == 0)
+      sum_ir = nullptr;
+    return make_tuple(sum_ir, sum_wei_arr);
   }
   
   /// Mlset-integrationRule Factory
