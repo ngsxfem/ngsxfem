@@ -28,9 +28,13 @@ class DomainTypeArray():
 
     Methods
     -------
-    Boundary():
-        Generates a list describing the boundary the region described in 
-        the DomainTypeArray instance.
+    Boundary(element_marking=False):
+        - If element_marking=False, a DomainTypeArray describing the 
+          boundary of the current DomainTypeArray.
+        - If element_marking=True, it generates a list describing all
+          elements which contain part of the boundary of the current
+          instance. Needed for GetElementsOfType.
+
 
     """
 
@@ -139,15 +143,23 @@ class DomainTypeArray():
     def __iand__(self, dta_b):
         return self.__and__(dta_b)
 
-    def Boundary(self):
+    def Boundary(self, element_marking=False):
         dtl_out = []
-        for dtt in self.dtlist:
-            for i, dt in in enumerate(dtt):
-                dtt_out = list(dtt)
-                if dt != IF:
-                    dtt_out[i] = IF
-                    dtl_out.append(tuple(dtt_out))
-        return dtl_out
+        if not element_marking:
+            for dtt in self.dtlist:
+                for i, dt in enumerate(dtt):
+                    dtt_out = list(dtt)
+                    if dt != IF:
+                        dtt_out[i] = IF
+                        dtl_out.append(tuple(dtt_out))
+            return DomainTypeArray(dtl_out)
+        else:
+            boundary = self
+            for codim in range(self.codim, 3):
+                boundary = boundary.Boundary()
+                dtl_out += boundary.dtlist
+            return dtl_out
+
 
 
 if __name__ == "__main__":
@@ -204,10 +216,17 @@ if __name__ == "__main__":
 
     dta7 = DomainTypeArray([(NEG, NEG, NEG)])
     print("Boundary: ", dta7.Boundary())
-    print("Expected: ", [(IF, NEG, NEG), (NEG, IF, NEG), (NEG, NEG, IF)])
+    print("Expected: ", [(NEG, IF, NEG), (NEG, NEG, IF), (IF, NEG, NEG)])
+    input("")
+
+    print("elements_makings=True\nBoundary: ", 
+          dta7.Boundary(element_marking=True))
+    print("Expected: ", [(NEG, IF, NEG), (NEG, NEG, IF), (IF, NEG, NEG), 
+                         (IF, IF, NEG), (IF, NEG, IF), (NEG, IF, IF),
+                         (IF, IF, IF)])
     input("")
 
     dta8 = DomainTypeArray([(POS, IF, NEG)])
     print("Boundary: ", dta8.Boundary())
-    print("Expected: ", [(IF, IF, NEG), (POS, IF, IF)])
+    print("Expected: ", [(POS, IF, IF), (IF, IF, NEG)])
     input("")
