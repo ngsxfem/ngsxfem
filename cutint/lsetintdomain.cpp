@@ -245,12 +245,17 @@ namespace xintegration
             common_length = py::len(dta());
         }
       }
-
-      py::extract<py::list> lset_list(lset);
-      if (!lset_list.check())
+      
+      py::extract<py::list> lset_list_(lset);
+      if (!lset_list_.check())
         throw Exception("lset is neither a level set nor a list ... need new candidates..");
+      py::list lset_list(lset_list_());
+      for (int i = 0; i < py::len(lset_list); i++)
+        if (!(py::extract<shared_ptr<GridFunction>>(lset_list[i]).check()))
+          throw Exception("lsets need to be GridFunctions!");
+      
       Array<shared_ptr<GridFunction>> gf_lsets;
-      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_list());
+      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_list);
       
       if (common_length == -1) // not a list of lists
       {
