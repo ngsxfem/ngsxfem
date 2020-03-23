@@ -42,6 +42,9 @@ hasif[:] = False
 hasif |= mlci.GetElementsOfType([IF,NEG,NEG])
 hasif |= mlci.GetElementsOfType([NEG,IF,NEG])
 hasif |= mlci.GetElementsOfType([NEG,NEG,IF])
+hasif |= mlci.GetElementsOfType([NEG,IF,IF])
+hasif |= mlci.GetElementsOfType([IF,IF,NEG])
+hasif |= mlci.GetElementsOfType([IF,NEG,IF])
 #later the last five lines should be replaced with:
 #hasif = mlci.GetElementsOfType([[NEG,IF,NEG],[IF,NEG,NEG],[NEG,NEG,IF]])
 

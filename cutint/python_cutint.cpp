@@ -26,7 +26,6 @@ void ExportNgsx_cutint(py::module &m)
         {
           static Timer t ("IntegrateX"); RegionTimer reg(t);
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
-          
           LocalHeap lh(heapsize, "lh-IntegrateX");
 
           double sum = 0.0;

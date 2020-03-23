@@ -115,6 +115,28 @@ namespace xintegration
     dts[0].SetSize(1); dts[0][0] = dt;    
   }
 
+  ostream & operator<< (ostream & ost, const LevelsetIntegrationDomain & lsetintdom)
+  {
+    if (lsetintdom.IsMultiLevelsetDomain())
+    {
+      ost << "MultiLevelsetDomain" << endl;
+      ost << "GridFunctions: \n " << lsetintdom.GetLevelsetGFs() << endl;
+      ost << "CoefficientFunctions: \n " << lsetintdom.GetLevelsetCFs() << endl;
+      ost << "DomainTypes: \n " << lsetintdom.GetDomainTypes() << endl;
+    }
+    else
+    {
+      ost << "SingleLevelsetDomain" << endl;
+      ost << "GridFunction: \n " << lsetintdom.GetLevelsetGF() << endl;
+      ost << "CoefficientFunction: \n " << lsetintdom.GetLevelsetCF() << endl;
+      ost << "DomainType: \n " << lsetintdom.GetDomainType() << endl;
+    }
+    ost << "IntegrationOrder: \n " << lsetintdom.GetIntegrationOrder() << endl;
+    ost << "Time IntegrationOrder: \n " << lsetintdom.GetTimeIntegrationOrder() << endl;
+    ost << "Number of subdivision levels: \n " << lsetintdom.GetNSubdivisionLevels() << endl;
+    ost << "Policy on Quads/Hexes: \n " << lsetintdom.GetSwapDimensionPolicy() << endl;
+    return ost;
+  }
 
   std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl)
   {
@@ -223,12 +245,17 @@ namespace xintegration
             common_length = py::len(dta());
         }
       }
-
-      py::extract<py::list> lset_list(lset);
-      if (!lset_list.check())
+      
+      py::extract<py::list> lset_list_(lset);
+      if (!lset_list_.check())
         throw Exception("lset is neither a level set nor a list ... need new candidates..");
+      py::list lset_list(lset_list_());
+      for (int i = 0; i < py::len(lset_list); i++)
+        if (!(py::extract<shared_ptr<GridFunction>>(lset_list[i]).check()))
+          throw Exception("lsets need to be GridFunctions!");
+      
       Array<shared_ptr<GridFunction>> gf_lsets;
-      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_list());
+      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_list);
       
       if (common_length == -1) // not a list of lists
       {

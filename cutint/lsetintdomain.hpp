@@ -61,7 +61,7 @@ namespace xintegration
 
     bool IsMultiLevelsetDomain () const
     {
-      return (dts[0].Size() > 1);
+      return ((gfs_lset.Size() > 1) || (dts.Size() > 1) || (dts[0].Size() > 1));
     }
 
     shared_ptr<CoefficientFunction> GetLevelsetCF () const
@@ -146,6 +146,7 @@ namespace xintegration
   private:
   };
 
+  ostream & operator<< (ostream & ost, const LevelsetIntegrationDomain & cdt);
 
   std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
   

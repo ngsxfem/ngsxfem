@@ -1,6 +1,7 @@
 /// from ngxfem
 #include "../xfem/cutinfo.hpp"
 #include "../cutint/xintegration.hpp"
+#include "../cutint/straightcutrule.hpp"
 using namespace ngsolve;
 using namespace xintegration;
 using namespace ngfem;
@@ -235,6 +236,70 @@ namespace ngcomp
         
   }
 
+  MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
+                                                            const Array<shared_ptr<GridFunction>> & lsets_in)
+    : ma(ama), lsets(lsets_in)
+  {
+    ;
+  }
+
+  shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsOfDomainType(
+    const Array<Array<DOMAIN_TYPE>> & cdt, VorB vb, LocalHeap & lh) const
+  {
+    LevelsetIntegrationDomain lsetintdom(lsets, cdt);
+    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
+    elems_of_domain_type->Clear();
+    
+    int ne = ma->GetNE(vb);
+    IterateRange
+      (ne, lh,
+       [&] (int elnr, LocalHeap & lh)
+       {
+         ElementId ei = ElementId(vb,elnr);
+         Ngs_Element ngel = ma->GetElement(ei);
+         ELEMENT_TYPE eltype = ngel.GetType();
+         ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
+
+         Array<DofId> dnums(0,lh);
+         int M =lsetintdom.GetLevelsetGFs().Size();
+         Array<DOMAIN_TYPE> dts_el(M,lh);
+         for (int j = 0; j < M; j++)
+         {
+           auto gflset = lsetintdom.GetLevelsetGFs()[j];
+           gflset->GetFESpace()->GetDofNrs(eltrans.GetElementId(), dnums);
+           FlatVector<> elvec(dnums.Size(), lh);
+           gflset->GetVector().GetIndirect(dnums, elvec);
+
+           dts_el[j] = CheckIfStraightCut(elvec);
+         }
+
+         for (int i = 0; i < lsetintdom.GetDomainTypes().Size(); i++)
+         {
+           bool matching = true;
+           for (int j = 0; j < M; j++)
+             if (lsetintdom.GetDomainTypes()[i][j] != dts_el[j])
+               matching = false;
+
+           if (matching)
+             elems_of_domain_type->SetBitAtomic(elnr);
+         }
+
+         // const IntegrationRule * ir_np;
+         // Array<double> wei_arr;
+         // tie (ir_np, wei_arr) = CreateCutIntegrationRule(lsetintdom, eltrans, lh);
+         // double part_vol = 0;
+         // if (ir_np)
+         //   for (auto w : wei_arr) 
+         //     part_vol += w; 
+         // if (part_vol > 0)
+         //   elems_of_domain_type->SetBitAtomic(elnr);
+       });
+    return elems_of_domain_type;
+  }
+  
+
+  
+  
 
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
                                                   shared_ptr<BitArray> a,

@@ -19,6 +19,7 @@ void ExportNgsx_xfem(py::module &m)
   typedef GridFunction GF;
   typedef shared_ptr<GF> PyGF;
   typedef shared_ptr<CutInformation> PyCI;
+  typedef shared_ptr<MultiLevelsetCutInformation> PyMLCI;
   typedef shared_ptr<BitArray> PyBA;
   
   
@@ -323,6 +324,116 @@ heapsize : int
 )raw_string")
 
     );
+
+
+
+  py::class_<MultiLevelsetCutInformation, shared_ptr<MultiLevelsetCutInformation>>
+    (m, "MultiLevelsetCutInfo",R"raw(
+A minimal version of a CutInfo that allows for several levelsets and a list of list of domain_types.
+)raw")
+    .def("__init__",  [] (MultiLevelsetCutInformation *instance,
+                          shared_ptr<MeshAccess> ma,
+                          py::list lsets)
+         {
+           for (int i = 0; i < py::len(lsets); i++)
+             if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
+               throw Exception("all lsets need to be GridFunctions!");
+           Array<shared_ptr<GridFunction>> lset_a = makeCArray<shared_ptr<GridFunction>> (lsets);
+           new (instance) MultiLevelsetCutInformation (ma, lset_a);
+         },
+         py::arg("mesh"),
+         py::arg("levelset"),
+         docu_string(R"raw_string(
+Creates a MultiLevelsetCutInfo based on a mesh.
+
+Parameters
+
+mesh : Mesh
+)raw_string")
+      )
+    .def("Mesh", [](MultiLevelsetCutInformation & self)
+         {
+           return self.GetMesh();
+         },docu_string(R"raw_string(
+Returns mesh of CutInfo)raw_string")
+      )
+    .def("GetElementsOfType", [](MultiLevelsetCutInformation & self,
+                                 py::object dt_in,
+                                 VorB vb,
+                                 int heapsize)
+         {
+
+           LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+           
+
+           py::extract<py::list> dts_list_(dt_in);
+           if (!dts_list_.check())
+             throw Exception("domain_type is not a list.");
+           auto dts_list(dts_list_());
+
+           int common_length = -1; //not a list
+           for (int i = 0; i < py::len(dts_list); i++)
+           {
+             auto dts_list_entry(dts_list[i]);
+             py::extract<py::list> dta(dts_list_entry);
+             if (!dta.check())
+             {
+               if (common_length != -1)
+                 throw Exception("domain_type arrays are incompatible");
+             }
+             else
+             {
+               if ((i>0) && (common_length != py::len(dta())))
+                 throw Exception("domain_type arrays have different length");
+               else
+                 common_length = py::len(dta());
+             }
+           }
+           
+           if (common_length == -1) // not a list of lists
+           {
+             Array<Array<DOMAIN_TYPE>> cdts_aa(1);
+             cdts_aa[0].SetSize(py::len(dts_list));
+             for (int i = 0; i < py::len(dts_list); i++)
+             {
+               auto dt = dts_list[i];
+               if (py::extract<DOMAIN_TYPE> (dt).check())
+                 cdts_aa[0][i] = py::extract<DOMAIN_TYPE>(dt)();
+               else
+                 throw Exception(" domain type in list is not compatible ");
+             }
+             return self.GetElementsOfDomainType(cdts_aa, vb, lh);
+           }
+           else
+           {
+             cout << " A " << endl;
+             Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
+             for (int i = 0; i < py::len(dts_list); i++)
+             {
+               cout << " B " << endl;
+               py::extract<py::list> dta_list_(dts_list[i]);
+               auto dta_list(dta_list_());
+               cdts_aa[i].SetSize(py::len(dta_list));
+               for (int j = 0; j < py::len(dta_list); j++)
+               {
+                 cout << " C " << endl;
+                 auto dt = dta_list[j];
+                 if (py::extract<DOMAIN_TYPE> (dt).check())
+                   cdts_aa[i][j] = py::extract<DOMAIN_TYPE>(dt)();
+                 else
+                   throw Exception(" domain type in list of list is not compatible ");
+               }
+             }
+             return self.GetElementsOfDomainType(cdts_aa, vb, lh);
+           }
+         },
+         py::arg("domain_type"),
+         py::arg("VOL_or_BND") = VOL,
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Returns BitArray that is true for every element that has the 
+corresponding combined domain type.)raw_string")
+      )
+    ;
 
 
 //   .def("__init__",  [] (XFESpace *instance,
