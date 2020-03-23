@@ -32,21 +32,13 @@ Draw (lsetp1_c, mesh, "lset_c")
 
 Draw (lsetp1_a * lsetp1_b * lsetp1_c, mesh, "lset_mult")
 
-mlci = MultiLevelsetCutInfo(mesh,[lsetp1_a, lsetp1_b, lsetp1_c])
-hasneg = mlci.GetElementsOfType([NEG,NEG,NEG])
+mlci = MultiLevelsetCutInfo(mesh,(lsetp1_a, lsetp1_b, lsetp1_c))
+
+hasneg = mlci.GetElementsOfType((NEG,NEG,NEG))
 
 Draw(BitArrayCF(hasneg),mesh,"hasneg")
 
-hasif = BitArray(mesh.ne)
-hasif[:] = False
-hasif |= mlci.GetElementsOfType([IF,NEG,NEG])
-hasif |= mlci.GetElementsOfType([NEG,IF,NEG])
-hasif |= mlci.GetElementsOfType([NEG,NEG,IF])
-hasif |= mlci.GetElementsOfType([NEG,IF,IF])
-hasif |= mlci.GetElementsOfType([IF,IF,NEG])
-hasif |= mlci.GetElementsOfType([IF,NEG,IF])
-#later the last five lines should be replaced with:
-#hasif = mlci.GetElementsOfType([[NEG,IF,NEG],[IF,NEG,NEG],[NEG,NEG,IF]])
+hasif = mlci.GetElementsOfType([(IF,NEG,NEG),(NEG,IF,NEG),(NEG,NEG,IF),(IF,IF,NEG),(IF,NEG,IF),(NEG,IF,IF)])
 
 Draw(BitArrayCF(hasif),mesh,"hasif")
 

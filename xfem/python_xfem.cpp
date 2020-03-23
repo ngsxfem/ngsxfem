@@ -333,8 +333,12 @@ A minimal version of a CutInfo that allows for several levelsets and a list of l
 )raw")
     .def("__init__",  [] (MultiLevelsetCutInformation *instance,
                           shared_ptr<MeshAccess> ma,
-                          py::list lsets)
+                          py::object lsets_in)
          {
+           py::extract<py::list> lsets_(lsets_in);
+           if (!lsets_.check())
+             throw Exception("levelset not compatible.");
+           auto lsets = lsets_();
            for (int i = 0; i < py::len(lsets); i++)
              if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
                throw Exception("all lsets need to be GridFunctions!");
@@ -364,23 +368,28 @@ Returns mesh of CutInfo)raw_string")
          {
 
            LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+
+           if (py::isinstance<py::tuple>(dt_in))
+           {
+             Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
+             Array<Array<DOMAIN_TYPE>> dts(1);
+             dts[0] = dts_;
+             return self.GetElementsOfDomainType(dts, vb, lh);
+           }
            
 
            py::extract<py::list> dts_list_(dt_in);
            if (!dts_list_.check())
-             throw Exception("domain_type is not a list.");
+             throw Exception("domain_type is neither a tuple nor a list.");
            auto dts_list(dts_list_());
 
            int common_length = -1; //not a list
            for (int i = 0; i < py::len(dts_list); i++)
            {
              auto dts_list_entry(dts_list[i]);
-             py::extract<py::list> dta(dts_list_entry);
+             py::extract<py::tuple> dta(dts_list_entry);
              if (!dta.check())
-             {
-               if (common_length != -1)
-                 throw Exception("domain_type arrays are incompatible");
-             }
+               throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
              else
              {
                if ((i>0) && (common_length != py::len(dta())))
@@ -390,42 +399,14 @@ Returns mesh of CutInfo)raw_string")
              }
            }
            
-           if (common_length == -1) // not a list of lists
+           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
+           for (int i = 0; i < py::len(dts_list); i++)
            {
-             Array<Array<DOMAIN_TYPE>> cdts_aa(1);
-             cdts_aa[0].SetSize(py::len(dts_list));
-             for (int i = 0; i < py::len(dts_list); i++)
-             {
-               auto dt = dts_list[i];
-               if (py::extract<DOMAIN_TYPE> (dt).check())
-                 cdts_aa[0][i] = py::extract<DOMAIN_TYPE>(dt)();
-               else
-                 throw Exception(" domain type in list is not compatible ");
-             }
-             return self.GetElementsOfDomainType(cdts_aa, vb, lh);
+             py::extract<py::tuple> dta_tuple_(dts_list[i]);
+             auto dta_tuple(dta_tuple_());
+             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta_tuple);
            }
-           else
-           {
-             cout << " A " << endl;
-             Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
-             for (int i = 0; i < py::len(dts_list); i++)
-             {
-               cout << " B " << endl;
-               py::extract<py::list> dta_list_(dts_list[i]);
-               auto dta_list(dta_list_());
-               cdts_aa[i].SetSize(py::len(dta_list));
-               for (int j = 0; j < py::len(dta_list); j++)
-               {
-                 cout << " C " << endl;
-                 auto dt = dta_list[j];
-                 if (py::extract<DOMAIN_TYPE> (dt).check())
-                   cdts_aa[i][j] = py::extract<DOMAIN_TYPE>(dt)();
-                 else
-                   throw Exception(" domain type in list of list is not compatible ");
-               }
-             }
-             return self.GetElementsOfDomainType(cdts_aa, vb, lh);
-           }
+           return self.GetElementsOfDomainType(cdts_aa, vb, lh);
          },
          py::arg("domain_type"),
          py::arg("VOL_or_BND") = VOL,

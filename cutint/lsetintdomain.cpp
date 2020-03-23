@@ -221,21 +221,40 @@ namespace xintegration
         throw Exception("multi level sets don't work with subdivlvl > 0");
       if (time_order > -1)
         throw Exception("multi level sets don't work with time_order > 0");
+
+      py::extract<py::tuple> lset_tuple_(lset);
+      if (!lset_tuple_.check())
+        throw Exception("lset is neither a level set nor a tuple ... need new candidates..");
+      py::tuple lset_tuple(lset_tuple_());
+      for (int i = 0; i < py::len(lset_tuple); i++)
+        if (!(py::extract<shared_ptr<GridFunction>>(lset_tuple[i]).check()))
+          throw Exception("lsets need to be GridFunctions!");
+      
+      Array<shared_ptr<GridFunction>> gf_lsets;
+      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_tuple);
+
+      
+      if (py::isinstance<py::tuple>(dt_in))
+      {
+        Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
+        Array<Array<DOMAIN_TYPE>> dts(1);
+        dts[0] = dts_;
+        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy);
+      }
       
       py::extract<py::list> dts_list_(dt_in);
-      if (!dts_list_.check())
-        throw Exception("domain_type is neither a DOMAIN_TYPE nor a list ... need new candidates..");
+        if (!dts_list_.check())
+          throw Exception("domain_type is neither a DOMAIN_TYPE nor a list nor a tuple.");
       auto dts_list(dts_list_());
 
       int common_length = -1; //not a list
       for (int i = 0; i < py::len(dts_list); i++)
       {
         auto dts_list_entry(dts_list[i]);
-        py::extract<py::list> dta(dts_list_entry);
+        py::extract<py::tuple> dta(dts_list_entry);
         if (!dta.check())
         {
-          if (common_length != -1)
-            throw Exception("domain_type arrays are incompatible");
+          throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
         }
         else
         {
@@ -246,36 +265,13 @@ namespace xintegration
         }
       }
       
-      py::extract<py::list> lset_list_(lset);
-      if (!lset_list_.check())
-        throw Exception("lset is neither a level set nor a list ... need new candidates..");
-      py::list lset_list(lset_list_());
-      for (int i = 0; i < py::len(lset_list); i++)
-        if (!(py::extract<shared_ptr<GridFunction>>(lset_list[i]).check()))
-          throw Exception("lsets need to be GridFunctions!");
-      
-      Array<shared_ptr<GridFunction>> gf_lsets;
-      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_list);
-      
-      if (common_length == -1) // not a list of lists
+      Array<Array<DOMAIN_TYPE>> dtas(py::len(dts_list));
+      for (int i = 0; i < py::len(dts_list); i++)
       {
-        Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (dts_list);
-        //TODO: check if entries are GF or only CF
-        Array<Array<DOMAIN_TYPE>> dts(1);
-        dts[0] = dts_;
-        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy);
+        py::extract<py::tuple> dta(dts_list[i]);
+        dtas[i] = makeCArray<DOMAIN_TYPE> (dta());
       }
-      else
-      {
-        Array<Array<DOMAIN_TYPE>> dtas(py::len(dts_list));
-        for (int i = 0; i < py::len(dts_list); i++)
-        {
-          py::extract<py::list> dta(dts_list[i]);
-          dtas[i] = makeCArray<DOMAIN_TYPE> (dta());
-        }
-        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy);
-        
-      }
+      return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy);
     }
   }
   
