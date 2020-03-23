@@ -115,6 +115,28 @@ namespace xintegration
     dts[0].SetSize(1); dts[0][0] = dt;    
   }
 
+  ostream & operator<< (ostream & ost, const LevelsetIntegrationDomain & lsetintdom)
+  {
+    if (lsetintdom.IsMultiLevelsetDomain())
+    {
+      ost << "MultiLevelsetDomain" << endl;
+      ost << "GridFunctions: \n " << lsetintdom.GetLevelsetGFs() << endl;
+      ost << "CoefficientFunctions: \n " << lsetintdom.GetLevelsetCFs() << endl;
+      ost << "DomainTypes: \n " << lsetintdom.GetDomainTypes() << endl;
+    }
+    else
+    {
+      ost << "SingleLevelsetDomain" << endl;
+      ost << "GridFunction: \n " << lsetintdom.GetLevelsetGF() << endl;
+      ost << "CoefficientFunction: \n " << lsetintdom.GetLevelsetCF() << endl;
+      ost << "DomainType: \n " << lsetintdom.GetDomainType() << endl;
+    }
+    ost << "IntegrationOrder: \n " << lsetintdom.GetIntegrationOrder() << endl;
+    ost << "Time IntegrationOrder: \n " << lsetintdom.GetTimeIntegrationOrder() << endl;
+    ost << "Number of subdivision levels: \n " << lsetintdom.GetNSubdivisionLevels() << endl;
+    ost << "Policy on Quads/Hexes: \n " << lsetintdom.GetSwapDimensionPolicy() << endl;
+    return ost;
+  }
 
   std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl)
   {
