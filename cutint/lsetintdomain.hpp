@@ -61,7 +61,7 @@ namespace xintegration
 
     bool IsMultiLevelsetDomain () const
     {
-      return (dts[0].Size() > 1);
+      return ((gfs_lset.Size() > 1) || (dts.Size() > 1) || (dts[0].Size() > 1));
     }
 
     shared_ptr<CoefficientFunction> GetLevelsetCF () const
