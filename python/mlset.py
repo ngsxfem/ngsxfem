@@ -161,6 +161,38 @@ class DomainTypeArray():
             return dtl_out
 
 
+def dta_indicator(lsets, dta):
+    """
+    Indicator function for a DomainTypeArray
+
+    Parameters
+    ----------
+    lsets : tuple(CoefficientFunctions)
+        The level set functions defining the region
+    dta : DomainTypeArray
+        The dta describing the region of interest. Must have codim=0
+
+    Returns
+    -------
+    CoefficientFunction
+        1 in the region on interest, 0 else
+    """
+
+    if dta.codim != 0:
+        raise NotImplementedError("Indicator only for codim=1")
+
+    ind = CoefficientFunction(1)
+    for dtt in dta.dtlist:
+        for i, dt in enumerate(dtt):
+            if dt == POS:
+                ind *= IfPos(lsets[i], CoefficientFunction(1), 
+                             CoefficientFunction(0))
+            elif dt == NEG:
+                ind *= IfPos(-lsets[i], CoefficientFunction(1),
+                             CoefficientFunction(0))
+
+    return ind
+
 
 if __name__ == "__main__":
 
