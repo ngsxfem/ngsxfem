@@ -10,21 +10,19 @@ SetNumThreads(4)
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-h_max = 0.3/2/2
-k = 3
+h_max = 0.001
+k = 1
 
 gamma_n = 10
 gamma_s = 0.1
 
 inverse = "pardiso"
-pReg = 1e-8
-condense = False
 
 
 # ----------------------------------- DATA ------------------------------------
 u_ex = 16 * x * (1 - x) * y * (1 - y)
-grad_u_ex = CoefficientFunction(( (1 - 2 * x) * y * (1 - y), 
-                                  x * (1 - x) * (1 - 2 * y)))
+grad_u_ex = CoefficientFunction((16 * (1 - 2 * x) * y * (1 - y), 
+                                 16 * x * (1 - x) * (1 - 2 * y)))
 rhs = 32 * (y * (1 - y) + x * (1 - x))
 
 
@@ -71,12 +69,11 @@ els_hasneg, els_if = BitArray(mesh.ne), BitArray(mesh.ne)
 els_if_singe = [BitArray(mesh.ne) for i in range(nr_ls)]
 facets_gp = BitArray(mesh.nedge)
 
-els_if[:] = False
-els_if |= mlci.GetElementsOfType(square.Boundary(element_marking=True))
-
 els_hasneg[:] = False
-els_hasneg |= mlci.GetElementsOfType(square.dtlist)
-els_hasneg |= els_if
+els_hasneg |= mlci.GetElementsWithContribution(square.dtlist)
+
+els_if[:] = False
+els_if |= els_hasneg & ~mlci.GetElementsOfType(square.dtlist)
 
 for i in range(nr_ls):
     els_if_singe[i][:] = False
@@ -135,12 +132,13 @@ Draw((gfu - u_ex) * dta_indicator(level_sets_p1, square), mesh, "err")
 # ------------------------------ POST-PROCESSING ------------------------------
 
 with TaskManager():
-    err_l2 = sqrt(Integrate(lset_dom_inner, InnerProduct(gfu - u_ex, 
-                                                         gfu - u_ex),
-                            mesh, order=2 * k))
-    err_h1 = sqrt(Integrate(lset_dom_inner, InnerProduct(Grad(gfu) - grad_u_ex,
-                                                         Grad(gfu) - grad_u_ex),
-                            mesh, order=2 * (k - 1)))
+    err_l2 = sqrt(Integrate(lset_dom_inner, cf=InnerProduct(gfu - u_ex, 
+                                                            gfu - u_ex),
+                            mesh=mesh, order=2 * k))
+    err_h1 = sqrt(Integrate(lset_dom_inner, 
+                            cf=InnerProduct(Grad(gfu) - grad_u_ex,
+                                            Grad(gfu) - grad_u_ex),
+                            mesh=mesh, order=2 * (k - 1)))
 
 print("\n")
 print("L2 error = {:1.3e}".format(err_l2))

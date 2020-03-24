@@ -26,30 +26,24 @@ Draw (lsetp1_a, mesh, "lset_a")
 Draw (lsetp1_b, mesh, "lset_b")
 Draw (lsetp1_c, mesh, "lset_c")
 
-Draw (lsetp1_a * lsetp1_b * lsetp1_c, mesh, "lset_mult")
+Draw (IfPos(lsetp1_a, 0, 1) * IfPos(lsetp1_b, 0, 1) * IfPos(lsetp1_c, 0, 1), mesh, "lset_mult")
 
 # Shape of interest
 triangle = DomainTypeArray([(NEG,NEG,NEG)])
 
 # Show MultiLevelsetCutInfo functionality
-mlci = MultiLevelsetCutInfo(mesh,(lsetp1_a, lsetp1_b, lsetp1_c))
+mlci = MultiLevelsetCutInfo(mesh, (lsetp1_a, lsetp1_b, lsetp1_c))
 
 els_neg = mlci.GetElementsOfType(triangle.dtlist)
 els_not_neg = mlci.GetElementsOfType((~triangle).dtlist)
-els_outer = mlci.GetElementsOfType((~triangle).dtlist + (~(triangle.Boundary())).dtlist)
-els_if1 = mlci.GetElementsOfType(triangle.Boundary(element_marking=True)) 
-els_if2 = mlci.GetElementsOfType(triangle.Boundary(element_marking=False)) 
+els_hasneg = mlci.GetElementsWithContribution(triangle.dtlist)
 
-els_hasneg = BitArray(mesh.ne)
-els_hasneg.Clear()
-els_hasneg |= els_neg | els_if1
+els_if = BitArray(mesh.ne)
+els_if[:] = False
+els_if |= els_hasneg & ~els_neg
 
 # Draw BitArrays
 Draw(BitArrayCF(els_neg), mesh, "els_neg")
-Draw(BitArrayCF(els_if1), mesh, "els_if1")
-Draw(BitArrayCF(els_if2), mesh, "els_if2")
-Draw(BitArrayCF(els_not_neg), mesh, "els_not_neg")
-Draw(BitArrayCF(els_outer), mesh, "els_outer")
 Draw(BitArrayCF(els_hasneg), mesh, "els_hasneg")
-
+Draw(BitArrayCF(els_if), mesh, "els_if")
 
