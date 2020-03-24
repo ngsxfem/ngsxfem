@@ -243,6 +243,38 @@ namespace ngcomp
     ;
   }
 
+  shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsWithContribution(
+    const Array<Array<DOMAIN_TYPE>> & cdt, VorB vb, LocalHeap & lh) const
+  {
+    LevelsetIntegrationDomain lsetintdom(lsets, cdt);
+    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
+    elems_of_domain_type->Clear();
+    
+    int ne = ma->GetNE(vb);
+    IterateRange
+      (ne, lh,
+       [&] (int elnr, LocalHeap & lh)
+       {
+         ElementId ei = ElementId(vb,elnr);
+         ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
+
+         const IntegrationRule * ir_np;
+         Array<double> wei_arr;
+         tie (ir_np, wei_arr) = CreateCutIntegrationRule(lsetintdom, eltrans, lh);
+         double part_vol = 0;
+         if (ir_np)
+           for (auto w : wei_arr) 
+             part_vol += w; 
+         if (part_vol > 0)
+           elems_of_domain_type->SetBitAtomic(elnr);
+         
+       });
+    return elems_of_domain_type;
+  }
+  
+
+  
+  
   shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsOfDomainType(
     const Array<Array<DOMAIN_TYPE>> & cdt, VorB vb, LocalHeap & lh) const
   {
@@ -283,16 +315,6 @@ namespace ngcomp
            if (matching)
              elems_of_domain_type->SetBitAtomic(elnr);
          }
-
-         // const IntegrationRule * ir_np;
-         // Array<double> wei_arr;
-         // tie (ir_np, wei_arr) = CreateCutIntegrationRule(lsetintdom, eltrans, lh);
-         // double part_vol = 0;
-         // if (ir_np)
-         //   for (auto w : wei_arr) 
-         //     part_vol += w; 
-         // if (part_vol > 0)
-         //   elems_of_domain_type->SetBitAtomic(elnr);
        });
     return elems_of_domain_type;
   }

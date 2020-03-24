@@ -412,7 +412,60 @@ Returns mesh of CutInfo)raw_string")
          py::arg("VOL_or_BND") = VOL,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-corresponding combined domain type.)raw_string")
+corresponding domain type.)raw_string")
+      )
+    .def("GetElementsWithContribution", [](MultiLevelsetCutInformation & self,
+                                           py::object dt_in,
+                                           VorB vb,
+                                           int heapsize)
+         {
+
+           LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+
+           if (py::isinstance<py::tuple>(dt_in))
+           {
+             Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
+             Array<Array<DOMAIN_TYPE>> dts(1);
+             dts[0] = dts_;
+             return self.GetElementsWithContribution(dts, vb, lh);
+           }
+           
+
+           py::extract<py::list> dts_list_(dt_in);
+           if (!dts_list_.check())
+             throw Exception("domain_type is neither a tuple nor a list.");
+           auto dts_list(dts_list_());
+
+           int common_length = -1; //not a list
+           for (int i = 0; i < py::len(dts_list); i++)
+           {
+             auto dts_list_entry(dts_list[i]);
+             py::extract<py::tuple> dta(dts_list_entry);
+             if (!dta.check())
+               throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
+             else
+             {
+               if ((i>0) && (common_length != py::len(dta())))
+                 throw Exception("domain_type arrays have different length");
+               else
+                 common_length = py::len(dta());
+             }
+           }
+           
+           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
+           for (int i = 0; i < py::len(dts_list); i++)
+           {
+             py::extract<py::tuple> dta_tuple_(dts_list[i]);
+             auto dta_tuple(dta_tuple_());
+             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta_tuple);
+           }
+           return self.GetElementsWithContribution(cdts_aa, vb, lh);
+         },
+         py::arg("domain_type"),
+         py::arg("VOL_or_BND") = VOL,
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Returns BitArray that is true for every element that has the 
+a contribution to the corresponding level set domain.)raw_string")
       )
     ;
 
