@@ -32,7 +32,7 @@ Draw (lsetp1_a * lsetp1_b * lsetp1_c, mesh, "lset_mult")
 triangle = DomainTypeArray([(NEG,NEG,NEG)])
 
 # Show MultiLevelsetCutInfo functionality
-mlci = MultiLevelsetCutInfo(mesh, (lsetp1_a, lsetp1_b, lsetp1_c))
+mlci = MultiLevelsetCutInfo(mesh,(lsetp1_a, lsetp1_b, lsetp1_c))
 
 els_neg = mlci.GetElementsOfType(triangle.dtlist)
 els_not_neg = mlci.GetElementsOfType((~triangle).dtlist)

@@ -111,6 +111,17 @@ namespace ngcomp
       cdt[0] = cdt_;
       return GetElementsOfDomainType(cdt,vb,lh);
     }
+
+    shared_ptr<BitArray> GetElementsWithContribution(const Array<Array<DOMAIN_TYPE>> & cdt,
+                                                 VorB vb, LocalHeap & lh) const;
+
+    shared_ptr<BitArray> GetElementsWithContribution(const Array<DOMAIN_TYPE> & cdt_,
+                                                 VorB vb, LocalHeap & lh) const
+    {
+      Array<Array<DOMAIN_TYPE>> cdt(1);
+      cdt[0] = cdt_;
+      return GetElementsWithContribution(cdt,vb,lh);
+    }
   };
   
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
