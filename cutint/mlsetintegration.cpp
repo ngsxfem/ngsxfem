@@ -10,7 +10,7 @@ namespace xintegration
                                                                                        const ElementTransformation & trafo,
                                                                                        LocalHeap & lh)
   {
-    bool debug_out = true;
+    bool debug_out = false;
 
     Array<double> sum_wei_arr (0);
     IntegrationRule * sum_ir = new (lh) IntegrationRule(0 , lh);
