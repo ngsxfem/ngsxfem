@@ -10,7 +10,7 @@ namespace xintegration
                                                                                        const ElementTransformation & trafo,
                                                                                        LocalHeap & lh)
   {
-    bool debug_out = false;
+    bool debug_out = true;
 
     Array<double> sum_wei_arr (0);
     IntegrationRule * sum_ir = new (lh) IntegrationRule(0 , lh);
@@ -43,6 +43,7 @@ namespace xintegration
     {
       cout << "#########################################################################" << endl;
       cout << "#########################################################################" << endl << endl;
+      cout << "intorder : " << intorder << endl;
       cout << "currently on element with ID: " << trafo.GetElementId() << endl << endl;
       cout << "level set vertex values (one column per lset):\n" << elvecs << endl;
       cout << "domain types current of element (corresp. to mlset): \n" << lset_dts << endl;
@@ -105,7 +106,7 @@ namespace xintegration
       else
       {
         if (debug_out)
-          cout << "This element is cut and relevant";
+          cout << "This element is cut and relevant ";
 
         // We reduce the domain type array to the necessary domain types and corresponding level sets 
         for (int i = 0; i < M; i++)
@@ -174,7 +175,10 @@ namespace xintegration
     {
       double sum = 0;
       for (auto w : sum_wei_arr)
+      {
         sum += w;
+      }
+      cout << "Sum of weigts on element: " << sum << endl << endl;
     }
     if (sum_ir->Size() == 0)
       sum_ir = nullptr;
