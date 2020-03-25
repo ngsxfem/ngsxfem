@@ -143,22 +143,25 @@ class DomainTypeArray():
     def __iand__(self, dta_b):
         return self.__and__(dta_b)
 
-    def Boundary(self, element_marking=False):
+    def Boundary(self):
+        """
+        Compute the Boundary of the current region.
+
+        Returns
+        -------
+        DomainTypeArray
+        """
+        if self.codim >= 3:
+            raise Exception("Boundary does not make sense for codim >=3")
+
         dtl_out = []
-        if not element_marking:
-            for dtt in self.dtlist:
-                for i, dt in enumerate(dtt):
-                    dtt_out = list(dtt)
-                    if dt != IF:
-                        dtt_out[i] = IF
-                        dtl_out.append(tuple(dtt_out))
-            return DomainTypeArray(dtl_out)
-        else:
-            boundary = self
-            for codim in range(self.codim, 3):
-                boundary = boundary.Boundary()
-                dtl_out += boundary.dtlist
-            return dtl_out
+        for dtt in self.dtlist:
+            for i, dt in enumerate(dtt):
+                dtt_out = list(dtt)
+                if dt != IF:
+                    dtt_out[i] = IF
+                    dtl_out.append(tuple(dtt_out))
+        return DomainTypeArray(dtl_out)
 
 
 def dta_indicator(lsets, dta):
