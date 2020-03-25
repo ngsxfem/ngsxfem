@@ -10,8 +10,8 @@ SetNumThreads(4)
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-h_max = 0.1
-k = 1
+h_max = 0.4
+k = 4
 
 gamma_n = 10
 gamma_s = 0.1
@@ -27,7 +27,7 @@ rhs = 32 * (y * (1 - y) + x * (1 - x))
 
 
 def level_sets():
-    return [-x, y - 1, x - 1, -y]
+    return [-y, x - 1, y - 1, -x]
 
 
 nr_ls = len(level_sets())
@@ -77,7 +77,9 @@ els_if |= els_hasneg & ~mlci.GetElementsOfType(square.dtlist)
 
 for i in range(nr_ls):
     els_if_singe[i][:] = False
-    els_if_singe[i] |= mlci.GetElementsOfType(lsets_bnd[i]["domain_type"])
+    els_if_singe[i] |= els_hasneg
+    els_if_singe[i] &= mlci.GetElementsWithContribution(lsets_bnd[i]["domain_type"])
+    Draw(BitArrayCF(els_if_singe[i]),mesh,"els_if_singe"+str(i))
 
 facets_gp[:] = False
 facets_gp |= GetFacetsWithNeighborTypes(mesh, a=els_hasneg, b=els_if,
@@ -113,6 +115,7 @@ for i, nitsche in enumerate(nitsche_terms):
 a += SymbolicFacetPatchBFI(form=ghost_penalty, skeleton=False,
                            definedonelements=facets_gp)
 
+
 f = LinearForm(V)
 f += SymbolicLFI(lset_dom_inner, form=forcing)
 
@@ -126,8 +129,8 @@ with TaskManager():
     gfu.vec.data = PreRic(a=a, rhs=f.vec, pre=inv, freedofs=freedofs)
 
 # ------------------------------- VISUALISATION -------------------------------
-Draw(gfu * dta_indicator(level_sets(), square), mesh, "solution")
-Draw((gfu - u_ex) * dta_indicator(level_sets_p1, square), mesh, "err")
+Draw(gfu, mesh, "solution")
+Draw((gfu - u_ex), mesh, "err")
 
 # ------------------------------ POST-PROCESSING ------------------------------
 
