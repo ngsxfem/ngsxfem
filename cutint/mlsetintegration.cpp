@@ -132,7 +132,11 @@ namespace xintegration
           }
           // condense_gflsets[0]->GetVector().GetIndirect(dnums, elvec);
           int j = condense_id_to_full_id[0];
-          FlatVector elvec(dnums.Size(), &(elvecs.Col(j)[0]));
+          elvec = elvecs.Col(j);
+          if (debug_out)
+          {
+            cout << elvec << endl;
+          }
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec,
                                                                   trafo, dts[j], intorder, quad_dir_policy, lh);
           if(ir != nullptr) 
