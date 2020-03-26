@@ -34,7 +34,7 @@ def MarkersEqual(arr1, arr2):
 # -----------------------------------------------------------------------------
 
 
-def test_2d_mlset():
+def test_2d_mlci_and_lo_integration():
     # ---------------------------- Background Mesh ----------------------------
     square = SplineGeometry()
     square.AddRectangle([-1, -0.5], [1, 1.5], bc=1)
@@ -76,6 +76,7 @@ def test_2d_mlset():
 
     # --------------------------- Test Integration ----------------------------
 
+    # ---------------------- Test Low-Order Integration -----------------------
     # Codim = 0
     lset_dom_0 = {"levelset": level_sets_p1[0], "domain_type": NEG}
     area0 = Integrate(levelset_domain=lset_dom_0, mesh=mesh, cf=1, order=0)
@@ -133,6 +134,33 @@ def test_2d_mlset():
 
     del mesh, level_sets, level_sets_p1, mlci, triangle
     del els_neg, els_hasneg, els_if, els_not_neg
+
+
+def test_2d_ho_integration():
+    # -------------------- Test Higher-Order Integration ----------------------
+    level_sets = [-y, x - 1, y - 1, -x]
+    nr_ls = len(level_sets)
+
+    # ---------------------------- Background Mesh ----------------------------
+    geo = SplineGeometry()
+    geo.AddRectangle((-0.2, -0.2), (1.2, 1.2),
+                     bcs=("bottom", "right", "top", "left"))
+    mesh = Mesh(geo.GenerateMesh(maxh=0.4))
+
+    # ------------------------------- LEVELSET --------------------------------
+    level_sets_p1 = tuple(GridFunction(H1(mesh, order=1)) for i in range(nr_ls))
+    for i, lsetp1 in enumerate(level_sets_p1):
+        InterpolateToP1(level_sets[i], lsetp1)
+
+    square = DomainTypeArray([(NEG, NEG, NEG, NEG)])
+    lset_dom_square = {"levelset": level_sets_p1, "domain_type": square.dtlist}
+
+    # ------------------------------- Integrate -------------------------------
+    result = Integrate(levelset_domain=lset_dom_square, mesh=mesh, 
+                       cf=x * (1 - x) * y * (1 - y), order=4)
+    assert abs(result - 1/36) < 1e-12
+
+    del mesh, level_sets, level_sets_p1, square 
 
 
 # -----------------------------------------------------------------------------
