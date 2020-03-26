@@ -193,6 +193,8 @@ def test_check_convergence_order():
         print("h_max   | L2 err.  | Rate | H1 err.  | Rate ")
         print("--------------------------------------------")
 
+        ratesl2, ratesh1 = 0, 0
+
         for i, Lx in enumerate(mesh_levels):
 
             if i > 0:
@@ -200,15 +202,20 @@ def test_check_convergence_order():
                                       errs["l2"][(Lx - 1, k)])
                 rate_h1 = CompLogRate(errs["h1"][(Lx, k)],
                                       errs["h1"][(Lx - 1, k)])
+                ratesl2 += rate_l2 
+                ratesh1 += rate_h1
 
                 print("{:3.1e}   {:5.3e}  {:4.2f}   {:5.3e}  {:4.2f} ".format(
                     h0 * 0.5**Lx, errs["l2"][(Lx, k)], rate_l2,
                     errs["h1"][(Lx, k)], rate_h1))
 
-                assert k + 1 - rate_l2 < rate_tol
-                assert k - rate_h1 < rate_tol
-
             else:
                 print("{:3.1e}   {:5.3e}  ----   {:5.3e}  ---- ".format(
                     h0 * 0.5**Lx, errs["l2"][(Lx, k)], errs["h1"][(Lx, k)]))
         print("--------------------------------------------")
+
+
+        assert abs(k + 1 - ratesl2 / (len(mesh_levels) - 1)) < rate_tol
+        assert abs(k - ratesh1 / (len(mesh_levels) - 1)) < rate_tol
+
+
