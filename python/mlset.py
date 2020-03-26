@@ -11,10 +11,10 @@ class DomainTypeArray():
 
     Parameters
     ----------
-    dtlist : list(tuples)
-        List containing tuples of DOMAIN_TYPE for regions where we 
-        integrate. ANY is a not valid DOMAIN_TYPE but is expanded on 
-        initialisation onto POS and NEG.
+    dtlist : list(tuples) or singe tuple
+        The tuple or a list of tuples of DOMAIN_TYPE describing the 
+        region where we integrate. ANY is a not valid DOMAIN_TYPE but 
+        is expanded on initialisation onto POS and NEG.
 
 
     Attributes
@@ -29,16 +29,16 @@ class DomainTypeArray():
     Methods
     -------
     Boundary(element_marking=False):
-        - If element_marking=False, a DomainTypeArray describing the 
-          boundary of the current DomainTypeArray.
-        - If element_marking=True, it generates a list describing all
-          elements which contain part of the boundary of the current
-          instance. Needed for GetElementsOfType.
+        - A DomainTypeArray describing the boundary of the current 
+        DomainTypeArray region.
 
 
     """
 
     def __init__(self, dtlist):
+        if type(dtlist) == tuple:
+            dtlist = [dtlist]
+
         if type(dtlist) != list or type(dtlist[0]) != tuple:
             raise TypeError("Invalid input: dtlist must be list of tuples")
 
@@ -188,7 +188,7 @@ def dta_indicator(lsets, dta):
     for dtt in dta.dtlist:
         for i, dt in enumerate(dtt):
             if dt == POS:
-                ind *= IfPos(lsets[i], CoefficientFunction(1), 
+                ind *= IfPos(lsets[i], CoefficientFunction(1),
                              CoefficientFunction(0))
             elif dt == NEG:
                 ind *= IfPos(-lsets[i], CoefficientFunction(1),
@@ -254,9 +254,9 @@ if __name__ == "__main__":
     print("Expected: ", [(NEG, IF, NEG), (NEG, NEG, IF), (IF, NEG, NEG)])
     input("")
 
-    print("elements_makings=True\nBoundary: ", 
+    print("elements_makings=True\nBoundary: ",
           dta7.Boundary(element_marking=True))
-    print("Expected: ", [(NEG, IF, NEG), (NEG, NEG, IF), (IF, NEG, NEG), 
+    print("Expected: ", [(NEG, IF, NEG), (NEG, NEG, IF), (IF, NEG, NEG),
                          (IF, IF, NEG), (IF, NEG, IF), (NEG, IF, IF),
                          (IF, IF, IF)])
     input("")
