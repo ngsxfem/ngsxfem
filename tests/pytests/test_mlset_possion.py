@@ -1,11 +1,12 @@
 # ------------------------------ LOAD LIBRARIES -------------------------------
+import pytest
 from netgen.geom2d import SplineGeometry
 from ngsolve import *
 from ngsolve.solvers import PreconditionedRichardson as PreRic
 from xfem import *
 from xfem.mlset import *
 
-ngsglobals.msg_level = 2
+ngsglobals.msg_level = 1
 SetNumThreads(4)
 
 
@@ -147,16 +148,20 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
 
     return err_l2, err_h1
 
+# ----------------------------- UTILITY FUNTIONS ------------------------------
+def CompLogRate(y1, y2, delta=log(2)):
+    return (log(y2) - log(y1)) / delta
 
 # -------------------------------- FIRST CHECK --------------------------------
-with TaskManager():
-    mesh = Mesh(geo.GenerateMesh(maxh=h0))
-    errl2, errh1 = SolvePossionOnUnitSquare(
-        level_sets(), mesh, full_order, rhs, u_ex=u_ex, grad_u_ex=grad_u_ex)
+def test_solution_in_space(): 
+    with TaskManager():
+        mesh = Mesh(geo.GenerateMesh(maxh=h0))
+        errl2, errh1 = SolvePossionOnUnitSquare(
+            level_sets(), mesh, full_order, rhs, u_ex=u_ex, grad_u_ex=grad_u_ex)
 
-    assert errl2 < 1e-12, errh1 < 1e-12
+        assert errl2 < 1e-12, errh1 < 1e-12
 
-    del mesh
+        del mesh
 
 
 # ----------------------------- CONVERGENCE STUDY -----------------------------
@@ -181,34 +186,29 @@ with TaskManager():
 
 
 # ------------------------------ POST-PROCESSING ------------------------------
+def test_check_convergence_order():
+    for k in orders:
+        print("\n Results with k = {:}:".format(k))
+        print("--------------------------------------------")
+        print("h_max   | L2 err.  | Rate | H1 err.  | Rate ")
+        print("--------------------------------------------")
 
+        for i, Lx in enumerate(mesh_levels):
 
-def CompLogRate(y1, y2, delta=log(2)):
-    return (log(y2) - log(y1)) / delta
+            if i > 0:
+                rate_l2 = CompLogRate(errs["l2"][(Lx, k)],
+                                      errs["l2"][(Lx - 1, k)])
+                rate_h1 = CompLogRate(errs["h1"][(Lx, k)],
+                                      errs["h1"][(Lx - 1, k)])
 
+                print("{:3.1e}   {:5.3e}  {:4.2f}   {:5.3e}  {:4.2f} ".format(
+                    h0 * 0.5**Lx, errs["l2"][(Lx, k)], rate_l2,
+                    errs["h1"][(Lx, k)], rate_h1))
 
-for k in orders:
-    print("\n Results with k = {:}:".format(k))
-    print("--------------------------------------------")
-    print("h_max   | L2 err.  | Rate | H1 err.  | Rate ")
-    print("--------------------------------------------")
+                assert k + 1 - rate_l2 < rate_tol
+                assert k - rate_h1 < rate_tol
 
-    for i, Lx in enumerate(mesh_levels):
-
-        if i > 0:
-            rate_l2 = CompLogRate(errs["l2"][(Lx, k)],
-                                  errs["l2"][(Lx - 1, k)])
-            rate_h1 = CompLogRate(errs["h1"][(Lx, k)],
-                                  errs["h1"][(Lx - 1, k)])
-
-            print("{:3.1e}   {:5.3e}  {:4.2f}   {:5.3e}  {:4.2f} ".format(
-                h0 * 0.5**Lx, errs["l2"][(Lx, k)], rate_l2,
-                errs["h1"][(Lx, k)], rate_h1))
-
-            assert k + 1 - rate_l2 < rate_tol
-            assert k - rate_h1 < rate_tol
-
-        else:
-            print("{:3.1e}   {:5.3e}  ----   {:5.3e}  ---- ".format(
-                h0 * 0.5**Lx, errs["l2"][(Lx, k)], errs["h1"][(Lx, k)]))
-    print("--------------------------------------------")
+            else:
+                print("{:3.1e}   {:5.3e}  ----   {:5.3e}  ---- ".format(
+                    h0 * 0.5**Lx, errs["l2"][(Lx, k)], errs["h1"][(Lx, k)]))
+        print("--------------------------------------------")
