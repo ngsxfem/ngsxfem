@@ -162,18 +162,28 @@ Other Parameters :
   deformation : GridFunction
     Specify a specific mesh deformation for a bilinear form
 
+  order : int
+    Modifies the order of the quadrature rule used. This is overruled by "order"-entry of the 
+    levelset_domain dictionary, if the dictionary entry exists.
+
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
     rule will be applied. This is only relevant for space-time discretizations.
 """
     if levelset_domain != None and type(levelset_domain)==dict:
+        # shallow copy is sufficient to modify "order" and "time_order" locally
+        levelset_domain_local = levelset_domain.copy()
+        if "order" in kwargs:
+            if not "order" in levelset_domain_local:
+                levelset_domain_local["order"] = kwargs["order"]
+            del kwargs["order"]
         if "time_order" in kwargs:
-            if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
-                levelset_domain["time_order"] = kwargs["time_order"]
+            if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
+                levelset_domain_local["time_order"] = kwargs["time_order"]
             del kwargs["time_order"]
-        
+
         # print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
-        return SymbolicCutBFI(levelset_domain=levelset_domain,*args, **kwargs)
+        return SymbolicCutBFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
         if (levelset_domain == None):
@@ -239,17 +249,28 @@ Other Parameters :
   deformation : GridFunction
       Specify a specific mesh deformation for a linear form
 
+  order : int
+    Modifies the order of the quadrature rule used. This is overruled by "order"-entry of the 
+    levelset_domain dictionary, if the dictionary entry exists.
+
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
     rule will be applied. This is only relevant for space-time discretizations. Note that
     time_order can only be active if the key "time_order" of the levelset_domain is not set (or -1)
 """
     if levelset_domain != None and type(levelset_domain)==dict:
+        # shallow copy is sufficient to modify "order" and "time_order" locally
+        levelset_domain_local = levelset_domain.copy()      
+        if "order" in kwargs:
+            if not "order" in levelset_domain_local:
+                levelset_domain_local["order"] = kwargs["order"]
+            del kwargs["order"]
         if "time_order" in kwargs:
-            if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
-                levelset_domain["time_order"] = kwargs["time_order"]
+            if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
+                levelset_domain_local["time_order"] = kwargs["time_order"]
             del kwargs["time_order"]
-        return SymbolicCutLFI(levelset_domain=levelset_domain,*args, **kwargs)
+        
+        return SymbolicCutLFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
         if (levelset_domain == None):
             return SymbolicLFI_old(*args,**kwargs)
