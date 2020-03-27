@@ -16,7 +16,6 @@ class DomainTypeArray():
         region where we integrate. ANY is a not valid DOMAIN_TYPE but 
         is expanded on initialisation onto POS and NEG.
 
-
     Attributes
     ----------
     as_list : list(tuples)
@@ -25,14 +24,14 @@ class DomainTypeArray():
     codim : int
         Co-dimension of the  region of interest.
 
-
     Methods
     -------
     Boundary(element_marking=False):
         - A DomainTypeArray describing the boundary of the current 
         DomainTypeArray region.
-
-
+    Indicator(lsets):
+        Returns an indicator CoefficientFunction of the current 
+        DomainTypeArrays region.
     """
 
     def __init__(self, dtlist):
@@ -164,34 +163,32 @@ class DomainTypeArray():
         return DomainTypeArray(dtl_out)
 
 
-def dta_indicator(lsets, dta):
-    """
-    Indicator function for a DomainTypeArray
+    def Indicator(self, lsets):
+        """
+        Indicator function for a DomainTypeArray
 
-    Parameters
-    ----------
-    lsets : tuple(CoefficientFunctions)
-        The level set functions defining the region
-    dta : DomainTypeArray
-        The dta describing the region of interest. Must have codim=0
+        Parameters
+        ----------
+        lsets : tuple(CoefficientFunctions)
+            The level set functions defining the region
 
-    Returns
-    -------
-    CoefficientFunction
-        1 in the region on interest, 0 else
-    """
+        Returns
+        -------
+        CoefficientFunction
+            1 in the region on interest, 0 else
+        """
 
-    if dta.codim != 0:
-        raise NotImplementedError("Indicator only for codim=1")
+        if self.codim != 0:
+            raise NotImplementedError("Indicator only for codim=1")
 
-    ind = CoefficientFunction(1)
-    for dtt in dta.as_list:
-        for i, dt in enumerate(dtt):
-            if dt == POS:
-                ind *= IfPos(lsets[i], CoefficientFunction(1),
-                             CoefficientFunction(0))
-            elif dt == NEG:
-                ind *= IfPos(-lsets[i], CoefficientFunction(1),
-                             CoefficientFunction(0))
+        ind = CoefficientFunction(1)
+        for dtt in self.as_list:
+            for i, dt in enumerate(dtt):
+                if dt == POS:
+                    ind *= IfPos(lsets[i], CoefficientFunction(1),
+                                 CoefficientFunction(0))
+                elif dt == NEG:
+                    ind *= IfPos(-lsets[i], CoefficientFunction(1),
+                                 CoefficientFunction(0))
 
-    return ind
+        return ind
