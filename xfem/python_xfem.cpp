@@ -375,10 +375,14 @@ Returns mesh of CutInfo)raw_string")
              Array<Array<DOMAIN_TYPE>> dts(1);
              dts[0] = dts_;
              return self.GetElementsOfDomainType(dts, vb, lh);
-           }
-           
+           }           
+
 
            py::extract<py::list> dts_list_(dt_in);
+           if (py::hasattr(dt_in, "dtlist"))
+           {
+             py::extract<py::list> dts_list_(dt_in.attr("dtlist"));
+           }
            if (!dts_list_.check())
              throw Exception("domain_type is neither a tuple nor a list.");
            auto dts_list(dts_list_());
@@ -429,9 +433,12 @@ corresponding domain type.)raw_string")
              dts[0] = dts_;
              return self.GetElementsWithContribution(dts, vb, lh);
            }
-           
 
            py::extract<py::list> dts_list_(dt_in);
+           if (py::hasattr(dt_in, "dtlist"))
+           {
+             py::extract<py::list> dts_list_(dt_in.attr("dtlist"));
+           }
            if (!dts_list_.check())
              throw Exception("domain_type is neither a tuple nor a list.");
            auto dts_list(dts_list_());

@@ -34,9 +34,9 @@ triangle = DomainTypeArray([(NEG,NEG,NEG)])
 # Show MultiLevelsetCutInfo functionality
 mlci = MultiLevelsetCutInfo(mesh, (lsetp1_a, lsetp1_b, lsetp1_c))
 
-els_neg = mlci.GetElementsOfType(triangle.dtlist)
-els_not_neg = mlci.GetElementsOfType((~triangle).dtlist)
-els_hasneg = mlci.GetElementsWithContribution(triangle.dtlist)
+els_neg = mlci.GetElementsOfType(triangle)
+els_not_neg = mlci.GetElementsOfType(~triangle)
+els_hasneg = mlci.GetElementsWithContribution(triangle)
 
 els_if = BitArray(mesh.ne)
 els_if[:] = False

@@ -58,7 +58,7 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
 
     square = DomainTypeArray([(NEG, NEG, NEG, NEG)])
 
-    lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square.dtlist}
+    lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
     lsets_bnd = []
     for i in range(nr_ls):
         dtt = tuple(IF if ii == i else NEG for ii in range(nr_ls))
@@ -72,10 +72,10 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
     facets_gp = BitArray(mesh.nedge)
 
     els_hasneg[:] = False
-    els_hasneg |= mlci.GetElementsWithContribution(square.dtlist)
+    els_hasneg |= mlci.GetElementsWithContribution(square)
 
     els_if[:] = False
-    els_if |= els_hasneg & ~mlci.GetElementsOfType(square.dtlist)
+    els_if |= els_hasneg & ~mlci.GetElementsOfType(square)
 
     for i in range(nr_ls):
         els_if_singe[i][:] = False
@@ -225,3 +225,9 @@ def test_check_convergence_order():
         assert k - ratesh1 < rate_tol
 
 
+# -----------------------------------------------------------------------------
+# --------------------------- RUN TESTS SEPARATELY ----------------------------
+# -----------------------------------------------------------------------------
+if __name__ == "__main__":
+    test_solution_in_space()
+    test_check_convergence_order()

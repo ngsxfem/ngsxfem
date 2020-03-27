@@ -118,3 +118,12 @@ def test_any_expansion():
     target_list = [(IF, NEG, NEG), (IF, NEG, POS), (IF, POS, NEG), 
                    (IF, POS, POS), (POS, IF, NEG), (POS, IF, POS)]
     assert CompList(dta12.dtlist, target_list)
+
+
+# -----------------------------------------------------------------------------
+# --------------------------- RUN TESTS SEPARATELY ----------------------------
+# -----------------------------------------------------------------------------
+if __name__ == "__main__":
+    test_trainge()
+    test_operators()
+    test_any_expansion()
