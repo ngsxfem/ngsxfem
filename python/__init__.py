@@ -116,14 +116,20 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": ngsolve.CoefficientFunction
-    CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-    FESpace with scalar continuous piecewise (multi-) linear basis functions.
-  * "domain_type" : {NEG,POS,IF} (ENUM)
-    Integration on the domain where either:
-    * the level set function is negative (NEG)
-    * the level set function is positive (POS)
-    * the level set function is zero     (IF )
+  * "levelset": 
+    singe level set : ngsolve.CoefficientFunction
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+    multiple level sets: tuple(ngsolve.GridFunction)
+      Tuple of GridFunctions that describe the geometry.
+  * "domain_type" :
+    single level set: {NEG,POS,IF} (ENUM) 
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+    multiple level sets: tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray
+      Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
@@ -203,14 +209,20 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": ngsolve.CoefficientFunction
-    CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-    FESpace with scalar continuous piecewise (multi-) linear basis functions.
-  * "domain_type" : {NEG,POS,IF} (ENUM)
-    Integration on the domain where either:
-    * the level set function is negative (NEG)
-    * the level set function is positive (POS)
-    * the level set function is zero     (IF )
+  * "levelset": 
+    singe level set : ngsolve.CoefficientFunction
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+    multiple level sets: tuple(ngsolve.GridFunction)
+      Tuple of GridFunctions that describe the geometry.
+  * "domain_type" :
+    single level set: {NEG,POS,IF} (ENUM) 
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+    multiple level sets: tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray
+      Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
@@ -304,14 +316,20 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": ngsolve.CoefficientFunction
-    CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-    FESpace with scalar continuous piecewise (multi-) linear basis functions.
-  * "domain_type" : {NEG,POS,IF} (ENUM)
-    Integration on the domain where either:
-    * the level set function is negative (NEG)
-    * the level set function is positive (POS)
-    * the level set function is zero     (IF )
+  * "levelset": 
+    singe level set : ngsolve.CoefficientFunction
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+    multiple level sets: tuple(ngsolve.GridFunction)
+      Tuple of GridFunctions that describe the geometry.
+  * "domain_type" :
+    single level set: {NEG,POS,IF} (ENUM) 
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+    multiple level sets: tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray
+      Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
