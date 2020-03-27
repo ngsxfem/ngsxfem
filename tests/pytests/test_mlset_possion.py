@@ -13,10 +13,10 @@ SetNumThreads(4)
 # -------------------------------- PARAMETERS ---------------------------------
 full_order = 4
 orders = [1, 2, 3]
-h0 = 0.2
-mesh_levels = range(0, 5)
+h0 = 0.4
+mesh_levels = range(0, 6)
 
-rate_tol = 0.2
+rate_tol = 0.1
 
 
 # ----------------------------------- DATA ------------------------------------
@@ -165,28 +165,29 @@ def test_solution_in_space():
 
 
 # ----------------------------- CONVERGENCE STUDY -----------------------------
-errs = {"l2": {}, "h1": {}}
-
-with TaskManager():
-    for Lx in mesh_levels:
-
-        ngmesh = geo.GenerateMesh(maxh=h0)
-        for i in range(Lx):
-            ngmesh.Refine()
-        mesh = Mesh(ngmesh)
-
-        for k in orders:
-            errl2, errh1 = SolvePossionOnUnitSquare(
-                level_sets(), mesh, k, rhs, u_ex=u_ex, grad_u_ex=grad_u_ex)
-
-            errs["l2"][(Lx, k)] = errl2
-            errs["h1"][(Lx, k)] = errh1
-
-        del ngmesh, mesh
-
-
-# ------------------------------ POST-PROCESSING ------------------------------
 def test_check_convergence_order():
+    errs = {"l2": {}, "h1": {}}
+
+    with TaskManager():
+        for Lx in mesh_levels:
+
+            ngmesh = geo.GenerateMesh(maxh=h0)
+            for i in range(Lx):
+                ngmesh.Refine()
+            mesh = Mesh(ngmesh)
+
+            for k in orders:
+                errl2, errh1 = SolvePossionOnUnitSquare(
+                    level_sets(), mesh, k, rhs, u_ex=u_ex, grad_u_ex=grad_u_ex,
+                    gamma_s=0.5)
+
+                errs["l2"][(Lx, k)] = errl2
+                errs["h1"][(Lx, k)] = errh1
+
+            del ngmesh, mesh
+
+
+    # ---------------------------- Post-Processing ----------------------------
     for k in orders:
         print("\n Results with k = {:}:".format(k))
         print("--------------------------------------------")
@@ -214,8 +215,13 @@ def test_check_convergence_order():
                     h0 * 0.5**Lx, errs["l2"][(Lx, k)], errs["h1"][(Lx, k)]))
         print("--------------------------------------------")
 
+        ratesl2 = ratesl2 / (len(mesh_levels) - 1)
+        ratesh1 = ratesh1 / (len(mesh_levels) - 1)
 
-        assert abs(k + 1 - ratesl2 / (len(mesh_levels) - 1)) < rate_tol
-        assert abs(k - ratesh1 / (len(mesh_levels) - 1)) < rate_tol
+        print("Avarage L2 rate: {}".format(ratesl2))
+        print("Avarage H1 rate: {}".format(ratesh1))
+
+        assert k + 1 - ratesl2 < rate_tol
+        assert k - ratesh1 < rate_tol
 
 
