@@ -384,7 +384,7 @@ Returns mesh of CutInfo)raw_string")
              py::extract<py::list> dts_list_(dt_in.attr("dtlist"));
            }
            if (!dts_list_.check())
-             throw Exception("domain_type is neither a tuple nor a list.");
+             throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
            auto dts_list(dts_list_());
 
            int common_length = -1; //not a list
@@ -440,7 +440,7 @@ corresponding domain type.)raw_string")
              py::extract<py::list> dts_list_(dt_in.attr("dtlist"));
            }
            if (!dts_list_.check())
-             throw Exception("domain_type is neither a tuple nor a list.");
+             throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
            auto dts_list(dts_list_());
 
            int common_length = -1; //not a list
