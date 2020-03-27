@@ -10,8 +10,9 @@ SetNumThreads(4)
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-h_max = 0.4
-k = 4
+h0 = 0.4
+Lx = 3
+k = 1
 
 gamma_n = 10
 gamma_s = 0.1
@@ -37,7 +38,10 @@ nr_ls = len(level_sets())
 geo = SplineGeometry()
 geo.AddRectangle((-0.2, -0.2), (1.2, 1.2),
                  bcs=("bottom", "right", "top", "left"))
-mesh = Mesh(geo.GenerateMesh(maxh=h_max))
+ngmesh = geo.GenerateMesh(maxh=h0)
+for i in range(Lx):
+    ngmesh.Refine()
+mesh = Mesh(ngmesh)
 
 
 # --------------------------- FINITE ELEMENT SPACE ----------------------------
@@ -74,6 +78,7 @@ els_hasneg |= mlci.GetElementsWithContribution(square.dtlist)
 
 els_if[:] = False
 els_if |= els_hasneg & ~mlci.GetElementsOfType(square.dtlist)
+Draw(BitArrayCF(els_if), mesh, "els_if")
 
 for i in range(nr_ls):
     els_if_singe[i][:] = False
@@ -84,6 +89,9 @@ for i in range(nr_ls):
 facets_gp[:] = False
 facets_gp |= GetFacetsWithNeighborTypes(mesh, a=els_hasneg, b=els_if,
                                         use_and=True)
+
+els_gp = GetElementsWithNeighborFacets(mesh, facets_gp)
+Draw(BitArrayCF(els_gp), mesh, "gp_elements")
 
 freedofs[:] = False
 freedofs |= GetDofsOfElements(V, els_hasneg) & V.FreeDofs()
