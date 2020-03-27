@@ -55,7 +55,7 @@ def test_2d_mlci_and_lo_integration():
 
     # ---------------------------- DomainTypeArray ----------------------------
     triangle = DomainTypeArray((NEG, NEG, NEG))
-    Draw(dta_indicator(level_sets_p1, triangle), mesh, "dta_indicator")
+    Draw(triangle.Indicator(level_sets_p1), mesh, "dta_indicator")
 
     # ------------------------------- Cut-Info --------------------------------
     mlci = MultiLevelsetCutInfo(mesh, level_sets_p1)
