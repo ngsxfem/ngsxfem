@@ -243,9 +243,9 @@ namespace xintegration
       }
       
       py::extract<py::list> dts_list_(dt_in);
-      if (py::hasattr(dt_in, "dtlist"))
+      if (py::hasattr(dt_in, "as_list"))
       {
-        py::extract<py::list> dts_list_(dt_in.attr("dtlist"));
+        py::extract<py::list> dts_list_(dt_in.attr("as_list"));
       } 
       if (!dts_list_.check())
         throw Exception("domain_type is neither a DOMAIN_TYPE nor a tuple nor a list nor a DomainTypeArray.");

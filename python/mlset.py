@@ -19,7 +19,7 @@ class DomainTypeArray():
 
     Attributes
     ----------
-    dtlist : list(tuples)
+    as_list : list(tuples)
         Expanded list containing valid tuples describing the region of
         interest
     codim : int
@@ -56,12 +56,12 @@ class DomainTypeArray():
                         dtlist_expand.append(tuple(dt_lists[i]))
                 else:
                     dtlist_expand.append(dtt)
-            self.dtlist = list(set(dtlist_expand))
+            self.as_list = list(set(dtlist_expand))
         else:
-            self.dtlist = list(set(dtlist))
+            self.as_list = list(set(dtlist))
 
         self.codim = 0
-        for dt in self.dtlist[0]:
+        for dt in self.as_list[0]:
             if dt == IF:
                 self.codim += 1
 
@@ -69,8 +69,8 @@ class DomainTypeArray():
         if self.codim > 3:
             print("Warning: Codim > 3 !!!")
 
-        dtt_len = len(self.dtlist[0])
-        for dtt in self.dtlist:
+        dtt_len = len(self.as_list[0])
+        for dtt in self.as_list:
             for dt in dtt:
                 if dt not in [NEG, POS, IF, ANY]:
                     raise Exception("Initialised with something other than NEG, POS, IF, ANY")
@@ -83,33 +83,33 @@ class DomainTypeArray():
                                 "different length!")
 
     def __len__(self):
-        return self.dtlist.__len__()
+        return self.as_list.__len__()
 
     def __iter__(self):
-        return self.dtlist.__iter__()
+        return self.as_list.__iter__()
 
     def __contains__(self, dtt):
-        return dtt in self.dtlist
+        return dtt in self.as_list
 
     def __str__(self):
         str_out = "DomainTypeArray:\n"
         str_out += "  Co-dim : {}\n".format(self.codim)
         str_out += "  Domains: ["
-        for dtt in self.dtlist:
+        for dtt in self.as_list:
             str_out += dtt.__str__() + ", "
         return str_out[:-2] + "]"
 
     def __or__(self, dta_b):
         if self.codim != dta_b.codim:
             raise Exception("Co-dims don't match: Union not possible!")
-        return DomainTypeArray(self.dtlist + dta_b.dtlist)
+        return DomainTypeArray(self.as_list + dta_b.as_list)
 
     def __and__(self, dta_b):
         if self.codim == 0:
-            return DomainTypeArray([dtt for dtt in self.dtlist if dtt in dta_b.dtlist])
+            return DomainTypeArray([dtt for dtt in self.as_list if dtt in dta_b.as_list])
         else:
             dtl_out = []
-            for dtt1, dtt2 in product(self.dtlist, dta_b.dtlist):
+            for dtt1, dtt2 in product(self.as_list, dta_b.as_list):
                 if dtt1 == dtt2:
                     dtl_out.append(dtt1)
                     continue
@@ -128,12 +128,12 @@ class DomainTypeArray():
 
     def __invert__(self):
 
-        n = len(self.dtlist[0])
+        n = len(self.as_list[0])
         dt_per = permutations([NEG] * (n - self.codim) +
                               [POS] * (n - self.codim) + [IF] * self.codim, n)
         dt_per = list(filter(lambda dtt: dtt.count(IF) == self.codim,
                              set(dt_per)))
-        for dt in self.dtlist:
+        for dt in self.as_list:
             dt_per.remove(dt)
         return DomainTypeArray(dt_per)
 
@@ -155,7 +155,7 @@ class DomainTypeArray():
             raise Exception("Boundary does not make sense for codim >=3")
 
         dtl_out = []
-        for dtt in self.dtlist:
+        for dtt in self.as_list:
             for i, dt in enumerate(dtt):
                 dtt_out = list(dtt)
                 if dt != IF:
@@ -185,7 +185,7 @@ def dta_indicator(lsets, dta):
         raise NotImplementedError("Indicator only for codim=1")
 
     ind = CoefficientFunction(1)
-    for dtt in dta.dtlist:
+    for dtt in dta.as_list:
         for i, dt in enumerate(dtt):
             if dt == POS:
                 ind *= IfPos(lsets[i], CoefficientFunction(1),

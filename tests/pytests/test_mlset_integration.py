@@ -67,9 +67,9 @@ def test_2d_mlci_and_lo_integration():
 
     UpdateMarkers(els_neg, mlci.GetElementsOfType(triangle))
     UpdateMarkers(els_hasneg, mlci.GetElementsWithContribution(triangle))
-    UpdateMarkers(els_neg2, mlci.GetElementsOfType(triangle.dtlist))
+    UpdateMarkers(els_neg2, mlci.GetElementsOfType(triangle.as_list))
     UpdateMarkers(els_hasneg2,
-                  mlci.GetElementsWithContribution(triangle.dtlist))
+                  mlci.GetElementsWithContribution(triangle.as_list))
     UpdateMarkers(els_if, mlci.GetElementsWithContribution(triangle.Boundary()))
     UpdateMarkers(els_not_neg, mlci.GetElementsWithContribution(~triangle))
 
@@ -198,8 +198,8 @@ def test_3d_mlset():
         domain[i] = IF
         sides.append(DomainTypeArray(tuple(domain)))
 
-    target_list = [dtt for side in sides for dtt in side.dtlist]
-    assert CompList(cube.Boundary().dtlist, target_list)
+    target_list = [dtt for side in sides for dtt in side.as_list]
+    assert CompList(cube.Boundary().as_list, target_list)
 
     # ------------------------------- Cut-Info --------------------------------
     mlci = MultiLevelsetCutInfo(mesh, level_sets_p1)

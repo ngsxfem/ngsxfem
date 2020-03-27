@@ -28,16 +28,16 @@ def test_trainge():
     target_list = [(NEG, NEG, POS), (NEG, POS, NEG), (NEG, POS, POS), 
                    (POS, NEG, NEG), (POS, NEG, POS), (POS, POS, NEG), 
                    (POS, POS, POS)]
-    assert CompList(invert_traingle.dtlist, target_list)
+    assert CompList(invert_traingle.as_list, target_list)
 
     triangle_bnd = triangle.Boundary()
     target_list = [(IF, NEG, NEG), (NEG, IF, NEG), (NEG, NEG, IF)]
-    assert CompList(triangle_bnd.dtlist, target_list)
+    assert CompList(triangle_bnd.as_list, target_list)
     assert triangle_bnd.codim == 1
 
     triangle_bnd_bnd = triangle_bnd.Boundary()
     target_list = [(IF, IF, NEG), (NEG, IF, IF), (IF, NEG, IF)]
-    assert CompList(triangle_bnd_bnd.dtlist, target_list)
+    assert CompList(triangle_bnd_bnd.as_list, target_list)
     assert triangle_bnd_bnd.codim == 2
 
     lines = []
@@ -60,45 +60,45 @@ def test_operators():
     assert len(dta3) == 2
 
     target_list = [(POS, NEG), (POS, POS)]
-    assert CompList(dta3.dtlist, target_list)
+    assert CompList(dta3.as_list, target_list)
 
     dta3 |= DomainTypeArray([(NEG, POS)])
     target_list = [(POS, NEG), (POS, POS), (NEG, POS)]
-    assert CompList(dta3.dtlist, target_list)
+    assert CompList(dta3.as_list, target_list)
 
     dta4 = dta3 & dta1
 
     target_list = [(POS, NEG)]
-    assert CompList(dta4.dtlist, target_list)
+    assert CompList(dta4.as_list, target_list)
 
     dta3 &= dta1 | dta2
     target_list = [(POS, NEG), (POS, POS)]
-    assert CompList(dta3.dtlist, target_list)
+    assert CompList(dta3.as_list, target_list)
 
     dta5 = DomainTypeArray([(IF, NEG)]) & DomainTypeArray([(POS, NEG)])
     target_list = [(IF, NEG)]
-    assert CompList(dta5.dtlist, target_list)
+    assert CompList(dta5.as_list, target_list)
 
     dta5 &= DomainTypeArray([(POS, IF)])
     target_list = [(IF, IF)]
-    assert CompList(dta5.dtlist, target_list)
+    assert CompList(dta5.as_list, target_list)
 
     target_list = [(NEG, POS), (NEG, NEG)]
-    assert CompList((~dta3).dtlist, target_list)
+    assert CompList((~dta3).as_list, target_list)
 
     dta6 = DomainTypeArray([(IF, NEG, POS)])
     dta6 &= DomainTypeArray([(POS, IF, POS)])
     target_list = [(IF, NEG, IF), (POS, IF, IF), (IF, POS, IF),
                          (NEG, IF, IF), (IF, IF, NEG)]
-    assert CompList((~dta6).dtlist, target_list)
+    assert CompList((~dta6).as_list, target_list)
 
     dta7 = DomainTypeArray([(NEG, NEG, NEG)])
     target_list = [(NEG, IF, NEG), (NEG, NEG, IF), (IF, NEG, NEG)]
-    assert CompList(dta7.Boundary().dtlist, target_list)
+    assert CompList(dta7.Boundary().as_list, target_list)
 
     dta8 = DomainTypeArray([(POS, IF, NEG)])
     target_list = [(POS, IF, IF), (IF, IF, NEG)]
-    assert CompList(dta8.Boundary().dtlist, target_list)
+    assert CompList(dta8.Boundary().as_list, target_list)
 
 
 # -----------------------------------------------------------------------------
@@ -108,16 +108,16 @@ def test_any_expansion():
     dta9 = DomainTypeArray((NEG, ANY, ANY))
     target_list = [(NEG, NEG, NEG), (NEG, NEG, POS), (NEG, POS, NEG),
                    (NEG, POS, POS)]
-    assert CompList(dta9.dtlist, target_list)
+    assert CompList(dta9.as_list, target_list)
 
     dta10 = DomainTypeArray([(NEG, ANY, ANY), (POS, ANY, ANY)])
     dta11 = DomainTypeArray([(ANY, ANY, ANY)])
-    assert CompList(dta10.dtlist, dta11.dtlist)
+    assert CompList(dta10.as_list, dta11.as_list)
 
     dta12 = DomainTypeArray([(IF, ANY, ANY), (POS, IF, ANY)])
     target_list = [(IF, NEG, NEG), (IF, NEG, POS), (IF, POS, NEG), 
                    (IF, POS, POS), (POS, IF, NEG), (POS, IF, POS)]
-    assert CompList(dta12.dtlist, target_list)
+    assert CompList(dta12.as_list, target_list)
 
 
 # -----------------------------------------------------------------------------
