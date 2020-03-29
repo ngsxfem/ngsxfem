@@ -377,15 +377,13 @@ Returns mesh of CutInfo)raw_string")
              return self.GetElementsOfDomainType(dts, vb, lh);
            }           
 
-
-           py::extract<py::list> dts_list_(dt_in);
-           if (py::hasattr(dt_in, "as_list"))
-           {
-             py::extract<py::list> dts_list_(dt_in.attr("as_list"));
-           }
-           if (!dts_list_.check())
+           py::list dts_list;
+           if (py::hasattr(dt_in, "as_list") && py::isinstance<py::list>(dt_in.attr("as_list")))
+             dts_list = dt_in.attr("as_list");      
+           else if (py::isinstance<py::list>(dt_in))
+             dts_list = dt_in;
+           else
              throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
-           auto dts_list(dts_list_());
 
            int common_length = -1; //not a list
            for (int i = 0; i < py::len(dts_list); i++)
@@ -434,14 +432,13 @@ corresponding domain type.)raw_string")
              return self.GetElementsWithContribution(dts, vb, lh);
            }
 
-           py::extract<py::list> dts_list_(dt_in);
-           if (py::hasattr(dt_in, "as_list"))
-           {
-             py::extract<py::list> dts_list_(dt_in.attr("as_list"));
-           }
-           if (!dts_list_.check())
+           py::list dts_list;
+           if (py::hasattr(dt_in, "as_list") && py::isinstance<py::list>(dt_in.attr("as_list")))
+             dts_list = dt_in.attr("as_list");      
+           else if (py::isinstance<py::list>(dt_in))
+             dts_list = dt_in;
+           else
              throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
-           auto dts_list(dts_list_());
 
            int common_length = -1; //not a list
            for (int i = 0; i < py::len(dts_list); i++)

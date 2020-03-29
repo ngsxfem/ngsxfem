@@ -242,14 +242,13 @@ namespace xintegration
         return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy);
       }
       
-      py::extract<py::list> dts_list_(dt_in);
-      if (py::hasattr(dt_in, "as_list"))
-      {
-        py::extract<py::list> dts_list_(dt_in.attr("as_list"));
-      } 
-      if (!dts_list_.check())
-        throw Exception("domain_type is neither a DOMAIN_TYPE nor a tuple nor a list nor a DomainTypeArray.");
-      auto dts_list(dts_list_());
+      py::list dts_list;
+      if (py::hasattr(dt_in, "as_list") && py::isinstance<py::list>(dt_in.attr("as_list")))
+        dts_list = dt_in.attr("as_list");      
+      else if (py::isinstance<py::list>(dt_in))
+        dts_list = dt_in;
+      else
+        throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
 
       int common_length = -1; //not a list
       for (int i = 0; i < py::len(dts_list); i++)
