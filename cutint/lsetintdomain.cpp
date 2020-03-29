@@ -250,30 +250,29 @@ namespace xintegration
       else
         throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
 
+      Array<Array<DOMAIN_TYPE>> dtas(py::len(dts_list));
       int common_length = -1; //not a list
       for (int i = 0; i < py::len(dts_list); i++)
       {
-        auto dts_list_entry(dts_list[i]);
-        py::extract<py::tuple> dta(dts_list_entry);
-        if (!dta.check())
+        auto dta(dts_list[i]);
+
+        // Check for valid input
+        if (!py::isinstance<py::tuple>(dta))
         {
           throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
         }
         else
         {
-          if ((i>0) && (common_length != py::len(dta())))
+          if ((i>0) && (common_length != py::len(dta)))
             throw Exception("domain_type arrays have different length");
           else
-            common_length = py::len(dta());
+            common_length = py::len(dta);
         }
+
+        // Input valid. Pass input on 
+        dtas[i] = makeCArray<DOMAIN_TYPE> (dta);
       }
-      
-      Array<Array<DOMAIN_TYPE>> dtas(py::len(dts_list));
-      for (int i = 0; i < py::len(dts_list); i++)
-      {
-        py::extract<py::tuple> dta(dts_list[i]);
-        dtas[i] = makeCArray<DOMAIN_TYPE> (dta());
-      }
+
       return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy);
     }
   }

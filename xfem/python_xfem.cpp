@@ -385,29 +385,27 @@ Returns mesh of CutInfo)raw_string")
            else
              throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
 
+           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
            int common_length = -1; //not a list
            for (int i = 0; i < py::len(dts_list); i++)
            {
-             auto dts_list_entry(dts_list[i]);
-             py::extract<py::tuple> dta(dts_list_entry);
-             if (!dta.check())
+             auto dta(dts_list[i]);
+
+             // Check that input is valid
+             if (!py::isinstance<py::tuple>(dta))
                throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
              else
              {
-               if ((i>0) && (common_length != py::len(dta())))
+               if ((i>0) && (common_length != py::len(dta)))
                  throw Exception("domain_type arrays have different length");
                else
-                 common_length = py::len(dta());
+                 common_length = py::len(dta);
              }
+
+             // Valid input. Add domain to pass to self.GetElementsOfDomainType
+             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
            
-           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
-           for (int i = 0; i < py::len(dts_list); i++)
-           {
-             py::extract<py::tuple> dta_tuple_(dts_list[i]);
-             auto dta_tuple(dta_tuple_());
-             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta_tuple);
-           }
            return self.GetElementsOfDomainType(cdts_aa, vb, lh);
          },
          py::arg("domain_type"),
@@ -440,29 +438,27 @@ corresponding domain type.)raw_string")
            else
              throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
 
+           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
            int common_length = -1; //not a list
            for (int i = 0; i < py::len(dts_list); i++)
            {
-             auto dts_list_entry(dts_list[i]);
-             py::extract<py::tuple> dta(dts_list_entry);
-             if (!dta.check())
+             auto dta(dts_list[i]);
+
+             // Check valid input
+             if (!py::isinstance<py::tuple>(dta))
                throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
              else
              {
-               if ((i>0) && (common_length != py::len(dta())))
+               if ((i>0) && (common_length != py::len(dta)))
                  throw Exception("domain_type arrays have different length");
                else
-                 common_length = py::len(dta());
+                 common_length = py::len(dta);
              }
+
+             // Valid input: Add domain to pass to self.GetElementsWithContribution
+             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
            
-           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
-           for (int i = 0; i < py::len(dts_list); i++)
-           {
-             py::extract<py::tuple> dta_tuple_(dts_list[i]);
-             auto dta_tuple(dta_tuple_());
-             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta_tuple);
-           }
            return self.GetElementsWithContribution(cdts_aa, vb, lh);
          },
          py::arg("domain_type"),
