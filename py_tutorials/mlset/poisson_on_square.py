@@ -17,7 +17,7 @@ k = 1
 gamma_n = 10
 gamma_s = 0.5
 
-inverse = "pardiso"
+inverse = "sparsecholesky"
 
 
 # ----------------------------------- DATA ------------------------------------
@@ -131,7 +131,7 @@ f += SymbolicLFI(lset_dom_inner, form=forcing)
 with TaskManager():
     f.Assemble()
     a.Assemble()
-    inv = a.mat.Inverse(freedofs=freedofs)
+    inv = a.mat.Inverse(freedofs=freedofs, inverse=inverse)
 
     gfu.vec.data = PreRic(a=a, rhs=f.vec, pre=inv, freedofs=freedofs)
 

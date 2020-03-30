@@ -26,10 +26,10 @@ Draw (lsetp1_a, mesh, "lset_a")
 Draw (lsetp1_b, mesh, "lset_b")
 Draw (lsetp1_c, mesh, "lset_c")
 
-Draw (IfPos(lsetp1_a, 0, 1) * IfPos(lsetp1_b, 0, 1) * IfPos(lsetp1_c, 0, 1), mesh, "lset_mult")
-
 # Shape of interest
 triangle = DomainTypeArray([(NEG,NEG,NEG)])
+Draw(triangle.Indicator((lsetp1_a,lsetp1_b,lsetp1_c)),mesh,"triangle_dom")
+Draw(triangle.Boundary().IndicatorSomoothed((lsetp1_a,lsetp1_b,lsetp1_c)),mesh,"triangle_bnd")
 
 # Show MultiLevelsetCutInfo functionality
 mlci = MultiLevelsetCutInfo(mesh, (lsetp1_a, lsetp1_b, lsetp1_c))

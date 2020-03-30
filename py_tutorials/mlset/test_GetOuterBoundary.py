@@ -22,7 +22,7 @@ for i, lsetp1 in enumerate(level_sets_p1):
 
 
 triangle = DomainTypeArray((POS, NEG, NEG))
-normals = triangle.GetOuterBoundary(level_sets_p1)
+normals = triangle.GetOuterNormals(level_sets_p1)
 
 for dtt in triangle.Boundary():
     name = str(dtt)
