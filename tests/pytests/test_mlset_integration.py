@@ -66,10 +66,12 @@ def test_2d_mlci_and_lo_integration():
     els_not_neg, els_if = BitArray(mesh.ne), BitArray(mesh.ne)
 
     UpdateMarkers(els_neg, mlci.GetElementsOfType(triangle))
-    UpdateMarkers(els_hasneg, mlci.GetElementsWithContribution(triangle))
     UpdateMarkers(els_neg2, mlci.GetElementsOfType(triangle.as_list))
+
+    UpdateMarkers(els_hasneg, mlci.GetElementsWithContribution(triangle))
     UpdateMarkers(els_hasneg2,
                   mlci.GetElementsWithContribution(triangle.as_list))
+    
     UpdateMarkers(els_if, mlci.GetElementsWithContribution(triangle.Boundary()))
     UpdateMarkers(els_not_neg, mlci.GetElementsWithContribution(~triangle))
 
