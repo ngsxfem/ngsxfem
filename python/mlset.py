@@ -179,7 +179,9 @@ class DomainTypeArray():
         """
 
         if self.codim != 0:
-            raise NotImplementedError("Indicator only for codim=1")
+            print("Warning: Indicator is not intended for codim > 0! "
+                  "Please use the IndicatorSomoothed method")
+            return self.IndicatorSomoothed(lsets)
 
         ind_combined = CoefficientFunction(0)
         for dtt in self.as_list:
@@ -198,8 +200,52 @@ class DomainTypeArray():
 
         del ind_combined
         return ind_leveled
-                elif dt == NEG:
-                    ind *= IfPos(-lsets[i], CoefficientFunction(1),
-                                 CoefficientFunction(0))
 
-        return ind
+    def IndicatorSomoothed(self, lsets, eps=0.03):
+        """
+        Smoothed indicator function for a DomainTypeArray of codim>0.
+        We assume that the level sets are approximately signed distance
+        functions in the eps region of the zero set. 
+
+        Parameters
+        ----------
+        lsets : tuple(CoefficientFunctions)
+            The level set functions defining the region
+        eps : float
+            The distance around the subdomain which is indicated.
+            (default value eps=0.01)
+
+        Returns
+        -------
+        CoefficientFunction
+            1 in the region of distance eps around the subdomain, 0 else
+        """
+
+        if self.codim == 0:
+            print("Warning: IndicatorSmothed is not intended for codim==0! "
+                  "Please use the Indicator method")
+            return self.Indicator(lsets)
+
+        def gf_abs(gf):
+            return IfPos(gf, gf, -gf)
+
+        ind_combined = CoefficientFunction(0)
+        for dtt in self.as_list:
+            ind = CoefficientFunction(1)
+            ind_cut = CoefficientFunction(1)
+
+            for i, dt in enumerate(dtt):
+                if dt == IF:
+                    ind *= IfPos(gf_abs(lsets[i]) - eps, 0, 1)
+                elif dt == POS:
+                    ind_cut *= IfPos(lsets[i] - eps, 1, 0)
+                elif dt == NEG:
+                    ind_cut *= IfPos(-lsets[i] + eps, 1, 0)
+
+            ind_combined += ind * ind_cut
+            del ind, ind_cut
+
+        ind_leveled = IfPos(ind_combined, 1, 0)
+
+        del ind_combined
+        return ind_leveled
