@@ -128,7 +128,7 @@ levelset_domain : dictionary
       * the level set function is negative (NEG)
       * the level set function is positive (POS)
       * the level set function is zero     (IF )
-    multiple level sets: tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray
+    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
       Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
@@ -221,7 +221,7 @@ levelset_domain : dictionary
       * the level set function is negative (NEG)
       * the level set function is positive (POS)
       * the level set function is zero     (IF )
-    multiple level sets: tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray
+    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
       Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
@@ -328,7 +328,7 @@ levelset_domain : dictionary
       * the level set function is negative (NEG)
       * the level set function is positive (POS)
       * the level set function is zero     (IF )
-    multiple level sets: tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray
+    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
       Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is

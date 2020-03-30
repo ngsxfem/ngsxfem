@@ -72,7 +72,8 @@ class DomainTypeArray():
         for dtt in self.as_list:
             for dt in dtt:
                 if dt not in [NEG, POS, IF, ANY]:
-                    raise Exception("Initialised with something other than NEG, POS, IF, ANY")
+                    raise Exception("Initialised with something other than NEG"
+                                    ", POS, IF, ANY")
             n = dtt.count(IF)
             if n != self.codim:
                 raise Exception("DomainTypeArray initialised with tuples of "
@@ -162,10 +163,9 @@ class DomainTypeArray():
                     dtl_out.append(tuple(dtt_out))
         return DomainTypeArray(dtl_out)
 
-
     def Indicator(self, lsets):
         """
-        Indicator function for a DomainTypeArray
+        Indicator function for a DomainTypeArray of codim=0
 
         Parameters
         ----------
@@ -181,12 +181,23 @@ class DomainTypeArray():
         if self.codim != 0:
             raise NotImplementedError("Indicator only for codim=1")
 
-        ind = CoefficientFunction(1)
+        ind_combined = CoefficientFunction(0)
         for dtt in self.as_list:
+            ind = CoefficientFunction(1)
+            
             for i, dt in enumerate(dtt):
                 if dt == POS:
-                    ind *= IfPos(lsets[i], CoefficientFunction(1),
-                                 CoefficientFunction(0))
+                    ind *= IfPos(lsets[i], 1, 0)
+                elif dt == NEG:
+                    ind *= IfPos(-lsets[i], 1, 0)
+
+            ind_combined += ind
+            del ind
+
+        ind_leveled = IfPos(ind_combined, 1, 0)
+
+        del ind_combined
+        return ind_leveled
                 elif dt == NEG:
                     ind *= IfPos(-lsets[i], CoefficientFunction(1),
                                  CoefficientFunction(0))
