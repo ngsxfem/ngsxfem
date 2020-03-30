@@ -36,11 +36,12 @@ for i, lsetp1 in enumerate(level_sets_p1):
     InterpolateToP1(level_sets()[i], lsetp1)
 
 square = DomainTypeArray([(NEG, NEG, NEG, NEG)])
-Draw(dta_indicator(level_sets_p1, square), mesh, "mlsets")
+Draw(square.Indicator(level_sets_p1), mesh, "mlsets")
 
-lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square.dtlist}
+lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
 
 # --------------------------------- INTEGRATE ---------------------------------
 result = Integrate(levelset_domain=lset_dom_inner, mesh=mesh, cf=function, order=k)
 print("Result: {}".format(result))
 print("Error : {}".format(abs(result-value)))
+assert abs(result-value) < 1e-12

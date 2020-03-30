@@ -32,21 +32,21 @@ triangle = DomainTypeArray([(NEG,NEG,NEG)])
 
 
 area = Integrate(levelset_domain={"levelset": (lsetp1_a,lsetp1_b,lsetp1_c),
-                                  "domain_type": triangle.dtlist},
+                                  "domain_type": triangle.as_list},
                  mesh=mesh, cf=1, order=0)
 print("area = {:10.8f}".format(area))                     
 print("area error = {:4.3e}".format(abs(area - 0.5)))  
 assert abs(area-0.5) < 1e-12
 
 area_invert = Integrate(levelset_domain={"levelset": (lsetp1_a,lsetp1_b,lsetp1_c), 
-                                         "domain_type": (~triangle).dtlist},
+                                         "domain_type": (~triangle).as_list},
                         mesh=mesh, cf=1, order=0)
 print("area_invert = {:10.8f}".format(area_invert))                     
 print("area_invert error = {:4.3e}".format(abs(area_invert - 3.5)))  
 assert abs(area_invert-3.5) < 1e-12
                    
 perimeter = Integrate(levelset_domain={"levelset" : (lsetp1_a,lsetp1_b,lsetp1_c), 
-                                       "domain_type": triangle.Boundary().dtlist},
+                                       "domain_type": triangle.Boundary().as_list},
                     mesh=mesh, cf=1, order=0)
 print("perimeter =", perimeter)                     
 print("perimeter error =", abs(perimeter - 1 - sqrt(5)))                     
@@ -54,7 +54,7 @@ assert abs(perimeter - 1 - sqrt(5)) < 1e-12
 
 
 all_points = Integrate(levelset_domain={"levelset": (lsetp1_a,lsetp1_b,lsetp1_c), 
-                                        "domain_type": triangle.Boundary().Boundary().dtlist},
+                                        "domain_type": triangle.Boundary().Boundary().as_list},
                         mesh=mesh, cf=y, order=0)
 print("all_points =", all_points)                     
 print("all_points error =", abs(all_points - 2))

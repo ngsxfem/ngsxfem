@@ -34,7 +34,7 @@ Draw(lsetp1_3,mesh,"lsetp1_3")
 cube = DomainTypeArray(dtlist=[(NEG,NEG,NEG)])
 
 volume = Integrate(levelset_domain={"levelset": [lsetp1_1, lsetp1_2, lsetp1_3], 
-                                    "domain_type": cube.dtlist},
+                                    "domain_type": cube.as_list},
                    mesh=mesh, cf=1, order=0)
 
 
@@ -43,7 +43,7 @@ print("volume error = {:4.3e}".format(abs(volume - 1)))
 assert abs(volume - 1) < 1e-12
 
 surface_area = Integrate(levelset_domain={"levelset": [lsetp1_1, lsetp1_2, lsetp1_3], 
-                                          "domain_type": cube.Boundary().dtlist},
+                                          "domain_type": cube.Boundary().as_list},
                          mesh=mesh, cf=1, order=0)
 
 print("surface_area = {:10.8f}".format(surface_area))            

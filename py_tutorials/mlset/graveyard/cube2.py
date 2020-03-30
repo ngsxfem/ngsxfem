@@ -35,7 +35,7 @@ cube = DomainTypeArray(dtlist=[(NEG, POS, NEG, POS, NEG, POS)])
 volume = Integrate(levelset_domain={"levelset": [lsetp1_x_upper, lsetp1_x_lower, 
                                                  lsetp1_y_upper, lsetp1_y_lower, 
                                                  lsetp1_z_upper, lsetp1_z_lower],
-                                    "domain_type": cube.dtlist},
+                                    "domain_type": cube.as_list},
                               mesh=mesh, cf=1, order=0)
 
 print("volume = {:10.8f}".format(volume))            
@@ -61,7 +61,7 @@ for i in range(6):
 surface_area = Integrate(levelset_domain={"levelset": [lsetp1_x_upper, lsetp1_x_lower, 
                                                  lsetp1_y_upper, lsetp1_y_lower, 
                                                  lsetp1_z_upper, lsetp1_z_lower],
-                                    "domain_type": cube.Boundary().dtlist},
+                                    "domain_type": cube.Boundary().as_list},
                               mesh=mesh, cf=1, order=0)
 
 print("surface_area = {:10.8f}".format(surface_area))            
