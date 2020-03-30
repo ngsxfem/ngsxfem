@@ -69,7 +69,7 @@ add_test(NAME pytests_mlset_integrate COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pyt
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_mlset_integration.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 add_test(NAME pytests_mlset_pde COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
-  "${PROJECT_SOURCE_DIR}/tests/pytests/test_mlset_possion.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_mlset_poisson.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 install( FILES
   ngsxfem_report.py

@@ -21,5 +21,5 @@ triangle = DomainTypeArray([(NEG, NEG, NEG, ANY, ANY, ANY),
                             (ANY, ANY, ANY, NEG, NEG, NEG)])
 
 Draw(triangle.Indicator(level_sets_p1), mesh, "triangle",sd=6)
-Draw(triangle.Boundary().IndicatorSomoothed(level_sets_p1), mesh, "bnd",sd=6)
-Draw(triangle.Boundary().Boundary().IndicatorSomoothed(level_sets_p1), mesh, "cnr",sd=6)
+Draw(triangle.Boundary().IndicatorSmoothed(level_sets_p1), mesh, "bnd",sd=6)
+Draw(triangle.Boundary().Boundary().IndicatorSmoothed(level_sets_p1), mesh, "cnr",sd=6)

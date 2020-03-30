@@ -33,7 +33,7 @@ class DomainTypeArray():
     Indicator(lsets):
         Returns an indicator CoefficientFunction of the current 
         (codim=0) DomainTypeArray region.
-    IndicatorSomoothed(lsets, eps):
+    IndicatorSmoothed(lsets, eps):
         Returns an indicator CoefficientFunction of an eps-region 
         around the current (codim>0) region.
     GetOuterNormals(lsetsp1):
@@ -189,13 +189,13 @@ class DomainTypeArray():
 
         if self.codim != 0:
             print("Warning: Indicator is not intended for codim > 0! "
-                  "Please use the IndicatorSomoothed method")
-            return self.IndicatorSomoothed(lsets)
+                  "Please use the IndicatorSmoothed method")
+            return self.IndicatorSmoothed(lsets)
 
         ind_combined = CoefficientFunction(0)
         for dtt in self.as_list:
             ind = CoefficientFunction(1)
-            
+
             for i, dt in enumerate(dtt):
                 if dt == POS:
                     ind *= IfPos(lsets[i], 1, 0)
@@ -210,7 +210,7 @@ class DomainTypeArray():
         del ind_combined
         return ind_leveled
 
-    def IndicatorSomoothed(self, lsets, eps=0.03):
+    def IndicatorSmoothed(self, lsets, eps=0.03):
         """
         Smoothed indicator function for a DomainTypeArray of codim>0.
         We assume that the level sets are approximately signed distance
@@ -295,4 +295,3 @@ class DomainTypeArray():
             n_dta[dtt] = n_dtt
 
         return n_dta
-
