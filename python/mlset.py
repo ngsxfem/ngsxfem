@@ -1,6 +1,7 @@
 """
 Convenience layer module for integration using multiple level sets.
 """
+from ngsolve import Norm, Grad
 from xfem import *
 from itertools import chain, permutations, product
 
@@ -172,7 +173,7 @@ class DomainTypeArray():
 
         Parameters
         ----------
-        lsets : tuple(CoefficientFunctions)
+        lsets : tuple(ngsolve.CoefficientFunctions)
             The level set functions defining the region
 
         Returns
@@ -212,7 +213,7 @@ class DomainTypeArray():
 
         Parameters
         ----------
-        lsets : tuple(CoefficientFunctions)
+        lsets : tuple(ngsolve.CoefficientFunctions)
             The level set functions defining the region
         eps : float
             The distance around the subdomain which is indicated.
@@ -252,3 +253,41 @@ class DomainTypeArray():
 
         del ind_combined
         return ind_leveled
+
+    def GetOuterBoundary(self, lsetsp1):
+        """
+        For each domain region in self, we compute the outward pointing
+        unit normal vector on each boundary segment.
+
+        Parameters
+        ----------
+        lesetsp1 : tuple(ngsolve.GridFunction)
+            The set of P1 level set functions.
+
+        Returns
+        -------
+        dict(dict(ngsolve.GridFunction))
+            For each dtt in self, the dictionary contains a dictionary,
+            where the normals can be called using the dtt of the 
+            boundary segment.
+        """
+
+        if self.codim > 0:
+            raise NotImplemented("GetOuterBoundary is olny available for "
+                                 "codim = 0 !")
+
+        n_dta = {}
+        for dtt in self.as_list:
+            n_dtt = {}
+            for i, dt in enumerate(dtt):
+                bnd = dtt[:i] + tuple([IF]) + dtt[i+1:]
+                if dt == POS:
+                    n_dt = - 1.0 / Norm(Grad(lsetsp1[i])) * Grad(lsetsp1[i])
+                else:
+                    n_dt = 1.0 / Norm(Grad(lsetsp1[i])) * Grad(lsetsp1[i])
+                n_dtt[bnd] = n_dt
+
+            n_dta[dtt] = n_dtt
+
+        return n_dta
+
