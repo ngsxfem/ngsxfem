@@ -31,7 +31,10 @@ class DomainTypeArray():
         DomainTypeArray region.
     Indicator(lsets):
         Returns an indicator CoefficientFunction of the current 
-        DomainTypeArrays region.
+        (codim=0) DomainTypeArray region.
+    IndicatorSomoothed(lsets, eps)
+        Returns an indicator CoefficientFunction of an eps-region 
+        around the current (codim>0) region.
     """
 
     def __init__(self, dtlist):
