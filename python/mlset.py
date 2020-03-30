@@ -33,9 +33,14 @@ class DomainTypeArray():
     Indicator(lsets):
         Returns an indicator CoefficientFunction of the current 
         (codim=0) DomainTypeArray region.
-    IndicatorSomoothed(lsets, eps)
+    IndicatorSomoothed(lsets, eps):
         Returns an indicator CoefficientFunction of an eps-region 
         around the current (codim>0) region.
+    GetOuterNormals(lsetsp1):
+        Return a dictionary, which contains a dictionary for each region
+        which in turn contains the outward pointing unit normal vector
+        on each boundary segment. Only for codim=0 DomainTypeArrays.
+
     """
 
     def __init__(self, dtlist):
@@ -254,7 +259,7 @@ class DomainTypeArray():
         del ind_combined
         return ind_leveled
 
-    def GetOuterBoundary(self, lsetsp1):
+    def GetOuterNormals(self, lsetsp1):
         """
         For each domain region in self, we compute the outward pointing
         unit normal vector on each boundary segment.

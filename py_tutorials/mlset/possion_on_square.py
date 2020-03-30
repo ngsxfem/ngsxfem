@@ -98,7 +98,7 @@ freedofs |= GetDofsOfElements(V, els_hasneg) & V.FreeDofs()
 # ----------------------------- (BI)LINEAR FORMS ------------------------------
 u, v = V.TnT()
 h = specialcf.mesh_size
-normals = square.GetOuterBoundary(level_sets_p1)
+normals = square.GetOuterNormals(level_sets_p1)
 
 diffusion = InnerProduct(Grad(u), Grad(v))
 
