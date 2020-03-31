@@ -294,11 +294,12 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
     """
-    if not "order" in levelset_domain or levelset_domain["order"] == -1:
-        levelset_domain["order"] = order
-    if not "time_order" in levelset_domain or levelset_domain["time_order"] == -1:
-        levelset_domain["time_order"] = time_order
-    return IntegrateX(levelset_domain = levelset_domain,
+    levelset_domain_local = levelset_domain.copy() 
+    if not "order" in levelset_domain_local or levelset_domain_local["order"] == -1:
+        levelset_domain_local["order"] = order
+    if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
+        levelset_domain_local["time_order"] = time_order
+    return IntegrateX(levelset_domain = levelset_domain_local,
                       mesh=mesh, cf=cf,
                       heapsize=heapsize)
 
