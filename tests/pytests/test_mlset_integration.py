@@ -169,6 +169,45 @@ def test_2d_ho_integration():
     del mesh, level_sets, level_sets_p1, square 
 
 
+def test_2d_overlaps():
+    # ---------------------------- Background Mesh ----------------------------
+    geo = SplineGeometry()
+    geo.AddRectangle((-1.1, -1.1), (1.1, 1.1), bc=1)
+    mesh = Mesh(geo.GenerateMesh(maxh=0.02))
+
+    # ------------------------------ Level Sets -------------------------------
+    level_sets = [x * x + y * y - 1, -x - 1 / 3, x - 1 / 3, y - 0.5]
+    nr_ls = len(level_sets)
+    level_sets_p1 = tuple(GridFunction(H1(mesh, order=1)) for i in range(nr_ls))
+
+    for i, lsetp1 in enumerate(level_sets_p1):
+        InterpolateToP1(level_sets[i], lsetp1)
+
+    # --------------------------- DomainTypeArrays ----------------------------
+    z_disc1 = DomainTypeArray([(NEG, NEG, NEG, POS), (NEG, POS, NEG, POS),
+                               (NEG, POS, NEG, NEG), (NEG, NEG, POS, NEG),
+                               (NEG, NEG, POS, POS)])
+    z_disc2 = DomainTypeArray([(NEG, ANY, ANY, POS), (NEG, POS, ANY, ANY),
+                               (NEG, ANY, POS, ANY)])
+    part1 = DomainTypeArray((NEG,ANY,ANY,ANY))
+    part2 = DomainTypeArray((NEG,NEG,NEG,NEG))
+    z_disc3 = part1 & ~part2
+
+    # ----------------------- Test Overlapping Domains ------------------------
+    lset_zdisc1 = {"levelset": level_sets_p1, "domain_type": z_disc1}
+    lset_zdisc2 = {"levelset": level_sets_p1, "domain_type": z_disc2}
+    lset_zdisc3 = {"levelset": level_sets_p1, "domain_type": z_disc3}
+    
+    area1 = Integrate(lset_zdisc1, 1, mesh, order=0)
+    area2 = Integrate(lset_zdisc2, 1, mesh, order=0)
+    area3 = Integrate(lset_zdisc3, 1, mesh, order=0)
+
+    assert abs(area1 - area2) < 1e-12
+    assert abs(area1 - area3) < 1e-12
+
+    del mesh, level_sets, level_sets_p1, z_disc1, z_disc2, z_disc3 
+
+
 # -----------------------------------------------------------------------------
 # --------------------------------- 3D TESTS ----------------------------------
 # -----------------------------------------------------------------------------
@@ -279,4 +318,5 @@ def test_3d_mlset():
 if __name__ == "__main__":
     test_2d_mlci_and_lo_integration()
     test_2d_ho_integration()
+    test_2d_overlaps()
     test_3d_mlset()
