@@ -727,6 +727,8 @@ namespace xintegration
     vector<int> dt_is_if_indices;
     for(int i=0; i<M; i++) if ( dts[i] == IF) dt_is_if_indices.push_back(i);
 
+    if(myir_untrafo->Size() == 0) return nullptr;
+
     if(dt_is_if_indices.size() == 0) //Plain volume case; simple
         ir = myir_untrafo;
     else if(dt_is_if_indices.size() == 1){
@@ -744,52 +746,40 @@ namespace xintegration
         if(DIM != 2 && DIM != 3) throw Exception("Codim 2 only in 2D and 3D yet!");
 
         if (DIM == 2){
-            auto myir = new (lh) IntegrationRule(0, lh);
             for(int i=0; i < myir_untrafo->Size(); i++){
-                auto old_weight = (*myir_untrafo)[i].Weight();
                 MappedIntegrationPoint<2,2> mip( (*myir_untrafo)[i],trafo);
-                myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+                (*myir_untrafo)[i].SetWeight( (*myir_untrafo)[i].Weight() / mip.GetMeasure());
             }
-
-            if(myir->Size() == 0) ir = nullptr;
-            else ir = myir;
         }
         if(DIM == 3){
-            if(myir_untrafo->Size() == 0) ir = nullptr;
-            else {
-                auto lset0 = getLseti_onrefgeom( dt_is_if_indices[0] );
-                auto lset1 = getLseti_onrefgeom( dt_is_if_indices[1] );
+            auto lset0 = getLseti_onrefgeom( dt_is_if_indices[0] );
+            auto lset1 = getLseti_onrefgeom( dt_is_if_indices[1] );
 
-                auto norm0 = lset0.GetNormal( (*myir_untrafo)[0].Point());
-                auto norm1 = lset1.GetNormal( (*myir_untrafo)[0].Point());
-                double cp_fac = 1./ L2Norm(Cross(norm0, norm1));
+            auto norm0 = lset0.GetNormal( (*myir_untrafo)[0].Point());
+            auto norm1 = lset1.GetNormal( (*myir_untrafo)[0].Point());
+            double cp_fac = 1./ L2Norm(Cross(norm0, norm1));
 
-                for(int i=0; i < myir_untrafo->Size(); i++){
-                    auto old_weight = (*myir_untrafo)[i].Weight();
-                    MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
+            for(int i=0; i < myir_untrafo->Size(); i++){
+                auto old_weight = (*myir_untrafo)[i].Weight();
+                MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
 
-                    Mat<3,3> F = mip.GetJacobian();
-                    Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
+                Mat<3,3> F = mip.GetJacobian();
+                Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
 
-                    (*myir_untrafo)[i].SetWeight(old_weight*L2Norm(normal) / mip.GetMeasure());
-                }
-                ir = myir_untrafo;
+                (*myir_untrafo)[i].SetWeight(old_weight*L2Norm(normal) / mip.GetMeasure());
             }
         }
+        ir = myir_untrafo;
     }
     else if(dt_is_if_indices.size() == 3){
         // Codim 3 for 3D
         if(DIM != 3) throw Exception("Codim 3 only in 3D!");
 
-        auto myir = new (lh) IntegrationRule(0, lh);
         for(int i=0; i < myir_untrafo->Size(); i++){
-            auto old_weight = (*myir_untrafo)[i].Weight();
             MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
-            myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+            (*myir_untrafo)[i].SetWeight( (*myir_untrafo)[i].Weight() / mip.GetMeasure());
         }
-
-        if(myir->Size() == 0) ir = nullptr;
-        else ir = myir;
+        ir = myir_untrafo;
     }
     else throw Exception("Codim possibilities available: 2D: 0,1,2; 3D: 0,1,2,3");
 
