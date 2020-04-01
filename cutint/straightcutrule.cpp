@@ -757,7 +757,6 @@ namespace xintegration
         if(DIM == 3){
             if(myir_untrafo->Size() == 0) ir = nullptr;
             else {
-                auto myir = new (lh) IntegrationRule(0, lh);
                 auto lset0 = getLseti_onrefgeom( dt_is_if_indices[0] );
                 auto lset1 = getLseti_onrefgeom( dt_is_if_indices[1] );
 
@@ -772,9 +771,9 @@ namespace xintegration
                     Mat<3,3> F = mip.GetJacobian();
                     Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
 
-                    myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight*L2Norm(normal) / mip.GetMeasure()) );
+                    (*myir_untrafo)[i].SetWeight(old_weight*L2Norm(normal) / mip.GetMeasure());
                 }
-                ir = myir;
+                ir = myir_untrafo;
             }
         }
     }
@@ -792,7 +791,7 @@ namespace xintegration
         if(myir->Size() == 0) ir = nullptr;
         else ir = myir;
     }
-    else throw Exception("Codim possibilities available: 2D: 0,1,2; 3D: 0,1,3");
+    else throw Exception("Codim possibilities available: 2D: 0,1,2; 3D: 0,1,2,3");
 
     return ir;
   }
