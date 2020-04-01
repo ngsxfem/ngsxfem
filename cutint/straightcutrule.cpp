@@ -740,18 +740,32 @@ namespace xintegration
         ir = myir;
     }
     else if(dt_is_if_indices.size() == 2) {
-        // Codim 2 for 2D
-        if(DIM != 2) throw Exception("Codim 2 only in 2D yet!");
+        // Codim 2 for 2D and 3D
+        if(DIM != 2 && DIM != 3) throw Exception("Codim 2 only in 2D and 3D yet!");
 
-        auto myir = new (lh) IntegrationRule(0, lh);
-        for(int i=0; i < myir_untrafo->Size(); i++){
-            auto old_weight = (*myir_untrafo)[i].Weight();
-            MappedIntegrationPoint<2,2> mip( (*myir_untrafo)[i],trafo);
-            myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+        if (DIM == 2){
+            auto myir = new (lh) IntegrationRule(0, lh);
+            for(int i=0; i < myir_untrafo->Size(); i++){
+                auto old_weight = (*myir_untrafo)[i].Weight();
+                MappedIntegrationPoint<2,2> mip( (*myir_untrafo)[i],trafo);
+                myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+            }
+
+            if(myir->Size() == 0) ir = nullptr;
+            else ir = myir;
         }
+        if(DIM == 3){
+            cout << "Experimental Codim 2 in 3D case!" << endl;
+            auto myir = new (lh) IntegrationRule(0, lh);
+            for(int i=0; i < myir_untrafo->Size(); i++){
+                auto old_weight = (*myir_untrafo)[i].Weight();
+                MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
+                myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+            }
 
-        if(myir->Size() == 0) ir = nullptr;
-        else ir = myir;
+            if(myir->Size() == 0) ir = nullptr;
+            else ir = myir;
+        }
     }
     else if(dt_is_if_indices.size() == 3){
         // Codim 3 for 3D
