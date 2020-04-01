@@ -755,32 +755,27 @@ namespace xintegration
             else ir = myir;
         }
         if(DIM == 3){
-            cout << "Experimental Codim 2 in 3D case!" << endl;
-            auto myir = new (lh) IntegrationRule(0, lh);
-            for(int i=0; i < myir_untrafo->Size(); i++){
-                auto old_weight = (*myir_untrafo)[i].Weight();
-                MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
-
-                Mat<3,3> F = mip.GetJacobian();
+            if(myir_untrafo->Size() == 0) ir = nullptr;
+            else {
+                auto myir = new (lh) IntegrationRule(0, lh);
                 auto lset0 = getLseti_onrefgeom( dt_is_if_indices[0] );
                 auto lset1 = getLseti_onrefgeom( dt_is_if_indices[1] );
 
-                auto norm0 = lset0.GetNormal( (*myir_untrafo)[i].Point());
-                auto norm1 = lset1.GetNormal( (*myir_untrafo)[i].Point());
+                auto norm0 = lset0.GetNormal( (*myir_untrafo)[0].Point());
+                auto norm1 = lset1.GetNormal( (*myir_untrafo)[0].Point());
                 double cp_fac = 1./ L2Norm(Cross(norm0, norm1));
-                Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
-                cout << "L2Norm: " << L2Norm(normal) << endl;
 
-                auto that = (*myir_untrafo)[0].Point() - (*myir_untrafo)[ myir_untrafo->Size()-1].Point();
-                double cp_fac2 = 1./L2Norm(that);
-                Vec<3> normal2 = cp_fac2* F * that;
-                cout << "L2Norm (2): " << L2Norm( normal2 ) << endl;
+                for(int i=0; i < myir_untrafo->Size(); i++){
+                    auto old_weight = (*myir_untrafo)[i].Weight();
+                    MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
 
-                myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight*L2Norm(normal) / mip.GetMeasure()) );
+                    Mat<3,3> F = mip.GetJacobian();
+                    Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
+
+                    myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight*L2Norm(normal) / mip.GetMeasure()) );
+                }
+                ir = myir;
             }
-
-            if(myir->Size() == 0) ir = nullptr;
-            else ir = myir;
         }
     }
     else if(dt_is_if_indices.size() == 3){
