@@ -769,6 +769,12 @@ namespace xintegration
                 auto norm1 = lset1.GetNormal( (*myir_untrafo)[i].Point());
                 double cp_fac = 1./ L2Norm(Cross(norm0, norm1));
                 Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
+                cout << "L2Norm: " << L2Norm(normal) << endl;
+
+                auto that = (*myir_untrafo)[0].Point() - (*myir_untrafo)[ myir_untrafo->Size()-1].Point();
+                double cp_fac2 = 1./L2Norm(that);
+                Vec<3> normal2 = cp_fac2* F * that;
+                cout << "L2Norm (2): " << L2Norm( normal2 ) << endl;
 
                 myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight*L2Norm(normal) / mip.GetMeasure()) );
             }
