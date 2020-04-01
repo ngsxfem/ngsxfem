@@ -760,7 +760,17 @@ namespace xintegration
             for(int i=0; i < myir_untrafo->Size(); i++){
                 auto old_weight = (*myir_untrafo)[i].Weight();
                 MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
-                myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight / mip.GetMeasure()) );
+
+                Mat<3,3> F = mip.GetJacobian();
+                auto lset0 = getLseti_onrefgeom( dt_is_if_indices[0] );
+                auto lset1 = getLseti_onrefgeom( dt_is_if_indices[1] );
+
+                auto norm0 = lset0.GetNormal( (*myir_untrafo)[i].Point());
+                auto norm1 = lset1.GetNormal( (*myir_untrafo)[i].Point());
+                double cp_fac = 1./ L2Norm(Cross(norm0, norm1));
+                Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
+
+                myir->Append( IntegrationPoint( (*myir_untrafo)[i].Point(), old_weight*L2Norm(normal) / mip.GetMeasure()) );
             }
 
             if(myir->Size() == 0) ir = nullptr;
