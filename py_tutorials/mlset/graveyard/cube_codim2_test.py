@@ -23,7 +23,7 @@ lsetp1_z = GridFunction(V)
 
 InterpolateToP1( x - 0.5, lsetp1_x_upper)
 InterpolateToP1( x + 0.5, lsetp1_x_lower)
-InterpolateToP1( y - 0., lsetp1_y)
+InterpolateToP1( x - y , lsetp1_y)
 InterpolateToP1( z - 0., lsetp1_z)
 
 # Integrate
@@ -36,5 +36,5 @@ length = Integrate(levelset_domain={"levelset": [lsetp1_x_upper, lsetp1_x_lower,
                               mesh=mesh, cf=1, order=0)
 
 print("length = {:10.8f}".format(length))
-print("length error = {:4.3e}".format(abs(length - 1)))
-assert abs(length - 1)
+print("length error = {:4.3e}".format(abs(length - sqrt(2))))
+assert abs(length - sqrt(2)) < 1e-12
