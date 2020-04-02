@@ -32,15 +32,15 @@ Draw (lsetp1_c, mesh, "lset_c")
 
 Draw (lsetp1_a * lsetp1_b * lsetp1_c, mesh, "lset_mult")
 
-inner = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
+inner = { "levelset" : (lsetp1_a,lsetp1_b,lsetp1_c),
           "domain_type" : (NEG,NEG,NEG)}
 
-boundary = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
-             "domain_type" : (IF,NEG,NEG) | (NEG,IF,NEG) | (NEG,NEG,IF)}
+boundary = { "levelset" : (lsetp1_a,lsetp1_b,lsetp1_c),
+             "domain_type" : [(IF,NEG,NEG), (NEG,IF,NEG), (NEG,NEG,IF)]}
 
-outer = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
-          "domain_type" : ~(NEG,NEG,NEG)}
+# outer = { "levelsets" : (lsetp1_a,lsetp1_b,lsetp1_c),
+#           "domain_type" : ~(NEG,NEG,NEG)}
 
 triangle_area = Integrate( levelset_domain=inner, cf=1, mesh=mesh, order=2)
 triangle_boundary_length = Integrate( levelset_domain=boundary, cf=1, mesh=mesh, order=2)
-outer_area = Integrate( levelset_domain=outer, cf=1, mesh=mesh, order=2)
+# outer_area = Integrate( levelset_domain=outer, cf=1, mesh=mesh, order=2)
