@@ -331,6 +331,54 @@ def test_3d_mlset():
                           order=0)
         assert abs(point - vals[key]) < 1e-12
 
+
+def test_3d_codim2_cross():
+
+    # ---------------------------- Background Mesh ----------------------------
+    geo = CSGeometry()
+    geo.Add(OrthoBrick(Pnt(-0.8,-0.8,-0.8), Pnt(0.8,0.8,0.8)))
+    mesh = Mesh(geo.GenerateMesh(maxh=0.5))
+
+    # ------------------------------ Level Sets -------------------------------
+    level_sets = (x - 0.5, x + 0.5, x - y, z - 0)
+    nr_ls = len(level_sets)
+    level_sets_p1 = tuple(GridFunction(H1(mesh,order=1)) for i in range(nr_ls))
+
+    for i, lset_p1 in enumerate(level_sets_p1):
+        InterpolateToP1(level_sets[i], lset_p1)
+
+    # ---------------------------- DomainTypeArray ----------------------------
+    line = DomainTypeArray(dtlist=[(NEG, POS, IF, IF)])
+
+    # --------------------------- Test Integration ----------------------------
+    length = Integrate(levelset_domain={"levelset": level_sets_p1,
+                                        "domain_type": line},
+                       mesh=mesh, cf=1, order=0)
+    assert abs(length - sqrt(2)) < 1e-12
+
+    del level_sets, level_sets_p1, nr_ls, line
+
+
+    # ------------------------------ SECOND TEST ------------------------------
+
+    # ------------------------------ Level Sets -------------------------------
+    level_sets = (x - 0.5, - x - 0.5, z - y, x - z, x + z)
+    nr_ls = len(level_sets)
+    level_sets_p1 = tuple(GridFunction(H1(mesh,order=1)) for i in range(nr_ls))
+
+    for i, lset_p1 in enumerate(level_sets_p1):
+        InterpolateToP1(level_sets[i], lset_p1)
+
+    # ---------------------------- DomainTypeArray ----------------------------
+    cross = DomainTypeArray([(NEG, NEG, IF, IF, ANY), (NEG, NEG, IF, ANY, IF)])
+
+    # --------------------------- Test Integration ----------------------------
+    length = Integrate(levelset_domain={"levelset": level_sets_p1,
+                                        "domain_type": cross},
+                       mesh=mesh, cf=1, order=0)
+    assert abs(length - 2* sqrt(3)) < 1e-12
+
+
 # -----------------------------------------------------------------------------
 # --------------------------- RUN TESTS SEPARATELY ----------------------------
 # -----------------------------------------------------------------------------
@@ -339,3 +387,4 @@ if __name__ == "__main__":
     test_2d_ho_integration()
     test_2d_overlaps()
     test_3d_mlset()
+    test_3d_codim2_cross()
