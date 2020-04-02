@@ -176,10 +176,13 @@ class DomainTypeArray():
         dtl_out = []
         for dtt in self.as_list:
             for i, dt in enumerate(dtt):
-                dtt_out = list(dtt)
                 if dt != IF:
-                    dtt_out[i] = IF
-                    dtl_out.append(tuple(dtt_out))
+                    if ( dtt[:i] + tuple([POS]) + dtt[i+1:] in self and 
+                         dtt[:i] + tuple([NEG]) + dtt[i+1:] in self):
+                        continue
+                    else:
+                        dtl_out.append(dtt[:i] + tuple([IF]) + dtt[i+1:])
+
         return DomainTypeArray(dtl_out)
 
     def Indicator(self, lsets):

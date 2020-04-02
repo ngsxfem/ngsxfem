@@ -21,8 +21,8 @@ def test_trianlge():
 
     invert_traingle = ~triangle
     target = DomainTypeArray([(NEG, NEG, POS), (NEG, POS, NEG), (NEG, POS, POS),
-                   (POS, NEG, NEG), (POS, NEG, POS), (POS, POS, NEG), 
-                   (POS, POS, POS)])
+                              (POS, NEG, NEG), (POS, NEG, POS), (POS, POS, NEG), 
+                              (POS, POS, POS)])
     assert invert_traingle == target
 
     triangle_bnd = triangle.Boundary()
@@ -84,7 +84,7 @@ def test_operators():
     dta6 = DomainTypeArray([(IF, NEG, POS)])
     dta6 &= DomainTypeArray([(POS, IF, POS)])
     target = DomainTypeArray([(IF, NEG, IF), (POS, IF, IF), (IF, POS, IF),
-                         (NEG, IF, IF), (IF, IF, NEG)])
+                              (NEG, IF, IF), (IF, IF, NEG)])
     assert (~dta6) == target
 
     dta7 = DomainTypeArray([(NEG, NEG, NEG)])
