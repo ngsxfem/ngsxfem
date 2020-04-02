@@ -23,7 +23,7 @@ geo = SplineGeometry()
 geo.AddRectangle((-1.1, -1.1), (1.1, 1.1), bc=1)
 
 with TaskManager():
-    mesh = Mesh(geo.GenerateMesh(maxh=0.01))
+    mesh = Mesh(geo.GenerateMesh(maxh=0.1))
 
 level_sets = [x * x + y * y - 1, -x - 1 / 3, x - 1 / 3, y - 0.5]
 nr_ls = len(level_sets)
@@ -72,3 +72,31 @@ area3 = Integrate(levelset_domain=lset_zdisc3, cf=1, mesh=mesh, order=0)
 print("Area 3 = {:12.10f}".format(area3))
 print("Error: {:4.2e}".format(abs(area3 - area_zd)))
 assert abs(area1 - area3) < 1e-12
+
+
+
+bnd_ = {(NEG, NEG, NEG, POS): [(IF, NEG, NEG, POS), (NEG, NEG, NEG, IF)],
+        (NEG, POS, NEG, POS): [(IF, POS, NEG, POS)],
+        (NEG, POS, NEG, NEG): [(IF, POS, NEG, NEG), (NEG, IF, NEG, NEG)],
+        (NEG, NEG, POS, NEG): [(NEG, NEG, IF, NEG), (IF, NEG, POS, NEG)],
+        (NEG, NEG, POS, POS): [(IF, NEG, POS, POS)]
+        }
+
+bnd_dta = DomainTypeArray([(IF, NEG, NEG, POS), (IF, NEG, POS, POS), 
+                           (IF, NEG, POS, NEG), (NEG, NEG, IF, NEG), 
+                           (NEG, NEG, NEG, IF), (NEG, IF, NEG, NEG),
+                           (IF, POS, NEG, NEG), (IF, POS, NEG, POS)])
+normals = [z_disc1.GetOuterNormals(level_sets_p1),
+           z_disc2.GetOuterNormals(level_sets_p1),
+           z_disc3.GetOuterNormals(level_sets_p1)]
+
+Draw(bnd_dta.IndicatorSmoothed(level_sets_p1), mesh, "bnd", sd=6)
+
+for dtt_v, dtt_l in bnd_.items():
+    for dtt_b in dtt_l:
+        name = str(dtt_b)
+        for s in ["DOMAIN_TYPE.", ",", " ", "(", ")"]:
+            name = name.replace(s, "")
+        for i, n in enumerate(normals):
+            Draw(n[dtt_v][dtt_b], mesh, "normals_"+name)
+            input(i)
