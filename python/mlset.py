@@ -4,6 +4,7 @@ Convenience layer module for integration using multiple level sets.
 from ngsolve import Norm, Grad
 from xfem import *
 from itertools import chain, permutations, product
+from collections import Counter
 
 
 class DomainTypeArray():
@@ -99,6 +100,15 @@ class DomainTypeArray():
 
     def __contains__(self, dtt):
         return dtt in self.as_list
+
+    def __eq__(self, dta_b):
+        if self.codim != dta_b.codim or self.__len__() != len(dta_b):
+            return False
+        else:
+            return Counter(self.as_list) == Counter(dta_b.as_list)
+
+    def __ne__(self, dta_b):
+        return not self.__eq__(dta_b)
 
     def __str__(self):
         str_out = "DomainTypeArray:\n"
