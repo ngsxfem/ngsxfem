@@ -337,7 +337,7 @@ def test_3d_codim2_cross():
     # ---------------------------- Background Mesh ----------------------------
     geo = CSGeometry()
     geo.Add(OrthoBrick(Pnt(-0.8,-0.8,-0.8), Pnt(0.8,0.8,0.8)))
-    mesh = Mesh(geo.GenerateMesh(maxh=0.5))
+    mesh = Mesh(geo.GenerateMesh(maxh=0.8))
 
     # ------------------------------ Level Sets -------------------------------
     level_sets = (x - 0.5, x + 0.5, x - y, z - 0)
@@ -377,6 +377,29 @@ def test_3d_codim2_cross():
                                         "domain_type": cross},
                        mesh=mesh, cf=1, order=0)
     assert abs(length - 2* sqrt(3)) < 1e-12
+
+    del level_sets, level_sets_p1, nr_ls, cross
+
+
+    # ------------------------------ THIRD TEST -------------------------------
+
+    # ------------------------------ Level Sets -------------------------------
+    level_sets = (x - 0.5, - x - 0.5, - z - 0.5, z + y, x + y, z + y + 0.1)
+    nr_ls = len(level_sets)
+    level_sets_p1 = tuple(GridFunction(H1(mesh,order=1)) for i in range(nr_ls))
+
+    for i, lset_p1 in enumerate(level_sets_p1):
+        InterpolateToP1(level_sets[i], lset_p1)
+
+    # ---------------------------- DomainTypeArray ----------------------------
+    lines = DomainTypeArray([(NEG, NEG, NEG, IF, IF, ANY), 
+                             (NEG, NEG, NEG, ANY, IF, IF)])
+
+    # --------------------------- Test Integration ----------------------------
+    length = Integrate(levelset_domain={"levelset": level_sets_p1,
+                                        "domain_type": lines},
+                       mesh=mesh, cf=1, order=0)
+    assert abs(length - 1.9*sqrt(3)) < 1e-12
 
 
 # -----------------------------------------------------------------------------
