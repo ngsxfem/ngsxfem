@@ -68,6 +68,28 @@ print("surface_area = {:10.8f}".format(surface_area))
 print("surface_area error = {:4.3e}".format(abs(surface_area - 6)))
 assert abs(surface_area - 6)
 
+
+# Compute length of lines
+sides = [(IF, POS, IF, POS, NEG, POS), (IF, POS, NEG, IF, NEG, POS),
+         (IF, POS, NEG, POS, IF, POS), (IF, POS, NEG, POS, NEG, IF),
+         (NEG, IF, IF, POS, NEG, POS), (NEG, IF, NEG, IF, NEG, POS),
+         (NEG, IF, NEG, POS, IF, POS), (NEG, IF, NEG, POS, NEG, IF),
+         (NEG, POS, IF, POS, IF, POS), (NEG, POS, NEG, IF, IF, POS),
+         (NEG, POS, IF, POS, NEG, IF), (NEG, POS, NEG, IF, NEG, IF)]
+
+for i, side in enumerate(sides):
+    length = Integrate(levelset_domain = {"levelset": [lsetp1_x_upper, lsetp1_x_lower, 
+                                                      lsetp1_y_upper, lsetp1_y_lower, 
+                                                      lsetp1_z_upper, lsetp1_z_lower],
+                                        "domain_type": side},
+                     mesh=mesh, cf=1, order=0)
+
+    
+    print("length{:d} = {:10.8f}".format(i, length))                     
+    print("length{:d} error = {:4.2e}".format(i, abs(length - 1)))
+    assert abs(length - 1) < 1e-12
+
+
 # Point evaluation
 point_domains = {"ppp": (IF, POS, IF, POS, IF, POS),
                  "ppn": (IF, POS, IF, POS, NEG, IF),

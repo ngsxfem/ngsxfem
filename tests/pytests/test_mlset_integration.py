@@ -290,10 +290,23 @@ def test_3d_mlset():
                              order=0)
     assert abs(area_surface - 6) < 1e-12
 
-    # Codim = 2 is not implemented yet
+
+    # Codim = 2
+    edges = [(IF, POS, IF, POS, NEG, POS), (IF, POS, NEG, IF, NEG, POS),
+             (IF, POS, NEG, POS, IF, POS), (IF, POS, NEG, POS, NEG, IF),
+             (NEG, IF, IF, POS, NEG, POS), (NEG, IF, NEG, IF, NEG, POS),
+             (NEG, IF, NEG, POS, IF, POS), (NEG, IF, NEG, POS, NEG, IF),
+             (NEG, POS, IF, POS, IF, POS), (NEG, POS, NEG, IF, IF, POS),
+             (NEG, POS, IF, POS, NEG, IF), (NEG, POS, NEG, IF, NEG, IF)]
+
+    for edge in edges:
+        lset_dom_edge = {"levelset": level_sets_p1, "domain_type": edge}
+        len_edge = Integrate(levelset_domain=lset_dom_edge, mesh=mesh, cf=1,
+                              order=0)
+        assert abs(len_edge - 1) < 1e-12
+
 
     # Codim = 3
-
     point_domains = {"ppp": (IF, POS, IF, POS, IF, POS),
                      "ppn": (IF, POS, IF, POS, NEG, IF),
                      "pnp": (IF, POS, NEG, IF, IF, POS),
