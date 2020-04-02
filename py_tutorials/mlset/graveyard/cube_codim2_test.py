@@ -16,24 +16,20 @@ geo.Add(OrthoBrick(Pnt(-0.8,-0.8,-0.8), Pnt(0.8,0.8,0.8)))
 mesh = Mesh(geo.GenerateMesh(maxh=0.3))
 
 # Level sets
-V = H1(mesh,order=1)
-lsetp1_x_upper, lsetp1_x_lower = GridFunction(V), GridFunction(V)
-lsetp1_y = GridFunction(V)
-lsetp1_z = GridFunction(V)
+level_sets = (x - 0.5, x + 0.5, x - y, z - 0)
+nr_ls = len(level_sets)
+level_sets_p1 = tuple(GridFunction(H1(mesh,order=1)) for i in range(nr_ls))
 
-InterpolateToP1( x - 0.5, lsetp1_x_upper)
-InterpolateToP1( x + 0.5, lsetp1_x_lower)
-InterpolateToP1( x - y , lsetp1_y)
-InterpolateToP1( z - 0., lsetp1_z)
+for i, lset_p1 in enumerate(level_sets_p1):
+    InterpolateToP1(level_sets[i], lset_p1)
 
 # Integrate
-cube = DomainTypeArray(dtlist=[(NEG, POS, IF, IF)])
+line = DomainTypeArray(dtlist=[(NEG, POS, IF, IF)])
 
 # Compute length
-length = Integrate(levelset_domain={"levelset": [lsetp1_x_upper, lsetp1_x_lower, 
-                                                 lsetp1_y, lsetp1_z],
-                                    "domain_type": cube.as_list},
-                              mesh=mesh, cf=1, order=0)
+length = Integrate(levelset_domain={"levelset": level_sets_p1,
+                                    "domain_type": line},
+                   mesh=mesh, cf=1, order=0)
 
 print("length = {:10.8f}".format(length))
 print("length error = {:4.3e}".format(abs(length - sqrt(2))))
