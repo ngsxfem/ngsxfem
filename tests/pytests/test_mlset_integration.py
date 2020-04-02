@@ -270,12 +270,12 @@ def test_3d_mlset():
     lset_dom_cube = {"levelset": level_sets_p1, "domain_type": cube}
     volume_cube = Integrate(levelset_domain=lset_dom_cube,
                             mesh=mesh, cf=1, order=0)
-    assert abs(volume_cube - 1)
+    assert abs(volume_cube - 1) < 1e-12
 
     lset_dom_cube_inv = {"levelset": level_sets_p1, "domain_type": ~cube}
     volume_cube_inv = Integrate(levelset_domain=lset_dom_cube_inv, mesh=mesh, cf=1,
                                 order=0)
-    assert abs(volume_cube_inv - 3.096)
+    assert abs(volume_cube_inv - 3.096) < 1e-12
 
     # Codim = 1
     for side in sides:
