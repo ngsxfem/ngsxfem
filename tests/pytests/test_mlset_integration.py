@@ -305,6 +305,12 @@ def test_3d_mlset():
                               order=0)
         assert abs(len_edge - 1) < 1e-12
 
+    lset_dom_edges = {"levelset": level_sets_p1,
+                        "domain_type": cube.Boundary().Boundary()}
+    area_surface = Integrate(levelset_domain=lset_dom_edges, mesh=mesh, cf=1,
+                             order=0)
+    assert abs(area_surface - 12) < 1e-12 
+
 
     # Codim = 3
     point_domains = {"ppp": (IF, POS, IF, POS, IF, POS),
