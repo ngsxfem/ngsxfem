@@ -1,7 +1,7 @@
 """
 Convenience layer module for integration using multiple level sets.
 """
-from ngsolve import Norm, Grad
+from ngsolve import Norm, Grad, GridFunction
 from xfem import *
 from itertools import chain, permutations, product
 from collections import Counter
@@ -17,14 +17,22 @@ class DomainTypeArray():
         The tuple or a list of tuples of DOMAIN_TYPE describing the 
         region where we integrate. ANY is a not valid DOMAIN_TYPE but 
         is expanded on initialisation onto POS and NEG.
+    lsets : tuple(ngsolve.GridFunction)
+        Optional argument: A tuple of discrete level set functions, 
+        which are used to compress the instance to only contain regions
+        with positive measure with respect to these level sets. If this
+        is given, then the DomainTypeArray is compressed on 
+        initialisation.
 
     Attributes
     ----------
     as_list : list(tuples)
         Expanded list containing valid tuples describing the region of
-        interest
+        interest.
     codim : int
         Co-dimension of the  region of interest.
+    compressed : bool
+        Indicates, whether the instance has been compressed.
 
     Methods
     -------
@@ -44,7 +52,7 @@ class DomainTypeArray():
 
     """
 
-    def __init__(self, dtlist):
+    def __init__(self, dtlist, lsets=None):
         if type(dtlist) == tuple:
             dtlist = [dtlist]
 
@@ -73,7 +81,9 @@ class DomainTypeArray():
         for dt in self.as_list[0]:
             if dt == IF:
                 self.codim += 1
-
+        self.lsets = lsets
+        self.compressed = False
+       
         # Safety checks
         if self.codim > 3:
             print("Warning: Codim > 3 !!!")
@@ -91,6 +101,19 @@ class DomainTypeArray():
             if dtt_len != len(dtt):
                 raise Exception("DomainTypeArray initialised with tuples of "
                                 "different length!")
+        if self.lsets:
+            if len(self.lsets) != dtt_len:
+                raise Exception("The number of level sets does not match the "
+                    " length of the arrays domain tuples!")
+            if type(self.lsets[0]) != GridFunction:
+                raise Exception("The level set functions need to be "
+                                "ngsolve.GridFunctions!")
+
+        # Compression if possible
+        if self.lsets:
+            self.Compress(self.lsets)
+            self.compressed = True
+
 
     def __len__(self):
         return self.as_list.__len__()
@@ -121,11 +144,11 @@ class DomainTypeArray():
     def __or__(self, dta_b):
         if self.codim != dta_b.codim:
             raise Exception("Co-dims don't match: Union not possible!")
-        return DomainTypeArray(self.as_list + dta_b.as_list)
+        return DomainTypeArray(self.as_list + dta_b.as_list, self.lsets)
 
     def __and__(self, dta_b):
         if self.codim == 0:
-            return DomainTypeArray([dtt for dtt in self.as_list if dtt in dta_b.as_list])
+            return DomainTypeArray([dtt for dtt in self.as_list if dtt in dta_b.as_list], self.lsets)
         else:
             dtl_out = []
             for dtt1, dtt2 in product(self.as_list, dta_b.as_list):
@@ -143,10 +166,9 @@ class DomainTypeArray():
                         dtt_out.append(dt)
                 else:
                     dtl_out.append(tuple(dtt_out))
-            return DomainTypeArray(dtl_out)
+            return DomainTypeArray(dtl_out, self.lsets)
 
     def __invert__(self):
-
         n = len(self.as_list[0])
         dt_per = permutations([NEG] * (n - self.codim) +
                               [POS] * (n - self.codim) + [IF] * self.codim, n)
@@ -154,7 +176,7 @@ class DomainTypeArray():
                              set(dt_per)))
         for dt in self.as_list:
             dt_per.remove(dt)
-        return DomainTypeArray(dt_per)
+        return DomainTypeArray(dt_per, self.lsets)
 
     def __ior__(self, dta_b):
         return self.__or__(dta_b)
@@ -162,9 +184,41 @@ class DomainTypeArray():
     def __iand__(self, dta_b):
         return self.__and__(dta_b)
 
+    def Compress(self, lsets):
+        """
+        For a given set of level sets, this function removes any regions
+        contained in the instance, which do not have a positive measure.
+        The level sets remain attached to the instance, such that 
+        self.Boundary() called after self.Compress(lsets) automatically
+        compresses the output. 
+        
+        """
+
+        self.lsets = lsets
+        self.compressed = True
+
+        if len(lsets) != len(self.as_list[0]):
+            raise Exception("The number of level sets does not match the "
+                            " length of the arrays domain tuples!")
+        if type(self.lsets[0]) != GridFunction:
+            raise Exception("The level set functions need to be "
+                            "ngsolve.GridFunctions!")
+
+        for dtt in self.as_list:
+            weight = weight = Integrate({"levelset": self.lsets, 
+                                         "domain_type": dtt},
+                                         cf=1, 
+                                         mesh=self.lsets[0].space.mesh,
+                                         order=0)
+            if abs(weight) < 1e-12:
+                self.as_list.remove(dtt)
+
+
     def Boundary(self):
         """
-        Compute the Boundary of the current region.
+        Compute the Boundary of the current region. If the instance has
+        been compressed, then only level set boundaries with positive 
+        measure are returned.
 
         Returns
         -------
@@ -181,9 +235,21 @@ class DomainTypeArray():
                          dtt[:i] + tuple([NEG]) + dtt[i+1:] in self):
                         continue
                     else:
-                        dtl_out.append(dtt[:i] + tuple([IF]) + dtt[i+1:])
+                        is_relevant = True
+                        dtt_out = dtt[:i] + tuple([IF]) + dtt[i+1:]
 
-        return DomainTypeArray(dtl_out)
+                        if self.lsets:
+                            weight = Integrate({"levelset": self.lsets,
+                                                "domain_type": dtt_out},
+                                                cf=1, 
+                                                mesh=self.lsets[0].space.mesh,
+                                                order=0)
+                            if abs(weight) < 1e-12:
+                                is_relevant = False
+                        if is_relevant:
+                            dtl_out.append(dtt_out)
+    
+        return DomainTypeArray(dtl_out, self.lsets)
 
     def Indicator(self, lsets):
         """
@@ -275,7 +341,7 @@ class DomainTypeArray():
     def GetOuterNormals(self, lsetsp1):
         """
         For each domain region in self, we compute the outward pointing
-        unit normal vector on each boundary segment.
+        unit normal vector on each boundary segment of self.Boundary().
 
         Parameters
         ----------
@@ -294,17 +360,18 @@ class DomainTypeArray():
             raise NotImplemented("GetOuterBoundary is olny available for "
                                  "codim = 0 !")
 
-        n_dta = {}
+        n_dtt = {}
+        bnd = self.Boundary()
         for dtt in self.as_list:
-            n_dtt = {}
             for i, dt in enumerate(dtt):
-                bnd = dtt[:i] + tuple([IF]) + dtt[i+1:]
+                dtt_bnd = dtt[:i] + tuple([IF]) + dtt[i+1:]
+                if dtt_bnd not in bnd:
+                    continue
                 if dt == POS:
                     n_dt = - 1.0 / Norm(Grad(lsetsp1[i])) * Grad(lsetsp1[i])
                 else:
                     n_dt = 1.0 / Norm(Grad(lsetsp1[i])) * Grad(lsetsp1[i])
-                n_dtt[bnd] = n_dt
+                n_dtt[dtt_bnd] = n_dt
 
-            n_dta[dtt] = n_dtt
-
-        return n_dta
+        del bnd
+        return n_dtt

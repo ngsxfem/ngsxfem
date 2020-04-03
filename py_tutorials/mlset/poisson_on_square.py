@@ -58,6 +58,7 @@ for i, lsetp1 in enumerate(level_sets_p1):
     Draw(lsetp1, mesh, "lsetp1_{}".format(i))
 
 square = DomainTypeArray((NEG, NEG, NEG, NEG))
+square.Compress(level_sets_p1)
 boundary = square.Boundary()
 
 lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
@@ -115,9 +116,8 @@ forcing = rhs * v
 a = RestrictedBilinearForm(V, element_restriction=els_hasneg,
                            facet_restriction=facets_gp, check_unused=False)
 a += SymbolicBFI(lset_dom_inner, form=diffusion, definedonelements=els_hasneg)
-for dtt in square.as_list:
-    for bnd, n in normals[dtt].items():
-        a += SymbolicBFI(lsets_bnd[bnd], form=nitsche(n),
+for bnd, n in normals.items():
+    a += SymbolicBFI(lsets_bnd[bnd], form=nitsche(n),
                      definedonelements=els_if_singe[bnd])
 a += SymbolicFacetPatchBFI(form=ghost_penalty, skeleton=False,
                            definedonelements=facets_gp)

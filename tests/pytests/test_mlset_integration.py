@@ -205,6 +205,24 @@ def test_2d_overlaps():
     assert abs(area1 - area2) < 1e-12
     assert abs(area1 - area3) < 1e-12
 
+    # --------------------------- Test Compression ----------------------------
+    z_disc2.Compress(level_sets_p1)
+    z_disc3.Compress(level_sets_p1)
+
+    assert z_disc1 == z_disc2
+    assert z_disc1 == z_disc3
+
+    assert len(z_disc2.Boundary()) == 8
+
+    lset_zdisc2_c = {"levelset": level_sets_p1, "domain_type": z_disc2}
+    lset_zdisc3_c = {"levelset": level_sets_p1, "domain_type": z_disc3}
+    
+    area2_c = Integrate(lset_zdisc2_c, 1, mesh, order=0)
+    area3_c = Integrate(lset_zdisc3_c, 1, mesh, order=0)
+
+    assert abs(area1 - area2_c) < 1e-12
+    assert abs(area1 - area3_c) < 1e-12
+
     del mesh, level_sets, level_sets_p1, z_disc1, z_disc2, z_disc3 
 
 
@@ -409,5 +427,5 @@ if __name__ == "__main__":
     test_2d_mlci_and_lo_integration()
     test_2d_ho_integration()
     test_2d_overlaps()
-    test_3d_mlset()
-    test_3d_codim2_cross()
+    # test_3d_mlset()
+    # test_3d_codim2_cross()

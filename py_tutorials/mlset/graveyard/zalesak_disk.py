@@ -44,6 +44,8 @@ print("Area   = {:12.10f}".format(area_zd))
 z_disc1 = DomainTypeArray([(NEG, NEG, NEG, POS), (NEG, POS, NEG, POS),
                            (NEG, POS, NEG, NEG), (NEG, NEG, POS, NEG),
                            (NEG, NEG, POS, POS)])
+Draw(z_disc1.Indicator(level_sets_p1), mesh, "z_disc1")
+
 lset_zdisc1 = {"levelset": level_sets_p1, "domain_type": z_disc1}
 
 area1 = Integrate(levelset_domain=lset_zdisc1, cf=1, mesh=mesh, order=0)
@@ -54,6 +56,11 @@ print("Error: {:4.2e}".format(abs(area1 - area_zd)))
 # Alternative 1
 z_disc2 = DomainTypeArray([(NEG, ANY, ANY, POS), (NEG, POS, ANY, ANY),
                            (NEG, ANY, POS, ANY)])
+# print(z_disc2)
+Draw(z_disc2.Indicator(level_sets_p1), mesh, "z_disc2")
+z_disc2.Compress(level_sets_p1)
+print(z_disc2==z_disc1)
+Draw(z_disc2.Indicator(level_sets_p1), mesh, "z_disc2_c")
 lset_zdisc2 = {"levelset": level_sets_p1, "domain_type": z_disc2}
 
 area2 = Integrate(levelset_domain=lset_zdisc2, cf=1, mesh=mesh, order=0)
@@ -74,29 +81,22 @@ print("Error: {:4.2e}".format(abs(area3 - area_zd)))
 assert abs(area1 - area3) < 1e-12
 
 
-
-bnd_ = {(NEG, NEG, NEG, POS): [(IF, NEG, NEG, POS), (NEG, NEG, NEG, IF)],
-        (NEG, POS, NEG, POS): [(IF, POS, NEG, POS)],
-        (NEG, POS, NEG, NEG): [(IF, POS, NEG, NEG), (NEG, IF, NEG, NEG)],
-        (NEG, NEG, POS, NEG): [(NEG, NEG, IF, NEG), (IF, NEG, POS, NEG)],
-        (NEG, NEG, POS, POS): [(IF, NEG, POS, POS)]
-        }
-
 bnd_dta = DomainTypeArray([(IF, NEG, NEG, POS), (IF, NEG, POS, POS), 
                            (IF, NEG, POS, NEG), (NEG, NEG, IF, NEG), 
                            (NEG, NEG, NEG, IF), (NEG, IF, NEG, NEG),
                            (IF, POS, NEG, NEG), (IF, POS, NEG, POS)])
-normals = [z_disc1.GetOuterNormals(level_sets_p1),
-           z_disc2.GetOuterNormals(level_sets_p1),
-           z_disc3.GetOuterNormals(level_sets_p1)]
+
+bnd3 = z_disc3.Boundary()
+bnd3.Compress(level_sets_p1)
+
+assert bnd3 == bnd_dta
+assert z_disc2.Boundary() == bnd3
 
 Draw(bnd_dta.IndicatorSmoothed(level_sets_p1), mesh, "bnd", sd=6)
 
-for dtt_v, dtt_l in bnd_.items():
-    for dtt_b in dtt_l:
-        name = str(dtt_b)
-        for s in ["DOMAIN_TYPE.", ",", " ", "(", ")"]:
-            name = name.replace(s, "")
-        for i, n in enumerate(normals):
-            Draw(n[dtt_v][dtt_b], mesh, "normals_"+name)
-            input(i)
+normals = z_disc2.GetOuterNormals(level_sets_p1)
+
+for dtt, n in normals.items():
+    Draw(n, mesh, "normal")
+    Draw(DomainTypeArray(dtt).IndicatorSmoothed(level_sets_p1), mesh, "boundary")
+    input(dtt.__str__())

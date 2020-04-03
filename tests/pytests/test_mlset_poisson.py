@@ -57,18 +57,19 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
         InterpolateToP1(level_sets[i], lsetp1)
 
     square = DomainTypeArray([(NEG, NEG, NEG, NEG)])
-
+    square.Compress(level_sets_p1)
     lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
-    lsets_bnd = []
-    for i in range(nr_ls):
-        dtt = tuple(IF if ii == i else NEG for ii in range(nr_ls))
-        lsets_bnd.append({"levelset": level_sets_p1, "domain_type": dtt})
+
+    boundary = square.Boundary()
+    lsets_bnd = {}
+    for dtt in boundary:
+        lsets_bnd[dtt] = {"levelset": level_sets_p1, "domain_type": dtt}
 
     mlci = MultiLevelsetCutInfo(mesh, level_sets_p1)
 
     # ---------------------------- Element Markers ----------------------------
     els_hasneg, els_if = BitArray(mesh.ne), BitArray(mesh.ne)
-    els_if_singe = [BitArray(mesh.ne) for i in range(nr_ls)]
+    els_if_singe = {dtt: BitArray(mesh.ne) for dtt in boundary}
     facets_gp = BitArray(mesh.nedge)
 
     els_hasneg[:] = False
@@ -77,11 +78,9 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
     els_if[:] = False
     els_if |= els_hasneg & ~mlci.GetElementsOfType(square)
 
-    for i in range(nr_ls):
-        els_if_singe[i][:] = False
-        els_if_singe[i] |= els_hasneg
-        els_if_singe[i] &= mlci.GetElementsWithContribution(
-            lsets_bnd[i]["domain_type"])
+    for i, (dtt, els_bnd) in enumerate(els_if_singe.items()):
+        els_bnd[:] = False
+        els_bnd |= mlci.GetElementsWithContribution(dtt)
 
     facets_gp[:] = False
     facets_gp |= GetFacetsWithNeighborTypes(mesh, a=els_hasneg, b=els_if,
@@ -93,15 +92,13 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
     # --------------------------- (Bi)Linear Forms ----------------------------
     u, v = V.TnT()
     h = specialcf.mesh_size
-    n_lsets = [1.0 / Norm(grad(lsetp1)) * grad(lsetp1)
-               for lsetp1 in level_sets_p1]
+    normals = square.GetOuterNormals(level_sets_p1)
 
     diffusion = InnerProduct(Grad(u), Grad(v))
 
-    nitsche_terms = [- InnerProduct(Grad(u) * n, v)
-                     - InnerProduct(Grad(v) * n, u)
-                     + (gamma_n * k * k / h) * InnerProduct(u, v) for n in n_lsets]
-
+    def nitsche(n):
+        return - InnerProduct(Grad(u) * n, v) - InnerProduct(Grad(v) * n, u) \
+                    + (gamma_n * k * k / h) * InnerProduct(u, v)
     ghost_penalty = gamma_s / (h**2) * (u - u.Other()) * (v - v.Other())
 
     forcing = rhs * v
@@ -111,9 +108,9 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
                                facet_restriction=facets_gp, check_unused=False)
     a += SymbolicBFI(lset_dom_inner, form=diffusion,
                      definedonelements=els_hasneg)
-    for i, nitsche in enumerate(nitsche_terms):
-        a += SymbolicBFI(lsets_bnd[i], form=nitsche,
-                         definedonelements=els_if_singe[i])
+    for bnd, n in normals.items():
+        a += SymbolicBFI(lsets_bnd[bnd], form=nitsche(n),
+                         definedonelements=els_if_singe[bnd])
     a += SymbolicFacetPatchBFI(form=ghost_penalty, skeleton=False,
                                definedonelements=facets_gp)
 
