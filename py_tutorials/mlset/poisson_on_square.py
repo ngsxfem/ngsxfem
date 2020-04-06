@@ -62,9 +62,7 @@ square.Compress(level_sets_p1)
 boundary = square.Boundary()
 
 lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
-lsets_bnd = {}
-for dtt in boundary:
-    lsets_bnd[dtt] = {"levelset": level_sets_p1, "domain_type": dtt}
+lsets_bnd = {dtt: {"levelset": level_sets_p1, "domain_type": dtt} for dtt in boundary}
 
 mlci = MultiLevelsetCutInfo(mesh, level_sets_p1)
 
