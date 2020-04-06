@@ -23,6 +23,9 @@ class DomainTypeArray():
         with positive measure with respect to these level sets. If this
         is given, then the DomainTypeArray is compressed on 
         initialisation.
+    persistent_compress : bool
+        Optional argument: Whether to re-compress after operations such
+        as .Boundary().
 
     Attributes
     ----------
@@ -31,14 +34,20 @@ class DomainTypeArray():
         interest.
     codim : int
         Co-dimension of the  region of interest.
-    compressed : bool
-        Indicates, whether the instance has been compressed.
+    lsets : {None, tuple(ngsolve.GridFunction)}
+        The set of level set functions, if compression is set to be 
+        persistent.
+    persistent_compress : bool
+        Indicates, whether the instance to be compressed persistently.
 
     Methods
     -------
     Boundary(element_marking=False):
         - A DomainTypeArray describing the boundary of the current 
         DomainTypeArray region.
+    Compress(lsets, persistent=False):
+        Remove domain regions which have have zero measure with respect
+        to the given level set functions.
     Indicator(lsets):
         Returns an indicator CoefficientFunction of the current 
         (codim=0) DomainTypeArray region.
@@ -52,13 +61,39 @@ class DomainTypeArray():
 
     """
 
-    def __init__(self, dtlist, lsets=None):
+    def __init__(self, dtlist, lsets=None, persistent_compress=False):
         if type(dtlist) == tuple:
             dtlist = [dtlist]
 
+        self.codim = sum([1 for dt in dtlist[0] if dt == IF])
+        if self.codim > 3:
+            print("Warning: Codim > 3 !!!")
+
+        # Safety checks
         if type(dtlist) != list or type(dtlist[0]) != tuple:
             raise TypeError("Invalid input: dtlist must be list of tuples")
+        dtt_len = len(dtlist[0])
+        for dtt in dtlist:
+            for dt in dtt:
+                if dt not in [NEG, POS, IF, ANY]:
+                    raise Exception("Initialised with something other than NEG"
+                                    ", POS, IF, ANY")
+            n = dtt.count(IF)
+            if n != self.codim:
+                raise Exception("DomainTypeArray initialised with tuples of "
+                                "different co-dimension!")
+            if dtt_len != len(dtt):
+                raise Exception("DomainTypeArray initialised with tuples of "
+                                "different length!")
+        if lsets:
+            if len(lsets) != dtt_len:
+                raise Exception("The number of level sets does not match the "
+                                " length of the arrays domain tuples!")
+            if type(lsets[0]) != GridFunction:
+                raise Exception("The level set functions need to be "
+                                "ngsolve.GridFunctions!")
 
+        # Expansion of ANY
         if (ANY in chain.from_iterable(dtlist)):
             dtlist_expand = []
             for dtt in dtlist:
@@ -77,43 +112,14 @@ class DomainTypeArray():
         else:
             self.as_list = list(set(dtlist))
 
-        self.codim = 0
-        for dt in self.as_list[0]:
-            if dt == IF:
-                self.codim += 1
         self.lsets = lsets
-        self.compressed = False
-       
-        # Safety checks
-        if self.codim > 3:
-            print("Warning: Codim > 3 !!!")
+        self.persistent_compress = persistent_compress
 
-        dtt_len = len(self.as_list[0])
-        for dtt in self.as_list:
-            for dt in dtt:
-                if dt not in [NEG, POS, IF, ANY]:
-                    raise Exception("Initialised with something other than NEG"
-                                    ", POS, IF, ANY")
-            n = dtt.count(IF)
-            if n != self.codim:
-                raise Exception("DomainTypeArray initialised with tuples of "
-                                "different co-dimension!")
-            if dtt_len != len(dtt):
-                raise Exception("DomainTypeArray initialised with tuples of "
-                                "different length!")
         if self.lsets:
-            if len(self.lsets) != dtt_len:
-                raise Exception("The number of level sets does not match the "
-                    " length of the arrays domain tuples!")
-            if type(self.lsets[0]) != GridFunction:
-                raise Exception("The level set functions need to be "
-                                "ngsolve.GridFunctions!")
-
-        # Compression if possible
-        if self.lsets:
-            self.Compress(self.lsets)
-            self.compressed = True
-
+            self.Compress(self.lsets, self.persistent_compress)
+        
+        if not self.persistent_compress:
+            self.lsets = None
 
     def __len__(self):
         return self.as_list.__len__()
@@ -144,13 +150,46 @@ class DomainTypeArray():
     def __or__(self, dta_b):
         if self.codim != dta_b.codim:
             raise Exception("Co-dims don't match: Union not possible!")
-        return DomainTypeArray(self.as_list + dta_b.as_list, self.lsets)
+        if not self.persistent_compress and not dta_b.persistent_compress:
+            lsets_out = None
+            pers_out = False
+        elif ((self.persistent_compress and  not dta_b.persistent_compress) or 
+              (not self.persistent_compress and dta_b.persistent_compress)):
+            print("WARNING: Combined domains with non matching persistent "
+                  "compression status: \n The returned domain will not be "
+                  "compressed.")
+            lsets_out = None
+            pers_out = False
+        else:
+            for lset1, lset2 in zip(self.lsets, dta_b.lsets):
+                if lset1 != lset2:
+                    raise Exception("Operator only possible for domains with the same level sets")
+            lsets_out = self.lsets
+            pers_out = self.persistent_compress
+
+        return DomainTypeArray(self.as_list + dta_b.as_list, lsets_out, pers_out)
 
     def __and__(self, dta_b):
-        if self.codim == 0:
-            return DomainTypeArray([dtt for dtt in self.as_list if dtt in dta_b.as_list], self.lsets)
+        if not self.persistent_compress and not dta_b.persistent_compress:
+            lsets_out = None
+            pers_out = False
+        elif ((self.persistent_compress and  not dta_b.persistent_compress) or 
+              (not self.persistent_compress and dta_b.persistent_compress)):
+            print("WARNING: Combined domains with non matching persistent "
+                  "compression status: \n The returned domain will not be "
+                  "compressed.")
+            lsets_out = None
+            pers_out = False
         else:
-            dtl_out = []
+            for lset1, lset2 in zip(self.lsets, dta_b.lsets):
+                if lset1 != lset2:
+                    raise Exception("Operator only possible for domains with the same level sets")
+            lsets_out = self.lsets
+            pers_out = self.persistent_compress
+
+        dtl_out = [dtt for dtt in self.as_list if dtt in dta_b.as_list]
+        
+        if len(dtl_out) == 0:
             for dtt1, dtt2 in product(self.as_list, dta_b.as_list):
                 if dtt1 == dtt2:
                     dtl_out.append(dtt1)
@@ -166,7 +205,8 @@ class DomainTypeArray():
                         dtt_out.append(dt)
                 else:
                     dtl_out.append(tuple(dtt_out))
-            return DomainTypeArray(dtl_out, self.lsets)
+        
+        return DomainTypeArray(dtl_out, lsets_out, pers_out)
 
     def __invert__(self):
         n = len(self.as_list[0])
@@ -176,7 +216,7 @@ class DomainTypeArray():
                              set(dt_per)))
         for dt in self.as_list:
             dt_per.remove(dt)
-        return DomainTypeArray(dt_per, self.lsets)
+        return DomainTypeArray(dt_per, self.lsets, self.persistent_compress)
 
     def __ior__(self, dta_b):
         return self.__or__(dta_b)
@@ -184,7 +224,7 @@ class DomainTypeArray():
     def __iand__(self, dta_b):
         return self.__and__(dta_b)
 
-    def Compress(self, lsets):
+    def Compress(self, lsets, persistent=False):
         """
         For a given set of level sets, this function removes any regions
         contained in the instance, which do not have a positive measure.
@@ -192,37 +232,40 @@ class DomainTypeArray():
         self.Boundary() called after self.Compress(lsets) automatically
         compresses the output. 
         
-        """
+        Parameters
+        ----------
+        lsets : tuple(ngsolve.GridFunction)
+            The set of level sets with respect to which it is computed,
+            whether regions have positive measure.
+        persistent : bool
+            Sets compression to continue on operations such as 
+            Boundary(). Default vale = False 
 
-        self.lsets = lsets
-        self.compressed = True
+        Returns
+        -------
+        None
+        """
 
         if len(lsets) != len(self.as_list[0]):
             raise Exception("The number of level sets does not match the "
                             " length of the arrays domain tuples!")
-        if type(self.lsets[0]) != GridFunction:
+        if type(lsets[0]) != GridFunction:
             raise Exception("The level set functions need to be "
                             "ngsolve.GridFunctions!")
 
         for dtt in self.as_list:
-            weight = weight = Integrate({"levelset": self.lsets, 
+            weight = weight = Integrate({"levelset": lsets, 
                                          "domain_type": dtt},
                                          cf=1, 
-                                         mesh=self.lsets[0].space.mesh,
+                                         mesh=lsets[0].space.mesh,
                                          order=0)
             if abs(weight) < 1e-12:
                 self.as_list.remove(dtt)
 
-        return None
+        if persistent:
+            self.persistent_compress = persistent
+            self.lsets = lsets
 
-
-    def ClearLevelset(self):
-        """
-        Removes the level sets attached to the instance on .Compress() 
-        """
-
-        self.lsets = None
-        self.compressed = False
         return None
 
 
@@ -260,8 +303,14 @@ class DomainTypeArray():
                                 is_relevant = False
                         if is_relevant:
                             dtl_out.append(dtt_out)
+
+        if self.persistent_compress:
+            dta_out = DomainTypeArray(dtl_out, self.lsets, 
+                                      self.persistent_compress)
+        else:
+            dta_out = DomainTypeArray(dtl_out)
     
-        return DomainTypeArray(dtl_out, self.lsets)
+        return dta_out
 
     def Indicator(self, lsets):
         """

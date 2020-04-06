@@ -30,6 +30,12 @@ def test_trianlge():
     assert triangle_bnd == target
     assert triangle_bnd.codim == 1
 
+    target = target | triangle_bnd
+    assert target == triangle_bnd
+
+    target = target & triangle_bnd
+    assert target == triangle_bnd
+
     triangle_bnd_bnd = triangle_bnd.Boundary()
     target = DomainTypeArray([(IF, IF, NEG), (NEG, IF, IF), (IF, NEG, IF)])
     assert triangle_bnd_bnd == target

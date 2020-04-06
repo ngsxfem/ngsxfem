@@ -193,6 +193,12 @@ def test_2d_overlaps():
     part2 = DomainTypeArray((NEG,NEG,NEG,NEG))
     z_disc3 = part1 & ~part2
 
+    z_disc4 = DomainTypeArray(z_disc3.as_list, level_sets_p1, False)
+    z_disc5 = DomainTypeArray(z_disc3.as_list, level_sets_p1, True)
+
+    assert z_disc4.lsets == None
+    assert z_disc4.persistent_compress == False
+
     # ----------------------- Test Overlapping Domains ------------------------
     lset_zdisc1 = {"levelset": level_sets_p1, "domain_type": z_disc1}
     lset_zdisc2 = {"levelset": level_sets_p1, "domain_type": z_disc2}
@@ -206,13 +212,26 @@ def test_2d_overlaps():
     assert abs(area1 - area3) < 1e-12
 
     # --------------------------- Test Compression ----------------------------
-    z_disc2.Compress(level_sets_p1)
+    z_disc2.Compress(level_sets_p1, persistent=True)
     z_disc3.Compress(level_sets_p1)
 
     assert z_disc1 == z_disc2
     assert z_disc1 == z_disc3
+    assert z_disc1 == z_disc4
+    assert z_disc1 == z_disc5
 
-    assert len(z_disc2.Boundary()) == 8
+    z_disc3_bnd_cmpr = z_disc3.Boundary()
+    z_disc3_bnd_cmpr.Compress(level_sets_p1)
+
+    assert z_disc2.Boundary() == z_disc5.Boundary()
+    assert z_disc2.Boundary() == z_disc3_bnd_cmpr
+    
+    assert z_disc2.Boundary().persistent_compress == True
+    for lset1, lset2 in zip(z_disc2.Boundary().lsets, level_sets_p1):
+        assert lset1 == lset2
+
+    assert z_disc3_bnd_cmpr.persistent_compress == False
+    assert z_disc3_bnd_cmpr.lsets == None 
 
     lset_zdisc2_c = {"levelset": level_sets_p1, "domain_type": z_disc2}
     lset_zdisc3_c = {"levelset": level_sets_p1, "domain_type": z_disc3}
