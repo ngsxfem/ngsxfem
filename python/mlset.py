@@ -213,6 +213,18 @@ class DomainTypeArray():
             if abs(weight) < 1e-12:
                 self.as_list.remove(dtt)
 
+        return None
+
+
+    def ClearLevelset(self):
+        """
+        Removes the level sets attached to the instance on .Compress() 
+        """
+
+        self.lsets = None
+        self.compressed = False
+        return None
+
 
     def Boundary(self):
         """
