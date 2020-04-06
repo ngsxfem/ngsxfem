@@ -253,14 +253,13 @@ class DomainTypeArray():
             raise Exception("The level set functions need to be "
                             "ngsolve.GridFunctions!")
 
+        dtl_out = []
         for dtt in self.as_list:
-            weight = weight = Integrate({"levelset": lsets, 
-                                         "domain_type": dtt},
-                                         cf=1, 
-                                         mesh=lsets[0].space.mesh,
-                                         order=0)
-            if abs(weight) < 1e-12:
-                self.as_list.remove(dtt)
+            weight = Integrate({"levelset": lsets, "domain_type": dtt},
+                                cf=1, mesh=lsets[0].space.mesh, order=0)
+            if abs(weight) > 1e-12:
+                dtl_out.append(dtt)
+        self.as_list = dtl_out
 
         if persistent:
             self.persistent_compress = persistent
