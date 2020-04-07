@@ -435,3 +435,71 @@ class DomainTypeArray():
 
         del bnd
         return n_dtt
+
+
+def TensorUnion(*args):
+    """
+    Construct the union of an arbitrary number of regions, described by
+    DomainTypeArrays, each dependent on a different set of level sets. 
+    This increases the tuple-dimension of the resulting domain regions.
+
+    Parameters
+    ----------
+    *args : DomainTypeArray
+        Variable list of DomainTypeArray objects
+
+    Returns
+    -------
+    DomainTypeArray
+    """
+
+    n_dtl = len(args)
+    n_dtas = []
+    codim = args[0].codim
+
+    for dta in args:
+        if type(dta) != DomainTypeArray:
+            raise TypeError("TensorUnion only possible for DomainTypeArrays")
+        if dta.codim != codim:
+            raise Exception("Cannot form TensorUnion for arrays of different codimension")
+        n_dtas.append(len(dta.as_list[0]))
+
+    i = 0
+    dtl_out = []
+    dtt_candiate = [ANY for j in range(sum(n_dtas))]
+    for j, dta in enumerate(args):
+        for dtt in dta.as_list:
+            dtt_out = dtt_candiate.copy()
+            dtt_out[i:i+n_dtas[j]] = dtt   
+            dtl_out.append(tuple(dtt_out))
+        i += n_dtas[j]
+
+    return DomainTypeArray(dtl_out)
+
+
+def TensorIntersection(*args):
+    """
+    Construct the intersection of an arbitrary number of regions, 
+    described by DomainTypeArrays, each dependent on a different set of 
+    level sets. This increases the tuple-dimension of the resulting 
+    domain regions.
+
+    Parameters
+    ----------
+    *args : DomainTypeArray
+        Variable list of DomainTypeArray objects
+
+    Returns
+    -------
+    DomainTypeArray
+    """
+    
+    for dta in args:
+        if type(dta) != DomainTypeArray:
+            raise TypeError("TensorUnion only possible for DomainTypeArrays")
+
+    dtl_out = []
+    for dtt in product(*[dta.as_list for dta in args]):
+        dtl_out.append(tuple(chain(*dtt)))
+    
+    return DomainTypeArray(dtl_out)
