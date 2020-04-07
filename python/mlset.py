@@ -64,15 +64,15 @@ class DomainTypeArray():
     def __init__(self, dtlist, lsets=None, persistent_compress=False):
         if type(dtlist) == tuple:
             dtlist = [dtlist]
+        if type(dtlist) != list or type(dtlist[0]) != tuple:
+            raise TypeError("Invalid input: dtlist must be a tuple or a list of tuples")
+        
+        dtt_len = len(dtlist[0])
 
         self.codim = sum([1 for dt in dtlist[0] if dt == IF])
         if self.codim > 3:
             print("Warning: Codim > 3 !!!")
 
-        # Safety checks
-        if type(dtlist) != list or type(dtlist[0]) != tuple:
-            raise TypeError("Invalid input: dtlist must be list of tuples")
-        dtt_len = len(dtlist[0])
         for dtt in dtlist:
             for dt in dtt:
                 if dt not in [NEG, POS, IF, ANY]:
