@@ -193,8 +193,8 @@ def test_2d_overlaps():
     part2 = DomainTypeArray((NEG,NEG,NEG,NEG))
     z_disc3 = part1 & ~part2
 
-    z_disc4 = DomainTypeArray(z_disc3.as_list, level_sets_p1, False)
-    z_disc5 = DomainTypeArray(z_disc3.as_list, level_sets_p1, True)
+    z_disc4 = DomainTypeArray(z_disc3.as_list, level_sets_p1, persistent_compress=False)
+    z_disc5 = DomainTypeArray(z_disc3.as_list, level_sets_p1, persistent_compress=True)
 
     assert z_disc4.lsets == None
     assert z_disc4.persistent_compress == False
@@ -220,14 +220,16 @@ def test_2d_overlaps():
     assert z_disc1 == z_disc4
     assert z_disc1 == z_disc5
 
+    z_disc2_bnd = z_disc2.Boundary()
     z_disc3_bnd_cmpr = z_disc3.Boundary()
     z_disc3_bnd_cmpr.Compress(level_sets_p1)
+    z_disc5_bnd = z_disc5.Boundary()
 
-    assert z_disc2.Boundary() == z_disc5.Boundary()
-    assert z_disc2.Boundary() == z_disc3_bnd_cmpr
+    assert z_disc2_bnd == z_disc5_bnd
+    assert z_disc2_bnd == z_disc3_bnd_cmpr
     
-    assert z_disc2.Boundary().persistent_compress == True
-    for lset1, lset2 in zip(z_disc2.Boundary().lsets, level_sets_p1):
+    assert z_disc2_bnd.persistent_compress == True
+    for lset1, lset2 in zip(z_disc2_bnd.lsets, level_sets_p1):
         assert lset1 == lset2
 
     assert z_disc3_bnd_cmpr.persistent_compress == False
@@ -446,5 +448,5 @@ if __name__ == "__main__":
     test_2d_mlci_and_lo_integration()
     test_2d_ho_integration()
     test_2d_overlaps()
-    # test_3d_mlset()
-    # test_3d_codim2_cross()
+    test_3d_mlset()
+    test_3d_codim2_cross()

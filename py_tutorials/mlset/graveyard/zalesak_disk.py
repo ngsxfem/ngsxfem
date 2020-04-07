@@ -16,6 +16,7 @@ from ngsolve import *
 from xfem import *
 from xfem.mlset import *
 from math import pi, asin, sqrt
+import pytest
 
 SetNumThreads(4)
 
@@ -58,8 +59,9 @@ z_disc2 = DomainTypeArray([(NEG, ANY, ANY, POS), (NEG, POS, ANY, ANY),
                            (NEG, ANY, POS, ANY)])
 # print(z_disc2)
 Draw(z_disc2.Indicator(level_sets_p1), mesh, "z_disc2")
-z_disc2.Compress(level_sets_p1, True)
+z_disc2.Compress(level_sets_p1, persistent=True)
 print(z_disc2==z_disc1)
+bnd2 = z_disc2.Boundary()
 Draw(z_disc2.Indicator(level_sets_p1), mesh, "z_disc2_c")
 lset_zdisc2 = {"levelset": level_sets_p1, "domain_type": z_disc2}
 
@@ -90,7 +92,7 @@ bnd3 = z_disc3.Boundary()
 bnd3.Compress(level_sets_p1)
 
 assert bnd3 == bnd_dta
-assert z_disc2.Boundary() == bnd3
+assert bnd2 == bnd3
 
 Draw(bnd_dta.IndicatorSmoothed(level_sets_p1), mesh, "bnd", sd=6)
 
@@ -102,21 +104,21 @@ for dtt, n in normals.items():
     # input(dtt.__str__())
 
 # Test operators
-
-dta_t1 = bnd3 & z_disc2.Boundary()
+dta_t1 = bnd3 & bnd2
 assert dta_t1.lsets == None
 assert dta_t1.persistent_compress == False
-dta_t2 = bnd3 | z_disc2.Boundary()
+dta_t2 = bnd3 | bnd2
 assert dta_t2.lsets == None
 assert dta_t2.persistent_compress == False
 
 bnd4 = z_disc3.Boundary()
 bnd4.Compress(level_sets_p1, persistent=True)
 
-dta_t3 = bnd4 & z_disc2.Boundary()
+dta_t3 = bnd4 & bnd2
 assert dta_t3.lsets == level_sets_p1
 assert dta_t3.persistent_compress == True
-dta_t3 = bnd4 | z_disc2.Boundary()
+
+dta_t3 = bnd4 | bnd2
 assert dta_t3.lsets == level_sets_p1
 assert dta_t3.persistent_compress == True
 
@@ -128,9 +130,8 @@ for i, lsetp1 in enumerate(level_sets_p1_2):
 bnd5 = z_disc3.Boundary()
 bnd5.Compress(level_sets_p1_2, persistent=True)
 
-dta_t3 = bnd5 & z_disc2.Boundary()
-assert dta_t3.lsets == level_sets_p1
-assert dta_t3.persistent_compress == True
-dta_t3 = bnd5 | z_disc2.Boundary()
-assert dta_t3.lsets == level_sets_p1
-assert dta_t3.persistent_compress == True
+# These operations should raise an exception
+with pytest.raises(Exception):
+    dta_t4 = bnd5 & z_disc2.Boundary()
+with pytest.raises(Exception):
+    dta_t4 = bnd5 | z_disc2.Boundary()
