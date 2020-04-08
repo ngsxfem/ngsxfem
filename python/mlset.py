@@ -1,8 +1,8 @@
 """
 Convenience layer module for integration using multiple level sets.
 """
-from ngsolve import Norm, Grad, GridFunction
-from xfem import *
+from ngsolve import Norm, Grad, GridFunction, CoefficientFunction, IfPos
+from xfem import IF, POS, NEG, ANY, Integrate
 from itertools import chain, product, repeat
 from collections import Counter
 
@@ -13,52 +13,54 @@ class DomainTypeArray():
 
     Parameters
     ----------
-    dtlist : list(tuples) or singe tuple
-        The tuple or a list of tuples of DOMAIN_TYPE describing the 
-        region where we integrate. ANY is a not valid DOMAIN_TYPE but 
-        is expanded on initialisation onto POS and NEG.
+    dtlist : {list(tuples({ENUM,ANY})), tuple({ENUM,ANY})}
+        The tuple(s) describing the region of interest. The regions
+        described by the individual tuples must be of the same
+        co-dimension and the same length. Each ANY is expanded
+        internally into a POS and a NEG region.
     lsets : tuple(ngsolve.GridFunction)
-        Optional argument: A tuple of discrete level set functions, 
-        which are used to compress the instance to only contain regions
-        with positive measure with respect to these level sets. If this
-        is given, then the DomainTypeArray is compressed on 
-        initialisation.
+        Optional argument (default=None): A tuple of discrete level set
+        functions, with respect to which the domain in defined. If this
+        given, then the DomainTypeArray is compressed into regions with
+        positive measure on initialisation.
     persistent_compress : bool
-        Optional argument: Whether to re-compress after operations such
-        as .Boundary().
+        Optional argument (default=False): Sets whether the result from
+        operations on this DomainTypeArray instance should automatically
+        be compressed with respect to lsets.
 
     Attributes
     ----------
     as_list : list(tuples)
-        Expanded list containing valid tuples describing the region of
+        Expanded list containing tuples describing the region of
         interest.
     codim : int
-        Co-dimension of the  region of interest.
+        Co-dimension of the contained region of interest.
     lsets : {None, tuple(ngsolve.GridFunction)}
-        The set of level set functions, if compression is set to be 
-        persistent.
+        The set of level set functions, with respect to which the
+        instance is compressed if persistent_compress=True.
     persistent_compress : bool
-        Indicates, whether the instance to be compressed persistently.
+        Indicates, whether the instance to be compressed persistently
+        after operations.
 
     Methods
     -------
     Boundary(element_marking=False):
-        - A DomainTypeArray describing the boundary of the current 
+        A DomainTypeArray describing the boundary of the current
         DomainTypeArray region.
     Compress(lsets, persistent=False):
         Remove domain regions which have have zero measure with respect
         to the given level set functions.
     Indicator(lsets):
-        Returns an indicator CoefficientFunction of the current 
-        (codim=0) DomainTypeArray region.
+        Returns an indicator CoefficientFunction of the instances'
+        region (codim=0 only).
     IndicatorSmoothed(lsets, eps):
         Returns an indicator CoefficientFunction of an eps-region 
-        around the current (codim>0) region.
+        around the current instances' region (codim>0 only).
     GetOuterNormals(lsetsp1):
-        Return a dictionary, which contains a dictionary for each region
-        which in turn contains the outward pointing unit normal vector
-        on each boundary segment. Only for codim=0 DomainTypeArrays.
-
+        Returns a dictionary, containing the outward pointing unit
+        normal vectors on each section of self.Boundary(). The keys are
+        the tuples of the boundary segments, each normal vector is
+        defined on.
     """
 
     def __init__(self, dtlist, lsets=None, persistent_compress=False):
@@ -268,13 +270,15 @@ class DomainTypeArray():
 
     def Boundary(self):
         """
-        Compute the Boundary of the current region. If the instance has
-        been compressed, then only level set boundaries with positive 
-        measure are returned.
+        Compute the boundary of the instances' contained region. If
+        persistent_compress=True has been set for the instance, then
+        the result will compressed into boundary regions with positive
+        measure. 
 
         Returns
         -------
         DomainTypeArray
+            Container of the resulting boundary region.
         """
         if self.codim >= 3:
             raise Exception("Boundary does not make sense for codim >=3")
@@ -289,7 +293,6 @@ class DomainTypeArray():
                     else:
                         is_relevant = True
                         dtt_out = dtt[:i] + tuple([IF]) + dtt[i+1:]
-
                         if self.lsets:
                             weight = Integrate({"levelset": self.lsets,
                                                 "domain_type": dtt_out},
@@ -311,17 +314,18 @@ class DomainTypeArray():
 
     def Indicator(self, lsets):
         """
-        Indicator function for a DomainTypeArray of codim=0
+        Indicator CoefficientFunction for a DomainTypeArray of codim=0.
 
         Parameters
         ----------
         lsets : tuple(ngsolve.CoefficientFunctions)
-            The level set functions defining the region
+            The set of level set functions with respect to which the
+            instances' region is defined.
 
         Returns
         -------
         CoefficientFunction
-            1 in the region on interest, 0 else
+            1 in the region on interest, 0 else.
         """
 
         if self.codim != 0:
@@ -332,7 +336,6 @@ class DomainTypeArray():
         ind_combined = CoefficientFunction(0)
         for dtt in self.as_list:
             ind = CoefficientFunction(1)
-
             for i, dt in enumerate(dtt):
                 if dt == POS:
                     ind *= IfPos(lsets[i], 1, 0)
@@ -343,28 +346,30 @@ class DomainTypeArray():
             del ind
 
         ind_leveled = IfPos(ind_combined, 1, 0)
-
         del ind_combined
+
         return ind_leveled
 
     def IndicatorSmoothed(self, lsets, eps=0.03):
         """
-        Smoothed indicator function for a DomainTypeArray of codim>0.
-        We assume that the level sets are approximately signed distance
-        functions in the eps region of the zero set. 
+        Indicator CoefficientFunction, indicating the eps-region around
+        the instances' region (codim>0). We assume that the level sets
+        are approximately signed distance functions in the eps region of
+        the zero set. 
 
         Parameters
         ----------
         lsets : tuple(ngsolve.CoefficientFunctions)
-            The level set functions defining the region
+            The set of level set functions defining the region.
         eps : float
-            The distance around the subdomain which is indicated.
-            (default value eps=0.01)
+            The distance around the sub-domain which is indicated
+            (default eps=0.01).
 
         Returns
         -------
         CoefficientFunction
-            1 in the region of distance eps around the subdomain, 0 else
+            1 in the region of distance eps around the sub-domain, 0 
+            else.
         """
 
         if self.codim == 0:
@@ -398,8 +403,8 @@ class DomainTypeArray():
 
     def GetOuterNormals(self, lsetsp1):
         """
-        For each domain region in self, we compute the outward pointing
-        unit normal vector on each boundary segment of self.Boundary().
+        For each region in self.Boundary(), we compute the outward 
+        pointing unit normal vector.
 
         Parameters
         ----------
@@ -408,10 +413,9 @@ class DomainTypeArray():
 
         Returns
         -------
-        dict(dict(ngsolve.GridFunction))
-            For each dtt in self, the dictionary contains a dictionary,
-            where the normals can be called using the dtt of the 
-            boundary segment.
+        dict(ngsolve.GridFunction)
+            Each normal is accessible with the tuple defining the
+            boundary region it is defined on as the key.
         """
 
         if self.codim > 0:
@@ -438,20 +442,22 @@ class DomainTypeArray():
 def TensorUnion(*args):
     """
     Construct the union of an arbitrary number of regions, described by
-    DomainTypeArrays, each dependent on a different set of level sets. 
-    This increases the tuple-dimension of the resulting domain regions.
+    different DomainTypeArrays, each dependent on a different set of 
+    level sets. This increases the tuple-dimension of the resulting 
+    domain regions.
 
     Parameters
     ----------
     *args : DomainTypeArray
-        Variable list of DomainTypeArray objects
+        Variable list of DomainTypeArray objects of the same
+        co-dimension.
 
     Returns
     -------
     DomainTypeArray
+        Container of the resulting region.
     """
 
-    n_dtl = len(args)
     n_dtas = []
     codim = args[0].codim
 
@@ -478,18 +484,19 @@ def TensorUnion(*args):
 def TensorIntersection(*args):
     """
     Construct the intersection of an arbitrary number of regions, 
-    described by DomainTypeArrays, each dependent on a different set of 
-    level sets. This increases the tuple-dimension of the resulting 
-    domain regions.
+    described by different DomainTypeArrays, each dependent on a
+    different set of level sets. This increases the tuple-dimension of
+    the resulting domain regions.
 
     Parameters
     ----------
     *args : DomainTypeArray
-        Variable list of DomainTypeArray objects
+        Variable list of DomainTypeArray objects.
 
     Returns
     -------
     DomainTypeArray
+        Container of the resulting region.
     """
     
     for dta in args:
