@@ -27,12 +27,12 @@ Draw(dta3.Indicator(level_sets3), mesh, "dta3", sd=4)
 
 # Test TensorUnion ------------------------------------------------------------
 dta_union = TensorUnion(dta1, dta2, dta3)
-Draw(dta_union.Indicator(level_sets1+level_sets2+level_sets3), mesh, "dta_union", sd=4)
+Draw(dta_union.Indicator(level_sets1+level_sets2+level_sets3), mesh, "dta_union", sd=5)
 
 dta4 = DomainTypeArray([(POS, POS, NEG, ANY, ANY, ANY), 
                          (ANY, ANY, ANY, NEG, NEG, POS)])
 dta_union2 = TensorUnion(dta4, dta3)
-Draw(dta_union.Indicator(level_sets1+level_sets2+level_sets3), mesh, "dta_union2", sd=4)
+Draw(dta_union.Indicator(level_sets1+level_sets2+level_sets3), mesh, "dta_union2", sd=5)
 
 # Test TensorIntersection -----------------------------------------------------
 dta5 = ~ dta1
@@ -40,8 +40,8 @@ dta6 = ~ dta2
 dta7 = ~ dta3
 
 dta_intersection = TensorIntersection(dta5, dta6, dta7)
-Draw(dta_intersection.Indicator(level_sets1+level_sets2+level_sets3), mesh, "dta_intersection", sd=4)
+Draw(dta_intersection.Indicator(level_sets1+level_sets2+level_sets3), mesh, "dta_intersection", sd=5)
 
 bnd1 = dta1.Boundary()
 dta_intersection2 = TensorIntersection(bnd1, dta6)
-Draw(dta_intersection2.IndicatorSmoothed(level_sets1+level_sets2), mesh, "dta_intersection2", sd=4)
+Draw(dta_intersection2.IndicatorSmoothed(level_sets1+level_sets2), mesh, "dta_intersection2", sd=6)

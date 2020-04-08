@@ -3,7 +3,7 @@ Convenience layer module for integration using multiple level sets.
 """
 from ngsolve import Norm, Grad, GridFunction
 from xfem import *
-from itertools import chain, permutations, product
+from itertools import chain, product, repeat
 from collections import Counter
 
 
@@ -101,7 +101,7 @@ class DomainTypeArray():
                     locations_expand = [i for i in range(len(dtt)) if dtt[i] == ANY]
                     n = len(locations_expand)
                     dt_lists = [list(dtt) for i in range(2**n)]
-                    dt_per = list(set(permutations([NEG] * n + [POS] * n, n)))
+                    dt_per = list(product(*list(repeat((POS, NEG), n))))
                     for i, dtl in enumerate(dt_lists):
                         for j, k in enumerate(locations_expand):
                             dt_lists[i][k] = dt_per[i][j]
@@ -210,10 +210,8 @@ class DomainTypeArray():
 
     def __invert__(self):
         n = len(self.as_list[0])
-        dt_per = permutations([NEG] * (n - self.codim) +
-                              [POS] * (n - self.codim) + [IF] * self.codim, n)
-        dt_per = list(filter(lambda dtt: dtt.count(IF) == self.codim,
-                             set(dt_per)))
+        dt_per = list(product(*list(repeat((POS, NEG, IF), n))))
+        dt_per = list(filter(lambda dtt: dtt.count(IF) == self.codim, dt_per))
         for dt in self.as_list:
             dt_per.remove(dt)
         return DomainTypeArray(dt_per, self.lsets, self.persistent_compress)
