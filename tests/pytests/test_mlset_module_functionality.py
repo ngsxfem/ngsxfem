@@ -122,9 +122,35 @@ def test_any_expansion():
 
 
 # -----------------------------------------------------------------------------
+# -------------------------- TEST TENSOR OPERATORS ----------------------------
+# -----------------------------------------------------------------------------
+def test_tensor_operators():
+    dta1 = DomainTypeArray((POS,))
+    dta2 = DomainTypeArray([(POS, NEG), (POS,POS)])
+    dta3 = DomainTypeArray((NEG, NEG, IF))
+
+    union = TensorUnion(dta1, dta2)
+    target = DomainTypeArray([(POS, ANY, ANY), (ANY, POS, NEG), (ANY, POS, POS)])
+    assert union == target
+
+    with pytest.raises(Exception):
+        union = TensorUnion(dta1, dta2, dta3)
+
+    intersection1 = TensorIntersection(dta1, dta2)
+    target = DomainTypeArray([(POS, POS, NEG), (POS, POS, POS)])
+    assert intersection1 == target
+
+    intersection2 = TensorIntersection(dta1, dta2, dta3)
+    target = DomainTypeArray([(POS, POS, NEG, NEG, NEG, IF), 
+                              (POS, POS,POS, NEG, NEG, IF)])
+    assert intersection2 == target
+
+
+# -----------------------------------------------------------------------------
 # --------------------------- RUN TESTS SEPARATELY ----------------------------
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     test_trianlge()
     test_operators()
     test_any_expansion()
+    test_tensor_operators()
