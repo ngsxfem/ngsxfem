@@ -23,8 +23,12 @@ To obtain higher order accuracy, we offer a mesh transformation technique in the
 To obtain robust method for PDEs on unfitted moving domain we can formulate space-time discretization. =ngsxfem= provides necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Further, it extends the tools for higher order accurate geometry handling to the space-time setting.
 #+html: <p align="center"><img src="doc/graphics/spacetime1.png" height="175"/><img src="doc/graphics/spacetime2.png" height="175"/></p> 
 
+*** Geometries described by multiple level sets
+Many geometries do not have -- due to sharp corners or edges -- an implicit description by a *smooth* level set function. Instead multiple level set functions can be used to describe theses geometries. 
+#+html: <p align="center"><img src="doc/graphics/zdisc-cut-elements.png" height="175"/></p> 
+
 ** Applications
-This section is to be added soon ...
+Two-phase diffusion problems / viscous flow problems (Stokes). This section is to be added soon ...
 
 * Installation
 ** Linux Build Steps
