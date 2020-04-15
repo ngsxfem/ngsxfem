@@ -16,25 +16,14 @@ namespace ngfem
 
   class SymbolicCutBilinearFormIntegrator : public SymbolicBilinearFormIntegrator
   {
-    shared_ptr<CoefficientFunction> cf_lset = nullptr;
-    shared_ptr<GridFunction> gf_lset = nullptr;
-    DOMAIN_TYPE dt = NEG;
-    int force_intorder = -1;
-    int subdivlvl = 0;
-    int time_order = -1;
-    SWAP_DIMENSIONS_POLICY pol;
+    shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;    
   public:
-    
-    SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
+
+    SymbolicCutBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                        shared_ptr<CoefficientFunction> acf,
-                                       DOMAIN_TYPE adt,
-                                       int aforce_intorder = -1,
-                                       int asubdivlvl = 0,
-                                       SWAP_DIMENSIONS_POLICY pol = FIND_OPTIMAL,
                                        VorB vb = VOL,
                                        VorB element_vb = VOL);
-
-    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    
     virtual VorB VB () const { return VOL; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
@@ -75,10 +64,7 @@ namespace ngfem
                                  const ElementTransformation & trafo, 
 				 FlatVector<double> elveclin,
                                  FlatMatrix<double> elmat,
-                                 LocalHeap & lh) const
-    {
-      throw Exception("SymbolicCutBilinearFormIntegrator::CalcLinearizedElementMatrix not yet implemented");
-    }
+                                 LocalHeap & lh) const;
 
     template <int D, typename SCAL, typename SCAL_SHAPES>
     void T_CalcLinearizedElementMatrixEB (const FiniteElement & fel,
@@ -96,10 +82,7 @@ namespace ngfem
 			const FlatVector<double> elx, 
 			FlatVector<double> ely,
 			void * precomputed,
-			LocalHeap & lh) const
-    {
-      throw Exception("SymbolicCutBilinearFormIntegrator::ApplyElementMatrix not yet implemented");
-    }
+			LocalHeap & lh) const;
 
       
     template <int D, typename SCAL, typename SCAL_SHAPES>
@@ -114,19 +97,20 @@ namespace ngfem
     }
 
   };
+  
   class SymbolicCutFacetBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
-    shared_ptr<CoefficientFunction> cf_lset;
-    DOMAIN_TYPE dt = NEG;
-    int force_intorder = -1;
-    int subdivlvl = 0;
+    shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;    
+    
   public:
     SymbolicCutFacetBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
                                             shared_ptr<CoefficientFunction> acf,
                                             DOMAIN_TYPE adt,
                                             int aforce_intorder,
                                             int asubdivlvl);
+    SymbolicCutFacetBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
+                                            shared_ptr<CoefficientFunction> acf);
 
     virtual VorB VB () const { return vb; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know

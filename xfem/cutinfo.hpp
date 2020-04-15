@@ -90,6 +90,40 @@ namespace ngcomp
 
   };
 
+
+
+  class MultiLevelsetCutInformation
+  {
+  protected:
+    shared_ptr<MeshAccess> ma;
+    Array<shared_ptr<GridFunction>> lsets;
+  public:
+    MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, const Array<shared_ptr<GridFunction>> & lsets_in);
+    shared_ptr<MeshAccess> GetMesh () const { return ma; }
+
+    shared_ptr<BitArray> GetElementsOfDomainType(const Array<Array<DOMAIN_TYPE>> & cdt,
+                                                 VorB vb, LocalHeap & lh) const;
+
+    shared_ptr<BitArray> GetElementsOfDomainType(const Array<DOMAIN_TYPE> & cdt_,
+                                                 VorB vb, LocalHeap & lh) const
+    {
+      Array<Array<DOMAIN_TYPE>> cdt(1);
+      cdt[0] = cdt_;
+      return GetElementsOfDomainType(cdt,vb,lh);
+    }
+
+    shared_ptr<BitArray> GetElementsWithContribution(const Array<Array<DOMAIN_TYPE>> & cdt,
+                                                 VorB vb, LocalHeap & lh) const;
+
+    shared_ptr<BitArray> GetElementsWithContribution(const Array<DOMAIN_TYPE> & cdt_,
+                                                 VorB vb, LocalHeap & lh) const
+    {
+      Array<Array<DOMAIN_TYPE>> cdt(1);
+      cdt[0] = cdt_;
+      return GetElementsWithContribution(cdt,vb,lh);
+    }
+  };
+  
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
                                                   shared_ptr<BitArray> a,
                                                   shared_ptr<BitArray> b,

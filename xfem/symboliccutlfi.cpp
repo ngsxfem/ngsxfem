@@ -15,19 +15,16 @@ namespace ngfem
 {
 
   SymbolicCutLinearFormIntegrator ::
-  SymbolicCutLinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
+  SymbolicCutLinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                    shared_ptr<CoefficientFunction> acf,
-                                   DOMAIN_TYPE adt,
-                                   int aforce_intorder,
-                                   int asubdivlvl,
-                                   SWAP_DIMENSIONS_POLICY apol,
                                    VorB vb)
-    : SymbolicLinearFormIntegrator(acf,vb,VOL), cf_lset(acf_lset), dt(adt),
-      force_intorder(aforce_intorder), subdivlvl(asubdivlvl), pol(apol)
+    : SymbolicLinearFormIntegrator(acf,vb,VOL),  
+      lsetintdom(lsetintdom_in)
   {
-    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
+    ;
   }
 
+  
   void 
   SymbolicCutLinearFormIntegrator ::
   CalcElementVector (const FiniteElement & fel,
@@ -82,47 +79,25 @@ namespace ngfem
     
     RegionTimer reg(t);
 
-    int intorder = 2*fel.Order();
-
     auto et = trafo.GetElementType();
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices right now");
 
-    if (force_intorder >= 0)
-      intorder = force_intorder;
-    
-    
+    LevelsetIntegrationDomain lsetintdom_local(lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(2*fel.Order());
+        
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
 
     elvec = 0;
 
-    const IntegrationRule * ir1;
+    const IntegrationRule * ir;
     Array<double> wei_arr;
-    tie (ir1, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
-    if (ir1 == nullptr)
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
+    
+    if (ir == nullptr)
       return;
-    ///
-    const IntegrationRule * ir = nullptr;
-    if (false && time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
-    {
-       static bool warned = false;
-       if (!warned)
-       {
-         cout << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
-         cout << "         A mapped integration rule of this will not see the time,\n";
-         cout << "         but the underlying integration rule will." << endl;
-         warned = true;
-       }
-       auto ir1D = SelectIntegrationRule (ET_SEGM, time_order);
-       ir = new (lh) IntegrationRule(ir1->Size()*ir1D.Size(),lh);
-       for (int i = 0; i < ir1D.Size(); i ++)
-         for (int j = 0; j < ir1->Size(); j ++)
-           (*ir)[i*ir1->Size()+j] = IntegrationPoint((*ir1)[j](0),(*ir1)[j](1),ir1D[i](0),(*ir1)[j].Weight()*ir1D[i].Weight());
-       // cout << *ir<< endl;
-    }
-    else
-      ir = ir1;
 
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);

@@ -98,3 +98,5 @@ INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
 #endif
 }
 
+ostream & operator<< (ostream & ost, DOMAIN_TYPE dt);
+ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt);

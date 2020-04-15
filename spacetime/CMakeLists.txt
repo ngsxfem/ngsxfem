@@ -16,5 +16,5 @@ install (FILES
 
 install( FILES
   py_demos/spaceP1_timeDGP1.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/spacetime
 )

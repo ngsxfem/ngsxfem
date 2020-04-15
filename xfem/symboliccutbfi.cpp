@@ -15,25 +15,17 @@
 
 namespace ngfem
 {
-
+  
   SymbolicCutBilinearFormIntegrator ::
-  SymbolicCutBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
+  SymbolicCutBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                      shared_ptr<CoefficientFunction> acf,
-                                     DOMAIN_TYPE adt,
-                                     int aforce_intorder,
-                                     int asubdivlvl,
-                                     SWAP_DIMENSIONS_POLICY apol,
-                                     VorB avb, VorB aelement_vb)
-    : SymbolicBilinearFormIntegrator(acf,avb,aelement_vb),
-    cf_lset(acf_lset),
-    dt(adt),
-    force_intorder(aforce_intorder),
-    subdivlvl(asubdivlvl),
-    pol(apol)
+                                     VorB avb,
+                                     VorB aelement_vb)
+    : SymbolicBilinearFormIntegrator(acf,avb,aelement_vb)
   {
-    tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
+    lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
   }
-
+  
 
   void 
   SymbolicCutBilinearFormIntegrator ::
@@ -109,36 +101,17 @@ namespace ngfem
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
 
-    if (force_intorder >= 0)
-      intorder = force_intorder;
-
-    const IntegrationRule * ir1;
+    LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(intorder);
+    
+    const IntegrationRule * ir;
     Array<double> wei_arr;
-    tie (ir1, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
 
-    if (ir1 == nullptr)
+    if (ir == nullptr)
       return;
     ///
-    const IntegrationRule * ir = nullptr;
-    if (false && time_order > -1) //simple tensor product rule (no moving cuts with this..) ...
-    {
-       static bool warned = false;
-       if (!warned)
-       {
-         cout << IM(3) << "WARNING: This is a pretty simple tensor product rule in space-time.\n";
-         cout << IM(3) << "         A mapped integration rule of this will not see the time,\n";
-         cout << IM(3) << "         but the underlying integration rule will." << endl;
-         warned = true;
-       }
-       auto ir1D = SelectIntegrationRule (ET_SEGM, time_order);
-       ir = new (lh) IntegrationRule(ir1->Size()*ir1D.Size(),lh);
-       for (int i = 0; i < ir1D.Size(); i ++)
-         for (int j = 0; j < ir->Size(); j ++)
-           (*ir)[i*ir1->Size()+j] = IntegrationPoint((*ir1)[j](0),(*ir1)[j](1),ir1D[i](0),(*ir1)[j].Weight()*ir1D[i].Weight());
-       //cout << *ir<< endl;
-    }
-    else
-      ir = ir1;
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
     
     ProxyUserData ud;
@@ -323,6 +296,8 @@ namespace ngfem
 
                                        {
       static Timer t("symbolicBFI - CalcElementMatrix EB", 2);
+      if (lsetintdom->IsMultiLevelsetDomain())
+        throw Exception("cut element boundary integrals not implemented for multi level sets");
       /*
       static Timer tir("symbolicBFI - CalcElementMatrix EB - intrules", 2);
       static Timer td("symbolicBFI - CalcElementMatrix EB - dmats", 2);
@@ -504,13 +479,13 @@ namespace ngfem
               const IntegrationPoint & facet_ip_r = transform( k, ipr);
               MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo);
               MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo);
-              double lset_l = gf_lset->Evaluate(mipl); //TODO: Not sure why that is seemingly better than cf_lset....
-              double lset_r = gf_lset->Evaluate(mipr);
+              double lset_l = lsetintdom->GetLevelsetGF()->Evaluate(mipl); //TODO: Not sure why that is seemingly better than cf_lset....
+              double lset_r = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
 
-              if ((lset_l > 0 && lset_r > 0) && dt != POS) continue;
-              if ((lset_l < 0 && lset_r < 0) && dt != NEG) continue;
+              if ((lset_l > 0 && lset_r > 0) && lsetintdom->GetDomainType() != POS) continue;
+              if ((lset_l < 0 && lset_r < 0) && lsetintdom->GetDomainType() != NEG) continue;
 
-              ir_facet_tmp = StraightCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, dt, order_sum, FIND_OPTIMAL, lh);
+              ir_facet_tmp = StraightCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, lsetintdom->GetDomainType(), order_sum, FIND_OPTIMAL, lh);
           }
           else if((etfacet == ET_TRIG) || (etfacet == ET_QUAD)){
               int nverts = ElementTopology::GetNVertices(etfacet);
@@ -530,15 +505,15 @@ namespace ngfem
                 MappedIntegrationPoint<3,3> & mip = *(new (lh) MappedIntegrationPoint<3,3>(ip_in_tet,trafo));
 
                 //cout << "mip : " << mip.GetPoint() << endl;
-                lset[i] = gf_lset->Evaluate(mip);
+                lset[i] = lsetintdom->GetLevelsetGF()->Evaluate(mip);
                 //cout << "lset[i] : " << lset[i] << endl;
                 haspos = lset[i] > 0 ? true : haspos;
                 hasneg = lset[i] < 0 ? true : hasneg;
               }
 
               //if (!hasneg || !haspos) continue;
-              if(dt != POS && !hasneg) continue;
-              if(dt != NEG && !haspos) continue;
+              if(lsetintdom->GetDomainType() != POS && !hasneg) continue;
+              if(lsetintdom->GetDomainType() != NEG && !haspos) continue;
               FlatVector<double> lset_fv(nverts, lh);
               for(int i=0; i<nverts; i++){
                   lset_fv[i] = lset[i];
@@ -546,7 +521,7 @@ namespace ngfem
               }
 
               LevelsetWrapper lsw(lset, etfacet);
-              ir_facet_tmp = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, dt, order_sum, FIND_OPTIMAL, lh);
+              ir_facet_tmp = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), order_sum, FIND_OPTIMAL, lh);
               //cout << "ir_facet_tmp: " << *ir_facet_tmp << endl;
               Vec<3> tetdiffvec2(0.);
 
@@ -601,7 +576,7 @@ namespace ngfem
                       ud.test_comp = l;
 
                       cf->Evaluate (mir, val);
-                      if(dt != IF){
+                      if(lsetintdom->GetDomainType() != IF){
                         for (int i = 0; i < mir.Size(); i++)
                           val(i) *= ir_facet[i].Weight() * mir[i].GetMeasure();
                       }
@@ -680,15 +655,11 @@ namespace ngfem
 
 
   SymbolicCutFacetBilinearFormIntegrator ::
-  SymbolicCutFacetBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
-                                          shared_ptr<CoefficientFunction> acf,
-                                          DOMAIN_TYPE adt,
-                                          int aforce_intorder,
-                                          int asubdivlvl)
-    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false),
-      cf_lset(acf_lset), dt(adt),
-      force_intorder(aforce_intorder), subdivlvl(asubdivlvl)
+  SymbolicCutFacetBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
+                                          shared_ptr<CoefficientFunction> acf)
+    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
+    lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
     simd_evaluate=false;
   }
 
@@ -703,6 +674,10 @@ namespace ngfem
     static Timer t_all("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix", 2);
     RegionTimer reg(t_all);
     elmat = 0.0;
+
+    if (lsetintdom->IsMultiLevelsetDomain())
+      throw Exception("cut element boundary integrals not implemented for multi level sets");
+
     
     if (LocalFacetNr2==-1) throw Exception ("SymbolicFacetBFI: LocalFacetNr2==-1");
 
@@ -715,14 +690,14 @@ namespace ngfem
     Facet2ElementTrafo transform1(eltype1, ElVertices1); 
 
     if (etfacet != ET_SEGM){
-        if(dt != IF) throw Exception("cut facet bilinear form can only do volume ints on ET_SEGM");
+        if(lsetintdom->GetDomainType() != IF) throw Exception("cut facet bilinear form can only do volume ints on ET_SEGM");
         if (etfacet != ET_TRIG && etfacet != ET_QUAD) throw Exception("cut facet bilinear form can do IF ints only on ET_SEGM, ET_TRIG and ET_QUAD");
     }
 
     IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
 
-    if (etfacet != ET_SEGM && dt == IF) // Codim 2 special case (3D -> 1D)
+    if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
       static Timer t("symbolicCutBFI - CoDim2-hack", 2);
       RegionTimer reg(t);
@@ -752,7 +727,7 @@ namespace ngfem
         MappedIntegrationPoint<3,3> & mip = *(new (lh) MappedIntegrationPoint<3,3>(ip_in_tet,trafo1));
         //cout << "mip : " << mip.GetPoint() << endl;
 
-        lset[i] = cf_lset->Evaluate(mip);
+        lset[i] = lsetintdom->GetLevelsetGF()->Evaluate(mip);
         //cout << "lset[i] : " << lset[i] << endl;
         haspos = lset[i] > 0 ? true : haspos;
         hasneg = lset[i] < 0 ? true : hasneg;
@@ -767,7 +742,7 @@ namespace ngfem
         }
 
       LevelsetWrapper lsw(lset, etfacet);
-      ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, dt, 2*maxorder, FIND_OPTIMAL, lh);
+      ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
       //cout << "ir_scr: " << *ir_scr << endl;
       Vec<3> tetdiffvec2(0.);
 
@@ -796,14 +771,14 @@ namespace ngfem
       const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
       MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
       MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
-      double lset_l = cf_lset->Evaluate(mipl);
-      double lset_r = cf_lset->Evaluate(mipr);
+      double lset_l = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
+      double lset_r = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
 
       
-      if ((lset_l > 0 && lset_r > 0) && dt != POS) return;
-      if ((lset_l < 0 && lset_r < 0) && dt != NEG) return;
+      if ((lset_l > 0 && lset_r > 0) && lsetintdom->GetDomainType() != POS) return;
+      if ((lset_l < 0 && lset_r < 0) && lsetintdom->GetDomainType() != NEG) return;
 
-      ir_scr = StraightCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, dt, 2*maxorder, FIND_OPTIMAL, lh);
+      ir_scr = StraightCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
       if (ir_scr == nullptr) return;
     }
 
@@ -886,7 +861,7 @@ namespace ngfem
                 cf -> Evaluate (mir1, val);
                 proxyvalues(STAR,l,k) = val.Col(0);
               }
-          if (dt == IF) // either 2D->0D (no need for weight correction) or 3D->1D ( weights are already corrected)
+          if (lsetintdom->GetDomainType() == IF) // either 2D->0D (no need for weight correction) or 3D->1D ( weights are already corrected)
               for (int i = 0; i < mir1.Size(); i++){
                     //proxyvalues(i,STAR,STAR) *= measure(i) * (*ir_scr)[i].Weight();
                     //proxyvalues(i,STAR,STAR) *= (*ir_facet)[i].Weight();
@@ -1427,4 +1402,225 @@ namespace ngfem
         }
   }
 
+
+
+  void SymbolicCutBilinearFormIntegrator ::
+  ApplyElementMatrix (const FiniteElement & fel, 
+                      const ElementTransformation & trafo, 
+                      const FlatVector<double> elx, 
+                      FlatVector<double> ely,
+                      void * precomputed,
+                      LocalHeap & lh) const
+  {
+    // THIS IS UGLY CODE DUPLICATION FROM SYMBOLICCUTBFI::T_CalcElementMatrixAdd
+    // and SymbolicBilinearFormIntegrator::ApplyElementMatrix (no simd)
+    // no simd
+
+    if (element_vb != VOL)
+        throw Exception ("Apply for EB not yet implemented");
+    
+    static bool warned = false;
+    if (!warned)
+    {
+      cout<<IM(3)<<"WARNING: The implementation of ApplyElementMatrix for cut elements is experimental.\n"<<endl;
+      warned = true;
+    }
+    
+    HeapReset hr(lh);
+    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+
+    int trial_difforder = 99, test_difforder = 99;
+    for (auto proxy : trial_proxies)
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
+    for (auto proxy : test_proxies)
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+
+    int intorder = fel_trial.Order()+fel_test.Order();
+
+    auto et = trafo.GetElementType();
+    if (et == ET_TRIG || et == ET_TET)
+      intorder -= test_difforder+trial_difforder;
+
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
+
+    if (force_intorder >= 0)
+      intorder = force_intorder;
+    
+
+    const IntegrationRule * ir;
+    Array<double> wei_arr;
+    tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    ely = 0;
+    if (ir == nullptr)
+      return;
+    
+    ProxyUserData ud(trial_proxies.Size(), lh);    
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
+    
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+
+    for (ProxyFunction * proxy : trial_proxies)
+      ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
+
+    for (ProxyFunction * proxy : trial_proxies)
+      proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
+    
+    // FlatVector<> ely1(ely.Size(), lh);
+    FlatVector ely1(ely.Size(), lh);   // can we really skip the <>  ???
+
+    FlatMatrix<> val(mir.Size(), 1,lh);
+    for (auto proxy : test_proxies)
+    {
+      HeapReset hr(lh);
+      FlatMatrix<> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+      for (int k = 0; k < proxy->Dimension(); k++)
+      {
+        ud.testfunction = proxy;
+        ud.test_comp = k;
+        cf -> Evaluate (mir, val);
+        proxyvalues.Col(k) = val.Col(0);
+      }
+        
+      for (int i = 0; i < mir.Size(); i++)
+        proxyvalues.Row(i) *= mir[i].GetWeight();
+
+      proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
+      ely += ely1;
+    }
+    
+  }
+
+
+
+  void SymbolicCutBilinearFormIntegrator ::
+  CalcLinearizedElementMatrix (const FiniteElement & fel,
+                               const ElementTransformation & trafo, 
+                               FlatVector<double> elveclin,
+                               FlatMatrix<double> elmat,
+                               LocalHeap & lh) const
+  {
+
+    if (element_vb != VOL)
+        throw Exception ("Apply for EB not yet implemented");
+
+    static bool warned = false;
+    if (!warned)
+    {
+      cout<<IM(3)<<"WARNING: The implementation of CalcLinearizedElementMatrix for cut elements is experimental.\n"<<endl;
+      warned = true;
+    }
+
+    static Timer t("symboliccutbfi - calclinearized", 2);
+    size_t tid = TaskManager::GetThreadId();
+    ThreadRegionTimer reg(t, tid);
+    
+    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+
+    int trial_difforder = 99, test_difforder = 99;
+    for (auto proxy : trial_proxies)
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
+    for (auto proxy : test_proxies)
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+
+    int intorder = fel_trial.Order()+fel_test.Order();
+
+    auto et = trafo.GetElementType();
+    if (et == ET_TRIG || et == ET_TET)
+      intorder -= test_difforder+trial_difforder;
+
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
+
+    if (force_intorder >= 0)
+      intorder = force_intorder;
+
+    const IntegrationRule * ir;
+    Array<double> wei_arr;
+    tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    elmat = 0;
+    if (ir == nullptr)
+      return;
+    
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+
+    ProxyUserData ud(trial_proxies.Size(), lh);
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
+    // ud.elx = &elveclin;
+    // ud.lh = &lh;
+    for (ProxyFunction * proxy : trial_proxies)
+    {
+      ud.AssignMemory (proxy, ir->Size(), proxy->Dimension(), lh);
+      proxy->Evaluator()->Apply(fel_trial, mir, elveclin, ud.GetMemory(proxy), lh);
+    }
+    
+    FlatMatrix<> val(mir.Size(), 1, lh), deriv(mir.Size(), 1, lh);
+    FlatMatrix<AutoDiff<1>> dval(mir.Size(), 1, lh);
+    
+    for (int k1 : Range(trial_proxies))
+      for (int l1 : Range(test_proxies))
+      {
+        HeapReset hr(lh);
+        auto proxy1 = trial_proxies[k1];
+        auto proxy2 = test_proxies[l1];
+
+        FlatTensor<3> proxyvalues(lh, mir.Size(), proxy2->Dimension(), proxy1->Dimension());
+          
+        for (int k = 0; k < proxy1->Dimension(); k++)
+          for (int l = 0; l < proxy2->Dimension(); l++)
+            // if (nonzeros(test_cum[l1]+l, trial_cum[k1]+k)) // does no work for non-linear 
+            if (true)
+            {
+              ud.trialfunction = proxy1;
+              ud.trial_comp = k;
+              ud.testfunction = proxy2;
+              ud.test_comp = l;
+                  
+              // cf -> EvaluateDeriv (mir, val, deriv);
+              // proxyvalues(STAR,l,k) = deriv.Col(0);
+              cf -> Evaluate (mir, dval);
+              for (size_t i = 0; i < mir.Size(); i++)
+                proxyvalues(i,l,k) = dval(i,0).DValue(0);
+            }
+            else
+              proxyvalues(STAR,l,k) = 0;
+
+        for (int i = 0; i < mir.Size(); i++)
+          proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+
+        FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
+        FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);
+
+        constexpr size_t BS = 16;
+        for (size_t i = 0; i < mir.Size(); i+=BS)
+        {
+          int rest = min2(size_t(BS), mir.Size()-i);
+          HeapReset hr(lh);
+          FlatMatrix<double,ColMajor> bdbmat1(rest*proxy2->Dimension(), elmat.Width(), lh);
+          FlatMatrix<double,ColMajor> bbmat2(rest*proxy2->Dimension(), elmat.Height(), lh);
+
+          for (int j = 0; j < rest; j++)
+          {
+            int ii = i+j;
+            IntRange r2 = proxy2->Dimension() * IntRange(j,j+1);
+            proxy1->Evaluator()->CalcMatrix(fel_trial, mir[ii], bmat1, lh);
+            proxy2->Evaluator()->CalcMatrix(fel_test, mir[ii], bmat2, lh);
+            bdbmat1.Rows(r2) = proxyvalues(ii,STAR,STAR) * bmat1;
+            bbmat2.Rows(r2) = bmat2;
+          }
+
+          IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
+          IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
+          elmat.Rows(r2).Cols(r1) += Trans (bbmat2.Cols(r2)) * bdbmat1.Cols(r1) | Lapack;
+        }
+      }
+  }
+
+  
 }

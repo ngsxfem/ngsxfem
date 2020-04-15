@@ -660,6 +660,132 @@ namespace xintegration
     return ir;
   }
 
+  const IntegrationRule * StraightCutsIntegrationRule(const FlatMatrix<> & cf_lsets_at_element,
+                                                     const ElementTransformation & trafo,
+                                                     const Array<DOMAIN_TYPE> & dts,
+                                                     int intorder,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
+                                                     LocalHeap & lh,
+                                                     bool spacetime_mode,
+                                                     double tval)
+  {
+
+    int DIM = trafo.SpaceDim();
+
+    auto et = trafo.GetElementType();
+    int M = cf_lsets_at_element.Width();
+
+    if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM)){
+      cout << "Element Type: " << et << endl;
+      throw Exception("only trigs, tets for now");
+    }
+
+    IntegrationRule quad_untrafo;
+
+    //This is how to create all the Lset Wrappers ... Collecting them in vector<> or Array<> does not work as there is no empty constructor...
+    //Let's see later how we actually will exploit those wrappers...
+
+    auto getLseti_onrefgeom = [&cf_lsets_at_element, &et](int i) {
+        vector<double> lset_vals(cf_lsets_at_element.Height());
+        for(int ii=0; ii<lset_vals.size(); ii++)
+            lset_vals[ii] = cf_lsets_at_element(ii, i);
+        LevelsetWrapper lset(lset_vals, et);
+        return lset;
+    };
+
+    const IntegrationRule* ir = nullptr;
+
+    // outer level
+    LevelsetCutSimplex s(getLseti_onrefgeom(0), dts[0], SimpleX(et));
+    s.Decompose();
+    Array<SimpleX> simplices_at_last_level(s.SimplexDecomposition);
+
+    for (int i = 1; i < M; i++) // all levelset decompositions after the first
+    {
+      auto lset_on_refgeom = getLseti_onrefgeom(i);
+      Array<SimpleX> simplices_at_current_level(0);
+      for (auto s : simplices_at_last_level)
+      {
+        auto lset_on_s = lset_on_refgeom; lset_on_s.update_initial_coefs(s.points);
+        auto dt_of_s = CheckIfStraightCut(lset_on_s.initial_coefs);
+        if (dt_of_s == IF){
+            LevelsetCutSimplex sub_s(lset_on_s, dts[i], s);
+            sub_s.Decompose();
+            // put sub_s.SimplexDecomposition members to simplices_at_current_level
+            simplices_at_current_level.Append(sub_s.SimplexDecomposition);
+        }
+        else if(dt_of_s == dts[i])
+            simplices_at_current_level.Append(s);
+      }
+      simplices_at_last_level = simplices_at_current_level;
+    }
+
+    auto myir_untrafo = new (lh) IntegrationRule(0, lh);
+    for(auto final_sub_s : simplices_at_last_level)
+        final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
+
+    vector<int> dt_is_if_indices;
+    for(int i=0; i<M; i++) if ( dts[i] == IF) dt_is_if_indices.push_back(i);
+
+    if(myir_untrafo->Size() == 0) return nullptr;
+
+    if(dt_is_if_indices.size() == 0) //Plain volume case; simple
+        ir = myir_untrafo;
+    else if(dt_is_if_indices.size() == 1){
+        //Do the rescaling according to the one lset function
+        auto lset = getLseti_onrefgeom( dt_is_if_indices[0] );
+
+        auto myir = new (lh) IntegrationRule(myir_untrafo->Size(), lh);
+        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        else TransformQuadUntrafoToIRInterface<3>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        ir = myir;
+    }
+    else if(dt_is_if_indices.size() == 2) {
+        // Codim 2 for 2D and 3D
+        if(DIM != 2 && DIM != 3) throw Exception("Codim 2 only in 2D and 3D yet!");
+
+        if (DIM == 2){
+            for(int i=0; i < myir_untrafo->Size(); i++){
+                MappedIntegrationPoint<2,2> mip( (*myir_untrafo)[i],trafo);
+                (*myir_untrafo)[i].SetWeight( (*myir_untrafo)[i].Weight() / mip.GetMeasure());
+            }
+        }
+        if(DIM == 3){
+            auto lset0 = getLseti_onrefgeom( dt_is_if_indices[0] );
+            auto lset1 = getLseti_onrefgeom( dt_is_if_indices[1] );
+
+            auto norm0 = lset0.GetNormal( (*myir_untrafo)[0].Point());
+            auto norm1 = lset1.GetNormal( (*myir_untrafo)[0].Point());
+            double cp_fac = 1./ L2Norm(Cross(norm0, norm1));
+
+            for(int i=0; i < myir_untrafo->Size(); i++){
+                auto old_weight = (*myir_untrafo)[i].Weight();
+                MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
+
+                Mat<3,3> F = mip.GetJacobian();
+                Vec<3> normal = cp_fac* F * Cross(norm0, norm1);
+
+                (*myir_untrafo)[i].SetWeight(old_weight*L2Norm(normal) / mip.GetMeasure());
+            }
+        }
+        ir = myir_untrafo;
+    }
+    else if(dt_is_if_indices.size() == 3){
+        // Codim 3 for 3D
+        if(DIM != 3) throw Exception("Codim 3 only in 3D!");
+
+        for(int i=0; i < myir_untrafo->Size(); i++){
+            MappedIntegrationPoint<3,3> mip( (*myir_untrafo)[i],trafo);
+            (*myir_untrafo)[i].SetWeight( (*myir_untrafo)[i].Weight() / mip.GetMeasure());
+        }
+        ir = myir_untrafo;
+    }
+    else throw Exception("Codim possibilities available: 2D: 0,1,2; 3D: 0,1,2,3");
+
+    return ir;
+  }
+
   const IntegrationRule * StraightCutIntegrationRuleUntransformed(const FlatVector<> & cf_lset_at_element,
                                                        ELEMENT_TYPE et,
                                                        DOMAIN_TYPE dt,
