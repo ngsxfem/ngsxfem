@@ -1446,23 +1446,25 @@ namespace ngfem
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
 
-    if (force_intorder >= 0)
-      intorder = force_intorder;
-    
 
+
+    LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(intorder);
+    
     const IntegrationRule * ir;
     Array<double> wei_arr;
-    tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
     ely = 0;
     if (ir == nullptr)
       return;
+    ///
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
     
-    ProxyUserData ud(trial_proxies.Size(), lh);    
+    ProxyUserData ud(trial_proxies.Size(),lh);
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
     ud.fel = &fel;
     
-    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
-
     for (ProxyFunction * proxy : trial_proxies)
       ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
 
@@ -1537,19 +1539,21 @@ namespace ngfem
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
       throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
 
-    if (force_intorder >= 0)
-      intorder = force_intorder;
 
+    LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(intorder);
+    
     const IntegrationRule * ir;
     Array<double> wei_arr;
-    tie (ir, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, trafo, dt, intorder, time_order, lh, subdivlvl, pol);
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
     elmat = 0;
     if (ir == nullptr)
       return;
-    
+    ///
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
-
-    ProxyUserData ud(trial_proxies.Size(), lh);
+    
+    ProxyUserData ud(trial_proxies.Size(),lh);
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
     ud.fel = &fel;
     // ud.elx = &elveclin;
