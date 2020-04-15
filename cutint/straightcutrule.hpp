@@ -111,7 +111,7 @@ namespace xintegration
       SimpleX s;
 
       LevelsetCutSimplex(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, SimpleX a_s) : LevelsetCutPolytopE(a_lset, a_dt), s(a_s) { ;}
-  private:
+  //private:
       void Decompose();
       Array<SimpleX> SimplexDecomposition; //TODO: Cf. line 117
   };
@@ -149,6 +149,15 @@ namespace xintegration
   const IntegrationRule * StraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
                                                      const ElementTransformation & trafo,
                                                      DOMAIN_TYPE dt,
+                                                     int intorder,
+                                                     SWAP_DIMENSIONS_POLICY quad_dir_policy,
+                                                     LocalHeap & lh,
+                                                     bool spacetime_mode = false,
+                                                     double tval = 0.);
+
+  const IntegrationRule * StraightCutsIntegrationRule(const FlatMatrix<> & cf_lsets_at_element,
+                                                     const ElementTransformation & trafo,
+                                                     const Array<DOMAIN_TYPE> & dt,
                                                      int intorder,
                                                      SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                      LocalHeap & lh,

@@ -3,6 +3,7 @@
 
 // #include "../spacetime/spacetimefe.hpp"   // for ScalarSpaceTimeFiniteElement
 #include "xdecompose.hpp"
+#include "lsetintdomain.hpp"
 
 #include <set>
 #include <vector>
@@ -11,6 +12,12 @@ using namespace ngfem;
 using ngfem::ELEMENT_TYPE;
 namespace xintegration
 {
+
+  tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
+                                                                         const ElementTransformation & trafo,
+                                                                         LocalHeap & lh);
+
+  /// OLD STYLE (to be removed on the long run, hopefully)
   /// struct which defines the relation a < b for Point4DCL 
   tuple<const IntegrationRule *, Array<double> > CreateCutIntegrationRule(shared_ptr<CoefficientFunction> cflset,
                                                    shared_ptr<GridFunction> gflset,
@@ -22,7 +29,6 @@ namespace xintegration
                                                    int subdivlvl = 0,
                                                    SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL);
 
-  std::tuple<shared_ptr<CoefficientFunction>,shared_ptr<GridFunction>> CF2GFForStraightCutRule(shared_ptr<CoefficientFunction> cflset, int subdivlvl = 0);
   
   /// (in order to use std::set-features)
   template< int SD>

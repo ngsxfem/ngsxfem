@@ -19,6 +19,7 @@ void ExportNgsx_xfem(py::module &m)
   typedef GridFunction GF;
   typedef shared_ptr<GF> PyGF;
   typedef shared_ptr<CutInformation> PyCI;
+  typedef shared_ptr<MultiLevelsetCutInformation> PyMLCI;
   typedef shared_ptr<BitArray> PyBA;
   
   
@@ -325,6 +326,150 @@ heapsize : int
     );
 
 
+
+  py::class_<MultiLevelsetCutInformation, shared_ptr<MultiLevelsetCutInformation>>
+    (m, "MultiLevelsetCutInfo",R"raw(
+A minimal version of a CutInfo that allows for several levelsets and a list of list of domain_types.
+)raw")
+    .def("__init__",  [] (MultiLevelsetCutInformation *instance,
+                          shared_ptr<MeshAccess> ma,
+                          py::object lsets_in)
+         {
+           py::extract<py::list> lsets_(lsets_in);
+           if (!lsets_.check())
+             throw Exception("levelset not compatible.");
+           auto lsets = lsets_();
+           for (int i = 0; i < py::len(lsets); i++)
+             if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
+               throw Exception("all lsets need to be GridFunctions!");
+           Array<shared_ptr<GridFunction>> lset_a = makeCArray<shared_ptr<GridFunction>> (lsets);
+           new (instance) MultiLevelsetCutInformation (ma, lset_a);
+         },
+         py::arg("mesh"),
+         py::arg("levelset"),
+         docu_string(R"raw_string(
+Creates a MultiLevelsetCutInfo based on a mesh.
+
+Parameters
+
+mesh : Mesh
+)raw_string")
+      )
+    .def("Mesh", [](MultiLevelsetCutInformation & self)
+         {
+           return self.GetMesh();
+         },docu_string(R"raw_string(
+Returns mesh of CutInfo)raw_string")
+      )
+    .def("GetElementsOfType", [](MultiLevelsetCutInformation & self,
+                                 py::object dt_in,
+                                 VorB vb,
+                                 int heapsize)
+         {
+
+           LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+
+           if (py::isinstance<py::tuple>(dt_in))
+           {
+             Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
+             Array<Array<DOMAIN_TYPE>> dts(1);
+             dts[0] = dts_;
+             return self.GetElementsOfDomainType(dts, vb, lh);
+           }           
+
+           py::list dts_list;
+           if (py::hasattr(dt_in, "as_list") && py::isinstance<py::list>(dt_in.attr("as_list")))
+             dts_list = dt_in.attr("as_list");      
+           else if (py::isinstance<py::list>(dt_in))
+             dts_list = dt_in;
+           else
+             throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
+
+           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
+           int common_length = -1; //not a list
+           for (int i = 0; i < py::len(dts_list); i++)
+           {
+             auto dta(dts_list[i]);
+
+             // Check that input is valid
+             if (!py::isinstance<py::tuple>(dta))
+               throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
+             else
+             {
+               if ((i>0) && (common_length != py::len(dta)))
+                 throw Exception("domain_type arrays have different length");
+               else
+                 common_length = py::len(dta);
+             }
+
+             // Valid input. Add domain to pass to self.GetElementsOfDomainType
+             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
+           }
+           
+           return self.GetElementsOfDomainType(cdts_aa, vb, lh);
+         },
+         py::arg("domain_type"),
+         py::arg("VOL_or_BND") = VOL,
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Returns BitArray that is true for every element that has the 
+corresponding domain type.)raw_string")
+      )
+    .def("GetElementsWithContribution", [](MultiLevelsetCutInformation & self,
+                                           py::object dt_in,
+                                           VorB vb,
+                                           int heapsize)
+         {
+
+           LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+
+           if (py::isinstance<py::tuple>(dt_in))
+           {
+             Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
+             Array<Array<DOMAIN_TYPE>> dts(1);
+             dts[0] = dts_;
+             return self.GetElementsWithContribution(dts, vb, lh);
+           }
+
+           py::list dts_list;
+           if (py::hasattr(dt_in, "as_list") && py::isinstance<py::list>(dt_in.attr("as_list")))
+             dts_list = dt_in.attr("as_list");      
+           else if (py::isinstance<py::list>(dt_in))
+             dts_list = dt_in;
+           else
+             throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
+
+           Array<Array<DOMAIN_TYPE>> cdts_aa(py::len(dts_list));
+           int common_length = -1; //not a list
+           for (int i = 0; i < py::len(dts_list); i++)
+           {
+             auto dta(dts_list[i]);
+
+             // Check valid input
+             if (!py::isinstance<py::tuple>(dta))
+               throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
+             else
+             {
+               if ((i>0) && (common_length != py::len(dta)))
+                 throw Exception("domain_type arrays have different length");
+               else
+                 common_length = py::len(dta);
+             }
+
+             // Valid input: Add domain to pass to self.GetElementsWithContribution
+             cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
+           }
+           
+           return self.GetElementsWithContribution(cdts_aa, vb, lh);
+         },
+         py::arg("domain_type"),
+         py::arg("VOL_or_BND") = VOL,
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Returns BitArray that is true for every element that has the 
+a contribution to the corresponding level set domain.)raw_string")
+      )
+    ;
+
+
 //   .def("__init__",  [] (XFESpace *instance,
   m.def("XFESpace", [] (
           PyFES basefes,
@@ -454,12 +599,7 @@ elnr : int
   typedef shared_ptr<BilinearFormIntegrator> PyBFI;
   typedef shared_ptr<LinearFormIntegrator> PyLFI;
 
-  m.def("SymbolicCutBFI", [](PyCF lset,
-                             DOMAIN_TYPE dt,
-                             int order,
-                             int time_order,
-                             int subdivlvl,
-                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
+  m.def("SymbolicCutBFI", [](py::dict lsetdom,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -489,20 +629,19 @@ elnr : int
           if (element_boundary) element_vb = BND;
           else element_vb = VOL;
 
+          shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           shared_ptr<BilinearFormIntegrator> bfi;
           if (!has_other && !skeleton)
           {
-            auto bfime = make_shared<SymbolicCutBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl,quad_dir_pol,vb,element_vb);
-            bfime->SetTimeIntegrationOrder(time_order);
-            bfi = bfime;
+            bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, vb, element_vb);
           }
           else
           {
-            if (time_order >= 0)
+            if (lsetintdom->GetTimeIntegrationOrder() >= 0)
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
             if (vb == BND)
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-            bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (lset, cf, dt, order, subdivlvl);
+            bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
           }
           if (py::extract<py::list> (definedon).check())
             bfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -521,12 +660,7 @@ elnr : int
 
           return PyBFI(bfi);
         },
-        py::arg("lset"),
-        py::arg("domain_type")=NEG,
-        py::arg("force_intorder")=-1,
-        py::arg("time_order")=-1,
-        py::arg("subdivlvl")=0,
-        py::arg("quad_dir_policy")=FIND_OPTIMAL,
+        py::arg("levelset_domain"),
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
@@ -612,12 +746,8 @@ time_order : int
 )raw_string")
     );
 
-  m.def("SymbolicCutLFI", [](PyCF lset,
-                             DOMAIN_TYPE dt,
-                             int order,
-                             int time_order,
-                             int subdivlvl,
-                             SWAP_DIMENSIONS_POLICY quad_dir_pol,
+  
+  m.def("SymbolicCutLFI", [](py::dict lsetdom,
                              PyCF cf,
                              VorB vb,
                              bool element_boundary,
@@ -638,9 +768,8 @@ time_order : int
           if (element_boundary || skeleton)
             throw Exception("No Facet LFI with Symbolic cuts..");
 
-          auto lfime  = make_shared<SymbolicCutLinearFormIntegrator> (lset, cf, dt, order, subdivlvl, quad_dir_pol,vb);
-          lfime->SetTimeIntegrationOrder(time_order);
-          shared_ptr<LinearFormIntegrator> lfi = lfime;
+          shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
+          auto lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, vb);
 
           if (py::extract<py::list> (definedon).check())
             lfi -> SetDefinedOn (makeCArray<int> (definedon));
@@ -659,12 +788,7 @@ time_order : int
 
           return PyLFI(lfi);
         },
-        py::arg("lset"),
-        py::arg("domain_type")=NEG,
-        py::arg("force_intorder")=-1,
-        py::arg("time_order")=-1,
-        py::arg("subdivlvl")=0,
-        py::arg("quad_dir_policy")=FIND_OPTIMAL,
+        py::arg("levelset_domain"),
         py::arg("form"),
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),

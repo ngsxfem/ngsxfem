@@ -116,19 +116,25 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": ngsolve.CoefficientFunction
-    CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-    FESpace with scalar continuous piecewise (multi-) linear basis functions.
-  * "domain_type" : {NEG,POS,IF} (ENUM)
-    Integration on the domain where either:
-    * the level set function is negative (NEG)
-    * the level set function is positive (POS)
-    * the level set function is zero     (IF )
+  * "levelset": 
+    singe level set : ngsolve.CoefficientFunction
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+    multiple level sets: tuple(ngsolve.GridFunction)
+      Tuple of GridFunctions that describe the geometry.
+  * "domain_type" :
+    single level set: {NEG,POS,IF} (ENUM) 
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
+      Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
-  * "force_intorder" : int
+  * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
@@ -162,28 +168,28 @@ Other Parameters :
   deformation : GridFunction
     Specify a specific mesh deformation for a bilinear form
 
+  order : int
+    Modifies the order of the quadrature rule used. This is overruled by "order"-entry of the 
+    levelset_domain dictionary, if the dictionary entry exists.
+
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
     rule will be applied. This is only relevant for space-time discretizations.
 """
     if levelset_domain != None and type(levelset_domain)==dict:
-        if not "force_intorder" in levelset_domain:
-            levelset_domain["force_intorder"] = -1
-        if not "subdivlvl" in levelset_domain:
-            levelset_domain["subdivlvl"] = 0
-        if not "levelset" in levelset_domain:
-            print("Please provide a level set function")
-        if not "domain_type" in levelset_domain:
-            print("Please provide a domain type (NEG,POS or IF)")
-        if not "quad_dir_policy" in levelset_domain:
-            levelset_domain["quad_dir_policy"] = OPTIMAL
+        # shallow copy is sufficient to modify "order" and "time_order" locally
+        levelset_domain_local = levelset_domain.copy()
+        if "order" in kwargs:
+            if not "order" in levelset_domain_local:
+                levelset_domain_local["order"] = kwargs["order"]
+            del kwargs["order"]
+        if "time_order" in kwargs:
+            if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
+                levelset_domain_local["time_order"] = kwargs["time_order"]
+            del kwargs["time_order"]
+
         # print("SymbolicBFI-Wrapper: SymbolicCutBFI called")
-        return SymbolicCutBFI(lset=levelset_domain["levelset"],
-                              domain_type=levelset_domain["domain_type"],
-                              force_intorder=levelset_domain["force_intorder"],
-                              subdivlvl=levelset_domain["subdivlvl"],
-                              quad_dir_policy=levelset_domain["quad_dir_policy"],
-                              *args, **kwargs)
+        return SymbolicCutBFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
         if (levelset_domain == None):
@@ -203,19 +209,25 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": ngsolve.CoefficientFunction
-    CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-    FESpace with scalar continuous piecewise (multi-) linear basis functions.
-  * "domain_type" : {NEG,POS,IF} (ENUM)
-    Integration on the domain where either:
-    * the level set function is negative (NEG)
-    * the level set function is positive (POS)
-    * the level set function is zero     (IF )
+  * "levelset": 
+    singe level set : ngsolve.CoefficientFunction
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+    multiple level sets: tuple(ngsolve.GridFunction)
+      Tuple of GridFunctions that describe the geometry.
+  * "domain_type" :
+    single level set: {NEG,POS,IF} (ENUM) 
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
+      Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
-  * "force_intorder" : int
+  * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
@@ -249,30 +261,29 @@ Other Parameters :
   deformation : GridFunction
       Specify a specific mesh deformation for a linear form
 
+  order : int
+    Modifies the order of the quadrature rule used. This is overruled by "order"-entry of the 
+    levelset_domain dictionary, if the dictionary entry exists.
+
   time_order : int
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
-    rule will be applied. This is only relevant for space-time discretizations.
+    rule will be applied. This is only relevant for space-time discretizations. Note that
+    time_order can only be active if the key "time_order" of the levelset_domain is not set (or -1)
 """
     if levelset_domain != None and type(levelset_domain)==dict:
-        if not "force_intorder" in levelset_domain:
-            levelset_domain["force_intorder"] = -1
-        if not "subdivlvl" in levelset_domain:
-            levelset_domain["subdivlvl"] = 0
-        if not "levelset" in levelset_domain:
-            print("Please provide a level set function")
-        if not "domain_type" in levelset_domain:
-            print("Please provide a domain type (NEG,POS or IF)")
-        if not "quad_dir_policy" in levelset_domain:
-            levelset_domain["quad_dir_policy"] = OPTIMAL
-        # print("SymbolicLFI-Wrapper: SymbolicCutLFI called")
-        return SymbolicCutLFI(lset=levelset_domain["levelset"],
-                              domain_type=levelset_domain["domain_type"],
-                              force_intorder=levelset_domain["force_intorder"],
-                              subdivlvl=levelset_domain["subdivlvl"],
-                              quad_dir_policy=levelset_domain["quad_dir_policy"],
-                              *args, **kwargs)
+        # shallow copy is sufficient to modify "order" and "time_order" locally
+        levelset_domain_local = levelset_domain.copy()      
+        if "order" in kwargs:
+            if not "order" in levelset_domain_local:
+                levelset_domain_local["order"] = kwargs["order"]
+            del kwargs["order"]
+        if "time_order" in kwargs:
+            if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
+                levelset_domain_local["time_order"] = kwargs["time_order"]
+            del kwargs["time_order"]
+        
+        return SymbolicCutLFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
-        # print("SymbolicLFI-Wrapper: original SymbolicLFI called")
         if (levelset_domain == None):
             return SymbolicLFI_old(*args,**kwargs)
         else:
@@ -283,27 +294,13 @@ def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
     """
-    if not "force_intorder" in levelset_domain or levelset_domain["force_intorder"] == -1:
-        levelset_domain["force_intorder"] = -1
-    else:
-        order = levelset_domain["force_intorder"]
-
-    if not "subdivlvl" in levelset_domain:
-        levelset_domain["subdivlvl"] = 0
-    if not "levelset" in levelset_domain:
-        print("Please provide a level set function")
-    if not "domain_type" in levelset_domain:
-        print("Please provide a domain type (NEG,POS or IF)")
-    if not "quad_dir_policy" in levelset_domain:
-        levelset_domain["quad_dir_policy"] = OPTIMAL
-
-    return IntegrateX(lset=levelset_domain["levelset"],
+    levelset_domain_local = levelset_domain.copy() 
+    if not "order" in levelset_domain_local or levelset_domain_local["order"] == -1:
+        levelset_domain_local["order"] = order
+    if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
+        levelset_domain_local["time_order"] = time_order
+    return IntegrateX(levelset_domain = levelset_domain_local,
                       mesh=mesh, cf=cf,
-                      order=order,
-                      domain_type=levelset_domain["domain_type"],
-                      subdivlvl=levelset_domain["subdivlvl"],
-                      time_order=time_order,
-                      quad_dir_policy=levelset_domain["quad_dir_policy"],
                       heapsize=heapsize)
 
 
@@ -320,19 +317,25 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": ngsolve.CoefficientFunction
-    CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-    FESpace with scalar continuous piecewise (multi-) linear basis functions.
-  * "domain_type" : {NEG,POS,IF} (ENUM)
-    Integration on the domain where either:
-    * the level set function is negative (NEG)
-    * the level set function is positive (POS)
-    * the level set function is zero     (IF )
+  * "levelset": 
+    singe level set : ngsolve.CoefficientFunction
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+    multiple level sets: tuple(ngsolve.GridFunction)
+      Tuple of GridFunctions that describe the geometry.
+  * "domain_type" :
+    single level set: {NEG,POS,IF} (ENUM) 
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
+      Integration on the domains specified
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
-  * "force_intorder" : int
+  * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration (affects only spatial integration)
   * "time_order" : int 
@@ -350,7 +353,7 @@ cf : ngsolve.CoefficientFunction
   the integrand
 
 order : int (default = 5)
-  integration order. Can be overruled by "force_intorder"-entry of the levelset_domain dictionary.
+  integration order. Can be overruled by "order"-entry of the levelset_domain dictionary.
 
 time_order : int (default = -1)
   integration order in time (for space-time integration), default: -1 (no space-time integrals)

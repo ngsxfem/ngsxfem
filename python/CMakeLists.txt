@@ -1,10 +1,12 @@
 if(NETGEN_USE_PYTHON)
     add_ngsolve_python_module(ngsxfem_py 
       python_ngsxfem.cpp
+      ../cutint/lsetintdomain.cpp
       ../cutint/fieldeval.cpp
       ../cutint/spacetimecutrule.cpp
       ../cutint/straightcutrule.cpp
       ../cutint/xdecompose.cpp
+      ../cutint/mlsetintegration.cpp
       ../cutint/xintegration.cpp
       ../lsetcurving/calcgeomerrors.cpp
       ../lsetcurving/calcpointshift.cpp
@@ -41,7 +43,7 @@ if(NETGEN_USE_PYTHON)
 
 
     install (FILES
-        __init__.py cutmg.py
+        __init__.py cutmg.py mlset.py
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
     )
