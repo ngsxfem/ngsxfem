@@ -1,3 +1,4 @@
 .vscode/tasks.json
 vscode.code-workspace
 build
+.local
