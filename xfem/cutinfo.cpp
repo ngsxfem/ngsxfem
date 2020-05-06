@@ -237,8 +237,9 @@ namespace ngcomp
   }
 
   MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
-                                                            const Array<shared_ptr<GridFunction>> & lsets_in)
-    : ma(ama), lsets(lsets_in)
+                                                            const Array<shared_ptr<GridFunction>> & lsets_in,
+                                                            int len_in)
+    : ma(ama), lsets(lsets_in), len(len_in)
   {
     ;
   }

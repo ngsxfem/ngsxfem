@@ -343,7 +343,7 @@ A minimal version of a CutInfo that allows for several levelsets and a list of l
              if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
                throw Exception("all lsets need to be GridFunctions!");
            Array<shared_ptr<GridFunction>> lset_a = makeCArray<shared_ptr<GridFunction>> (lsets);
-           new (instance) MultiLevelsetCutInformation (ma, lset_a);
+           new (instance) MultiLevelsetCutInformation (ma, lset_a, py::len(lsets));
          },
          py::arg("mesh"),
          py::arg("levelset"),
@@ -371,6 +371,8 @@ Returns mesh of CutInfo)raw_string")
 
            if (py::isinstance<py::tuple>(dt_in))
            {
+             if (py::len(dt_in) != self.GetLen())
+               throw Exception("Number of domains does not match number of levelsets");
              Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
              Array<Array<DOMAIN_TYPE>> dts(1);
              dts[0] = dts_;
@@ -405,6 +407,8 @@ Returns mesh of CutInfo)raw_string")
              // Valid input. Add domain to pass to self.GetElementsOfDomainType
              cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
+           if (common_length != self.GetLen())
+             throw Exception("Number of domains does not match number of levelsets");
            
            return self.GetElementsOfDomainType(cdts_aa, vb, lh);
          },
@@ -424,6 +428,8 @@ corresponding domain type.)raw_string")
 
            if (py::isinstance<py::tuple>(dt_in))
            {
+             if (py::len(dt_in) != self.GetLen())
+               throw Exception("Number of domains does not match number of levelsets");
              Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
              Array<Array<DOMAIN_TYPE>> dts(1);
              dts[0] = dts_;
@@ -458,6 +464,9 @@ corresponding domain type.)raw_string")
              // Valid input: Add domain to pass to self.GetElementsWithContribution
              cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
+           cout << common_length << "  " << self.GetLen() << endl;
+           if (common_length != self.GetLen())
+             throw Exception("Number of domains does not match number of levelsets");
            
            return self.GetElementsWithContribution(cdts_aa, vb, lh);
          },
