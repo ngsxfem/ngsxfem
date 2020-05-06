@@ -468,7 +468,6 @@ corresponding domain type.)raw_string")
              // Valid input: Add domain to pass to self.GetElementsWithContribution
              cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
-           cout << common_length << "  " << self.GetLen() << endl;
            if (common_length != self.GetLen())
              throw Exception("Number of domains does not match number of levelsets");
            
