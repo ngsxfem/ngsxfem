@@ -64,10 +64,7 @@ namespace ngfem
                                  const ElementTransformation & trafo, 
 				 FlatVector<double> elveclin,
                                  FlatMatrix<double> elmat,
-                                 LocalHeap & lh) const
-    {
-      throw Exception("SymbolicCutBilinearFormIntegrator::CalcLinearizedElementMatrix not yet implemented");
-    }
+                                 LocalHeap & lh) const;
 
     template <int D, typename SCAL, typename SCAL_SHAPES>
     void T_CalcLinearizedElementMatrixEB (const FiniteElement & fel,
@@ -85,10 +82,7 @@ namespace ngfem
 			const FlatVector<double> elx, 
 			FlatVector<double> ely,
 			void * precomputed,
-			LocalHeap & lh) const
-    {
-      throw Exception("SymbolicCutBilinearFormIntegrator::ApplyElementMatrix not yet implemented");
-    }
+			LocalHeap & lh) const;
 
       
     template <int D, typename SCAL, typename SCAL_SHAPES>

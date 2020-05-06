@@ -221,13 +221,13 @@ namespace ngcomp
   /// output of field data (coefficient values)
   void SpaceTimeVTKOutput::PrintFieldData()
   {
-    *fileout << "FIELD FieldData " << value_field.Size() << endl;
+    // *fileout << "FIELD FieldData " << value_field.Size() << endl;
 
     for (auto field : value_field)
     {
-      *fileout << field->Name() << " "
-               << field->Dimension() << " "
-               << field->Size()/field->Dimension() << " float" << endl;
+      *fileout << "SCALARS " << field->Name()
+               << " float " << field->Dimension() << endl
+               << "LOOKUP_TABLE default" << endl;
       for (auto v : *field)
         *fileout << v << " ";
       *fileout << endl;

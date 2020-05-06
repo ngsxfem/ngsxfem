@@ -1402,4 +1402,229 @@ namespace ngfem
         }
   }
 
+
+
+  void SymbolicCutBilinearFormIntegrator ::
+  ApplyElementMatrix (const FiniteElement & fel, 
+                      const ElementTransformation & trafo, 
+                      const FlatVector<double> elx, 
+                      FlatVector<double> ely,
+                      void * precomputed,
+                      LocalHeap & lh) const
+  {
+    // THIS IS UGLY CODE DUPLICATION FROM SYMBOLICCUTBFI::T_CalcElementMatrixAdd
+    // and SymbolicBilinearFormIntegrator::ApplyElementMatrix (no simd)
+    // no simd
+
+    if (element_vb != VOL)
+        throw Exception ("Apply for EB not yet implemented");
+    
+    static bool warned = false;
+    if (!warned)
+    {
+      cout<<IM(3)<<"WARNING: The implementation of ApplyElementMatrix for cut elements is experimental.\n"<<endl;
+      warned = true;
+    }
+    
+    HeapReset hr(lh);
+    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+
+    int trial_difforder = 99, test_difforder = 99;
+    for (auto proxy : trial_proxies)
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
+    for (auto proxy : test_proxies)
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+
+    int intorder = fel_trial.Order()+fel_test.Order();
+
+    auto et = trafo.GetElementType();
+    if (et == ET_TRIG || et == ET_TET)
+      intorder -= test_difforder+trial_difforder;
+
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
+
+
+
+    LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(intorder);
+    
+    const IntegrationRule * ir;
+    Array<double> wei_arr;
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
+    ely = 0;
+    if (ir == nullptr)
+      return;
+    ///
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+    
+    ProxyUserData ud(trial_proxies.Size(),lh);
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
+    
+    for (ProxyFunction * proxy : trial_proxies)
+      ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
+
+    for (ProxyFunction * proxy : trial_proxies)
+      proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
+    
+    // FlatVector<> ely1(ely.Size(), lh);
+    FlatVector ely1(ely.Size(), lh);   // can we really skip the <>  ???
+
+    FlatMatrix<> val(mir.Size(), 1,lh);
+    for (auto proxy : test_proxies)
+    {
+      HeapReset hr(lh);
+      FlatMatrix<> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+      for (int k = 0; k < proxy->Dimension(); k++)
+      {
+        ud.testfunction = proxy;
+        ud.test_comp = k;
+        cf -> Evaluate (mir, val);
+        proxyvalues.Col(k) = val.Col(0);
+      }
+        
+      for (int i = 0; i < mir.Size(); i++)
+        proxyvalues.Row(i) *= mir[i].GetWeight();
+
+      proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
+      ely += ely1;
+    }
+    
+  }
+
+
+
+  void SymbolicCutBilinearFormIntegrator ::
+  CalcLinearizedElementMatrix (const FiniteElement & fel,
+                               const ElementTransformation & trafo, 
+                               FlatVector<double> elveclin,
+                               FlatMatrix<double> elmat,
+                               LocalHeap & lh) const
+  {
+
+    if (element_vb != VOL)
+        throw Exception ("Apply for EB not yet implemented");
+
+    static bool warned = false;
+    if (!warned)
+    {
+      cout<<IM(3)<<"WARNING: The implementation of CalcLinearizedElementMatrix for cut elements is experimental.\n"<<endl;
+      warned = true;
+    }
+
+    static Timer t("symboliccutbfi - calclinearized", 2);
+    size_t tid = TaskManager::GetThreadId();
+    ThreadRegionTimer reg(t, tid);
+    
+    const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
+    const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
+    const FiniteElement & fel_test = mixedfe ? mixedfe->FETest() : fel;
+
+    int trial_difforder = 99, test_difforder = 99;
+    for (auto proxy : trial_proxies)
+      trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
+    for (auto proxy : test_proxies)
+      test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+
+    int intorder = fel_trial.Order()+fel_test.Order();
+
+    auto et = trafo.GetElementType();
+    if (et == ET_TRIG || et == ET_TET)
+      intorder -= test_difforder+trial_difforder;
+
+    if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
+      throw Exception("SymbolicCutBFI can only treat simplices or hyperrectangulars right now");
+
+
+    LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(intorder);
+    
+    const IntegrationRule * ir;
+    Array<double> wei_arr;
+    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
+    elmat = 0;
+    if (ir == nullptr)
+      return;
+    ///
+    BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+    
+    ProxyUserData ud(trial_proxies.Size(),lh);
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
+    // ud.elx = &elveclin;
+    // ud.lh = &lh;
+    for (ProxyFunction * proxy : trial_proxies)
+    {
+      ud.AssignMemory (proxy, ir->Size(), proxy->Dimension(), lh);
+      proxy->Evaluator()->Apply(fel_trial, mir, elveclin, ud.GetMemory(proxy), lh);
+    }
+    
+    FlatMatrix<> val(mir.Size(), 1, lh), deriv(mir.Size(), 1, lh);
+    FlatMatrix<AutoDiff<1>> dval(mir.Size(), 1, lh);
+    
+    for (int k1 : Range(trial_proxies))
+      for (int l1 : Range(test_proxies))
+      {
+        HeapReset hr(lh);
+        auto proxy1 = trial_proxies[k1];
+        auto proxy2 = test_proxies[l1];
+
+        FlatTensor<3> proxyvalues(lh, mir.Size(), proxy2->Dimension(), proxy1->Dimension());
+          
+        for (int k = 0; k < proxy1->Dimension(); k++)
+          for (int l = 0; l < proxy2->Dimension(); l++)
+            // if (nonzeros(test_cum[l1]+l, trial_cum[k1]+k)) // does no work for non-linear 
+            if (true)
+            {
+              ud.trialfunction = proxy1;
+              ud.trial_comp = k;
+              ud.testfunction = proxy2;
+              ud.test_comp = l;
+                  
+              // cf -> EvaluateDeriv (mir, val, deriv);
+              // proxyvalues(STAR,l,k) = deriv.Col(0);
+              cf -> Evaluate (mir, dval);
+              for (size_t i = 0; i < mir.Size(); i++)
+                proxyvalues(i,l,k) = dval(i,0).DValue(0);
+            }
+            else
+              proxyvalues(STAR,l,k) = 0;
+
+        for (int i = 0; i < mir.Size(); i++)
+          proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+
+        FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
+        FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);
+
+        constexpr size_t BS = 16;
+        for (size_t i = 0; i < mir.Size(); i+=BS)
+        {
+          int rest = min2(size_t(BS), mir.Size()-i);
+          HeapReset hr(lh);
+          FlatMatrix<double,ColMajor> bdbmat1(rest*proxy2->Dimension(), elmat.Width(), lh);
+          FlatMatrix<double,ColMajor> bbmat2(rest*proxy2->Dimension(), elmat.Height(), lh);
+
+          for (int j = 0; j < rest; j++)
+          {
+            int ii = i+j;
+            IntRange r2 = proxy2->Dimension() * IntRange(j,j+1);
+            proxy1->Evaluator()->CalcMatrix(fel_trial, mir[ii], bmat1, lh);
+            proxy2->Evaluator()->CalcMatrix(fel_test, mir[ii], bmat2, lh);
+            bdbmat1.Rows(r2) = proxyvalues(ii,STAR,STAR) * bmat1;
+            bbmat2.Rows(r2) = bmat2;
+          }
+
+          IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
+          IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
+          elmat.Rows(r2).Cols(r1) += Trans (bbmat2.Cols(r2)) * bdbmat1.Cols(r1) | Lapack;
+        }
+      }
+  }
+
+  
 }

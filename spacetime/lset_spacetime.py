@@ -125,7 +125,7 @@ class LevelSetMeshAdaptation_Spacetime:
                 self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof].data = self.ci.GetCutRatios(VOL)
         
         
-        self.ci.Update(self.lset_p1,self.order_time)
+        self.ci.Update(self.lset_p1,time_order=self.order_time)
         self.hasneg_spacetime[:] = False
         self.hasneg_spacetime |= self.ci.GetElementsOfType(NEG)
         self.haspos_spacetime[:] = False

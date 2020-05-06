@@ -126,19 +126,26 @@ namespace ngcomp
     auto xfes = dynamic_pointer_cast<XFESpace>((*xstdfes)[1]);
     if (!xfes)
       throw Exception("cast failed: not an XFESpace");
-
+    
+    int dimension = xfes->GetDimension();
+    
     const int basendof = vneg.Size();
     for (int i = 0; i < basendof; ++i)
     {
-      vneg(i) = vbase(i);
-      vpos(i) = vbase(i);
+      for (int j = 0; j < dimension; j++)
+      {
+        vneg(dimension*i+j) = vbase(dimension*i+j);
+        vpos(dimension*i+j) = vbase(dimension*i+j);
+      }
       const int xdof = xfes->GetXDofOfBaseDof(i);
       if (xdof != -1)
       {
         if (xfes->GetDomOfDof(xdof) == POS)
-          vpos(i) += vx(xdof);
+          for (int j = 0; j < dimension; j++)
+            vpos(dimension*i+j) += vx(dimension*xdof+j);
         else
-          vneg(i) += vx(xdof);
+          for (int j = 0; j < dimension; j++)
+            vneg(dimension*i+j) += vx(dimension*xdof+j);
       }
     }
   }
@@ -151,9 +158,14 @@ namespace ngcomp
   {
     if (flags.GetDefineFlag("trace"))
       trace = true;
+    dimension = basefes->GetDimension();
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
-
+    if (dimension > 1)
+    {
+      evaluator[VOL] = make_shared<BlockDifferentialOperator> (evaluator[VOL], dimension);
+      flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
+    }
     private_cutinfo = false;
   }
 
@@ -164,8 +176,14 @@ namespace ngcomp
   {
     if (flags.GetDefineFlag("trace"))
       trace = true;
+    dimension = basefes->GetDimension();
     evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND>>>();
     flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpX<D,DIFFOPX::EXTEND_GRAD>>>();
+    if (dimension > 1)
+    {
+      evaluator[VOL] = make_shared<BlockDifferentialOperator> (evaluator[VOL], dimension);
+      flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
+    }
 
     private_cutinfo = true;
     coef_lset = lset;
@@ -177,26 +195,53 @@ namespace ngcomp
   T_XFESpace<D> :: GetAdditionalEvaluators () const
   {
     SymbolTable<shared_ptr<DifferentialOperator>> additional;
-    switch (ma->GetDimension())
+    if (dimension > 1)
     {
-    case 1 :
-      throw Exception("dim==1 not implemented"); break;
-    case 2 :
-      additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>> ());
-      additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>> ());
-      additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>> ());
-      additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND_GRAD>>> ());
-      additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS_GRAD>>> ());
-      additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG_GRAD>>> ()); break;
-    case 3 :
-      additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND>>> ());
-      additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS>>> ());
-      additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG>>> ());
-      additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND_GRAD>>> ());
-      additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS_GRAD>>> ());
-      additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG_GRAD>>> ()); break;
-    default :
-      ;
+      switch (ma->GetDimension())
+      {
+      case 1 :
+        throw Exception("dim==1 not implemented"); break;
+      case 2 :
+        additional.Set ("extend", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>> (),dimension));
+        additional.Set ("pos", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>> (),dimension));
+        additional.Set ("neg", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>> (),dimension));
+        additional.Set ("extendgrad", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND_GRAD>>> (),dimension));
+        additional.Set ("posgrad", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS_GRAD>>> (),dimension));
+        additional.Set ("neggrad", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG_GRAD>>> (),dimension)); break;
+      case 3 :
+        additional.Set ("extend", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND>>> (),dimension));
+        additional.Set ("pos", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS>>> (),dimension));
+        additional.Set ("neg", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG>>> (),dimension));
+        additional.Set ("extendgrad", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND_GRAD>>> (),dimension));
+        additional.Set ("posgrad", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS_GRAD>>> (),dimension));
+        additional.Set ("neggrad", make_shared<BlockDifferentialOperator>(make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG_GRAD>>> (),dimension)); break;
+      default :
+        ;
+      }
+    }
+    else
+    {
+      switch (ma->GetDimension())
+      {
+      case 1 :
+        throw Exception("dim==1 not implemented"); break;
+      case 2 :
+        additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>> ());
+        additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>> ());
+        additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>> ());
+        additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND_GRAD>>> ());
+        additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS_GRAD>>> ());
+        additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG_GRAD>>> ()); break;
+      case 3 :
+        additional.Set ("extend", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND>>> ());
+        additional.Set ("pos", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS>>> ());
+        additional.Set ("neg", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG>>> ());
+        additional.Set ("extendgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::EXTEND_GRAD>>> ());
+        additional.Set ("posgrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RPOS_GRAD>>> ());
+        additional.Set ("neggrad", make_shared<T_DifferentialOperator<DiffOpX<3,DIFFOPX::RNEG_GRAD>>> ()); break;
+      default :
+        ;
+      }
     }
     return additional;
   }
