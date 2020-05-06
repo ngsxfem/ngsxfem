@@ -352,7 +352,11 @@ Creates a MultiLevelsetCutInfo based on a mesh.
 
 Parameters
 
-mesh : Mesh
+mesh : 
+  mesh
+
+levelsets : tuple(ngsolve.GridFunction)
+  tuple of GridFunctions w.r.t. which elements are marked 
 )raw_string")
       )
     .def("Mesh", [](MultiLevelsetCutInformation & self)
