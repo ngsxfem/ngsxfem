@@ -6,6 +6,8 @@
 #include "../xfem/symboliccutlfi.hpp"
 #include "../xfem/ghostpenalty.hpp"
 
+#include <typeinfo>
+
 using namespace ngcomp;
 
 void ExportNgsx_xfem(py::module &m)
@@ -329,7 +331,7 @@ heapsize : int
 
   py::class_<MultiLevelsetCutInformation, shared_ptr<MultiLevelsetCutInformation>>
     (m, "MultiLevelsetCutInfo",R"raw(
-A minimal version of a CutInfo that allows for several levelsets and a list of list of domain_types.
+A minimal version of a CutInfo that allows for several levelsets and a list of tuples of domain_types.
 )raw")
     .def("__init__",  [] (MultiLevelsetCutInformation *instance,
                           shared_ptr<MeshAccess> ma,
@@ -343,7 +345,14 @@ A minimal version of a CutInfo that allows for several levelsets and a list of l
              if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
                throw Exception("all lsets need to be GridFunctions!");
            Array<shared_ptr<GridFunction>> lset_a = makeCArray<shared_ptr<GridFunction>> (lsets);
-           new (instance) MultiLevelsetCutInformation (ma, lset_a, py::len(lsets));
+           Array<shared_ptr<GridFunction>> lset_b;
+           for (int i =0; i <py::len(lsets); i++)
+           {
+            lset_b.Append(CreateGridFunction(lset_a[i]->GetFESpace(), "lset_p1", Flags()));
+            lset_b[i]->Update();
+            lset_b[i]->GetVectorPtr()->Set(1.0, lset_a[i]->GetVector());
+           }
+           new (instance) MultiLevelsetCutInformation (ma, lset_b, py::len(lsets));
          },
          py::arg("mesh"),
          py::arg("levelset"),
@@ -365,6 +374,32 @@ levelsets : tuple(ngsolve.GridFunction)
          },docu_string(R"raw_string(
 Returns mesh of CutInfo)raw_string")
       )
+    .def("Update", [] (MultiLevelsetCutInformation & self,
+                       py::object lsets_in)
+         {
+           py::extract<py::list> lsets_(lsets_in);
+           if (!lsets_.check())
+             throw Exception("levelset not compatible.");
+           auto lsets = lsets_();
+           for (int i = 0; i < py::len(lsets); i++)
+             if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
+               throw Exception("all lsets need to be GridFunctions!");
+           if (py::len(lsets) != self.GetLen())
+             throw Exception("New levelset tuple must have the same length as the original!");
+
+           Array<shared_ptr<GridFunction>> lsets_a = makeCArray<shared_ptr<GridFunction>> (lsets);
+           self.Update(lsets_a);
+         },
+         py::arg("levelsets"),
+         docu_string(R"raw_string(
+Update the MultiLevelsetCutInfo based on a set of levelsets
+
+Parameters
+
+levelsets : tuple(ngsolve.GridFunction)
+  tuple of GridFunctions w.r.t. which elements are marked
+)raw_string")
+        )
     .def("GetElementsOfType", [](MultiLevelsetCutInformation & self,
                                  py::object dt_in,
                                  VorB vb,

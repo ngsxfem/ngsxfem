@@ -244,6 +244,14 @@ namespace ngcomp
     ;
   }
 
+  void MultiLevelsetCutInformation::Update(const Array<shared_ptr<GridFunction>> & lsets_in)
+  {
+    for(int i=0; i < this->len; i++)
+    {
+      this->lsets[i]->GetVectorPtr()->Set(1.0, lsets_in[i]->GetVector());
+    }
+  }
+
   shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsWithContribution(
     const Array<Array<DOMAIN_TYPE>> & cdt, VorB vb, LocalHeap & lh) const
   {
