@@ -1,5 +1,5 @@
 """
-Basic functionality test for multiple level-set functionality
+Basic tests for multiple level-set functionality
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -247,6 +247,50 @@ def test_2d_overlaps():
     del mesh, level_sets, level_sets_p1, z_disc1, z_disc2, z_disc3 
 
 
+def test_multilevelsetcutinfo():
+    # ---------------------------- Background Mesh ----------------------------
+    geo = SplineGeometry()
+    geo.AddRectangle((-1, -1), (1, 1), bc=1)
+    mesh = Mesh(geo.GenerateMesh(maxh=0.2))
+
+    # ------------------------------ Test Update ------------------------------
+    ba = [BitArray(mesh.ne) for i in range(4)]
+    for ba_ in ba:
+        ba_.Clear()
+
+    P1 = H1(mesh, order=1)
+    lsets = tuple(GridFunction(P1) for i in range(2))
+
+    InterpolateToP1(x + 0.5, lsets[0])
+    InterpolateToP1(x - 0.5, lsets[1])
+
+    mlci = MultiLevelsetCutInfo(mesh, lsets)
+    ba[0] |= mlci.GetElementsOfType((POS, NEG))
+
+    InterpolateToP1(y + 0.5, lsets[0])
+    InterpolateToP1(y - 0.5, lsets[1])    
+
+    ba[1] |= mlci.GetElementsOfType((POS, NEG))
+    assert MarkersEqual(ba[0], ba[1])
+
+    mlci.Update(lsets)
+    ba[2] |= mlci.GetElementsOfType((POS, NEG))
+    assert MarkersEqual(ba[0], ba[2]) == False
+
+    # -------------------------- Test Safety Checks ---------------------------
+    with pytest.raises(netgen.libngpy._meshing.NgException):
+        mlci2 = MultiLevelsetCutInfo(mesh, (x, y))
+
+    with pytest.raises(netgen.libngpy._meshing.NgException):
+        a1 = mlci.GetElementsOfType((NEG, NEG, NEG))
+    with pytest.raises(netgen.libngpy._meshing.NgException):
+        a2 = mlci.GetElementsOfType([(NEG, NEG, NEG)])
+    with pytest.raises(netgen.libngpy._meshing.NgException):
+        a3 = mlci.GetElementsWithContribution((NEG, NEG, NEG))
+    with pytest.raises(netgen.libngpy._meshing.NgException):
+        a4 = mlci.GetElementsWithContribution([(NEG, NEG, NEG)])
+
+
 # -----------------------------------------------------------------------------
 # --------------------------------- 3D TESTS ----------------------------------
 # -----------------------------------------------------------------------------
@@ -446,6 +490,7 @@ def test_3d_codim2_cross():
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     test_2d_mlci_and_lo_integration()
+    test_multilevelsetcutinfo()
     test_2d_ho_integration()
     test_2d_overlaps()
     test_3d_mlset()
