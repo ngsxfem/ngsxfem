@@ -344,13 +344,13 @@ A minimal version of a CutInfo that allows for several levelsets and a list of t
                throw Exception("all lsets need to be GridFunctions!");
            Array<shared_ptr<GridFunction>> lset_a = makeCArray<shared_ptr<GridFunction>> (lsets);
            Array<shared_ptr<GridFunction>> lset_b;
-           for (int i =0; i <py::len(lsets); i++)
+           for (int i = 0; i < py::len(lsets); i++)
            {
             lset_b.Append(CreateGridFunction(lset_a[i]->GetFESpace(), "lset_p1", Flags()));
             lset_b[i]->Update();
             lset_b[i]->GetVectorPtr()->Set(1.0, lset_a[i]->GetVector());
            }
-           new (instance) MultiLevelsetCutInformation (ma, lset_b, py::len(lsets));
+           new (instance) MultiLevelsetCutInformation (ma, lset_b);
          },
          py::arg("mesh"),
          py::arg("levelset"),

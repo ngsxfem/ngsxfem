@@ -97,19 +97,17 @@ namespace ngcomp
   protected:
     shared_ptr<MeshAccess> ma;
     Array<shared_ptr<GridFunction>> lsets;
-    int len;
     vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_with_contribution;
     vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_of_domain_type;
   public:
     MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, 
-                                 const Array<shared_ptr<GridFunction>> & lsets_in,
-                                 int len_in);
+                                 const Array<shared_ptr<GridFunction>> & lsets_in);
     
     void Update(const Array<shared_ptr<GridFunction>> & lsets_in, LocalHeap & lh);
 
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
     
-    int GetLen() const {return len;}
+    int GetLen() const {return lsets.Size();}
 
     void UpdateElementsOfDomainType(const shared_ptr<BitArray> & elems_of_domain_type, 
                                     const Array<Array<DOMAIN_TYPE>> & cdt, 

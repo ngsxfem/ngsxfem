@@ -239,16 +239,15 @@ namespace ngcomp
   }
 
   MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
-                                                            const Array<shared_ptr<GridFunction>> & lsets_in,
-                                                            int len_in)
-    : ma(ama), lsets(lsets_in), len(len_in)
+                                                            const Array<shared_ptr<GridFunction>> & lsets_in)
+    : ma(ama), lsets(lsets_in)
   {
     ;
   }
 
   void MultiLevelsetCutInformation::Update(const Array<shared_ptr<GridFunction>> & lsets_in, LocalHeap & lh)
   {
-    for(int i=0; i < this->len; i++)
+    for(int i=0; i < lsets_in.Size(); i++)
       this->lsets[i]->GetVectorPtr()->Set(1.0, lsets_in[i]->GetVector());
 
     for (auto tup : collect_elements_with_contribution)
