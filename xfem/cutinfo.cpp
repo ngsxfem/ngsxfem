@@ -293,8 +293,6 @@ namespace ngcomp
                                                                                 VorB vb, 
                                                                                 LocalHeap & lh)
   {
-    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
-
     // Check whether BitArray with requested cdt has already been computed
     // and return that BitArray if found
     for (auto tup : collect_elements_with_contribution)
@@ -302,6 +300,7 @@ namespace ngcomp
         return get<0>(tup);
 
     // Compute the new BitArray
+    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
     UpdateElementsWithContribution(elems_of_domain_type, cdt, vb, lh);
 
     // Add BitArray to instance collection
@@ -358,8 +357,6 @@ namespace ngcomp
                                                                             VorB vb, 
                                                                             LocalHeap & lh)
   {
-    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
-
     // Check whether BitArray with requested cdt has already been computed
     // and return that BitArray if found
     for (auto tup : collect_elements_of_domain_type)
@@ -367,6 +364,7 @@ namespace ngcomp
         return get<0>(tup);
 
     // Compute the new BitArray
+    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
     UpdateElementsOfDomainType(elems_of_domain_type, cdt, vb, lh);
     
     // Add BitArray to instance collection

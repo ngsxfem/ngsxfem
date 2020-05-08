@@ -324,9 +324,7 @@ a : ngsolve.BitArray
 heapsize : int
   heapsize of local computations.
 )raw_string")
-
     );
-
 
 
   py::class_<MultiLevelsetCutInformation, shared_ptr<MultiLevelsetCutInformation>>
@@ -357,7 +355,7 @@ A minimal version of a CutInfo that allows for several levelsets and a list of t
          py::arg("mesh"),
          py::arg("levelset"),
          docu_string(R"raw_string(
-Creates a MultiLevelsetCutInfo based on a mesh.
+Creates a MultiLevelsetCutInfo based on a mesh and a tuple of levelsets.
 
 Parameters
 
@@ -372,7 +370,8 @@ levelsets : tuple(ngsolve.GridFunction)
          {
            return self.GetMesh();
          },docu_string(R"raw_string(
-Returns mesh of CutInfo)raw_string")
+Returns mesh of CutInfo.
+)raw_string")
       )
     .def("Update", [] (MultiLevelsetCutInformation & self,
                        py::object lsets_in,
@@ -396,13 +395,17 @@ Returns mesh of CutInfo)raw_string")
          py::arg("levelsets"),
          py::arg("heapsize") = 1000000,
          docu_string(R"raw_string(
-Update the MultiLevelsetCutInfo based on a set of levelsets
+Updates the tuple of levelsets behind the MultiLevelsetCutInfo and 
+recomputes any element marker arrays which have been created with this
+instance.
 
 Parameters
 
 levelsets : tuple(ngsolve.GridFunction)
-  tuple of GridFunctions w.r.t. which elements are marked
-)raw_string")
+  tuple of GridFunctions w.r.t. which elements are marked.
+
+heapsize : int = 1000000
+  heapsize of local computations)raw_string")
         )
     .def("GetElementsOfType", [](MultiLevelsetCutInformation & self,
                                  py::object dt_in,
@@ -459,8 +462,18 @@ levelsets : tuple(ngsolve.GridFunction)
          py::arg("VOL_or_BND") = VOL,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-corresponding domain type.)raw_string")
-      )
+corresponding domain type. This BitArray remains attached to the mlci class
+instance and is updated on mlci.Update(lsets).
+
+Parameters
+
+domain_type : {tuple(ENUM), list(tuple(ENUM)), DomainTypeArray}
+  Description of the domain.
+
+heapsize : int = 1000000
+  heapsize of local computations.
+)raw_string")
+    )
     .def("GetElementsWithContribution", [](MultiLevelsetCutInformation & self,
                                            py::object dt_in,
                                            VorB vb,
@@ -516,9 +529,18 @@ corresponding domain type.)raw_string")
          py::arg("VOL_or_BND") = VOL,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-a contribution to the corresponding level set domain.)raw_string")
-      )
-    ;
+a contribution to the corresponding level set domain. This BitArray 
+remains attached to the mlci class instance and is updated on 
+mlci.Update(lsets).
+
+Parameters
+
+domain_type : {tuple(ENUM), list(tuple(ENUM)), DomainTypeArray}
+  Description of the domain.
+
+heapsize : int = 1000000
+  heapsize of local computations.
+)raw_string"));
 
 
 //   .def("__init__",  [] (XFESpace *instance,
