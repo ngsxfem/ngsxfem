@@ -375,8 +375,11 @@ levelsets : tuple(ngsolve.GridFunction)
 Returns mesh of CutInfo)raw_string")
       )
     .def("Update", [] (MultiLevelsetCutInformation & self,
-                       py::object lsets_in)
+                       py::object lsets_in,
+                       int heapsize)
          {
+           LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+
            py::extract<py::list> lsets_(lsets_in);
            if (!lsets_.check())
              throw Exception("levelset not compatible.");
@@ -388,9 +391,10 @@ Returns mesh of CutInfo)raw_string")
              throw Exception("New levelset tuple must have the same length as the original!");
 
            Array<shared_ptr<GridFunction>> lsets_a = makeCArray<shared_ptr<GridFunction>> (lsets);
-           self.Update(lsets_a);
+           self.Update(lsets_a, lh);
          },
          py::arg("levelsets"),
+         py::arg("heapsize") = 1000000,
          docu_string(R"raw_string(
 Update the MultiLevelsetCutInfo based on a set of levelsets
 
