@@ -98,6 +98,8 @@ namespace ngcomp
     shared_ptr<MeshAccess> ma;
     Array<shared_ptr<GridFunction>> lsets;
     int len;
+    vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>> >> collect_elements_with_contribution;
+    vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>> >> collect_elements_of_domain_type;
   public:
     MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, 
                                  const Array<shared_ptr<GridFunction>> & lsets_in,
@@ -109,10 +111,10 @@ namespace ngcomp
     int GetLen() const {return len;}
 
     shared_ptr<BitArray> GetElementsOfDomainType(const Array<Array<DOMAIN_TYPE>> & cdt,
-                                                 VorB vb, LocalHeap & lh) const;
+                                                 VorB vb, LocalHeap & lh);
 
     shared_ptr<BitArray> GetElementsOfDomainType(const Array<DOMAIN_TYPE> & cdt_,
-                                                 VorB vb, LocalHeap & lh) const
+                                                 VorB vb, LocalHeap & lh)
     {
       Array<Array<DOMAIN_TYPE>> cdt(1);
       cdt[0] = cdt_;
@@ -120,15 +122,18 @@ namespace ngcomp
     }
 
     shared_ptr<BitArray> GetElementsWithContribution(const Array<Array<DOMAIN_TYPE>> & cdt,
-                                                 VorB vb, LocalHeap & lh) const;
+                                                 VorB vb, LocalHeap & lh);
 
     shared_ptr<BitArray> GetElementsWithContribution(const Array<DOMAIN_TYPE> & cdt_,
-                                                 VorB vb, LocalHeap & lh) const
+                                                 VorB vb, LocalHeap & lh)
     {
       Array<Array<DOMAIN_TYPE>> cdt(1);
       cdt[0] = cdt_;
       return GetElementsWithContribution(cdt,vb,lh);
     }
+
+    bool CombinedDomainTypesEqual(const Array<Array<DOMAIN_TYPE>> & cdta, 
+                                  const Array<Array<DOMAIN_TYPE>> & cdtb) const;
   };
   
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
