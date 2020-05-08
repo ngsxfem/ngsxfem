@@ -2,6 +2,8 @@
 #include "../xfem/cutinfo.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/straightcutrule.hpp"
+#include <unordered_map>
+
 using namespace ngsolve;
 using namespace xintegration;
 using namespace ngfem;
@@ -243,11 +245,26 @@ namespace ngcomp
     ;
   }
 
-  shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsWithContribution(
-    const Array<Array<DOMAIN_TYPE>> & cdt, VorB vb, LocalHeap & lh) const
+  void MultiLevelsetCutInformation::Update(const Array<shared_ptr<GridFunction>> & lsets_in, LocalHeap & lh)
   {
+    for(int i=0; i < lsets_in.Size(); i++)
+      this->lsets[i]->GetVectorPtr()->Set(1.0, lsets_in[i]->GetVector());
+
+    for (auto tup : collect_elements_with_contribution)
+      UpdateElementsWithContribution(get<0>(tup), get<1>(tup), get<2>(tup), lh);
+
+    for (auto tup : collect_elements_of_domain_type)
+      UpdateElementsOfDomainType(get<0>(tup), get<1>(tup), get<2>(tup), lh);
+
+  }
+
+  void MultiLevelsetCutInformation::UpdateElementsWithContribution(const shared_ptr<BitArray> & elems_of_domain_type, 
+                                                                   const Array<Array<DOMAIN_TYPE>> & cdt, 
+                                                                   VorB vb, 
+                                                                   LocalHeap & lh) const
+  {
+
     LevelsetIntegrationDomain lsetintdom(lsets, cdt);
-    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
     elems_of_domain_type->Clear();
     
     int ne = ma->GetNE(vb);
@@ -269,17 +286,34 @@ namespace ngcomp
            elems_of_domain_type->SetBitAtomic(elnr);
          
        });
+  }
+
+  shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsWithContribution(const Array<Array<DOMAIN_TYPE>> & cdt,
+                                                                                VorB vb, 
+                                                                                LocalHeap & lh)
+  {
+    // Check whether BitArray with requested cdt has already been computed
+    // and return that BitArray if found
+    for (auto tup : collect_elements_with_contribution)
+      if (CombinedDomainTypesEqual(get<1>(tup), cdt))
+        return get<0>(tup);
+
+    // Compute the new BitArray
+    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
+    UpdateElementsWithContribution(elems_of_domain_type, cdt, vb, lh);
+
+    // Add BitArray to instance collection
+    collect_elements_with_contribution.push_back(make_tuple(elems_of_domain_type, cdt, vb));
+
     return elems_of_domain_type;
   }
   
-
-  
-  
-  shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsOfDomainType(
-    const Array<Array<DOMAIN_TYPE>> & cdt, VorB vb, LocalHeap & lh) const
+  void MultiLevelsetCutInformation::UpdateElementsOfDomainType(const shared_ptr<BitArray> & elems_of_domain_type, 
+                                                               const Array<Array<DOMAIN_TYPE>> & cdt, 
+                                                               VorB vb, 
+                                                               LocalHeap & lh) const
   {
     LevelsetIntegrationDomain lsetintdom(lsets, cdt);
-    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
     elems_of_domain_type->Clear();
     
     int ne = ma->GetNE(vb);
@@ -316,9 +350,80 @@ namespace ngcomp
              elems_of_domain_type->SetBitAtomic(elnr);
          }
        });
+  }
+
+  shared_ptr<BitArray> MultiLevelsetCutInformation::GetElementsOfDomainType(const Array<Array<DOMAIN_TYPE>> & cdt, 
+                                                                            VorB vb, 
+                                                                            LocalHeap & lh)
+  {
+    // Check whether BitArray with requested cdt has already been computed
+    // and return that BitArray if found
+    for (auto tup : collect_elements_of_domain_type)
+      if (CombinedDomainTypesEqual(get<1>(tup), cdt))
+        return get<0>(tup);
+
+    // Compute the new BitArray
+    shared_ptr<BitArray> elems_of_domain_type = make_shared<BitArray>(ma->GetNE(vb));
+    UpdateElementsOfDomainType(elems_of_domain_type, cdt, vb, lh);
+    
+    // Add BitArray to instance collection
+    collect_elements_of_domain_type.push_back(make_tuple(elems_of_domain_type, cdt, vb));
+
     return elems_of_domain_type;
   }
   
+
+  bool MultiLevelsetCutInformation::CombinedDomainTypesEqual(const Array<Array<DOMAIN_TYPE>> & cdta,
+                                                             const Array<Array<DOMAIN_TYPE>> & cdtb) const
+  {
+    int len_a = cdta.Size();
+    int len_b = cdtb.Size();
+    if (len_a != len_b)
+        return false;
+
+    unordered_map<string, int> count;
+    string dtt_encoded;
+    
+    for (const Array<DOMAIN_TYPE> & dtt : cdta)
+    {
+      dtt_encoded.clear();
+      for(const DOMAIN_TYPE & dt : dtt)
+      {
+        if (dt == NEG)
+          dtt_encoded.push_back('n');
+        else if (dt == IF)
+          dtt_encoded.push_back('i');
+        else if (dt == POS)
+          dtt_encoded.push_back('p');
+        else
+          throw Exception("Unable to encode domain domain type");
+      }
+      count[dtt_encoded]++;
+    }
+
+    for (const Array<DOMAIN_TYPE> & dtt : cdtb)
+    {
+      dtt_encoded.clear();
+      for(const DOMAIN_TYPE & dt : dtt)
+      {
+        if (dt == NEG)
+          dtt_encoded.push_back('n');
+        else if (dt == IF)
+          dtt_encoded.push_back('i');
+        else if (dt == POS)
+          dtt_encoded.push_back('p');
+        else
+          throw Exception("Unable to encode domain domain type");
+      }
+      count[dtt_encoded]--;
+    }
+
+    for (auto i : count)
+      if (i.second != 0)
+        return false;
+
+    return true;
+  }
 
   
   
