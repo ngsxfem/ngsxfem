@@ -5,7 +5,8 @@
 A module for unfitted discretizations in NGSolve
 
 Modules:
-xfem.lsetcuving ... isoparametric unfitted FEM
+xfem.lsetcurving ... isoparametric unfitted FEM
+xfem.mlset ... multiple level sets
 """
 
 from ngsolve.comp import *
