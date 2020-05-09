@@ -874,9 +874,11 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, int dim_space, bool hdiv)
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
         {
 
+          const int dim_space = self->GetFESpace()->GetSpatialDimension();
+          
           Array<int> comparr(0);
           if (py::extract<int> (comp).check())
           {
@@ -960,7 +962,6 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
-        py::arg("dim_space") = 2,
         py::arg("hdiv") = false,
         docu_string(R"raw_string(
 Normal derivative of higher order. This is evaluated via numerical differentiation which offers only
@@ -976,9 +977,6 @@ order : int
 
 comp : int
   component of proxy if test / trialfunction is a component of a compound or vector test / trialfunction
-
-dim_space : int
-  dimension of the space
 
 hdiv : boolean
   assumes scalar FEs if false, otherwise assumes hdiv
