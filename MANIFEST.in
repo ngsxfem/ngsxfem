@@ -1,0 +1,3 @@
+include CMakeLists.txt LICENSE README.org 
+recursive-include . *.in *.hpp *.cpp CMakeLists.txt
+global-exclude external_dependencies/**/*.in external_dependencies/**/*.hpp external_dependencies/**/*.cpp external_dependencies/**/CMakeLists.txt
