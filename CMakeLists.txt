@@ -167,7 +167,7 @@ message("
 
   Build NGSolve from scratch: ${BUILD_NGSOLVE}
   Build xfem (and NGSolve) with ccache: ${USE_CCACHE}
-
+  Build xfem with python stub files: ${BUILD_STUB_FILES}
 
   Building:
 

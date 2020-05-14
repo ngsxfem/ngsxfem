@@ -33,6 +33,7 @@ class CMakeBuild(build_ext):
                       '-DPYTHON_EXECUTABLE=' + sys.executable,
                       '-DCMAKE_CXX_COMPILER=ngscxx',
                       '-DCMAKE_LINKER=ngsld',
+                      '-DBUILD_STUB_FILES=ON',
                       '-DBUILD_NGSOLVE=OFF']
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -52,10 +53,12 @@ class CMakeBuild(build_ext):
             os.makedirs(self.build_temp)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
+        
+        subprocess.check_call(['mv', 'ngsxfem_py.so', 'xfem'], cwd=self.build_lib)
 
 setup(
     name='xfem',
-    version='1.3.dev1',
+    version='1.3.dev2',
     author='Christoph Lehrenfeld',
     author_email='lehrenfeld@math.uni-goettingen.de',
     description='(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM.',
@@ -63,7 +66,7 @@ setup(
     url="https://github.com/ngsxfem/ngsxfem",
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=["xfem", "xfem.cutmg", "xfem.lsetcurv", "xfem.lset_spacetime", "xfem.mlset", "xfem.utils"],
+    packages=["xfem"], 
     package_dir={"xfem" : "python",
                  "xfem.cutmg" : "python",
                  "xfem.lsetcurv" : "lsetcurving",

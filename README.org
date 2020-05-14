@@ -37,6 +37,7 @@ If you run Linux you can install =ngsxfem= through pip:
 pip install git+https://github.com/ngsxfem/ngsxfem.git@master --user --upgrade --verbose
 #+END_SRC
 This will build =ngsxfem= assuming that a compatible =NGSolve= version is installed. If this fails (e.g. because you are not using MacOS or you haven't installed =NGSolve= yet consider the build steps below).
+You also will need cmake, NGSolve and a (modestly) recent compiler (e.g. clang) installed.
 
 ** Linux Build Steps
 You require Netgen/NGSolve to run and build the xfem module (=ngsxfem=). 
