@@ -58,11 +58,11 @@ class CMakeBuild(build_ext):
 
 setup(
     name='xfem',
-    version='1.3.dev2',
+    version='1.3.dev3',
     author='Christoph Lehrenfeld',
     author_email='lehrenfeld@math.uni-goettingen.de',
     description='(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM.',
-    long_description='(ngs)xfem is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, … . ngsxfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.',
+    long_description='(ngs)xfem is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . ngsxfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.',
     url="https://github.com/ngsxfem/ngsxfem",
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
