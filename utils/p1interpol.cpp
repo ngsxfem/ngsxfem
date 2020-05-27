@@ -5,6 +5,7 @@
 /*********************************************************************/
 
 #include "p1interpol.hpp"
+#include "../cutint/spacetimecutrule.hpp"
 
 namespace ngcomp
 {
@@ -22,7 +23,7 @@ namespace ngcomp
     : ma(a_gf_p1->GetMeshAccess()), coef(nullptr), gf(a_gf), gf_p1(a_gf_p1)
   {; }
 
-  void InterpolateP1::Do(LocalHeap & lh, double eps_perturbation)
+  void InterpolateP1::Do(LocalHeap & lh, double eps_perturbation, double tref_val)
   {
     static Timer time_fct ("LsetCurv::InterpolateP1::Do");
     RegionTimer reg (time_fct);
@@ -46,7 +47,9 @@ namespace ngcomp
         {
           Vec<2> point;
           ma->GetPoint<2>(vnr,point);
-          IntegrationPoint ip(0,0,0,0);
+          IntegrationPoint ip(0,0,0,tref_val);
+          if (tref_val >= 0)
+            MarkAsSpaceTimeIntegrationPoint(ip);
           MappedIntegrationPoint<2,2> mip(ip,eltrans);
           Vec<2> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint[0],refpoint[1],0.0,0.0);
@@ -60,7 +63,10 @@ namespace ngcomp
         {
           Vec<3> point;
           ma->GetPoint<3>(vnr,point);
-          IntegrationPoint ip(0,0,0,0);
+          IntegrationPoint ip(0,0,0,tref_val);
+          if (tref_val >= 0)
+            MarkAsSpaceTimeIntegrationPoint(ip);
+          
           MappedIntegrationPoint<3,3> mip(ip,eltrans);
           Vec<3> refpoint = mip.GetJacobianInverse() * (point - mip.GetPoint());
           IntegrationPoint ip_f(refpoint,0.0);

@@ -220,7 +220,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
           coef_tref->FixTime(nodes[i]);
 
         InterpolateP1 iP1(st_CF, node_gf);
-        iP1.Do(lh);
+        iP1.Do(lh,1e-15,nodes[i]);
         for(int j = 0; j < Vh_ptr->GetNDof();j++)
         {
           gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);

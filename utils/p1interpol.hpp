@@ -32,7 +32,7 @@ namespace ngcomp
   public:
     InterpolateP1 (shared_ptr<CoefficientFunction> a_coef, shared_ptr<GridFunction> a_gf_p1);
     InterpolateP1 (shared_ptr<GridFunction> a_gf, shared_ptr<GridFunction> a_gf_p1);
-    void Do (LocalHeap & lh, double eps_perturbation=1e-15);
+    void Do (LocalHeap & lh, double eps_perturbation=1e-15, double tref_val = -1);
   };
 
 }
