@@ -568,7 +568,8 @@ namespace xintegration
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
           Mat<D,D> Finv = mip.GetJacobianInverse();
 
-          Vec<D> normal = Trans(Finv) * lset.GetNormal(quad_untrafo[i].Point());
+          FlatVector<double> fv(D,&(lset.GetNormal(quad_untrafo[i].Point())(0)));
+          Vec<D> normal = Trans(Finv) * fv;
           const double weight = myweight * L2Norm(normal);
 
           (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);

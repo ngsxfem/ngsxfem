@@ -152,7 +152,11 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * Henry von Wahl (multiple levelsets)
 
 * Literature
-=ngsxfem= has been used in the following scientific articles (that we are aware of):
+=ngsxfem= has been used in the following scientific works (that we are aware of):
+** Journal publications / preprints:
+
+ * Aikaterini Aretaki1 and Efthymios N. Karatzas. Random geometries and quasi Monte Carlo methods for optimal control PDE problems based on fictitious domain [[https://arxiv.org/pdf/2003.00352.pdf][pdf]]
+FEMs and cut elements. 
  * H. von Wahl, T. Richter, C. Lehrenfeld. An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains. [[https://arxiv.org/pdf/2002.02352][pdf]]        
  * P. Brandner, A. Reusken. Finite element error analysis of surface Stokes equations in stream function formulation. [[https://www.igpm.rwth-aachen.de/Download/reports/pdf/IGPM493.pdf][pdf]]         
  * T. Jankuhn, A. Reusken. Higher order Trace Finite Element Methods for the Surface Stokes Equation [[https://arxiv.org/pdf/1909.08327][pdf]] 
@@ -168,3 +172,10 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * C. Lehrenfeld. A higher order isoparametric fictitious domain method for level set domains. [[https://link.springer.com/chapter/10.1007/978-3-319-71431-8_3][http]]
  * P. Lederer, C.-M. Pfeiler, C. Wintersteiger, C. Lehrenfeld. Higher order unfitted FEM for Stokes interface problems. [[https://onlinelibrary.wiley.com/doi/abs/10.1002/pamm.201610003][http]]
  * C. Lehrenfeld. Removing the stabilization parameter in fitted and unfitted symmetric Nitsche formulations. [[https://www.eccomas2016.org/proceedings/pdf/4573.pdf][http]]
+** PhD theses:
+ * T. Ludescher: Multilevel Preconditioning of Stabilized Unfitted Finite Element Discretizations 
+** Master theses:
+ * J. Preuss: Higher order unfitted isoparametric space-time FEM on moving domains
+ * H.G. Raumer: Shape Optimization for Interface Problems using unfitted Finite Elements
+** Bachelor theses:
+ * F. Heimann: Higher order Discontinuous Galerkin methods for the Laplace-Beltrami problem on unfitted smooth surfaces

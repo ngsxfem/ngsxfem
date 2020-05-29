@@ -82,7 +82,10 @@ namespace ngfem
       {
         scafe_back.CalcShape(ipx,shape_back);
         dvec_back = Trans(vector_back)*shape_back;
-        diff = zdiff - dvec_back - mip.GetJacobian() * ipx.Point();
+
+        FlatVector<double> fv(D,&(ipx.Point())(0));
+
+        diff = zdiff - dvec_back - mip.GetJacobian() * fv;
         // cout << "diff = " << diff << endl;
         // cout << "its = " << its << endl;
         if ( L2Norm(diff) < 1e-8*h ) break;
@@ -194,7 +197,8 @@ namespace ngfem
       // Fixed point iteration
       while (its < NEWTON_ITER_TRESHOLD)
       {
-        diff = zdiff - mip.GetJacobian() * ipx.Point();
+        FlatVector<double> fv(D,&(ipx.Point())(0));
+        diff = zdiff - mip.GetJacobian() * fv;
         if ( L2Norm(diff) < 1e-8*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
         its++;
