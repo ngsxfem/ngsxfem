@@ -159,7 +159,8 @@ namespace xintegration
     for ( auto part : ir_parts )
       size += part->Size();
 
-    ArrayMem<double,100> sum_wei_arr(size);
+    // ArrayMem<double,100> sum_wei_arr(size);
+    Array<double> sum_wei_arr(size);
     
     if (ir_parts.Size() > 0) //collect parts:
     {
