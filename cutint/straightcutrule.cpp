@@ -721,10 +721,19 @@ namespace xintegration
       simplices_at_last_level = simplices_at_current_level;
     }
 
-    auto myir_untrafo = new (lh) IntegrationRule(0, lh);
-    for(auto final_sub_s : simplices_at_last_level)
-        final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
+    // Memory leaky:
+    // for(auto final_sub_s : simplices_at_last_level)
+    //     final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
 
+    // Workaround:
+    IntegrationRule tmp;
+    for(auto final_sub_s : simplices_at_last_level)
+        final_sub_s.GetPlainIntegrationRule(tmp, intorder);
+    
+    auto myir_untrafo = new (lh) IntegrationRule(tmp.Size(),lh);
+    for (int i = 0; i < tmp.Size(); i++)
+      (*myir_untrafo)[i] = tmp[i];
+    
     vector<int> dt_is_if_indices;
     for(int i=0; i<M; i++) if ( dts[i] == IF) dt_is_if_indices.push_back(i);
 
