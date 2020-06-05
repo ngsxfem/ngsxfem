@@ -2,7 +2,6 @@ build:
   stage: build
   before_script:
     - echo " before script "
-    - pip3 install psutil
     - rm -rf ~/inst/netgen
     - mkdir -p ~/inst/netgen
     - if [ ! -f ~/ngsolve_stable.sif ]; then singularity pull -U library://laevar/default/ngsolve:stable ; mv ngsolve_stable.sif ~/ ; fi
