@@ -12,8 +12,7 @@ namespace xintegration
   {
     bool debug_out = false;
 
-    Array<double> sum_wei_arr (0);
-    IntegrationRule * sum_ir = new (lh) IntegrationRule(0 , lh);
+    ArrayMem<const IntegrationRule *, 20> ir_parts; //static/dynamic memory allocation
       
     const Array<shared_ptr<GridFunction>> & gflsets (lsetintdom.GetLevelsetGFs());
     int intorder = lsetintdom.GetIntegrationOrder();
@@ -24,12 +23,12 @@ namespace xintegration
     if (time_intorder >= 0)
       throw Exception("no space-time integration with multiple level sets, yet.");
     
-    Array<DofId> dnums(0,lh);
+    ArrayMem<DofId,10> dnums;
     gflsets[0]->GetFESpace()->GetDofNrs(trafo.GetElementId(), dnums);
     FlatVector<> elvec(dnums.Size(), lh);
     FlatMatrix<> elvecs(dnums.Size(), M, lh);
 
-    Array<DOMAIN_TYPE> lset_dts(M); //<- domain types corresponding to levelset
+    ArrayMem<DOMAIN_TYPE,10> lset_dts(M); //<- domain types corresponding to levelset
 
     // Check if element is relevant for the given integration domain
     for (int i = 0; i < M; i++)
@@ -68,10 +67,10 @@ namespace xintegration
         cout << "domain types for integration: \n" << dts << endl;
       }
 
-      Array<shared_ptr<GridFunction>> condense_gflsets;
-      Array<DOMAIN_TYPE> condense_dts;// only for debugging
-      Array<DOMAIN_TYPE> condense_target_dts;
-      Array<int> condense_id_to_full_id(0);
+      ArrayMem<shared_ptr<GridFunction>,10> condense_gflsets;
+      ArrayMem<DOMAIN_TYPE,10> condense_dts;// only for debugging
+      ArrayMem<DOMAIN_TYPE,10> condense_target_dts;
+      ArrayMem<int,10> condense_id_to_full_id;
 
       if (!compatible)
       {
@@ -93,14 +92,7 @@ namespace xintegration
         }      
         // Uncut elements simply return the standard integration rule
         ir = & (SelectIntegrationRule (trafo.GetElementType(), intorder));
-        for(int i=0; i< ir->Size(); i++)
-        {
-          sum_ir->Append((*ir)[i]);
-          sum_wei_arr.Append((*ir)[i].Weight());
-        }
-        // Array<double> wei_arr (ir->Size());
-        // for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-        // return make_tuple(ir, wei_arr);
+        ir_parts.Append(ir);
       }
 
       else
@@ -140,14 +132,7 @@ namespace xintegration
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec,
                                                                   trafo, dts[j], intorder, quad_dir_policy, lh);
           if(ir != nullptr) 
-          {
-            // Array<double> wei_arr (ir->Size());
-            for(int i=0; i< ir->Size(); i++)
-            {
-              sum_ir->Append((*ir)[i]);
-              sum_wei_arr.Append((*ir)[i].Weight());
-            }
-          }
+            ir_parts.Append(ir);
         }
         else 
         { 
@@ -164,15 +149,29 @@ namespace xintegration
             cout << "-------------------------------------------------------------------------" << endl << endl;
           }
           if(ir != nullptr)
-          {
-            for(int i=0; i< ir->Size(); i++)
-            {
-              sum_ir->Append((*ir)[i]);
-              sum_wei_arr.Append((*ir)[i].Weight());
-            }
-          }
+            ir_parts.Append(ir);
         }
       }
+    }
+    IntegrationRule * sum_ir = nullptr;
+
+    int size = 0;
+    for ( auto part : ir_parts )
+      size += part->Size();
+
+    ArrayMem<double,100> sum_wei_arr(size);
+    
+    if (ir_parts.Size() > 0) //collect parts:
+    {
+      sum_ir = new (lh) IntegrationRule(size , lh);
+      int cnt = 0;
+      for ( auto part : ir_parts )
+        for ( auto ip : *part )
+        {
+          (*sum_ir)[cnt] = ip;
+          sum_wei_arr[cnt] = ip.Weight();
+          cnt++;
+        }
     }
 
     if (debug_out)
@@ -184,8 +183,7 @@ namespace xintegration
       }
       cout << "Sum of weigts on element: " << sum << endl << endl;
     }
-    if (sum_ir->Size() == 0)
-      sum_ir = nullptr;
+    
     return make_tuple(sum_ir, sum_wei_arr);
   }
   
