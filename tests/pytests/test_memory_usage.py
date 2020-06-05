@@ -4,8 +4,9 @@ Test for memory usage/clean-up in integrate
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
 import pytest
-from netgen.geom2d import unit_square
+
 from ngsolve import *
+from ngsolve.meshes import MakeStructured2DMesh
 from xfem import *
 
 import psutil
@@ -22,8 +23,9 @@ def memory_usage_psutil():
 # -----------------------------------------------------------------------------
 # ------------------------------ SINGLE LEVELSET ------------------------------
 # -----------------------------------------------------------------------------
-def test_singele_lset_memory():
-    mesh = Mesh(unit_square.GenerateMesh(maxh=0.2))
+@pytest.mark.parametrize("quad", [True, False])
+def test_singele_lset_memory(quad):
+    mesh = MakeStructured2DMesh(quads=quad, nx=2**3, ny=2**3)
     
     lset = (x-0.5)**2 + (y - 0.5)**2 - 0.4**2
     lset_p1 = GridFunction(H1(mesh, order=1))
@@ -31,19 +33,24 @@ def test_singele_lset_memory():
 
     lset_dom = {"levelset": lset_p1, "domain_type": NEG, "subdivions": 0}
 
-    m1 = memory_usage_psutil()
+    mem = []
+    mem.append(memory_usage_psutil())
 
-    for it in range(int(1e4)):
-        Integrate(lset_dom, cf=1, mesh=mesh, order=0)
+    for it in range(2):
+        for it in range(int(5e3)):
+            Integrate(lset_dom, cf=1, mesh=mesh, order=0)
 
-    m2 = memory_usage_psutil()
-    assert abs(m2 - m1) < 0.4
+        mem.append(memory_usage_psutil())
+
+    assert abs(mem[1] - mem[2]) < abs(max(mem) - min(mem))
+    assert abs(mem[1] - mem[2]) < 0.01 * max(mem)
+
 
 # -----------------------------------------------------------------------------
 # ---------------------------- MULTIPLE LEVELSETS -----------------------------
 # -----------------------------------------------------------------------------
 def test_multiple_lset_memory():
-    mesh = Mesh(unit_square.GenerateMesh(maxh=0.2))
+    mesh = MakeStructured2DMesh(quads=False, nx=2**3, ny=2**3)
     
     lsets = [-y + 0.1, x - 0.9, y - 0.9, -x + 0.1]
     lsets_p1 = tuple(GridFunction(H1(mesh, order=1)) for i in range(len(lsets)))
@@ -52,13 +59,16 @@ def test_multiple_lset_memory():
 
     lset_dom = {"levelset": lsets_p1, "domain_type": (NEG, NEG, NEG, NEG)}
 
-    m1 = memory_usage_psutil()
+    mem = []
+    mem.append(memory_usage_psutil())
 
-    for it in range(int(1e4)):
-        Integrate(lset_dom, cf=1, mesh=mesh, order=0)
+    for it in range(2):
+        for it in range(int(5e3)):
+            Integrate(lset_dom, cf=1, mesh=mesh, order=0)
+        mem.append(memory_usage_psutil())
 
-    m2 = memory_usage_psutil()
-    assert abs(m2 - m1) < 0.4
+    assert abs(mem[1] - mem[2]) < abs(max(mem) - min(mem))
+    assert abs(mem[1] - mem[2]) < 0.01 * max(mem)
 
 
 # -----------------------------------------------------------------------------
@@ -68,5 +78,6 @@ def test_multiple_lset_memory():
 
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    test_singele_lset_memory()
+    test_singele_lset_memory(True)
+    test_singele_lset_memory(False)
     test_multiple_lset_memory()
