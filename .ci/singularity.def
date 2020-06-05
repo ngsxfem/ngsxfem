@@ -16,6 +16,7 @@ From: ubuntu:18.04
         liboce-ocaf-dev libopenblas-dev libsuitesparse-dev g++ gcc
     apt-get clean
     pip3 install pdoc3
+    pip3 install psutil
 
 %runscript
     exec /usr/bin/python3 "$@"
