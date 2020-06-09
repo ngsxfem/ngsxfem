@@ -24,7 +24,6 @@ namespace ngfem
                                        VorB vb = VOL,
                                        VorB element_vb = VOL);
     
-    virtual VorB VB () const { return VOL; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
