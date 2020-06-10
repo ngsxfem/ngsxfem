@@ -489,43 +489,10 @@ namespace ngcomp
         }
       }
     }
-
-    BitArray dofs_with_cut_on_boundary(GetNDof());
-    dofs_with_cut_on_boundary.Clear();
-
-    for (int selnr = 0; selnr < nse; ++selnr)
-    {
-      ElementId ei(BND,selnr);
-      DOMAIN_TYPE dt = cutinfo->DomainTypeOfElement(ei);
-      if (dt!=IF) continue;
-
-      Array<int> dnums;
-      GetDofNrs(ei, dnums);
-
-      for (int i = 0; i < dnums.Size(); ++i)
-      {
-        const int xdof = dnums[i];
-        dofs_with_cut_on_boundary.SetBit(xdof);
-      }
-    }
-
+    
     UpdateCouplingDofArray();
     FinalizeUpdate ();
     
-    dirichlet_dofs.SetSize (GetNDof());
-    dirichlet_dofs.Clear();
-
-    for (int i = 0; i < basedof2xdof.Size(); ++i)
-    {
-      const int dof = basedof2xdof[i];
-      if (dof != -1 && basefes->IsDirichletDof(i))
-        if (dofs_with_cut_on_boundary.Test(dof))
-          dirichlet_dofs.SetBitAtomic (dof);
-    }
-
-    free_dofs->SetSize (GetNDof());
-    *free_dofs = dirichlet_dofs;
-    free_dofs->Invert();
 
     *testout << "ndof = " << ndof << endl;
     *testout << "basedof2xdof = " << basedof2xdof << endl;
@@ -540,6 +507,45 @@ namespace ngcomp
     *testout << "free_dofs = " << *free_dofs << endl;
   }
 
+
+  /// update element coloring
+  void XFESpace::FinalizeUpdate()
+  {
+    int nse=ma->GetNSE();
+    BitArray dofs_with_cut_on_boundary(GetNDof());
+    dofs_with_cut_on_boundary.Clear();
+
+    for (int selnr = 0; selnr < nse; ++selnr)
+    {
+      ElementId ei(BND,selnr);
+      DOMAIN_TYPE dt = cutinfo->DomainTypeOfElement(ei);
+      if (dt!=IF) continue;
+      Array<int> dnums;
+      GetDofNrs(ei, dnums);
+      for (int i = 0; i < dnums.Size(); ++i)
+      {
+        const int xdof = dnums[i];
+        dofs_with_cut_on_boundary.SetBit(xdof);
+      }
+    }
+    
+    FESpace::FinalizeUpdate ();
+    
+    dirichlet_dofs.SetSize (GetNDof());
+    dirichlet_dofs.Clear();
+
+    for (int i = 0; i < basedof2xdof.Size(); ++i)
+    {
+      const int dof = basedof2xdof[i];
+      if (dof != -1 && basefes->IsDirichletDof(i))
+        if (dofs_with_cut_on_boundary.Test(dof))
+          dirichlet_dofs.SetBitAtomic (dof);
+    }
+    free_dofs->SetSize (GetNDof());
+    *free_dofs = dirichlet_dofs;
+    free_dofs->Invert();
+  }
+  
   template <int D>
   FiniteElement & T_XFESpace<D> :: GetFE (ElementId ei, Allocator & alloc) const
   {

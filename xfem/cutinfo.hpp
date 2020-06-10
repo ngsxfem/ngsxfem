@@ -51,12 +51,11 @@ namespace ngcomp
         ba = elems_of_domain_type;
       else
         ba = selems_of_domain_type;
-
-      if (ba[IF]->Test(elnr))
+      if (ba[CDOM_IF]->Test(elnr))
         return IF;
       else
       {
-        if (ba[NEG]->Test(elnr))
+        if (ba[CDOM_NEG]->Test(elnr))
           return NEG;
         else
           return POS;
