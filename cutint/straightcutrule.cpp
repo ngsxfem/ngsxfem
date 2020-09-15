@@ -568,7 +568,8 @@ namespace xintegration
           MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
           Mat<D,D> Finv = mip.GetJacobianInverse();
 
-          Vec<D> normal = Trans(Finv) * lset.GetNormal(quad_untrafo[i].Point());
+          FlatVector<double> fv(D,&(lset.GetNormal(quad_untrafo[i].Point())(0)));
+          Vec<D> normal = Trans(Finv) * fv;
           const double weight = myweight * L2Norm(normal);
 
           (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
@@ -720,10 +721,19 @@ namespace xintegration
       simplices_at_last_level = simplices_at_current_level;
     }
 
-    auto myir_untrafo = new (lh) IntegrationRule(0, lh);
-    for(auto final_sub_s : simplices_at_last_level)
-        final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
+    // Memory leaky:
+    // for(auto final_sub_s : simplices_at_last_level)
+    //     final_sub_s.GetPlainIntegrationRule(*myir_untrafo, intorder);
 
+    // Workaround:
+    IntegrationRule tmp;
+    for(auto final_sub_s : simplices_at_last_level)
+        final_sub_s.GetPlainIntegrationRule(tmp, intorder);
+    
+    auto myir_untrafo = new (lh) IntegrationRule(tmp.Size(),lh);
+    for (int i = 0; i < tmp.Size(); i++)
+      (*myir_untrafo)[i] = tmp[i];
+    
     vector<int> dt_is_if_indices;
     for(int i=0; i<M; i++) if ( dts[i] == IF) dt_is_if_indices.push_back(i);
 

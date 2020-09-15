@@ -70,10 +70,7 @@ namespace ngcomp
     }
 
     /// update element coloring
-    virtual void FinalizeUpdate()
-    {
-      FESpace::FinalizeUpdate ();
-    }
+    virtual void FinalizeUpdate();
 
     virtual size_t GetNDof () const { return ndof; }
 

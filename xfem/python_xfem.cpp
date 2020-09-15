@@ -6,6 +6,8 @@
 #include "../xfem/symboliccutlfi.hpp"
 #include "../xfem/ghostpenalty.hpp"
 
+#include <typeinfo>
+
 using namespace ngcomp;
 
 void ExportNgsx_xfem(py::module &m)
@@ -322,14 +324,12 @@ a : ngsolve.BitArray
 heapsize : int
   heapsize of local computations.
 )raw_string")
-
     );
-
 
 
   py::class_<MultiLevelsetCutInformation, shared_ptr<MultiLevelsetCutInformation>>
     (m, "MultiLevelsetCutInfo",R"raw(
-A minimal version of a CutInfo that allows for several levelsets and a list of list of domain_types.
+A minimal version of a CutInfo that allows for several levelsets and a list of tuples of domain_types.
 )raw")
     .def("__init__",  [] (MultiLevelsetCutInformation *instance,
                           shared_ptr<MeshAccess> ma,
@@ -343,24 +343,70 @@ A minimal version of a CutInfo that allows for several levelsets and a list of l
              if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
                throw Exception("all lsets need to be GridFunctions!");
            Array<shared_ptr<GridFunction>> lset_a = makeCArray<shared_ptr<GridFunction>> (lsets);
-           new (instance) MultiLevelsetCutInformation (ma, lset_a);
+           Array<shared_ptr<GridFunction>> lset_b;
+           for (int i = 0; i < py::len(lsets); i++)
+           {
+            lset_b.Append(CreateGridFunction(lset_a[i]->GetFESpace(), "lset_p1", Flags()));
+            lset_b[i]->Update();
+            lset_b[i]->GetVectorPtr()->Set(1.0, lset_a[i]->GetVector());
+           }
+           new (instance) MultiLevelsetCutInformation (ma, lset_b);
          },
          py::arg("mesh"),
          py::arg("levelset"),
          docu_string(R"raw_string(
-Creates a MultiLevelsetCutInfo based on a mesh.
+Creates a MultiLevelsetCutInfo based on a mesh and a tuple of levelsets.
 
 Parameters
 
-mesh : Mesh
+mesh : 
+  mesh
+
+levelsets : tuple(ngsolve.GridFunction)
+  tuple of GridFunctions w.r.t. which elements are marked 
 )raw_string")
       )
     .def("Mesh", [](MultiLevelsetCutInformation & self)
          {
            return self.GetMesh();
          },docu_string(R"raw_string(
-Returns mesh of CutInfo)raw_string")
+Returns mesh of CutInfo.
+)raw_string")
       )
+    .def("Update", [] (MultiLevelsetCutInformation & self,
+                       py::object lsets_in,
+                       int heapsize)
+         {
+           LocalHeap lh (heapsize, "MultiLevelsetCutInfo-heap", true);
+
+           py::extract<py::list> lsets_(lsets_in);
+           if (!lsets_.check())
+             throw Exception("levelset not compatible.");
+           auto lsets = lsets_();
+           for (int i = 0; i < py::len(lsets); i++)
+             if (!(py::extract<shared_ptr<GridFunction>>(lsets[i]).check()))
+               throw Exception("all lsets need to be GridFunctions!");
+           if (py::len(lsets) != self.GetLen())
+             throw Exception("New levelset tuple must have the same length as the original!");
+
+           Array<shared_ptr<GridFunction>> lsets_a = makeCArray<shared_ptr<GridFunction>> (lsets);
+           self.Update(lsets_a, lh);
+         },
+         py::arg("levelsets"),
+         py::arg("heapsize") = 1000000,
+         docu_string(R"raw_string(
+Updates the tuple of levelsets behind the MultiLevelsetCutInfo and 
+recomputes any element marker arrays which have been created with this
+instance.
+
+Parameters
+
+levelsets : tuple(ngsolve.GridFunction)
+  tuple of GridFunctions w.r.t. which elements are marked.
+
+heapsize : int = 1000000
+  heapsize of local computations)raw_string")
+        )
     .def("GetElementsOfType", [](MultiLevelsetCutInformation & self,
                                  py::object dt_in,
                                  VorB vb,
@@ -371,6 +417,8 @@ Returns mesh of CutInfo)raw_string")
 
            if (py::isinstance<py::tuple>(dt_in))
            {
+             if (py::len(dt_in) != self.GetLen())
+               throw Exception("Number of domains does not match number of levelsets");
              Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
              Array<Array<DOMAIN_TYPE>> dts(1);
              dts[0] = dts_;
@@ -405,6 +453,8 @@ Returns mesh of CutInfo)raw_string")
              // Valid input. Add domain to pass to self.GetElementsOfDomainType
              cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
+           if (common_length != self.GetLen())
+             throw Exception("Number of domains does not match number of levelsets");
            
            return self.GetElementsOfDomainType(cdts_aa, vb, lh);
          },
@@ -412,8 +462,18 @@ Returns mesh of CutInfo)raw_string")
          py::arg("VOL_or_BND") = VOL,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-corresponding domain type.)raw_string")
-      )
+corresponding domain type. This BitArray remains attached to the mlci class
+instance and is updated on mlci.Update(lsets).
+
+Parameters
+
+domain_type : {tuple(ENUM), list(tuple(ENUM)), DomainTypeArray}
+  Description of the domain.
+
+heapsize : int = 1000000
+  heapsize of local computations.
+)raw_string")
+    )
     .def("GetElementsWithContribution", [](MultiLevelsetCutInformation & self,
                                            py::object dt_in,
                                            VorB vb,
@@ -424,6 +484,8 @@ corresponding domain type.)raw_string")
 
            if (py::isinstance<py::tuple>(dt_in))
            {
+             if (py::len(dt_in) != self.GetLen())
+               throw Exception("Number of domains does not match number of levelsets");
              Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
              Array<Array<DOMAIN_TYPE>> dts(1);
              dts[0] = dts_;
@@ -458,6 +520,8 @@ corresponding domain type.)raw_string")
              // Valid input: Add domain to pass to self.GetElementsWithContribution
              cdts_aa[i] = makeCArray<DOMAIN_TYPE> (dta);
            }
+           if (common_length != self.GetLen())
+             throw Exception("Number of domains does not match number of levelsets");
            
            return self.GetElementsWithContribution(cdts_aa, vb, lh);
          },
@@ -465,9 +529,18 @@ corresponding domain type.)raw_string")
          py::arg("VOL_or_BND") = VOL,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Returns BitArray that is true for every element that has the 
-a contribution to the corresponding level set domain.)raw_string")
-      )
-    ;
+a contribution to the corresponding level set domain. This BitArray 
+remains attached to the mlci class instance and is updated on 
+mlci.Update(lsets).
+
+Parameters
+
+domain_type : {tuple(ENUM), list(tuple(ENUM)), DomainTypeArray}
+  Description of the domain.
+
+heapsize : int = 1000000
+  heapsize of local computations.
+)raw_string"));
 
 
 //   .def("__init__",  [] (XFESpace *instance,
@@ -801,9 +874,11 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );
 
   typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, int dim_space, bool hdiv)
+  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
         {
 
+          const int dim_space = self->GetFESpace()->GetSpatialDimension();
+          
           Array<int> comparr(0);
           if (py::extract<int> (comp).check())
           {
@@ -887,7 +962,6 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
         py::arg("proxy"),
         py::arg("order"),
         py::arg("comp") = -1,
-        py::arg("dim_space") = 2,
         py::arg("hdiv") = false,
         docu_string(R"raw_string(
 Normal derivative of higher order. This is evaluated via numerical differentiation which offers only
@@ -903,9 +977,6 @@ order : int
 
 comp : int
   component of proxy if test / trialfunction is a component of a compound or vector test / trialfunction
-
-dim_space : int
-  dimension of the space
 
 hdiv : boolean
   assumes scalar FEs if false, otherwise assumes hdiv

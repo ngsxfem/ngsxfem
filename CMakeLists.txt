@@ -71,7 +71,7 @@ else(BUILD_NGSOLVE)
     message(STATUS "install dir ${install_dir}")
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   find_package(NGSolve CONFIG REQUIRED
-    HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen
+    HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen $ENV{NETGENDIR}/../lib/cmake/ngsolve/ $ENV{NETGENDIR}/../Resources/CMake
   )
 endif(BUILD_NGSOLVE)
 
@@ -167,7 +167,7 @@ message("
 
   Build NGSolve from scratch: ${BUILD_NGSOLVE}
   Build xfem (and NGSolve) with ccache: ${USE_CCACHE}
-
+  Build xfem with python stub files: ${BUILD_STUB_FILES}
 
   Building:
 

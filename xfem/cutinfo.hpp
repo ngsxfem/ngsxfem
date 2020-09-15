@@ -51,12 +51,11 @@ namespace ngcomp
         ba = elems_of_domain_type;
       else
         ba = selems_of_domain_type;
-
-      if (ba[IF]->Test(elnr))
+      if (ba[CDOM_IF]->Test(elnr))
         return IF;
       else
       {
-        if (ba[NEG]->Test(elnr))
+        if (ba[CDOM_NEG]->Test(elnr))
           return NEG;
         else
           return POS;
@@ -97,31 +96,56 @@ namespace ngcomp
   protected:
     shared_ptr<MeshAccess> ma;
     Array<shared_ptr<GridFunction>> lsets;
+    vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_with_contribution;
+    vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_of_domain_type;
   public:
-    MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, const Array<shared_ptr<GridFunction>> & lsets_in);
+    MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, 
+                                 const Array<shared_ptr<GridFunction>> & lsets_in);
+    
+    void Update(const Array<shared_ptr<GridFunction>> & lsets_in, LocalHeap & lh);
+
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
+    
+    int GetLen() const {return lsets.Size();}
+
+    void UpdateElementsOfDomainType(const shared_ptr<BitArray> & elems_of_domain_type, 
+                                    const Array<Array<DOMAIN_TYPE>> & cdt, 
+                                    VorB vb, 
+                                    LocalHeap & lh) const;
 
     shared_ptr<BitArray> GetElementsOfDomainType(const Array<Array<DOMAIN_TYPE>> & cdt,
-                                                 VorB vb, LocalHeap & lh) const;
+                                                 VorB vb, 
+                                                 LocalHeap & lh);
 
     shared_ptr<BitArray> GetElementsOfDomainType(const Array<DOMAIN_TYPE> & cdt_,
-                                                 VorB vb, LocalHeap & lh) const
+                                                 VorB vb, 
+                                                 LocalHeap & lh)
     {
       Array<Array<DOMAIN_TYPE>> cdt(1);
       cdt[0] = cdt_;
       return GetElementsOfDomainType(cdt,vb,lh);
     }
 
+    void UpdateElementsWithContribution(const shared_ptr<BitArray> & elems_of_domain_type, 
+                                        const Array<Array<DOMAIN_TYPE>> & cdt, 
+                                        VorB vb, 
+                                        LocalHeap & lh) const;
+
     shared_ptr<BitArray> GetElementsWithContribution(const Array<Array<DOMAIN_TYPE>> & cdt,
-                                                 VorB vb, LocalHeap & lh) const;
+                                                     VorB vb, 
+                                                     LocalHeap & lh);
 
     shared_ptr<BitArray> GetElementsWithContribution(const Array<DOMAIN_TYPE> & cdt_,
-                                                 VorB vb, LocalHeap & lh) const
+                                                     VorB vb, 
+                                                     LocalHeap & lh)
     {
       Array<Array<DOMAIN_TYPE>> cdt(1);
       cdt[0] = cdt_;
       return GetElementsWithContribution(cdt,vb,lh);
     }
+
+    bool CombinedDomainTypesEqual(const Array<Array<DOMAIN_TYPE>> & cdta, 
+                                  const Array<Array<DOMAIN_TYPE>> & cdtb) const;
   };
   
   shared_ptr<BitArray> GetFacetsWithNeighborTypes(shared_ptr<MeshAccess> ma,
@@ -131,6 +155,7 @@ namespace ngcomp
                                                   bool bound_val_b,
                                                   bool ask_and,
                                                   LocalHeap & lh);
+
   shared_ptr<BitArray> GetElementsWithNeighborFacets(shared_ptr<MeshAccess> ma,
                                                      shared_ptr<BitArray> a,
                                                      LocalHeap & lh);

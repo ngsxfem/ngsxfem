@@ -43,8 +43,10 @@ namespace ngfem
   CalcElementMatrixAdd (const FiniteElement & fel,
                         const ElementTransformation & trafo,
                         FlatMatrix<double> elmat,
+                        bool & symmetric_so_far,
                         LocalHeap & lh) const
   {
+    symmetric_so_far = false;
     T_CalcElementMatrixAdd<double,double,double> (fel, trafo, elmat, lh);
   }
 
@@ -53,8 +55,10 @@ namespace ngfem
   CalcElementMatrixAdd (const FiniteElement & fel,
                         const ElementTransformation & trafo,
                         FlatMatrix<Complex> elmat,
+                        bool & symmetric_so_far,
                         LocalHeap & lh) const
   {
+    symmetric_so_far = false;
     if (fel.ComplexShapes() || trafo.IsComplex())
       T_CalcElementMatrixAdd<Complex,Complex> (fel, trafo, elmat, lh);
     else
@@ -95,7 +99,7 @@ namespace ngfem
     int intorder = fel_trial.Order()+fel_test.Order();
 
     auto et = trafo.GetElementType();
-    if (et == ET_TRIG || et == ET_TET)
+    if (et == ET_SEGM || et == ET_TRIG || et == ET_TET)
       intorder -= test_difforder+trial_difforder;
 
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )

@@ -24,10 +24,11 @@ namespace ngfem
                                        VorB vb = VOL,
                                        VorB element_vb = VOL);
     
-    virtual VorB VB () const { return VOL; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
+
+    
     virtual void 
     CalcElementMatrix     (const FiniteElement & fel,
                           const ElementTransformation & trafo, 
@@ -38,13 +39,15 @@ namespace ngfem
     CalcElementMatrixAdd (const FiniteElement & fel,
                           const ElementTransformation & trafo, 
                           FlatMatrix<double> elmat,
+                          bool & symmetric_so_far,                          
                           LocalHeap & lh) const;
 
     virtual void 
     CalcElementMatrixAdd (const FiniteElement & fel,
                           const ElementTransformation & trafo, 
                           FlatMatrix<Complex> elmat,
-                          LocalHeap & lh) const;    
+                          bool & symmetric_so_far,                          
+                          LocalHeap & lh) const;
 
     
     template <typename SCAL, typename SCAL_SHAPES, typename SCAL_RES>

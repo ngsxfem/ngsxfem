@@ -26,7 +26,7 @@ namespace ngcomp
     //     	  const string & aname,
     //     	  const Flags & flags);
 
-    virtual MatrixGraph * GetGraph (int level, bool symmetric);
+    virtual MatrixGraph GetGraph (int level, bool symmetric);
   };
 
 }
