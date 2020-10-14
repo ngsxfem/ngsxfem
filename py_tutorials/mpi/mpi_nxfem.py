@@ -1,11 +1,13 @@
+from mpi4py import MPI
 import netgen.meshing
 from netgen.geom2d import SplineGeometry
 from ngsolve import *
 from xfem import *
 from math import pi
 from xfem.lsetcurv import *
+from ngsolve import ngs2petsc
 
-comm = mpi_world
+comm = MPI.COMM_WORLD
 rank = comm.rank
 np = comm.size
 
@@ -109,10 +111,14 @@ gfu = GridFunction(VhG)
 gfu.components[0].Set(solution[1], BND)
 
 # # setting up matrix and vector
-# c = Preconditioner(a, 'hypre') # very good for low order but fine meshes
-c = Preconditioner(a, 'bddc') # very good for high order but moderate meshes
-#c = Preconditioner(a, 'bddc', coarsetype="h1amg") # only for serial runs
+#c = Preconditioner(a, 'hypre') # very good for low order but fine meshes
+#c = Preconditioner(a, 'bddc') # very good for high order but moderate meshes
 #c = Preconditioner(a, 'direct', inverse="masterinverse") # only for small runs
+# c = Preconditioner(a, 'gamg') # petsc gamg
+if np == 1:
+    c = Preconditioner(a, 'bddc', coarsetype="h1amg") # only for serial runs
+else:
+    c = Preconditioner(a, 'bddc', coarsetype="gamg") # 
 
 a.Assemble();
 f.Assemble();
