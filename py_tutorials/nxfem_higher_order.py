@@ -16,7 +16,7 @@ to the one used in cutfem.py and nxfem.py. However, we use a higher order method
     extensions:
     -----------
     * A Stokes interface problem based on similar techniques and a Taylor-Hood discretization is
-    used in stokesxfem.py
+    used in stokescutfem.py
     * To be robust w.r.t. high contrasts we could apply a edge-based stabilization. In
     fictdom_ghostpen.py this stabilization is used for a one-domain (higher order) problem.
 
