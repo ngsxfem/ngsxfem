@@ -139,7 +139,7 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * =py_tutorials/nxfem_higher_order.py= : stationary interface problem with a higher order isoparametric unfitted FEM with Nitsche (similar to =nxfem.py=)
  * =py_tutorials/fictdom_ghostpen.py= : stationary fictitious domain problem with isoparametric CutFEM, Nitsche and ghost penalty stabilization
  * =py_tutorials/fictdom_dg_ghostpen.py= : stationary fictitious domain problem with isoparametric Cut-DG-FEM, Nitsche and ghost penalty stabilization
- * =py_tutorials/stokesxfem.py= : stationary Stokes interface problem with an isoparametric (P2X/P1X) Taylor-Hood-Nitsche-XFEM discretization
+ * =py_tutorials/stokescutfem.py= : stationary Stokes interface problem with an unfitted isoparametric (P2/P1) Taylor-Hood-Nitsche discretization
  * =py_tutorials/tracefem.py= : stationary 2D surface PDE problem with a TraceFEM discretization (low order)
  * =py_tutorials/tracefem3d.py= : stationary 3D surface PDE problem with a TraceFEM discretization (higher order)
  * =spacetime/py_tutorials/spacetimeP1P1.py= : moving fictitous domain problem using a space time unfitted FEM
