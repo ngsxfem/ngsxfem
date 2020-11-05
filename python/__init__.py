@@ -459,3 +459,29 @@ def SpaceTimeWeakSet(gfu_e, cf, space_fes):
     gfu_e_repl = GridFunction(space_fes)
     gfu_e_repl.Set( cf )
     gfu_e.vec[:].data = gfu_e_repl.vec
+
+
+def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
+    if not "sd" in kwargs:
+        kwargs["sd"] = 5
+    return StdDraw(IfPos(levelset,fpos,fneg),*args,**kwargs)
+    
+def DrawDiscontinuous_webgui(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs):
+    fneg = CoefficientFunction(fneg)
+    fpos = CoefficientFunction(fpos)
+    if fneg.dim > 1 or fpos.dim > 1:
+        print("webgui discontinuous vis only for scalar functions a.t.m., switching to IfPos variant")
+    else:
+        return WebGuiDraw(CoefficientFunction((levelset,fpos,fneg,0)),eval_function="value.x>0.0?value.y:value.z",*args,**kwargs)
+    return DrawDiscontinuous_std(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs)
+
+from functools import partial
+def MakeDiscontinuousDraw(Draw):
+    """
+Generates a Draw-like visualization function. If Draw is from the webgui, a special evaluator is used to draw a pixel-sharp discontinuity otherwise an IfPos-CoefficientFunction is used.     
+    """
+    if (Draw.__module__ == "ngsolve.webgui"):
+        return partial(DrawDiscontinuous_webgui,Draw)
+    else:
+        return partial(DrawDiscontinuous_std,Draw)
+    
