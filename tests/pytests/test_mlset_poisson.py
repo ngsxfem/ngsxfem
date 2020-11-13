@@ -200,8 +200,9 @@ def test_check_convergence_order():
                                       errs["l2"][(Lx - 1, k)])
                 rate_h1 = CompLogRate(errs["h1"][(Lx, k)],
                                       errs["h1"][(Lx - 1, k)])
-                ratesl2 += rate_l2 
-                ratesh1 += rate_h1
+                if i > 1:
+                    ratesl2 += rate_l2 
+                    ratesh1 += rate_h1
 
                 print("{:3.1e}   {:5.3e}  {:4.2f}   {:5.3e}  {:4.2f} ".format(
                     h0 * 0.5**Lx, errs["l2"][(Lx, k)], rate_l2,
@@ -212,11 +213,11 @@ def test_check_convergence_order():
                     h0 * 0.5**Lx, errs["l2"][(Lx, k)], errs["h1"][(Lx, k)]))
         print("--------------------------------------------")
 
-        ratesl2 = ratesl2 / (len(mesh_levels) - 1)
-        ratesh1 = ratesh1 / (len(mesh_levels) - 1)
+        ratesl2 = ratesl2 / (len(mesh_levels) - 2)
+        ratesh1 = ratesh1 / (len(mesh_levels) - 2)
 
-        print("Avarage L2 rate: {}".format(ratesl2))
-        print("Avarage H1 rate: {}".format(ratesh1))
+        print("Average L2 rate (on final meshes): {}".format(ratesl2))
+        print("Average H1 rate (on final meshes): {}".format(ratesh1))
 
         assert k + 1 - ratesl2 < rate_tol
         assert k - ratesh1 < rate_tol
