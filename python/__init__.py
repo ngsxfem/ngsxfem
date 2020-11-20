@@ -461,9 +461,16 @@ def SpaceTimeWeakSet(gfu_e, cf, space_fes):
     gfu_e.vec[:].data = gfu_e_repl.vec
 
 
+from ngsolve.internal import *
 def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
+    if "deformation" in kwargs and StdDraw.__module__ == "ngsolve.solve":
+        args2 = list(args[:])
+        args2[1] = "deformation_"+args[1]
+        StdDraw(kwargs["deformation"],*tuple(args2),**kwargs)
+        visoptions.deformation=1
     if not "sd" in kwargs:
         kwargs["sd"] = 5
+        
     return StdDraw(IfPos(levelset,fpos,fneg),*args,**kwargs)
     
 def DrawDiscontinuous_webgui(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs):
@@ -481,7 +488,26 @@ def MakeDiscontinuousDraw(Draw):
 Generates a Draw-like visualization function. If Draw is from the webgui, a special evaluator is used to draw a pixel-sharp discontinuity otherwise an IfPos-CoefficientFunction is used.     
     """
     if (Draw.__module__ == "ngsolve.webgui"):
-        return partial(DrawDiscontinuous_webgui,Draw)
+        ret = partial(DrawDiscontinuous_webgui,Draw)
     else:
-        return partial(DrawDiscontinuous_std,Draw)
+        ret = partial(DrawDiscontinuous_std,Draw)
+    ret.__doc__ ="""
+    Visualization method for functions that are non-smooth across 
+    level set interfaces. Effectively calls """+Draw.__module__+""".Draw with
+    a few manipulations. 
+
+    Parameters
+    ----------
+    levelset : CoefficientFunction
+        (scalar) CoefficientFunction that describes the (implicit) geometry 
+    fneg : CoefficientFunction
+        CoefficientFunction that is evaluated where the level set function is negative
+    fpos : CoefficientFunction
+        CoefficientFunction that is evaluated where the level set function is positive
+        
+    deformation : deformation (optional)
+        (vectorial) CoefficientFunction that describes the deformation of the background mesh
+    *remainder* : *
+        all remainder arguments are passed to """ +Draw.__module__ +".Draw"
+    return ret
     
