@@ -290,7 +290,7 @@ Other Parameters :
         else:
             return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
-def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000):
+def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000, ip_container=None):
     """
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
@@ -302,7 +302,9 @@ See documentation of Integrate.
         levelset_domain_local["time_order"] = time_order
     return IntegrateX(levelset_domain = levelset_domain_local,
                       mesh=mesh, cf=cf,
-                      heapsize=heapsize)
+                      ip_container=ip_container,
+                      heapsize=heapsize
+                      )
 
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO
@@ -364,6 +366,9 @@ region_wise : bool
 
 element_wise : bool
   (only active for non-levelset version)
+
+ip_container : list (or None)
+  a list to store integration points (for debugging or visualization purposes)
 
 heapsize : int
   heapsize for local computations.
