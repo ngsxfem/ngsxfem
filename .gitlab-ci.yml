@@ -6,6 +6,10 @@ stages:
 build:
   stage: build
   image: schruste/ngsolve:latest
+  cache:
+    key: "$CI_PIPELINE_ID"
+    paths:
+      - build/
   script:
     - git submodule update --init --recursive
     - mkdir build
@@ -72,7 +76,6 @@ cleanup:
 
 paper:
   stage: build
-  image: openjournals/paperdraft
   script:
     - echo $PWD    
     - docker run --rm --volume $PWD:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
