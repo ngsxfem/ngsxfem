@@ -22,11 +22,6 @@ build:
 ctests-tutorials:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
   script:
     - bash .ci/ci_ctests.sh tutorial
 
@@ -36,11 +31,6 @@ ctests-tutorials:
 ctests-mayfail:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -49,11 +39,6 @@ ctests-mayfail:
 ctests-remaining:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
   script:
     -  bash .ci/ci_ctests.sh remaining
   when: always
@@ -62,11 +47,6 @@ ctests-remaining:
 go4quads-tests:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-    - build/
-    - install/
   script:
     - bash .ci/ci_ctests.sh go4quads-tests
   when: always
@@ -75,11 +55,6 @@ go4quads-tests:
 metrics:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-    - build/
-    - install/
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
