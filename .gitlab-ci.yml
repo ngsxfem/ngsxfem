@@ -71,6 +71,7 @@ paper:
   stage: build
   image: openjournals/paperdraft
   script:
+    - echo $PWD    
     - docker run --rm --volume $PWD:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
     paths:
