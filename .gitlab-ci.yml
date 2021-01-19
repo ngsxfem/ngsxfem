@@ -14,8 +14,8 @@ oj-docker:
   image: python:latest
   cache:
     key: global
-  paths:
-    - openjournal-docker/
+    paths:
+      - openjournal-docker/
   script:
   - mkdir -p openjournal-docker
   - cd openjournal-docker
@@ -28,8 +28,8 @@ paper:
   image: docker:latest
   cache:
     key: global
-  paths:
-    - openjournal-docker/
+    paths:
+      - openjournal-docker/
   script:
     - docker load -i openjournal-docker/openjournals_paperdraft.tar
     - docker run --rm --volume ./:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
