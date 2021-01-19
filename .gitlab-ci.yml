@@ -101,7 +101,6 @@ cleanup:
 
 paper0:
   stage: build
-  image: openjournals/paperdraft
   script:
     - echo $PWD
     - ls -al .
@@ -110,7 +109,6 @@ paper0:
         
 paper:
   stage: build
-  image: openjournals/paperdraft
   script:
     - echo $PWD 2>&1 
     - ls -al /builds/lehrenfeld/ngsxfem/.git/ 2>&1 
