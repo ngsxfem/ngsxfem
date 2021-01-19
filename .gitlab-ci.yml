@@ -2,68 +2,13 @@ stages:
     - build
     - test
     - deploy
-        
-build:
-  stage: build
-  image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-  script:
-    - git submodule update --init --recursive
-    - mkdir build
-    - mkdir install    
-    - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
-    - make install
 
-ctests-tutorials:
-  stage: test
-  image: schruste/ngsolve:latest
-  script:
-    - bash .ci/ci_ctests.sh tutorial
-
-  when: always
-  allow_failure: false
-
-ctests-mayfail:
-  stage: test
-  image: schruste/ngsolve:latest
-  script:
-    - bash .ci/ci_ctests.sh mayfail
-  when: always
-  allow_failure: true
-
-ctests-remaining:
-  stage: test
-  image: schruste/ngsolve:latest
-  script:
-    -  bash .ci/ci_ctests.sh remaining
-  when: always
-  allow_failure: false
-
-go4quads-tests:
-  stage: test
-  image: schruste/ngsolve:latest
-  script:
-    - bash .ci/ci_ctests.sh go4quads-tests
-  when: always
-  allow_failure: false
-
-metrics:
-  stage: test
-  image: schruste/ngsolve:latest
-  script:
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - python3 /home/jovyan/.local/lib/python3.8/site-packages/share/ngsxfem/report/ngsxfem_report.py 2> metrics.txt
-  artifacts:
-    reports:
-      metrics: metrics.txt
-  when: always
-  allow_failure: true
+cache:
+  key: $CI_PIPELINE_ID
+  paths:
+    - build/
+    - install/
+    - openjournal-docker/
         
 deploy:
   stage: deploy
@@ -74,11 +19,19 @@ cleanup:
   stage: deploy
   script:
     - echo " cleanup "
-        
+
+before_script:
+  script:
+    - mkdir -p openjournal-docker
+    - cd openjournal-docker
+    - wget https://raw.githubusercontent.com/NotGlop/docker-drag/master/docker_pull.py .
+    - python docker_pull.py openjournals/paperdraft   
+                        
 paper:
   stage: build
   image: docker:latest
   script:
+    - docker load openjournal-docker/openjournals_paperdraft.tar
     - docker run --rm --volume ./:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
     paths:
