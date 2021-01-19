@@ -8,22 +8,20 @@ cache:
   paths:
     - build/
     - install/
+
+cache:
+  key: global
+  paths:
     - openjournal-docker/
-
-                
-deploy:
-  stage: deploy
-  script:
-  - echo " deploy"
-
-cleanup:
-  stage: deploy
-  script:
-    - echo " cleanup "
+        
 
 oj-docker:
   stage: build
   image: python:latest
+  cache:
+    key: global
+  paths:
+    - openjournal-docker/
   script:
   - mkdir -p openjournal-docker
   - cd openjournal-docker
@@ -34,8 +32,12 @@ oj-docker:
 paper:
   stage: deploy
   image: docker:latest
+  cache:
+    key: global
+  paths:
+    - openjournal-docker/
   script:
-    - docker load openjournal-docker/openjournals_paperdraft.tar
+    - docker load -i openjournal-docker/openjournals_paperdraft.tar
     - docker run --rm --volume ./:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
     paths:
