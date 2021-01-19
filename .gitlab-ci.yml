@@ -13,8 +13,9 @@ build:
   script:
     - git submodule update --init --recursive
     - mkdir build
+    - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=~/inst/ngsxfem ..
+    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
     - make install
 
 ctests-tutorials:
@@ -24,6 +25,7 @@ ctests-tutorials:
     key: $CI_PIPELINE_ID
     paths:
       - build/
+      - install/
   script:
     - bash .ci/ci_ctests.sh tutorial
 
@@ -37,6 +39,7 @@ ctests-mayfail:
     key: $CI_PIPELINE_ID
     paths:
       - build/
+      - install/
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -49,6 +52,7 @@ ctests-remaining:
     key: $CI_PIPELINE_ID
     paths:
       - build/
+      - install/
   script:
     -  bash .ci/ci_ctests.sh remaining
   when: always
@@ -61,6 +65,7 @@ go4quads-tests:
     key: $CI_PIPELINE_ID
     paths:
     - build/
+    - install/
   script:
     - bash .ci/ci_ctests.sh go4quads-tests
   when: always
@@ -73,9 +78,10 @@ metrics:
     key: $CI_PIPELINE_ID
     paths:
     - build/
+    - install/
   script:
-    - export LD_LIBRARY_PATH="${HOME}/inst/ngsxfem/lib/python3/dist-packages/xfem/"
-    - export PYTHONPATH="${HOME}/inst/ngsxfem/lib/python3/dist-packages"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
     - python3 /home/jovyan/.local/lib/python3.8/site-packages/share/ngsxfem/report/ngsxfem_report.py 2> metrics.txt
   artifacts:
     reports:
@@ -93,6 +99,15 @@ cleanup:
   script:
     - echo " cleanup "
 
+paper0:
+  stage: build
+  image: openjournals/paperdraft
+  script:
+    - echo $PWD
+    - ls -al .
+    - echo $PWD 2>&1 
+    - ls -al . 2>&1 
+        
 paper:
   stage: build
   image: openjournals/paperdraft
