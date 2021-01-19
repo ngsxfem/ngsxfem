@@ -21,6 +21,7 @@ build:
 
 ctests-tutorials:
   stage: test
+  image: schruste/ngsolve:latest
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
@@ -33,6 +34,7 @@ ctests-tutorials:
 
 ctests-mayfail:
   stage: test
+  image: schruste/ngsolve:latest
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
@@ -44,6 +46,7 @@ ctests-mayfail:
 
 ctests-remaining:
   stage: test
+  image: schruste/ngsolve:latest
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
@@ -55,6 +58,7 @@ ctests-remaining:
 
 go4quads-tests:
   stage: test
+  image: schruste/ngsolve:latest
   cache:
     key: "$CI_PIPELINE_ID"
     paths:
