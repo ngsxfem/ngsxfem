@@ -9,7 +9,8 @@ cache:
     - build/
     - install/
     - openjournal-docker/
-        
+
+                
 deploy:
   stage: deploy
   script:
@@ -27,6 +28,7 @@ oj-docker:
   - mkdir -p openjournal-docker
   - cd openjournal-docker
   - wget https://raw.githubusercontent.com/NotGlop/docker-drag/master/docker_pull.py
+  - pip install --user requests      
   - python docker_pull.py openjournals/paperdraft   
                         
 paper:
