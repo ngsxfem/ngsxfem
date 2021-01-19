@@ -98,7 +98,7 @@ metrics:
 paper:
   stage: build
   image: schruste/joss:latest
-  entrypoint: [""] 
+    entrypoint: [""] 
   script:
     - export JOURNAL=joss
     - echo $PWD
