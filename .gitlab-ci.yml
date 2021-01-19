@@ -9,8 +9,6 @@ cache:
     - build/
     - install/
     - openjournal-docker/
-
-                
         
 deploy:
   stage: deploy
@@ -22,14 +20,17 @@ cleanup:
   script:
     - echo " cleanup "
 
-before_script:
+oj-docker:
+  stage: build
+  image: docker:latest
+  script:
   - mkdir -p openjournal-docker
   - cd openjournal-docker
   - wget https://raw.githubusercontent.com/NotGlop/docker-drag/master/docker_pull.py .
   - python docker_pull.py openjournals/paperdraft   
                         
 paper:
-  stage: build
+  stage: deploy
   image: docker:latest
   script:
     - docker load openjournal-docker/openjournals_paperdraft.tar
