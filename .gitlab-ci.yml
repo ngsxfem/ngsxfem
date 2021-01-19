@@ -26,7 +26,7 @@ oj-docker:
   script:
   - mkdir -p openjournal-docker
   - cd openjournal-docker
-  - wget https://raw.githubusercontent.com/NotGlop/docker-drag/master/docker_pull.py .
+  - wget https://raw.githubusercontent.com/NotGlop/docker-drag/master/docker_pull.py
   - python docker_pull.py openjournals/paperdraft   
                         
 paper:
