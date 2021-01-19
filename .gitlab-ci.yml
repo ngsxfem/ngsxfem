@@ -1,8 +1,11 @@
+stages:
+    - build
+    - test
+    - deploy
+        
 build:
   stage: build
   image: schruste/ngsolve:latest
-  cache:
-    key: "$CI_PIPELINE_ID"
   script:
     - git submodule update --init --recursive
     - mkdir build
