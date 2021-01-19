@@ -80,7 +80,7 @@ cleanup:
 
 paper:
   stage: build
-  image: schruste/ngsolve:latest
+  image: openjournals/paperdraft
   script:
     - echo $PWD    
     - docker run --rm --volume /builds/lehrenfeld/ngsxfem/.git/:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
