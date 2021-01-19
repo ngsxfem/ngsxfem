@@ -7,23 +7,21 @@ build:
   stage: build
   image: schruste/ngsolve:latest
   cache:
-    key: asdf
+    key: $CI_PIPELINE_ID
     paths:
       - build/
   script:
     - git submodule update --init --recursive
     - mkdir build
-    - mkdir install
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF ..
-    - make -j3
+    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=~/inst/ngsxfem ..
     - make install
 
 ctests-tutorials:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: asdf
+    key: $CI_PIPELINE_ID
     paths:
       - build/
   script:
@@ -36,7 +34,7 @@ ctests-mayfail:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: asdf
+    key: $CI_PIPELINE_ID
     paths:
       - build/
   script:
@@ -48,7 +46,7 @@ ctests-remaining:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: asdf
+    key: $CI_PIPELINE_ID
     paths:
       - build/
   script:
@@ -60,7 +58,7 @@ go4quads-tests:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: asdf
+    key: $CI_PIPELINE_ID
     paths:
     - build/
   script:
@@ -68,6 +66,23 @@ go4quads-tests:
   when: always
   allow_failure: false
 
+metrics:
+  stage: test
+  image: schruste/ngsolve:latest
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+    - build/
+  script:
+    - export LD_LIBRARY_PATH="${HOME}/inst/ngsxfem/lib/python3/dist-packages/xfem/"
+    - export PYTHONPATH="${HOME}/inst/ngsxfem/lib/python3/dist-packages"
+    - python3 /home/jovyan/.local/lib/python3.8/site-packages/share/ngsxfem/report/ngsxfem_report.py 2> metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
+  when: always
+  allow_failure: true
+        
 deploy:
   stage: deploy
   script:
