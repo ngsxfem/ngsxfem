@@ -8,20 +8,6 @@ cache:
   paths:
     - build/
     - install/
-
-oj-docker:
-  stage: build
-  image: python:latest
-  cache:
-    key: global
-    paths:
-      - openjournal-docker/
-  script:
-  - mkdir -p openjournal-docker
-  - cd openjournal-docker
-  - wget https://raw.githubusercontent.com/NotGlop/docker-drag/master/docker_pull.py
-  - pip install --user requests      
-  - python docker_pull.py openjournals/paperdraft   
                         
 paper:
   stage: deploy
@@ -35,7 +21,6 @@ paper:
     - ls -al .
     - ls -al *
     - docker load -i openjournal-docker/openjournals_paperdraft.tar
-    - docker run --rm --volume ./:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
     paths:
       - paper.pdf
