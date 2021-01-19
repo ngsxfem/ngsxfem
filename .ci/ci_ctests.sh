@@ -2,15 +2,15 @@
 
 set -e
 
-cat ~/inst/netgen/bin/ngscxx
-echo "cmake-tests"
-cd build
-export NETGENDIR="${HOME}/inst/netgen/bin"
-export PATH="${NETGENDIR}:${PATH}"
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${HOME}/inst/netgen/lib"
-export PYTHONPATH="${PYTHONPATH}:${HOME}/inst/netgen/lib/python3/dist-packages"
-echo $PATH
-echo $(which ngscxx)
+# cat ~/inst/netgen/bin/ngscxx
+# echo "cmake-tests"
+# cd build
+# export NETGENDIR="${HOME}/inst/netgen/bin"
+# export PATH="${NETGENDIR}:${PATH}"
+# export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${HOME}/inst/netgen/lib"
+# export PYTHONPATH="${PYTHONPATH}:${HOME}/inst/netgen/lib/python3/dist-packages"
+# echo $PATH
+# echo $(which ngscxx)
 
 if [ $1 == "tutorial" ]; then
   ctest -V -R 'py_tutorial'

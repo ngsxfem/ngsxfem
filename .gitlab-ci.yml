@@ -1,16 +1,14 @@
 build:
   stage: build
-  before_script:
-    - echo " before script "
-    - rm -rf ~/inst/netgen
-    - mkdir -p ~/inst/netgen
-    - if [ ! -f ~/ngsolve_stable.sif ]; then singularity pull -U library://laevar/default/ngsolve:stable ; mv ngsolve_stable.sif ~/ ; fi
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-      - build/
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_build.sh
+    - git submodule update --init --recursive
+    - mkdir build
+    - mkdir install
+    - cd build
+    - cmake -DBUILD_NGSOLVE=OFF ..
+    - make -j3
+    - make install
 
 ctests-tutorials:
   stage: test
@@ -19,7 +17,7 @@ ctests-tutorials:
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh tutorial
+    - bash .ci/ci_ctests.sh tutorial
 
   when: always
   allow_failure: false
@@ -31,7 +29,7 @@ ctests-mayfail:
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh mayfail
+    - bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
 
@@ -42,7 +40,7 @@ ctests-remaining:
     paths:
       - build/
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh remaining
+    -  bash .ci/ci_ctests.sh remaining
   when: always
   allow_failure: false
 
@@ -53,16 +51,9 @@ go4quads-tests:
     paths:
     - build/
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh go4quads-tests
+    - bash .ci/ci_ctests.sh go4quads-tests
   when: always
   allow_failure: false
-
-ngsxfem-report:
-  stage: deploy
-  script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ngsxfem-report.sh
-  when: always
-  allow_failure: true
 
 deploy:
   stage: deploy
@@ -74,24 +65,7 @@ cleanup:
   script:
     - echo " cleanup "
 
-        jobs:
-  paper:
-    runs-on: ubuntu-latest
-    name: Paper Draft
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build draft PDF
-        uses: openjournals/openjournals-draft-action@master
-        with:
-          journal: joss
-          # This should be the path to the paper within your repo.
-          paper-path: paper.md
-      - name: Upload
-        uses: actions/upload-artifact@v1
-        with:
-          name: paper
-          # This is the output path where Pandoc will write the compiled
-          # PDF. Note, this should be the same directory as the input
-          # paper.md
-          path: paper.pdf
+paper:
+  stage: build
+  script:
+    - echo " TODO "
