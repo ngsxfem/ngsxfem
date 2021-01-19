@@ -2,25 +2,104 @@ stages:
     - build
     - test
     - deploy
-
-cache:
-  key: $CI_PIPELINE_ID
-  paths:
-    - build/
-    - install/
-                        
-paper:
-  stage: deploy
-  image: docker:latest
+        
+build:
+  stage: build
+  image: schruste/ngsolve:latest
   cache:
-    key: global
+    key: $CI_PIPELINE_ID
     paths:
-      - openjournal-docker/
-    policy: pull        
+      - build/
+      - install/
   script:
-    - ls -al .
-    - ls -al *
-    - docker load -i openjournal-docker/openjournals_paperdraft.tar
+    - git submodule update --init --recursive
+    - mkdir build
+    - mkdir install    
+    - cd build
+    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - make install
+
+ctests-tutorials:
+  stage: test
+  image: schruste/ngsolve:latest
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+      - build/
+      - install/
+    policy: pull    
+  script:
+    - bash .ci/ci_ctests.sh tutorial
+  when: always
+  allow_failure: false
+
+ctests-mayfail:
+  stage: test
+  image: schruste/ngsolve:latest
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+      - build/
+      - install/
+    policy: pull    
+  script:
+    - bash .ci/ci_ctests.sh mayfail
+  when: always
+  allow_failure: true
+
+ctests-remaining:
+  stage: test
+  image: schruste/ngsolve:latest
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+      - build/
+      - install/
+    policy: pull    
+  script:
+    -  bash .ci/ci_ctests.sh remaining
+  when: always
+  allow_failure: false
+
+go4quads-tests:
+  stage: test
+  image: schruste/ngsolve:latest
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+      - build/
+      - install/
+    policy: pull    
+  script:
+    - bash .ci/ci_ctests.sh go4quads-tests
+  when: always
+  allow_failure: false
+
+metrics:
+  stage: test
+  image: schruste/ngsolve:latest
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+      - build/
+      - install/
+    policy: pull    
+  script:
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - python3 /home/jovyan/.local/lib/python3.8/site-packages/share/ngsxfem/report/ngsxfem_report.py 2> metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
+  when: always
+  allow_failure: true
+
+paper:
+  stage: build
+  image: schruste/joss:latest
+  script:
+    - export JOURNAL=joss
+    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml paper.md 
   artifacts:
     paths:
       - paper.pdf
