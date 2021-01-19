@@ -9,12 +9,6 @@ cache:
     - build/
     - install/
 
-cache:
-  key: global
-  paths:
-    - openjournal-docker/
-        
-
 oj-docker:
   stage: build
   image: python:latest
