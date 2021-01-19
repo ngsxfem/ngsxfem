@@ -103,8 +103,6 @@ paper:
     - echo $PWD
     - ls -al .
     - ls /usr/local/bin/pandoc    
-    - /usr/local/bin/pandoc -s -o paper.pdf paper.md 
-    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md 
   artifacts:
     paths:
       - paper.pdf
