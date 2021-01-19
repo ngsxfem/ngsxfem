@@ -67,5 +67,9 @@ cleanup:
 
 paper:
   stage: build
+  image: openjournals/paperdraft
   script:
-    - echo " TODO "
+    - docker run --rm --volume $PWD/paper:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
+  artifacts:
+    paths:
+      - paper.pdf
