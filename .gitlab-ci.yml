@@ -82,7 +82,8 @@ paper:
   stage: build
   image: openjournals/paperdraft
   script:
-    - echo $PWD    
+    - echo $PWD
+    - ls -al /builds/lehrenfeld/ngsxfem/.git/
     - docker run --rm --volume /builds/lehrenfeld/ngsxfem/.git/:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
     paths:
