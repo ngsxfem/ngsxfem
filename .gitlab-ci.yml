@@ -22,7 +22,7 @@ cleanup:
 
 oj-docker:
   stage: build
-  image: docker:latest
+  image: python:latest
   script:
   - mkdir -p openjournal-docker
   - cd openjournal-docker
