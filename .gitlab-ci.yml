@@ -30,7 +30,10 @@ paper:
     key: global
     paths:
       - openjournal-docker/
+    policy: pull        
   script:
+    - ls -al .
+    - ls -al *
     - docker load -i openjournal-docker/openjournals_paperdraft.tar
     - docker run --rm --volume ./:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
