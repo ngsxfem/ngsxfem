@@ -99,7 +99,7 @@ paper:
   image: schruste/joss:latest
   script:
     - export JOURNAL=joss
-    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml paper.md 
+    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md 
   artifacts:
     paths:
       - paper.pdf
