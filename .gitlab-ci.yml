@@ -11,6 +11,7 @@ build:
     paths:
       - build/
       - install/
+    policy: pull-push
   script:
     - git submodule update --init --recursive
     - mkdir build
@@ -27,7 +28,7 @@ ctests-tutorials:
     paths:
       - build/
       - install/
-    policy: pull    
+    policy: pull
   script:
     - bash .ci/ci_ctests.sh tutorial
   when: always
@@ -99,6 +100,10 @@ paper:
   image: schruste/joss:latest
   script:
     - export JOURNAL=joss
+    - echo $PWD
+    - ls -al .
+    - ls /usr/local/bin/pandoc    
+    - /usr/local/bin/pandoc -s -o paper.pdf paper.md 
     - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md 
   artifacts:
     paths:
