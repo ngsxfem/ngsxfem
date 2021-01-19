@@ -7,7 +7,7 @@ build:
   stage: build
   image: schruste/ngsolve:latest
   cache:
-    key: "$CI_PIPELINE_ID"
+    key: asdf
     paths:
       - build/
   script:
@@ -23,7 +23,7 @@ ctests-tutorials:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: "$CI_PIPELINE_ID"
+    key: asdf
     paths:
       - build/
   script:
@@ -36,7 +36,7 @@ ctests-mayfail:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: "$CI_PIPELINE_ID"
+    key: asdf
     paths:
       - build/
   script:
@@ -48,7 +48,7 @@ ctests-remaining:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: "$CI_PIPELINE_ID"
+    key: asdf
     paths:
       - build/
   script:
@@ -60,7 +60,7 @@ go4quads-tests:
   stage: test
   image: schruste/ngsolve:latest
   cache:
-    key: "$CI_PIPELINE_ID"
+    key: asdf
     paths:
     - build/
   script:
