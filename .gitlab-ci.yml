@@ -98,21 +98,12 @@ cleanup:
   stage: deploy
   script:
     - echo " cleanup "
-
-paper0:
-  stage: build
-  script:
-    - echo $PWD
-    - ls -al .
-    - echo $PWD 2>&1 
-    - ls -al . 2>&1 
         
 paper:
   stage: build
+  image: docker:latest
   script:
-    - echo $PWD 2>&1 
-    - ls -al /builds/lehrenfeld/ngsxfem/.git/ 2>&1 
-    - docker run --rm --volume /builds/lehrenfeld/ngsxfem/.git/:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
+    - docker run --rm --volume ./:/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
   artifacts:
     paths:
       - paper.pdf
