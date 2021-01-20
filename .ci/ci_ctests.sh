@@ -20,7 +20,7 @@ if [ $1 == "mayfail" ]; then
     ctest -V -R 'pymayfailtests'
 fi
 
-if [ $1 == "remaining" ]; then
+if [ $1 == "pytests" ]; then
     ctest -V -R 'pytests'
 fi
 

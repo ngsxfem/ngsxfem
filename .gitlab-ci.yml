@@ -34,11 +34,11 @@ ctests-mayfail:
   when: always
   allow_failure: true
 
-ctests-remaining:
+ctests-pytests:
   stage: test
   image: schruste/ngsolve:latest
   script:
-    -  bash .ci/ci_ctests.sh remaining
+    -  bash .ci/ci_ctests.sh pytests
   when: always
   allow_failure: false
 
@@ -56,7 +56,6 @@ metrics:
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - python3 tests/ngsxfem_report.py
     - python3 tests/ngsxfem_report.py 2> metrics.txt
   artifacts:
     reports:
