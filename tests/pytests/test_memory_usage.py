@@ -42,7 +42,7 @@ def test_singele_lset_memory(quad):
 
         mem.append(memory_usage_psutil())
 
-    assert abs(mem[1] - mem[2]) < abs(max(mem) - min(mem))
+    assert abs(mem[1] - mem[2]) <= abs(max(mem) - min(mem))
     assert abs(mem[1] - mem[2]) < 0.01 * max(mem)
 
 
@@ -67,7 +67,7 @@ def test_multiple_lset_memory():
             Integrate(lset_dom, cf=1, mesh=mesh, order=0)
         mem.append(memory_usage_psutil())
 
-    assert abs(mem[1] - mem[2]) < abs(max(mem) - min(mem))
+    assert abs(mem[1] - mem[2]) <= abs(max(mem) - min(mem))
     assert abs(mem[1] - mem[2]) < 0.01 * max(mem)
 
 
