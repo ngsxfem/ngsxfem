@@ -7,7 +7,6 @@ from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
 from xfem.lsetcurv import *
 
-from netgen import gui
 
 @pytest.mark.parametrize("integration_quadtrig_newold", [(False, True),(False, False),(True, True)])
 @pytest.mark.parametrize("order", [1,2,3])
