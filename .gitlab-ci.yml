@@ -6,12 +6,6 @@ stages:
 build:
   stage: build
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-    policy: pull-push
   script:
     - git submodule update --init --recursive
     - mkdir build
@@ -19,16 +13,14 @@ build:
     - cd build
     - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
     - make install
+  artifacts:
+    paths:
+      - build
+      - install
 
 ctests-tutorials:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-    policy: pull
   script:
     - bash .ci/ci_ctests.sh tutorial
   when: always
@@ -37,12 +29,6 @@ ctests-tutorials:
 ctests-mayfail:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-    policy: pull    
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -51,12 +37,6 @@ ctests-mayfail:
 ctests-remaining:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-    policy: pull    
   script:
     -  bash .ci/ci_ctests.sh remaining
   when: always
@@ -65,12 +45,6 @@ ctests-remaining:
 go4quads-tests:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-    policy: pull    
   script:
     - bash .ci/ci_ctests.sh go4quads-tests
   when: always
@@ -79,16 +53,10 @@ go4quads-tests:
 metrics:
   stage: test
   image: schruste/ngsolve:latest
-  cache:
-    key: $CI_PIPELINE_ID
-    paths:
-      - build/
-      - install/
-    policy: pull    
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - python3 /home/jovyan/.local/lib/python3.8/site-packages/share/ngsxfem/report/ngsxfem_report.py 2> metrics.txt
+    - python3 tests/report/ngsxfem_report.py 2> metrics.txt
   artifacts:
     reports:
       metrics: metrics.txt
