@@ -97,7 +97,8 @@ metrics:
 
 paper:
   stage: build
-  image: schruste/joss:latest
+  image:
+    name: schruste/joss:latest
     entrypoint: [""] 
   script:
     - export JOURNAL=joss
