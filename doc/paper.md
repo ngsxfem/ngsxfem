@@ -21,7 +21,7 @@ affiliations:
  - name: Institut für Analysis und Numerik, Otto-von-Guericke Universität, Magdeburg
    index: 2
 date: xx xx 2021
-bibliography: lit-ngsxfem.bib
+bibliography: doc/lit-ngsxfem.bib
 
 ---
 
