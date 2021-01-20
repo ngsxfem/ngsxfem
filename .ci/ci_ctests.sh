@@ -6,6 +6,10 @@ ls -al .
 echo "cmake-tests"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/ngsxfem/lib/python3/dist-packages/xfem/"
 export PYTHONPATH="${PYTHONPATH}:${PWD}/install/ngsxfem/lib/python3/dist-packages"
+echo "${PWD}/install/ngsxfem/lib/python3/dist-packages"
+ls -al ${PWD}/install/ngsxfem/lib/python3/dist-packages
+export | grep PYTHONPATH
+
 cd build
 
 if [ $1 == "tutorial" ]; then
