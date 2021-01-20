@@ -56,6 +56,7 @@ metrics:
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - ls -al .
     - python3 tests/report/ngsxfem_report.py
     - python3 tests/report/ngsxfem_report.py 2> metrics.txt
   artifacts:
