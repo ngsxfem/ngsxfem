@@ -6,7 +6,7 @@ install( FILES
   moving_domain.py
   nxfem.py
   nxfem_higher_order.py
-  stokesxfem.py
+  stokescutfem.py
   traceconverg.py
   tracefem.py
   tracefem3d.py

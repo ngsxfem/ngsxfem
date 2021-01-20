@@ -290,7 +290,7 @@ Other Parameters :
         else:
             return SymbolicLFI_old(levelset_domain,*args,**kwargs)
 
-def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000):
+def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000, ip_container=None):
     """
 Integrate_X_special_args should not be called directly.
 See documentation of Integrate.
@@ -302,7 +302,9 @@ See documentation of Integrate.
         levelset_domain_local["time_order"] = time_order
     return IntegrateX(levelset_domain = levelset_domain_local,
                       mesh=mesh, cf=cf,
-                      heapsize=heapsize)
+                      ip_container=ip_container,
+                      heapsize=heapsize
+                      )
 
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO
@@ -364,6 +366,9 @@ region_wise : bool
 
 element_wise : bool
   (only active for non-levelset version)
+
+ip_container : list (or None)
+  a list to store integration points (for debugging or visualization purposes)
 
 heapsize : int
   heapsize for local computations.
@@ -459,3 +464,55 @@ def SpaceTimeWeakSet(gfu_e, cf, space_fes):
     gfu_e_repl = GridFunction(space_fes)
     gfu_e_repl.Set( cf )
     gfu_e.vec[:].data = gfu_e_repl.vec
+
+
+from ngsolve.internal import *
+def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
+    if "deformation" in kwargs and StdDraw.__module__ == "ngsolve.solve":
+        args2 = list(args[:])
+        args2[1] = "deformation_"+args[1]
+        StdDraw(kwargs["deformation"],*tuple(args2),**kwargs)
+        visoptions.deformation=1
+    if not "sd" in kwargs:
+        kwargs["sd"] = 5
+        
+    return StdDraw(IfPos(levelset,fpos,fneg),*args,**kwargs)
+    
+def DrawDiscontinuous_webgui(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs):
+    fneg = CoefficientFunction(fneg)
+    fpos = CoefficientFunction(fpos)
+    if fneg.dim > 1 or fpos.dim > 1:
+        print("webgui discontinuous vis only for scalar functions a.t.m., switching to IfPos variant")
+    else:
+        return WebGuiDraw(CoefficientFunction((levelset,fpos,fneg,0)),eval_function="value.x>0.0?value.y:value.z",*args,**kwargs)
+    return DrawDiscontinuous_std(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs)
+
+from functools import partial
+def MakeDiscontinuousDraw(Draw):
+    """
+Generates a Draw-like visualization function. If Draw is from the webgui, a special evaluator is used to draw a pixel-sharp discontinuity otherwise an IfPos-CoefficientFunction is used.     
+    """
+    if (Draw.__module__ == "ngsolve.webgui"):
+        ret = partial(DrawDiscontinuous_webgui,Draw)
+    else:
+        ret = partial(DrawDiscontinuous_std,Draw)
+    ret.__doc__ ="""
+    Visualization method for functions that are non-smooth across 
+    level set interfaces. Effectively calls """+Draw.__module__+""".Draw with
+    a few manipulations. 
+
+    Parameters
+    ----------
+    levelset : CoefficientFunction
+        (scalar) CoefficientFunction that describes the (implicit) geometry 
+    fneg : CoefficientFunction
+        CoefficientFunction that is evaluated where the level set function is negative
+    fpos : CoefficientFunction
+        CoefficientFunction that is evaluated where the level set function is positive
+        
+    deformation : deformation (optional)
+        (vectorial) CoefficientFunction that describes the deformation of the background mesh
+    *remainder* : *
+        all remainder arguments are passed to """ +Draw.__module__ +".Draw"
+    return ret
+    

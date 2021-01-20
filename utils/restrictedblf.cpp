@@ -19,7 +19,7 @@ namespace ngcomp
   
   
   
-  MatrixGraph * RestrictedBilinearForm :: GetGraph (int level, bool symmetric)
+  MatrixGraph RestrictedBilinearForm :: GetGraph (int level, bool symmetric)
   {
     static Timer timer ("BilinearForm::GetGraph");
     RegionTimer reg (timer);
@@ -134,6 +134,6 @@ namespace ngcomp
       }
 
     graph -> FindSameNZE();
-    return graph;
+    return move(*graph);
   }
 }

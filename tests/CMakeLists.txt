@@ -18,8 +18,8 @@ add_test(NAME py_tutorial_nxfem_ho COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME py_tutorial_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/tracefem.py" "testmode")
 
-add_test(NAME py_tutorial_stokesxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/stokesxfem.py" "testmode")
+add_test(NAME py_tutorial_stokescutfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/py_tutorials/stokescutfem.py" "testmode")
 
 add_test(NAME py_tutorial_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_ghostpen.py" "testmode")

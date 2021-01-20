@@ -2,8 +2,7 @@ from ngsolve import *
 from xfem import *
 from netgen.geom2d import unit_square
 from netgen.csg import unit_cube
-from sys import argv
-
+import sys
 import time
 
 ngsglobals.msg_level = 1
@@ -30,22 +29,7 @@ def test_fes_timing(dimension=2,stdfes=True,quad_dominated=False, order=1):
     for i in range(steps):
         Vh.Update()
     te = time.time()
-    container.append(("Update",1e9*(te-ts)/steps))
-    return container
-
-## dd/mm/yyyy format
-date = time.strftime("%Y/%m/%d %H:%M:%S")
-
-if len(argv) > 1:
-    basedir = argv[1]
-else:
-    basedir = "./"
-if len(argv) > 2:
-    id = str(argv[2])
-else:
-    id = "0000"
-
-filename1 = basedir + "fes_timings"
+    return 1e9*(te-ts)/steps
 
 testcases = [ (2, False, 1, False),
               (2,  True, 1, False),
@@ -57,24 +41,21 @@ testcases = [ (2, False, 1, False),
               (3,  True, 1, True),
 ]
 
+metricname_base = "fes_timings"
 for dim, stdfes, order, taskmanager in testcases:
-    filename2 = filename1 + "_dim" + str(dim)
+    metricname = metricname_base + "_dim" + str(dim)
     if stdfes:
-        filename3 = filename2 + "_std"
+        metricname += "_std"
     else:
-        filename3 = filename2 + "_x"
-    filename4 = filename3 + "_order" + str(order)
+        metricname += "_x"
+    metricname += "_order" + str(order)
     if taskmanager:
-        filename5 = filename4 + "_TM"
+        metricname += "_TM"
     else:
-        filename5 = filename4 + "_NoTM"
+        metricname += "_NoTM"
     if taskmanager:
         with TaskManager():
             report = test_fes_timing(dimension=dim,stdfes=stdfes,order=order)
     else:
         report = test_fes_timing(dimension=dim,stdfes=stdfes,order=order)
-    for key, entry in report:
-        filename = filename5 + "_" + key.replace(" ", "_")
-        f = open(filename, 'a')
-        f.write("{:8}\t{:20}\t{:.6e}\n".format(id,date,entry))
-        f.close()
+    print(metricname,report, file=sys.stderr)

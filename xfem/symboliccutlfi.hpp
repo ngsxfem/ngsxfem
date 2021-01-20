@@ -18,7 +18,6 @@ namespace ngfem
                                      shared_ptr<CoefficientFunction> acf,
                                      VorB vb = VOL);
     
-    virtual VorB VB () const { return VOL; }
     virtual string Name () const { return string ("Symbolic Cut LFI"); }
 
 

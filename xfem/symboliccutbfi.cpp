@@ -99,7 +99,7 @@ namespace ngfem
     int intorder = fel_trial.Order()+fel_test.Order();
 
     auto et = trafo.GetElementType();
-    if (et == ET_TRIG || et == ET_TET)
+    if (et == ET_SEGM || et == ET_TRIG || et == ET_TET)
       intorder -= test_difforder+trial_difforder;
 
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
