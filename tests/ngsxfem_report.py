@@ -1,5 +1,6 @@
 from ngsolve import *
 from xfem import *
+from xfem.mlset import *
 from netgen.geom2d import unit_square
 from netgen.csg import unit_cube
 import sys
@@ -59,3 +60,29 @@ for dim, stdfes, order, taskmanager in testcases:
     else:
         report = test_fes_timing(dimension=dim,stdfes=stdfes,order=order)
     print(metricname,report, file=sys.stderr)
+
+
+def dta_timings(n, steps):
+    domains = [DomainTypeArray((NEG, NEG, NEG)) for _ in range(n)]
+
+    ts1 = time.time()
+    for i in range(steps):
+        dta = TensorUnion(*domains)
+    te1 = time.time()
+
+    ts2 = time.time()
+    for i in range(steps):
+        dta_inv = ~dta
+    te2 = time.time()
+
+    return 1e9 * (te1 - ts1) / steps, len(dta.as_list),\
+           1e9 * (te2 - ts2) / steps, len(dta_inv.as_list)
+
+
+testcases = [1, 2, 3, 4, 5]
+metricname_base = "dta_timings"
+
+for n in testcases:
+    metricname = metricname_base + "_tris" + str(n)
+    report = dta_timings(n, 5)
+    print(metricname, *report, file=sys.stderr)
