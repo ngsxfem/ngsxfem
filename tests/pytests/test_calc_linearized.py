@@ -7,7 +7,6 @@ from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
 from xfem.lsetcurv import *
 
-
 def test_calc_linearized():
     square = SplineGeometry()
     square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
