@@ -212,10 +212,12 @@ class DomainTypeArray():
 
     def __invert__(self):
         n = len(self.as_list[0])
-        dt_per = list(product(*list(repeat((POS, NEG, IF), n))))
-        dt_per = list(filter(lambda dtt: dtt.count(IF) == self.codim, dt_per))
-        for dt in self.as_list:
-            dt_per.remove(dt)
+        if self.codim == 0:
+            dt_per = set(product(*list(repeat((POS, NEG), n))))
+        else:
+            dt_per = set(product(*list(repeat((POS, NEG, IF), n))))
+            dt_per = set(filter(lambda dtt: dtt.count(IF) == self.codim, dt_per))
+        dt_per = list(dt_per.difference(set(self.as_list)))
         return DomainTypeArray(dt_per, self.lsets, self.persistent_compress)
 
     def __ior__(self, dta_b):
