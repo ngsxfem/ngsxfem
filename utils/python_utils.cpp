@@ -89,9 +89,9 @@ heapsize : int
            py::object ael_restriction,
            py::object afac_restriction,
            bool check_unused,
-           py::dict bpflags)
+           py::kwargs kwargs)
         {
-          Flags flags = py::extract<Flags> (bpflags)();
+          auto flags = CreateFlagsFromKwArgs(kwargs);
 
           shared_ptr<BitArray> el_restriction = nullptr;
           shared_ptr<BitArray> fac_restriction = nullptr;
@@ -113,7 +113,6 @@ heapsize : int
         py::arg("element_restriction") = DummyArgument(),
         py::arg("facet_restriction") = DummyArgument(),
         py::arg("check_unused") = true,
-        py::arg("flags") = py::dict(),
         docu_string(R"raw_string(
 A restricted bilinear form is a (so far real-valued) bilinear form with a reduced MatrixGraph
 compared to the usual BilinearForm. BitArray(s) define on which elements/facets entries will be

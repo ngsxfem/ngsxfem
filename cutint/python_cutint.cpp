@@ -22,10 +22,18 @@ void ExportNgsx_cutint(py::module &m)
         [](py::dict lsetdom,
            shared_ptr<MeshAccess> ma,
            PyCF cf,
+           py::object ip_container,
            int heapsize)
         {
           static Timer t ("IntegrateX"); RegionTimer reg(t);
+
+          py::extract<py::list> ip_cont_(ip_container);
+          shared_ptr<py::list> ip_cont = nullptr;
+          if (ip_cont_.check())
+            ip_cont = make_shared<py::list>(ip_cont_());
+                       
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
+          bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrateX");
 
           double sum = 0.0;
@@ -51,6 +59,12 @@ void ExportNgsx_cutint(py::module &m)
                  double lsum = 0.0;
                  for (int i = 0; i < mir.Size(); i++)
                      lsum += mir[i].GetMeasure()*wei_arr[i]*val(i,0);
+
+                 if (ip_cont != nullptr)
+                   for (int i = 0; i < mir.Size(); i++)
+                     ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                                               ma.get(), VOL, static_cast<int>(el.Nr())});
+                 
                  AtomicAdd(sum,lsum);
                }
              });
@@ -62,6 +76,7 @@ void ExportNgsx_cutint(py::module &m)
         py::arg("levelset_domain"),
         py::arg("mesh"),
         py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+        py::arg("ip_container")=py::none(),
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Integrate on a level set domains. The accuracy of the integration is 'order' w.r.t. a (multi-)linear
@@ -105,6 +120,9 @@ mesh :
 
 cf : ngsolve.CoefficientFunction
   the integrand
+
+ip_container : list (or None)
+  a list to store integration points (for debugging or visualization purposes)
 
 heapsize : int
   heapsize for local computations.

@@ -246,9 +246,28 @@ namespace ngfem
                      LocalHeap & lh) const;
 
     virtual void
+    CalcLinearizedFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatVector<double> elvec,
+                     FlatMatrix<double> elmat,
+                     LocalHeap & lh) const
+    {
+      static bool warned = false;
+      if (!warned)
+      {
+        cout << IM(3) << "WARNING: SymbolicFacetPatchBilinearFormIntegrator::CalcLinearizedFacetMatrix called. The form is treated as bilinear and hence CalcFacetMatri is called.";
+        warned = true;
+      }
+      CalcFacetMatrix(volumefel1, LocalFacetNr1, eltrans1, ElVertices1, volumefel2, LocalFacetNr2, eltrans2, ElVertices2, elmat, lh);
+    }
+    
+
+    virtual void
     CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
                      const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
-                     const ElementTransformation & seltrans,  
+                     const ElementTransformation & seltrans, FlatArray<int> & SElVertices, 
                      FlatMatrix<double> elmat,
                      LocalHeap & lh) const
     {
@@ -263,7 +282,16 @@ namespace ngfem
                       FlatVector<double> elx, FlatVector<double> ely,
                       LocalHeap & lh) const
     {
-      throw Exception("SymbolicFacetPatchBilinearFormIntegrator::ApplyFacetMatrix not yet implemented");
+      static bool warned = false;
+      if (!warned)
+      {
+        cout << IM(3) << "WARNING: SymbolicFacetPatchBilinearFormIntegrator::ApplyFacetMatrix called. The application is done through the computation of the element matrices (i.e. slower than possible).";
+        warned = true;
+      }
+      FlatMatrix<double> mat(ely.Size(), elx.Size(), lh);
+      CalcFacetMatrix (volumefel1, LocalFacetNr1, eltrans1, ElVertices1,
+                       volumefel2, LocalFacetNr2, eltrans2, ElVertices2, mat, lh);
+      ely = mat * elx;
     }
 
 
@@ -274,7 +302,17 @@ namespace ngfem
                       FlatVector<double> elx, FlatVector<double> ely,
                       LocalHeap & lh) const
     {
-      throw Exception("SymbolicFacetPatchBilinearFormIntegrator::ApplyFacetMatrix not yet implemented");
+      static bool warned = false;
+      if (!warned)
+      {
+        cout << IM(3) << "WARNING: SymbolicFacetPatchBilinearFormIntegrator::ApplyFacetMatrix called. The application is done through the computation of the element matrices (i.e. slower than possible).";
+        warned = true;
+      }
+      FlatMatrix<double> mat(ely.Size(), elx.Size(), lh);
+      CalcFacetMatrix (volumefel, LocalFacetNr,
+                       eltrans, ElVertices,
+                       seltrans, SElVertices, mat, lh);
+      ely = mat * elx;
     }
 
   };

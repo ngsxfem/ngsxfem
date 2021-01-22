@@ -23,7 +23,7 @@ inverse = "umfpack"                             # Direct linear solver used
 condense = True                                 # Use static condensation 
 maxit_newt = 15                                 # Max. nr. of Newton iterations
 tol_newt = 1e-10                                # l2 Newton residual tolerance
-update_jacobi_tol = 0.15                         # Factor for Jacobean update
+update_jacobi_tol = 0.15                        # Factor for Jacobean update
 reuse_jacobi = True                             # Try to reuse Jacobean
 print_newt = True                               # Newton convergence info
 
@@ -267,6 +267,9 @@ def test_st2d1_drag_lift():
     print("Val: {:10.8f}  {:10.8f}  {:10.8f}".format(C_drag, C_lift, pdiff))
     print("Err: {:1.2e}    {:1.2e}    {:1.2e}".format(err_drag, err_lift, err_p))
 
-    assert err_drag < 2e-5
+    assert err_drag < 2.5e-5
     assert err_lift < 2e-6
     assert err_p    < 2e-4
+
+if __name__ == "__main__":
+    test_st2d1_drag_lift()
