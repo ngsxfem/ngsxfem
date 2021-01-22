@@ -6,7 +6,6 @@ from netgen.geom2d import SplineGeometry
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from math import pi
 from xfem.lsetcurv import *
-from netgen import gui
 
 def test_calc_linearized():
     square = SplineGeometry()

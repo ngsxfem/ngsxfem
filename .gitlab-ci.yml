@@ -1,75 +1,64 @@
+stages:
+    - build
+    - test
+    - deploy
+        
 build:
   stage: build
-  before_script:
-    - echo " before script "
-    - rm -rf ~/inst/netgen
-    - mkdir -p ~/inst/netgen
-    - if [ ! -f ~/ngsolve_stable.sif ]; then singularity pull -U library://laevar/default/ngsolve:stable ; mv ngsolve_stable.sif ~/ ; fi
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-      - build/
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_build.sh
+    - git submodule update --init --recursive
+    - mkdir build
+    - mkdir install    
+    - cd build
+    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - make install
+  artifacts:
+    paths:
+      - build
+      - install
 
 ctests-tutorials:
   stage: test
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-      - build/
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh tutorial
-
+    - bash .ci/ci_ctests.sh tutorial
   when: always
   allow_failure: false
 
 ctests-mayfail:
   stage: test
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-      - build/
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh mayfail
+    - bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
 
-ctests-remaining:
+ctests-pytests:
   stage: test
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-      - build/
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh remaining
+    -  bash .ci/ci_ctests.sh pytests
   when: always
   allow_failure: false
 
 go4quads-tests:
   stage: test
-  cache:
-    key: "$CI_PIPELINE_ID"
-    paths:
-    - build/
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ctests.sh go4quads-tests
+    - bash .ci/ci_ctests.sh go4quads-tests
   when: always
   allow_failure: false
 
-ngsxfem-report:
-  stage: deploy
+metrics:
+  stage: test
+  image: schruste/ngsolve:latest
   script:
-    - singularity exec ~/ngsolve_stable.sif bash .ci/ci_ngsxfem-report.sh
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - python3 tests/ngsxfem_report.py 2> metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
   when: always
   allow_failure: true
-
-deploy:
-  stage: deploy
-  script:
-  - echo " deploy"
-
-cleanup:
-  stage: deploy
-  script:
-    - echo " cleanup "
