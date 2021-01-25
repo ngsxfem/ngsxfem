@@ -20,6 +20,17 @@ install( FILES
 )
 
 install( FILES
+  spacetime/test_RestrictToTime.py
+  spacetime/spacetime_vtk.py
+  spacetime/spaceP1_timeDGP1.py
+  spacetime/spaceP1_timeCGP1.py
+  spacetime/shiftedeval_debug.py
+  spacetime/set_test.py
+  spacetime/model_spacetime.py
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/spacetime
+)
+
+install( FILES
   mlset/poisson_on_square.py
   mlset/TensorFunctions.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/mlset
