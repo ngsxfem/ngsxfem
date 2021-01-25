@@ -46,12 +46,19 @@ For a comprehensive and up-to-date list of the scientific works which have used 
 
 
 * Installation
+** Docker container
+#+BEGIN_SRC shell
+docker run -i -t schruste/ngsxfem:latest /bin/bash
+#+END_SRC
+
 ** Pre-compiled binaries
 TODO
 
 ** Building from source
 
 To build =ngsxfem= from source, the corresponding version of =Netgen/NGSolve= is required to be installed. This can either be done in advance (default option), or as an external dependency.
+=ngsolve= is pulled as a submodule. The version of the submodule is compatible with this version of =ngsxfem=. If in doubt make sure that you install exactly this version of =NGSolve= before building =ngsxfem=.
+
 
 *** Linux
 **** Prerequisites on Ubuntu
