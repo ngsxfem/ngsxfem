@@ -12,8 +12,8 @@ export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
 
 cd build
 
-if [ $1 == "tutorial" ]; then
-  ctest -V -R 'py_tutorial'
+if [ $1 == "demos" ]; then
+  ctest -V -R 'py_demo'
 fi
 
 if [ $1 == "mayfail" ]; then

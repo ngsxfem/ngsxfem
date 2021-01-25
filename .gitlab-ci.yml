@@ -18,11 +18,11 @@ build:
       - build
       - install
 
-ctests-tutorials:
+ctests-demos:
   stage: test
   image: schruste/ngsolve:latest
   script:
-    - bash .ci/ci_ctests.sh tutorial
+    - bash .ci/ci_ctests.sh demos
   when: always
   allow_failure: false
 
