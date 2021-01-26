@@ -154,15 +154,10 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
 * Literature
 =ngsxfem= has been used in the following scientific works (that we are aware of):
 ** Journal publications / preprints:
-<<<<<<< HEAD
-
- * A. Aretaki1, E.N. Karatzas. Random geometries and quasi Monte Carlo methods for optimal control PDE problems based on fictitious domain [[https://arxiv.org/pdf/2003.00352.pdf][pdf]]
-FEMs and cut elements. 
-=======
+ * M. Olshanskii, A. Quaini, Q. Sun, An unfitted finite element method for two-phase Stokes problems with slip between phases. [[https://arxiv.org/pdf/2101.09627.pdf][pdf]]
  * E.N. Karatzas, M. Nonino, F. Ballarin and G. Rozza, A Reduced Order Cut Finite Element method for geometrically parametrized steady and unsteady Navier-Stokes problems. [[https://arxiv.org/pdf/2010.04953.pdf][pdf]]
  * A. Aretaki and E.N. Karatzas. Random geometries and quasi Monte Carlo methods for optimal control PDE problems based on fictitious domain FEMs and cut elements. [[https://arxiv.org/pdf/2003.00352.pdf][pdf]]
  * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data. [[https://arxiv.org/pdf/2011.08691.pdf][pdf]]
->>>>>>> master
  * H. von Wahl, T. Richter, C. Lehrenfeld. An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains. [[https://arxiv.org/pdf/2002.02352][pdf]]        
  * P. Brandner, A. Reusken. Finite element error analysis of surface Stokes equations in stream function formulation. [[https://www.igpm.rwth-aachen.de/Download/reports/pdf/IGPM493.pdf][pdf]]         
  * T. Jankuhn, A. Reusken. Higher order Trace Finite Element Methods for the Surface Stokes Equation [[https://arxiv.org/pdf/1909.08327][pdf]] 
