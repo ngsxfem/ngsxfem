@@ -296,12 +296,12 @@ class DomainTypeArray():
         for dtt in self.as_list:
             for i, dt in enumerate(dtt):
                 if dt != IF:
-                    if ( dtt[:i] + tuple([POS]) + dtt[i+1:] in self and 
-                         dtt[:i] + tuple([NEG]) + dtt[i+1:] in self):
+                    if (dtt[:i] + (POS,) + dtt[i+1:] in self and
+                        dtt[:i] + (NEG,) + dtt[i+1:] in self):
                         continue
                     else:
                         is_relevant = True
-                        dtt_out = dtt[:i] + tuple([IF]) + dtt[i+1:]
+                        dtt_out = dtt[:i] + (IF,) + dtt[i+1:]
                         if self.lsets:
                             weight = Integrate({"levelset": self.lsets,
                                                 "domain_type": dtt_out},
