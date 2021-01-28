@@ -2,3 +2,4 @@
 vscode.code-workspace
 build
 .local
+.DS_Store
