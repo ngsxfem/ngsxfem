@@ -63,6 +63,15 @@ metrics:
   when: always
   allow_failure: true
 
+codestyle-demos:
+  stage: test
+  image: schruste/ngsolve:latest
+  script:
+    - pip3 install --user pycodestyle
+    - pycodestyle demos/{*,mlset/*,spacetime/*,lsetcurving/*,mpi/*}.py
+  when: always
+  allow_failure: true
+        
 paper:
   stage: build
   image:
