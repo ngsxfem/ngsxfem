@@ -15,6 +15,12 @@ install( FILES
 )
 
 install( FILES
+  lsetcurving/integrate.py
+  lsetcurving/lsetgeoms.py
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/lsetcurv
+)
+
+install( FILES
   mpi/mpi_nxfem.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/mpi
 )

@@ -4,5 +4,3 @@ install( FILES
   DESTINATION ${NGSOLVE_INSTALL_DIR_INCLUDE}
   )
 
-add_subdirectory(py_demos)
-
