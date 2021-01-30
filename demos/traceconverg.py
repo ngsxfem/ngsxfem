@@ -1,63 +1,71 @@
 """
-In this example we solve a 2-dimensional scalar-valued Laplace-Beltrami problem on a surface (unit circle) embedded in a square domain. 
-As to discretization method we use a levelset-based implicit geometry description, 
-and a trace finite element method with a normal diffusion for consistent stabilization. 
-To compute the error we construct a manufactured solution of the PDE to study optimal convergence for different polynomial degrees.  
+In this example we solve a 2-dimensional scalar-valued Laplace-Beltrami
+problem on a surface (unit circle) embedded in a square domain. As to
+discretisation method we use a levelset-based implicit geometry
+description, and a trace finite element method with a normal diffusion
+for consistent stabilization. To compute the error we construct a
+manufactured solution of the PDE to study optimal convergence for
+different polynomial degrees.
 
-    domain: 
-    -------
+Domain:
+-------
 
-    The background domain Omega is [-1.5,1.5]^2 in R^2
-    while the surface Gamma is closed, fixed in space and described implicitly via the zero level of a level set function (unit circle). 
-    For the discretization the level set function is approximated first-order by a piecewise linear interpolation, 
-    while the mesh deformation is applied to the geometry for high-order accuracy. 
+The background domain Omega is [-1.5,1.5]^2 in R^2 while the surface
+Gamma is closed, fixed in space and described implicitly via the zero
+level of a level set function (unit circle). For the discretisation the
+level set function is approximated first-order by a piecewise linear
+interpolation, while the mesh deformation is applied to the geometry for
+high-order accuracy.
 
-    PDE problem: 
-    ------------
-    domain equation: 
-                     u - div_Gamma(grad_Gamma(u)) = f    on Gamma
+PDE problem:
+------------
+Domain equation:
+                 u - div_Gamma(grad_Gamma(u)) = f    on Gamma
 
-    where div_Gamma(grad_Gamma(( )) is the Laplace-Beltrami operator defined on a closed surface Gamma
-    which is embedded in a domain Omega in R^d. 
-    The r.h.s. term f is chosen f = 2*(x + y) according to a manufactured solution u = x + y
-    which allows us to measure errors after the computation of a discrete solution. 
+where div_Gamma(grad_Gamma(( )) is the Laplace-Beltrami operator defined
+on a closed surface Gamma which is embedded in a domain Omega in R^d.
+The r.h.s. term f is chosen f = 2*(x + y) according to a manufactured
+solution u = x + y which allows us to measure errors after the
+computation of a discrete solution.
 
-    discretization: 
-    ---------------
-    Finite element space:
-    We consider a given, fixed mesh on Omega and a standard finite element space Vh on Omega. 
-    For a start we use the space of piecewise linears for Vh. 
-    To obtain a finite element space for the PDE problem on Gamma we use the restrction of Vh on Gamma, 
-    the trace finite element Vh^Gamma = tr_Gamma Vh. 
+Discretisation:
+---------------
+* Finite element space: We consider a given, fixed mesh on Omega and a
+  standard finite element space Vh on Omega. For a start we use the
+  space of piecewise linear functions for Vh. To obtain a finite element
+  space for the PDE problem on Gamma we use the restriction of Vh on
+  Gamma, the trace finite element Vh^Gamma = tr_Gamma Vh.
 
-    variational formulation:
-    We use normal diffusion method for consistent stabilization in terms of the bilinear form of grad(u)*n and grad(v)*n, 
-    in order to ensure stability of the resulting formulation. 
+* Variational formulation: We use normal diffusion method for consistent
+  stabilization in terms of the bilinear form of grad(u)*n and grad(v)*n,
+  in order to ensure stability of the resulting formulation.
 
-    linear systems:
-    ---------------
-    A (sparse) direct solver is applied to solve the arising linear systems.
+* Linear systems: A (sparse) direct solver is applied to solve the
+  arising linear systems.
 
-    extensions:
-    -----------
-    * Instead of using the normal diffusion method, one could use ghost penalty method (or some others) for consistent stabilization. 
-    * We choose the order of mesh deformation the same as the finite element polynomial degree, which gives the optimal error convergence. 
-      You can also set the order different from the polynomial degree, in order to test other possibilities. 
-
+Extensions:
+-----------
+* Instead of using the normal diffusion method, one could use ghost
+  penalty method (or some others) for consistent stabilization.
+* We choose the order of mesh deformation the same as the finite element
+  polynomial degree, which gives the optimal error convergence. You can
+  also set the order different from the polynomial degree, in order to
+  test other possibilities.
 """
 
-# ngsolve stuff
-from ngsolve import *
-# visualization stuff
-from ngsolve.internal import *
-# basic xfem functionality
-from xfem import *
-from xfem.lsetcurv import *
-# basic geometry features (for the background mesh)
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from netgen.geom2d import SplineGeometry
 from netgen.csg import *
-# error plot features
+from ngsolve import *
+from ngsolve.internal import *
+from xfem import *
+from xfem.lsetcurv import *
+
 import matplotlib.pyplot as plt
+
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 # the order of finite element space (polynomial degree)
 p = 1

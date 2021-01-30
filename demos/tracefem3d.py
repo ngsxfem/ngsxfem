@@ -1,33 +1,33 @@
 """
-In this example we solve a scalar Laplace-Beltrami problem with a similar discretization method
-to the one used in tracefem.py. However, we use a 3D (background mesh dimension) problem and 
-higher order method this time.
+In this example we solve a scalar Laplace-Beltrami problem with a
+similar discretisation method to the one used in tracefem.py. However,
+we use a 3D (background mesh dimension) problem and higher order method
+this time.
 
-    Further comments:
-    -------------------------
-    Geometry approximation:
-    We use the same approach as described in nxfem_higher_order.py
+Further comments:
+-------------------------
+* Geometry approximation: We use the same approach as described in
+  nxfem_higher_order.py
 
-    Linear systems:
-    To be robust w.r.t. the interface position also in the condition number we use the
-    normal diffusion stabilization.
+* Linear systems: To be robust w.r.t. the interface position also in the
+  condition number we use the normal diffusion stabilization.
 
-    Visualization:
-    The visualization of the solution is most convenient with paraview and the generated
-    vtk file.
-
+* Visualization: The visualization of the solution is most convenient
+  with paraview and the generated vtk file.
 """
-from math import pi
-# ngsolve stuff
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
+from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from ngsolve import *
-# visualization stuff
 from ngsolve.internal import *
-# basic xfem functionality
 from xfem import *
 from xfem.lsetcurv import *
 
-# from netgen.geom2d import SplineGeometry
-from netgen.csg import CSGeometry, OrthoBrick, Pnt
+from math import pi
+
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 # geometry
 cube = CSGeometry()

@@ -1,58 +1,64 @@
 """
-In this example we solve a moving domain problem with homogeneous Neumann boundary conditions.
-The domain's evolution is described by a given level set function. We work with a simple background 
-mesh that is unfitted to the moving domain. The problem is treated by a fictitious domain approach
-combined with a Space-Time-DG method. To obtain higher order accuracy we employ a mesh trans-
-formation at fixed points in time.
+In this example we solve a moving domain problem with homogeneous
+Neumann boundary conditions. The domain's evolution is described by a
+given level set function. We work with a simple background  mesh that is
+unfitted to the moving domain. The problem is treated by a fictitious
+domain approach combined with a Space-Time-DG method. To obtain higher
+order accuracy we employ a mesh transformation at fixed points in time.
 
-    domain: 
-    -------  
-    The background domain is chosen as [-1,-0.75]x[1,1.5] while the moving domain is described
-    as the set of points where the level set function takes negative values.
+Domain: 
+-------  
+The background domain is chosen as [-1,-0.75]x[1,1.5] while the moving
+domain is described as the set of points where the level set function
+takes negative values.
 
-    PDE problem:
-    ------------  
-    domain equations:
-    u_t - u_xx - u_yy + w_1 * u_x + w_2 * u_y = f in moving domain
-    boundary conditions:
-                                        du/dn = 0 on boundary of moving domain
+PDE problem:
+------------  
+domain equations:
+u_t - u_xx - u_yy + w_1 * u_x + w_2 * u_y = f in moving domain
+boundary conditions:
+                                    du/dn = 0 on boundary of moving
+                                                 domain
 
-    discretization:
-    ---------------
-    Variational formulation:
-    We use a Space-Time-DG method for the variational formulation. In order to reduce 
-    computational complexity the problem is divided into time intervals (time slabs). Using
-    a suited weak formulation on these time slabs allows to solve the problem time slab by
-    time slab. This yields the computational structure of a time stepping scheme.
+Discretization:
+---------------
+* Variational formulation: We use a Space-Time-DG method for the
+  variational formulation. In order to reduce  computational complexity
+  the problem is divided into time intervals (time slabs). Using a
+  suited weak formulation on these time slabs allows to solve the
+  problem time slab by time slab. This yields the computational
+  structure of a time stepping scheme.
 
-    Finite element space:
-    The functions in our finite element space are linear combinations of tensor products
-    between purely time respectively space dependent functions. The polynomial degrees in 
-    space and time can be prescribed independently. 
-    
-    implementation:
-    ---------------
-    The integrals that appear in the variational formulation are first approximated
-    by using quadrature in time, cf. [1]. This approach requires additional stabilization in 
-    order to extend the discrete solution. To this end we apply Ghost-Penalty stabilization.
-    
-    linear systems:
-    ---------------
-    A (sparse) direct solver is applied to solve the arising linear systems.
+* Finite element space: The functions in our finite element space are
+  linear combinations of tensor products between purely time
+  respectively space dependent functions. The polynomial degrees in
+  space and time can be prescribed independently.
 
-    further information:
-    ---------------
-    A more detailed explanation of the implementation is given in a
-    juypter-notebook available from [2].
-    
-    literature:
-    -----------
-    [1]: P. Hansbo, M Larson, and S. Zahedi. A CutFEM for coupled bulk-surface problems 
-         on time-dependent domains. CMAME, 2016
-    [2]: jupyter – Tutorials for ngsxfem. http://www.github.com/ngsxfem/ngsxfem-jupyter
+Implementation:
+---------------
+The integrals that appear in the variational formulation are first
+approximated by using quadrature in time, cf. [1]. This approach
+requires additional stabilization in order to extend the discrete
+solution. To this end we apply Ghost-Penalty stabilization.
 
+Linear systems:
+---------------
+A (sparse) direct solver is applied to solve the arising linear systems.
+
+Further information:
+---------------
+A more detailed explanation of the implementation is given in a
+juypter-notebook available from [2].
+
+Literature:
+-----------
+[1] P. Hansbo, M Larson, and S. Zahedi. A CutFEM for coupled
+    bulk-surface problems on time-dependent domains. CMAME, 2016
+[2] jupyter – Tutorials for ngsxfem.
+    http://www.github.com/ngsxfem/ngsxfem-jupyter
 """
 
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from ngsolve import *
 from ngsolve.comp import *
 from ngsolve.utils import *
@@ -61,6 +67,9 @@ from netgen.geom2d import SplineGeometry
 from xfem.lsetcurv import *
 from math import pi
 
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 class quad_rule:
 

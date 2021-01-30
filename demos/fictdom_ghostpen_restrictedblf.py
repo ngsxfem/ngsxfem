@@ -1,9 +1,15 @@
+"""
+"""
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from netgen.geom2d import SplineGeometry
-from netgen.meshing import MeshingParameters
 from ngsolve import *
 from xfem import *
-# For LevelSetAdaptationMachinery
 from xfem.lsetcurv import *
+
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 # Geometry 
 square = SplineGeometry()

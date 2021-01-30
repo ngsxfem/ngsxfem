@@ -1,12 +1,15 @@
-from math import pi
-# ngsolve stuff
+"""
+"""
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
+from netgen.geom2d import SplineGeometry
 from ngsolve import *
-# visualization stuff
 from ngsolve.internal import *
-# basic xfem functionality
 from xfem import *
 
-from netgen.geom2d import SplineGeometry
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 # geometry
 square = SplineGeometry()

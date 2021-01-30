@@ -1,23 +1,25 @@
 """
-In this example we solve a scalar *unfitted* interface problem using the same method as in
-cutfem.py. The difference to cutfem.py is the fact that we use an extended finite element instead of
-the composition of two cutFEM spaces.
+In this example we solve a scalar *unfitted* interface problem using the
+same method as in cutfem.py. The difference to cutfem.py is the fact
+that we use an extended finite element instead of the composition of
+two cutFEM spaces.
 
-    extensions:
-    -----------
-    To obtain higher order accuracy (also w.r.t. the geometry approximatin) isoparametric unfitted
-    methods can be used, cf. nxfem_higher_order.py.
-
+Extensions:
+-----------
+To obtain higher order accuracy (also w.r.t. the geometry approximation)
+isoparametric unfitted methods can be used, cf. nxfem_higher_order.py.
 """
 
-# the constant pi
-from math import pi
-# ngsolve stuff
-from ngsolve import *
-# basic xfem functionality
-from xfem import *
-# basic geometry features (for the background mesh)
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from netgen.geom2d import SplineGeometry
+from ngsolve import *
+from xfem import *
+
+from math import pi
+
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 # We generate the background mesh of the domain and use a simplicial triangulation
 # To obtain a mesh with quadrilaterals use 'quad_dominated=True'

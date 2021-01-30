@@ -1,81 +1,83 @@
 """
-In this example we solve an *unfitted* Stokes interface problem with a high order isoparametric
-unfitted discretization method. 
-This file is based on the discretizations in cutfem.py, nxfem.py and nxfem_higher_order.py. 
+In this example we solve an *unfitted* Stokes interface problem with a
+high order isoparametric unfitted discretisation method. This file is
+based on the discretisations in cutfem.py, nxfem.py and
+nxfem_higher_order.py.
 
-    domain: 
-    -------
-    The domain is [-1,1]^2 while the interface is described by a level set function ( circle with
-    radius R=2/3).
+Domain:
+-------
+The domain is [-1,1]^2 while the interface is described by a level set
+function ( circle with radius R=2/3).
 
-    PDE problem:
-    ------------
-    domain equations for velocity (u1,u2) and pressure p:
-     mu_i div( sigma(u_i,p_i) ) = rho_i g  in subdomain i, i=1,2,
-                       div(u_i) = 0        in subdomain i, i=1,2,
-    interface conditions:
-                                [u] =    0 on interface (continuity across the interface    ),
-                     [sigma(u,p)·n] =    f on interface (conservation of the (momentum) flux),
-                                 u  =  u_D on domain boundary.
+PDE problem:
+------------
+domain equations for velocity (u1,u2) and pressure p:
+ mu_i div( sigma(u_i,p_i) ) = rho_i g  in subdomain i, i=1,2,
+                   div(u_i) = 0        in subdomain i, i=1,2,
+interface conditions:
+                        [u] = 0        on interface (continuity across
+                                                     the interface),
+             [sigma(u,p)·n] = f        on interface (conservation of the
+                                                     (momentum) flux),
+                         u  = u_D      on domain boundary.
 
-    The r.h.s. term g corresponds to gravity, the term f is surface tension force (here f =
-    kappa · n where kappa is the mean curvature (1/R)). The Dirichlet data is chosen according to
-    match a manufactured solution introduced in [1] which allows us to measure errors after the 
-    computation of a discrete solution.
-    The coefficients mu are domain-wise constants which are different in the two subdomains.
+The r.h.s. term g corresponds to gravity, the term f is surface tension
+force (here f = kappa · n where kappa is the mean curvature (1/R)). The
+Dirichlet data is chosen according to match a manufactured solution
+introduced in [1] which allows us to measure errors after the
+computation of a discrete solution. The coefficients mu are domain-wise
+constants which are different in the two sub-domains.
 
-    discretization:
-    ---------------
-    Finite element space:
-    As in cutfem.py but for every velocity component and the pressure
+Discretionary:
+---------------
+* Finite element space: As in cutfem.py but for every velocity component
+  and the pressure.
 
-    Variational formulation:
-    We use a Nitsche formulation which involves averages of the fluxes and jumps of the solution
-    across the interface [2]. For the average we use the Hansbo-choice [3] where the average is
-    adjusted to the local cut configuration in order to ensure stability of the resulting viscosity
-    formulation. 
-    To ensure inf-sup for the velocity-pressure space we add a ghost penalty stabilization on the
-    pressure space, cf. [2]. 
+* Variational formulation: We use a Nitsche formulation which involves
+  averages of the fluxes and jumps of the solution across the interface
+  [2]. For the average we use the Hansbo-choice [3] where the average
+  is adjusted to the local cut configuration in order to ensure stability
+  of the resulting viscosity formulation. To ensure inf-sup for the
+  velocity-pressure space we add a ghost penalty stabilization on the
+  pressure space, cf. [2]. 
 
-    Surface tension:  
-    In this example we prescribe the surface tension analytically, i.e. we circumvent approximating
-    the mean curvature from the level set function. 
+* Surface tension: In this example we prescribe the surface tension
+  analytically, i.e. we circumvent approximating the mean curvature from
+  the level set function. 
 
-    implementational aspects:
-    ---------------
-    Geometry approximation:
-    As in nxfem_higher_order.py
+Implementational aspects:
+-------------------------
+* Geometry approximation: As in nxfem_higher_order.py
 
-    Ghost penalty stabilization:
-    The edge-based stabilizations require different couplings (compared to standard
-    discretizations). To add these to the sparsity pattern we have to add the "dgjumps" flags which
-    prepares the sparse matrix for the corresponding needed couplings.
+* Ghost penalty stabilization: The edge-based stabilizations require
+  different couplings (compared to standard discretisations). To add
+  these to the sparsity pattern we have to add the "dgjumps" flags which
+  prepares the sparse matrix for the corresponding needed couplings.
 
+* Linear systems: A (sparse) direct solver is applied to solve the
+  arising linear systems.
 
-    linear systems:
-    ---------------
-    A (sparse) direct solver is applied to solve the arising linear systems.
-
-    literature:
-    -----------
-    [1]: M.Kirchhart, S.Groß, A.Reusken, Analysis of an XFEM discretization for Stokes interface
-    problems, SISC, 2016
-    [2]: P.Lederer, C.-M.Pfeiler, C.Wintersteiger, C.Lehrenfeld, Higher order unfitted fem for
-    stokes interface problems. PAMM, 2016 
-    [3]: A.Hansbo, P.Hansbo, An unfitted finite element method, based on Nitsche's method, for
-    elliptic interface problems, Comp. Meth. Appl. Mech. Eng., 2002
+Literature:
+-----------
+[1] M. Kirchhart, S. Groß, A. Reusken, Analysis of an XFEM
+    discretization for Stokes interface problems, SISC, 2016
+[2] P. Lederer, C.-M. Pfeiler, C. Wintersteiger, C. Lehrenfeld, Higher
+    order unfitted fem for Stokes interface problems. PAMM, 2016 
+[3] A. Hansbo, P. Hansbo, An unfitted finite element method, based on
+    Nitsche's method, for elliptic interface problems, Comp. Meth. Appl.
+    Mech. Eng., 2002
 
 """
-from math import pi
-# basic netgen/NGSolve
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from netgen.geom2d import SplineGeometry
-from netgen.meshing import MeshingParameters
 from ngsolve import *
-# basic unfitted functionality
 from xfem import *
-# higher order level set approximation machinery
 from xfem.lsetcurv import *
 
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 ### generate the background mesh
 square = SplineGeometry()

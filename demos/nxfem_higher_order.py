@@ -1,45 +1,47 @@
 """
-In this example we solve a scalar *unfitted* interface problem with a similar discretization method
-to the one used in cutfem.py and nxfem.py. However, we use a higher order method this time.
+In this example we solve a scalar *unfitted* interface problem with a
+similar discretisation method to the one used in cutfem.py and nxfem.py.
+However, we use a higher order method this time.
 
-    implementational aspects:
-    -------------------------
-    Geometry approximation:
-    To approximate the implicitly described geometry we use the piecewise (multi-) linear
-    interpolation of the level set function as a basis. For this geometry approximation (arbitrary
-    order) accurate numerical integration is provided.  
-    To improve this domain approximation (which is only second order accurate) we apply an
-    additional mesh transformation as in [1] which improves the geometrically accuracy. Integrals
-    are (automatically) transformed to the basis configuration where the numerical integration is
-    applied. 
+Implementational aspects:
+-------------------------
+* Geometry approximation: To approximate the implicitly described
+  geometry we use the piecewise (multi-) linear interpolation of the
+  level set function as a basis. For this geometry approximation
+  (arbitrary order) accurate numerical integration is provided.
+  To improve this domain approximation (which is only second order
+  accurate) we apply an additional mesh transformation as in [1] which
+  improves the geometrically accuracy. Integrals are (automatically)
+  transformed to the basis configuration where the numerical integration
+  is applied.
 
-    extensions:
-    -----------
-    * A Stokes interface problem based on similar techniques and a Taylor-Hood discretization is
-    used in stokescutfem.py
-    * To be robust w.r.t. high contrasts we could apply a edge-based stabilization. In
-    fictdom_ghostpen.py this stabilization is used for a one-domain (higher order) problem.
+Extensions:
+-----------
+* A Stokes interface problem based on similar techniques and a
+  Taylor-Hood discretisation is used in stokescutfem.py
+* To be robust w.r.t. high contrasts we could apply a edge-based
+  stabilization. In fictdom_ghostpen.py this stabilization is used for
+  a one-domain (higher order) problem.
 
-    literature:
-    -----------
-    [1]: C.Lehrenfeld, High order unfitted finite element methods on level set domains using
-    isoparametric mappings, Comp. Meth. Appl. Mech. Eng., 2016
-
+Literature:
+-----------
+[1] C. Lehrenfeld, High order unfitted finite element methods on level
+    set domains using isoparametric mappings, Comp. Meth. Appl. Mech.
+    Eng., 300:716-733, 2016.
 """
 
-
-# the constant pi
-from math import pi
-# ngsolve stuff
-from ngsolve import *
-# visualization stuff
-from ngsolve.internal import *
-# basic xfem functionality
-from xfem import *
-# for isoparametric mapping
-from xfem.lsetcurv import *
-# basic geometry features (for the background mesh)
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from netgen.geom2d import SplineGeometry
+from ngsolve import *
+from ngsolve.internal import *
+from xfem import *
+from xfem.lsetcurv import *
+
+from math import pi
+
+
+# -------------------------------- PARAMETERS ---------------------------------
+# ----------------------------------- MAIN ------------------------------------
 
 # We generate the background mesh of the domain and use a simplicial triangulation
 # To obtain a mesh with quadrilaterals use 'quad_dominated=True'
