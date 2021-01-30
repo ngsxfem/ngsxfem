@@ -38,6 +38,6 @@ install( FILES
 
 install( FILES
   mlset/poisson_on_square.py
-  mlset/TensorFunctions.py
+  mlset/tensor_functions.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/mlset
 )
