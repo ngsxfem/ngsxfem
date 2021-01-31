@@ -11,9 +11,9 @@ function ( circle with radius R=2/3).
 
 PDE problem:
 ------------
-domain equations for velocity (u1,u2) and pressure p:
- mu_i div( sigma(u_i,p_i) ) = rho_i g  in subdomain i, i=1,2,
-                   div(u_i) = 0        in subdomain i, i=1,2,
+domain equations for velocity (u1, u2) and pressure p:
+ mu_i div( sigma(u_i,p_i) ) = rho_i g  in sub-domain i, i=1,2,
+                   div(u_i) = 0        in sub-domain i, i=1,2,
 interface conditions:
                         [u] = 0        on interface (continuity across
                                                      the interface),
@@ -28,7 +28,7 @@ introduced in [1] which allows us to measure errors after the
 computation of a discrete solution. The coefficients mu are domain-wise
 constants which are different in the two sub-domains.
 
-Discretionary:
+Discretisation:
 ---------------
 * Finite element space: As in cutfem.py but for every velocity component
   and the pressure.
@@ -60,12 +60,14 @@ Implementational aspects:
 Literature:
 -----------
 [1] M. Kirchhart, S. Groß, A. Reusken, Analysis of an XFEM
-    discretization for Stokes interface problems, SISC, 2016
+    discretization for Stokes interface problems, SIAM J. Sci. Comput.,
+    38(2), A1019–A1043, 2016.
 [2] P. Lederer, C.-M. Pfeiler, C. Wintersteiger, C. Lehrenfeld, Higher
-    order unfitted fem for Stokes interface problems. PAMM, 2016 
+    order unfitted fem for Stokes interface problems. Proc. Appl. Math.
+    Mech., 16: 7-10, 2016.
 [3] A. Hansbo, P. Hansbo, An unfitted finite element method, based on
     Nitsche's method, for elliptic interface problems, Comp. Meth. Appl.
-    Mech. Eng., 2002
+    Mech. Eng., 191(47):5537-5552, 2002
 
 """
 

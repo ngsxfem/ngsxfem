@@ -70,7 +70,7 @@ Literature:
 -----------
 [1] A. Hansbo, P. Hansbo, An unfitted finite element method, based on
     Nitsche's method, for elliptic interface problems, Comp. Meth.
-    Appl. Mech. Eng., 191:5537-5552, 2002.
+    Appl. Mech. Eng., 191(47):5537-5552, 2002.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
