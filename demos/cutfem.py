@@ -15,7 +15,7 @@ interpolation.
 PDE problem:
 ------------
 domain equations:
-    - alpha_i (u_xx + u_yy) =   f in subdomain i, i=1,2
+    - alpha_i (u_xx + u_yy) =   f in sub-domain i, i=1,2
 interface conditions:
                         [u] =    0 on interface (continuity across
                                                  the interface     ),
