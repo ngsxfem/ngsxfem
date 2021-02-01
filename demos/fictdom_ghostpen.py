@@ -15,6 +15,7 @@ maxh = 0.1
 order = 3
 # stabilization parameter for ghost-penalty
 # gamma_stab = [0.1,0.01,0.001,0.0001,0.00001,0.00001]
+gamma_stab = 0.1
 # stabilization parameter for Nitsche
 lambda_nitsche = 10 * order * order
 
@@ -28,7 +29,7 @@ ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=quad_mesh)
 mesh = Mesh(ngmesh)
 
 
-# Manufactured exact solution
+# Manufactured exact solution for monitoring the error
 r2 = 3 / 4  # outer radius
 r1 = 1 / 4  # inner radius
 rc = (r1 + r2) / 2.0
@@ -38,7 +39,6 @@ levelset = IfPos(r - rc, r - rc - rr, rc - r - rr)
 
 coeff_f = CoefficientFunction(-20 * ((r1 + r2) / sqrt(x**2 + y**2) - 4))
 
-# for monitoring the error
 exact = CoefficientFunction(
     20 * (r2 - sqrt(x**2 + y**2)) * (sqrt(x**2 + y**2) - r1)).Compile()
 
@@ -107,8 +107,8 @@ a += SymbolicBFI(lset_if, form=nitsche_term)
 # a += SymbolicBFI(form = gp_term,VOL_or_BND = VOL, skeleton=True,
 #                  definedonelements=ba_facets)
 
-a += SymbolicFacetPatchBFI(form=0.1 / h**2 * (u - u.Other()) * (v - v.Other()),
-                           skeleton=False,
+gp_term = gamma_stab / h**2 * (u - u.Other()) * (v - v.Other())
+a += SymbolicFacetPatchBFI(form=gp_term, skeleton=False,
                            definedonelements=ba_facets)
 
 # R.h.s. term:
