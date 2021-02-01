@@ -82,14 +82,17 @@ from math import pi
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-# Geometry corners, mesh size and FE space polynomial order
+# Domain corners
 ll, ur = (-1.5, -1.5), (1.5, 1.5)
+# mesh size
 maxh = 0.2
+# Finite element order
 order = 1
 
 # Diffusion coefficients for the sub-domains (NEG/POS):
 alpha = [1.0, 2.0]
-
+# Nitsche penalty parameter
+lambda_nitsche = 20
 
 # ----------------------------------- MAIN ------------------------------------
 # We generate the background mesh of the domain and use a simplicity
@@ -151,7 +154,7 @@ h = specialcf.mesh_size
 # the cut ratio extracted from the cutinfo-class
 kappa = (CutRatioGF(ci), 1.0 - CutRatioGF(ci))
 # Nitsche stabilization parameter:
-stab = 20 * (alpha[1] + alpha[0]) / h
+stab = lambda_nitsche * (alpha[1] + alpha[0]) / h
 
 # expressions of test and trial functions (u and v are tuples):
 u = VhG.TrialFunction()
@@ -226,8 +229,8 @@ err_sqr_coefs = [(gfu.components[i] - solution[i])**2 for i in [0, 1]]
 
 # Computation of L2 error:
 l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
-                         mesh=mesh, order=2) +
-               Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
-                         mesh=mesh, order=2))
+                         mesh=mesh, order=2 * order)
+               + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
+                           mesh=mesh, order=2 * order))
 
 print("L2 error : ", l2error)
