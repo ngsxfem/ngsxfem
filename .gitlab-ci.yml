@@ -51,6 +51,8 @@ go4quads-tests:
   allow_failure: false
 
 metrics:
+  tags:
+    - c5
   stage: test
   image: schruste/ngsolve:latest
   script:
