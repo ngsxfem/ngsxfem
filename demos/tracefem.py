@@ -9,68 +9,75 @@ from xfem import *
 
 
 # -------------------------------- PARAMETERS ---------------------------------
+# MEsh diameter
+maxh = 0.3
+# Polynomial order of FE space
+order = 1
+# Extra subdivisions of cut elements to generate quadrature rule
+subdivlvl = 0
+
+
 # ----------------------------------- MAIN ------------------------------------
 
 # geometry
 square = SplineGeometry()
-square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
-mesh = Mesh (square.GenerateMesh(maxh=0.3, quad_dominated=False))
+square.AddRectangle([-1.5, -1.5], [1.5, 1.5], bc=1)
+mesh = Mesh(square.GenerateMesh(maxh=maxh, quad_dominated=False))
 
-levelset = sqrt(x*x+y*y) - 0.7
-order = 1
+levelset = sqrt(x * x + y * y) - 0.7
 
-lset_approx = GridFunction(H1(mesh,order=1))
-InterpolateToP1(levelset,lset_approx)
-subdivlvl = 0
+lset_approx = GridFunction(H1(mesh, order=1))
+InterpolateToP1(levelset, lset_approx)
 
-# extended FESpace 
+# Extended FESpace
 VhG = H1(mesh, order=order, dirichlet=[])
 
-# overwrite freedofs of VhG to mark only dofs that are involved in the cut problem
+# Overwrite freedofs of VhG to mark only dofs that are involved in the
+# cut problem
 ci = CutInfo(mesh, lset_approx)
 ba_IF = ci.GetElementsOfType(IF)
 cf_IF = BitArrayCF(ba_IF)
 freedofs = VhG.FreeDofs()
-freedofs &= GetDofsOfElements(VhG,ba_IF)
+freedofs &= GetDofsOfElements(VhG, ba_IF)
 
 gfu = GridFunction(VhG)
 
-# coefficients / parameters: 
-n = 1.0/sqrt(InnerProduct(grad(lset_approx),grad(lset_approx))) * grad(lset_approx)
+# Coefficients / parameters:
+n = 1.0 / Norm(grad(lset_approx)) * grad(lset_approx)
 h = specialcf.mesh_size
 
-#tangential projection
+
+# Tangential projection
 def P(u):
-   return u - (u*n)*n
+    return u - (u * n) * n
 
-# expressions of test and trial functions:
-u = VhG.TrialFunction()
-v = VhG.TestFunction()
 
-# integration domains (and integration parameter "subdivlvl" and "force_intorder")
-lset_if  = { "levelset" : lset_approx, "domain_type" : IF , "subdivlvl" : subdivlvl}
+# Expressions of test and trial functions:
+u, v = VhG.TnT()
 
-# bilinear forms:
+# Integration domains (and integration parameter "subdivlvl" and
+# "force_intorder")
+lset_if = {"levelset": lset_approx, "domain_type": IF, "subdivlvl": subdivlvl}
 
-a = BilinearForm(VhG, symmetric = True)
-a += SymbolicBFI(levelset_domain = lset_if , form = P(grad(u)) * P(grad(v)) + u * v)
-a += SymbolicBFI(form = 1.0/h*( InnerProduct(grad(u),n) * InnerProduct(grad(v),n)), definedonelements = ba_IF)
+# Bilinear forms:
+a = BilinearForm(VhG, symmetric=True)
+a += SymbolicBFI(levelset_domain=lset_if, form=P(grad(u)) * P(grad(v)) + u * v)
+a += SymbolicBFI(form=1.0 / h * (InnerProduct(grad(u), n)
+                      * InnerProduct(grad(v), n)),
+                 definedonelements=ba_IF)
 a.Assemble()
 
 f = LinearForm(VhG)
-f += SymbolicLFI(levelset_domain = lset_if, form = sin(x) * v)
-f.Assemble();
+f += SymbolicLFI(levelset_domain=lset_if, form=sin(x) * v)
+f.Assemble()
 
 gfu.vec[:] = 0.0
 gfu.vec.data = a.mat.Inverse(freedofs) * f.vec
 
 nan = CoefficientFunction(float('nan'))
-Draw(IfPos(cf_IF-0.5,gfu,nan),mesh,"u")
+Draw(IfPos(cf_IF - 0.5, gfu, nan), mesh, "u")
 
 visoptions.mminval = -0.2
 visoptions.mmaxval = 0.2
 visoptions.deformation = 1
 visoptions.autoscale = 0
-
-
-

@@ -65,119 +65,132 @@ import matplotlib.pyplot as plt
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-# ----------------------------------- MAIN ------------------------------------
+# Domain corners
+ll, ur = (-1.5, -1.5), (1.5, 1.5)
+# mesh size
+maxh = 0.5
+# Finite element order
+order = 2
 
-# the order of finite element space (polynomial degree)
-p = 1
 # times of mesh refinement for convergence study
-ij = 5
-# a list to store errors
-l = []
+n_refs = 5
 
-# We generate the background mesh of the domain and use a simplicial triangulation
-# To obtain a mesh with quadrilaterals use 'quad_dominated=True' 
+
+# ----------------------------------- MAIN ------------------------------------
+# a list to store errors
+errors = []
+
+# We generate the background mesh of the domain and use a simplicial
+# triangulation to obtain a mesh with quadrilaterals use
+# 'quad_dominated=True'
 square = SplineGeometry()
-square.AddRectangle([-1.5,-1.5],[1.5,1.5], bc = 1)
-mesh = Mesh(square.GenerateMesh(maxh = 0.5, quad = False))
+square.AddRectangle(ll, ur, bc=1)
+mesh = Mesh(square.GenerateMesh(maxh=maxh, quad=False))
 Draw(mesh)
-# generate a level set function of unit circle
-phi = sqrt(x*x + y*y) - 1.0
+
+# Generate a level set function of unit circle
+phi = sqrt(x**2 + y**2) - 1.0
 Draw(phi, mesh, "levelset")
 
-# iteration with mesh refinement for convergence study
-for i in range(ij):
+# Iteration with mesh refinement (bisection) for convergence study
+for i in range(n_refs):
     if i > 0:
         mesh.Refine()
-        
+
     Draw(phi, mesh, "levelset")
-    
-    # level set function 1st-order interpolation and pth-order deformation
-    lsetad = LevelSetMeshAdaptation(mesh, order = p, threshold = 1000) # threshold: the limit of deformation
+
+    # level set function: 1st-order interpolation and
+    #                    'order'th-order deformation
+    # threshold: the limit of deformation
+    lsetad = LevelSetMeshAdaptation(mesh, order=order, threshold=1000)
     deform = lsetad.CalcDeformation(phi)
-    lsetip = lsetad.lset_p1 # InterpolateToP1(lset,lsetip)
+    lsetip = lsetad.lset_p1  # InterpolateToP1(lset,lsetip)
     subdiv = 0
     Draw(lsetip, mesh, "lsetapprox")
-    
-    # set mesh deformation to reach geometrically high order accuracy
+
+    # Set mesh deformation to reach geometrically high order accuracy
     mesh.SetDeformation(deform)
-    
-    # declare the integration domains
+
+    # Declare the integration domains
     lsetif = {"levelset": lsetip, "domain_type": IF, "subdivlvl": subdiv}
-    
-    # declare a trace finite element space with polynomial degree p
-    trVh = H1(mesh, order = p, dirichlet = [])
-    # declare the symbolic trial and test functions
+
+    # Declare a trace finite element space with polynomial degree p
+    trVh = H1(mesh, order=order, dirichlet=[])
+    # Declare the symbolic trial and test functions
     u = trVh.TrialFunction()
     v = trVh.TestFunction()
-    
-    # collect the information about the cut elements
+
+    # Collect the information about the cut elements
     cut = CutInfo(mesh, lsetip)
     elem = cut.GetElementsOfType(IF)
     cutdof = trVh.FreeDofs() & GetDofsOfElements(trVh, elem)
-    
-    # declare a grid function to store the solution
-    gf = GridFunction(trVh)
-    
-    # calculate normal vector n and mesh size h
-    n = 1.0/sqrt(InnerProduct(grad(lsetip),grad(lsetip))) * grad(lsetip)
-    h = specialcf.mesh_size
-    gamma = 1.0/h
-    
-    # define the tangential projection P
-    def P(u):
-        return u - (u*n)*n
 
-    # assemble the bilinear form A(u,v)
-    a = BilinearForm(trVh, symmetric = True, check_unused = False)
-    a += SymbolicBFI(levelset_domain = lsetif, form = u * v + P(grad(u)) * P(grad(v)), definedonelements = elem)
-    a += SymbolicBFI(form = gamma * (grad(u)*n) * (grad(v)*n), definedonelements = elem) # normal diffusion
+    # Declare a grid function to store the solution
+    gf = GridFunction(trVh)
+
+    # Calculate normal vector n and mesh size h
+    n = 1.0 / sqrt(InnerProduct(grad(lsetip), grad(lsetip))) * grad(lsetip)
+    h = specialcf.mesh_size
+    gamma = 1.0 / h
+
+    # Define the tangential projection P
+    def P(u):
+        return u - (u * n) * n
+
+    # Assemble the bilinear form A(u,v)
+    a = BilinearForm(trVh, symmetric=True, check_unused=False)
+    a += SymbolicBFI(levelset_domain=lsetif,
+                     form=u * v + P(grad(u)) * P(grad(v)),
+                     definedonelements=elem)
+    a += SymbolicBFI(form=gamma * (grad(u) * n) * (grad(v) * n),
+                     definedonelements=elem)  # normal diffusion
     a.Assemble()
-    
-    # assemble the linear form f(v)
+
+    # Assemble the linear form f(v)
     f = LinearForm(trVh)
-    f += SymbolicLFI(levelset_domain = lsetif, form = 2*(x + y) * v, definedonelements = elem)
+    f += SymbolicLFI(levelset_domain=lsetif, form=2 * (x + y) * v,
+                     definedonelements=elem)
     f.Assemble()
-    
-    # solve the linear system Au = f
+
+    # Solve the linear system Au = f
     gf.vec[:] = 0.0
     gf.vec.data = a.mat.Inverse(cutdof) * f.vec
     num = gf
-    
-    # visualization settings
+
+    # Visualization settings
     visoptions.mminval = 0
     visoptions.mmaxval = 0
     visoptions.deformation = 0
     visoptions.autoscale = 1
-    
-    # compute the error between the numerical and the exact solutions
+
+    # Compute the error between the numerical and the exact solutions
     exa = CoefficientFunction((x + y))
-    error = sqrt(Integrate(lsetif, (num-exa)*(num-exa), mesh))
-    print("L2 Error: {0}".format(error))
-    
+    error = sqrt(Integrate(lsetif, (num - exa) * (num - exa), mesh))
+    print("L2 Error: {:.5e}".format(error))
+
     RefineAtLevelSet(lsetad.lset_p1)
-    l.append((i, error))
-    
+    errors.append((i, error))
+
     Draw(exa, mesh, "exact")
     Draw(num, mesh, "numeric")
-    
+
     mesh.UnsetDeformation()
     input("<press enter to continue>")
-    
+
 # plot errors to show convergence
-ref = [[l[0][1]*0.5**(j*L) for L in range(len(l))] for j in range(ij)]
+ref = [[errors[0][1] * 0.5**(j * L) for L in range(len(errors))]
+       for j in range(n_refs)]
 
 plt.yscale('log')
 plt.xlabel("lvl")
 plt.ylabel("L2 error")
-lvl, err = zip(*l)
+lvl, err = zip(*errors)
 plt.plot(lvl, err, "-*")
 
-for j in range(ij):
+for j in range(n_refs):
     plt.plot(lvl, ref[j])
-plt.title("order = " + str(p))
+plt.title("order = " + str(order))
 plt.ion()
 plt.show()
-plt.savefig("order = " + str(p) + ".png")
+plt.savefig("order = " + str(order) + ".png")
 input("<press enter to quit>")
-
-
