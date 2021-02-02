@@ -187,10 +187,10 @@ u_coef = gfu.components[0] + \
 u = [gfu.components[0] + op(gfu.components[1]) for op in [neg, pos]]
 
 # visualize levelset, interpolated levelset and discrete solution:
-# (Note that the visualization does not respect the discontinuities. 
+# (Note that the visualization does not respect the discontinuities.
 # They are smeared out. To see kinks or jumps more clearly increase the
-# subdivision option in the visualization.) drawing deformation allows 
-# to deform the mesh to obtain the geometry that is used in the 
+# subdivision option in the visualization.) drawing deformation allows
+# to deform the mesh to obtain the geometry that is used in the
 # computations:
 Draw(levelset, mesh, "levelset")
 Draw(lsetp1, mesh, "lsetp1")
@@ -209,6 +209,6 @@ l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
                            mesh=mesh, order=2 * order, heapsize=1000000))
 
 print("L2 error : ", l2error)
-# for later refinements etc. its always a good idea to deactivate the 
+# for later refinements etc. its always a good idea to deactivate the
 # mesh deformation
 mesh.UnsetDeformation()

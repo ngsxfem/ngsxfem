@@ -21,11 +21,11 @@ from math import pi
 # -------------------------------- PARAMETERS ---------------------------------
 # Domain corners
 ll, ur = (-1.5, -1.5), (1.5, 1.5)
-# mesh size
+# Mesh size
 maxh = 0.2
 # Finite element order
 order = 1
-# diffusion coefficients for the sub-domains (NEG/POS):
+# Diffusion coefficients for the sub-domains (NEG/POS):
 alpha = [1.0, 2.0]
 # Nitsche penalty parameter
 lambda_nitsche = 20
@@ -39,7 +39,7 @@ square = SplineGeometry()
 square.AddRectangle(ll, ur, bc=1)
 mesh = Mesh(square.GenerateMesh(maxh=maxh, quad_dominated=False))
 
-# manufactured solution and corresponding r.h.s. data CoefficientFunctions:
+# Manufactured solution and corresponding r.h.s. data CoefficientFunctions:
 r44 = (x**4 + y**4)
 r41 = sqrt(sqrt(x**4 + y**4))
 r4m3 = (1.0 / (r41 * r41 * r41))
@@ -53,7 +53,7 @@ coef_f = [(-1 * sqrt(2) * pi * (pi * cos(pi / 4 * (r44)) * (r66)
           (-2 * pi * 3 / 2 * (r4m3) * (-(r66) / (r44) + (r22)))]
 
 
-# level set function of the domain (phi = ||x||_4 - 1) and its interpolation:
+# Level set function of the domain (phi = ||x||_4 - 1) and its interpolation:
 levelset = (sqrt(sqrt(x**4 + y**4)) - 1.0)
 lsetp1 = GridFunction(H1(mesh, order=1))
 InterpolateToP1(levelset, lsetp1)
@@ -68,22 +68,22 @@ InterpolateToP1(levelset, lsetp1)
 #    part in the negative domain and the measure of the full element.
 ci = CutInfo(mesh, lsetp1)
 
-# extended FESpace
+# Extended FESpace
 Vh = H1(mesh, order=1, dirichlet=[1, 2, 3, 4])
 Vhx = XFESpace(Vh, ci)
 VhG = FESpace([Vh, Vhx])
 print("unknowns in extended FESpace:", VhG.ndof)
 
-# coefficients / parameters:
+# Coefficients:
 n = 1.0 / grad(lsetp1).Norm() * grad(lsetp1)
 h = specialcf.mesh_size
 
-# the cut ratio extracted from the cutinfo-class
+# The cut ratio extracted from the cutinfo-class
 kappa = (CutRatioGF(ci), 1.0 - CutRatioGF(ci))
 # Nitsche stabilization parameter:
 stab = lambda_nitsche * (alpha[1] + alpha[0]) / h
 
-# expressions of test and trial functions:
+# Expressions of test and trial functions:
 u_std, u_x = VhG.TrialFunction()
 v_std, v_x = VhG.TestFunction()
 
@@ -108,7 +108,7 @@ lset_neg = {"levelset": lsetp1, "domain_type": NEG, "subdivlvl": 0}
 lset_pos = {"levelset": lsetp1, "domain_type": POS, "subdivlvl": 0}
 lset_if = {"levelset": lsetp1, "domain_type": IF, "subdivlvl": 0}
 
-# bilinear forms:
+# Bilinear forms:
 a = BilinearForm(VhG, symmetric=True)
 # l.h.s. domain integrals:
 a += SymbolicBFI(levelset_domain=lset_neg, form=alpha[0] * gradu[0] * gradv[0])
@@ -118,35 +118,36 @@ a += SymbolicBFI(levelset_domain=lset_if, form=average_flux_u * (v[0] - v[1])
                  + average_flux_v * (u[0] - u[1])
                  + stab * (u[0] - u[1]) * (v[0] - v[1]))
 
+# Linear form
 f = LinearForm(VhG)
-# r.h.s. domain integrals:
+# R.h.s. domain integrals:
 f += SymbolicLFI(levelset_domain=lset_neg, form=coef_f[0] * v[0])
 f += SymbolicLFI(levelset_domain=lset_pos, form=coef_f[1] * v[1])
 
-# solution vector
+# Solution vector
 gfu = GridFunction(VhG)
 
-# setting domain boundary conditions:
+# Setting domain boundary conditions:
 gfu.components[0].Set(solution[1], BND)
 
-# setting up matrix and vector
+# Setting up matrix and vector
 a.Assemble()
 f.Assemble()
-# homogenization of boundary data and solution of linear system
+# Homogenization of boundary data and solution of linear system
 rhs = gfu.vec.CreateVector()
 rhs.data = f.vec - a.mat * gfu.vec
 update = gfu.vec.CreateVector()
 update.data = a.mat.Inverse(VhG.FreeDofs()) * rhs
 gfu.vec.data += update
 
-# visualization of (discrete) solution: Wherever (interpolated) level
+# Visualization of (discrete) solution: Wherever (interpolated) level
 # set function is negative visualize the first component, where it is
 # positive visualize the second component
 u_coef = gfu.components[0] + \
     IfPos(lsetp1, pos(gfu.components[1]), neg(gfu.components[1]))
 u = [gfu.components[0] + op(gfu.components[1]) for op in [neg, pos]]
 
-# visualize levelset, interpolated levelset and discrete solution:
+# Visualize levelset, interpolated levelset and discrete solution:
 # (Note that the visualization does not respect the discontinuities.
 # They are smeared out. To see kinks or jumps more clearly increase the
 # subdivision option in the visualization.)
