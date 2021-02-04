@@ -19,11 +19,11 @@ gamma_stab = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.00001]
 # stabilization parameter for Nitsche
 lambda_nitsche = 10 * order * order
 
+
 # ----------------------------------- MAIN ------------------------------------
 # Geometry and Mesh
 square = SplineGeometry()
 square.AddRectangle((-1, -1), (1, 1), bc=1)
-
 mesh = Mesh(square.GenerateMesh(maxh=maxh, quad_dominated=quad_mesh))
 
 

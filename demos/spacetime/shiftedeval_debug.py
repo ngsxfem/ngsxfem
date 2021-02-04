@@ -10,9 +10,11 @@ from xfem import *
 
 ngsglobals.msg_level = 1
 
+
 # -------------------------------- PARAMETERS ---------------------------------
 order = 3
 maxh = 0.28
+
 
 # ----------------------------------- MAIN ------------------------------------
 mesh = Mesh(unit_square.GenerateMesh(maxh=maxh))

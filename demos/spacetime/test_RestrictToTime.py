@@ -22,7 +22,6 @@ tend = 0.5
 
 
 # ----------------------------------- MAIN ------------------------------------
-
 square = SplineGeometry()
 square.AddRectangle([-0.6, -0.6], [0.6, 1], bc=1)
 ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)

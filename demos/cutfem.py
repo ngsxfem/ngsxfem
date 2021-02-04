@@ -94,6 +94,7 @@ alpha = [1.0, 2.0]
 # Nitsche penalty parameter
 lambda_nitsche = 20
 
+
 # ----------------------------------- MAIN ------------------------------------
 # We generate the background mesh of the domain and use a simplicity
 # triangulation to obtain a mesh with quadrilaterals use

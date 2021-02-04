@@ -15,6 +15,7 @@ from math import pi
 
 ngsglobals.msg_level = 1
 
+
 # -------------------------------- PARAMETERS ---------------------------------
 maxh = 0.08
 
@@ -26,6 +27,7 @@ k_t = 1
 k_s = 1
 tend = 1
 delta_t = tend / 64
+
 
 # ----------------------------------- MAIN ------------------------------------
 square = SplineGeometry()

@@ -40,6 +40,7 @@ subdivlvl = 0
 reac_cf = 1
 diff_cf = 1
 
+
 # ----------------------------------- MAIN ------------------------------------
 # Geometry
 cube = CSGeometry()

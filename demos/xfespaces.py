@@ -11,7 +11,6 @@ from time import sleep
 
 # -------------------------------- PARAMETERS ---------------------------------
 # ----------------------------------- MAIN ------------------------------------
-
 square = SplineGeometry()
 square.AddRectangle([-1, -1], [1, 1], bc=1)
 mesh = Mesh(square.GenerateMesh(maxh=0.6, quad_dominated=False))

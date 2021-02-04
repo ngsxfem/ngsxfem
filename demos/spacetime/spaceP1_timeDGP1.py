@@ -16,6 +16,7 @@ from math import pi
 
 ngsglobals.msg_level = 1
 
+
 # -------------------------------- PARAMETERS ---------------------------------
 # polynomial order in time
 k_t = 1
@@ -28,6 +29,7 @@ time_order = 2
 
 tend = 1
 delta_t = tend / 32
+
 
 # ----------------------------------- MAIN ------------------------------------
 square = SplineGeometry()

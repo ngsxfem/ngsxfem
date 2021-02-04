@@ -16,6 +16,7 @@ from math import pi
 
 ngsglobals.msg_level = 1
 
+
 # -------------------------------- PARAMETERS ---------------------------------
 A = 1.25
 maxh = 0.3
@@ -35,16 +36,14 @@ time_order = 2
 tend = 1
 delta_t = tend / 4
 
+
 # ----------------------------------- MAIN ------------------------------------
-
 square = SplineGeometry()
-
 square.AddRectangle([-A, -A], [A, A])
 ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
 mesh = Mesh(ngmesh)
 
 # expression for the time variable:
-
 coef_told = Parameter(0)
 coef_delta_t = Parameter(0)
 tref = ReferenceTimeVariable()

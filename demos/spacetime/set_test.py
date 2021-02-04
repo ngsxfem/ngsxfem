@@ -9,12 +9,13 @@ from netgen.geom2d import unit_square
 from xfem import *
 from xfem.lset_spacetime import *
 
+
 # -------------------------------- PARAMETERS ---------------------------------
 maxh = 0.1
 k_s = k_t = 2
 
-# ----------------------------------- MAIN ------------------------------------
 
+# ----------------------------------- MAIN ------------------------------------
 ngmesh = unit_square.GenerateMesh(maxh=maxh, quad_dominated=False)
 mesh = Mesh(ngmesh)
 

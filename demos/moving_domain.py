@@ -70,9 +70,7 @@ from math import pi
 
 # -------------------------------- PARAMETERS ---------------------------------
 # ----------------------------------- MAIN ------------------------------------
-
 class quad_rule:
-
     def __init__(self, name, npoints):
         '''Constructor of quadrature rule.
            This class is used for approximating the time integrals.

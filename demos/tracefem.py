@@ -18,7 +18,6 @@ subdivlvl = 0
 
 
 # ----------------------------------- MAIN ------------------------------------
-
 # geometry
 square = SplineGeometry()
 square.AddRectangle([-1.5, -1.5], [1.5, 1.5], bc=1)
