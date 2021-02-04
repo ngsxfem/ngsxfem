@@ -2,3 +2,6 @@
 vscode.code-workspace
 build
 .local
+**/__pycache__
+**/#*
+paper.pdf

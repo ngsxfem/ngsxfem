@@ -450,6 +450,38 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
           py::arg("use_FixAnyTime") = false
           );
 
+  m.def("fix_t", [](PyCF self, py::object time) -> PyCF
+  {
+    shared_ptr<ParameterCoefficientFunction<double>> t = nullptr;
+    auto t1 = py::extract<shared_ptr<ParameterCoefficientFunction<double>>> (time);
+    if (t1.check())
+    {
+      t = t1();
+    }
+    else
+    { 
+      auto t2 = py::extract<double> (time);
+      if (t2.check())
+        t = make_shared<ParameterCoefficientFunction<double>>(t2());
+      else  
+        throw Exception("time object not valid");
+    }
+    return PyCF(make_shared<FixTimeCoefficientFunction> (self, t));
+  },
+  docu_string(R"raw_string(
+fix_t fixes the evaluated time to a fixed value.
+
+Parameters
+
+self: ngsolve.CoefficientFunction
+  CoefficientFunction in which the time should be fixed
+  
+time: Parameter or double
+  Value the time should become (if Parameter, the value can be adjusted later on)
+
+)raw_string")
+     );
+     
    m.def("fix_t", [](PyGF self, double time, bool use_FixAnyTime) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
