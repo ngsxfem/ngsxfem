@@ -33,13 +33,14 @@ bibliography: doc/lit-ngsxfem.bib
 # Statement of need
 
 
+# ngsxfem in scientific literature
+As far as we are aware `ngsxfem` has been used in the following scientific literature:
+
+* *Journal Publications and pre-prints*: @vWRFH21, @OQS21, @BR20, @KNBR20, @AK20, @vWRL20, @KBR20, @LR19, @JR19a, @JR19, @LO19, @HL19, @GLR18, @LR17, @Leh17, @LPWL16, @LR16, @Leh16a, @Leh16
+* *Accompanying source code* @vWRFH20a, @vWRL20a
+* *Thesis* @Hei20, @Lud20, @Hei18, @Rau18, @Pre18,
+
 # Acknowledgements
 T. Ludescher, the NGSolve crew!
 
 # References
-* @OQS21, @vWRFH21, @vWRFH20a, @vWRL20, @vWRL20a, @BR20, @JR19, @JR19a, @KBR20, @LPWL16, @Leh16, @Leh17, @LR17, @Pre18, @HL19, @LO19, @LR19, @Rau18, @Hei18, @Lud20, @Leh16a, @GLR18, @AK20, @LR16, @KNBR20, @Hei20
-* ngsolve / netgen
-* ngsxfem-jupyter
-
-
-
