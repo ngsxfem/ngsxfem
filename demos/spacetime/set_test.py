@@ -1,9 +1,18 @@
+"""
+
+"""
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from ngsolve import *
 from netgen.geom2d import unit_square
 
 from xfem import *
 from math import pi
 from xfem.lset_spacetime import *
+
+# -------------------------------- PARAMETERS ---------------------------------
+
+# ----------------------------------- MAIN ------------------------------------
 
 ngmesh = unit_square.GenerateMesh(maxh=0.1, quad_dominated=False)
 mesh = Mesh (ngmesh)

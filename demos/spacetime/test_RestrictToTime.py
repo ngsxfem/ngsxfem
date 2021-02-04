@@ -1,3 +1,8 @@
+"""
+
+"""
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from ngsolve import *
 from time import sleep
 from netgen.geom2d import unit_square
@@ -11,6 +16,9 @@ from time import sleep
 
 from xfem.lset_spacetime import *
 
+# -------------------------------- PARAMETERS ---------------------------------
+
+# ----------------------------------- MAIN ------------------------------------
 
 square = SplineGeometry()
 square.AddRectangle([-0.6,-0.6],[0.6,1],bc=1)

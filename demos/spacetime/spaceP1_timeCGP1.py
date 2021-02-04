@@ -1,4 +1,8 @@
-# unfitted Heat equation with Neumann b.c.
+"""
+unfitted Heat equation with Neumann b.c.
+"""
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from ngsolve import *
 from time import sleep
 from netgen.geom2d import unit_square
@@ -13,6 +17,10 @@ from math import pi
 from xfem.lset_spacetime import *
 
 ngsglobals.msg_level = 1
+
+# -------------------------------- PARAMETERS ---------------------------------
+
+# ----------------------------------- MAIN ------------------------------------
 
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1])

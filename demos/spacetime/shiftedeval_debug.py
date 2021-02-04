@@ -1,11 +1,18 @@
-# solve the Poisson equation -Delta u = f
-# with Dirichlet boundary condition u = 0
+"""
+solve the Poisson equation -Delta u = f with Dirichlet boundary 
+condition u = 0
+"""
 
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from ngsolve import *
 from netgen.geom2d import unit_square
 from xfem import *
 
 ngsglobals.msg_level = 1
+
+# -------------------------------- PARAMETERS ---------------------------------
+
+# ----------------------------------- MAIN ------------------------------------
 
 # works for me
 mesh = Mesh(unit_square.GenerateMesh(maxh=0.28))

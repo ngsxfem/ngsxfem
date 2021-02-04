@@ -1,5 +1,9 @@
-# unfitted Heat equation with Neumann b.c.
-# solved with a P1-DG-in-time space-time discretization
+"""
+unfitted Heat equation with Neumann b.c. solved with a P1-DG-in-time 
+space-time discretisation.
+"""
+
+# ------------------------------ LOAD LIBRARIES -------------------------------
 from ngsolve import *
 from time import sleep
 from netgen.geom2d import unit_square
@@ -15,6 +19,9 @@ from xfem.lset_spacetime import *
 
 ngsglobals.msg_level = 1
 
+# -------------------------------- PARAMETERS ---------------------------------
+
+# ----------------------------------- MAIN ------------------------------------
 square = SplineGeometry()
 square.AddRectangle([-1,-1],[1,1])
 ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
