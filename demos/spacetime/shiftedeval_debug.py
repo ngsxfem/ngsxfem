@@ -1,5 +1,5 @@
 """
-solve the Poisson equation -Delta u = f with Dirichlet boundary 
+solve the Poisson equation -Delta u = f with Dirichlet boundary
 condition u = 0
 """
 
@@ -26,7 +26,7 @@ gfu_new = GridFunction(fes)
 gfu_old = GridFunction(fes)
 
 dfm_back = GridFunction(fes_dfm)
-#dfm_back.vec[37:] = 0.1
+# dfm_back.vec[37:] = 0.1
 dfm_back.Set(CoefficientFunction((0.2 * sin(5 * y), 0.2 * cos(5 * x))))
 for i in range(2 * mesh.nv):
     dfm_back.vec[i] = 0.0

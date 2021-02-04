@@ -71,11 +71,13 @@ def SolveProblem(delta_t):
 
         dfm = lset_adap_st.CalcDeformation(levelset, told, t_old, delta_t)
 
-        #
         for atime in intermediate_times:
-            # for i, atime in enumerate(lset_adap_st.v_ho_st.TimeFE_nodes().NumPy()):
+            # atimes = lset_adap_st.v_ho_st.TimeFE_nodes().NumPy()
+            # for i, atime in enumerate(atimes):
             lset_ho = RestrictToTime(lset_adap_st.lset_ho, atime)
-            # lset_slice.vec[:] = lset_adap_st.lset_ho.vec[i*lset_adap_st.ndof_node : (i+1)*lset_adap_st.ndof_node]
+            # _sl_s = i * lset_adap_st.ndof_node
+            # _sl_e = (i+1) * lset_adap_st.ndof_node
+            # lset_slice.vec[:] = lset_adap_st.lset_ho.vec[_sl_s, _sl_e]
 
             # Draw(lset_ho,mesh,"restrictLset")
             told.Set(t_old + delta_t * atime)

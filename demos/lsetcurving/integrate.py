@@ -10,7 +10,7 @@ order.
 Literature
 ----------
 [1] C. Lehrenfeld. High order unfitted finite element methods on level
-    set domains using isoparametric mappings. Comp. Meth. Appl. Mech. 
+    set domains using isoparametric mappings. Comp. Meth. Appl. Mech.
     Eng., 300:716-733, 2016.
 [2] C. Lehrenfeld. A higher order isoparametric fictitious domain method
     for level set domains. In S. P. A. Bordas, E. Burman, M. G. Larson,

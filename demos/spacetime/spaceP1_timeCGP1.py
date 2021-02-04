@@ -18,7 +18,6 @@ ngsglobals.msg_level = 1
 # -------------------------------- PARAMETERS ---------------------------------
 maxh = 0.08
 
-
 # diffusion coefficient
 alpha = 1
 # polynomial order in time
@@ -29,7 +28,6 @@ tend = 1
 delta_t = tend / 64
 
 # ----------------------------------- MAIN ------------------------------------
-
 square = SplineGeometry()
 square.AddRectangle([-1, -1], [1, 1])
 ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
@@ -43,8 +41,6 @@ tref = ReferenceTimeVariable()
 t = coef_told + coef_delta_t * tref
 
 # the data:
-
-
 if True:
     # radius of disk (the geometry)
     r0 = 0.5
@@ -273,7 +269,10 @@ while tend - told > delta_t / 2:
 
     Redraw(blocking=True)
 
-print("\nWARNING 1: This Petrov-Galerkin version is still missing a proper extension ! ")
-print("WARNING 2: This Petrov-Galerkin version only works for P1P0 (in time) so far ! ")
+print("")
+print("WARNING 1:", end=" ")
+print("This Petrov-Galerkin version is still missing a proper extension !")
+print("WARNING 2:", end=" ")
+print("This Petrov-Galerkin version only works for P1P0 (in time) so far !")
 
 print("")

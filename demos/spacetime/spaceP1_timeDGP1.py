@@ -1,5 +1,5 @@
 """
-unfitted Heat equation with Neumann b.c. solved with a P1-DG-in-time 
+unfitted Heat equation with Neumann b.c. solved with a P1-DG-in-time
 space-time discretisation.
 """
 
@@ -92,7 +92,7 @@ else:
     alpha = 0.05
     coeff_f = CoefficientFunction(0)
 
-## the discretisation
+# the discretisation
 # spatial FESpace for solution
 fes1 = H1(mesh, order=k_s)
 
@@ -211,7 +211,7 @@ while tend - told > delta_t / 2:
     told = told + delta_t
     coef_told.Set(told)
 
-    if u_exact != None:
+    if u_exact is not None:
         # compute error at end of time slab
         l2error = sqrt(Integrate(lset_neg_top, (u_exactL(
             told) - u_last) * (u_exactL(told) - u_last), mesh))

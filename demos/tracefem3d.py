@@ -101,8 +101,8 @@ lset_if = {"levelset": lset_approx, "domain_type": IF, "subdivlvl": subdivlvl}
 a = BilinearForm(VhG, symmetric=True)
 a += SymbolicBFI(levelset_domain=lset_if,
                  form=diff_cf * P(grad(u)) * P(grad(v)) + reac_cf * u * v)
-a += SymbolicBFI(form=(diff_cf / h + reac_cf * h) * (cf_IF * grad(u) * n)
-                       * (grad(v) * n))
+a += SymbolicBFI(
+    form=(diff_cf / h + reac_cf * h) * (cf_IF * grad(u) * n) * (grad(v) * n))
 
 # R.h.s. linear form
 f_cf = (sin(pi * z) * (diff_cf * pi * pi * (1 - z * z) + reac_cf)
