@@ -2,21 +2,20 @@
 unfitted Heat equation with Neumann b.c. solved with a P1-DG-in-time
 space-time discretisation
 """
+
 # ------------------------------ LOAD LIBRARIES -------------------------------
-from ngsolve import *
-from time import sleep
-from netgen.geom2d import unit_square
 from netgen.geom2d import SplineGeometry
-from netgen.meshing import MeshingParameters
-
-from ngsolve.internal import *
+from ngsolve import *
 from ngsolve.solvers import *
-from xfem import *
-from math import pi
+from ngsolve.internal import *
 
+from xfem import *
 from xfem.lset_spacetime import *
 
-#ngsglobals.msg_level = 1
+from math import pi
+
+ngsglobals.msg_level = 1
+
 # -------------------------------- PARAMETERS ---------------------------------
 
 

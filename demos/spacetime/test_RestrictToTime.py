@@ -3,18 +3,15 @@
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
-from ngsolve import *
-from time import sleep
-from netgen.geom2d import unit_square
 from netgen.geom2d import SplineGeometry
-from netgen.meshing import MeshingParameters
-
+from ngsolve import *
 from ngsolve.internal import *
-from xfem import *
-from numpy import pi
-from time import sleep
 
+from xfem import *
 from xfem.lset_spacetime import *
+
+from math import pi
+
 
 # -------------------------------- PARAMETERS ---------------------------------
 
