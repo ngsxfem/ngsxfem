@@ -11,7 +11,7 @@ Given a level set function \phi which describes the geometry (e.g. \Omega = { \p
 On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
 On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) sub-domains where the level set is positive/negative/zero.
 
-#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="175"/><img src="doc/graphics/intpoints.jpg" height="175"/> <br>Left: Subdivision strategy for tetrahedra. Right: Integration points on a cut element</p>
+#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="175"/><img src="doc/graphics/cut_quadrature.png" height="175"/> <br>Left: Subdivision strategy for tetrahedra. Right: Integration points on a cut element</p>
 
 
 *** Tools to work on an "active mesh" only
@@ -36,7 +36,7 @@ Many geometries do not have -- due to sharp corners or edges -- an implicit desc
 To work with these more complicated domains, =ngsxfem= provides tools to work with these geometries as with simple geometries, for example computing the level-set description of the boundary and exterior.  
 To enable integration on such domains =ngsxfem= generates quadrature rules with respect to every level-set which cuts a given element. Furthermore, it provides the analogous tools to the single level-set setting, to mark those elements of the mesh which are relevant to a given geometry.
 
-#+html: <p align="center"><img src="doc/graphics/zdisc-cut-elements.png" height="175"/> <img src="doc/graphics/quadrature_mlset.jpg" alt="TODO" height="175"/> <br>Left: Elements marked with respect to multiple level sets. Right: Quadrature for multiple cuts.</p> 
+#+html: <p align="center"><img src="doc/graphics/zdisc-cut-elements.png" height="175"/> <img src="doc/graphics/cut_quadrature_mlset.png" height="175"/> <br>Left: Elements marked with respect to multiple level sets. Right: Quadrature for multiple cuts.</p> 
 
 
 ** Applications and Literature
