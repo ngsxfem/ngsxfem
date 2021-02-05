@@ -20,8 +20,7 @@ namespace ngcomp
   class SpaceTimeFESpace : public FESpace
   {
     int ndof;
-    FESpace* Vh;
-    shared_ptr<FESpace> Vh_ptr;
+    shared_ptr<FESpace> Vh;
     ScalarFiniteElement<1>* tfe;
     double time;
     bool override_time = false;
@@ -30,8 +29,7 @@ namespace ngcomp
 
     SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags);
 
-    //virtual FESpace get_V() const { return *Vh; }
-    // FESpace* GetSpaceFESpace() { return Vh; }
+    shared_ptr<FESpace> GetSpaceFESpace() { return Vh; }
 
     // destructor
     virtual ~SpaceTimeFESpace ();
