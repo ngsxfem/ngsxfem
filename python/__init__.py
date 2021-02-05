@@ -105,8 +105,8 @@ This can lead to non-zero values also in domains where the level set function is
         return add
     raise Exception("cannot form neg_grad")
 
-SymbolicBFI_old = SymbolicBFI
-def SymbolicBFI(levelset_domain=None, *args, **kwargs):
+ngsolve_SymbolicBFI = SymbolicBFI
+def SymbolicBFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicBFI to allow for integrators on level set domains (see also
 SymbolicCutBFI). The dictionary contains the level set function (CoefficientFunciton or
@@ -194,12 +194,11 @@ Other Parameters :
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
         if (levelset_domain == None):
-            return SymbolicBFI_old(*args,**kwargs)
+            return ngsolve_SymbolicBFI(*args,**kwargs)
         else:
-            return SymbolicBFI_old(levelset_domain,*args,**kwargs)
-
-SymbolicLFI_old = SymbolicLFI
-def SymbolicLFI(levelset_domain=None, *args, **kwargs):
+            return ngsolve_SymbolicBFI(levelset_domain,*args,**kwargs)
+ngsolve_SymbolicLFI = SymbolicLFI
+def SymbolicLFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicLFI to allow for integrators on level set domains (see also
 SymbolicCutLFI). The dictionary contains the level set function (CoefficientFunciton or
@@ -286,9 +285,9 @@ Other Parameters :
         return SymbolicCutLFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
         if (levelset_domain == None):
-            return SymbolicLFI_old(*args,**kwargs)
+            return ngsolve_SymbolicLFI(*args,**kwargs)
         else:
-            return SymbolicLFI_old(levelset_domain,*args,**kwargs)
+            return ngsolve_SymbolicLFI(levelset_domain,*args,**kwargs)
 
 def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000, ip_container=None):
     """
@@ -465,6 +464,32 @@ def SpaceTimeWeakSet(gfu_e, cf, space_fes):
     gfu_e_repl.Set( cf )
     gfu_e.vec[:].data = gfu_e_repl.vec
 
+ngsolveSet = GridFunction.Set
+def SpaceTimeSet(self, cf, *args, **kwargs):
+    if (isinstance(self.space,CSpaceTimeFESpace)):
+      gfs = GridFunction(self.space.spaceFES)
+      ndof_node = len(gfs.vec)
+      for i,ti in enumerate(self.space.TimeFE_nodes()):
+        ngsolveSet(gfs,fix_t(cf,ti), *args, **kwargs)
+        self.vec[i*ndof_node : (i+1)*ndof_node].data = gfs.vec[:]
+    else:
+      ngsolveSet(self,cf, *args, **kwargs)
+
+
+
+def fix_t(obj,time,*args,**kwargs):
+    if not isinstance(time, Parameter):
+      if isinstance(obj,GridFunction):
+        return fix_t_gf(obj,time,*args,**kwargs)
+      elif isinstance(obj,ProxyFunction):
+        return fix_t_proxy(obj,time,*args,**kwargs)
+
+    if isinstance(obj,CoefficientFunction):
+      return fix_t_coef(obj,time,*args,**kwargs)
+    else:
+      raise Exception("obj is not a CoefficientFunction")
+
+
 
 from ngsolve.internal import *
 def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
@@ -515,4 +540,13 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
     *remainder* : *
         all remainder arguments are passed to """ +Draw.__module__ +".Draw"
     return ret
-    
+
+# some global scope manipulations (monkey patches etc..):
+
+# monkey patches
+GridFunction.Set = SpaceTimeSet
+SymbolicLFI = SymbolicLFIWrapper
+SymbolicBFI = SymbolicBFIWrapper
+
+# global scope definitions:
+tref = ReferenceTimeVariable()
