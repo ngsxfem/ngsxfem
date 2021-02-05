@@ -541,6 +541,38 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
         all remainder arguments are passed to """ +Draw.__module__ +".Draw"
     return ret
 
+try:
+    from ipywidgets import interact, FloatSlider
+    from ngsolve.webgui import Draw
+    def TimeSlider_Draw(cf,mesh,*args,**kwargs):
+        ts = Parameter(0)
+        if not isinstance(cf,CoefficientFunction):
+            cf = CoefficientFunction(cf)
+        scene = Draw(fix_t(cf,ts),mesh,*args,**kwargs); 
+        def UpdateTime(time): 
+            ts.Set(time); scene.Redraw()
+        return interact(UpdateTime,time=FloatSlider(description="tref:", 
+                                                    continuous_update=True,
+                                                    min=0,max=1,step=.025));
+    def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
+        DrawDC = MakeDiscontinuousDraw(Draw)
+        if not isinstance(cf1,CoefficientFunction):
+            cf1=CoefficientFunction(cf1)
+        if not isinstance(cf2,CoefficientFunction):
+            cf2=CoefficientFunction(cf2)
+        if not isinstance(cf3,CoefficientFunction):
+            cf3=CoefficientFunction(cf3)
+        ts = Parameter(0)
+        scene = DrawDC(fix_t(cf1,ts),fix_t(cf2,ts),fix_t(cf3,ts),mesh,*args,**kwargs); 
+        def UpdateTime(time): 
+            ts.Set(time); scene.Redraw()
+        return interact(UpdateTime,time=FloatSlider(description="tref:", 
+                                                    continuous_update=True,
+                                                    min=0,max=1,step=.025));
+        
+except:
+    pass
+
 # some global scope manipulations (monkey patches etc..):
 
 # monkey patches
