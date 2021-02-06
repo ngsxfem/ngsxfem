@@ -145,7 +145,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   {
      auto st_vec = st_GF->GetVectorPtr()->FV<SCAL>();   
      auto restricted_vec = s_GF->GetVectorPtr()->FV<SCAL>();
-     //restricted_vec = SCAL(0.0);
 
      Array<double> & nodes = TimeFE_nodes();
 
@@ -154,7 +153,14 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      int cnt = 0;
      for(int i= 0; i < nodes.Size(); i++) {
          if (!IsTimeNodeActive(i))
-           continue;
+           if (abs(time - nodes[i]) < EPS)
+           {
+             restricted_vec = SCAL(0.0);
+             return;
+           }
+           else
+             continue;
+           
          if(abs(time - nodes[i]) < EPS) {
              cout << IM(3) <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)

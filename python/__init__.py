@@ -468,11 +468,15 @@ def SpaceTimeWeakSet(gfu_e, cf, space_fes):
 ngsolveSet = GridFunction.Set
 def SpaceTimeSet(self, cf, *args, **kwargs):
     if (isinstance(self.space,CSpaceTimeFESpace)):
+      cf = CoefficientFunction(cf)
       gfs = GridFunction(self.space.spaceFES)
       ndof_node = len(gfs.vec)
+      j = 0
       for i,ti in enumerate(self.space.TimeFE_nodes()):
-        ngsolveSet(gfs,fix_t(cf,ti), *args, **kwargs)
-        self.vec[i*ndof_node : (i+1)*ndof_node].data = gfs.vec[:]
+        if self.space.IsTimeNodeActive(i):
+          ngsolveSet(gfs,fix_t(cf,ti), *args, **kwargs)
+          self.vec[j*ndof_node : (j+1)*ndof_node].data = gfs.vec[:]
+          j += 1
     else:
       ngsolveSet(self,cf, *args, **kwargs)
 
