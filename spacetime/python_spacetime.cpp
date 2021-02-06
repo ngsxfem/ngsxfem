@@ -128,6 +128,9 @@ heapsize : int
     self->SetTime(t);
   },
        "Set the time variable\n Also sets override time")
+  .def_property_readonly("spaceFES",
+                [](PySTFES self) { return self->GetSpaceFESpace(); },
+               "get space FESpace")
   .def("SetOverrideTime", [](PySTFES self, bool override)
   {
     self->SetOverrideTime(override);
@@ -385,7 +388,7 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
 
    // DiffOpFixt
 
-  m.def("fix_t", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
+  m.def("fix_t_proxy", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
   {
     Array<int> comparr(0);
     if (py::extract<int> (comp).check())
@@ -450,11 +453,43 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
           py::arg("use_FixAnyTime") = false
           );
 
-   m.def("fix_t", [](PyGF self, double time, bool use_FixAnyTime) -> PyCF
+  m.def("fix_t_coef", [](PyCF self, py::object time) -> PyCF
+  {
+    shared_ptr<ParameterCoefficientFunction<double>> t = nullptr;
+    auto t1 = py::extract<shared_ptr<ParameterCoefficientFunction<double>>> (time);
+    if (t1.check())
+    {
+      t = t1();
+    }
+    else
+    { 
+      auto t2 = py::extract<double> (time);
+      if (t2.check())
+        t = make_shared<ParameterCoefficientFunction<double>>(t2());
+      else  
+        throw Exception("time object not valid");
+    }
+    return PyCF(make_shared<FixTimeCoefficientFunction> (self, t));
+  },
+  docu_string(R"raw_string(
+fix_t fixes the evaluated time to a fixed value.
+
+Parameters
+
+self: ngsolve.CoefficientFunction
+  CoefficientFunction in which the time should be fixed
+  
+time: Parameter or double
+  Value the time should become (if Parameter, the value can be adjusted later on)
+
+)raw_string")
+     );
+     
+   m.def("fix_t_gf", [](PyGF self, double time) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
      const int SpaceD = self->GetFESpace()->GetSpatialDimension();
-     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
+     if(time == 0.0 || time == 1.0)
      {
        switch (int(time))
        {
@@ -480,6 +515,8 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
 
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
    },
+   py::arg("gf"),
+   py::arg("time") = 0.0,
     docu_string(R"raw_string(
 fix_t fixes the time (ReferenceTimeVariable) of a given expression.
 This is the variant for a gridfunction.
@@ -492,12 +529,6 @@ self: ngsolve.GridFunction
 time: double
   Value the time should become
   
-use_FixAnyTime: bool
-  Bool flag to control whether the time value should be expected to be
-  a node of the time scalar finite element or interpolation should be used.
-  use_FixAnyTime = True means interpolation is used. use_FixAnyTime = False
-  currently only supports time 0 and 1.
-
 )raw_string")
 );
 
