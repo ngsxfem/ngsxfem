@@ -27,19 +27,18 @@ namespace ngcomp
 {
 
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
-  : FESpace (ama, flags), Vh_ptr(aVh)
+  : FESpace (ama, flags), Vh(aVh)
   {
     cout << IM(3) << "AMA DIM: " << ama->GetDimension() << endl;
     cout << IM(3) << "Constructor of SpaceTimeFESpace" << endl;
     cout << IM(3) <<"Flags = " << flags << endl;
 
-    dimension = aVh->GetDimension ();
+    dimension = Vh->GetDimension ();
 
-    int order_s = aVh->GetOrder();
+    int order_s = Vh->GetOrder();
     int order_t = atfe->Order();
     bool linear_time = order_t == 1;
 
-    Vh = aVh.get();
     tfe = atfe.get();
 
     cout << IM(3) <<"Hello from SpaceTimeFESpace.cpp" << endl;
@@ -146,7 +145,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   {
      auto st_vec = st_GF->GetVectorPtr()->FV<SCAL>();   
      auto restricted_vec = s_GF->GetVectorPtr()->FV<SCAL>();
-     //restricted_vec = SCAL(0.0);
 
      Array<double> & nodes = TimeFE_nodes();
 
@@ -155,7 +153,14 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      int cnt = 0;
      for(int i= 0; i < nodes.Size(); i++) {
          if (!IsTimeNodeActive(i))
-           continue;
+           if (abs(time - nodes[i]) < EPS)
+           {
+             restricted_vec = SCAL(0.0);
+             return;
+           }
+           else
+             continue;
+           
          if(abs(time - nodes[i]) < EPS) {
              cout << IM(3) <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
@@ -188,7 +193,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
   {
      shared_ptr<GridFunction> restricted_GF = nullptr;
-     restricted_GF = make_shared < S_GridFunction < double > >( Vh_ptr);
+     restricted_GF = make_shared < S_GridFunction < double > >( Vh);
      restricted_GF->Update();
      switch (Vh->GetDimension())
      {
@@ -204,7 +209,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   void SpaceTimeFESpace ::InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> ctref, shared_ptr<GridFunction> st_GF)
   {
     LocalHeapMem<100000> lh("SpacetimeInterpolateToP1");
-    auto node_gf = make_shared < S_GridFunction < double > >( Vh_ptr);
+    auto node_gf = make_shared < S_GridFunction < double > >( Vh);
     node_gf->Update();
     auto gf_vec = st_GF->GetVectorPtr()->FV<double>();
     auto node_gf_vec = node_gf->GetVectorPtr()->FV<double>();
@@ -221,9 +226,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
         InterpolateP1 iP1(st_CF, node_gf);
         iP1.Do(lh,1e-15,nodes[i]);
-        for(int j = 0; j < Vh_ptr->GetNDof();j++)
+        for(int j = 0; j < Vh->GetNDof();j++)
         {
-          gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);
+          gf_vec(i*Vh->GetNDof()+j) = node_gf_vec(j);
         }
       }
     }        
