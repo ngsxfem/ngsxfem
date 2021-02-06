@@ -29,8 +29,8 @@ add_test(NAME py_tutorial_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
-add_test(NAME pytests_apply COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
-  "${PROJECT_SOURCE_DIR}/tests/pytests/test_apply.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+add_test(NAME pytests_nonlin COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_nonlin.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 add_test(NAME pytests_calc_linearized COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_calc_linearized.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
