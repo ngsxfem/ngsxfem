@@ -141,7 +141,7 @@ Draw(IfPos(-lsetp1, gfu, float('nan')), mesh, "u")
 warped_u = CoefficientFunction((deformation[0],
                                 deformation[1],
                                 IfPos(-lsetp1, 0.2 * gfu, float('nan'))))
-Draw(warped_u, mesh, "warped_u", sd=4)
+Draw(warped_u, mesh, "warped_u")
 
 
 visoptions.autoscale = False

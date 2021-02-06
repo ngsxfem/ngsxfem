@@ -41,7 +41,7 @@ Draw(BitArrayCF(ci.GetElementsOfType(NEG, VOL)), mesh, "neg")
 Draw(BitArrayCF(ci.GetElementsOfType(POS, VOL)), mesh, "pos")
 
 Draw(u.components[0] + IfPos(lsetp1, pos(u.components[1]),
-                             neg(u.components[1])), mesh, "u", sd=6)
+                             neg(u.components[1])), mesh, "u")
 
 
 for i in range(fes.ndof):

@@ -198,7 +198,7 @@ Draw(lsetmeshadap.deform, mesh, "deformation")
 Draw(u_coef, mesh, "u")
 Draw(CoefficientFunction((lsetmeshadap.deform[0],
                           lsetmeshadap.deform[1], u_coef)),
-     mesh, "graph_of_u", sd=3)
+     mesh, "graph_of_u")
 visoptions.deformation = 1
 
 err_sqr_coefs = [(u[i] - solution[i]) * (u[i] - solution[i]) for i in [0, 1]]
