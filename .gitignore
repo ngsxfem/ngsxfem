@@ -6,3 +6,5 @@ build
 **/__pycache__
 **/#*
 paper.pdf
+.env
+workspace.code-workspace
