@@ -3,3 +3,8 @@ vscode.code-workspace
 build
 .local
 .DS_Store
+**/__pycache__
+**/#*
+paper.pdf
+.env
+workspace.code-workspace
