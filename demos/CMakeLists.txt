@@ -31,7 +31,6 @@ install( FILES
   spacetime/spaceP1_timeDGP1.py
   spacetime/spaceP1_timeCGP1.py
   spacetime/shiftedeval_debug.py
-  spacetime/set_test.py
   spacetime/model_spacetime.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/spacetime
 )
