@@ -23,6 +23,7 @@ void ExportNgsx_cutint(py::module &m)
            shared_ptr<MeshAccess> ma,
            PyCF cf,
            py::object ip_container,
+           bool element_wise,
            int heapsize)
         {
           static Timer t ("IntegrateX"); RegionTimer reg(t);
@@ -37,7 +38,17 @@ void ExportNgsx_cutint(py::module &m)
           LocalHeap lh(heapsize, "lh-IntegrateX");
 
           double sum = 0.0;
+          Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
+          element_sum = 0.0;
+
           int DIM = ma->GetDimension();
+
+          int cfdim = cf->Dimension();
+          if(element_wise && cfdim != 1)
+            throw Exception("element_wise only implemented for 1 dimensional coefficientfunctions");
+
+          MyMutex mutex_ip_cont;
+          MyLock lock_ip_cont(mutex_ip_cont);
 
           Array<int> dnums;
           ma->IterateElements
@@ -62,21 +73,34 @@ void ExportNgsx_cutint(py::module &m)
 
                  if (ip_cont != nullptr)
                    for (int i = 0; i < mir.Size(); i++)
+                   {
+                     MyLock lock_ip_cont(mutex_ip_cont);
                      ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
                                                ma.get(), VOL, static_cast<int>(el.Nr())});
+                   }
+                 if (element_wise)
+                   element_sum(el.Nr()) = lsum;
                  
                  AtomicAdd(sum,lsum);
                }
              });
 
-          sum = ma->GetCommunicator().AllReduce(sum, MPI_SUM);
-          
-          return sum;
+          py::object result;
+          if (element_wise)
+          {
+            result = py::cast(element_sum);
+          }
+          else
+          {
+            result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
+          }
+          return result;
         },
         py::arg("levelset_domain"),
         py::arg("mesh"),
         py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
         py::arg("ip_container")=py::none(),
+        py::arg("element_wise")=false,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Integrate on a level set domains. The accuracy of the integration is 'order' w.r.t. a (multi-)linear
@@ -123,6 +147,9 @@ cf : ngsolve.CoefficientFunction
 
 ip_container : list (or None)
   a list to store integration points (for debugging or visualization purposes)
+
+element_wise : bool
+  result will return the integral w.r.t. each element individually.
 
 heapsize : int
   heapsize for local computations.

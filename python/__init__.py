@@ -302,6 +302,7 @@ See documentation of Integrate.
     return IntegrateX(levelset_domain = levelset_domain_local,
                       mesh=mesh, cf=cf,
                       ip_container=ip_container,
+                      element_wise=element_wise,
                       heapsize=heapsize
                       )
 
@@ -364,10 +365,10 @@ region_wise : bool
   (only active for non-levelset version)
 
 element_wise : bool
-  (only active for non-levelset version)
+  integration result is return per element
 
 ip_container : list (or None)
-  a list to store integration points (for debugging or visualization purposes)
+  a list to store integration points (for debugging or visualization purposes only!)
 
 heapsize : int
   heapsize for local computations.
