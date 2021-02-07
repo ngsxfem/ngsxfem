@@ -8,7 +8,6 @@ if(NETGEN_USE_PYTHON)
       ../cutint/xdecompose.cpp
       ../cutint/mlsetintegration.cpp
       ../cutint/xintegration.cpp
-      ../lsetcurving/calcgeomerrors.cpp
       ../lsetcurving/calcpointshift.cpp
       ../lsetcurving/lsetrefine.cpp
       ../lsetcurving/projshift.cpp

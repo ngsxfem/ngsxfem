@@ -34,6 +34,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.threshold = threshold
         self.periodic = periodic
         
+        self.mesh = mesh
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho_node = GridFunction (self.v_ho, "lset_ho_node")
         self.ndof_node = len(self.lset_ho_node.vec)
@@ -81,17 +82,11 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_kappa = SpaceTimeFESpace(self.v_kappa_node,self.tfe)
         self.kappa = GridFunction(self.v_kappa, "kappa")        
         
-    def interpol_ho(self,levelset,t): #,tstart,delta_t):
-        #times = [tstart + delta_t * xi for xi in self.v_ho_st.TimeFE_nodes()]
+    def interpol_ho(self,levelset):
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):
-            #t.Set(ti)
-            t.FixTime(ti)
-            #print("i, ti: ", i, ti)
-            self.lset_ho_node.Set(levelset)
+            self.lset_ho_node.Set(fix_t(levelset,ti))
             self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.lset_ho_node.vec[:]
-        #t.Set(tstart)
-        t.UnfixTime()
 
     def interpol_p1(self):
         for i in range(self.order_time + 1):
@@ -99,7 +94,7 @@ class LevelSetMeshAdaptation_Spacetime:
             InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = self.lset_p1_node.vec[:]
             
-    def CalcDeformation(self, levelset,t,calc_kappa = False):
+    def CalcDeformation(self, levelset,calc_kappa = False):
         """
         Compute the deformation
         """
@@ -115,7 +110,7 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_kappa.Update()
         self.kappa.Update()
         
-        self.interpol_ho(levelset,t) #,tstart,delta_t)
+        self.interpol_ho(levelset)
         self.interpol_p1()
                 
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
@@ -143,114 +138,18 @@ class LevelSetMeshAdaptation_Spacetime:
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
         return self.deform
             
-    def CalcMaxDistance(self, levelset,t, given_pts = []):
+
+    def CalcMaxDistance(self, levelset, order=None, time_order=None, heapsize=None):
         """
-        Compute largest distance
+Compute approximated distance between of the isoparametrically obtained geometry
+(should be called in deformed state)
         """
-        if given_pts:
-            time_quad = given_pts
-        else:
-            time_quad = self.v_ho_st.TimeFE_nodes() 
-        # times = [tstart + delta_t * xi for xi in time_quad]
-        max_dists = []
-        # for ti,xi in zip(times,time_quad):
-        for xi in time_quad:
-        
-            RestrictGFInTime(self.lset_p1,xi,self.lset_p1_node)
-            RestrictGFInTime(self.deform,xi,self.deform_node)
-            t.FixTime(xi)
-            # t.Set(ti) 
-            self.v_def_st.SetTime(xi)
-            self.v_ho_st.SetTime(xi)
-            max_dists.append(CalcMaxDistance(levelset,self.lset_p1_node,self.deform_node,heapsize=self.heapsize))
-            #max_dists.append(CalcMaxDistance(self.lset_ho,self.lset_p1,self.deform,heapsize=self.heapsize))
-        t.UnfixTime()
-        self.v_def_st.SetOverrideTime(False)
-        self.v_ho_st.SetOverrideTime(False)
-        # t.Set(tstart)
-        return max(max_dists)
-      
-       
-## geometry        
-#square = SplineGeometry()
-#square.AddRectangle([0,0],[2,2],bc=1)
-#ngmesh = square.GenerateMesh(maxh=0.03, quad_dominated=False)
-#mesh = Mesh (ngmesh)
-#
-## data
-#t = Parameter(0)
-#lset = CoefficientFunction( sqrt( (x-1-0.25*sin(pi*t))*(x-1-0.25*sin(pi*t))+(y-1)*(y-1)) - 0.5  )
-#
-#
-#
-#def SolveProblem(mesh,delta_t,k_s=2,k_t=1):
-#    max_nodes = []
-#    max_interm = []
-#    tstart = 0
-#    tnew = 0
-#    tend = 1
-#    t.Set(tnew)
-#    lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = k_t,
-#                                             threshold=0.5, discontinuous_qn=True)
-#    
-#    while tend - tnew > delta_t/2:
-#        t.Set(tnew)
-#        dfm = lset_adap_st.CalcDeformation(lset,t,tnew,delta_t,calc_kappa=True) 
-#        Draw(lset_adap_st.kappa,mesh,"kappa")
-#        max_nodes.append(lset_adap_st.CalcMaxDistance(lset,t,tnew,delta_t))
-#        max_interm.append(lset_adap_st.CalcMaxDistance(
-#                              lset,t,tnew,delta_t,[i*0.1 for i in range(11)]))
-#        tnew += delta_t 
-#    return max(max_nodes),max(max_interm)
-#
-#
-#def StudyConvergence(delta_t=0.5,max_rfs=2,where = "space"):   
-#    max_dist_nodes = []
-#    max_dist_interm = []
-#    ref_lvl = 0
-#    while ref_lvl <= max_rfs:  
-#        
-#        if where == "space" and ref_lvl > 0:
-#            mesh.Refine()
-#        elif where == "time" and ref_lvl > 0:
-#            delta_t = delta_t / 2  
-#        e1,e2 = SolveProblem(mesh,delta_t,k_s=3,k_t=2)
-#        max_dist_nodes.append(e1)
-#        max_dist_interm.append(e2)
-#        ref_lvl = ref_lvl + 1
-#    print("Studying convergence in: " + where)
-#    print("Max-Dist nodes = {0}".format(max_dist_nodes))
-#    if min(max_dist_nodes):
-#        eoc_nodes = [ log(max_dist_nodes[i-1]/max_dist_nodes[i])/log(2) for i in range(1,len(max_dist_nodes))]
-#        print("Eoc nodes = {0}".format(eoc_nodes))
-#    print("Max-Dist intermediate = {0}".format(max_dist_interm))
-#    if min(max_dist_interm):
-#        eoc_interm = [ log(max_dist_interm[i-1]/max_dist_interm[i])/log(2) for i in range(1,len(max_dist_interm))]
-#        print("Eoc intermediate = {0}".format(eoc_interm))
-#            
-#            
-#StudyConvergence(delta_t=0.01,max_rfs=3,where = "time")
-#        
-#                                            
-#lset_adap_st.interpol_ho(lset,t,tstart,delta_t)
-#lset_ho = lset_adap_st.lset_ho
-#lset_adap_st.interpol_p1()
-#lset_p1 = lset_adap_st.lset_p1
-#dfm = lset_adap_st.CalcDeformation(lset,t,tstart,delta_t)
-#print("Max-Dist nodes = {0}".format(lset_adap_st.CalcMaxDistance(lset,t,tstart,delta_t)))
-#print("Max-Dist intermediate points = {0}".format(lset_adap_st.CalcMaxDistance(
-#                              lset,t,tstart,delta_t,[i*0.1 for i in range(11)])))
-#
-## Plotting
-#visoptions.deformation = 1
-#lset_adap_st.v_ho_st.SetTime(0.0)    
-#lset_adap_st.v_p1_st.SetTime(0.0) 
-#lset_adap_st.v_def_st.SetTime(0.0) 
-#Draw(lset_ho,mesh,"lsetHO")
-#Draw(lset_p1,mesh,"lsetP1")
-#Draw(dfm,mesh,"deformation")
-#input("")
-#lset_adap_st.v_ho_st.SetTime(1.0) 
-#lset_adap_st.v_p1_st.SetTime(1.0)  
-#lset_adap_st.v_def_st.SetTime(1.0)  
-#Redraw()   
+        if order == None:
+          order = 2 * self.order_qn
+        if time_order == None:
+          time_order = 2 * self.order_time
+        if heapsize == None:
+          heapsize = self.heapsize
+        lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order, "time_order" : time_order}
+        minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
+        return max(abs(minv),abs(maxv))

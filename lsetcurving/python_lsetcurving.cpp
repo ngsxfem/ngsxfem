@@ -5,7 +5,7 @@
 #include <comp.hpp>
 #include <fem.hpp>
 
-#include "../lsetcurving/calcgeomerrors.hpp"
+//#include "../lsetcurving/calcgeomerrors.hpp"
 #include "../lsetcurving/lsetrefine.hpp"
 #include "../lsetcurving/projshift.hpp"
 #include "../lsetcurving/shiftedevaluate.hpp"
@@ -20,107 +20,6 @@ void ExportNgsx_lsetcurving(py::module &m)
   typedef shared_ptr<GF> PyGF;
   typedef shared_ptr<BitArray> PyBA;
 
-
-
-  py::class_<StatisticContainer, shared_ptr<StatisticContainer>>(m, "StatisticContainer")
-    .def(py::init<>())
-    .def("Print", [](StatisticContainer & self, string label, string select)
-         {
-           if (select == "L1")
-             PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
-           if (select == "L2")
-             PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
-           if (select == "max")
-             PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
-           if (select == "misc")
-             PrintConvergenceTable(self.ErrorMisc,label+"_misc");
-           if (select == "all")
-           {
-             PrintConvergenceTable(self.ErrorL1Norm,label+"_L1");
-             PrintConvergenceTable(self.ErrorL2Norm,label+"_L2");
-             PrintConvergenceTable(self.ErrorMaxNorm,label+"_max");
-             PrintConvergenceTable(self.ErrorMisc,label+"_misc");
-           }
-         },
-         py::arg("label")="something",py::arg("select")="all"
-      )
-    ;
-
-  m.def("CalcMaxDistance",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, int heapsize)
-        {
-          StatisticContainer dummy;
-          LocalHeap lh (heapsize, "CalcDistance-Heap");
-          if (lset_p1->GetMeshAccess()->GetDimension()==2)
-            CalcDistances<2>(lset_ho, lset_p1, deform,  dummy, lh, -1.0, false);
-          else
-            CalcDistances<3>(lset_ho, lset_p1, deform,  dummy, lh, -1.0, false);
-          return (double) dummy.ErrorMaxNorm[dummy.ErrorMaxNorm.Size()-1];
-        } ,
-        py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("heapsize")=1000000,
-        docu_string(R"raw_string(
-Compute approximated distance between of the isoparametrically obtained geometry.
-
-  G_h = { phi_lin o Psi^{-1} }
-
-and 
-
-  G   = { phi = 0 }
-
-as 
-
-  max_{x in G_h} | phi(x) |
-
-where 
-
-  phi = lset_ho
-  phi_lin = lset_p1
-  Psi = Id + deform
-
-The approximation is obtained as the maximum that is only computed on the integration points.
-
-Parameters
-
-lset_ho : ngsolve.CoefficientFunction
-  level set (high order) function
-
-lset_p1 : ngsolve.GridFunction
-  P1 approximation of level set function
-
-deform : ngsolve.GridFunction
-  Deformation field describing a transformation
-
-heapsize : int
-  heapsize of local computations.
-)raw_string")
-    )
-    ;
-
-  
-  m.def("CalcDistances",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, StatisticContainer & stats, int heapsize, double refine_threshold, bool absolute)
-        {
-          LocalHeap lh (heapsize, "CalcDistance-Heap");
-          if (lset_p1->GetMeshAccess()->GetDimension()==2)
-            CalcDistances<2>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold, absolute);
-          else
-            CalcDistances<3>(lset_ho, lset_p1, deform,  stats, lh, refine_threshold, absolute);
-        } ,
-        py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("stats")=NULL,py::arg("heapsize")=1000000,py::arg("refine_threshold")=-1.0,py::arg("absolute")=false,
-        docu_string(R"raw_string(
-This is an internal function (and should be removed after some refactoring at some point)!
-)raw_string")
-    )
-    ;
-
-  // m.def("CalcDeformationError",  [] (PyCF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn, StatisticContainer & stats, double lower, double upper, int heapsize)
-  //       {
-  //         LocalHeap lh (heapsize, "CalcDeformationError-Heap");
-  //         if (lset_p1->GetMeshAccess()->GetDimension()==2)
-  //           CalcDeformationError<2>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
-  //         else
-  //           CalcDeformationError<3>(lset_ho, lset_p1, deform, qn, stats, lh, lower, upper);
-  //       } ,
-  //       py::arg("lset_ho")=NULL,py::arg("lset_p1")=NULL,py::arg("deform")=NULL,py::arg("qn")=NULL,py::arg("stats")=NULL,py::arg("lower")=0.0,py::arg("upper")=0.0,py::arg("heapsize")=1000000)
-  //   ;
 
   m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn,
                              py::object active_elems_in,

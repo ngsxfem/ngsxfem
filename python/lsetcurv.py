@@ -89,6 +89,7 @@ The computed deformation depends on different options:
 
         self.eps_perturbation = eps_perturbation
         
+        self.mesh = mesh
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho = GridFunction (self.v_ho, "lset_ho")
 
@@ -162,23 +163,18 @@ blending : None/string/CoefficientFunction
                      heapsize=self.heapsize)
         return self.deform
 
-
-    # def CalcDistances(self, levelset,  lset_stats):
-    #     """
-    #     Compute largest distance
-    #     """
-    #     CalcDistances(levelset,self.lset_p1,self.deform,lset_stats)
-
-    def CalcMaxDistance(self, levelset, heapsize=None):
+    def CalcMaxDistance(self, levelset, order=None, heapsize=None):
         """
-Compute approximated distance between of the isoparametrically obtained geometry.
-
-See documentation of xfem.CalcMaxDistance 
+Compute approximated distance between of the isoparametrically obtained geometry
+(should be called in deformed state)
         """
-        if (heapsize == None):
-            return CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize)
-        else:
-            return CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=heapsize)
+        if order == None:
+          order = 2 * self.order_qn
+        if heapsize == None:
+          heapsize = self.heapsize
+        lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order}
+        minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
+        return max(abs(minv),abs(maxv))
         
     def MarkForRefinement(self, levelset = None, refine_threshold = 0.1, absolute = False):
         """
