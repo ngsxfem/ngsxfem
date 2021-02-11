@@ -32,6 +32,28 @@ bibliography: doc/lit-ngsxfem.bib
 
 # Statement of need
 
+Features
+* level set described geometries
+* element markers
+* extended FESpaces
+* Cut domain integration
+* cut stabilization techniques (ghost penalty)
+
+Distinct features:
+* Unfitted space-time (2D and 3D + t) finite elements and quadrature
+* isoparametric unfitted FEM
+* Multigrid CutMG
+* multiple level sets
+
+Applications:
+* PDEs on moving domains @Pre18 @Hei20 @Lud20 @LO19 (e.g. two-phase flows, FSI @vWRL20 @vWRFH21) 
+* flows on surfaces @JR19a, @JR19, 
+* interface problems (Stokes @LPWL16 / scalar @LR16, @Leh16)
+* fictitous domains @Leh16a
+* model order reduction with geometry 
+* particle-laden flows
+* shape optimization @Rau18
+
 
 # ngsxfem in scientific literature
 As far as we are aware `ngsxfem` has been used in the following scientific literature:
