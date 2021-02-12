@@ -71,7 +71,7 @@ codestyle-demos:
   script:
     - pip3 install --user pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
-    - pycodestyle demos/{*,mlset/*,spacetime/*,lsetcurving/*,mpi/*}.py
+    - pycodestyle demos/{*,mlset/*,spacetime/*,lsetcurving/*,mpi/*,cutint/*}.py
   when: always
   allow_failure: true
         

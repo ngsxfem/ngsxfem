@@ -15,6 +15,13 @@ install( FILES
 )
 
 install( FILES
+  cutint/area_of_a_circle_quads.py
+  cutint/integrate_one_big_quad2D.py
+  cutint/integrate_one_big_quad3D.py
+  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/cutint
+)
+
+install( FILES
   lsetcurving/integrate.py
   lsetcurving/lsetgeoms.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/lsetcurv

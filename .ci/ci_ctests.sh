@@ -25,6 +25,6 @@ if [ $1 == "pytests" ]; then
 fi
 
 if [ $1 == "go4quads-tests" ]; then
-   cd ../cutint/py_demos/
+   cd ../demos/cutint
    python3 area_of_a_circle_quads.py
 fi
