@@ -153,6 +153,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      int cnt = 0;
      for(int i= 0; i < nodes.Size(); i++) {
          if (!IsTimeNodeActive(i))
+         {
            if (abs(time - nodes[i]) < EPS)
            {
              restricted_vec = SCAL(0.0);
@@ -160,6 +161,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
            }
            else
              continue;
+         }
            
          if(abs(time - nodes[i]) < EPS) {
              cout << IM(3) <<"Node case" << endl;

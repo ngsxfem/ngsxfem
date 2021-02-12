@@ -41,7 +41,7 @@ def test_spacetime_lsetcurving_maxdist(imax, order):
 
         maxdists = []
         while tend - told.Get() > delta_t/2:
-            dfm = lset_adap_st.CalcDeformation(levelset,tref)
+            dfm = lset_adap_st.CalcDeformation(levelset)
             mesh.SetDeformation(dfm)
             maxdist = lset_adap_st.CalcMaxDistance(levelset)    
             mesh.UnsetDeformation()
