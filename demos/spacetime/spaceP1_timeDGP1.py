@@ -28,21 +28,22 @@ lset_order_time = 1
 time_order = 2
 
 tend = 1
-delta_t = tend / 32
+tstart = 0
+n_steps = 32
+delta_t = (tend - tstart)/n_steps
 
+gamma = 1.05
 
 # ----------------------------------- MAIN ------------------------------------
+told = Parameter(tstart)
+t = told + delta_t * tref
+
 square = SplineGeometry()
 square.AddRectangle([-1, -1], [1, 1])
 ngmesh = square.GenerateMesh(maxh=0.08, quad_dominated=False)
 mesh = Mesh(ngmesh)
 
 # expression for the time variable:
-
-coef_told = Parameter(0)
-coef_delta_t = Parameter(0)
-tref = ReferenceTimeVariable()
-t = coef_told + coef_delta_t * tref
 
 # the data:
 # radius of disk (the geometry)
@@ -105,10 +106,6 @@ st_fes = SpaceTimeFESpace(fes1, tfe, flags={"dgjumps": True})
 
 # Unfitted heat equation example
 
-coef_delta_t.Set(delta_t)
-tnew = 0
-told = 0
-
 lset_p1 = GridFunction(st_fes)
 
 SpaceTimeInterpolateToP1(levelset, tref, lset_p1)
@@ -155,7 +152,7 @@ hasneg_integrators_a.append(SpaceTimeNegBFI(form=-u * dt(v)))
 hasneg_integrators_a.append(SpaceTimeNegBFI(
     form=-delta_t * u * InnerProduct(w, grad(v))))
 patch_integrators_a.append(SymbolicFacetPatchBFI(
-    form=delta_t * 1.05 * h**(-2) * (u - u.Other()) * (v - v.Other()),
+    form=delta_t * gamma * h**(-2) * (u - u.Other()) * (v - v.Other()),
     skeleton=False, time_order=time_order))
 hasneg_integrators_f.append(SymbolicLFI(
     levelset_domain=lset_neg, form=delta_t * coeff_f * v,
@@ -173,7 +170,7 @@ f = LinearForm(st_fes)
 for integrator in hasneg_integrators_f:
     f += integrator
 
-while tend - told > delta_t / 2:
+while tend - told.Get() > delta_t / 2:
     SpaceTimeInterpolateToP1(levelset, tref, lset_p1)
     RestrictGFInTime(spacetime_gf=lset_p1,
                      reference_time=0.0, space_gf=lset_bottom)
@@ -210,17 +207,15 @@ while tend - told > delta_t / 2:
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
 
     # update time variable (float and ParameterCL)
-    told = told + delta_t
-    coef_told.Set(told)
+    told.Set(told.Get() + delta_t)
 
     if u_exact is not None:
         # compute error at end of time slab
-        l2error = sqrt(Integrate(lset_neg_top, (u_exactL(
-            told) - u_last) * (u_exactL(told) - u_last), mesh))
+        l2error = sqrt(Integrate(lset_neg_top, (fix_t(u_exact,1) - u_last)**2, mesh))
         # print time and error
-        print("t = {0:10}, l2error = {1:20}".format(told, l2error), end="\n")
+        print("t = {0:10}, l2error = {1:20}".format(told.Get(), l2error), end="\n")
     else:
-        print("t = {0:10}".format(told), end="\n")
+        print("t = {0:10}".format(told.Get()), end="\n")
     # Redraw:
     # Redraw(blocking=True)
 
