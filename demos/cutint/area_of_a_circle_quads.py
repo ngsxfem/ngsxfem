@@ -27,9 +27,9 @@ for key in domains:
     eoc[key] = []
 
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
 
 for i in range(n_ref):
+  lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2, discontinuous_qn=True)
   V = H1(mesh,order=1)
   lset_approx = GridFunction(V)
   InterpolateToP1(levelset,lset_approx)
