@@ -546,6 +546,22 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
         all remainder arguments are passed to """ +Draw.__module__ +".Draw"
     return ret
 
+class NoDeformation:
+    lsetp1 = None
+    def __init__(self,mesh = None, levelset=None):
+        if levelset != None:
+            if mesh == None:
+                raise Exception("need mesh");
+            self.lsetp1 = GridFunction(H1(mesh))
+            InterpolateToP1(levelset,self.lsetp1)
+
+        pass
+    def __enter__(self):
+        return self.lsetp1
+    def __exit__(self, type, value, tb):
+        pass
+
+
 try:
     from ipywidgets import interact, FloatSlider
     from ngsolve.webgui import Draw

@@ -46,7 +46,12 @@ function) (and options).
     order_qn = 2
     order_lset = 2
 
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, eps_perturbation = 1e-14, heapsize=1000000):
+    gf_to_project = []
+
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, 
+                 threshold = -1, discontinuous_qn = False, 
+                 eps_perturbation = 1e-14, heapsize=1000000,
+                 levelset = None):
         """
 The computed deformation depends on different options:
 
@@ -78,6 +83,9 @@ The computed deformation depends on different options:
 
   heapsize : int
     heapsize for local computations.
+
+  levelset : CoefficientFunction or None(default)
+    If a level set function is prescribed the deformation is computed right away.
         """
         self.order_deform = order
         self.order_qn = order
@@ -104,9 +112,27 @@ The computed deformation depends on different options:
 
         self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
         self.deform = GridFunction(self.v_def, "deform")
+        self.deform_last = GridFunction(self.v_def, "deform_last")
         self.heapsize = heapsize
+        if levelset != None:
+          self.CalcDeformation(levelset)
 
-    def CalcDeformation(self, levelset, ba =None, blending=None):
+        
+    def ProjectOnUpdate(self,gf):
+        if isinstance(gf,list):
+            self.gf_to_project.extend(gf)
+        else:
+            self.gf_to_project.append(gf)
+
+    def ProjectGFs(self):
+        for gf in self.gf_to_project:
+            # make tmp copy 
+            gfcopy = GridFunction(gf.space)
+            gfcopy.vec.data = gf.vec
+            gf.Set(shifted_eval(gfcopy, back = self.deform_last, forth = self.deform))
+            print("updated ", gf.name)
+
+    def CalcDeformation(self, levelset, ba =None, blending=None, dont_project_gfs=False):
         """
 Compute the mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise linear
 approximation) are mapped towards the corresponding isolines of a given function
@@ -151,6 +177,7 @@ blending : None/string/CoefficientFunction
             scale=sqrt(self.lset_p1.space.mesh.dim) * specialcf.mesh_size
             blending = self.lset_p1*self.lset_p1*self.lset_p1*self.lset_p1/(scale*scale*scale*scale)
             
+        self.deform_last.vec.data = self.deform.vec
         ProjectShift(self.lset_ho,
                      self.lset_p1,
                      self.deform,
@@ -161,7 +188,18 @@ blending : None/string/CoefficientFunction
                      upper=self.lset_upper_bound,
                      threshold=self.threshold,
                      heapsize=self.heapsize)
+
+        if not dont_project_gfs:
+            self.ProjectGFs()
+
         return self.deform
+
+    def __enter__(self):
+      self.mesh.SetDeformation(self.deform)
+      return self.lset_p1
+
+    def __exit__(self, type, value, tb):
+      self.mesh.UnsetDeformation()
 
     def CalcMaxDistance(self, levelset, order=None, heapsize=None):
         """

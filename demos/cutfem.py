@@ -87,7 +87,7 @@ ll, ur = (-1.5, -1.5), (1.5, 1.5)
 # mesh size
 maxh = 0.2
 # Finite element order
-order = 1
+order = 2
 
 # Diffusion coefficients for the sub-domains (NEG/POS):
 alpha = [1.0, 2.0]
@@ -120,8 +120,13 @@ coef_f = [(-1 * sqrt(2) * pi * (pi * cos(pi / 4 * (r44)) * (r66)
 # Level set function of the domain (phi = ||x||_4 - 1) and its
 # interpolation:
 levelset = sqrt(sqrt(x**4 + y**4)) - 1.0
-lsetp1 = GridFunction(H1(mesh, order=1))
-InterpolateToP1(levelset, lsetp1)
+
+if order > 1:
+  from xfem.lsetcurv import LevelSetMeshAdaptation
+  lsetadap = LevelSetMeshAdaptation(mesh,order=order,levelset=levelset)
+else:
+  lsetadap = NoDeformation(mesh,levelset)
+lsetp1 = lsetadap.lset_p1
 
 # Background FESpaces (used as CutFESpaces later-on):
 Vh = H1(mesh, order=order, dirichlet=[1, 2, 3, 4])
@@ -198,12 +203,13 @@ f += SymbolicLFI(levelset_domain=lset_pos, form=coef_f[1] * v[1])
 # solution vector
 gfu = GridFunction(VhG)
 
-# setting domain boundary conditions:
-gfu.components[1].Set(solution[1], BND)
+with lsetadap:
+  # setting domain boundary conditions:
+  gfu.components[1].Set(solution[1], BND)
 
-# setting up matrix and vector
-a.Assemble()
-f.Assemble()
+  # setting up matrix and vector
+  a.Assemble()
+  f.Assemble()
 
 # homogenization of boundary data and solution of linear system
 rhs = gfu.vec.CreateVector()
@@ -229,9 +235,10 @@ Draw(u_coef, mesh, "u")
 err_sqr_coefs = [(gfu.components[i] - solution[i])**2 for i in [0, 1]]
 
 # Computation of L2 error:
-l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
-                         mesh=mesh, order=2 * order)
-               + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
-                           mesh=mesh, order=2 * order))
+with lsetadap:
+  l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
+                          mesh=mesh, order=2 * order)
+                + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
+                            mesh=mesh, order=2 * order))
 
 print("L2 error : ", l2error)
