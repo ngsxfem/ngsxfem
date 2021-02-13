@@ -116,6 +116,8 @@ heapsize : int
   like a heap overflow.
 
 dgjumps : bool  
+  )raw_string")
+   );
 
   py::class_<SpaceTimeFESpace, PySTFES, FESpace>
     (m, "CSpaceTimeFESpace")
