@@ -85,7 +85,8 @@ lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time 
 gfu = GridFunction(st_fes)
 u_last = CreateTimeRestrictedGF(gfu,0)
 
-Draw(IfPos(lsetadap.levelsetp1[TOP],0,u_last),mesh,"u_last")
+scene = DrawDC(lsetadap.levelsetp1[TOP],u_last,0,mesh,"u_last", 
+               deformation=lsetadap.deformation[TOP])
 
 u,v = st_fes.TnT()
 h = specialcf.mesh_size
@@ -148,5 +149,9 @@ while tend - told.Get() > delta_t/2:
     told.Set(told.Get() + delta_t)
     print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(),l2error))
     
-    Redraw(blocking=True)
-
+    try:
+        __builtin__ 
+        __IPYTHON__
+        scene.Redraw()
+    except:
+        scene.Redraw(blocking=True)
