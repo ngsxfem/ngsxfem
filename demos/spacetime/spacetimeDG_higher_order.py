@@ -91,27 +91,31 @@ scene = DrawDC(lsetadap.levelsetp1[TOP],u_last,0,mesh,"u_last",
 u,v = st_fes.TnT()
 h = specialcf.mesh_size
 
-hasneg_ints_a = [lsetadap.BFI(NEG,INTERVAL, v*(dt(u) + lsetadap.mesh_velocity*grad(u) )),
-                 lsetadap.BFI(NEG,INTERVAL, alpha * delta_t* InnerProduct( grad(u), grad(v)) ),
-                 lsetadap.BFI(NEG,INTERVAL, delta_t*v*InnerProduct(w,grad(u))),
-                 lsetadap.BFI(NEG,BOTTOM, fix_t(u,0)*fix_t(v,0))]
-patch_ints_a = [SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u - u.Other() )*(v - v.Other()),
-                                      skeleton=False, time_order=time_order, deformation=lsetadap.deform)]
-hasneg_ints_f = [lsetadap.LFI(NEG,INTERVAL, delta_t*coeff_f*v),
-                 lsetadap.LFI(NEG,BOTTOM, u_last*fix_t(v,0))]
+ba_facets = BitArray(mesh.nfacet)
+ci = CutInfo(mesh,time_order=time_order)
+
+def NEGBFI(time_type,form):
+    return lsetadap.BFI(NEG,time_type,form,definedonelements=ci.GetElementsOfType(HASNEG))
+def NEGLFI(time_type,form):
+    return lsetadap.LFI(NEG,time_type,form,definedonelements=ci.GetElementsOfType(HASNEG))
 
 a = BilinearForm(st_fes,"a", check_unused=False)
-for integrator in hasneg_ints_a + patch_ints_a:
-    a += integrator
+a += NEGBFI(INTERVAL, v*(dt(u) + lsetadap.mesh_velocity*grad(u) ))
+a += NEGBFI(INTERVAL, alpha * delta_t* InnerProduct( grad(u), grad(v)))
+a += NEGBFI(INTERVAL, delta_t*v*InnerProduct(w,grad(u)))
+a += NEGBFI(BOTTOM, fix_t(u,0)*fix_t(v,0))
+a += SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u - u.Other() )*(v - v.Other()),
+                           skeleton=False, time_order=time_order, deformation=lsetadap.deform,
+                           definedonelements = ba_facets)
+
 f = LinearForm(st_fes)
-for integrator in hasneg_ints_f:
-    f += integrator
+f += NEGLFI(INTERVAL, delta_t*coeff_f*v)
+f += NEGLFI(BOTTOM, u_last*fix_t(v,0))
 
 # set initial values
 u_last.Set(fix_t(u_exact,0))
 # project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
-ci = CutInfo(mesh,time_order=time_order)
 
 while tend - told.Get() > delta_t/2:
     lsetadap.CalcDeformation(levelset)
@@ -120,15 +124,9 @@ while tend - told.Get() > delta_t/2:
     ci.Update(lsetadap.levelsetp1[INTERVAL],time_order=time_order)
 
     # re-compute the facets for stabilization:
-    ba_facets = GetFacetsWithNeighborTypes(mesh,a=ci.GetElementsOfType(HASNEG),
+    ba_facets[:] = GetFacetsWithNeighborTypes(mesh,a=ci.GetElementsOfType(HASNEG),
                                                 b=ci.GetElementsOfType(IF))
     active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
-
-    # re-set definedonelements-markers according to new markings:
-    for integrator in hasneg_ints_a + hasneg_ints_f:
-        integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
-    for integrator in patch_ints_a:
-        integrator.SetDefinedOnElements(ba_facets)
 
     a.Assemble()
     f.Assemble()
