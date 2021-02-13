@@ -494,10 +494,22 @@ def fix_t(obj,time,*args,**kwargs):
     else:
       raise Exception("obj is not a CoefficientFunction")
 
-
-
 from ngsolve.internal import *
+import ngsolve
+
+class DummyScene:
+  def __init__(self):
+    pass
+  def Redraw(self,blocking=False):
+    ngsolve.Redraw(blocking=blocking)
+dummy_scene = DummyScene()
+
+
 def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
+    def StdDrawWithDummyScene(cf,*args,**kwargs):
+        StdDraw(cf,*args,**kwargs)
+        return dummy_scene
+
     if "deformation" in kwargs and StdDraw.__module__ == "ngsolve.solve":
         args2 = list(args[:])
         args2[1] = "deformation_"+args[1]
@@ -506,7 +518,7 @@ def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
     if not "sd" in kwargs:
         kwargs["sd"] = 5
         
-    return StdDraw(IfPos(levelset,fpos,fneg),*args,**kwargs)
+    return StdDrawWithDummyScene(IfPos(levelset,fpos,fneg),*args,**kwargs)
     
 def DrawDiscontinuous_webgui(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs):
     fneg = CoefficientFunction(fneg)
@@ -547,6 +559,7 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
     return ret
 
 try:
+    __IPYTHON__
     from ipywidgets import interact, FloatSlider
     from ngsolve.webgui import Draw
     def TimeSlider_Draw(cf,mesh,*args,**kwargs):
@@ -558,7 +571,7 @@ try:
             ts.Set(time); scene.Redraw()
         return interact(UpdateTime,time=FloatSlider(description="tref:", 
                                                     continuous_update=True,
-                                                    min=0,max=1,step=.025));
+                                                    min=0,max=1,step=.025))
     def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
         DrawDC = MakeDiscontinuousDraw(Draw)
         if not isinstance(cf1,CoefficientFunction):
@@ -573,10 +586,17 @@ try:
             ts.Set(time); scene.Redraw()
         return interact(UpdateTime,time=FloatSlider(description="tref:", 
                                                     continuous_update=True,
-                                                    min=0,max=1,step=.025));
+                                                    min=0,max=1,step=.025))
+    import ngsolve.webgui
+    DrawDC = MakeDiscontinuousDraw(ngsolve.webgui.Draw)
         
 except:
-    pass
+    def TimeSlider_Draw(cf,mesh,*args,**kwargs):
+      print("TimeSlider_Draw only available in ipython mode")
+    def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
+      print("TimeSlider_DrawDC only available in ipython mode")
+    import ngsolve
+    DrawDC = MakeDiscontinuousDraw(ngsolve.Draw)
 
 # some global scope manipulations (monkey patches etc..):
 
