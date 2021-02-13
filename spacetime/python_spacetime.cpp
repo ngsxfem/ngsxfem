@@ -45,13 +45,16 @@ void ExportNgsx_spacetime(py::module &m)
                                         PyFES basefes,
                                         shared_ptr<FiniteElement> fe,
                                         py::object dirichlet,
-                                        py::dict bpflags,
-                                        int heapsize)
+                                        int heapsize, 
+                                        py::kwargs kwargs)
   {
 
 
     shared_ptr<SpaceTimeFESpace> ret = nullptr;
-    Flags flags = py::extract<Flags> (bpflags)();
+    //Flags flags = py::extract<Flags> (bpflags)();
+    auto flags = CreateFlagsFromKwArgs(kwargs);
+
+
     shared_ptr<MeshAccess> ma = basefes->GetMeshAccess();
 
     if (py::isinstance<py::list>(dirichlet)) {
@@ -86,7 +89,6 @@ void ExportNgsx_spacetime(py::module &m)
        py::arg("spacefes"),
        py::arg("timefe"),
        py::arg("dirichlet") = DummyArgument(),
-       py::arg("flags") = py::dict(),
        py::arg("heapsize") = 1000000,
        docu_string(R"raw_string(
 This function creates a SpaceTimeFiniteElementSpace based on a spacial FE space and a time Finite element
@@ -109,17 +111,11 @@ dirichlet : list or string
   The boundary of the space domain which should have Dirichlet boundary values.
   Specification policy is the same as with the usual space finite element spaces.
 
-flags : dict
-  Dictionary of additional flags for the finite element space. In the constructor
-  of the SpaceTimeFESpace, those will be forwarded to the contructor of the general
-  base class FESpace. An example would be flags = {"dgjumps": True}.
-
 heapsize : int
   Size of the local heap of this class. Increase this if you observe errors which look
   like a heap overflow.
 
-       )raw_string")
-               );
+dgjumps : bool  
 
   py::class_<SpaceTimeFESpace, PySTFES, FESpace>
     (m, "CSpaceTimeFESpace")

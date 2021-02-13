@@ -75,7 +75,7 @@ fes1 = H1(mesh, order=k_s)
 # time finite element (nodal!)
 tfe = ScalarTimeFE(k_t) 
 # space-time finite element space
-st_fes = SpaceTimeFESpace(fes1,tfe, flags = {"dgjumps": True})
+st_fes = SpaceTimeFESpace(fes1,tfe, dgjumps=True)
 
 # Space time version of Levelset Mesh Adapation object. Also offers integrator helper functions that
 # involve the correct mesh deformation 
