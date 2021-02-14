@@ -13,6 +13,7 @@
 
 #include "../utils/p1interpol.hpp"
 #include "timecf.hpp"
+#include "diffopDt.hpp"
 
 const double EPS = 1e-9;
 
@@ -46,21 +47,15 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     cout << IM(3) <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
-    if(ma->GetDimension() == 2) {
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<2>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<2>>>();
-    }
-    else if (ma->GetDimension() == 3){
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<3>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<3>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<3>>>();
-    }
-    else {
+    Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+2>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+2>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+2>>>();
+    });
+    if (ma->GetDimension() < 2)
         throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
-    }
 
-     integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
+    integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
 
     if (dimension > 1)
@@ -69,9 +64,19 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
       evaluator[BND] = 
         make_shared<BlockDifferentialOperator> (evaluator[BND], dimension);
-      // flux_evaluator[BND] = 
-      //   make_shared<BlockDifferentialOperator> (flux_evaluator[BND], dimension);
+      Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
+        Switch<3> (dimension-1, [&] (auto DIM) {
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM+2,DIM+1>>>());
+        });
+      });
     }
+    else
+      Switch<2> (ma->GetDimension()-2, [&] (auto DIM) {
+        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+2>>>());
+        additional_evaluators.Set ("fix_t_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+2,0>>>());
+        additional_evaluators.Set ("fix_t_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+2,1>>>());
+      });
+    
 
     time=0;
   }

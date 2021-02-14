@@ -190,86 +190,6 @@ Also see skip_first_node.
   )raw_string")
    );
 
-
-  // DiffOpDt
-
-  m.def("dt", [] (const PyProxyFunction self,py::object comp)
-  {
-    Array<int> comparr(0);
-    if (py::extract<int> (comp).check())
-    {
-      int c = py::extract<int>(comp)();
-      if (c != -1)
-      {
-        comparr.SetSize(1);
-        comparr[0] = c;
-      }
-    }
-
-    if (py::extract<py::list> (comp).check())
-      comparr = makeCArray<int> (py::extract<py::list> (comp)());
-
-    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))
-    {
-      throw Exception("cannot work with compounddiffops, prescribe comp != -1");
-    }
-
-    shared_ptr<DifferentialOperator> diffopdt;
-    if ( self->GetFESpace()->GetSpatialDimension() == 2) {
-        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<2>>> ();
-    }
-    else if( self->GetFESpace()->GetSpatialDimension() == 3) {
-        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
-    }
-    for (int i = comparr.Size() - 1; i >= 0; --i)
-    {
-      diffopdt = make_shared<CompoundDifferentialOperator> (diffopdt, comparr[i]);
-    }
-
-    auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(), self->IsTestFunction(), self->IsComplex(),diffopdt, nullptr, nullptr, nullptr, nullptr, nullptr);
-    
-    if (self->IsOther())
-      adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
-
-    return PyProxyFunction(adddiffop);
-    },
-          py::arg("proxy"),
-          py::arg("comp") = -1,
-        docu_string(R"raw_string(
-dt is the differential operator in time. This is the variant for a proxy function.
-
-Parameters
-
-proxy : ngsolve.ProxyFunction
-  Function to differentiate
-  
-comp : int or list
-  ??
-  
-)raw_string")
-          );
-
-  m.def("dt", [](PyGF self) -> PyCF
-  {
-    shared_ptr<DifferentialOperator> diffopdt;
-    if ( self->GetFESpace()->GetSpatialDimension() == 2)
-        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<2>>> ();
-    else if ( self->GetFESpace()->GetSpatialDimension() == 3)
-        diffopdt = make_shared<T_DifferentialOperator<DiffOpDt<3>>> ();
-
-    return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdt));
-  }, docu_string(R"raw_string(
-dt is the differential operator in time. For a given GridFunction gfu,
-dt (gfu) will be its time derivative
-
-Parameters
-
-self : ngsolve.GridFunction
-  Function to differentiate
-
-)raw_string")
-);
-
   typedef shared_ptr<TimeVariableCoefficientFunction> PyTimeVariableCF;
 
   py::class_<TimeVariableCoefficientFunction, PyTimeVariableCF, CoefficientFunction>(m, "TimeVariableCoefficientFunction")
@@ -293,96 +213,10 @@ This is the time variable. Call tref = ReferenceTimeVariable() to have a symboli
 for the time like x,y,z for space. That can be used e.g. in lset functions for unfitted methods.
 Note that one would typically use tref in [0,1] as one time slab, leading to a call like
 t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
+ngsxfem.__init__ defines tref.
 )raw_string")
 );
 
-   // DiffOpDtVec
-
-   m.def("dt_vec", [] (const PyProxyFunction self,py::object comp)
-   {
-     Array<int> comparr(0);
-     if (py::extract<int> (comp).check())
-     {
-       int c = py::extract<int>(comp)();
-       if (c != -1)
-       {
-         comparr.SetSize(1);
-         comparr[0] = c;
-       }
-     }
-
-     if (py::extract<py::list> (comp).check())
-       comparr = makeCArray<int> (py::extract<py::list> (comp)());
-
-     if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))
-     {
-       throw Exception("cannot work with compounddiffops, prescribe comp != -1");
-     }
-
-     shared_ptr<DifferentialOperator> diffopdtvec;
-     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
-     switch (self->Dimension())
-     {
-       case 1 : {
-         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 1>>> ();
-         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 1>>> ();
-         break;
-     }
-       case 2 : {
-         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 2>>> ();
-         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 2>>> ();
-         break;
-     }
-       case 3 : {
-         if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 3>>> ();
-         else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 3>>> ();
-         break;
-     }
-       default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
-     }
-
-     for (int i = comparr.Size() - 1; i >= 0; --i)
-     {
-       diffopdtvec = make_shared<CompoundDifferentialOperator> (diffopdtvec, comparr[i]);
-     }
-
-     auto adddiffop = make_shared<ProxyFunction> (self->GetFESpace(), self->IsTestFunction(), self->IsComplex(), diffopdtvec, nullptr, nullptr, nullptr, nullptr, nullptr);
-
-     if (self->IsOther())
-       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
-
-     return PyProxyFunction(adddiffop);
-     },
-           py::arg("proxy"),
-           py::arg("comp") = -1
-           );
-
-   m.def("dt_vec", [](PyGF self) -> PyCF
-   {
-       shared_ptr<DifferentialOperator> diffopdtvec;
-       const int SpaceD = self->GetFESpace()->GetSpatialDimension();
-       switch (self->Dimension())
-       {
-         case 1 : {
-           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 1>>> ();
-           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 1>>> ();
-           break;
-       }
-         case 2 : {
-           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 2>>> ();
-           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 2>>> ();
-           break;
-       }
-         case 3 : {
-           if(SpaceD == 2) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<2, 3>>> ();
-           else if(SpaceD == 3) diffopdtvec = make_shared<T_DifferentialOperator<DiffOpDtVec<3, 3>>> ();
-           break;
-       }
-         default : throw Exception("Diffop dt only implemented for dim <= 3 so far.");
-       }
-
-     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopdtvec,nullptr,nullptr,0));
-   });
 
    // DiffOpFixt
 
@@ -402,34 +236,31 @@ t = told + delta_t * tref, when tref is our ReferenceTimeVariable.
     if (py::extract<py::list> (comp).check())
       comparr = makeCArray<int> (py::extract<py::list> (comp)());
 
-    if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))
+    auto scd= dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator());
+    if (comparr.Size()== 0 && scd)
     {
-      throw Exception("cannot work with compounddiffops, prescribe comp != -1");
+      comparr.SetSize(1);
+      comparr[0] = scd->Component();
+      //throw Exception("cannot work with compounddiffops, prescribe comp != -1");
     }
 
     shared_ptr<DifferentialOperator> diffopfixt;
     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
     {
-      switch (int(time))
-      {
-        case 0 : {
-          if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 0>>> ();
-          else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 0>>> ();
-          break;
-      }
-        case 1 : {
-          if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 1>>> ();
-          else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 1>>> ();
-          break;
-      }
-        default : throw Exception("Requested time not implemented yet.");
-      }
-    }
+      if (SpaceD < 2)
+        throw Exception("Requested time not implemented yet.");
+      Switch<2> (int(time), [&] (auto TT) {
+        Switch<2> (SpaceD-2, [&] (auto SD) {
+          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<SD+2, TT>>> ();
+        });
+      });
+    } 
     else {
-      cout << "Calling DiffOpFixAnyTime" << endl;
-      if(SpaceD == 2) diffopfixt = make_shared<DiffOpFixAnyTime<2>> (time);
-      else if(SpaceD == 3) diffopfixt = make_shared<DiffOpFixAnyTime<3>> (time);
+      cout << IM(4) << "Calling DiffOpFixAnyTime" << endl;
+      Switch<2> (SpaceD-2, [&] (auto SD) {
+        diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
+      });
     }
 
 
@@ -489,28 +320,19 @@ time: Parameter or double
      const int SpaceD = self->GetFESpace()->GetSpatialDimension();
      if(time == 0.0 || time == 1.0)
      {
-       switch (int(time))
-       {
-         case 0 : {
-           if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 0>>> ();
-           else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 0>>> ();
-           break;
-       }
-         case 1 : {
-           if(SpaceD == 2) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, 1>>> ();
-           else if(SpaceD == 3) diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, 1>>> ();
-           break;
-       }
-         default : throw Exception("Requested time not implemented yet.");
-       }
+      if (SpaceD < 2) throw Exception("Requested time not implemented yet.");
+      Switch<2> (int(time), [&] (auto TT) {
+        Switch<2> (SpaceD-2, [&] (auto SD) {
+          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<SD+2, TT>>> ();
+        });
+      });
      }
      else {
-       cout << "Calling DiffOpFixAnyTime" << endl;
-       if(SpaceD == 2) diffopfixt = make_shared<DiffOpFixAnyTime<2>> (time);
-       else if(SpaceD == 3) diffopfixt = make_shared<DiffOpFixAnyTime<3>> (time);
+       cout << IM(4) << "Calling DiffOpFixAnyTime" << endl;
+       Switch<2> (SpaceD-2, [&] (auto SD) {
+         diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
+       });
      }
-
-
      return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
    },
    py::arg("gf"),

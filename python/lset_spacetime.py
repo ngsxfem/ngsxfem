@@ -131,7 +131,7 @@ class LevelSetMeshAdaptation_Spacetime:
 
     @property
     def mesh_velocity(self):
-        return dt_vec(self.deform)
+        return dt(self.deform)
 
     def interpol_ho(self,levelset):
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]

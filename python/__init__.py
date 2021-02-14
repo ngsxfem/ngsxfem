@@ -105,6 +105,16 @@ This can lead to non-zero values also in domains where the level set function is
         return add
     raise Exception("cannot form neg_grad")
 
+def dt(func):
+    """
+Evaluates the time derivative of a Space-Time function.
+    """
+    add = func.Operator("dt")
+    if add:
+        return add
+    raise Exception("cannot form dt")
+
+
 ngsolve_SymbolicBFI = SymbolicBFI
 def SymbolicBFIWrapper(levelset_domain=None, *args, **kwargs):
     """
@@ -480,14 +490,17 @@ def SpaceTimeSet(self, cf, *args, **kwargs):
     else:
       ngsolveSet(self,cf, *args, **kwargs)
 
-
-
 def fix_t(obj,time,*args,**kwargs):
     if not isinstance(time, Parameter):
-      if isinstance(obj,GridFunction):
-        return fix_t_gf(obj,time,*args,**kwargs)
-      elif isinstance(obj,ProxyFunction):
-        return fix_t_proxy(obj,time,*args,**kwargs)
+      if isinstance(obj,GridFunction) or isinstance(obj,ProxyFunction):
+        if time == 0:
+          return obj.Operator("fix_t_bottom")
+        elif time == 1: 
+          return obj.Operator("fix_t_top")
+        elif isinstance(obj,GridFunction):
+          return fix_t_gf(obj,time,*args,**kwargs)
+        elif isinstance(obj,ProxyFunction):
+          return fix_t_proxy(obj,time,*args,**kwargs)
 
     if isinstance(obj,CoefficientFunction):
       return fix_t_coef(obj,time,*args,**kwargs)
