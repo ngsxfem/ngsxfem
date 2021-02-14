@@ -249,11 +249,14 @@ ngsxfem.__init__ defines tref.
     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
     {
       if (SpaceD < 2)
-        throw Exception("Requested time not implemented yet.");
+        throw Exception("SpaceD < 2 not implemented yet.");
       Switch<2> (int(time), [&] (auto TT) {
-        Switch<2> (SpaceD-2, [&] (auto SD) {
-          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<SD+2, TT>>> ();
-        });
+        if (SpaceD == 2)
+        // Switch<2> (SpaceD-2, [&] (auto SD) {
+          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, TT>>> ();
+        else
+          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, TT>>> ();
+        // });
       });
     } 
     else {
@@ -322,9 +325,12 @@ time: Parameter or double
      {
       if (SpaceD < 2) throw Exception("Requested time not implemented yet.");
       Switch<2> (int(time), [&] (auto TT) {
-        Switch<2> (SpaceD-2, [&] (auto SD) {
-          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<SD+2, TT>>> ();
-        });
+        if (SpaceD == 2)
+        // Switch<2> (SpaceD-2, [&] (auto SD) {
+          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, TT>>> ();
+        else
+          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, TT>>> ();
+        // });
       });
      }
      else {
