@@ -30,7 +30,7 @@ time_order = 2
 tend = 1
 tstart = 0
 n_steps = 32
-delta_t = (tend - tstart)/n_steps
+delta_t = (tend - tstart) / n_steps
 
 gamma = 1.05
 
@@ -211,11 +211,12 @@ while tend - told.Get() > delta_t / 2:
 
     if u_exact is not None:
         # compute error at end of time slab
-        l2error = sqrt(Integrate(lset_neg_top, (fix_t(u_exact,1) - u_last)**2, mesh))
+        l2error = sqrt(Integrate(lset_neg_top,
+                                 (fix_t(u_exact, 1) - u_last)**2, mesh))
         # print time and error
-        print("t = {0:10}, l2error = {1:20}".format(told.Get(), l2error), end="\n")
+        print("t = {:0.8f}, l2error = {:0.18f}".format(told.Get(), l2error))
     else:
-        print("t = {0:10}".format(told.Get()), end="\n")
+        print("t = {:0.8f}".format(told.Get()))
     # Redraw:
     # Redraw(blocking=True)
 
