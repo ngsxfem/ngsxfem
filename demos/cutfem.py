@@ -122,10 +122,10 @@ coef_f = [(-1 * sqrt(2) * pi * (pi * cos(pi / 4 * (r44)) * (r66)
 levelset = sqrt(sqrt(x**4 + y**4)) - 1.0
 
 if order > 1:
-  from xfem.lsetcurv import LevelSetMeshAdaptation
-  lsetadap = LevelSetMeshAdaptation(mesh,order=order,levelset=levelset)
+    from xfem.lsetcurv import LevelSetMeshAdaptation
+    lsetadap = LevelSetMeshAdaptation(mesh, order=order, levelset=levelset)
 else:
-  lsetadap = NoDeformation(mesh,levelset)
+    lsetadap = NoDeformation(mesh, levelset)
 lsetp1 = lsetadap.lset_p1
 
 # Background FESpaces (used as CutFESpaces later-on):
@@ -204,12 +204,12 @@ f += SymbolicLFI(levelset_domain=lset_pos, form=coef_f[1] * v[1])
 gfu = GridFunction(VhG)
 
 with lsetadap:
-  # setting domain boundary conditions:
-  gfu.components[1].Set(solution[1], BND)
+    # setting domain boundary conditions:
+    gfu.components[1].Set(solution[1], BND)
 
-  # setting up matrix and vector
-  a.Assemble()
-  f.Assemble()
+    # setting up matrix and vector
+    a.Assemble()
+    f.Assemble()
 
 # homogenization of boundary data and solution of linear system
 rhs = gfu.vec.CreateVector()
@@ -236,9 +236,9 @@ err_sqr_coefs = [(gfu.components[i] - solution[i])**2 for i in [0, 1]]
 
 # Computation of L2 error:
 with lsetadap:
-  l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
-                          mesh=mesh, order=2 * order)
-                + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
-                            mesh=mesh, order=2 * order))
+    l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
+                             mesh=mesh, order=2 * order)
+                   + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
+                               mesh=mesh, order=2 * order))
 
 print("L2 error : ", l2error)
