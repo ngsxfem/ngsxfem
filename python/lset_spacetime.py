@@ -231,12 +231,12 @@ class LevelSetMeshAdaptation_Spacetime:
     def BFI(self, domain_type, time_type, form, time_order = None, definedonelements = None):
         return self.Integrator(SymbolicBFI, domain_type, time_type, form, time_order, definedonelements)
 
-    def Integrate(self, domain_type, time_type, form, order = 5, time_order = None):
+    def Integrate(self, domain_type, time_type, cf, order = 5, time_order = None):
         if time_order == None:
             time_order = 2 * self.order_time
         self.mesh.SetDeformation(self.deformation[time_type])
         fi = Integrate(levelset_domain = self.levelset_domain(domain_type,time_type), 
-                       mesh = self.mesh, cf = form, order = order, 
+                       mesh = self.mesh, cf = cf, order = order, 
                        time_order=time_order)
         self.mesh.UnsetDeformation()
         return fi

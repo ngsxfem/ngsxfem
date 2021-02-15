@@ -213,7 +213,32 @@ Compute approximated distance between of the isoparametrically obtained geometry
         lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order}
         minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
         return max(abs(minv),abs(maxv))
-        
+
+    def levelset_domain(self, domain_type = IF):
+        return { "levelset" : self.lset_p1, "domain_type" : domain_type}
+
+    def Integrator(self, SymbolicFI, domain_type, form, definedonelements = None):
+        fi = SymbolicFI(levelset_domain = self.levelset_domain(domain_type), 
+                         form = form, 
+                         deformation=self.deform)
+        if definedonelements != None:
+            fi.SetDefinedOnElements(definedonelements)       
+        return fi
+
+    def LFI(self, domain_type, form, definedonelements = None):
+        return self.Integrator(SymbolicLFI, domain_type, form, definedonelements)
+
+    def BFI(self, domain_type, form, definedonelements = None):
+        return self.Integrator(SymbolicBFI, domain_type, form, definedonelements)
+
+    def Integrate(self, domain_type, cf, order = 5):
+        self.mesh.SetDeformation(self.deform)
+        fi = Integrate(levelset_domain = self.levelset_domain(domain_type), 
+                       mesh = self.mesh, cf = cf, order = order)
+        self.mesh.UnsetDeformation()
+        return fi
+
+
     def MarkForRefinement(self, levelset = None, refine_threshold = 0.1, absolute = False):
         """
 Marks elements for refinement where the geometry approximation is larger than a prescrbed relative
