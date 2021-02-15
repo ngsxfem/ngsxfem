@@ -66,7 +66,7 @@ square = DomainTypeArray((NEG, NEG, NEG, NEG))
 with TaskManager():
     square.Compress(level_sets_p1)
     boundary = square.Boundary()
-    boundary.Compress()
+    boundary.Compress(level_sets_p1)
 
 lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
 lsets_bnd = {dtt: {"levelset": level_sets_p1, "domain_type": dtt}
