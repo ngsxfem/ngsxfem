@@ -46,14 +46,14 @@ namespace xintegration
               cout << "Calling bisection for root finding ..." << endl;
               first = false;
             }
-            vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
+            vector<double> vals(subdivs+1); vector<tuple<double,double>> sign_change_intervals;
             vector<double> roots; double delta_x = 1./subdivs;
             FlatVector<> shape(li.Size(), lh);
             function<double(double)> eval = [&li, &fe_time, &shape](double xi) -> double {
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{xi,0,0}, 0.), shape);
                 return InnerProduct(li,shape);
             };
-            for(int i=0; i<subdivs; i++){
+            for(int i=0; i<subdivs+1; i++){
                 double xi = delta_x*i;
                 vals[i] = eval(xi);
                 if(vals[i] == 0)
