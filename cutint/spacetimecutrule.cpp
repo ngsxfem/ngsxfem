@@ -53,7 +53,7 @@ namespace xintegration
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{xi,0,0}, 0.), shape);
                 return InnerProduct(li,shape);
             };
-            for(int i=0; i<subdivs+1; i++){
+            for(int i=0; i<subdivs; i++){
                 double xi = delta_x*i;
                 vals[i] = eval(xi);
                 if(vals[i] == 0)
