@@ -9,16 +9,14 @@ xfem.lsetcurving ... isoparametric unfitted FEM
 xfem.mlset ... multiple level sets
 """
 
-from ngsolve.comp import *
-from ngsolve.fem import *
-from ngsolve import BitArray
-from ngsolve.utils import L2
+from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
+                     GridFunction, IfPos, LinearForm, Parameter)
+from ngsolve.comp import Integrate as ngsolve_Integrate
+from ngsolve.comp import ProxyFunction
+from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
+from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
 from xfem.ngsxfem_py import *
-# from xfem.ngsxfem_utils_py import *
-# from xfem.ngsxfem_lsetcurving_py import *
-# from xfem.ngsxfem_xfem_py import *
-# from xfem.ngsxfem_cutint_py import *
-# from xfem.ngsxfem_spacetime_py import *
+
 
 def extend(func):
     """
@@ -115,7 +113,7 @@ Evaluates the time derivative of a Space-Time function.
     raise Exception("cannot form dt")
 
 
-ngsolve_SymbolicBFI = SymbolicBFI
+
 def SymbolicBFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicBFI to allow for integrators on level set domains (see also
@@ -207,7 +205,7 @@ Other Parameters :
             return ngsolve_SymbolicBFI(*args,**kwargs)
         else:
             return ngsolve_SymbolicBFI(levelset_domain,*args,**kwargs)
-ngsolve_SymbolicLFI = SymbolicLFI
+
 def SymbolicLFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicLFI to allow for integrators on level set domains (see also
@@ -318,7 +316,6 @@ See documentation of Integrate.
 
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO
-Integrate_old = Integrate
 def Integrate(levelset_domain=None, *args, **kwargs):
     """
 Integrate-wrapper. If a dictionary 'levelset_domain' is provided integration will be done on the
@@ -389,12 +386,12 @@ heapsize : int
     else:
         # print("Integrate-Wrapper: original Integrate called")
         if (levelset_domain == None):
-            return Integrate_old(*args,**kwargs)
+            return ngsolve_Integrate(*args,**kwargs)
         else:
             newargs = [levelset_domain]
             for q in args:
                 newargs.append(q)
-            return Integrate_old(*newargs,**kwargs)
+            return ngsolve_Integrate(*newargs,**kwargs)
 
 def IndicatorCF(mesh, ba, facets = False):
     """
@@ -507,8 +504,9 @@ def fix_t(obj,time,*args,**kwargs):
     else:
       raise Exception("obj is not a CoefficientFunction")
 
-from ngsolve.internal import *
 import ngsolve
+from ngsolve.internal import *
+
 
 class DummyScene:
   def __init__(self):
@@ -589,7 +587,7 @@ class NoDeformation:
 
 try:
     __IPYTHON__
-    from ipywidgets import interact, FloatSlider
+    from ipywidgets import FloatSlider, interact
     from ngsolve.webgui import Draw
     def TimeSlider_Draw(cf,mesh,*args,**kwargs):
         ts = Parameter(0)

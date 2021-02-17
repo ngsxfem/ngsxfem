@@ -1,7 +1,7 @@
 import pytest
-from ngsolve import *
 from ngsolve.meshes import *
 from netgen.csg import *
+from ngsolve import *
 from xfem import *
 from math import pi
 import netgen.meshing as ngm
