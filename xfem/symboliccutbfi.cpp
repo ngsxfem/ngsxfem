@@ -9,13 +9,15 @@
 */
 
 #include <fem.hpp>
+#include <variant>
 #include "../xfem/symboliccutbfi.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/straightcutrule.hpp"
 
 namespace ngfem
 {
-  
+
+
   SymbolicCutBilinearFormIntegrator ::
   SymbolicCutBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                      shared_ptr<CoefficientFunction> acf,

@@ -572,6 +572,7 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
 class NoDeformation:
     lsetp1 = None
     def __init__(self,mesh = None, levelset=None):
+        self.deform = None
         if levelset != None:
             if mesh == None:
                 raise Exception("need mesh");
@@ -625,9 +626,35 @@ except:
     import ngsolve
     DrawDC = MakeDiscontinuousDraw(ngsolve.Draw)
 
+
+dCut_raw = CutDifferentialSymbol(VOL)
+
+def dCut(*args, **kwargs):
+  print("das hier ist noch Mist (mlset ..) ||| TODO ")
+  if len(args) > 0:
+    lsetdom = {"levelset": args[0], "domain_type": args[1]}
+  elif "levelset_domain" in kwargs:
+    lsetdom = kwargs["levelset_domain"]
+    del kwargs["levelset_domain"]
+  else:
+    raise Exception("either prescribe (levelset, domain_type,...) or (levelset_domain = {...},..)")
+  if "order" in kwargs:
+    if not "order" in lsetdom:
+      lsetdom["order"] = kwargs["order"]
+    del kwargs["order"]
+  if "time_order" in kwargs:
+    if not "time_order" in lsetdom or lsetdom["time_order"] == -1:
+      lsetdom["time_order"] = kwargs["time_order"]
+    del kwargs["time_order"]
+  return dCut_raw(lsetdom,**kwargs)
+
 # some global scope manipulations (monkey patches etc..):
 
 # monkey patches
+print("|---------------------------------------------|")
+print("| ngsxfem applied monkey patches for          |")
+print("| GridFunction.Set, SymbolicLFI, SymbolicBFI. |")
+print("|---------------------------------------------|")
 GridFunction.Set = SpaceTimeSet
 SymbolicLFI = SymbolicLFIWrapper
 SymbolicBFI = SymbolicBFIWrapper

@@ -10,9 +10,11 @@
 
 #include <fem.hpp>
 #include "../xfem/symboliccutlfi.hpp"
+#include "../xfem/symboliccutbfi.hpp"
 #include "../cutint/xintegration.hpp"
 namespace ngfem
 {
+
 
   SymbolicCutLinearFormIntegrator ::
   SymbolicCutLinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
@@ -81,7 +83,7 @@ namespace ngfem
 
     auto et = trafo.GetElementType();
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
-      throw Exception("SymbolicCutBFI can only treat simplices right now");
+      throw Exception("SymbolicCutlfi can only treat simplices right now");
 
     LevelsetIntegrationDomain lsetintdom_local(lsetintdom);    
     if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom

@@ -180,25 +180,20 @@ average_flux_v = sum([- kappa[i] * alpha[i] * gradv[i] * n for i in [0, 1]])
 # the integration domain). If the "levelset"-argument is not a
 # (multi-)linear function, you can use the "subdivlvl" argument to add
 # additional refinement levels for the geometry approximation.
-lset_neg = {"levelset": lsetp1, "domain_type": NEG, "subdivlvl": 0}
-lset_pos = {"levelset": lsetp1, "domain_type": POS, "subdivlvl": 0}
-lset_if = {"levelset": lsetp1, "domain_type": IF, "subdivlvl": 0}
+dx = tuple([dCut(lsetp1,dt,deformation=lsetadap.deform) for dt in [NEG,POS]])
+ds = dCut(lsetp1,IF,deformation=lsetadap.deform)
 
 # bilinear forms:
 a = BilinearForm(VhG, symmetric=True)
 # l.h.s. domain integrals:
-a += SymbolicBFI(levelset_domain=lset_neg, form=alpha[0] * gradu[0] * gradv[0])
-a += SymbolicBFI(levelset_domain=lset_pos, form=alpha[1] * gradu[1] * gradv[1])
+a += sum(alpha[i]*gradu[i]*gradv[i]*dx[i] for i in [0,1])
 # Nitsche integrals:
-a += SymbolicBFI(levelset_domain=lset_if,
-                 form=(average_flux_u * (v[0] - v[1]) +
-                       average_flux_v * (u[0] - u[1]) +
-                       stab * (u[0] - u[1]) * (v[0] - v[1])))
+a += (average_flux_u * (v[0] - v[1]) + average_flux_v * (u[0] - u[1]) +
+      stab * (u[0] - u[1]) * (v[0] - v[1]))*ds
 
 f = LinearForm(VhG)
 # r.h.s. domain integrals:
-f += SymbolicLFI(levelset_domain=lset_neg, form=coef_f[0] * v[0])
-f += SymbolicLFI(levelset_domain=lset_pos, form=coef_f[1] * v[1])
+f += sum( coef_f[i] * v[i] * dx[i] for i in [0,1])
 
 # solution vector
 gfu = GridFunction(VhG)
@@ -207,9 +202,9 @@ with lsetadap:
     # setting domain boundary conditions:
     gfu.components[1].Set(solution[1], BND)
 
-    # setting up matrix and vector
-    a.Assemble()
-    f.Assemble()
+# setting up matrix and vector
+a.Assemble()
+f.Assemble()
 
 # homogenization of boundary data and solution of linear system
 rhs = gfu.vec.CreateVector()
@@ -231,14 +226,9 @@ Draw(levelset, mesh, "levelset")
 Draw(lsetp1, mesh, "levelset_P1")
 Draw(u_coef, mesh, "u")
 
-# Error coefficients:
-err_sqr_coefs = [(gfu.components[i] - solution[i])**2 for i in [0, 1]]
-
 # Computation of L2 error:
-with lsetadap:
-    l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
-                             mesh=mesh, order=2 * order)
-                   + Integrate(levelset_domain=lset_pos, cf=err_sqr_coefs[1],
-                               mesh=mesh, order=2 * order))
+dx = tuple([dCut(lsetp1,dt,deformation=lsetadap.deform,order=2*order) for dt in [NEG,POS]])
+err_sqr = sum([(gfu.components[i] - solution[i])**2 * dx[i] for i in [0, 1]])
+l2error = sqrt(Integrate(err_sqr, mesh))
 
 print("L2 error : ", l2error)

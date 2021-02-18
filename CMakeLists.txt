@@ -116,6 +116,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_subdirectory(python)
 add_subdirectory(utils)
+add_subdirectory(cutint)
 add_subdirectory(xfem)
 add_subdirectory(demos)
 add_subdirectory(lsetcurving)
