@@ -10,7 +10,7 @@ xfem.mlset ... multiple level sets
 """
 
 from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
-                     GridFunction, IfPos, LinearForm, Parameter)
+                     GridFunction, H1, IfPos, LinearForm, Parameter)
 from ngsolve.comp import Integrate as ngsolve_Integrate
 from ngsolve.comp import ProxyFunction
 from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
@@ -494,7 +494,7 @@ def SpaceTimeSet(self, cf, *args, **kwargs):
     else:
       ngsolveSet(self,cf, *args, **kwargs)
 
-def fix_t(obj,time,*args,**kwargs):
+def fix_tref(obj,time,*args,**kwargs):
     if not isinstance(time, Parameter):
       if isinstance(obj,GridFunction) or isinstance(obj,ProxyFunction):
         if time == 0:
@@ -510,6 +510,13 @@ def fix_t(obj,time,*args,**kwargs):
       return fix_t_coef(obj,time,*args,**kwargs)
     else:
       raise Exception("obj is not a CoefficientFunction")
+
+def fix_t(obj,time,*args,**kwargs):
+  """
+  Deprecated: use "fix_tref" instead
+  """
+  print("WARNING: fix_t is deprecated. Use \"fix_tref\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref(obj,time,*args,**kwargs)
 
 import ngsolve
 from ngsolve.internal import *
@@ -657,6 +664,22 @@ def dCut(*args, **kwargs):
     if not "time_order" in lsetdom or lsetdom["time_order"] == -1:
       lsetdom["time_order"] = kwargs["time_order"]
     del kwargs["time_order"]
+  return dCut_raw(lsetdom,**kwargs)
+
+def dxtref(mesh, *args,**kwargs):
+  """
+  dxtref is the Differential Symbol for the integration over all elements 
+  extruded by the reference interval [0,1] to space-time prisms
+  """
+  gflset = GridFunction(H1(mesh))
+  gflset.vec[:] = 1
+  lsetdom = {"levelset": gflset, "domain_type": POS}  
+  if "time_order" in kwargs:
+    lsetdom["time_order"] = kwargs["time_order"]
+    del kwargs["time_order"]
+  if "order" in kwargs:
+    lsetdom["order"] = kwargs["order"]
+    del kwargs["order"]
   return dCut_raw(lsetdom,**kwargs)
 
 # some global scope manipulations (monkey patches etc..):
