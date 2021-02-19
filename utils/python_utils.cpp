@@ -83,8 +83,12 @@ heapsize : int
   
   typedef shared_ptr<BitArray> PyBA;
 
-  m.def("RestrictedBilinearForm",
-        [](shared_ptr<FESpace> fes,
+  py::class_<RestrictedBilinearForm, shared_ptr<RestrictedBilinearForm>, BilinearForm> rblf(m, "RestrictedBilinearForm", docu_string(R"raw_string(
+BilinearForm restricted on a set of elements and facets.
+)raw_string") , py::dynamic_attr());
+    
+
+  rblf.def(py::init([](shared_ptr<FESpace> fes,
            const string & aname,
            py::object ael_restriction,
            py::object afac_restriction,
@@ -104,10 +108,10 @@ heapsize : int
           if (fes->IsComplex())
             throw Exception("RestrictedBilinearForm not implemented for complex fespace");
 
-          shared_ptr<BilinearForm> biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+          auto biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
           biform -> SetCheckUnused (check_unused);
           return biform;
-        },
+        }),
         py::arg("space"),
         py::arg("name") = "bfa",
         py::arg("element_restriction") = DummyArgument(),
@@ -149,7 +153,15 @@ check_unused : boolean
 
 flags : ngsolve.Flags
   additional bilinear form flags
-)raw_string"));
+)raw_string"))
+  .def_property("element_restriction", 
+                  &RestrictedBilinearForm::GetElementRestriction,
+                  &RestrictedBilinearForm::SetElementRestriction, "element restriction")
+  .def_property("facet_restriction", 
+                  &RestrictedBilinearForm::GetFacetRestriction,
+                  &RestrictedBilinearForm::SetFacetRestriction, "facet restriction")
+
+;
 
   m.def("CompoundBitArray",
         [] (py::list balist)

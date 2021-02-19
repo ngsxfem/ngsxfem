@@ -108,9 +108,12 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               definedonelements=ci.GetElementsOfType(HASNEG))
 dw = delta_t*dFacetPatch(definedonelements=ba_facets, time_order=time_order, 
                          deformation=lsetadap.deformation[INTERVAL])
+                         
 dt = lambda u: 1.0/delta_t * dtref(u)
 
-a = BilinearForm(st_fes, "a", check_unused=False)
+a = RestrictedBilinearForm(st_fes, "a", check_unused=False, 
+                           element_restriction=ci.GetElementsOfType(HASNEG),
+                           facet_restriction=ba_facets)
 a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
 a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
 a += (v * InnerProduct(w, grad(u))) * dQ
@@ -138,7 +141,7 @@ while tend - told.Get() > delta_t / 2:
                                               b=ci.GetElementsOfType(IF))
     active_dofs = GetDofsOfElements(st_fes, ci.GetElementsOfType(HASNEG))
 
-    a.Assemble()
+    a.Assemble(reallocate=True)
     f.Assemble()
 
     # solve linear system
