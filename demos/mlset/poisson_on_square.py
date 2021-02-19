@@ -149,12 +149,9 @@ Draw((gfu - u_ex), mesh, "err")
 
 # Post-processing
 with TaskManager():
-    lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
-    err_l2 = sqrt(Integrate(lset_dom_inner, mesh=mesh, order=2 * k,
-                            cf=InnerProduct(gfu - u_ex, gfu - u_ex)))
-    err_h1 = sqrt(Integrate(lset_dom_inner, mesh=mesh, order=2 * (k - 1),
-                            cf=InnerProduct(Grad(gfu) - grad_u_ex,
-                                            Grad(gfu) - grad_u_ex)))
+    dx = dCut(level_sets_p1, square, order=2 * k)
+    err_l2 = sqrt(Integrate((gfu - u_ex)**2 * dx, mesh))
+    err_h1 = sqrt(Integrate((Grad(gfu) - grad_u_ex)**2 * dx, mesh))
 
 print("\n")
 print("L2 error = {:1.3e}".format(err_l2))
