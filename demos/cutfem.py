@@ -180,20 +180,21 @@ average_flux_v = sum([- kappa[i] * alpha[i] * gradv[i] * n for i in [0, 1]])
 # the integration domain). If the "levelset"-argument is not a
 # (multi-)linear function, you can use the "subdivlvl" argument to add
 # additional refinement levels for the geometry approximation.
-dx = tuple([dCut(lsetp1,dt,deformation=lsetadap.deform) for dt in [NEG,POS]])
-ds = dCut(lsetp1,IF,deformation=lsetadap.deform)
+dx = tuple([dCut(lsetp1, dt, deformation=lsetadap.deform)
+            for dt in [NEG, POS]])
+ds = dCut(lsetp1, IF, deformation=lsetadap.deform)
 
 # bilinear forms:
 a = BilinearForm(VhG, symmetric=True)
 # l.h.s. domain integrals:
-a += sum(alpha[i]*gradu[i]*gradv[i]*dx[i] for i in [0,1])
+a += sum(alpha[i] * gradu[i] * gradv[i] * dx[i] for i in [0, 1])
 # Nitsche integrals:
-a += (average_flux_u * (v[0] - v[1]) + average_flux_v * (u[0] - u[1]) +
-      stab * (u[0] - u[1]) * (v[0] - v[1]))*ds
+a += (average_flux_u * (v[0] - v[1]) + average_flux_v * (u[0] - u[1])
+      + stab * (u[0] - u[1]) * (v[0] - v[1])) * ds
 
 f = LinearForm(VhG)
 # r.h.s. domain integrals:
-f += sum( coef_f[i] * v[i] * dx[i] for i in [0,1])
+f += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
 
 # solution vector
 gfu = GridFunction(VhG)
@@ -227,7 +228,8 @@ Draw(lsetp1, mesh, "levelset_P1")
 Draw(u_coef, mesh, "u")
 
 # Computation of L2 error:
-dx = tuple([dCut(lsetp1,dt,deformation=lsetadap.deform,order=2*order) for dt in [NEG,POS]])
+dx = tuple([dCut(lsetp1, dt, deformation=lsetadap.deform, order=2 * order)
+            for dt in [NEG, POS]])
 err_sqr = sum([(gfu.components[i] - solution[i])**2 * dx[i] for i in [0, 1]])
 l2error = sqrt(Integrate(err_sqr, mesh))
 
