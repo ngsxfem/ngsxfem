@@ -633,6 +633,9 @@ def dCut(*args, **kwargs):
   print("das hier ist noch Mist (mlset ..) ||| TODO ")
   if len(args) > 0:
     lsetdom = {"levelset": args[0], "domain_type": args[1]}
+  elif "levelset" in kwargs and "domain_type" in kwargs:
+    lsetdom = {"levelset": kwargs["levelset"], "domain_type": kwargs["domain_type"]}
+    del kwargs["levelset"], kwargs["domain_type"]
   elif "levelset_domain" in kwargs:
     lsetdom = kwargs["levelset_domain"]
     del kwargs["levelset_domain"]
