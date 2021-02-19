@@ -94,23 +94,25 @@ h = specialcf.mesh_size
 ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh,time_order=time_order)
 
-def NEGBFI(time_type,form):
-    return lsetadap.BFI(NEG,time_type,form,definedonelements=ci.GetElementsOfType(HASNEG))
-def NEGLFI(time_type,form):
-    return lsetadap.LFI(NEG,time_type,form,definedonelements=ci.GetElementsOfType(HASNEG))
+dQ = dCut(lsetadap.levelsetp1[INTERVAL],NEG,time_order=2*k_t,
+          deformation=lsetadap.deformation[INTERVAL],definedonelements=ci.GetElementsOfType(HASNEG))
+dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG, deformation=lsetadap.deformation[BOTTOM],
+              definedonelements=ci.GetElementsOfType(HASNEG))
+dOmnew = dCut(lsetadap.levelsetp1[TOP],NEG,deformation=lsetadap.deformation[TOP],
+              definedonelements=ci.GetElementsOfType(HASNEG))
 
 a = BilinearForm(st_fes,"a", check_unused=False)
-a += NEGBFI(INTERVAL, v*(dt(u) + lsetadap.mesh_velocity*grad(u) ))
-a += NEGBFI(INTERVAL, alpha * delta_t* InnerProduct( grad(u), grad(v)))
-a += NEGBFI(INTERVAL, delta_t*v*InnerProduct(w,grad(u)))
-a += NEGBFI(BOTTOM, fix_t(u,0)*fix_t(v,0))
+a += v*(dt(u) + lsetadap.deform_velocity*grad(u) )*dQ
+a += (alpha * delta_t* InnerProduct( grad(u), grad(v)))*dQ
+a += (delta_t*v*InnerProduct(w,grad(u)))*dQ
+a += (fix_t(u,0)*fix_t(v,0)) * dOmold
 a += SymbolicFacetPatchBFI(form = h**(-2)*delta_t*(1+delta_t/h)*gamma*(u - u.Other() )*(v - v.Other()),
                            skeleton=False, time_order=time_order, deformation=lsetadap.deform,
                            definedonelements = ba_facets)
 
 f = LinearForm(st_fes)
-f += NEGLFI(INTERVAL, delta_t*coeff_f*v)
-f += NEGLFI(BOTTOM, u_last*fix_t(v,0))
+f += (delta_t*coeff_f*v) * dQ
+f += (u_last*fix_t(v,0)) * dOmold
 
 # set initial values
 u_last.Set(fix_t(u_exact,0))
@@ -141,7 +143,7 @@ while tend - told.Get() > delta_t/2:
     RestrictGFInTime(spacetime_gf=gfu,reference_time=1.0,space_gf=u_last)
     
     # compute error at final time
-    l2error = sqrt(lsetadap.Integrate(NEG,TOP,(fix_t(u_exact,1) - u_last)**2, order=2*k_s))
+    l2error = sqrt(Integrate((fix_t(u_exact,1) - u_last)**2*dOmnew,mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
