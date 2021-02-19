@@ -129,10 +129,6 @@ class LevelSetMeshAdaptation_Spacetime:
             gf.Set(shifted_eval(gfcopy, back = self.deform_last_top, forth = self.deform_bottom))
             #print("updated ", gf.name)
 
-    @property
-    def deform_velocity(self):
-        return dt(self.deform)
-
     def interpol_ho(self,levelset):
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):

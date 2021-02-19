@@ -295,6 +295,10 @@ heapsize : int
          py::arg("skeleton")=false,
          py::arg("deformation")=nullptr,
          py::arg("definedonelements")=nullptr)
+    .def("__rmul__", [](CutDifferentialSymbol & self, double x)
+    {
+      return CutDifferentialSymbol(self, x );
+    })
     ;
 
   py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol")
@@ -330,7 +334,12 @@ heapsize : int
          py::arg("deformation")=nullptr,
          py::arg("definedonelements")=nullptr,
          py::arg("time_order")=-1
-         );
+         )
+    .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)
+    {
+      return FacetPatchDifferentialSymbol(self, x );
+    })
+    ;
 
 
 

@@ -97,29 +97,29 @@ h = specialcf.mesh_size
 ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=time_order)
 
-dQ = dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
-          deformation=lsetadap.deformation[INTERVAL],
-          definedonelements=ci.GetElementsOfType(HASNEG))
+dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
+                    deformation=lsetadap.deformation[INTERVAL],
+                    definedonelements=ci.GetElementsOfType(HASNEG))
 dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
               deformation=lsetadap.deformation[BOTTOM],
               definedonelements=ci.GetElementsOfType(HASNEG))
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
               definedonelements=ci.GetElementsOfType(HASNEG))
+dw = delta_t*dFacetPatch(definedonelements=ba_facets, time_order=time_order, 
+                         deformation=lsetadap.deformation[INTERVAL])
+dt = lambda u: 1.0/delta_t * dtref(u)
 
 a = BilinearForm(st_fes, "a", check_unused=False)
-a += v * (dt(u) - lsetadap.deform_velocity * grad(u)) * dQ
-a += (alpha * delta_t * InnerProduct(grad(u), grad(v))) * dQ
-a += (delta_t * v * InnerProduct(w, grad(u))) * dQ
+a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
+a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
+a += (v * InnerProduct(w, grad(u))) * dQ
 a += (fix_t(u, 0) * fix_t(v, 0)) * dOmold
-a += SymbolicFacetPatchBFI(form=h**(-2) * delta_t * (1 + delta_t / h) * gamma * (u - u.Other()) * (v - v.Other()),
-                           skeleton=False, time_order=time_order,
-                           deformation=lsetadap.deform,
-                           definedonelements=ba_facets)
+a += h**(-2) * (1 + delta_t / h) * gamma * (u - u.Other()) * (v - v.Other()) * dw
 
 f = LinearForm(st_fes)
-f += (delta_t * coeff_f * v) * dQ
-f += (u_last * fix_t(v, 0)) * dOmold
+f += coeff_f * v * dQ
+f += u_last * fix_t(v, 0) * dOmold
 
 # set initial values
 u_last.Set(fix_t(u_exact, 0))

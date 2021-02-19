@@ -103,14 +103,21 @@ This can lead to non-zero values also in domains where the level set function is
         return add
     raise Exception("cannot form neg_grad")
 
-def dt(func):
+def dtref(func):
     """
-Evaluates the time derivative of a Space-Time function.
+Evaluates the time derivative (w.r.t. the reference time interval) of a Space-Time function.
     """
     add = func.Operator("dt")
     if add:
         return add
     raise Exception("cannot form dt")
+
+def dt(func):
+    """
+Deprecated: use "dtref" instead
+    """
+    print("WARNING: dt is deprecated. Use \"dtref\" instead. \n         Note that the operator acts w.r.t. the reference time intervals.")
+    return dtref(func)
 
 
 

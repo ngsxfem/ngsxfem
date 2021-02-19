@@ -47,16 +47,24 @@ namespace ngfem
   {
   public:
     shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;
+    double scale = 1;
     
     CutDifferentialSymbol (VorB _vb) : DifferentialSymbol(_vb) { ; }
     CutDifferentialSymbol (shared_ptr<LevelsetIntegrationDomain> _lsetdom, VorB _vb, VorB _element_vb, bool _skeleton)
       : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), lsetintdom(_lsetdom) { ; }
+    CutDifferentialSymbol (CutDifferentialSymbol & _cds, double _scale)
+      : DifferentialSymbol(_cds), lsetintdom(_cds.lsetintdom), scale(_cds.scale*_scale) { ; }
 
     virtual ~CutDifferentialSymbol() { ; }
     virtual shared_ptr<Integral> MakeIntegral(shared_ptr<CoefficientFunction> cf) const
     {
       if (lsetintdom)
-        return make_shared<CutIntegral> (cf, make_shared<CutDifferentialSymbol>(*this));
+      {
+        if (scale != 1.0)
+          return make_shared<CutIntegral> (scale * cf, make_shared<CutDifferentialSymbol>(*this));
+        else
+          return make_shared<CutIntegral> (cf, make_shared<CutDifferentialSymbol>(*this));
+      }
       else
         throw Exception("no level set domain prescribed. Cannot define a CutIntegral.");
     }
@@ -68,7 +76,6 @@ namespace ngfem
   class FacetPatchIntegral : public Integral
   {
   public:
-    using Integral::dx;
     int time_order;
     FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
                  shared_ptr<FacetPatchDifferentialSymbol> _dx);
@@ -99,14 +106,20 @@ namespace ngfem
   {
   public:
     int time_order;
+    double scale = 1;
     FacetPatchDifferentialSymbol (VorB _vb) : DifferentialSymbol(_vb) { ; }
     FacetPatchDifferentialSymbol (VorB _vb, VorB _element_vb, bool _skeleton, int _time_order)
       : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), time_order(_time_order){ ; }
+    FacetPatchDifferentialSymbol (FacetPatchDifferentialSymbol & _cds, double _scale)
+      : DifferentialSymbol(_cds), time_order(_cds.time_order), scale(_cds.scale*_scale) { ; }
 
     virtual ~FacetPatchDifferentialSymbol() { ; }
     virtual shared_ptr<Integral> MakeIntegral(shared_ptr<CoefficientFunction> cf) const
     {
-      return make_shared<FacetPatchIntegral> (cf, make_shared<FacetPatchDifferentialSymbol>(*this));
+      if (scale!=1.0)
+        return make_shared<FacetPatchIntegral> (scale * cf, make_shared<FacetPatchDifferentialSymbol>(*this));
+      else
+        return make_shared<FacetPatchIntegral> (cf, make_shared<FacetPatchDifferentialSymbol>(*this));
     }
 
 
