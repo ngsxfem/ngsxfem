@@ -108,7 +108,7 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               definedonelements=ci.GetElementsOfType(HASNEG))
 
 a = BilinearForm(st_fes, "a", check_unused=False)
-a += v * (dt(u) + lsetadap.deform_velocity * grad(u)) * dQ
+a += v * (dt(u) - lsetadap.deform_velocity * grad(u)) * dQ
 a += (alpha * delta_t * InnerProduct(grad(u), grad(v))) * dQ
 a += (delta_t * v * InnerProduct(w, grad(u))) * dQ
 a += (fix_t(u, 0) * fix_t(v, 0)) * dOmold
