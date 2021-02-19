@@ -117,15 +117,15 @@ a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
 a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
 a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
 a += (v * InnerProduct(w, grad(u))) * dQ
-a += (fix_t(u, 0) * fix_t(v, 0)) * dOmold
+a += (fix_tref(u, 0) * fix_tref(v, 0)) * dOmold
 a += h**(-2) * (1 + delta_t / h) * gamma * (u - u.Other()) * (v - v.Other()) * dw
 
 f = LinearForm(st_fes)
 f += coeff_f * v * dQ
-f += u_last * fix_t(v, 0) * dOmold
+f += u_last * fix_tref(v, 0) * dOmold
 
 # set initial values
-u_last.Set(fix_t(u_exact, 0))
+u_last.Set(fix_tref(u_exact, 0))
 # project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
 
@@ -154,7 +154,7 @@ while tend - told.Get() > delta_t / 2:
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
 
     # compute error at final time
-    l2error = sqrt(Integrate((fix_t(u_exact, 1) - u_last)**2 * dOmnew, mesh))
+    l2error = sqrt(Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
