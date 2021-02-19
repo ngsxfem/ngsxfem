@@ -68,10 +68,6 @@ with TaskManager():
     boundary = square.Boundary()
     boundary.Compress(level_sets_p1)
 
-lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
-lsets_bnd = {dtt: {"levelset": level_sets_p1, "domain_type": dtt}
-             for dtt in boundary}
-
 mlci = MultiLevelsetCutInfo(mesh, level_sets_p1)
 
 
@@ -123,17 +119,20 @@ forcing = rhs * v
 
 
 # Set up the integrators
+dx = dCut(level_sets_p1, square, definedonelements=els_hasneg)
+ds = {dtt: dCut(level_sets_p1, dtt, definedonelements=els_if_singe[dtt])
+      for dtt in boundary}
+
 a = RestrictedBilinearForm(V, element_restriction=els_hasneg,
                            facet_restriction=facets_gp, check_unused=False)
-a += SymbolicBFI(lset_dom_inner, form=diffusion, definedonelements=els_hasneg)
+a += diffusion * dx
 for bnd, n in normals.items():
-    a += SymbolicBFI(lsets_bnd[bnd], form=nitsche(n),
-                     definedonelements=els_if_singe[bnd])
+    a += nitsche(n) * ds[bnd]
 a += SymbolicFacetPatchBFI(form=ghost_penalty, skeleton=False,
                            definedonelements=facets_gp)
 
 f = LinearForm(V)
-f += SymbolicLFI(lset_dom_inner, form=forcing)
+f += forcing * dx
 
 
 # Assemble and solve the linear system
@@ -150,13 +149,12 @@ Draw((gfu - u_ex), mesh, "err")
 
 # Post-processing
 with TaskManager():
-    err_l2 = sqrt(Integrate(lset_dom_inner, cf=InnerProduct(gfu - u_ex,
-                                                            gfu - u_ex),
-                            mesh=mesh, order=2 * k))
-    err_h1 = sqrt(Integrate(lset_dom_inner,
+    lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
+    err_l2 = sqrt(Integrate(lset_dom_inner, mesh=mesh, order=2 * k,
+                            cf=InnerProduct(gfu - u_ex, gfu - u_ex)))
+    err_h1 = sqrt(Integrate(lset_dom_inner, mesh=mesh, order=2 * (k - 1),
                             cf=InnerProduct(Grad(gfu) - grad_u_ex,
-                                            Grad(gfu) - grad_u_ex),
-                            mesh=mesh, order=2 * (k - 1)))
+                                            Grad(gfu) - grad_u_ex)))
 
 print("\n")
 print("L2 error = {:1.3e}".format(err_l2))
