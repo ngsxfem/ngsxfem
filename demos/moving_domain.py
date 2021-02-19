@@ -388,9 +388,9 @@ def SolveProblem(sd, delta_t):
     t.Set(tstart)
 
     deformation = sd.lsetmeshadap.CalcDeformation(levelset)
-    mesh.SetDeformation(deformation)
+    mesh.deformation = deformation
     u0.Set(coef_u0)  # set initial condition
-    mesh.UnsetDeformation()
+    mesh.deformation = None
 
     # Dummy-Assemble
     a = BilinearForm(W, symmetric=False)
@@ -487,11 +487,11 @@ def SolveProblem(sd, delta_t):
             # Assemble the matrices at time point ti and add them
             # to the total system.
             # mesh adaptation
-            mesh.SetDeformation(deformation)
+            mesh.deformation = deformation
             sd.bfs[i].Assemble()
             sd.lfs[i].Assemble()
             # unset mesh adaptation
-            mesh.UnsetDeformation()
+            mesh.deformation = None
             amat.AsVector().data += sd.bfs[i].mat.AsVector()
             fvec.data += sd.lfs[i].vec
 
@@ -513,12 +513,12 @@ def SolveProblem(sd, delta_t):
     t.Set(tend)
     # mesh adaptation
     deformation = sd.lsetmeshadap.CalcDeformation(levelset)
-    mesh.SetDeformation(deformation)
+    mesh.deformation = deformation
     l2error = sqrt(Integrate(sd.levelset_domain,
                              (u0 - exact) * (u0 - exact), mesh))
     print("Time: {0}, Error: {1}".format(tnew, l2error))
     # unset mesh adaptation
-    mesh.UnsetDeformation()
+    mesh.deformation = None
     return l2error
 
 

@@ -251,7 +251,7 @@ for i in [0, 1]:
 
 
 # Apply mesh adaptation for higher order geometry approximation
-mesh.SetDeformation(deformation)
+mesh.deformation = deformation
 
 
 # Assemble and solve the resulting linear system
@@ -286,7 +286,7 @@ print("H1 Error of velocity: {:10.8e}".format(vh1error))
 print("L2 Error of pressure: {:10.8e}".format(pl2error))
 
 # Unset mesh adaptation
-mesh.UnsetDeformation()
+mesh.deformation = None
 
 # Visualization of the solution
 Draw(deformation, mesh, "deformation")

@@ -64,7 +64,7 @@ for i in range(n_ref):
               i, ", Key ", key, " : ", integral)
         errors[key].append(abs(integral - referencevals[key]))
 
-    mesh.UnsetDeformation()
+    mesh.deformation = None
 
     if i < n_ref - 1:
         # RefineAtLevelSet(gf=lset_approx)

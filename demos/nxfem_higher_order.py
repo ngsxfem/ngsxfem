@@ -166,7 +166,7 @@ gfu.components[0].Set(solution[1], BND)
 
 # activate the mesh deformation (changes the integrals via corresponding
 # transformation):
-mesh.SetDeformation(deformation)
+mesh.deformation = deformation
 
 # setting up matrix and vector
 a.Assemble()
@@ -211,4 +211,4 @@ l2error = sqrt(Integrate(levelset_domain=lset_neg, cf=err_sqr_coefs[0],
 print("L2 error : ", l2error)
 # for later refinements etc. its always a good idea to deactivate the
 # mesh deformation
-mesh.UnsetDeformation()
+mesh.deformation = None

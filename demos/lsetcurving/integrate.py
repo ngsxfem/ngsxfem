@@ -78,11 +78,11 @@ for reflevel in range(maxreflvl):
 
         # Apply the mesh deformation
         deformation = lsetmeshadap.CalcDeformation(levelset)
-        mesh.SetDeformation(deformation)
+        mesh.deformation = deformation
         integrals_curved = Integrate(levelset_domain=lset_dom, cf=integrand,
                                      mesh=mesh, order=order)
         # Undo the mesh deformation (for refinement)
-        mesh.UnsetDeformation()
+        mesh.deformation = None
 
         err_curved[key].append(abs(integrals_curved - referencevals[key]))
         err_uncurved[key].append(abs(integrals_uncurved - referencevals[key]))

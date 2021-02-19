@@ -112,7 +112,7 @@ f_cf = (sin(pi * z) * (diff_cf * pi * pi * (1 - z * z) + reac_cf)
 f = LinearForm(VhG)
 f += SymbolicLFI(levelset_domain=lset_if, form=f_cf * v)
 
-mesh.SetDeformation(deformation)
+mesh.deformation = deformation
 a.Assemble()
 f.Assemble()
 
@@ -124,7 +124,7 @@ err_sqr_coefs = (gfu - exact) * (gfu - exact)
 l2error = sqrt(Integrate(levelset_domain=lset_if,
                          cf=err_sqr_coefs[0], mesh=mesh, order=2))
 
-mesh.UnsetDeformation()
+mesh.deformation = None
 
 print("l2error : ", l2error)
 Draw(deformation, mesh, "deformation")

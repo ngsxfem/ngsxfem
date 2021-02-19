@@ -109,7 +109,7 @@ for i in range(n_refs):
     Draw(lsetip, mesh, "lsetapprox")
 
     # Set mesh deformation to reach geometrically high order accuracy
-    mesh.SetDeformation(deform)
+    mesh.deformation = deformation
 
     # Declare the integration domains
     lsetif = {"levelset": lsetip, "domain_type": IF, "subdivlvl": subdiv}
@@ -174,7 +174,7 @@ for i in range(n_refs):
     Draw(exa, mesh, "exact")
     Draw(num, mesh, "numeric")
 
-    mesh.UnsetDeformation()
+    mesh.deformation = None
     input("<press enter to continue>")
 
 # plot errors to show convergence
