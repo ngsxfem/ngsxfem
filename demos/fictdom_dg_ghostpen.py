@@ -59,69 +59,62 @@ hasneg = ci.GetElementsOfType(HASNEG)
 Vh = L2(mesh, order=order, dirichlet=[], dgjumps=True)
 active_dofs = GetDofsOfElements(Vh, hasneg)
 Vh = Compress(Vh, active_dofs)
-active_dofs = GetDofsOfElements(Vh, hasneg)
 
 gfu = GridFunction(Vh)
 
 hasif = ci.GetElementsOfType(IF)
 
-ba_gp_facets = GetFacetsWithNeighborTypes(
-    mesh, a=hasneg, b=hasif, use_and=True)
-ba_fd_facets = GetFacetsWithNeighborTypes(
-    mesh, a=hasneg, b=hasneg, use_and=True)
-
+ba_gp_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasif)
+ba_fd_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasneg)
 
 a = RestrictedBilinearForm(Vh, "a", hasneg, ba_fd_facets, check_unused=False)
 f = LinearForm(Vh)
 
 u, v = Vh.TnT()
 h = specialcf.mesh_size
-n_levelset = 1.0 / Norm(grad(lsetp1)) * grad(lsetp1)
+nh = 1.0 / Norm(grad(lsetp1)) * grad(lsetp1)
 
-# Diffusion term
-a += SymbolicBFI(lset_neg, form=grad(u) * grad(v), definedonelements=hasneg)
-a += SymbolicFacetPatchBFI(form=0.1 / h**2 * (u - u.Other()) * (v - v.Other()),
-                           skeleton=False,
-                           definedonelements=ba_gp_facets)
+# element-wise diffusion term
+dx = dCut(lsetp1,NEG,definedonelements=hasneg, deformation=deformation)
+a += grad(u) * grad(v) * dx
 
+# ghost penalty
+dw = dFacetPatch(definedonelements=ba_gp_facets, deformation=deformation)
+a += 0.1 / h**2 * (u - u.Other()) * (v - v.Other()) * dw
+
+# Interior penalty terms:
 nF = specialcf.normal(mesh.dim)
-
 flux_u = -0.5 * (grad(u) + grad(u.Other())) * nF
 flux_v = -0.5 * (grad(v) + grad(v.Other())) * nF
 jump_u = u - u.Other()
 jump_v = v - v.Other()
-
-# Interior penalty terms:
-a += SymbolicBFI(lset_neg, form=(lambda_dg / h * jump_u * jump_v
-                                 + flux_u * jump_v + flux_v * jump_u),
-                 skeleton=True, definedonelements=ba_fd_facets)
+dk = dCut(lsetp1,NEG,skeleton=True,definedonelements=ba_fd_facets, 
+          deformation=deformation)
+a += (lambda_dg/ h * jump_u * jump_v + flux_u * jump_v + flux_v * jump_u) * dk
 
 # Nitsche term
-nitsche_term = -grad(u) * n_levelset * v
-nitsche_term += -grad(v) * n_levelset * u
-nitsche_term += (lambda_nitsche / h) * u * v
-a += SymbolicBFI(lset_if, form=nitsche_term, definedonelements=hasif)
+ds = dCut(lsetp1,IF,definedonelements=hasif, deformation=deformation)
+a += (-grad(u)*nh * v -grad(v)*nh * u + lambda_nitsche/h * u * v) * ds
 
 # R.h.s. term:
-f += SymbolicLFI(lset_neg, form=coeff_f * v)
-
+f += coeff_f * v * dx
 
 # Apply mesh adaptation
-mesh.SetDeformation(deformation)
 
 # Assemble system
-a.Assemble()
 f.Assemble()
+mesh.deformation = deformation
+a.Assemble()
 
 # Solve linear system
-gfu.vec.data = a.mat.Inverse(active_dofs, "sparsecholesky") * f.vec
+gfu.vec.data = a.mat.Inverse(Vh.FreeDofs(), "sparsecholesky") * f.vec
 
 # measure the error
 l2error = sqrt(Integrate(lset_neg, (gfu - exact) * (gfu - exact), mesh))
 print("L2 Error: {0}".format(l2error))
 
 # Unset mesh adaptation
-mesh.UnsetDeformation()
+mesh.deformation = None
 
 
 # Visualization:
