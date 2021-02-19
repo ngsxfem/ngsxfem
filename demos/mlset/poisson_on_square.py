@@ -104,35 +104,24 @@ u, v = V.TnT()
 h = specialcf.mesh_size
 normals = square.GetOuterNormals(level_sets_p1)
 
-diffusion = InnerProduct(Grad(u), Grad(v))
-
-
-def nitsche(n):
-    form = - InnerProduct(Grad(u) * n, v) - InnerProduct(Grad(v) * n, u)
-    form += (gamma_n * k * k / h) * InnerProduct(u, v)
-    return form
-
-
-ghost_penalty = gamma_s / (h**2) * (u - u.Other()) * (v - v.Other())
-
-forcing = rhs * v
-
-
-# Set up the integrators
+# Set up the integrator symbols
 dx = dCut(level_sets_p1, square, definedonelements=els_hasneg)
 ds = {dtt: dCut(level_sets_p1, dtt, definedonelements=els_if_singe[dtt])
       for dtt in boundary}
+dw = dFacetPatch(definedonelements=facets_gp, skeleton=False)
 
+# Construct integrator
 a = RestrictedBilinearForm(V, element_restriction=els_hasneg,
                            facet_restriction=facets_gp, check_unused=False)
-a += diffusion * dx
+a += InnerProduct(Grad(u), Grad(v)) * dx
 for bnd, n in normals.items():
-    a += nitsche(n) * ds[bnd]
-a += SymbolicFacetPatchBFI(form=ghost_penalty, skeleton=False,
-                           definedonelements=facets_gp)
+    a += -InnerProduct(Grad(u) * n, v) * ds[bnd]
+    a += -InnerProduct(Grad(v) * n, u) * ds[bnd]
+    a += (gamma_n * k * k / h) * InnerProduct(u, v) * ds[bnd]
+a += gamma_s / (h**2) * (u - u.Other()) * (v - v.Other()) * dw
 
 f = LinearForm(V)
-f += forcing * dx
+f += rhs * v * dx
 
 
 # Assemble and solve the linear system
