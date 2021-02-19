@@ -132,7 +132,7 @@ class LevelSetMeshAdaptation_Spacetime:
     def interpol_ho(self,levelset):
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):
-            self.lset_ho_node.Set(fix_t(levelset,ti))
+            self.lset_ho_node.Set(fix_tref(levelset,ti))
             self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.lset_ho_node.vec[:]
 
     def interpol_p1(self):

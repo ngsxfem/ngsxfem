@@ -183,12 +183,12 @@ for patch_integrators_a, u in [(patch_integrators_a_i, u_i),
         skeleton=False, time_order=time_order))
 
 hasneg_integrators_a_i.append(SymbolicBFI(
-    levelset_domain=lset_neg_top, form=fix_t(u_i, 1) * fix_t(v_t, 1)))
+    levelset_domain=lset_neg_top, form=fix_tref(u_i, 1) * fix_tref(v_t, 1)))
 
 hasneg_integrators_a_e.append(SymbolicBFI(levelset_domain=lset_neg_bottom,
-                                          form=-fix_t(u_e, 0) * fix_t(v_t, 0)))
+                                          form=-fix_tref(u_e, 0) * fix_tref(v_t, 0)))
 # hasneg_integrators_f.append(SymbolicLFI(levelset_domain=lset_neg_bottom,
-#                                         form=u_last*fix_t(v,0)))
+#                                         form=u_last*fix_tref(v,0)))
 
 hasneg_integrators_f.append(SymbolicLFI(levelset_domain=lset_neg,
                                         form=delta_t * coeff_f * v_t,

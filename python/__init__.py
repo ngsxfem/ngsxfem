@@ -608,7 +608,7 @@ try:
         ts = Parameter(0)
         if not isinstance(cf,CoefficientFunction):
             cf = CoefficientFunction(cf)
-        scene = Draw(fix_t(cf,ts),mesh,*args,**kwargs); 
+        scene = Draw(fix_tref(cf,ts),mesh,*args,**kwargs); 
         def UpdateTime(time): 
             ts.Set(time); scene.Redraw()
         return interact(UpdateTime,time=FloatSlider(description="tref:", 
@@ -623,7 +623,7 @@ try:
         if not isinstance(cf3,CoefficientFunction):
             cf3=CoefficientFunction(cf3)
         ts = Parameter(0)
-        scene = DrawDC(fix_t(cf1,ts),fix_t(cf2,ts),fix_t(cf3,ts),mesh,*args,**kwargs); 
+        scene = DrawDC(fix_tref(cf1,ts),fix_tref(cf2,ts),fix_tref(cf3,ts),mesh,*args,**kwargs); 
         def UpdateTime(time): 
             ts.Set(time); scene.Redraw()
         return interact(UpdateTime,time=FloatSlider(description="tref:", 
