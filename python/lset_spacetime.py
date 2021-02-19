@@ -130,7 +130,7 @@ class LevelSetMeshAdaptation_Spacetime:
             #print("updated ", gf.name)
 
     @property
-    def mesh_velocity(self):
+    def deform_velocity(self):
         return dt(self.deform)
 
     def interpol_ho(self,levelset):
