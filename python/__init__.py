@@ -629,8 +629,9 @@ except:
 
 dCut_raw = CutDifferentialSymbol(VOL)
 
+dFacetPatch = FacetPatchDifferentialSymbol(VOL)
+
 def dCut(*args, **kwargs):
-  print("das hier ist noch Mist (mlset ..) ||| TODO ")
   if len(args) > 0:
     lsetdom = {"levelset": args[0], "domain_type": args[1]}
   elif "levelset" in kwargs and "domain_type" in kwargs:

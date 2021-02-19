@@ -768,14 +768,14 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
           shared_ptr<BilinearFormIntegrator> bfi;
           if (skeleton)
           {
-            auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator2> (cf, order);
+            auto bfime = make_shared<SymbolicFacetBilinearFormIntegrator2> (cf);
             bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }
           else
           {
             // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
-            auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf, order);
+            auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf);
             bfime->SetTimeIntegrationOrder(time_order);
             bfi = bfime;
           }

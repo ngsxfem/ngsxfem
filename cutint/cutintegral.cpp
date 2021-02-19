@@ -3,6 +3,9 @@
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
 
+CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, shared_ptr<CutDifferentialSymbol> _dx)
+  : Integral(_cf, *_dx), lsetintdom(_dx->lsetintdom) { ; }
+
 shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
 {
   // check for DG terms
@@ -13,24 +16,24 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
                         if (dynamic_cast<ProxyFunction&> (cf).IsOther())
                           has_other = true;
                     });
-  if (has_other && (cdx->element_vb != BND) && !cdx->skeleton)
+  if (has_other && (dx.element_vb != BND) && !dx.skeleton)
     throw Exception("DG-facet terms need either skeleton=True or element_boundary=True");
 
   shared_ptr<BilinearFormIntegrator> bfi;
   if (!has_other && !dx.skeleton)
-    bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*(cdx->lsetintdom), cf, dx.vb, dx.element_vb);
+    bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, dx.vb, dx.element_vb);
   else
   {
-    if (cdx->lsetintdom->GetTimeIntegrationOrder() >= 0)
+    if (lsetintdom->GetTimeIntegrationOrder() >= 0)
       throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
-    if (cdx->vb == BND)
+    if (dx.vb == BND)
       throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-    bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*(cdx->lsetintdom), cf);
+    bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
   }
 
-  if (cdx->definedon)
+  if (dx.definedon)
     {
-      if (auto definedon_bitarray = get_if<BitArray> (&*cdx->definedon); definedon_bitarray)
+      if (auto definedon_bitarray = get_if<BitArray> (&*dx.definedon); definedon_bitarray)
         bfi->SetDefinedOn(*definedon_bitarray);
       /*
         // can't do that withouyt mesh
@@ -41,10 +44,10 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
         }
       */
     }
-  bfi->SetDeformation(cdx->deformation);               
-  bfi->SetBonusIntegrationOrder(cdx->bonus_intorder);
-  if(cdx->definedonelements)
-    bfi->SetDefinedOnElements(cdx->definedonelements);
+  bfi->SetDeformation(dx.deformation);               
+  bfi->SetBonusIntegrationOrder(dx.bonus_intorder);
+  if(dx.definedonelements)
+    bfi->SetDefinedOnElements(dx.definedonelements);
   // for (auto both : dx.userdefined_intrules)
   //   bfi->SetIntegrationRule(both.first, *both.second);
 
@@ -63,14 +66,14 @@ shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator()
                         if (dynamic_cast<ProxyFunction&> (cf).IsOther())
                           has_other = true;
                     });
-  if (has_other && (cdx->element_vb != BND) && !cdx->skeleton)
+  if (has_other && (dx.element_vb != BND) && !dx.skeleton)
     throw Exception("DG-facet terms need either skeleton=True or element_boundary=True");
 
   shared_ptr<LinearFormIntegrator> lfi;
-  lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*(cdx->lsetintdom), cf, dx.vb);
-  if (cdx->definedon)
+  lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, dx.vb);
+  if (dx.definedon)
     {
-      if (auto definedon_bitarray = get_if<BitArray> (&*cdx->definedon); definedon_bitarray)
+      if (auto definedon_bitarray = get_if<BitArray> (&*dx.definedon); definedon_bitarray)
         lfi->SetDefinedOn(*definedon_bitarray);
       /*
         // can't do that withouyt mesh
@@ -81,10 +84,10 @@ shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator()
         }
       */
     }
-  lfi->SetDeformation(cdx->deformation);               
-  lfi->SetBonusIntegrationOrder(cdx->bonus_intorder);
-  if(cdx->definedonelements)
-    lfi->SetDefinedOnElements(cdx->definedonelements);
+  lfi->SetDeformation(dx.deformation);               
+  lfi->SetBonusIntegrationOrder(dx.bonus_intorder);
+  if(dx.definedonelements)
+    lfi->SetDefinedOnElements(dx.definedonelements);
   // for (auto both : dx.userdefined_intrules)
   //   lfi->SetIntegrationRule(both.first, *both.second);
 
@@ -97,18 +100,18 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
                                   FlatVector<TSCAL> element_wise)
 {
   LocalHeap glh(10000000, "lh-T_CutIntegrate");
-  bool space_time = cdx->lsetintdom->GetTimeIntegrationOrder() >= 0;
-  if (cdx->element_vb == BND)
+  bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+  if (dx.element_vb == BND)
     throw Exception("CutIntegrate can only deal with VOL a.t.m..");
   TSCAL sum = 0.0;
 
   BitArray defon;
 
-  if (cdx->definedon)
+  if (dx.definedon)
     {
-      if (auto definedon_bitarray = get_if<BitArray> (&*cdx->definedon))
+      if (auto definedon_bitarray = get_if<BitArray> (&*dx.definedon))
         defon = *definedon_bitarray;
-      if (auto definedon_string = get_if<string> (&*cdx->definedon))
+      if (auto definedon_string = get_if<string> (&*dx.definedon))
         {
           shared_ptr<MeshAccess> spma(const_cast<MeshAccess*>(&ma), NOOP_Deleter);
           Region reg(spma, dx.vb, *definedon_string);
@@ -125,14 +128,14 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
   {
     if (defon.Size() && !defon.Test(el.GetIndex()))
       return;
-    if (cdx->definedonelements && !cdx->definedonelements->Test(el.Nr()))
+    if (dx.definedonelements && !dx.definedonelements->Test(el.Nr()))
       return;
 
     auto & trafo1 = ma.GetTrafo (el, lh);
-    auto & trafo = trafo1.AddDeformation(this->cdx->deformation.get(), lh);
+    auto & trafo = trafo1.AddDeformation(this->dx.deformation.get(), lh);
     const IntegrationRule * ir;
     Array<double> wei_arr;
-    tie (ir, wei_arr) = CreateCutIntegrationRule(*cdx->lsetintdom,trafo,lh);
+    tie (ir, wei_arr) = CreateCutIntegrationRule(*lsetintdom,trafo,lh);
 
     if (ir != nullptr)
     {
@@ -164,6 +167,40 @@ double CutIntegral::Integrate (const ngcomp::MeshAccess & ma,
 Complex CutIntegral::Integrate (const ngcomp::MeshAccess & ma,
                               FlatVector<Complex> element_wise)
 { return T_CutIntegrate(ma, element_wise);}
+
+FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
+                                        shared_ptr<FacetPatchDifferentialSymbol> _dx)
+      : Integral(_cf, *_dx), time_order(_dx->time_order) { ; }
+
+
+shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator()
+{
+  // check for DG terms
+  bool has_other = false;
+  cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
+                    {
+                      if (dynamic_cast<ProxyFunction*> (&cf))
+                        if (dynamic_cast<ProxyFunction&> (cf).IsOther())
+                          has_other = true;
+                    });
+  if (!has_other)
+    cout << " no Other() used?!" << endl;
+
+  auto bfi = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf);
+  bfi->SetTimeIntegrationOrder(time_order);
+
+  if (dx.definedon)
+  {
+    if (auto definedon_bitarray = get_if<BitArray> (&*dx.definedon); definedon_bitarray)
+      bfi->SetDefinedOn(*definedon_bitarray);
+  }
+  bfi->SetDeformation(dx.deformation);               
+  bfi->SetBonusIntegrationOrder(dx.bonus_intorder);
+  if(dx.definedonelements)
+    bfi->SetDefinedOnElements(dx.definedonelements);
+  return bfi;
+}
+
 
 
 template double CutIntegral :: T_CutIntegrate<double> (const ngcomp::MeshAccess & ma,

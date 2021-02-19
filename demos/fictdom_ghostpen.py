@@ -106,9 +106,9 @@ a += SymbolicBFI(lset_if, form=nitsche_term)
 # a += SymbolicBFI(form = gp_term,VOL_or_BND = VOL, skeleton=True,
 #                  definedonelements=ba_facets)
 
-gp_term = gamma_stab / h**2 * (u - u.Other()) * (v - v.Other())
-a += SymbolicFacetPatchBFI(form=gp_term, skeleton=False,
-                           definedonelements=ba_facets)
+dw = dFacetPatch(definedonelements=ba_facets)
+a += gamma_stab / h**2 * (u - u.Other()) * (v - v.Other()) * dw
+
 
 # R.h.s. term:
 f = LinearForm(Vh)
@@ -116,7 +116,7 @@ f += SymbolicLFI(lset_neg, form=coeff_f * v)
 
 
 # Apply mesh adaptation
-mesh.SetDeformation(deformation)
+mesh.deformation = deformation
 
 # Assemble system
 a.Assemble()
@@ -130,7 +130,7 @@ l2error = sqrt(Integrate(lset_neg, (gfu - exact) * (gfu - exact), mesh))
 print("L2 Error: {0}".format(l2error))
 
 # Unset mesh adaptation
-mesh.UnsetDeformation()
+mesh.deformation = None
 
 # visualization:
 Draw(deformation, mesh, "deformation")

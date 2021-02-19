@@ -927,10 +927,8 @@ namespace ngfem
         }
   }
   SymbolicFacetBilinearFormIntegrator2 ::
-  SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
-                                        int aforce_intorder)
-    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false),
-      force_intorder(aforce_intorder)
+  SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf)
+    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
     simd_evaluate=false;
   }
@@ -1083,10 +1081,8 @@ namespace ngfem
 
 
   SymbolicFacetPatchBilinearFormIntegrator ::
-  SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf,
-                                            int aforce_intorder)
-    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false),
-      force_intorder(aforce_intorder)
+  SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf)
+    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
     simd_evaluate=false;
   }

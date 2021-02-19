@@ -297,6 +297,41 @@ heapsize : int
          py::arg("definedonelements")=nullptr)
     ;
 
+  py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol")
+    .def(py::init<VorB>())
+    .def("__call__", [](FacetPatchDifferentialSymbol & self,
+                        optional<variant<Region,string>> definedon,
+                        bool element_boundary,
+                        VorB element_vb, bool skeleton,
+                        shared_ptr<GridFunction> deformation,
+                        shared_ptr<BitArray> definedonelements,
+                        int time_order)
+         {
+           if (element_boundary) element_vb = BND;
+           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton,time_order);
+           if (definedon)
+             {
+               if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
+                 {
+                   dx.definedon = definedon_region->Mask();
+                   dx.vb = VorB(*definedon_region);
+                 }
+               if (auto definedon_string = get_if<string>(&*definedon); definedon_string)
+                 dx.definedon = *definedon_string;
+             }
+           dx.deformation = deformation;
+           dx.definedonelements = definedonelements;
+           return dx;
+         },
+         py::arg("definedon")=nullptr,
+         py::arg("element_boundary")=false,
+         py::arg("element_vb")=VOL,
+         py::arg("skeleton")=false,
+         py::arg("deformation")=nullptr,
+         py::arg("definedonelements")=nullptr,
+         py::arg("time_order")=-1
+         );
+
 
 
   
