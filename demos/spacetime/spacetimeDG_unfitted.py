@@ -106,19 +106,22 @@ dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
               definedonelements=ci.GetElementsOfType(HASNEG))
-dw = delta_t*dFacetPatch(definedonelements=ba_facets, time_order=time_order, 
+dw = delta_t*dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                          deformation=lsetadap.deformation[INTERVAL])
-                         
-dt = lambda u: 1.0/delta_t * dtref(u)
 
-a = RestrictedBilinearForm(st_fes, "a", check_unused=False, 
+
+def dt(u): return 1.0/delta_t * dtref(u)
+
+
+a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
                            element_restriction=ci.GetElementsOfType(HASNEG),
                            facet_restriction=ba_facets)
 a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
 a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
 a += (v * InnerProduct(w, grad(u))) * dQ
 a += (fix_tref(u, 0) * fix_tref(v, 0)) * dOmold
-a += h**(-2) * (1 + delta_t / h) * gamma * (u - u.Other()) * (v - v.Other()) * dw
+a += h**(-2) * (1 + delta_t / h) * gamma * \
+    (u - u.Other()) * (v - v.Other()) * dw
 
 f = LinearForm(st_fes)
 f += coeff_f * v * dQ
@@ -154,7 +157,8 @@ while tend - told.Get() > delta_t / 2:
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
 
     # compute error at final time
-    l2error = sqrt(Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
+    l2error = sqrt(
+        Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
@@ -164,5 +168,5 @@ while tend - told.Get() > delta_t / 2:
         __builtin__
         __IPYTHON__
         scene.Redraw()
-    except:
+    except NameError:
         scene.Redraw(blocking=True)

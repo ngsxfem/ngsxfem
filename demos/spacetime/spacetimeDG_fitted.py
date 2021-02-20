@@ -36,10 +36,13 @@ coeff_f = coeff_f.Compile()
 
 gfu = GridFunction(st_fes)
 u_last = CreateTimeRestrictedGF(gfu, 1)
-u,v = st_fes.TnT()
+u, v = st_fes.TnT()
 
 dxt = delta_t * dxtref(mesh, time_order=2)
-dt = lambda u : 1.0/delta_t * dtref(u)
+
+
+def dt(u): return 1.0/delta_t * dtref(u)
+
 
 a = BilinearForm(st_fes, symmetric=False)
 a += grad(u) * grad(v) * dxt
@@ -51,14 +54,14 @@ f = LinearForm(st_fes)
 f += coeff_f * v * dxt
 f += u_last * fix_tref(v, 0) * dx
 
-u_last.Set(fix_tref(u_exact,0))
-Draw(u_last,mesh,"u")
+u_last.Set(fix_tref(u_exact, 0))
+Draw(u_last, mesh, "u")
 
 while tend - told.Get() > delta_t / 2:
     f.Assemble()
     gfu.vec.data = a.mat.Inverse(st_fes.FreeDofs(), "umfpack") * f.vec
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
-    l2error = sqrt(Integrate((fix_tref(u_exact,1) - u_last) ** 2, mesh))
+    l2error = sqrt(Integrate((fix_tref(u_exact, 1) - u_last) ** 2, mesh))
     Redraw()
-    told.Set(told.Get()+ delta_t)
+    told.Set(told.Get() + delta_t)
     print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))

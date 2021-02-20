@@ -75,7 +75,7 @@ h = specialcf.mesh_size
 nh = 1.0 / Norm(grad(lsetp1)) * grad(lsetp1)
 
 # element-wise diffusion term
-dx = dCut(lsetp1,NEG,definedonelements=hasneg, deformation=deformation)
+dx = dCut(lsetp1, NEG, definedonelements=hasneg, deformation=deformation)
 a += grad(u) * grad(v) * dx
 
 # ghost penalty
@@ -88,13 +88,13 @@ flux_u = -0.5 * (grad(u) + grad(u.Other())) * nF
 flux_v = -0.5 * (grad(v) + grad(v.Other())) * nF
 jump_u = u - u.Other()
 jump_v = v - v.Other()
-dk = dCut(lsetp1,NEG,skeleton=True,definedonelements=ba_fd_facets, 
+dk = dCut(lsetp1, NEG, skeleton=True, definedonelements=ba_fd_facets,
           deformation=deformation)
-a += (lambda_dg/ h * jump_u * jump_v + flux_u * jump_v + flux_v * jump_u) * dk
+a += (lambda_dg / h * jump_u * jump_v + flux_u * jump_v + flux_v * jump_u) * dk
 
 # Nitsche term
-ds = dCut(lsetp1,IF,definedonelements=hasif, deformation=deformation)
-a += (-grad(u)*nh * v -grad(v)*nh * u + lambda_nitsche/h * u * v) * ds
+ds = dCut(lsetp1, IF, definedonelements=hasif, deformation=deformation)
+a += (-grad(u)*nh * v - grad(v)*nh * u + lambda_nitsche/h * u * v) * ds
 
 # R.h.s. term:
 f += coeff_f * v * dx
