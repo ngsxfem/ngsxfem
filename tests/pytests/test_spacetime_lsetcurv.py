@@ -28,7 +28,6 @@ def test_spacetime_lsetcurving_maxdist(imax, order):
         delta_t = (tend - tstart)/(2**(i))
 
         told = Parameter(tstart)
-        tref = ReferenceTimeVariable()
         t = told + delta_t*tref
 
         lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space = k_s, order_time = k_t, threshold=0.5, discontinuous_qn=True)
@@ -42,9 +41,9 @@ def test_spacetime_lsetcurving_maxdist(imax, order):
         maxdists = []
         while tend - told.Get() > delta_t/2:
             dfm = lset_adap_st.CalcDeformation(levelset)
-            mesh.SetDeformation(dfm)
+            mesh.deformation = dfm
             maxdist = lset_adap_st.CalcMaxDistance(levelset)    
-            mesh.UnsetDeformation()
+            mesh.deformation = None
             maxdists.append(maxdist)
             told.Set(told.Get() + delta_t)
 
@@ -57,3 +56,6 @@ def test_spacetime_lsetcurving_maxdist(imax, order):
     print("avg: ", avg_eoc)
 
     assert avg_eoc > order + 0.75
+
+if __name__ == "__main__":
+    test_spacetime_lsetcurving_maxdist(5, 2)
