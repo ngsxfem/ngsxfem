@@ -164,6 +164,7 @@ blending : None/string/CoefficientFunction
         self.qn.Update()
         self.v_def.Update()
         self.deform.Update()
+        self.deform_last.Update()
         
         self.lset_ho.Set(levelset)
         self.qn.Set(self.lset_ho.Deriv())
