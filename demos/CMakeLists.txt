@@ -33,7 +33,6 @@ install( FILES
 )
 
 install( FILES
-  spacetime/test_RestrictToTime.py
   spacetime/spacetime_vtk.py
   spacetime/spacetimeDG_unfitted.py
   spacetime/spacetimeDG_fitted.py
