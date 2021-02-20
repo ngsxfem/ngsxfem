@@ -59,7 +59,7 @@ for lsetgeom in ["cheese", "torus", "dziukelliott", "dziuk88", "sphere"]:
 
         deformation = lsetmeshadap.CalcDeformation(levelset)
         distances.append(lsetmeshadap.CalcMaxDistance(levelset, deform=True))
-        
+
         # Refine cut elements:
         RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
 
