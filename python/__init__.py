@@ -488,7 +488,7 @@ def SpaceTimeSet(self, cf, *args, **kwargs):
       j = 0
       for i,ti in enumerate(self.space.TimeFE_nodes()):
         if self.space.IsTimeNodeActive(i):
-          ngsolveSet(gfs,fix_t(cf,ti), *args, **kwargs)
+          ngsolveSet(gfs,fix_tref(cf,ti), *args, **kwargs)
           self.vec[j*ndof_node : (j+1)*ndof_node].data = gfs.vec[:]
           j += 1
     else:
