@@ -10,8 +10,6 @@ using namespace ngfem;
 
 namespace xintegration
 {
-  void DebugSpaceTimeCutIntegrationRule();
-
   tuple<const IntegrationRule *, Array<double>> SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
                                                      const ElementTransformation & trafo, //To be added
                                                      ScalarFiniteElement<1>* fe_time,
