@@ -54,6 +54,7 @@ mesh = Make2DProblem(maxh=maxh)
 # Level set mesh adaptation machinery
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.2,
                                       discontinuous_qn=True)
+lsetp1 = lsetmeshadap.lset_p1
 
 # Containers to compute error convergence
 err_uncurved, err_curved = {}, {}
@@ -65,27 +66,21 @@ for key in [NEG, POS, IF]:
     eoc_curved[key] = []
     eoc_uncurved[key] = []
 
+
 # Main loop
 for reflevel in range(maxreflvl):
     if(reflevel > 0):
         mesh.Refine()
+    lsetmeshadap.CalcDeformation(levelset)
 
     for key in [NEG, POS, IF]:
-        lset_dom = {"levelset": levelset, "domain_type": key}
+        dx = dCut(lsetp1, key, order=order)
+        dy = dCut(lsetp1, key, order=order, deformation=lsetmeshadap.deform)
+        integral_uncurved = Integrate(integrand*dx, mesh)
+        integral_curved = Integrate(integrand*dy, mesh)
 
-        integrals_uncurved = Integrate(levelset_domain=lset_dom, cf=integrand,
-                                       mesh=mesh, order=order)
-
-        # Apply the mesh deformation
-        deformation = lsetmeshadap.CalcDeformation(levelset)
-        mesh.deformation = deformation
-        integrals_curved = Integrate(levelset_domain=lset_dom, cf=integrand,
-                                     mesh=mesh, order=order)
-        # Undo the mesh deformation (for refinement)
-        mesh.deformation = None
-
-        err_curved[key].append(abs(integrals_curved - referencevals[key]))
-        err_uncurved[key].append(abs(integrals_uncurved - referencevals[key]))
+        err_curved[key].append(abs(integral_curved - referencevals[key]))
+        err_uncurved[key].append(abs(integral_uncurved - referencevals[key]))
 
     # Mark cut elements for refinement:
     RefineAtLevelSet(gf=lsetmeshadap.lset_p1)

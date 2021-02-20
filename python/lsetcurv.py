@@ -202,7 +202,7 @@ blending : None/string/CoefficientFunction
     def __exit__(self, type, value, tb):
       self.mesh.UnsetDeformation()
 
-    def CalcMaxDistance(self, levelset, order=None, heapsize=None):
+    def CalcMaxDistance(self, levelset, order=None, heapsize=None, deform=False):
         """
 Compute approximated distance between of the isoparametrically obtained geometry
 (should be called in deformed state)
@@ -212,7 +212,12 @@ Compute approximated distance between of the isoparametrically obtained geometry
         if heapsize == None:
           heapsize = self.heapsize
         lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order}
-        minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
+        if self.mesh.deformation or not deform:
+          minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
+        else:
+          self.mesh.deformation = self.deform
+          minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
+          self.mesh.deformation = None
         return max(abs(minv),abs(maxv))
 
     def levelset_domain(self, domain_type = IF):

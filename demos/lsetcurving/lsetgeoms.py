@@ -17,9 +17,9 @@ import sys
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-maxh = 1.0
+maxh = 0.5
 order = 2
-maxreflvl = 5
+maxreflvl = 4
 
 
 # ----------------------------------- MAIN ------------------------------------
@@ -37,7 +37,7 @@ maxreflvl = 5
 
 # Main loop
 for lsetgeom in ["cheese", "torus", "dziukelliott", "dziuk88", "sphere"]:
-    print('Gemometry: ', lsetgeom)
+    print('Geometry: ', lsetgeom)
 
     geom = CSGeometry()
     geom.Add(BoundingBoxes[lsetgeom])
@@ -57,14 +57,9 @@ for lsetgeom in ["cheese", "torus", "dziukelliott", "dziuk88", "sphere"]:
         if(reflevel > 0):
             mesh.Refine()
 
-        # Apply the mesh deformation
         deformation = lsetmeshadap.CalcDeformation(levelset)
-        mesh.SetDeformation(deformation)
-        distances.append(lsetmeshadap.CalcMaxDistance(levelset))
-
-        # Undo mesh deformation (for refinement)
-        mesh.UnsetDeformation()
-
+        distances.append(lsetmeshadap.CalcMaxDistance(levelset, deform=True))
+        
         # Refine cut elements:
         RefineAtLevelSet(gf=lsetmeshadap.lset_p1)
 
