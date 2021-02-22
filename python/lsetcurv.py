@@ -48,6 +48,7 @@ function) (and options).
 
     gf_to_project = []
 
+    @TimeFunction
     def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, 
                  threshold = -1, discontinuous_qn = False, 
                  eps_perturbation = 1e-14, heapsize=1000000,
@@ -124,6 +125,7 @@ The computed deformation depends on different options:
         else:
             self.gf_to_project.append(gf)
 
+    @TimeFunction
     def ProjectGFs(self):
         timer = Timer("ProjectGFs")
         timer.Start()
@@ -135,6 +137,7 @@ The computed deformation depends on different options:
             print("updated ", gf.name)
         timer.Stop()
 
+    @TimeFunction
     def CalcDeformation(self, levelset, ba =None, blending=None, dont_project_gfs=False):
         """
 Compute the mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise linear
@@ -159,8 +162,6 @@ blending : None/string/CoefficientFunction
      order polynomial with lset_p1. It is scaled with h, so that value 1 is not reached within cut
      elements.
         """
-        timerall = Timer("LevelsetMeshAdaptation:CalcDeformation")
-        timerall.Start()
         self.v_ho.Update()
         self.lset_ho.Update()
         self.v_p1.Update()
@@ -198,7 +199,6 @@ blending : None/string/CoefficientFunction
         if not dont_project_gfs:
             self.ProjectGFs()
 
-        timerall.Stop()
         return self.deform
 
     def __enter__(self):
@@ -208,6 +208,7 @@ blending : None/string/CoefficientFunction
     def __exit__(self, type, value, tb):
       self.mesh.UnsetDeformation()
 
+    @TimeFunction
     def CalcMaxDistance(self, levelset, order=None, heapsize=None, deform=False):
         """
 Compute approximated distance between of the isoparametrically obtained geometry
@@ -243,6 +244,7 @@ Compute approximated distance between of the isoparametrically obtained geometry
     def BFI(self, domain_type, form, definedonelements = None):
         return self.Integrator(SymbolicBFI, domain_type, form, definedonelements)
 
+    @TimeFunction
     def Integrate(self, domain_type, cf, order = 5):
         self.mesh.SetDeformation(self.deform)
         fi = Integrate(levelset_domain = self.levelset_domain(domain_type), 
@@ -251,6 +253,7 @@ Compute approximated distance between of the isoparametrically obtained geometry
         return fi
 
 
+    @TimeFunction
     def MarkForRefinement(self, levelset = None, refine_threshold = 0.1, absolute = False):
         """
 Marks elements for refinement where the geometry approximation is larger than a prescrbed relative
