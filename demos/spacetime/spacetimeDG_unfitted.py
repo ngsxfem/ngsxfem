@@ -106,11 +106,11 @@ dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
               definedonelements=ci.GetElementsOfType(HASNEG))
-dw = delta_t*dFacetPatch(definedonelements=ba_facets, time_order=time_order,
-                         deformation=lsetadap.deformation[INTERVAL])
+dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
+                           deformation=lsetadap.deformation[INTERVAL])
 
 
-def dt(u): return 1.0/delta_t * dtref(u)
+def dt(u): return 1.0 / delta_t * dtref(u)
 
 
 a = RestrictedBilinearForm(st_fes, "a", check_unused=False,

@@ -2,29 +2,13 @@ install( FILES
   cutfem.py
   fictdom_dg_ghostpen.py
   fictdom_ghostpen.py
-  fictdom_ghostpen_restrictedblf.py
+  lsetgeoms.py
+  mlset_poisson.py
   moving_domain.py
   nxfem.py
-  nxfem_higher_order.py
   stokescutfem.py
-  traceconverg.py
   tracefem.py
-  tracefem3d.py
-  xfespaces.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
-)
-
-install( FILES
-  cutint/area_of_a_circle_quads.py
-  cutint/integrate_one_big_quad2D.py
-  cutint/integrate_one_big_quad3D.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/cutint
-)
-
-install( FILES
-  lsetcurving/integrate.py
-  lsetcurving/lsetgeoms.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/lsetcurv
 )
 
 install( FILES
@@ -34,14 +18,8 @@ install( FILES
 
 install( FILES
   spacetime/spacetime_vtk.py
+  spacetime/spacetimeCG_unfitted.py
   spacetime/spacetimeDG_unfitted.py
   spacetime/spacetimeDG_fitted.py
-  spacetime/spaceP1_timeCGP1.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/spacetime
-)
-
-install( FILES
-  mlset/poisson_on_square.py
-  mlset/tensor_functions.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/mlset
 )

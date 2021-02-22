@@ -588,8 +588,8 @@ namespace xintegration
                                                      double tval)
   {
     static Timer t ("NewStraightCutIntegrationRule");
-    static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);
-    static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule",2);
+    // static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);
+    // static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule",2);
 
     // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
     // RegionTimer reg(t);
@@ -605,11 +605,11 @@ namespace xintegration
 
     bool is_quad = (et == ET_QUAD) || (et == ET_HEX);
 
-    timercutgeom.Start();
+    //timercutgeom.Start();
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
-    timercutgeom.Stop();
+    //timercutgeom.Stop();
 
-    timermakequadrule.Start();
+    //timermakequadrule.Start();
     IntegrationRule quad_untrafo;
     vector<double> lset_vals(cf_lset_at_element.Size());
     for(int i=0; i<lset_vals.size(); i++) lset_vals[i] = cf_lset_at_element[i];
@@ -617,8 +617,8 @@ namespace xintegration
 
     if (element_domain == IF)
     {
-      static Timer timer1("StraightCutElementGeometry::Load+Cut",2);
-      timer1.Start();
+      //static Timer timer1("StraightCutElementGeometry::Load+Cut",2);
+      //timer1.Start();
       if(!is_quad){
           LevelsetCutSimplex s(lset, dt, SimpleX(et));
           s.GetIntegrationRule(quad_untrafo, intorder);
@@ -627,12 +627,12 @@ namespace xintegration
           LevelsetCutQuadrilateral q(lset, dt, Quadrilateral(et), quad_dir_policy);
           q.GetIntegrationRule(quad_untrafo, intorder);
       }
-      timer1.Stop();
+      //timer1.Stop();
     }
 
     const IntegrationRule* ir = nullptr;
 
-    timermakequadrule.Stop();
+    //timermakequadrule.Stop();
 
     if (element_domain == IF) // there is a cut on the current element
     {
@@ -819,7 +819,7 @@ namespace xintegration
       auto element_domain = CheckIfStraightCut(cf_lset_at_element);
       timercutgeom.Stop();
 
-      timermakequadrule.Start();
+      //timermakequadrule.Start();
       IntegrationRule quad_untrafo;
       vector<double> lset_vals(cf_lset_at_element.Size());
       for(int i=0; i<lset_vals.size(); i++) lset_vals[i] = cf_lset_at_element[i];
@@ -827,8 +827,8 @@ namespace xintegration
 
       if (element_domain == IF)
       {
-        static Timer timer1("StraightCutElementGeometry::Load+Cut");
-        timer1.Start();
+        //static Timer timer1("StraightCutElementGeometry::Load+Cut");
+        //timer1.Start();
         if(!is_quad){
             LevelsetCutSimplex s(lset, dt, SimpleX(et));
             s.GetIntegrationRule(quad_untrafo, intorder);
@@ -837,12 +837,12 @@ namespace xintegration
             LevelsetCutQuadrilateral q(lset, dt, Quadrilateral(et), quad_dir_policy);
             q.GetIntegrationRule(quad_untrafo, intorder);
         }
-        timer1.Stop();
+        //timer1.Stop();
       }
 
       const IntegrationRule* ir = nullptr;
 
-      timermakequadrule.Stop();
+      //timermakequadrule.Stop();
 
       if (element_domain == IF) // there is a cut on the current element
       {
