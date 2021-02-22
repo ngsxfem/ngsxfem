@@ -162,7 +162,7 @@ heapsize : int
            PyCF cf,
            int heapsize)
         {
-          static Timer t ("IntegrationPointExtrema"); RegionTimer reg(t);
+          static int timer = NgProfiler::CreateTimer ("IntegrationPointExtrema"); NgProfiler::RegionTimer reg (timer);
 
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;

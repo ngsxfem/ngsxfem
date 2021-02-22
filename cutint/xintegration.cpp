@@ -15,7 +15,7 @@ namespace xintegration
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
   {
-    static Timer t ("CreateCutIntegrationRule");
+    static int timer = NgProfiler::CreateTimer ("CreateCutIntegrationRule"); NgProfiler::RegionTimer reg (timer);
     if (lsetintdom.IsMultiLevelsetDomain())
     {
       return CreateMultiLevelsetCutIntegrationRule(lsetintdom, trafo, lh);
@@ -110,8 +110,6 @@ namespace xintegration
   const Vec<SD>* PointContainer<SD>::operator()(const Vec<SD> & p)
   {
 
-    static Timer timer ("PointContainer::operator()");
-    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
 
     typename SetOfPoints::iterator it;
@@ -567,7 +565,7 @@ namespace xintegration
     //enum { D = ET_trait<ET_SPACE>::DIM }; // spatial dimension
     //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
-    static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
+    //static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
     // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
 
@@ -863,10 +861,7 @@ namespace xintegration
 
       if (!refine_space && !refine_time) // already on finest level: deal with cut situation
       {
-        static Timer timer ("MakeQuadRule::DecomposeAndFillCutSimplex");
-        // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
         // RegionTimer reg (timer);
-        // Generate list of vertices corresponding to simplex/prism
         Array<Simplex<SD> *> simplices;
         const int nvt = ET_TIME == ET_SEGM ? 2 : 1;
         const int nvs = verts_space.Size();
@@ -937,7 +932,7 @@ namespace xintegration
     }
     else // no cut
     {
-      static Timer timer ("MakeQuadRule::FillUnCutSimplex");
+      //static Timer timer ("MakeQuadRule::FillUnCutSimplex");
       //RegionTimer reg (timer);
       // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
 
@@ -1055,15 +1050,6 @@ namespace xintegration
 
       // }
 
-      static Timer timer ("CutSimplex<3>::MakeQuad");
-      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
-      // RegionTimer reg (timer);
-
-      static Timer timer1 ("CutSimplex<3>::MakeQuad1",2);
-      static Timer timer2 ("CutSimplex<3>::MakeQuad2",2);
-      static Timer timer3 ("CutSimplex<3>::MakeQuad3",2);
-      static Timer timer4 ("CutSimplex<3>::MakeQuad4",2);
-
       enum { SD = 3};
 
       Array< const Vec<SD> * > cutpoints(4);
@@ -1099,7 +1085,6 @@ namespace xintegration
       // for (int l = 0; l < 4; ++l)
       //   cout << l << ":" << (*numint.lset)(*(s.p[l])) << endl;
 
-      timer1.Start();
       for (int j = 0; j < 4; ++j)
       {
         zero[j] = false;
@@ -1121,13 +1106,11 @@ namespace xintegration
           zero[j] = true;
         }
       }
-      timer1.Stop();
 
       // cout << " vvals = \n";
       // for (int l = 0; l < 4; ++l)
       //   cout << l << ":" << vvals[l] << endl;
 
-      timer2.Start();
       int cntcuts = 0;
       for (int j = 0; j < 6; ++j)
       {
@@ -1161,15 +1144,10 @@ namespace xintegration
           cntcuts ++;
         }
       }
-      timer2.Stop();
 
 
       if (ncutpoints == 3) // three intersections: prism + tetra
       {
-        static Timer timer ("CutSimplex<3>::cutpoints.Size=3");
-        // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
-        // RegionTimer reg3 (timer);
-
         Array< const Vec<SD> *> & minorgroup ( nnegpoints > npospoints ?
                                                pospoints : negpoints);
         int & nminorgroup ( nnegpoints > npospoints ? npospoints : nnegpoints);
@@ -1212,9 +1190,6 @@ namespace xintegration
       }
       else if (ncutpoints == 4) // four intersections: prism + prism
       {
-        static Timer timer ("CutSimplex<3>::cutpoints.Size=4");
-        // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
-        // RegionTimer reg4 (timer);
         //pos domain
         {
           Array< const Vec<SD> *> posprism(6);
@@ -1255,7 +1230,6 @@ namespace xintegration
           //   cout << *posprism[l] << endl;
 
           Array< Simplex<SD> * > innersimplices(0);
-          timer3.Start();
           DecomposePrismIntoSimplices<SD>(posprism, innersimplices, numint.pc, numint.lh);
           for (int l = 0; l < innersimplices.Size(); ++l)
           {
@@ -1265,7 +1239,6 @@ namespace xintegration
                                     numint.GetIntegrationOrderMax());
             delete innersimplices[l];
           }
-          timer3.Stop();
         }
         //neg domain
         {
@@ -1295,7 +1268,6 @@ namespace xintegration
           negprism[5] = cutpoints[cut4];
 
           Array< Simplex<SD> * > innersimplices(0);
-          timer3.Start();
           DecomposePrismIntoSimplices<SD>(negprism, innersimplices, numint.pc, numint.lh);
           for (int l = 0; l < innersimplices.Size(); ++l)
           {
@@ -1304,7 +1276,6 @@ namespace xintegration
                                     numint.GetIntegrationOrderMax());
             delete innersimplices[l];
           }
-          timer3.Stop();
         }
         //interface
         {
@@ -1343,14 +1314,12 @@ namespace xintegration
           trig2[1] = cutpoints[ndiag2];
           trig2[2] = cutpoints[diag1];
 
-          timer4.Start();
           FillSimplexCoDim1WithRule<SD> ( trig1, *pospoints[0],
                                           numint.compquadrule.GetInterfaceRule(),
                                           numint.GetIntegrationOrderMax());
           FillSimplexCoDim1WithRule<SD> ( trig2, *pospoints[0],
                                           numint.compquadrule.GetInterfaceRule(),
                                           numint.GetIntegrationOrderMax());
-          timer4.Stop();
         }
 
       } // end of 3 or 4 cutpoints
@@ -1366,12 +1335,6 @@ namespace xintegration
                                                   const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
     {
       enum { SD = 2};
-
-      static Timer timer ("CutSimplex<2>::MakeQuad");
-      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
-      // RegionTimer reg (timer);
-
-      // cout << " simplex = " << s << endl;
 
       Array< const Vec<SD> * > cutpoints(0);
       Array< const Vec<SD> * > pospoints(0);
@@ -1528,7 +1491,7 @@ namespace xintegration
     {
       enum { SD = 1};
 
-      static Timer timer ("CutSimplex<1>::MakeQuad");
+      // static Timer timer ("CutSimplex<1>::MakeQuad");
       // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
       // RegionTimer reg (timer);
 
@@ -1584,8 +1547,6 @@ namespace xintegration
   void MakeQuadRuleOnCutSimplex(const Simplex <D> & s,
                                 const NumericalIntegrationStrategy<ET_SPACE,ET_TIME> & numint)
   {
-    static Timer timer ("MakeQuadRuleOnCutSimplex");
-    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
     // std::cout << " from here MakeQuadRuleOnCutSimplex "<< D << " " << ET_SPACE << " " << ET_TIME  << std::endl;
     // std::cout << " simplex s = " << s << std::endl;
@@ -1612,11 +1573,7 @@ namespace xintegration
                                              int subdivlvl,
                                              LocalHeap & lh)
   {
-    static Timer t ("CutIntegrationRule");
-    static Timer timercutgeom ("CutIntegrationRule::MakeQuadRule",2);
-
-    // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
-    // RegionTimer reg(t);
+    static int timer = NgProfiler::CreateTimer ("OldCutIntegrationRule"); NgProfiler::RegionTimer reg (timer);
 
     int DIM = trafo.SpaceDim();
     auto lset_eval
@@ -1625,7 +1582,6 @@ namespace xintegration
     if (trafo.VB() == BND)
       DIM--;
       // tstart.Stop();
-    timercutgeom.Start();
 
     auto et = trafo.GetElementType();
 
@@ -1647,7 +1603,6 @@ namespace xintegration
                                                 *lset_eval, cquad3d, lh,
                                                 intorder, 0, subdivlvl, 0);
     DOMAIN_TYPE element_domain = xgeom->MakeQuadRule();
-    timercutgeom.Stop();
 
     const IntegrationRule* ir = nullptr;
 

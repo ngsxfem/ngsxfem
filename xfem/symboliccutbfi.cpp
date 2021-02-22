@@ -76,8 +76,9 @@ namespace ngfem
                           LocalHeap & lh) const
     
   {
-    static Timer t(string("SymbolicCutBFI::CalcElementMatrixAdd")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), 2);
-    // ThreadRegionTimer reg(t, TaskManager::GetThreadId());
+
+    static int timer = NgProfiler::CreateTimer ("SymbolicCutBFI::CalcElementMatrixAdd");
+    NgProfiler::RegionTimer reg (timer);
 
     if (element_vb != VOL)
       {
@@ -301,7 +302,7 @@ namespace ngfem
                                    LocalHeap & lh) const
 
                                        {
-      static Timer t("symbolicBFI - CalcElementMatrix EB", 2);
+      static int timer = NgProfiler::CreateTimer ("symbolicBFI - CalcElementMatrix EB");
       if (lsetintdom->IsMultiLevelsetDomain())
         throw Exception("cut element boundary integrals not implemented for multi level sets");
       /*
@@ -311,7 +312,7 @@ namespace ngfem
       static Timer tb("symbolicBFI - CalcElementMatrix EB - bmats", 2);
       static Timer tmult("symbolicBFI - CalcElementMatrix EB - mult", 2);
       */
-      RegionTimer reg(t);
+      NgProfiler::RegionTimer reg (timer);
 
       //elmat = 0;
 
@@ -677,8 +678,8 @@ namespace ngfem
     FlatMatrix<double> elmat,
     LocalHeap & lh) const
   {
-    static Timer t_all("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix", 2);
-    RegionTimer reg(t_all);
+    static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
+    NgProfiler::RegionTimer reg(timer);
     elmat = 0.0;
 
     if (lsetintdom->IsMultiLevelsetDomain())
@@ -1518,9 +1519,8 @@ namespace ngfem
       warned = true;
     }
 
-    static Timer t("symboliccutbfi - calclinearized", 2);
-    size_t tid = TaskManager::GetThreadId();
-    ThreadRegionTimer reg(t, tid);
+    static int timer = NgProfiler::CreateTimer ("symboliccutbfi - calclinearized");
+    NgProfiler::RegionTimer reg(timer);
     
     const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
     const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;

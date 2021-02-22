@@ -125,12 +125,15 @@ The computed deformation depends on different options:
             self.gf_to_project.append(gf)
 
     def ProjectGFs(self):
+        timer = Timer("ProjectGFs")
+        timer.Start()
         for gf in self.gf_to_project:
             # make tmp copy 
             gfcopy = GridFunction(gf.space)
             gfcopy.vec.data = gf.vec
             gf.Set(shifted_eval(gfcopy, back = self.deform_last, forth = self.deform))
             print("updated ", gf.name)
+        timer.Stop()
 
     def CalcDeformation(self, levelset, ba =None, blending=None, dont_project_gfs=False):
         """
@@ -156,6 +159,8 @@ blending : None/string/CoefficientFunction
      order polynomial with lset_p1. It is scaled with h, so that value 1 is not reached within cut
      elements.
         """
+        timerall = Timer("LevelsetMeshAdaptation:CalcDeformation")
+        timerall.Start()
         self.v_ho.Update()
         self.lset_ho.Update()
         self.v_p1.Update()
@@ -193,6 +198,7 @@ blending : None/string/CoefficientFunction
         if not dont_project_gfs:
             self.ProjectGFs()
 
+        timerall.Stop()
         return self.deform
 
     def __enter__(self):

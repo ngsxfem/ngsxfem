@@ -150,11 +150,10 @@ namespace ngfem
     double * n_totalits,
     double * n_maxits)
   {
-    static Timer time_not_conv ("SearchCorrespondingPoint::not converged");
-    static Timer time_conv ("SearchCorrespondingPoint::converged");
-    static Timer time_its ("SearchCorrespondingPoint::iterations");
-    static Timer time_fct ("SearchCorrespondingPoint");
-    RegionTimer reg (time_fct);
+    static int timer = NgProfiler::CreateTimer ("SearchCorrespondingPoint"); NgProfiler::RegionTimer reg (timer);
+    // static Timer time_not_conv ("SearchCorrespondingPoint::not converged");
+    // static Timer time_conv ("SearchCorrespondingPoint::converged");
+    // static Timer time_its ("SearchCorrespondingPoint::iterations");
     
     HeapReset hr(lh);
       
@@ -165,7 +164,7 @@ namespace ngfem
     int it = 0;
     for (it = 0; it < 20; ++it)
     {
-      RegionTimer reg_its (time_its);
+      //RegionTimer reg_its (time_its);
       const double curr_val = lseteval.Evaluate(curr_ip,lh); // InnerProduct(shape, sca_values);
       const Vec<D> curr_grad = lseteval.EvaluateGrad(curr_ip,lh); //Trans(dshape) * sca_values;
       const double curr_defect = goal_val - curr_val;
@@ -192,7 +191,7 @@ namespace ngfem
       *n_maxits = max2((double)it,*n_maxits);
 
     if (it == 20){
-      RegionTimer reg (time_not_conv);
+      //RegionTimer reg (time_not_conv);
       
       std::cout << " SearchCorrespondingPoint:: did not converge " << std::endl;
       // getchar();
@@ -200,7 +199,7 @@ namespace ngfem
     }
     else
     {
-      RegionTimer reg (time_conv);
+      //RegionTimer reg (time_conv);
       for (int d = 0; d < D; ++d) final_point(d) = curr_ip(d);
     }
   }

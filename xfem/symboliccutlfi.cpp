@@ -55,7 +55,8 @@ namespace ngfem
                        FlatVector<SCAL> elvec,
                        LocalHeap & lh) const
   {
-    static Timer t("symbolicCutLFI - CalcElementVector", 2);
+    static int timer = NgProfiler::CreateTimer ("symbolicCutLFI - CalcElementVector");
+    NgProfiler::RegionTimer reg (timer);
     HeapReset hr(lh);
     
     // tstart.Start();
@@ -79,7 +80,6 @@ namespace ngfem
           }
       }
     
-    RegionTimer reg(t);
 
     auto et = trafo.GetElementType();
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
