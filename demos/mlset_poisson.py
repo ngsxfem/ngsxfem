@@ -138,9 +138,9 @@ Draw((gfu - u_ex), mesh, "err")
 
 # Post-processing
 with TaskManager():
-    dx = dCut(level_sets_p1, square, order=2 * k)
-    err_l2 = sqrt(Integrate((gfu - u_ex)**2 * dx, mesh))
-    err_h1 = sqrt(Integrate((Grad(gfu) - grad_u_ex)**2 * dx, mesh))
+    err_l2 = sqrt(Integrate((gfu - u_ex)**2 * dx.order(2 * k), mesh))
+    err_h1 = sqrt(Integrate((Grad(gfu) - grad_u_ex)**2 * dx.order(2 * (k - 1)),
+                  mesh))
 
 print("\n")
 print("L2 error = {:1.3e}".format(err_l2))

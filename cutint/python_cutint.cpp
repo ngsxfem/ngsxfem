@@ -300,8 +300,15 @@ heapsize : int
     {
       return CutDifferentialSymbol(self, x );
     })
+    .def("order", [](CutDifferentialSymbol & self, int order)
+    {
+      auto _cds = CutDifferentialSymbol(self);
+      _cds.lsetintdom->SetIntegrationOrder(order);
+      return _cds;
+    },
+    py::arg("order"))
     ;
-
+    
   py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol")
     .def(py::init<VorB>())
     .def("__call__", [](FacetPatchDifferentialSymbol & self,
