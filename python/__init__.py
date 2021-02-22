@@ -641,46 +641,135 @@ except:
     DrawDC = MakeDiscontinuousDraw(ngsolve.Draw)
 
 
-dCut_raw = CutDifferentialSymbol(VOL)
+_dCut_raw = CutDifferentialSymbol(VOL)
+_dFacetPatch_raw = FacetPatchDifferentialSymbol(VOL)
 
-dFacetPatch = FacetPatchDifferentialSymbol(VOL)
 
-def dCut(*args, **kwargs):
-  if len(args) > 0:
-    lsetdom = {"levelset": args[0], "domain_type": args[1]}
-  elif "levelset" in kwargs and "domain_type" in kwargs:
-    lsetdom = {"levelset": kwargs["levelset"], "domain_type": kwargs["domain_type"]}
-    del kwargs["levelset"], kwargs["domain_type"]
-  elif "levelset_domain" in kwargs:
-    lsetdom = kwargs["levelset_domain"]
-    del kwargs["levelset_domain"]
-  else:
-    raise Exception("either prescribe (levelset, domain_type,...) or (levelset_domain = {...},..)")
-  if "order" in kwargs:
-    if not "order" in lsetdom:
-      lsetdom["order"] = kwargs["order"]
-    del kwargs["order"]
-  if "time_order" in kwargs:
-    if not "time_order" in lsetdom or lsetdom["time_order"] == -1:
-      lsetdom["time_order"] = kwargs["time_order"]
-    del kwargs["time_order"]
-  return dCut_raw(lsetdom,**kwargs)
+def dFacetPatch(**kwargs):
+    """
+    Differential symbol for facet patch integrators.
 
-def dxtref(mesh, *args,**kwargs):
-  """
-  dxtref is the Differential Symbol for the integration over all elements 
-  extruded by the reference interval [0,1] to space-time prisms
-  """
-  gflset = GridFunction(H1(mesh))
-  gflset.vec[:] = 1
-  lsetdom = {"levelset": gflset, "domain_type": POS}  
-  if "time_order" in kwargs:
-    lsetdom["time_order"] = kwargs["time_order"]
-    del kwargs["time_order"]
-  if "order" in kwargs:
-    lsetdom["order"] = kwargs["order"]
-    del kwargs["order"]
-  return dCut_raw(lsetdom,**kwargs)
+    Parameters
+    ----------
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        ??? Default: False.
+    element_vb : {VOL, BND}
+        ???
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    time_order : int
+        Order in time that is used in the space-time integration.
+        Default: time_order=-1 means that no space-time rule will be
+        applied. This is only relevant for space-time discretizations.
+
+    Returns
+    -------
+      FacetPatchDifferentialSymbol(VOL)
+    """
+    return _dFacetPatch_raw(**kwargs)
+
+
+def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
+         levelset_domain=None, **kwargs):
+    """
+    Differential symbol for cut integration.
+
+    Parameters
+    ----------
+    levelset : ngsolve.GridFunction
+        The P1 level set describing the geometry.
+    domain_type : {POS, IF, NEG, mlset.DomainTypeArray}
+        The domain type of interest.
+    order : int
+        Modify the order of the integration rule used.
+    subdivlvl : int
+        Number of additional subdivision used on cut elements to
+        generate the cut quadrature rule.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        ??? Default: False
+    element_vb : {VOL, BND}
+        ???
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    time_order : int
+        Order in time that is used in the space-time integration.
+        Default: time_order=-1 means that no space-time rule will be
+        applied. This is only relevant for space-time discretizations.
+
+    Returns
+    -------
+        CutDifferentialSymbol(VOL)
+    """
+    if levelset_domain is not None and type(levelset_domain) == dict:
+        lsetdom = levelset_domain
+    else:
+        lsetdom = {"levelset": levelset, "domain_type": domain_type}
+    if order is not None and "order" not in lsetdom.keys():
+        lsetdom["order"] = order
+    if subdivlvl is not None and "subdivlvl" not in lsetdom.keys():
+        lsetdom["subdivlvl"] = subdivlvl
+    if time_order > -1 and "time_order" not in time_order.keys():
+        lsetdom["time_order"] = time_order
+
+    return _dCut_raw(lsetdom, **kwargs)
+
+
+def dxtref(mesh, order=None, time_order=-1, **kwargs):
+    """
+    Differential symbol for the integration over all elements extruded by
+    the reference interval [0,1] to space-time prisms.
+
+    Parameters
+    ----------
+    mesh : ngsolve.Mesh
+        The spatial mesh.
+        The domain type of interest.
+    order : int
+        Modify the order of the integration rule used.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        ??? Default: False
+    element_vb : {VOL, BND}
+        ???
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    time_order : int
+        Order in time that is used in the space-time integration.
+        Default: time_order=-1 means that no space-time rule will be
+        applied. This is only relevant for space-time discretizations.
+
+    Return
+    ------
+        CutDifferentialSymbol(VOL)
+    """
+    gflset = GridFunction(H1(mesh))
+    gflset.vec[:] = 1
+
+    lsetdom = {"levelset": gflset, "domain_type": POS}
+    if order is not None:
+        lsetdom["order"] = order
+    if time_order > -1:
+        lsetdom["time_order"] = time_order
+
+    return _dCut_raw(lsetdom, **kwargs)
 
 # some global scope manipulations (monkey patches etc..):
 

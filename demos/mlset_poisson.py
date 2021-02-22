@@ -108,7 +108,7 @@ normals = square.GetOuterNormals(level_sets_p1)
 dx = dCut(level_sets_p1, square, definedonelements=els_hasneg)
 ds = {dtt: dCut(level_sets_p1, dtt, definedonelements=els_if_singe[dtt])
       for dtt in boundary}
-dw = dFacetPatch(definedonelements=facets_gp, skeleton=False)
+dw = dFacetPatch(definedonelements=facets_gp)
 
 # Construct integrator
 a = RestrictedBilinearForm(V, element_restriction=els_hasneg,
