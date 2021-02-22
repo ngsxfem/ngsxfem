@@ -1,7 +1,17 @@
 """
 In this example we compute a Poisson problem on the unit square to
 illustrate the functionality of ngsxfem to solve PDE problems on
-geometries described via multiple level sets.
+geometries described via multiple level set functions.
+
+Used Features:
+--------------
+  * Quadrature with respect to multiple level set functions., see the
+    'mlset_pde' jupyter tutorial.
+  * MultiLevelsetCutInfo, see the 'mlset_basic' jupyter tutorial.
+  * DomainTypeArray convenience layer, see the 'mlset_basic' jupyter
+    tutorial.
+  * Restricted BilinearForm, see the TODO! jupyter tutorial.
+  * Cut Differential Symbols, see the TODO! jupyter tutorial.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -140,7 +150,7 @@ Draw((gfu - u_ex), mesh, "err")
 with TaskManager():
     err_l2 = sqrt(Integrate((gfu - u_ex)**2 * dx.order(2 * k), mesh))
     err_h1 = sqrt(Integrate((Grad(gfu) - grad_u_ex)**2 * dx.order(2 * (k - 1)),
-                  mesh))
+                            mesh))
 
 print("\n")
 print("L2 error = {:1.3e}".format(err_l2))
