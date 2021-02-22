@@ -29,7 +29,6 @@ void ExportNgsx_cutint(py::module &m)
         {
           static int timer = NgProfiler::CreateTimer ("IntegrateX");
           NgProfiler::RegionTimer reg (timer);
-
           py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
           if (ip_cont_.check())

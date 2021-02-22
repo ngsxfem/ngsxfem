@@ -150,7 +150,8 @@ namespace ngfem
     double * n_totalits,
     double * n_maxits)
   {
-    static int timer = NgProfiler::CreateTimer ("SearchCorrespondingPoint"); NgProfiler::RegionTimer reg (timer);
+    static int timer = NgProfiler::CreateTimer ("SearchCorrespondingPoint"); 
+    ThreadRegionTimer reg (timer,TaskManager::GetThreadId());
     // static Timer time_not_conv ("SearchCorrespondingPoint::not converged");
     // static Timer time_conv ("SearchCorrespondingPoint::converged");
     // static Timer time_its ("SearchCorrespondingPoint::iterations");

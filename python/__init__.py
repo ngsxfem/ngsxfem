@@ -644,7 +644,6 @@ except:
 _dCut_raw = CutDifferentialSymbol(VOL)
 _dFacetPatch_raw = FacetPatchDifferentialSymbol(VOL)
 
-
 def dFacetPatch(**kwargs):
     """
     Differential symbol for facet patch integrators.
@@ -653,14 +652,10 @@ def dFacetPatch(**kwargs):
     ----------
     definedon : Region
         Domain description on where the integrator is defined.
-    element_boundary : bool
-        ??? Default: False.
-    element_vb : {VOL, BND}
-        ???
     deformation : ngsolve.GridFunction
-        Mesh deformation. Default: None.
+        Mesh deformation that is applied during integration. Default: None.
     definedonelements : ngsolve.BitArray
-        Allows integration only on elements or facets (if skeleton=True)
+        Allows integration only on a set of facets
         that are marked True. Default: None.
     time_order : int
         Order in time that is used in the space-time integration.
@@ -671,6 +666,9 @@ def dFacetPatch(**kwargs):
     -------
       FacetPatchDifferentialSymbol(VOL)
     """
+    if "element_vb" in kwargs or "element_boundary" in kwargs \
+       or "skeleton" in kwargs:
+        raise Exception("facet patch integrators are fixed to facet patches")
     return _dFacetPatch_raw(**kwargs)
 
 
@@ -682,24 +680,29 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
     Parameters
     ----------
     levelset : ngsolve.GridFunction
-        The P1 level set describing the geometry.
+        The level set fct. describing the geometry 
+        (desirable: P1 approximation).
     domain_type : {POS, IF, NEG, mlset.DomainTypeArray}
         The domain type of interest.
     order : int
         Modify the order of the integration rule used.
     subdivlvl : int
         Number of additional subdivision used on cut elements to
-        generate the cut quadrature rule.
+        generate the cut quadrature rule. Note: subdivlvl >0 only
+        makes sense if you don't provide a P1 level set function
+        and no isoparametric mapping is used.
     definedon : Region
         Domain description on where the integrator is defined.
     element_boundary : bool
-        ??? Default: False
-    element_vb : {VOL, BND}
-        ???
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
     skeleton : bool
         Integration over element-interface. Default: False.
     deformation : ngsolve.GridFunction
-        Mesh deformation. Default: None.
+        Mesh deformation that is applied. Default: None.
     definedonelements : ngsolve.BitArray
         Allows integration only on elements or facets (if skeleton=True)
         that are marked True. Default: None.
@@ -707,6 +710,9 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         Order in time that is used in the space-time integration.
         Default: time_order=-1 means that no space-time rule will be
         applied. This is only relevant for space-time discretizations.
+    levelset_domain : dict
+        description of integration domain through a dictionary 
+        (deprecated).
 
     Returns
     -------
@@ -720,7 +726,7 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         lsetdom["order"] = order
     if subdivlvl is not None and "subdivlvl" not in lsetdom.keys():
         lsetdom["subdivlvl"] = subdivlvl
-    if time_order > -1 and "time_order" not in time_order.keys():
+    if time_order > -1 and "time_order" not in lsetdom.keys():
         lsetdom["time_order"] = time_order
 
     return _dCut_raw(lsetdom, **kwargs)
@@ -741,9 +747,11 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
     definedon : Region
         Domain description on where the integrator is defined.
     element_boundary : bool
-        ??? Default: False
-    element_vb : {VOL, BND}
-        ???
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
     skeleton : bool
         Integration over element-interface. Default: False.
     deformation : ngsolve.GridFunction
@@ -774,10 +782,10 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
 # some global scope manipulations (monkey patches etc..):
 
 # monkey patches
-print("|---------------------------------------------|")
-print("| ngsxfem applied monkey patches for          |")
-print("| GridFunction.Set, SymbolicLFI, SymbolicBFI. |")
-print("|---------------------------------------------|")
+# print("|---------------------------------------------|")
+# print("| ngsxfem applied monkey patches for          |")
+# print("| GridFunction.Set, SymbolicLFI, SymbolicBFI. |")
+# print("|---------------------------------------------|")
 GridFunction.Set = SpaceTimeSet
 SymbolicLFI = SymbolicLFIWrapper
 SymbolicBFI = SymbolicBFIWrapper

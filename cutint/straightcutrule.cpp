@@ -587,14 +587,12 @@ namespace xintegration
                                                      bool spacetime_mode,
                                                      double tval)
   {
-    static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRule"); NgProfiler::RegionTimer reg (timer);
+    static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRule"); 
+    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
 
     //static Timer t ("NewStraightCutIntegrationRule");
     // static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);
     // static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule",2);
-
-    // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
-    // RegionTimer reg(t);
 
     int DIM = trafo.SpaceDim();
 
