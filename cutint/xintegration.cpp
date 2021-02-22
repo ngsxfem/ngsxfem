@@ -15,7 +15,8 @@ namespace xintegration
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
   {
-    static int timer = NgProfiler::CreateTimer ("CreateCutIntegrationRule"); NgProfiler::RegionTimer reg (timer);
+    static int timer = NgProfiler::CreateTimer ("CreateCutIntegrationRule");
+    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     if (lsetintdom.IsMultiLevelsetDomain())
     {
       return CreateMultiLevelsetCutIntegrationRule(lsetintdom, trafo, lh);
