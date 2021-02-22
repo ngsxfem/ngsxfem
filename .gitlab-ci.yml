@@ -42,14 +42,6 @@ ctests-pytests:
   when: always
   allow_failure: false
 
-go4quads-tests:
-  stage: test
-  image: schruste/ngsolve:latest
-  script:
-    - bash .ci/ci_ctests.sh go4quads-tests
-  when: always
-  allow_failure: false
-
 metrics:
   tags:
     - c5

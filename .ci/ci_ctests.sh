@@ -23,8 +23,3 @@ fi
 if [ $1 == "pytests" ]; then
     ctest -V -R 'pytests'
 fi
-
-if [ $1 == "go4quads-tests" ]; then
-   cd ../demos/cutint
-   python3 area_of_a_circle_quads.py
-fi

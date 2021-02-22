@@ -12,9 +12,6 @@ add_test(NAME py_demo_nxfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME py_demo_cutfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/cutfem.py" "testmode")
 
-add_test(NAME py_demo_nxfem_ho COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/demos/nxfem_higher_order.py" "testmode")
-
 add_test(NAME py_demo_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/tracefem.py" "testmode")
 
