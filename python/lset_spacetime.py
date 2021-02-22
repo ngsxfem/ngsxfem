@@ -21,6 +21,7 @@ class LevelSetMeshAdaptation_Spacetime:
 
     gf_to_project = []
 
+    @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
                  lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000,periodic=False):
         """
@@ -121,6 +122,7 @@ class LevelSetMeshAdaptation_Spacetime:
         else:
             self.gf_to_project.append(gf)
 
+    @TimeFunction
     def ProjectGFs(self):
         for gf in self.gf_to_project:
             # make tmp copy 
@@ -129,22 +131,26 @@ class LevelSetMeshAdaptation_Spacetime:
             gf.Set(shifted_eval(gfcopy, back = self.deform_last_top, forth = self.deform_bottom))
             #print("updated ", gf.name)
 
+    @TimeFunction
     def interpol_ho(self,levelset):
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):
             self.lset_ho_node.Set(fix_tref(levelset,ti))
             self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.lset_ho_node.vec[:]
 
+    @TimeFunction
     def interpol_p1(self):
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = self.lset_p1_node.vec[:]
-            
+
+    @TimeFunction
     def CalcDeformation(self, levelset, calc_kappa = False, dont_project_gfs = False):
         """
         Compute the deformation
         """
+
         self.v_ho.Update()
         self.lset_ho_node.Update()
         self.v_p1.Update()
@@ -156,10 +162,9 @@ class LevelSetMeshAdaptation_Spacetime:
         self.v_kappa_node.Update()
         self.v_kappa.Update()
         self.kappa.Update()
-        
+        self.deform_last_top.Update()               
         self.interpol_ho(levelset)
         self.interpol_p1()
-                
         RestrictGFInTime(spacetime_gf=self.deform,reference_time=1.0,space_gf=self.deform_last_top)   
 
 
@@ -227,6 +232,7 @@ class LevelSetMeshAdaptation_Spacetime:
     def BFI(self, domain_type, time_type, form, time_order = None, definedonelements = None):
         return self.Integrator(SymbolicBFI, domain_type, time_type, form, time_order, definedonelements)
 
+    @TimeFunction
     def Integrate(self, domain_type, time_type, cf, order = 5, time_order = None):
         if time_order == None:
             time_order = 2 * self.order_time
@@ -238,6 +244,7 @@ class LevelSetMeshAdaptation_Spacetime:
         return fi
 
 
+    @TimeFunction
     def CalcMaxDistance(self, levelset, order=None, time_order=None, heapsize=None):
         """
 Compute approximated distance between of the isoparametrically obtained geometry
