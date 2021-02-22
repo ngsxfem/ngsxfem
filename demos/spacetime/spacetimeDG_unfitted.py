@@ -75,7 +75,7 @@ mesh = Mesh(ngmesh)
 fes1 = H1(mesh, order=k_s, dgjumps=True)
 # time finite element (nodal!)
 tfe = ScalarTimeFE(k_t)
-# (tensor product) space-time finite element space 
+# (tensor product) space-time finite element space
 st_fes = tfe * fes1
 
 # Space time version of Levelset Mesh Adapation object. Also offers integrator

@@ -24,6 +24,7 @@ Literature:
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
+import sys
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from ngsolve import *
 from ngsolve.internal import *
@@ -114,9 +115,8 @@ print("l2error : ", sqrt(Integrate((gfu - exact)**2 * ds, mesh=mesh)))
 Draw(deformation, mesh, "deformation")
 Draw(gfu, mesh, "u")
 
-import sys
 if len(sys.argv) < 2 or not (sys.argv[1] == "testmode"):
-  input("Continue (press enter) to create a VTK-Output to tracefem3d.vtk")
-  VTKOutput(ma=mesh, coefs=[deformation, lset_approx, gfu],
-            names=["deformation", "P1-levelset", "u"],
-            filename="tracefem", subdivision=2).Do()
+    input("Continue (press enter) to create a VTK-Output to tracefem3d.vtk")
+    VTKOutput(ma=mesh, coefs=[deformation, lset_approx, gfu],
+              names=["deformation", "P1-levelset", "u"],
+              filename="tracefem", subdivision=2).Do()

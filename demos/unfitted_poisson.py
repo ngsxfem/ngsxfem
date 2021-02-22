@@ -199,12 +199,12 @@ f.Assemble()
 # homogenization of boundary data and solution of linear system
 f.vec.data -= a.mat * gfu.vec
 gfu.vec.data += a.mat.Inverse(VhG.FreeDofs()) * f.vec
- 
+
 # visualize levelset, interpolated levelset and discrete solution:
 Draw(levelset, mesh, "levelset")
 Draw(lsetp1, mesh, "levelset_P1")
-# Note that standard netgen-gui visualization does not respect 
-# the discontinuities, they are smeared out. To see kinks or jumps 
+# Note that standard netgen-gui visualization does not respect
+# the discontinuities, they are smeared out. To see kinks or jumps
 # more clearly increase the subdivision option in the visualization.
 DrawDC(lsetp1, gfu.components[0], gfu.components[1],
        mesh, "u", deformation=lsetadap.deform)
