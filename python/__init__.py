@@ -17,6 +17,19 @@ from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
 from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
 from xfem.ngsxfem_py import *
 
+def HAS(domain_type):
+    """
+For a given domain_type return the combined domain type that 
+includes all elements that have a part in the domain type.
+    """
+    if domain_type == NEG:
+        return HASNEG
+    elif domain_type == POS:
+        return HASPOS
+    elif domain_type == IF:
+        return IF
+    else:
+        raise Exception("invalid domain type")
 
 def extend(func):
     """
