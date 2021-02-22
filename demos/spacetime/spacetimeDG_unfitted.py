@@ -72,11 +72,11 @@ for j in range(space_refs):
 mesh = Mesh(ngmesh)
 
 # spatial FESpace for solution
-fes1 = H1(mesh, order=k_s)
+fes1 = H1(mesh, order=k_s, dgjumps=True)
 # time finite element (nodal!)
 tfe = ScalarTimeFE(k_t)
-# space-time finite element space
-st_fes = SpaceTimeFESpace(fes1, tfe, dgjumps=True)
+# (tensor product) space-time finite element space 
+st_fes = tfe * fes1
 
 # Space time version of Levelset Mesh Adapation object. Also offers integrator
 # helper functions that involve the correct mesh deformation
@@ -86,7 +86,7 @@ lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k_s,
                                             discontinuous_qn=True)
 
 gfu = GridFunction(st_fes)
-u_last = CreateTimeRestrictedGF(gfu, 0)
+u_last = CreateTimeRestrictedGF(gfu, 1)
 
 scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
                deformation=lsetadap.deformation[TOP])
@@ -95,9 +95,9 @@ u, v = st_fes.TnT()
 h = specialcf.mesh_size
 
 ba_facets = BitArray(mesh.nfacet)
-ci = CutInfo(mesh, time_order=time_order)
+ci = CutInfo(mesh, time_order=0)
 
-dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
+dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
                     deformation=lsetadap.deformation[INTERVAL],
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
@@ -136,7 +136,7 @@ while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
 
     # update markers in (space-time) mesh
-    ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
+    ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=0)
 
     # re-compute the facets for stabilization:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh,

@@ -155,15 +155,14 @@ dgjumps : bool
      "Return bool whether node is active")
   ;
 
-  m.def("ScalarTimeFE", []( int order, bool skip_first_node, bool only_first_node)
-  {
-    BaseScalarFiniteElement * fe = nullptr;
 
+  py::class_<NodalTimeFE, shared_ptr<NodalTimeFE>,FiniteElement>(m, "ScalarTimeFE")
+  .def(py::init([] ( int order, bool skip_first_node, bool only_first_node) -> shared_ptr<NodalTimeFE>
+  {
     if (skip_first_node && only_first_node)
       throw Exception("can't skip and keep first node at the same time.");
-    fe = new NodalTimeFE(order, skip_first_node, only_first_node);
-    return shared_ptr<BaseScalarFiniteElement>(fe);
-  },
+    return make_shared<NodalTimeFE>(order, skip_first_node, only_first_node);
+  }),
   py::arg("order") = 0,
   py::arg("skip_first_node") = false,
   py::arg("only_first_node") = false,
@@ -188,7 +187,28 @@ This will create the time finite element with only the first node at t=0.
 That feature comes in handy for several CG like implementations in time.
 Also see skip_first_node.
   )raw_string")
-   );
+   )
+  // .def("__rmul__", [](shared_ptr<NodalTimeFE> self, shared_ptr<FESpace> fes)
+  // {
+  //   Flags flags(fes->GetFlags());
+  //   auto ret = make_shared<SpaceTimeFESpace> (fes->GetMeshAccess(), fes, self, fes->GetFlags());
+
+  //   LocalHeap lh (1000000, "SpaceTimeFESpace::Update-heap", true);
+  //   ret->Update();
+  //   ret->FinalizeUpdate();
+  //   return ret;
+  // })
+  .def("__mul__", [](shared_ptr<NodalTimeFE> self, shared_ptr<FESpace> fes)
+  {
+    Flags flags(fes->GetFlags());
+    auto ret = make_shared<SpaceTimeFESpace> (fes->GetMeshAccess(), fes, self, fes->GetFlags());
+
+    LocalHeap lh (1000000, "SpaceTimeFESpace::Update-heap", true);
+    ret->Update();
+    ret->FinalizeUpdate();
+    return ret;
+  })
+  ;
 
   typedef shared_ptr<TimeVariableCoefficientFunction> PyTimeVariableCF;
 

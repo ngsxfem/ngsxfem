@@ -22,7 +22,7 @@ mesh = Mesh(unit_square.GenerateMesh(maxh=0.05, quad_dominated=False))
 
 V = H1(mesh, order=order, dirichlet=".*")
 tfe = ScalarTimeFE(k_t)
-st_fes = SpaceTimeFESpace(V, tfe)
+st_fes = tfe * V
 
 # Fitted heat equation example
 tnew = 0
