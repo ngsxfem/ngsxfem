@@ -695,8 +695,8 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         Domain description on where the integrator is defined.
     element_boundary : bool
         Integration on each element boundary. Default: False
-    element_vb : {VOL, BND}
-        Integration on each element or its boundary. Default: VOL
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
         (is overwritten by element_boundary if element_boundary 
         is True)
     skeleton : bool
@@ -747,9 +747,11 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
     definedon : Region
         Domain description on where the integrator is defined.
     element_boundary : bool
-        ??? Default: False
-    element_vb : {VOL, BND}
-        ???
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
     skeleton : bool
         Integration over element-interface. Default: False.
     deformation : ngsolve.GridFunction
