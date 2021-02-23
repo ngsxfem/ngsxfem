@@ -762,7 +762,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
                                   has_other = true;
                             });
           if (!has_other)
-            cout << " no Other() used?!" << endl;
+            cout << IM(2) << " no Other() used?!" << endl;
 
   
           shared_ptr<BilinearFormIntegrator> bfi;

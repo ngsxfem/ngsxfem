@@ -194,7 +194,7 @@ namespace ngfem
     if (it == 20){
       //RegionTimer reg (time_not_conv);
       
-      std::cout << " SearchCorrespondingPoint:: did not converge " << std::endl;
+      std::cout << IM(2) << " SearchCorrespondingPoint:: did not converge " << std::endl;
       // getchar();
       final_point = init_point;
     }

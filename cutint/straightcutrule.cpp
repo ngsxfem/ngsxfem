@@ -43,7 +43,7 @@ namespace xintegration
       // RegionTimer reg(t);
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       if(CheckIfStraightCut(lset_on_points) != IF) {
-          cout << "Lsetvals: ";
+          cout << IM(1) << "Lsetvals: ";
           for(auto d: lset_on_points) cout << d << endl;
           throw Exception ("You tried to cut a simplex with a plain geometry lset function");
       }
@@ -142,8 +142,8 @@ namespace xintegration
               SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[2],s_cut.points[3]}));
           }
           else {
-            cout << "s.D = " << s.D << " , s_cut.points.Size() = " << s_cut.points.Size() << endl;
-            cout << "@ lset vals: " << endl;
+            cout << IM(1) << "s.D = " << s.D << " , s_cut.points.Size() = " << s_cut.points.Size() << endl;
+            cout << IM(1) << "@ lset vals: " << endl;
             for (auto d: lsetvals) cout << d << endl;
             throw Exception("Bad length of s_cut!");
           }
@@ -188,7 +188,7 @@ namespace xintegration
               SimplexDecomposition.Append(point_listC);
           }
           else {
-              cout << "@ lset vals: " << endl;
+              cout << IM(1) << "@ lset vals: " << endl;
               for (auto d: lsetvals) cout << d << endl;
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
           }
@@ -286,14 +286,14 @@ namespace xintegration
                   if(q.D == 2) if_scale_factor = L2Norm(lset_grad)/abs(lset_grad[0]);
                   else if(q.D == 3) if_scale_factor = L2Norm(lset_grad)/sqrt(pow(lset_grad[0],2) + pow(lset_grad[1],2));
                   if( isnan(if_scale_factor) || if_scale_factor > C ){
-                      cout << "Straightcutrule WARNING: IF scaling factor larger than bound:" << endl;
-                      cout << "IF scaling factor: " << if_scale_factor << endl;
-                      cout << "dims: " << q.D << endl;
-                      cout << "c: " << c << endl;
-                      cout << "C: " << C << endl;
-                      cout << "This might happen in 3D if the child quad had a bad topology and called its fallback routine." << endl;
-                      cout << "If you haven't done so, maybe try POL= OPTIMAL to avoid this" << endl;
-                      //throw Exception("if_scale_factor larger than bound");
+                      cout << IM(1) << "Straightcutrule WARNING: IF scaling factor larger than bound:" << endl;
+                      cout << IM(1) << "IF scaling factor: " << if_scale_factor << endl;
+                      cout << IM(1) << "dims: " << q.D << endl;
+                      cout << IM(1) << "c: " << c << endl;
+                      cout << IM(1) << "C: " << C << endl;
+                      cout << IM(1) << "This might happen in 3D if the child quad had a bad topology and called its fallback routine." << endl;
+                      cout << IM(1) << "If you haven't done so, maybe try POL= OPTIMAL to avoid this" << endl;
+                      throw Exception("if_scale_factor larger than bound");
                   }
               }
               intrule.Append(IntegrationPoint( ip , p2.Weight()*p1.Weight()*(xi1-xi0)*if_scale_factor));
@@ -599,7 +599,7 @@ namespace xintegration
     auto et = trafo.GetElementType();
 
     if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
-      cout << "Element Type: " << et << endl;
+      cout << IM(1) << "Element Type: " << et << endl;
       throw Exception("only trigs, tets, quads for now");
     }
 
@@ -677,7 +677,7 @@ namespace xintegration
     int M = cf_lsets_at_element.Width();
 
     if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM)){
-      cout << "Element Type: " << et << endl;
+      cout << IM(1) << "Element Type: " << et << endl;
       throw Exception("only trigs, tets for now");
     }
 
@@ -809,7 +809,7 @@ namespace xintegration
 
 
       if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
-        cout << "Element Type: " << et << endl;
+        cout << IM(1) <<  "Element Type: " << et << endl;
         throw Exception("only trigs, tets, quads for now");
       }
       bool is_quad = (et == ET_QUAD) || (et == ET_HEX);

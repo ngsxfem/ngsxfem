@@ -38,7 +38,7 @@ namespace ngcomp
     {
       if ( coef_lset == NULL )
       {
-        cout << " no lset, FinalizeUpdate postponed " << endl;
+        cout << IM(2) << " no lset, FinalizeUpdate postponed " << endl;
         return;
       }
       FESpace::FinalizeUpdate ();

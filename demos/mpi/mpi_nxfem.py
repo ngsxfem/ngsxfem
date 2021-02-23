@@ -12,13 +12,13 @@ from xfem.lsetcurv import *
 
 from math import pi
 
-from ngsolve import ngs2petsc
-
-import os
-
 comm = MPI.COMM_WORLD
 rank = comm.rank
 np = comm.size
+
+
+import os
+
 
 ngsglobals.msg_level = 10
 
@@ -45,7 +45,8 @@ geo.AddRectangle(ll, ur, bc=1)
 
 if rank == 0:
     ngmesh = geo.GenerateMesh(maxh=maxh)
-    ngmesh.Distribute(comm)
+    if np > 1:
+        ngmesh.Distribute(comm)
 else:
     ngmesh = netgen.meshing.Mesh.Receive(comm)
     ngmesh.SetGeometry(geo)
@@ -148,6 +149,7 @@ gfu.components[0].Set(solution[1], BND)
 if np == 1:
     c = Preconditioner(a, 'bddc', coarsetype="h1amg")  # only for serial runs
 else:
+    from ngsolve import ngs2petsc
     c = Preconditioner(a, 'bddc', coarsetype="gamg")
 
 a.Assemble()

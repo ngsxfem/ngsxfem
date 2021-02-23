@@ -184,7 +184,7 @@ shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegra
                           has_other = true;
                     });
   if (!has_other)
-    cout << " no Other() used?!" << endl;
+    cout << IM(3) << " no Other() used?!" << endl;
 
   auto bfi = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf);
   bfi->SetTimeIntegrationOrder(time_order);

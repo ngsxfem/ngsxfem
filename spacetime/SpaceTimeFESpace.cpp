@@ -1,10 +1,8 @@
 
-// SpaceTimeFESpace based on:
-
 /*********************************************************************/
-/* File:   myFESpace.cpp                                             */
-/* Author: Joachim Schoeberl                                         */
-/* Date:   26. Apr. 2009                                             */
+/* File:   SpaceTimeFESpace.cpp                                      */
+/* Author: Janosch Preuss & Christoph Lehrenfeld                     */
+/* Date:   2017                                                      */
 /*********************************************************************/
 
 #include "SpaceTimeFE.hpp"
@@ -30,9 +28,9 @@ namespace ngcomp
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
   : FESpace (ama, flags), Vh(aVh)
   {
-    cout << IM(3) << "AMA DIM: " << ama->GetDimension() << endl;
-    cout << IM(3) << "Constructor of SpaceTimeFESpace" << endl;
-    cout << IM(3) <<"Flags = " << flags << endl;
+    *testout << "AMA DIM: " << ama->GetDimension() << endl;
+    *testout << "Constructor of SpaceTimeFESpace" << endl;
+    *testout <<"Flags = " << flags << endl;
 
     dimension = Vh->GetDimension ();
 
@@ -42,9 +40,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     tfe = atfe.get();
 
-    cout << IM(3) <<"Hello from SpaceTimeFESpace.cpp" << endl;
-    cout << IM(3) <<"Order Space: " << order_s << endl;
-    cout << IM(3) <<"Order Time: " << order_t << endl;
+    *testout <<"Hello from SpaceTimeFESpace.cpp" << endl;
+    *testout <<"Order Space: " << order_s << endl;
+    *testout <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
     Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
@@ -101,11 +99,11 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     }
     FESpace::Update();
     Vh->Update();
-    cout << IM(3) << "Dofs in base: " << Vh->GetNDof() << endl;
+    *testout << "Dofs in base: " << Vh->GetNDof() << endl;
 
     // number of dofs:
     ndof = (Vh->GetNDof()) * tfe->GetNDof();
-    cout << IM(3) << "Total number of Dofs: " << ndof << endl;
+    *testout << "Total number of Dofs: " << ndof << endl;
 
 
   }
@@ -169,16 +167,16 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
          }
            
          if(abs(time - nodes[i]) < EPS) {
-             cout << IM(3) <<"Node case" << endl;
+             *testout <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
                  restricted_vec[j] = st_vec[j+cnt*Vh->GetNDof()];
              return;
          }
          cnt++;
      }
-     cout << IM(3) <<"General case" << endl;
+     *testout <<"General case" << endl;
      // General case
-     //cout << IM(3) <<"time fe:" << GetTimeFE() << endl;
+     //*testout <<"time fe:" << GetTimeFE() << endl;
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
 
      const int dim = Vh->GetDimension();

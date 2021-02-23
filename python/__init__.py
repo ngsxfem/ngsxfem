@@ -2,12 +2,17 @@
 (ngs)xfem
 =========
 
-A module for unfitted discretizations in NGSolve
+A module for unfitted finite element discretizations in NGSolve
 
-Modules:
+Submodules:
+xfem.cutmg ... MultiGrid for CutFEM
 xfem.lsetcurving ... isoparametric unfitted FEM
+xfem.lset_spacetime ... isoparametric unfitted space-time FEM
 xfem.mlset ... multiple level sets
+xfem.utils ... some example level set geometries
 """
+
+
 
 from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
                      GridFunction, H1, IfPos, LinearForm, Parameter)

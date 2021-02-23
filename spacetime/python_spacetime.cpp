@@ -75,7 +75,7 @@ void ExportNgsx_spacetime(py::module &m)
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
     //cout << tfe << endl;
     if(tfe == nullptr)
-      cout << "Warning! tfe == nullptr" << endl;
+      cout << IM(1) << "Warning! tfe == nullptr" << endl;
 
     ret = make_shared<SpaceTimeFESpace> (ma, basefes,tfe, flags);
 

@@ -5,6 +5,8 @@
 =ngsxfem= is an academic software. 
 Its primary intention is to facilitate the development and validation of new numerical methods.
 
+[[_TOC_]]
+
 ** The main features
 *** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
 Given a level set function \phi which describes the geometry (e.g. \Omega = { \phi < 0 }) a piecewise linear approximation is made.
