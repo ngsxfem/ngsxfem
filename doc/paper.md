@@ -75,12 +75,12 @@ Left: Active elements with respect to level set function. Right: XFEM basis func
 To obtain higher order accuracy of integrals, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. 
 Thereby the piecewise linear approximation of the level-set (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
 
-![Left: Piecewise linear approximation. Right: Higher-order mapped domain](doc/graphics/lsetcurv.jpg){ height=3cm align=center} 
+![Left: Piecewise linear approximation. Right: Higher-order mapped domain](doc/graphics/lsetcurv.jpg){ height=2.5cm align=center} 
 
 ## Space-Time Finite Elements for the treatment of moving domain problems
 To obtain robust method for partial differential equations on unfitted moving domain we can formulate space-time discretizations. `ngsxfem` provides the necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Furthermore, it extends the tools for higher order accurate geometry handling into the space-time setting.
 
-![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a space-time level set function (red).](doc/graphics/spacetime.png){ height=2cm align=center}
+![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a space-time level set function (red).](doc/graphics/spacetime.png){ height=2.5cm align=center}
 
 
 ## Geometries described by multiple level sets
