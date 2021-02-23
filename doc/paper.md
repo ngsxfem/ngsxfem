@@ -1,8 +1,12 @@
 ---
-title: 'ngsxfem: An add-on to NGSolve for unfitted finite element discretizations'
+title: '`ngsxfem`: An add-on to NGSolve for unfitted finite element discretizations'
 tags:
   - finite elements
-  - xfem
+  - unfitted finite elements
+  - level set geometry
+  - Cut FEM
+  - eXtended FEM
+  - Cut-Cell methods
 authors:
   - name: Christoph Lehrenfeld^[Corresponding Author]
     orcid: 0000-0003-0170-8468
@@ -24,8 +28,6 @@ date: xx xx 2021
 bibliography: doc/lit-ngsxfem.bib
 
 ---
-
-# Discussion points:
 
 # Summary
 `ngsxfem` is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell,.. . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.

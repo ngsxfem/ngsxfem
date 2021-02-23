@@ -170,8 +170,8 @@ class LevelSetMeshAdaptation_Spacetime:
 
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            self.ci.Update(self.lset_p1_node)
             if calc_kappa:
+                self.ci.Update(self.lset_p1_node)
                 self.kappa.vec[i*self.v_kappa_node.ndof : (i+1)*self.v_kappa_node.ndof].data = self.ci.GetCutRatios(VOL)
         
         
