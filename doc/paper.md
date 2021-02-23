@@ -60,7 +60,7 @@ Given a level set function $\phi$ which describes the geometry (e.g. $\Omega = \
 On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
 On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) sub-domains where the level set is positive/negative/zero.
 
-![cuttet](graphics/cuttet.jpg){ height=130px } ![cutquad](graphics/cut_quadrature.png){ height=130px }
+![cuttet](doc/graphics/cuttet.jpg){ height=130px } ![cutquad](doc/graphics/cut_quadrature.png){ height=130px }
 
 Left: Subdivision strategy for tetrahedra. Right: Integration points on a cut element
 
@@ -69,7 +69,7 @@ In unfitted finite element methods some functions and integrals are only defined
 `ngsxfem` offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces. 
 On cut elements one often also uses locally modified finite elements, e.g. by restriction of finite elements on the background mesh.
 
-![unfmesh](graphics/unfittedmesh.jpg){ height=130px} ![xfem](graphics/xfem.jpg){ height=130px}
+![unfmesh](doc/graphics/unfittedmesh.jpg){ height=130px} ![xfem](doc/graphics/xfem.jpg){ height=130px}
 
 Left: Active elements with respect to level set function. Right: XFEM basis function.
 
@@ -77,14 +77,14 @@ Left: Active elements with respect to level set function. Right: XFEM basis func
 To obtain higher order accuracy of integrals, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. 
 Thereby the piecewise linear approximation of the level-set (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
 
-![lsetcurv](graphics/lsetcurv.jpg){ height=150px align=center} 
+![lsetcurv](doc/graphics/lsetcurv.jpg){ height=150px align=center} 
 
 Left: Piecewise linear approximation. Right: Higher-order mapped domain
 
 ## Space-Time Finite Elements for the treatment of moving domain problems
 To obtain robust method for partial differential equations on unfitted moving domain we can formulate space-time discretizations. `ngsxfem` provides the necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Furthermore, it extends the tools for higher order accurate geometry handling into the space-time setting.
 
-![lsetcurv](graphics/spacetime1.png){ height=150px align=center} ![lsetcurv](graphics/spacetime2.png){ height=150px align=center} 
+![lsetcurv](doc/graphics/spacetime1.png){ height=150px align=center} ![lsetcurv](doc/graphics/spacetime2.png){ height=150px align=center} 
 
 Top: Sketch of a space-time moving domain (1D + time) Bottom: sketch of an isoparametrically mapped space-time prism cut by the zero level of a space-time level set function (red).
 
@@ -93,7 +93,7 @@ Many geometries do not have -- due to sharp corners or edges -- an implicit desc
 To work with these more complicated domains, `ngsxfem` provides tools to work with these geometries as with simple geometries, for example computing the level-set description of the boundary and exterior.  
 To enable integration on such domains `ngsxfem` generates quadrature rules with respect to every level-set which cuts a given element. Furthermore, it provides the analogous tools to the single level-set setting, to mark those elements of the mesh which are relevant to a given geometry.
 
-![lsetcurv](graphics/zdisc-cut-elements.png){ height=175px} ![lsetcurv](graphics/cut_quadrature_mlset.png){ height=175px} 
+![lsetcurv](doc/graphics/zdisc-cut-elements.png){ height=175px} ![lsetcurv](doc/graphics/cut_quadrature_mlset.png){ height=175px} 
 
 Left: Elements marked with respect to multiple level sets. Right: Quadrature for multiple cuts.
 
