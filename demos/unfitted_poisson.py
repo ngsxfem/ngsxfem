@@ -1,7 +1,7 @@
 """
 In this example we solve a scalar *unfitted* interface problem. As a
 discretisation method we use a level set based geometry description and
-a Cut or Extended Finite element method with a Nitsche formulation to 
+a Cut or Extended Finite element method with a Nitsche formulation to
 impose the interface conditions.
 
 Domain:
@@ -31,7 +31,7 @@ domain-wise constants which are different in the two sub-domains.
 Discretisation:
 ---------------
 * Finite element space: We consider two different formulations:
-  * "CutFEM" For each sub-domain we consider the space of piecewise 
+  * "CutFEM" For each sub-domain we consider the space of piecewise
     polynomials restricted to the corresponding sub-domain.
   * "XFEM" we consider a standard space of piecewise polynomials combined
     with an enrichment space.
@@ -48,7 +48,7 @@ Implementational aspects:
   geometry we use the piecewise (multi-) linear interpolation of the
   level set function. For this geometry approximation (arbitrary order)
   accurate numerical integration is provided.
-  For higher order approximation an additional mesh deformation is 
+  For higher order approximation an additional mesh deformation is
   applied that maps the low order interface approximation to something
   more accurate.
 
