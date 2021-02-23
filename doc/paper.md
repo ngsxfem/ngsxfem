@@ -99,9 +99,7 @@ Left: Elements marked with respect to multiple level sets. Right: Quadrature for
 
 
 # `ngsxfem` in the scientific literature
-
-`ngsxfem` has been used in a variety of applications. These include surface problems [https://arxiv.org/abs/1909.08327](link), fluid-structure interaction problems with contact [https://arxiv.org/abs/2011.08691](link), reduced order methods [https://arxiv.org/abs/2010.04953](link) and optimal contoll problems [https://arxiv.org/abs/2003.00352](link). 
-
+`ngsxfem` has been used in a variety of applications. These include surface problems [link](https://arxiv.org/abs/1909.08327), fluid-structure interaction problems with contact [link](https://arxiv.org/abs/2011.08691), reduced order methods [link](https://arxiv.org/abs/2010.04953)) and optimal contoll problems [link](https://arxiv.org/abs/2003.00352). 
 
 As far as we are aware `ngsxfem` has been used in the following scientific literature:
 
