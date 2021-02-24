@@ -62,9 +62,8 @@ lset_if = {"levelset": lsetp1, "domain_type": IF, "subdivlvl": 0}
 ci = CutInfo(mesh, lsetp1)
 hasneg = ci.GetElementsOfType(HASNEG)
 
-Vh = L2(mesh, order=order, dirichlet=[], dgjumps=True)
-active_dofs = GetDofsOfElements(Vh, hasneg)
-Vh = Compress(Vh, active_dofs)
+Vhbase = L2(mesh, order=order, dirichlet=[], dgjumps=True)
+Vh = Restrict(Vhbase, hasneg)
 
 gfu = GridFunction(Vh)
 
