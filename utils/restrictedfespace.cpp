@@ -79,6 +79,34 @@ namespace ngcomp
     else  
       dnums.SetSize(0);
   }
+
+
+  ProxyNode RestrictedFESpace::MakeProxyFunction (bool testfunction,
+                                                  const function<shared_ptr<ProxyFunction>(shared_ptr<ProxyFunction>)> & addblock) const
+  {
+    auto proxybase = GetBaseSpace()->GetProxyFunction(testfunction);
+    auto compound = dynamic_pointer_cast<CompoundDifferentialOperator>(proxybase);
+    shared_ptr<DifferentialOperator> ev1 = proxybase->Evaluator() ? make_shared<RestrictedDifferentialOperator>(proxybase->Evaluator()) : nullptr;
+    shared_ptr<DifferentialOperator> ev2 = proxybase->DerivEvaluator() ? make_shared<RestrictedDifferentialOperator>(proxybase->DerivEvaluator()) : nullptr;
+    shared_ptr<DifferentialOperator> ev3 = proxybase->TraceEvaluator() ? make_shared<RestrictedDifferentialOperator>(proxybase->TraceEvaluator()) : nullptr;
+    shared_ptr<DifferentialOperator> ev4 = proxybase->TraceDerivEvaluator() ? make_shared<RestrictedDifferentialOperator>(proxybase->TraceDerivEvaluator()) : nullptr;
+    shared_ptr<DifferentialOperator> ev5 = proxybase->TTraceEvaluator() ? make_shared<RestrictedDifferentialOperator>(proxybase->TTraceEvaluator()) : nullptr;
+    shared_ptr<DifferentialOperator> ev6 = proxybase->TTraceDerivEvaluator() ? make_shared<RestrictedDifferentialOperator>(proxybase->TTraceDerivEvaluator()) : nullptr;
+
+    shared_ptr<FESpace> fes = dynamic_pointer_cast<FESpace> (const_cast<RestrictedFESpace*>(this)->shared_from_this());
+    auto proxy = make_shared<ProxyFunction>(fes, testfunction, fes->IsComplex(), ev1, ev2, ev3, ev4, ev5, ev6); 
+    ProxyNode proxyn(proxy);
+    proxyn.SetFESpace(fes);
+
+    auto add_diffops = proxybase->GetAdditionalEvaluators();
+    for (int i = 0; i < add_diffops.Size(); i++)
+      proxyn->SetAdditionalEvaluator (add_diffops.GetName(i), make_shared<RestrictedDifferentialOperator>(add_diffops[i]));
+    proxyn = addblock(proxyn);
+
+    return proxyn;
+  }
+
+
 }
 
 #include <fem.hpp>
