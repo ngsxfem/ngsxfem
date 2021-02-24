@@ -15,12 +15,12 @@ ngsglobals.msg_level = 1
 
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
-i = 3
+i = 2
 n_steps = 2**i
-space_refs = 0
+space_refs = i
 
 # polynomial order in time
-k_t = 2
+k_t = 3
 # polynomial order in space
 k_s = k_t
 # polynomial order in time for level set approximation
@@ -92,7 +92,7 @@ lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k_s,
                                             discontinuous_qn=True)
 
 ## lset epsilon pertubation for extended facet patch bfi domain
-eps=0.1*delta_t
+eps=5.*delta_t
 
 gfu_i = GridFunction(st_fes_i)
 gfu_e = GridFunction(st_fes_e)
@@ -153,6 +153,8 @@ u_last.Set(fix_tref(u_exact, 0))
 # project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
 
+max_error = 0
+
 while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
 
@@ -160,7 +162,7 @@ while tend - told.Get() > delta_t / 2:
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
     
     # re-evaluate the "active dofs" in the space time slab
-    active_dofs = GetDofsOfElements(st_fes,ci.GetElementsOfType(HASNEG))
+    active_dofs = GetDofsOfElements(st_fes_i,ci.GetElementsOfType(HASNEG))
         
     # Actually, one could also subtract epsilon from all vector elements...
     InterpolateToP1(lsetadap.levelsetp1[BOTTOM]-eps,lset_p1_slice)
@@ -202,6 +204,8 @@ while tend - told.Get() > delta_t / 2:
     told.Set(told.Get() + delta_t)
     print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))
     
+    if l2error > max_error:
+        max_error = l2error
     #break
     
     try:
@@ -210,3 +214,5 @@ while tend - told.Get() > delta_t / 2:
         scene.Redraw()
     except NameError:
         scene.Redraw(blocking=True)
+
+print("Greatest slice error: ", max_error)
