@@ -56,10 +56,8 @@ lset_if = {"levelset": lsetp1, "domain_type": IF, "subdivlvl": 0}
 ci = CutInfo(mesh, lsetp1)
 hasneg = ci.GetElementsOfType(HASNEG)
 
-Vh = H1(mesh, order=order, dirichlet=[], dgjumps=True)
-active_dofs = GetDofsOfElements(Vh, hasneg)
-Vh = Compress(Vh, active_dofs)
-active_dofs = GetDofsOfElements(Vh, hasneg)
+Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
+Vh = Restrict(Vhbase, hasneg)
 
 gfu = GridFunction(Vh)
 
@@ -77,7 +75,6 @@ n_levelset = 1.0 / Norm(grad(lsetp1)) * grad(lsetp1)
 
 
 a = BilinearForm(Vh, symmetric=False)
-
 # Diffusion term
 a += SymbolicBFI(lset_neg, form=grad(u) * grad(v))
 # Nitsche term
@@ -123,7 +120,7 @@ a.Assemble()
 f.Assemble()
 
 # Solve linear system
-gfu.vec.data = a.mat.Inverse(active_dofs) * f.vec
+gfu.vec.data = a.mat.Inverse(Vh.FreeDofs()) * f.vec
 
 # Measure the error
 l2error = sqrt(Integrate(lset_neg, (gfu - exact) * (gfu - exact), mesh))
