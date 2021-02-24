@@ -500,6 +500,9 @@ namespace ngcomp
                                                      shared_ptr<BitArray> a,
                                                      LocalHeap & lh)
   {
+    if (ma->GetCommunicator().Size() > 1)
+      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
+
     int nf = ma->GetNFacets();
     int ne = ma->GetNE();
     shared_ptr<BitArray> ret = make_shared<BitArray> (ne);
@@ -524,10 +527,6 @@ namespace ngcomp
                                          shared_ptr<BitArray> a,
                                          LocalHeap & lh)
   {
-    if (fes->GetMeshAccess()->GetCommunicator().Size() > 1)
-      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
-    
-    
     int ne = fes->GetMeshAccess()->GetNE();
     int ndof = fes->GetNDof();
     shared_ptr<BitArray> ret = make_shared<BitArray> (ndof);
