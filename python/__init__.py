@@ -521,8 +521,8 @@ def fix_tref(obj,time,*args,**kwargs):
           return obj.Operator("fix_t_top")
         elif isinstance(obj,GridFunction):
           return fix_t_gf(obj,time,*args,**kwargs)
-        elif isinstance(obj,ProxyFunction):
-          return fix_t_proxy(obj,time,*args,**kwargs)
+      elif isinstance(obj,ProxyFunction):
+        return fix_t_proxy(obj,time,*args,**kwargs)
 
     if isinstance(obj,CoefficientFunction):
       return fix_t_coef(obj,time,*args,**kwargs)
@@ -620,7 +620,7 @@ class NoDeformation:
 
 try:
     __IPYTHON__
-    from ipywidgets import FloatSlider, interact
+    from ipywidgets import interact, FloatSlider
     from ngsolve.webgui import Draw
     def TimeSlider_Draw(cf,mesh,*args,**kwargs):
         ts = Parameter(0)
