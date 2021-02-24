@@ -107,6 +107,7 @@ lset_p1_slice = GridFunction(lsetadap.levelsetp1[BOTTOM].space)
 
 h = specialcf.mesh_size
 
+ba_strip = BitArray(mesh.ne)
 ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=time_order)
 ci_slice = CutInfo(mesh)
@@ -143,8 +144,6 @@ u_last.Set(fix_tref(u_exact, 0))
 # project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
 
-max_error = 0
-
 while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
     gfu_e.Set(u_last)
@@ -163,7 +162,7 @@ while tend - told.Get() > delta_t / 2:
     ci_slice.Update(lset_p1_slice)
     ba_minus_haspos = BitArray(ci_slice.GetElementsOfType(HASPOS))
 
-    ba_strip = BitArray(ba_minus_haspos & ba_plus_hasneg)
+    ba_strip[:] = ba_minus_haspos & ba_plus_hasneg
     ba_facets[:] = GetFacetsWithNeighborTypes(
         mesh, a=ba_strip, b=ba_plus_hasneg)
     active_dofs |= GetDofsOfElements(st_fes_i, ba_strip)
