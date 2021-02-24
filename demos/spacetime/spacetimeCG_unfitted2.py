@@ -157,6 +157,7 @@ max_error = 0
 
 while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
+    gfu_e.Set(u_last)
 
     # update markers in (space-time) mesh
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
@@ -194,7 +195,6 @@ while tend - told.Get() > delta_t / 2:
     #  * for error evaluation
     #  * upwind-coupling to next time slab
     RestrictGFInTime(spacetime_gf=gfu_i, reference_time=1.0, space_gf=u_last)
-    gfu_e.Set(u_last)
 
     # compute error at final time
     l2error = sqrt(
