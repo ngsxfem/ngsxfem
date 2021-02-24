@@ -60,11 +60,8 @@ namespace ngcomp
       CompressedFESpace::FinalizeUpdate();
     }
 
-    ProxyNode MakeProxyFunction (bool testfunction,
-                                 const function<shared_ptr<ProxyFunction>(shared_ptr<ProxyFunction>)> & addblock) const override
-    {
-      return GetBaseSpace()->MakeProxyFunction (testfunction, addblock);
-    }
+    virtual ProxyNode MakeProxyFunction (bool testfunction,
+                                 const function<shared_ptr<ProxyFunction>(shared_ptr<ProxyFunction>)> & addblock) const override;
 
   };
 }
@@ -78,14 +75,22 @@ namespace ngfem
   public:
     RestrictedDifferentialOperator (shared_ptr<DifferentialOperator> adiffop)
       : DifferentialOperator(adiffop->Dim(), adiffop->BlockDim(),
-                             adiffop->VB(), adiffop->DiffOrder()), diffop(adiffop) { ; }
+                             adiffop->VB(), adiffop->DiffOrder()), diffop(adiffop) { 
+      dimensions = adiffop->Dimensions();
+    }
 
     NGS_DLL_HEADER virtual ~RestrictedDifferentialOperator (){ ; };
     
     virtual string Name() const override { return "restricted-"+diffop->Name(); }
     shared_ptr<DifferentialOperator> BaseDiffOp() const { return diffop; }
     virtual bool SupportsVB (VorB checkvb) const override { return diffop->SupportsVB(checkvb); }
-    virtual IntRange UsedDofs(const FiniteElement & fel) const override { return diffop->UsedDofs(fel); }
+    virtual IntRange UsedDofs(const FiniteElement & fel) const override 
+    { 
+      if (fel.GetNDof() == 0)
+        return IntRange(0,0);
+      else
+        return diffop->UsedDofs(fel);//(0, fel.GetNDof()); 
+    }
 
     shared_ptr<DifferentialOperator> GetTrace() const override
     {
