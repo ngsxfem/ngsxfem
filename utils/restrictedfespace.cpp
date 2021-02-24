@@ -37,9 +37,6 @@ namespace ngcomp
     }
     else
       active_dofs->Set();
-    if (active_els)
-      cout << "ACT ELs:" << *active_els << endl;
-    cout << *active_dofs << endl;
     CompressedFESpace::Update();
   }
 
