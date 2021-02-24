@@ -84,13 +84,7 @@ namespace ngfem
     virtual string Name() const override { return "restricted-"+diffop->Name(); }
     shared_ptr<DifferentialOperator> BaseDiffOp() const { return diffop; }
     virtual bool SupportsVB (VorB checkvb) const override { return diffop->SupportsVB(checkvb); }
-    virtual IntRange UsedDofs(const FiniteElement & fel) const override 
-    { 
-      if (fel.GetNDof() == 0)
-        return IntRange(0,0);
-      else
-        return diffop->UsedDofs(fel);//(0, fel.GetNDof()); 
-    }
+    virtual IntRange UsedDofs(const FiniteElement & fel) const override { return diffop->UsedDofs(fel); }
 
     shared_ptr<DifferentialOperator> GetTrace() const override
     {
