@@ -123,6 +123,7 @@ dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
 
 def dt(u): return 1.0 / delta_t * dtref(u)
 
+
 a_i = BilinearForm(trialspace=st_fes_i, testspace=st_fes_t, check_unused=False)
 
 a_i += v_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dQ
