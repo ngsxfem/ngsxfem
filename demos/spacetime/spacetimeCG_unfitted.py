@@ -1,281 +1,194 @@
 """
-unfitted Heat equation with Neumann b.c.
+unfitted Heat equation with Neumann b.c. solved with an unfitted isoparametric
+space-time discretisation.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
-from netgen.geom2d import SplineGeometry
 from ngsolve import *
-from ngsolve.internal import *
-from ngsolve.solvers import *
-
+from netgen.geom2d import SplineGeometry
 from xfem import *
-from xfem.lset_spacetime import *
-
 from math import pi
-
+from xfem.lset_spacetime import *
 ngsglobals.msg_level = 1
 
-
 # -------------------------------- PARAMETERS ---------------------------------
-maxh = 0.08
 
-# diffusion coefficient
-alpha = 1
+# DISCRETIZATION PARAMETERS:
+# parameter for refinement study:
+i = 2
+n_steps = 2**i
+space_refs = i
+
 # polynomial order in time
-k_t = 1
+k_t = 3
 # polynomial order in space
-k_s = 1
-tend = 1
-delta_t = tend / 64
-
-
-# ----------------------------------- MAIN ------------------------------------
-square = SplineGeometry()
-square.AddRectangle([-1, -1], [1, 1])
-ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
-mesh = Mesh(ngmesh)
-
-# expression for the time variable:
-
-coef_told = Parameter(0)
-coef_delta_t = Parameter(0)
-tref = ReferenceTimeVariable()
-t = coef_told + coef_delta_t * tref
-
-# the data:
-if True:
-    # radius of disk (the geometry)
-    r0 = 0.5
-    # case 1: analytical solution:
-    # position shift of the geometry in time
-    rho = CoefficientFunction((1 / (pi)) * sin(2 * pi * t))
-
-    def rhoL(t):
-        return CoefficientFunction((1 / (pi)) * sin(2 * pi * t))
-
-    # convection velocity:
-    d_rho = CoefficientFunction(2 * cos(2 * pi * t))
-    w = CoefficientFunction((0, d_rho))
-
-    # level set
-    r = sqrt(x**2 + (y - rho)**2)
-    levelset = r - r0
-
-    # solution and r.h.s.
-    Q = pi / r0
-    u_exact = cos(Q * r) * sin(pi * t)
-
-    def u_exactL(t):
-        return cos(Q * sqrt(x**2 + (y - rhoL(t))**2)) * sin(pi * t)
-
-    coeff_f = (Q / r * sin(Q * r) + (Q**2) * cos(Q * r)) * \
-        sin(pi * t) + pi * cos(Q * r) * cos(pi * t)
-    u_init = u_exact
-
-else:
-    r0 = 0.5
-    # case 2: trivial solution:
-    # position shift of the geometry in time
-    rho = CoefficientFunction(0)
-    # convection velocity:
-    d_rho = CoefficientFunction(0)
-    w = CoefficientFunction((0, d_rho))
-
-    # level set
-    r = sqrt(x**2 + (y - rho)**2)
-    levelset = r - r0
-
-    # diffusion coefficient
-    alpha = 1
-
-    # solution and r.h.s.
-    u_exact = 1 - t**6
-    coeff_f = -6 * t**5
-    u_init = u_exact
-
-# the discretisation
-
-
-# spatial FESpace for solution
-fes1 = H1(mesh, order=k_s)
+k_s = k_t
 # polynomial order in time for level set approximation
 lset_order_time = k_t
 # integration order in time
 time_order = 2 * k_t
-# time finite element (nodal!)
-tfe = ScalarTimeFE(k_t)
-tfe_i = ScalarTimeFE(k_t, skip_first_node=True)  # interior
-tfe_e = ScalarTimeFE(k_t, only_first_node=True)  # exterior (inital values)
-tfe_t = ScalarTimeFE(k_t - 1)                     # test
+# time stepping parameters
+tstart = 0
+tend = 0.5
+delta_t = (tend - tstart) / n_steps
+maxh = 0.5
+# ghost penalty parameter
+gamma = 0.05
+# map from reference time to physical time
+told = Parameter(tstart)
+t = told + delta_t * tref
 
+# PROBLEM SETUP:
+
+# outer domain:
+rect = SplineGeometry()
+rect.AddRectangle([-0.6, -1], [0.6, 1])
+
+# level set geometry
+# radius of disk (the geometry)
+R = 0.5
+# position shift of the geometry in time
+rho = (1 / (pi)) * sin(2 * pi * t)
+# convection velocity:
+w = CoefficientFunction((0, rho.Diff(t)))
+max_velocity = 2
+# level set
+r = sqrt(x**2 + (y - rho)**2)
+levelset = r - R
+
+# diffusion coeff
+alpha = 1
+# solution
+u_exact = cos(pi * r / R) * sin(pi * t)
+# r.h.s.
+coeff_f = (u_exact.Diff(t)
+           - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
+           + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
+
+# ----------------------------------- MAIN ------------------------------------
+
+ngmesh = rect.GenerateMesh(maxh=maxh, quad_dominated=False)
+for j in range(space_refs):
+    ngmesh.Refine()
+mesh = Mesh(ngmesh)
+
+# spatial FESpace for solution
+fes = H1(mesh, order=k_s, dgjumps=True)
+# time finite elements (nodal!)
+tfe_i = ScalarTimeFE(k_t, skip_first_node=True)  # interior shapes
+tfe_e = ScalarTimeFE(k_t, only_first_node=True)  # exterior shapes (init. val.)
+tfe_t = ScalarTimeFE(k_t-1)                     # test shapes
 # space-time finite element space
-st_fes = SpaceTimeFESpace(fes1, tfe, flags={"dgjumps": True})
-st_fes_i = SpaceTimeFESpace(fes1, tfe_i, flags={"dgjumps": True})
-st_fes_e = SpaceTimeFESpace(fes1, tfe_e, flags={"dgjumps": True})
-st_fes_t = SpaceTimeFESpace(fes1, tfe_t, flags={"dgjumps": True})
+st_fes_i, st_fes_e, st_fes_t = [tfe * fes for tfe in [tfe_i, tfe_e, tfe_t]]
 
-# Fitted heat equation example
+# Space time version of Levelset Mesh Adapation object. Also offers integrator
+# helper functions that involve the correct mesh deformation
+lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k_s,
+                                            order_time=lset_order_time,
+                                            threshold=0.5,
+                                            discontinuous_qn=True)
 
-coef_delta_t.Set(delta_t)
-tnew = 0
-told = 0
-
-lset_p1 = GridFunction(st_fes)
-
-SpaceTimeInterpolateToP1(levelset, tref, lset_p1)
-
-lset_top = CreateTimeRestrictedGF(lset_p1, 1.0)
-lset_bottom = CreateTimeRestrictedGF(lset_p1, 0.0)
+# lset epsilon pertubation for extended facet patch bfi domain
+eps = 1.1*max_velocity*delta_t
 
 gfu_i = GridFunction(st_fes_i)
 gfu_e = GridFunction(st_fes_e)
 
-#
 u_last = CreateTimeRestrictedGF(gfu_e, 0)
-# gfu_e.Set(u_init)
-SpaceTimeWeakSet(gfu_e, u_exactL(0.0), fes1)
-
-Draw(gfu_e, mesh, "gfu_e")
 
 u_i = st_fes_i.TrialFunction()
 u_e = st_fes_e.TrialFunction()
 v_t = st_fes_t.TestFunction()
 
+scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
+               deformation=lsetadap.deformation[TOP])
+
+lset_p1_slice = GridFunction(lsetadap.levelsetp1[BOTTOM].space)
+
 h = specialcf.mesh_size
 
-Draw(lset_top, mesh, "lset")
-Draw(IfPos(-lset_top, CoefficientFunction((0, 0)),
-           CoefficientFunction((float('nan'), float('nan')))), mesh, "filter")
-visoptions.deformation = 1
-Draw(u_last, mesh, "u", sd=2, autoscale=False, min=-1, max=1)
-
-lset_neg = {"levelset": lset_p1, "domain_type": NEG, "subdivlvl": 0}
-lset_neg_bottom = {"levelset": lset_bottom, "domain_type": NEG, "subdivlvl": 0}
-lset_neg_top = {"levelset": lset_top, "domain_type": NEG, "subdivlvl": 0}
-
-
-def SpaceTimeNegBFI(form):
-    return SymbolicBFI(levelset_domain=lset_neg, form=form,
-                       time_order=time_order)
-
-
+ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=time_order)
+ci_slice = CutInfo(mesh)
+
+dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
+                    deformation=lsetadap.deformation[INTERVAL],
+                    definedonelements=ci.GetElementsOfType(HASNEG))
+dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
+              deformation=lsetadap.deformation[TOP],
+              definedonelements=ci.GetElementsOfType(HASNEG))
+dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
+                           deformation=lsetadap.deformation[INTERVAL])
 
 
-hasneg_integrators_a_i = []
-hasneg_integrators_a_e = []
-hasneg_integrators_f = []
-patch_integrators_a_i = []
-patch_integrators_a_e = []
+def dt(u): return 1.0 / delta_t * dtref(u)
 
-for hasneg_integrators_a, u in [(hasneg_integrators_a_i, u_i),
-                                (hasneg_integrators_a_e, u_e)]:
-    hasneg_integrators_a.append(SpaceTimeNegBFI(form=-dt(v_t) * u))
-    hasneg_integrators_a.append(SpaceTimeNegBFI(
-        form=-delta_t * InnerProduct(w, grad(v_t)) * u))
-    hasneg_integrators_a.append(SpaceTimeNegBFI(
-        form=delta_t * alpha * grad(u) * grad(v_t)))
+a_i = BilinearForm(trialspace=st_fes_i, testspace=st_fes_t, check_unused=False)
 
-for patch_integrators_a, u in [(patch_integrators_a_i, u_i),
-                               (patch_integrators_a_e, u_e)]:
-    patch_integrators_a.append(SymbolicFacetPatchBFI(
-        form=delta_t * 1.05 * h**(-2) * (u - u.Other()) * (v_t - v_t.Other()),
-        skeleton=False, time_order=time_order))
-
-hasneg_integrators_a_i.append(SymbolicBFI(
-    levelset_domain=lset_neg_top, form=fix_tref(u_i, 1) * fix_tref(v_t, 1)))
-
-hasneg_integrators_a_e.append(SymbolicBFI(levelset_domain=lset_neg_bottom,
-                                          form=-fix_tref(u_e, 0)
-                                          * fix_tref(v_t, 0)))
-# hasneg_integrators_f.append(SymbolicLFI(levelset_domain=lset_neg_bottom,
-#                                         form=u_last*fix_tref(v,0)))
-
-hasneg_integrators_f.append(SymbolicLFI(levelset_domain=lset_neg,
-                                        form=delta_t * coeff_f * v_t,
-                                        time_order=time_order))
-
-a_i = BilinearForm(trialspace=st_fes_i, testspace=st_fes_t,
-                   check_unused=False, symmetric=False)
-for integrator in hasneg_integrators_a_i + patch_integrators_a_i:
-    a_i += integrator
-
-a_e = BilinearForm(trialspace=st_fes_e, testspace=st_fes_t,
-                   check_unused=False, symmetric=False)
-for integrator in hasneg_integrators_a_e + patch_integrators_a_e:
-    a_e += integrator
+a_i += v_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dQ
+a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
+a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
+a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
 
 f = LinearForm(st_fes_t)
+f += coeff_f * v_t * dQ
+f += -v_t * (dt(gfu_e) - dt(lsetadap.deform) * grad(gfu_e)) * dQ
+f += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
+f += -(v_t * InnerProduct(w, grad(gfu_e))) * dQ
 
-for integrator in hasneg_integrators_f:
-    f += integrator
+# set initial values
+u_last.Set(fix_tref(u_exact, 0))
+# project u_last at the beginning of each time step
+lsetadap.ProjectOnUpdate(u_last)
 
-while tend - told > delta_t / 2:
-    SpaceTimeInterpolateToP1(levelset, tref, lset_p1)
-    RestrictGFInTime(spacetime_gf=lset_p1,
-                     reference_time=0.0, space_gf=lset_bottom)
-    RestrictGFInTime(spacetime_gf=lset_p1,
-                     reference_time=1.0, space_gf=lset_top)
+max_error = 0
+
+while tend - told.Get() > delta_t / 2:
+    lsetadap.CalcDeformation(levelset)
+    gfu_e.Set(u_last)
 
     # update markers in (space-time) mesh
-    ci.Update(lset_p1, time_order=time_order)
+    ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
 
-    # re-compute the facets for stabilization:
-    ba_facets = GetFacetsWithNeighborTypes(mesh,
-                                           a=ci.GetElementsOfType(HASNEG),
-                                           b=ci.GetElementsOfType(IF))
     # re-evaluate the "active dofs" in the space time slab
-    active_dofs = GetDofsOfElements(st_fes, ci.GetElementsOfType(HASNEG))
+    active_dofs = GetDofsOfElements(st_fes_i, ci.GetElementsOfType(HASNEG))
 
-    # re-set definedonelements-markers according to new markings:
-    for integrator in (hasneg_integrators_a_i + hasneg_integrators_a_e
-                       + hasneg_integrators_f):
-        integrator.SetDefinedOnElements(ci.GetElementsOfType(HASNEG))
-    for integrator in patch_integrators_a:
-        integrator.SetDefinedOnElements(ba_facets)
+    InterpolateToP1(lsetadap.levelsetp1[BOTTOM]-eps, lset_p1_slice)
+    ci_slice.Update(lset_p1_slice)
+    ba_plus_hasneg = BitArray(ci_slice.GetElementsOfType(HASNEG))
 
-    # assemble linear system
-    # input("")
+    InterpolateToP1(lsetadap.levelsetp1[BOTTOM]+eps, lset_p1_slice)
+    ci_slice.Update(lset_p1_slice)
+    ba_minus_haspos = BitArray(ci_slice.GetElementsOfType(HASPOS))
+
+    ba_strip = BitArray(ba_minus_haspos & ba_plus_hasneg)
+    ba_facets[:] = GetFacetsWithNeighborTypes(
+        mesh, a=ba_strip, b=ba_plus_hasneg)
+    active_dofs |= GetDofsOfElements(st_fes_i, ba_strip)
+
     a_i.Assemble()
-    # input("")
-    a_e.Assemble()
-    # input("")
     f.Assemble()
-    # input("")
 
     # solve linear system
-    inv = a_i.mat.Inverse(active_dofs, inverse="umfpack")
-    f.vec.data -= a_e.mat * gfu_e.vec
-    gfu_i.vec.data = inv * f.vec
+    gfu_i.vec.data = a_i.mat.Inverse(active_dofs) * f.vec
 
     # evaluate upper trace of solution for
     #  * for error evaluation
     #  * upwind-coupling to next time slab
     RestrictGFInTime(spacetime_gf=gfu_i, reference_time=1.0, space_gf=u_last)
 
-    # gfu_e.Set(u_last)
-    SpaceTimeWeakSet(gfu_e, u_last, fes1)
+    # compute error at final time
+    l2error = sqrt(
+        Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
 
-    # update time variable (float and ParameterCL)
-    told = told + delta_t
-    coef_told.Set(told)
+    # update time variable (ParameterCL)
+    told.Set(told.Get() + delta_t)
+    print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))
 
-    if u_exact is not None:
-        # compute error at end of time slab
-        l2error = sqrt(
-            Integrate(lset_neg_top, (u_exactL(told) - u_last)**2, mesh))
-        # print time and error
-        print("\rt = {0:10}, l2error = {1:20}".format(told, l2error), end="")
-    else:
-        print("\rt = {0:10}".format(told), end="")
-    # Redraw:
-
-    Redraw(blocking=True)
-
-print("")
-print("WARNING 1:", end=" ")
-print("This Petrov-Galerkin version is still missing a proper extension !")
-print("WARNING 2:", end=" ")
-print("This Petrov-Galerkin version only works for P1P0 (in time) so far !")
-
-print("")
+    try:
+        __builtin__
+        __IPYTHON__
+        scene.Redraw()
+    except NameError:
+        scene.Redraw(blocking=True)
