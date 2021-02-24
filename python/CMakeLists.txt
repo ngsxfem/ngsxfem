@@ -24,6 +24,7 @@ if(NETGEN_USE_PYTHON)
       ../utils/ngsxstd.cpp
       ../utils/p1interpol.cpp
       ../utils/restrictedblf.cpp
+      ../utils/restrictedfespace.cpp
       ../utils/xprolongation.cpp
       ../xfem/cutinfo.cpp
       ../xfem/ghostpenalty.cpp

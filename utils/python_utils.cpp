@@ -9,6 +9,7 @@
 #include "../utils/restrictedblf.hpp"
 #include "../utils/p1interpol.hpp"
 #include "../utils/xprolongation.hpp"
+#include "../utils/restrictedfespace.hpp"
 
 using namespace ngcomp;
 
@@ -212,6 +213,62 @@ Similar functionality (also for facets) can be obtained with IndicatorCF.
          },
          py::arg("bitarray")
       );
+
+  py::class_<RestrictedFESpace, shared_ptr<RestrictedFESpace>, CompressedFESpace>(m, "Restrict",
+	docu_string(R"delimiter(Wrapper Finite Element Spaces.
+The restricted fespace is a wrapper around a standard fespace which removes dofs from marked elements.
+
+Parameters:
+
+fespace : ngsolve.comp.FESpace
+    finite element space
+
+active_els : BitArray or None
+    Only use dofs from these elements
+)delimiter"))
+    .def(py::init([] (shared_ptr<FESpace> & fes,
+                      py::object active_els)
+                  {
+                    // shared_ptr<CompoundFESpace> compspace = dynamic_pointer_cast<CompoundFESpace> (fes);
+                    // if (compspace)
+                      // cout << "yes, we can also compress a CompoundFESpace" << endl;
+                    // throw py::type_error("cannot apply compression on CompoundFESpace - Use CompressCompound(..)");
+                    auto ret = make_shared<RestrictedFESpace> (fes);
+                    shared_ptr<BitArray> actdofs = nullptr;
+                    if (! py::extract<DummyArgument> (active_els).check())
+                      dynamic_pointer_cast<RestrictedFESpace>(ret)->SetActiveElements(py::extract<shared_ptr<BitArray>>(active_els)());
+                    ret->Update();
+                    ret->FinalizeUpdate();
+                    return ret;                    
+                  }), py::arg("fespace"), py::arg("active_elements")=DummyArgument())
+    .def("GetBaseSpace", [](RestrictedFESpace & self)
+         {
+           return self.GetBaseSpace();
+         })
+    .def(py::pickle([](const RestrictedFESpace* restr_fes)
+                    {
+                      return py::make_tuple(restr_fes->GetBaseSpace(),restr_fes->GetActiveElements());
+                    },
+                    [] (py::tuple state) -> shared_ptr<RestrictedFESpace>
+                    {
+                      auto fes = make_shared<RestrictedFESpace>(state[0].cast<shared_ptr<FESpace>>());
+                      if (state[1].cast<shared_ptr<BitArray>>())
+                        fes->SetActiveElements(state[1].cast<shared_ptr<BitArray>>());
+                      fes->Update();
+                      fes->FinalizeUpdate();
+                      return fes;
+                    }))
+    .def_property("active_elements", 
+                    &RestrictedFESpace::GetActiveElements,
+                    &RestrictedFESpace::SetActiveElements, "active elements")
+
+    ;
+
+
+
+
+
+
 
 
 
