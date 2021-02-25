@@ -41,12 +41,12 @@ u, v = st_fes.TnT()
 dxt = delta_t * dxtref(mesh, time_order=2)
 
 
-def dt(u): return 1.0/delta_t * dtref(u)
+def dt(u): return 1.0 / delta_t * dtref(u)
 
 
 a = BilinearForm(st_fes, symmetric=False)
 a += grad(u) * grad(v) * dxt
-a += fix_tref(u, 0) * fix_tref(v, 0)*dx
+a += fix_tref(u, 0) * fix_tref(v, 0) * dx
 a += dt(u) * v * dxt
 a.Assemble()
 
