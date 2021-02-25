@@ -187,12 +187,10 @@ for it in range(1, int(T_end / dt + 0.5) + 1):
     active_dofs = GetDofsOfElements(V, els_outer)
 
     # Check element history for method of lines time-derivative approx.
-    els_test.Clear()
-    els_test = els_hasneg & ~els_outer_old
+    els_test[:] = els_hasneg & ~els_outer_old
     assert sum(els_test) == 0, 'Some active elements do not have a history'
 
-    els_outer_old.Clear()
-    els_outer_old |= els_outer
+    els_outer_old[:] = els_outer
 
     with TaskManager():
         # Update Linear System
