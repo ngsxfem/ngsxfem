@@ -167,11 +167,12 @@ while tend - told.Get() > delta_t / 2:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
                                               b=ba_plus_hasneg)
     active_dofs = GetDofsOfElements(st_fes_i, ba_plus_hasneg)
-    
+
     # Check element history for method of lines time-derivative approx.
     els_test[:] = ci.GetElementsOfType(HASNEG) & ~ba_plus_hasneg_old
-    assert sum(els_test) == 0, 'Some active elements do not have a history. You might want to increase eps'
-    
+    assert sum(els_test) == 0, 'Some active elements do not have a history.\
+        You might want to increase eps'
+
     ba_plus_hasneg_old[:] = ba_plus_hasneg
 
     a_i.Assemble()
