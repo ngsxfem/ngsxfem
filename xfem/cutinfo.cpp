@@ -58,6 +58,10 @@ namespace ngcomp
   {
     static int timer = NgProfiler::CreateTimer ("CutInformation::Update");
     NgProfiler::RegionTimer reg (timer);
+
+    if (time_order > 0)
+      cout << IM(3) << "Warning: you used CutInfo.Update with time_order > 0.\ntime_order = 0 suffices to detect the cut topology\nand should be prefered.\n";
+
     shared_ptr<GridFunction> gf_lset;
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
 
