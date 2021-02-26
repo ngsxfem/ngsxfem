@@ -28,7 +28,7 @@ def check_if_ngsolve_newer_than(ngsolve_version_required):
     import ngsolve
     import re
     ngsver = [0 for i in range(4)]
-    res = re.split(re.compile('[-bv]'), ngsolve.__version__)
+    res = re.split(r'-', ngsolve.__version__)
     if len(res) > 1:
         mmp, ngsver[3], h = res
     else:
