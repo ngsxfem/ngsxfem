@@ -54,6 +54,8 @@ told = Parameter(0)
 t = told + delta_t * tref
 
 # the data:
+
+
 def x0(t):
     return r0 * cos(pi * t)
 
