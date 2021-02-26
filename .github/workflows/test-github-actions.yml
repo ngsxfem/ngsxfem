@@ -31,7 +31,7 @@ jobs:
           path: |
             build
             install
-          key: ${{ runner.os }}-build-results
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
 
   ctests-tutorials:
     needs: [configure, build]
@@ -47,7 +47,7 @@ jobs:
           path: |
             build
             install
-          key: ${{ runner.os }}-build-results
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
       - name: run-ctests-tutorials
         run: .ci/ci_ctests.sh tutorial
         shell: bash
@@ -67,7 +67,7 @@ jobs:
           path: |
             build
             install
-          key: ${{ runner.os }}-build-results
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
       - name: run-ctests-mayfail
         run: .ci/ci_ctests.sh mayfail
         shell: bash
@@ -87,7 +87,7 @@ jobs:
           path: |
             build
             install
-          key: ${{ runner.os }}-build-results
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
       - name: install dependencey packages
         run: |
           python3 -m pip install --upgrade pip
@@ -110,7 +110,7 @@ jobs:
   #         path: |
   #           build
   #           install
-  #         key: ${{ runner.os }}-build-results
+  #         key: ${{ runner.os }}-${{ github.sha }}-build-results
   #     - name: run-metrics
   #       run: |
   #         export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
