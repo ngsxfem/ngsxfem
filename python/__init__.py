@@ -40,8 +40,6 @@ def check_if_ngsolve_newer_than(ngsolve_version_required):
     mmp, ngsver_required[3] =  re.split(re.compile('[-bv]'), ngsolve_version_required)
     ngsver_required[0:3] = re.split(re.compile('[.bv]'), mmp)
 
-    print(ngsver)
-    print(ngsver_required)
     for i in range(3):
         if int(ngsver[i]) < int(ngsver_required[i]):
             print("""
