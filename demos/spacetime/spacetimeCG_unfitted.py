@@ -144,6 +144,9 @@ u_last.Set(fix_tref(u_exact, 0))
 # project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
 
+ba_plus_hasneg_old, els_test = BitArray(mesh.ne), BitArray(mesh.ne)
+ba_plus_hasneg_old.Set()
+
 while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
     gfu_e.Set(u_last)
@@ -152,8 +155,6 @@ while tend - told.Get() > delta_t / 2:
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
 
     # re-evaluate the "active dofs" in the space time slab
-    active_dofs = GetDofsOfElements(st_fes_i, ci.GetElementsOfType(HASNEG))
-
     InterpolateToP1(lsetadap.levelsetp1[BOTTOM] - eps, lset_p1_slice)
     ci_slice.Update(lset_p1_slice)
     ba_plus_hasneg = BitArray(ci_slice.GetElementsOfType(HASNEG))
@@ -165,7 +166,13 @@ while tend - told.Get() > delta_t / 2:
     ba_strip[:] = ba_minus_haspos & ba_plus_hasneg
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
                                               b=ba_plus_hasneg)
-    active_dofs |= GetDofsOfElements(st_fes_i, ba_strip)
+    active_dofs = GetDofsOfElements(st_fes_i, ba_plus_hasneg)
+    
+    # Check element history for method of lines time-derivative approx.
+    els_test[:] = ci.GetElementsOfType(HASNEG) & ~ba_plus_hasneg_old
+    assert sum(els_test) == 0, 'Some active elements do not have a history. You might want to increase eps'
+    
+    ba_plus_hasneg_old[:] = ba_plus_hasneg
 
     a_i.Assemble()
     f.Assemble()
