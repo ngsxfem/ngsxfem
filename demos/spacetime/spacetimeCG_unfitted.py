@@ -89,7 +89,7 @@ lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k_s,
                                             discontinuous_qn=True)
 
 # lset epsilon perturbation for extended facet patch bfi domain
-eps = 1.1 * max_velocity * delta_t
+eps = 2 * max_velocity * delta_t
 
 gfu_i = GridFunction(st_fes_i)
 gfu_e = GridFunction(st_fes_e)
