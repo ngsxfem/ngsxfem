@@ -1,6 +1,32 @@
 """
-Heat equation (fitted) with Dirichlet b.c. solved with a P1-DG-in-time
-space-time discretisation
+Heat equation (fitted) with Dirichlet b.c. solved with a DG-in-time
+space-time finite element discretisation
+
+Domain:
+-------
+
+The background domain is [-0.6,0.6]x[-1,1]x[0,0.5] (2D+time interval)
+while the physical domain is a circle that is traveling up and down
+over time.
+
+PDE problem:
+------------
+  u_t - (u_xx + u_yy) = f in  Omega=[0,1]^2
+                    u = 0 on dOmega
+The r.h.s. term f is chosen according to a manufactured solution.
+
+Discretisation:
+---------------
+* Discontinuous-in-time Galerkin space-time finite elements
+
+Implementational aspects:
+-------------------------------------------------------
+* A (sparse) direct solver is applied to solve the arising linear systems.
+
+References:
+-----------
+All concepts that are used here are explained in the jupyter-tutorial
+`spacetime.ipynb` (for the more involved case of moving domains). 
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------

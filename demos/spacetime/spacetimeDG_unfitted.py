@@ -1,6 +1,48 @@
 """
-unfitted Heat equation with Neumann b.c. solved with an unfitted isoparametric
-space-time discretisation.
+In this example we solve a scalar *unfitted* PDE problem on a moving
+domain. A discontinuous-in-time space-time formulation is applied. 
+Natural boundary conditions are applied which simplifies the variational 
+formulation. To stabilize arbitray cut configurations, we use a space-time
+version of the ghost penalty method.
+
+Domain:
+-------
+
+The background domain is [-0.6,0.6]x[-1,1]x[0,0.5] (2D+time interval)
+while the physical domain is a circle that is traveling up and down
+over time.
+
+PDE problem:
+------------
+  u_t + wx·u_x + wy·u_y - (u_xx + u_yy) = f in  Omega(t) (where lset is neg.)
+        (-u_x+wx u)·nx+(-u_y+wy u)·ny u = 0 on dOmega(t) (where lset is zero.)
+where w = (wx,wy) is a divergence-free vector field. 
+The r.h.s. term f is chosen according to a manufactured solution.
+
+Discretisation:
+---------------
+* Background space-time finite element space restricted to active domain
+* Ghost penalty stabilization to deal with bad cuts (version as in [1])
+
+Implementational aspects (cf. [1] and [2] for details):
+-------------------------------------------------------
+* Geometry approximation in space-time using isoparametric unfitted FEM
+* Projection operator that maps solutions from one deformed mesh to another
+* A (sparse) direct solver is applied to solve the arising linear systems.
+
+References:
+-----------
+All concepts that are used here are explained in the jupyter-tuorials
+`spacetime.ipynb`. As a simplified setting without cut configurations, 
+we also refer to the `spacetimeDG_fitted.py` demo.
+
+Literature:
+-----------
+[1] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving 
+    domains. Master's thesis, NAM, University of Göttingen, 2018. 
+[2] F. Heimann. On Discontinuous- and Continuous-In-Time Unfitted Space-Time 
+    Methods for PDEs on Moving Domains. Master's thesis, NAM, University of 
+    Göttingen, 2020.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------

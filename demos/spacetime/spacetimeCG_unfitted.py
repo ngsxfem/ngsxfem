@@ -1,6 +1,37 @@
 """
-unfitted Heat equation with Neumann b.c. solved with an unfitted isoparametric
-space-time discretisation.
+In this example we solve a scalar *unfitted* PDE problem on a moving
+domain. The setting is the same as in `spacetimeDG_unfitted.py`
+However, here, we apply a continuous-in-time Petrov-Galerkin method.
+
+Domain + PDE problem:
+---------------------
+As in `spacetimeDG_unfitted.py`
+
+Discretisation:
+---------------
+* Background space-time finite element space restricted to active domain
+* Ghost penalty stabilization to deal with bad cuts (version as in [1])
+  and in order to define a proper extension to a neighborhood, cf. [2]
+
+Implementational aspects (cf. [1] and [2] for details):
+-------------------------------------------------------
+* Geometry approximation in space-time using isoparametric unfitted FEM
+* Projection operator that maps solutions from one deformed mesh to another
+* A (sparse) direct solver is applied to solve the arising linear systems.
+
+References:
+-----------
+All concepts that are used here are explained in the jupyter-tuorials
+`spacetime.ipynb`. As a simplified setting without cut configurations, 
+we also refer to the `spacetimeDG_fitted.py` demo.
+
+Literature:
+-----------
+[1] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving 
+    domains. Master's thesis, NAM, University of Göttingen, 2018. 
+[2] F. Heimann. On Discontinuous- and Continuous-In-Time Unfitted Space-Time 
+    Methods for PDEs on Moving Domains. Master's thesis, NAM, University of 
+    Göttingen, 2020.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
