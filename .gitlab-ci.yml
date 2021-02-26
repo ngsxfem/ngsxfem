@@ -73,7 +73,8 @@ paper:
     name: openjournals/paperdraft
     entrypoint: [""] 
   script:
-    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf doc/paper.md 
+    - cd doc
+    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md 
   artifacts:
     paths:
-      - paper.pdf
+      - doc/paper.pdf

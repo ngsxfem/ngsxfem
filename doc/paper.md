@@ -20,13 +20,12 @@ authors:
     orcid: 0000-0002-0793-1647
     affiliation: 2
 affiliations:
- - name: Institut für Numerische und Angewandte Mathematik, Georg-August Universität Göttingen
+ - name: Institute of Numerical and Applied Mathematics, Georg-August Universität Göttingen
    index: 1
- - name: Institut für Analysis und Numerik, Otto-von-Guericke Universität, Magdeburg
+ - name: Institute for Analysis and Numerics, Otto-von-Guericke Universität, Magdeburg
    index: 2
 date: xx xx 2021
-bibliography: doc/lit-ngsxfem.bib
-
+bibliography: lit-ngsxfem.bib
 ---
 
 # Summary
