@@ -7,7 +7,7 @@ Its primary intention is to facilitate the development and validation of new num
 
 ** The main features
 The main features of this tool are listed below. In [[doc/paper.md]] more details and references are given.
-* Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
+* Numerical integration on implicitly described geometries. More specifically geometries that are describe by one or multiple level set functions and hence are not fitted to the computational mesh.
 * Tools to work on an "active mesh" only
 * Higher order representation of implicit level-set geometries 
 * Space-Time Finite Elements for the treatment of moving domain problems
@@ -17,15 +17,21 @@ The main features of this tool are listed below. In [[doc/paper.md]] more detail
 Not all features combine directly. Here is an overview of features and which work or 
 may not work together:
 
-|               | CutFEM/XFEM | isoparam | mlset | space-time | mpi | ghost penalty |
-|---------------+-------------+----------+-------+------------+-----+---------------|
-| CutFEM/XFEM   | /           | yes      | yes   | no         | yes | yes           |
-| isoparam      | yes         | /        | no    | yes        | yes | yes           |
-| mlset         | yes         | no       | /     | no         | yes | yes           |
-| space-time    | yes         | yes      | no    | /          | yes | yes           |
-| mpi           | yes         | yes      | yes   | yes        | /   | no            |
-| ghost penalty | yes         | yes      | yes   | yes        | no  | /             |
-|---------------+-------------+----------+-------+------------+-----+---------------|
+
+| Features                             | CFE | XFE | DGF | Iso | MLS | STF | GhP | Hex | Tet | MPI |
+|--------------------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----|
+| [CFE] CutFEM formulation             | /   | /   | yes | yes | yes | no  | yes | yes | yes | yes |
+| [XFE] XFEM formulation               | /   | /   | yes | yes | no? | no  | yes | yes | yes | yes |
+| [DGF] Discontinuous Galerkin form.   | yes | yes | /   | yes | no  | no? | yes | no? | yes | no* |
+| [Iso] isoparametric mesh deformation | yes | yes | yes | /   | no  | yes | yes | yes | yes | yes |
+| [MLS] multiple level set             | yes | no? | no  | no  | /   | no  | yes | no  | yes | yes |
+| [STF] space-time finite elements     | yes | no  | no? | yes | no  | /   | yes | yes | yes | yes |
+| [GhP] Ghost penalty                  | yes | yes | yes | yes | yes | yes | /   | yes | yes | no  |
+| [Hex] hyperrectangles (quads/hexes)  | yes | yes | no? | yes | no  | yes | yes | /   | /   | yes |
+| [Tet] simplices (trigs./tets)        | yes | yes | yes | yes | yes | yes | yes | /   | /   | yes |
+| [MPI] MPI                            | yes | yes | no* | yes | yes | yes | no  | yes | yes | /   |
+|--------------------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----|
+
 
 The nos on mpi+ghost penalty and space-time+mlset are however work in progress.
 
