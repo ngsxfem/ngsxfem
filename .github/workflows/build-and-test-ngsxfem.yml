@@ -41,14 +41,14 @@ jobs:
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
-      - name: Retrieve chached build results
+      - name: Retrieve cached build results
         uses: actions/cache@v2
         with:
           path: |
             build
             install
           key: ${{ runner.os }}-${{ github.sha }}-build-results
-      - name: run-ctests-tutorials
+      - name: Run demo ctests
         run: .ci/ci_ctests.sh tutorial
         shell: bash
     continue-on-error: true
@@ -61,14 +61,14 @@ jobs:
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
-      - name: Retrieve chached build results
+      - name: Retrieve cached build results
         uses: actions/cache@v2
         with:
           path: |
             build
             install
           key: ${{ runner.os }}-${{ github.sha }}-build-results
-      - name: run-ctests-mayfail
+      - name: Run mayfail ctests
         run: .ci/ci_ctests.sh mayfail
         shell: bash
     continue-on-error: true
@@ -81,18 +81,18 @@ jobs:
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
-      - name: Retrieve chached build results
+      - name: Retrieve cached build results
         uses: actions/cache@v2
         with:
           path: |
             build
             install
           key: ${{ runner.os }}-${{ github.sha }}-build-results
-      - name: install dependencey packages
+      - name: Install python dependences
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install psutil
-      - name: run-ctests-pytests
+      - name: Run pytest ctests
         run: .ci/ci_ctests.sh pytests
         shell: bash
 
@@ -104,7 +104,7 @@ jobs:
   #     options: --user ${{ needs.configure.outputs.uid_gid }}
   #   steps:
   #     - uses: actions/checkout@v2
-  #     - name: Retrieve chached build results
+  #     - name: Retrieve cached build results
   #       uses: actions/cache@v2
   #       with:
   #         path: |
@@ -121,7 +121,7 @@ jobs:
   #       uses: actions/upload-artifact@v2
   #       with:
   #         name: metrics-report
-  #         path: metrics.txt
+  #         path: metrics.txt 
   
   check-demo-codestyle:
     runs-on: ubuntu-latest  
