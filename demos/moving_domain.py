@@ -47,7 +47,7 @@ t = Parameter(0.0)
 nu = 1e-5
 c_gamma = 1
 
-inverse = "pardiso"
+inverse = "umfpack"
 
 # Problem Data
 # Initial condition and right-hand side
@@ -61,8 +61,9 @@ u_ex = CoefficientFunction(cos(r1 * sqrt((x - rho)**2 + y**2))**2)
 
 grad_u_ex = CoefficientFunction((-pi * sin(pi / r0 * sqrt((x - rho)**2 + y**2))
                                  * (x - rho) / sqrt((x - rho)**2 + y**2),
-                                - pi * sin(pi / r0 * sqrt((x - rho)**2 + y**2))
-                                * y / sqrt((x - rho)**2 + y**2)))
+                                 - pi * sin(pi / r0 *
+                                            sqrt((x - rho)**2 + y**2))
+                                 * y / sqrt((x - rho)**2 + y**2)))
 # rhs from py_tutorial
 rhs = nu * CoefficientFunction(-(pi / r0) * r1
                                * (sin(r1 * sqrt((x - rho)**2 + y**2))

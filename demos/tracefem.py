@@ -7,9 +7,9 @@ condition number we use the normal diffusion stabilization, cf.[1,2].
 
 Used features:
 -------------------------
-* Higher order eometry approximation, cf. ngsxfem-jupyter tutorial
-  intlset.ipynb from https://github.com/ngsxfem/ngsxfem-jupyter/
-* Compressed finite element space to condense the system to active dofs
+* Higher order geometry approximation, cf. jupyter tutorial `lsetint`
+* Restricted finite element space to condense the system to active dofs,
+  cf. jupyter tutorial `basics`
 * Visualization: The visualization of the solution is most convenient
   with paraview and the generated vtk file.
 
@@ -55,13 +55,12 @@ coef_f = (sin(pi * z) * (diff_cf * pi * pi * (1 - z * z) + reac_cf)
           + diff_cf * cos(pi * z) * 2 * pi * z)
 
 # ----------------------------------- MAIN ------------------------------------
-# preliminary refinement
+# preliminary refinements
 for i in range(n_cut_ref):
     lsetp1 = GridFunction(H1(mesh, order=1))
     InterpolateToP1(levelset, lsetp1)
     RefineAtLevelSet(lsetp1)
     mesh.Refine()
-
 
 # Class to compute the mesh transformation needed for higher order accuracy
 #  * order: order of the mesh deformation function
@@ -76,16 +75,17 @@ Vh = H1(mesh, order=order, dirichlet=[])
 
 ci = CutInfo(mesh, lset_approx)
 ba_IF = ci.GetElementsOfType(IF)
-VhG = Compress(Vh, GetDofsOfElements(Vh, ba_IF))
+VhG = Restrict(Vh, ba_IF)
 
 gfu = GridFunction(VhG)
 
 # coefficients / parameters:
-n = 1.0 / Norm(grad(lset_approx)) * grad(lset_approx)
+n = Normalize(grad(lset_approx))
 h = specialcf.mesh_size
 
-
 # Tangential projection
+
+
 def P(u):
     return u - (u * n) * n
 

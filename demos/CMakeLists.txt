@@ -1,12 +1,12 @@
 install( FILES
-  fictdom_dg_ghostpen.py
-  fictdom_ghostpen.py
+  fictdom.py
+  fictdom_dg.py
+  fictdom_mlset.py
   lsetgeoms.py
-  mlset_poisson.py
   moving_domain.py
   stokescutfem.py
   tracefem.py
-  unfitted_poisson.py
+  unf_interf_prob.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
 )
 
