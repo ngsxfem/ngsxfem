@@ -95,33 +95,6 @@ jobs:
       - name: Run pytest ctests
         run: .ci/ci_ctests.sh pytests
         shell: bash
-
-  # metrics:
-  #   needs: [configure, build]
-  #   runs-on: ubuntu-latest
-  #   container: 
-  #     image: schruste/ngsolve:latest
-  #     options: --user ${{ needs.configure.outputs.uid_gid }}
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Retrieve cached build results
-  #       uses: actions/cache@v2
-  #       with:
-  #         path: |
-  #           build
-  #           install
-  #         key: ${{ runner.os }}-${{ github.sha }}-build-results
-  #     - name: run-metrics
-  #       run: |
-  #         export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-  #         export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-  #         python3 tests/ngsxfem_report.py 2> metrics.txt
-  #       shell: bash
-  #     - name: archive metrics artifacts
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: metrics-report
-  #         path: metrics.txt 
   
   check-demo-codestyle:
     runs-on: ubuntu-latest  
