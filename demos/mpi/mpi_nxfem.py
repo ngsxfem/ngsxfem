@@ -75,7 +75,7 @@ mesh = Mesh(ngmesh)
 levelset = (sqrt(sqrt(x**4 + y**4)) - 1)
 
 lsetadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000,
-                                      discontinuous_qn=True)
+                                  discontinuous_qn=True)
 deformation = lsetadap.CalcDeformation(levelset)
 lsetp1 = lsetadap.lset_p1
 Draw(lsetp1, mesh, "lsetp1")

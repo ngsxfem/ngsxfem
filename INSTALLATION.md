@@ -1,12 +1,10 @@
 # Installation of `ngsxfem`
+We provide two (and a half) ways to setup `ngsxfem` on your machine:
+* [Installation through `pip`](#installation-through-pip-pip3)
+* [Installation from source](#building-from-source)
+* [Running a docker image](#docker-container)
 
-## Docker container
-
-``` {.shell}
-docker run -i -t schruste/ngsxfem:latest /bin/bash
-```
-
-## Installation through `pip` (`pip3`)
+# Installation through `pip` (`pip3`)
 
 **TODO**
 ### Releases
@@ -17,7 +15,7 @@ docker run -i -t schruste/ngsxfem:latest /bin/bash
 ### dev-branch (`master`)
 * **TODO** pip command: Linux / Mac (make sure that a from-source build is chosen)
 
-## Building from source
+# Building from source
 
 To build `ngsxfem` from source, the corresponding version of `Netgen/NGSolve` is required to be installed. This can either be done in advance (default option), or as an external dependency. `ngsolve` is pulled as a submodule. The version of the submodule is compatible with this version of `ngsxfem`. If in doubt make sure that you install exactly this version of `NGSolve` before building `ngsxfem`.
 
@@ -136,19 +134,18 @@ make
 make install
 ```
 
+
+
 ## Testing the installation
 
 We run test by default. I you wish to test your self-built binaries, go to the `build-xfem` directory and run `make test` or `ctest`. If you need to see specific tests failing use ctest -V. To run individual tests use ctest -R \<regex\>. E.g. ctest -R cutint to only run cut integration tests. Note that we use `pytest` and `psutil` (with python version \> 3). These can easily be installed using `pip`.
 
-# Examples and Documentation
 
-We provide two main sources to learn how to use `ngsxfem`:
- * At <https://github.com/ngsxfem/ngsxfem-jupyter> you can find tutorial-style jupyter notebooks for ngsxfem. These explain the core functionalities and usage of the tools provided by `ngsxfem`. You can run those tutorials interactively (without the need of a local installation) through binder. 
- * in the [`demos`](./demos)-directory we provide several examples that demonstrate the usage of `ngsxfem` features. See [`demos/README.md`](demos/README.md) for details.
-# List of contributing authors (with major contributions)
+# Docker container
+A convenient and reproducable way to set up `ngsxfem` is the usage of [a docker image](https://hub.docker.com/r/schruste/ngsxfem) that we provide here:
+<https://hub.docker.com/r/schruste/ngsxfem>
 
--   Christoph Lehrenfeld (main author)
--   Fabian Heimann (cutIntegration, space-time)
--   Thomas Ludescher (multigrid)
--   Janosch Preuss (space-time)
--   Henry von Wahl (multiple levelsets)
+Assuming an installed `docker` with running docker domain, you can spawn into the `ngsxfem` iamge with
+``` {.shell}
+docker run -i -t schruste/ngsxfem:latest /bin/bash
+```

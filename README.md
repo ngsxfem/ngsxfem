@@ -42,4 +42,12 @@ We provide two main sources to learn how to use `ngsxfem`:
  * in the [`demos`](./demos)-directory we provide several examples that demonstrate the usage of `ngsxfem` features. See [`demos/README.md`](demos/README.md) for details.
 
  # Installation
- We provide installation instructions for installation through `pip` and installation from source in [`INSTALLATION.md`](INSTALLATION.md).
+ We provide installation instructions for installation through `pip` and installation from source in [`INSTALLATION.md`](INSTALLATION.md). Further, [a docker image](https://hub.docker.com/r/schruste/ngsxfem) is available that can be used to run `ngsxfem` through docker.
+
+ # List of contributing authors (with major contributions)
+
+-   Christoph Lehrenfeld (main author)
+-   Fabian Heimann (cutIntegration, space-time)
+-   Thomas Ludescher (multigrid)
+-   Janosch Preuss (space-time)
+-   Henry von Wahl (multiple levelsets)
