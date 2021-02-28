@@ -25,6 +25,9 @@ from xfem.ngsxfem_py import *
 __ngsolve_required__ = "6.2.2101-122"
 
 def check_if_ngsolve_newer_than(ngsolve_version_required):
+    """
+    Check for compatibiilty of ngsolve version
+    """
     import ngsolve
     import re
     ngsver = [0 for i in range(4)]
@@ -528,12 +531,19 @@ all_combined_domain_types = [ COMBINED_DOMAIN_TYPE.NO,
                               COMBINED_DOMAIN_TYPE.ANY ]            
 
 def SpaceTimeWeakSet(gfu_e, cf, space_fes):
+    """
+Ondocumented feature
+    """
     gfu_e_repl = GridFunction(space_fes)
     gfu_e_repl.Set( cf )
     gfu_e.vec[:].data = gfu_e_repl.vec
 
 ngsolveSet = GridFunction.Set
 def SpaceTimeSet(self, cf, *args, **kwargs):
+    """
+Overrides the NGSolve version of Set in case of a space-time FESpace.
+In this case the usual Set() is used on each nodal dof in time.
+    """
     if (isinstance(self.space,CSpaceTimeFESpace)):
       cf = CoefficientFunction(cf)
       gfs = GridFunction(self.space.spaceFES)
@@ -548,6 +558,13 @@ def SpaceTimeSet(self, cf, *args, **kwargs):
       ngsolveSet(self,cf, *args, **kwargs)
 
 def fix_tref(obj,time,*args,**kwargs):
+    """
+Takes a (possibly space-time) CoefficientFunction and fixes the temporal
+variable to `time` and return this as a new CoefficientFunction.
+Note that all operations are done on the unit interval it is the 
+reference time that is fixed. 
+    """
+
     if not isinstance(time, Parameter):
       if isinstance(obj,GridFunction) or isinstance(obj,ProxyFunction):
         if time == 0:
@@ -637,6 +654,12 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
     return ret
 
 class NoDeformation:
+    """
+Dummy deformation class. Does nothing to the mesh. Has
+two dummy members:
+* lsetp1
+* deform (= None)    
+    """
     lsetp1 = None
     def __init__(self,mesh = None, levelset=None):
         self.deform = None
@@ -668,6 +691,20 @@ try:
                                                     continuous_update=True,
                                                     min=0,max=1,step=.025))
     def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
+        """
+Draw a (reference) time-dependent function that is discontinuous across an 
+interface described by a level set function. Change reference time through
+widget slider.
+
+        Args:
+            cf1 (CoefficientFunction): level set function
+            cf2 (CoefficientFunction): function to draw where lset is negative
+            cf3 (CoefficientFunction): function to draw where lset is positive
+            mesh (Mesh): Mesh
+
+        Returns:
+            widget element that allows to vary the reference time. 
+        """
         DrawDC = MakeDiscontinuousDraw(Draw)
         if not isinstance(cf1,CoefficientFunction):
             cf1=CoefficientFunction(cf1)
