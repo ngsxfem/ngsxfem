@@ -1,7 +1,7 @@
 """
 In this example we solve an unfitted Poisson problem similar to the one in
-`fictdom.py`, however this time with the unfitted geometry being the 
-unit square. This example shall illustrate the functionality of ngsxfem to 
+`fictdom.py`, however this time with the unfitted geometry being the
+unit square. This example shall illustrate the functionality of ngsxfem to
 solve PDE problems on geometries described via multiple level set functions.
 
 PDE problem + Discretisation + Geometry + Implementational aspects:

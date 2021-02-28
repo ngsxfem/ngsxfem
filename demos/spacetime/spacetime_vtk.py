@@ -1,11 +1,11 @@
 """
 This is a simple demonstration on how to use the SpaceTime VTK output for
 levelset-based moving domain problems in 2D.
-A circle is traveling around in a squared background domain. 
+A circle is traveling around in a squared background domain.
 A piecewise linear-in-space approximation of the level set geometry is taken
-as an initial approximation. A space-time mesh deformation is then applied 
-to recover higher order geometrical accuracy also in space-time. 
-In this example only a few time steps are carried out and in each time step 
+as an initial approximation. A space-time mesh deformation is then applied
+to recover higher order geometrical accuracy also in space-time.
+In this example only a few time steps are carried out and in each time step
 a VTK output is generated which allows to visualize the space-time geometries.
 """
 

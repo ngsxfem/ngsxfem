@@ -26,7 +26,7 @@ Implementational aspects:
 References:
 -----------
 All concepts that are used here are explained in the jupyter-tutorial
-`spacetime.ipynb` (for the more involved case of moving domains). 
+`spacetime.ipynb` (for the more involved case of moving domains).
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------

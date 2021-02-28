@@ -10,7 +10,7 @@ Discretisation:
 ---------------
 * Background discontinuous FEspace restricted to active domain (CutFEM)
 * Interior penalty DG formulation inside the domain, see e.g. [1]
-* Nitsche formulation to impose boundary conditions, see. e.g. [2] 
+* Nitsche formulation to impose boundary conditions, see. e.g. [2]
 * Ghost penalty stabilization to deal with bad cuts (version as in [3])
 
 Implementational aspects:
@@ -26,14 +26,14 @@ All concepts that are used here are explained in the jupyter-tuorials
 
 Literature:
 -----------
-[1] C. Gürkan, S. Sticko, A. Massing, Stabilized Cut Discontinuous Galerkin 
+[1] C. Gürkan, S. Sticko, A. Massing, Stabilized Cut Discontinuous Galerkin
     Methods for Advection-Reaction Problems, SIAM J. Sci. Comp. 42(3):
     A2620-A2654, 2020.
-[2] E. Burman, P. Hansbo, Fictitious domain finite element methods using cut 
+[2] E. Burman, P. Hansbo, Fictitious domain finite element methods using cut
     elements: II. A stabilized Nitsche method, Appl. Num. Math. 62(4):328-341,
     2012.
-[3] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving 
-    domains. Master's thesis, NAM, University of Göttingen, 2018. 
+[3] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving
+    domains. Master's thesis, NAM, University of Göttingen, 2018.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------

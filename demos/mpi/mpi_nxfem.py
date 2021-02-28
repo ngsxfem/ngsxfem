@@ -14,7 +14,7 @@ Implementational aspects:
 * Linear systems: linear systems are solved with a CG solver and an algebraic
   multigrid preconditioner.
 
-* The solution is written to VTK files which allows visualization with 
+* The solution is written to VTK files which allows visualization with
   e.g. paraview.
 
 """

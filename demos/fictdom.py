@@ -2,17 +2,17 @@
 In this example we solve a scalar *unfitted* PDE problem. As a
 discretisation method we use a level set based geometry description and
 a Cut (or Fictitious) Finite element method with a Nitsche formulation to
-impose boundary conditions. For stability we add a ghost penalty 
+impose boundary conditions. For stability we add a ghost penalty
 stabilization.
 
 Domain:
 -------
 
-The domain is [-1,1]^2 while the interface is a ringe described by a 
-level set function. In the discretisation the level set function is 
+The domain is [-1,1]^2 while the interface is a ringe described by a
+level set function. In the discretisation the level set function is
 approximated with a piecewise linear interpolation. This approximate
-geometry is then mapped by applying a mesh deformation resulting in 
-a higher order geometry approximation. 
+geometry is then mapped by applying a mesh deformation resulting in
+a higher order geometry approximation.
 
 PDE problem:
 ------------
@@ -24,7 +24,7 @@ The r.h.s. term f is chosen according to a manufactured solution.
 Discretisation:
 ---------------
 * Background finite element space restricted to active domain (CutFEM)
-* Nitsche formulation to impose boundary conditions, see. e.g. [1] 
+* Nitsche formulation to impose boundary conditions, see. e.g. [1]
 * Ghost penalty stabilization to deal with bad cuts (version as in [2])
 
 Implementational aspects:
@@ -40,11 +40,11 @@ All concepts that are used here are explained in the jupyter-tuorials
 
 Literature:
 -----------
-[1] E. Burman, P. Hansbo, Fictitious domain finite element methods using cut 
+[1] E. Burman, P. Hansbo, Fictitious domain finite element methods using cut
     elements: II. A stabilized Nitsche method, Appl. Num. Math. 62(4):328-341,
     2012.
-[2] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving 
-    domains. Master's thesis, NAM, University of Göttingen, 2018. 
+[2] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving
+    domains. Master's thesis, NAM, University of Göttingen, 2018.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
