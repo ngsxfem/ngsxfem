@@ -27,6 +27,7 @@ Literature:
 from netgen.geom2d import SplineGeometry
 from ngsolve import *
 from xfem import *
+from xfem.lsetcurv import *
 
 from math import pi, ceil
 
@@ -104,13 +105,17 @@ V = H1(mesh, order=k, dgjumps=True)
 gfu = GridFunction(V)
 
 # Discrete level set and cut info classes
-lsetp1 = GridFunction(H1(mesh, order=1))
-InterpolateToP1(levelset_func(t), lsetp1)
+
+# Higher order level set approximation
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=k, threshold=0.1,
+                                      discontinuous_qn=True)
+deformation = lsetmeshadap.deform
+lsetp1 = lsetmeshadap.lset_p1
 
 # Cut-Info classes for element marking
-ci_main = CutInfo(mesh, lsetp1)
-ci_inner = CutInfo(mesh, lsetp1)
-ci_outer = CutInfo(mesh, lsetp1)
+ci_main = CutInfo(mesh)
+ci_inner = CutInfo(mesh)
+ci_outer = CutInfo(mesh)
 
 # Element and facet markers
 els_hasneg = ci_main.GetElementsOfType(HASNEG)
@@ -129,8 +134,9 @@ gamma_s = c_gamma * K_tilde
 u, v = V.TnT()
 h = specialcf.mesh_size
 
-dx = dCut(levelset=lsetp1, domain_type=NEG, definedonelements=els_hasneg)
-dw = dFacetPatch(definedonelements=facets_ring)
+dx = dCut(levelset=lsetp1, domain_type=NEG, definedonelements=els_hasneg,
+          deformation=deformation)
+dw = dFacetPatch(definedonelements=facets_ring,deformation=deformation)
 
 # Bilinear and linear forms
 a = RestrictedBilinearForm(V, element_restriction=els_outer,
@@ -160,6 +166,8 @@ def CompErrs():
     return l2
 
 
+lsetmeshadap.ProjectOnUpdate(gfu)
+
 # Time stepping loop
 gfu.Set(u0)
 els_outer_old.Set()
@@ -169,6 +177,8 @@ Draw(gfu - u_ex, mesh, "l2err")
 
 for it in range(1, int(T_end / dt + 0.5) + 1):
     t.Set(it * dt)
+    # Update mesh deformation (Note: this updates gfu)
+    deformation = lsetmeshadap.CalcDeformation(levelset_func(t))
 
     # Update Element markers: extension facets. Updating the cut-info
     # classes automatically updates the marker BitArrays.
@@ -193,13 +203,12 @@ for it in range(1, int(T_end / dt + 0.5) + 1):
 
     els_outer_old[:] = els_outer
 
-    with TaskManager():
-        # Update Linear System
-        a.Assemble(reallocate=True)
-        f.Assemble()
-        inv = a.mat.Inverse(active_dofs, inverse=inverse)
-        # Solve Problem
-        gfu.vec.data = inv * f.vec
+    # Update Linear System
+    a.Assemble(reallocate=True)
+    f.Assemble()
+    inv = a.mat.Inverse(active_dofs, inverse=inverse)
+    # Solve Problem
+    gfu.vec.data = inv * f.vec
 
     # Compute Errors
     l2err = CompErrs()
