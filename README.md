@@ -1,10 +1,9 @@
-[TOC]
-
-# About `ngsxfem` {.unlisted .unnumbered}
+# About `ngsxfem`
 
 `ngsxfem` is an add-on library to the finite element package [Netgen/NGSolve](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
-## The main features
+**TODO:**Add 'manual' Table of content here (ignore  'About ngsxfem' )
+# The main features
 
 The main features of this tool are listed below. In [*doc/paper.md*]{.spurious-link target="doc/paper.md"} more details and references are given.
 
@@ -48,9 +47,16 @@ Some of the nos are work in progress (), some have not been considered so far an
 docker run -i -t schruste/ngsxfem:latest /bin/bash
 ```
 
-## Pre-compiled binaries
+## Installation through `pip` (`pip3`)
 
-TODO
+**TODO**
+### Releases
+* Linux
+* Mac
+* Windows is not supported a.t.m. (try WSL)
+
+### dev-branch (`master`)
+* **TODO** pip command: Linux / Mac (make sure that a from-source build is chosen)
 
 ## Building from source
 
@@ -58,14 +64,11 @@ To build `ngsxfem` from source, the corresponding version of `Netgen/NGSolve` is
 
 ### Linux
 
-#### 1.  Prerequisites on Ubuntu
-
-On Ubuntu `python3-dev` similar dependencies as required by
-`NGSolve`, see [www.ngsolve.org](https://ngsolve.org/docu/latest/install/installlinux.html).
+#### 1.  Prerequisites
+There are no additional dependencies that come on top of `NGSolve`, see [www.ngsolve.org](https://ngsolve.org/docu/latest/install/installlinux.html).
 
 #### 2.  Building `ngsxfem` with pre-installed `NGSolve`
-
-Make sure that the installed version of `NGSolve` is compatible with the current `ngsxfem` release. If you are building the latest release of `ngsxfem`, then the latest release of `NGSolve` will be sufficient.
+Make sure that the installed version of `NGSolve` is compatible with the current `ngsxfem` release. If you are building the latest release of `ngsxfem`, then the latest release of `NGSolve` should work.
 
 Choose a directory where you wish to download the source files and build the library. We shall refer to this location as `BASEDIR`. Here the git repository need to be cloned.
 
