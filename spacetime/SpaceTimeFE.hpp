@@ -126,8 +126,8 @@ namespace ngfem
             return true;
         }
 
-        // void CalcInterpolationPoints ();
-        // Array<double> & GetNodes() { return nodes; }
+        void CalcInterpolationPoints ();
+        Array<double> & GetNodes() { return nodes; }
         int order_time() const { return 3; }
 
       //   template <class T>

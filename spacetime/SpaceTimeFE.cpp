@@ -183,7 +183,7 @@ namespace ngfem
         : ScalarFiniteElement<1> (askip_first_nodes ? 2 : (aonly_first_nodes ? 2 : 2 + 2), 3), 
         skip_first_nodes(askip_first_nodes), only_first_nodes(aonly_first_nodes)
       {
-         // CalcInterpolationPoints ();
+         CalcInterpolationPoints ();
       }
 
 
@@ -228,30 +228,30 @@ namespace ngfem
          }
       }
 
-      // void GCC3FE :: CalcInterpolationPoints ()
-      // {
-      //    nodes.SetSize(order+1);
-      //    switch (order)
-      //    {
-      //     // Gauss-Lobatto integration points (Spectral FE)
-      //     // The maximum order implemented here is mentioned in python_spacetime.cpp
-      //     // in a documentation string. Please update that after inserting higher orders here.
-      //     case 0 : nodes[0] = 0.0;  break;
-      //     case 1 : nodes[0] = 0.0; nodes[1] = 1.0;  break;
-      //     case 2 : nodes[0] = 0.0; nodes[1] = 0.5; nodes[2] = 1.0;  break;
-      //     case 3 : nodes[0] = 0.0; nodes[1] = 0.5*(1.0-1.0/sqrt(5.0));
-      //              nodes[2] = 0.5*(1.0+1.0/sqrt(5.0)); nodes[3] = 1.0;  break;
-      //     case 4 : nodes[0] = 0.0; nodes[1] = 0.5*(1.0-sqrt(3.0/7.0)); nodes[2] = 0.5;
-      //              nodes[3] = 0.5*(1.0+sqrt(3.0/7.0)); nodes[4] = 1.0;  break;
-      //     case 5 : nodes[0] = 0.0;
-      //              nodes[1] = 0.5*(1.0 - sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
-      //              nodes[2] = 0.5*(1.0 - sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
-      //              nodes[3] = 0.5*(1.0 + sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
-      //              nodes[4] = 0.5*(1.0 + sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
-      //              nodes[5] = 1.0;  break;
-      //     default : throw Exception("Requested TimeFE not implemented yet.");
-      //    }
-      // }
+      void GCC3FE :: CalcInterpolationPoints ()
+      {
+          nodes.SetSize(order+1);
+          switch (order)
+          {
+           // Gauss-Lobatto integration points (Spectral FE)
+           // The maximum order implemented here is mentioned in python_spacetime.cpp
+           // in a documentation string. Please update that after inserting higher orders here.
+           case 0 : nodes[0] = 0.0;  break;
+           case 1 : nodes[0] = 0.0; nodes[1] = 1.0;  break;
+           case 2 : nodes[0] = 0.0; nodes[1] = 0.5; nodes[2] = 1.0;  break;
+           case 3 : nodes[0] = 0.0; nodes[1] = 0.5*(1.0-1.0/sqrt(5.0));
+                    nodes[2] = 0.5*(1.0+1.0/sqrt(5.0)); nodes[3] = 1.0;  break;
+           case 4 : nodes[0] = 0.0; nodes[1] = 0.5*(1.0-sqrt(3.0/7.0)); nodes[2] = 0.5;
+                    nodes[3] = 0.5*(1.0+sqrt(3.0/7.0)); nodes[4] = 1.0;  break;
+           case 5 : nodes[0] = 0.0;
+                    nodes[1] = 0.5*(1.0 - sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
+                    nodes[2] = 0.5*(1.0 - sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
+                    nodes[3] = 0.5*(1.0 + sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
+                    nodes[4] = 0.5*(1.0 + sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
+                    nodes[5] = 1.0;  break;
+           default : throw Exception("Requested TimeFE not implemented yet.");
+          }
+       }
   
       template class SpaceTimeFE<2>;
       template class SpaceTimeFE<3>;
