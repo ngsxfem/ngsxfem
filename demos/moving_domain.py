@@ -6,7 +6,9 @@ discretisation and utilised ghost-penalty stabilisation to realise a
 discrete extension of the solution into an extension strip. With this
 extension, a method of lines approximation of the time-derivative is
 possible to create an Eulerian time-stepping method. For the numerical
-analysis of this method, see [1].
+analysis of this method, see [1]. In contrast to [1], this file uses
+an isoparametric mapping approach to realise a higher-order geometry
+approximation. 
 
 Used Features:
 --------------
@@ -14,6 +16,8 @@ Used Features:
     jupyter tutorial.
   * Integrators with respect to level set geometry, see the 'cutfem'
     jupyter tutorial.
+  * Higher-order geometry approximation, see the 'cutfem' jupyter 
+    tutorial.
   * Ghost-penalty stabilisation, see the 'spacetime' jupyter tutorial.
 
 Literature:
@@ -104,9 +108,8 @@ h_max = h0 * 0.5**Lx
 V = H1(mesh, order=k, dgjumps=True)
 gfu = GridFunction(V)
 
-# Discrete level set and cut info classes
 
-# Higher order level set approximation
+# Higher order discrete level set approximation
 lsetmeshadap = LevelSetMeshAdaptation(mesh, order=k, threshold=0.1,
                                       discontinuous_qn=True)
 deformation = lsetmeshadap.deform
@@ -136,7 +139,7 @@ h = specialcf.mesh_size
 
 dx = dCut(levelset=lsetp1, domain_type=NEG, definedonelements=els_hasneg,
           deformation=deformation)
-dw = dFacetPatch(definedonelements=facets_ring,deformation=deformation)
+dw = dFacetPatch(definedonelements=facets_ring, deformation=deformation)
 
 # Bilinear and linear forms
 a = RestrictedBilinearForm(V, element_restriction=els_outer,
@@ -166,6 +169,8 @@ def CompErrs():
     return l2
 
 
+# Project the solution defined with respect to the last mesh deformation
+# onto the the mesh with the current mesh deformation.
 lsetmeshadap.ProjectOnUpdate(gfu)
 
 # Time stepping loop
