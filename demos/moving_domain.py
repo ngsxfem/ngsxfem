@@ -8,7 +8,7 @@ extension, a method of lines approximation of the time-derivative is
 possible to create an Eulerian time-stepping method. For the numerical
 analysis of this method, see [1]. In contrast to [1], this file uses
 an isoparametric mapping approach to realise a higher-order geometry
-approximation. 
+approximation.
 
 Used Features:
 --------------
@@ -16,7 +16,7 @@ Used Features:
     jupyter tutorial.
   * Integrators with respect to level set geometry, see the 'cutfem'
     jupyter tutorial.
-  * Higher-order geometry approximation, see the 'cutfem' jupyter 
+  * Higher-order geometry approximation, see the 'cutfem' jupyter
     tutorial.
   * Ghost-penalty stabilisation, see the 'spacetime' jupyter tutorial.
 
