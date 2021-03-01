@@ -8,6 +8,7 @@
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/mlsetintegration.hpp"
+#include "../cutint/cutintegral.hpp"
 
 using namespace xintegration;
 
@@ -26,8 +27,8 @@ void ExportNgsx_cutint(py::module &m)
            bool element_wise,
            int heapsize)
         {
-          static Timer t ("IntegrateX"); RegionTimer reg(t);
-
+          static int timer = NgProfiler::CreateTimer ("IntegrateX");
+          NgProfiler::RegionTimer reg (timer);
           py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
           if (ip_cont_.check())
@@ -160,7 +161,7 @@ heapsize : int
            PyCF cf,
            int heapsize)
         {
-          static Timer t ("IntegrationPointExtrema"); RegionTimer reg(t);
+          static int timer = NgProfiler::CreateTimer ("IntegrationPointExtrema"); NgProfiler::RegionTimer reg (timer);
 
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
@@ -258,6 +259,94 @@ cf : ngsolve.CoefficientFunction
 heapsize : int
   heapsize for local computations.
 )raw_string"));
+
+
+  py::class_<CutDifferentialSymbol,DifferentialSymbol>(m, "CutDifferentialSymbol")
+    .def(py::init<VorB>())
+    .def("__call__", [](CutDifferentialSymbol & self,
+                        py::dict lsetdom,
+                        optional<variant<Region,string>> definedon,
+                        bool element_boundary,
+                        VorB element_vb, bool skeleton,
+                        shared_ptr<GridFunction> deformation,
+                        shared_ptr<BitArray> definedonelements)
+         {
+           if (element_boundary) element_vb = BND;
+           auto dx = CutDifferentialSymbol(PyDict2LevelsetIntegrationDomain(lsetdom), 
+                                           self.vb, element_vb, skeleton);
+           if (definedon)
+             {
+               if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
+                 {
+                   dx.definedon = definedon_region->Mask();
+                   dx.vb = VorB(*definedon_region);
+                 }
+               if (auto definedon_string = get_if<string>(&*definedon); definedon_string)
+                 dx.definedon = *definedon_string;
+             }
+           dx.deformation = deformation;
+           dx.definedonelements = definedonelements;
+           return dx;
+         },
+         py::arg("levelset_domain"),
+         py::arg("definedon")=nullptr,
+         py::arg("element_boundary")=false,
+         py::arg("element_vb")=VOL,
+         py::arg("skeleton")=false,
+         py::arg("deformation")=nullptr,
+         py::arg("definedonelements")=nullptr)
+    .def("__rmul__", [](CutDifferentialSymbol & self, double x)
+    {
+      return CutDifferentialSymbol(self, x );
+    })
+    .def("order", [](CutDifferentialSymbol & self, int order)
+    {
+      auto _cds = CutDifferentialSymbol(self);
+      _cds.lsetintdom->SetIntegrationOrder(order);
+      return _cds;
+    },
+    py::arg("order"))
+    ;
+    
+  py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol")
+    .def(py::init<VorB>())
+    .def("__call__", [](FacetPatchDifferentialSymbol & self,
+                        optional<variant<Region,string>> definedon,
+                        bool element_boundary,
+                        VorB element_vb, bool skeleton,
+                        shared_ptr<GridFunction> deformation,
+                        shared_ptr<BitArray> definedonelements,
+                        int time_order)
+         {
+           if (element_boundary) element_vb = BND;
+           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton,time_order);
+           if (definedon)
+             {
+               if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
+                 {
+                   dx.definedon = definedon_region->Mask();
+                   dx.vb = VorB(*definedon_region);
+                 }
+               if (auto definedon_string = get_if<string>(&*definedon); definedon_string)
+                 dx.definedon = *definedon_string;
+             }
+           dx.deformation = deformation;
+           dx.definedonelements = definedonelements;
+           return dx;
+         },
+         py::arg("definedon")=nullptr,
+         py::arg("element_boundary")=false,
+         py::arg("element_vb")=VOL,
+         py::arg("skeleton")=false,
+         py::arg("deformation")=nullptr,
+         py::arg("definedonelements")=nullptr,
+         py::arg("time_order")=-1
+         )
+    .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)
+    {
+      return FacetPatchDifferentialSymbol(self, x );
+    })
+    ;
 
 
 

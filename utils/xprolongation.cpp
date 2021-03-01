@@ -43,7 +43,10 @@ namespace ngmg
       throw Exception("call Update before prolongating");
     if (v.EntrySize() > 1)
       throw Exception("no dim>1 yet");    
-    static Timer t("Prolongate"); RegionTimer r(t);
+
+    static int timer = NgProfiler::CreateTimer ("Prolongate");
+    NgProfiler::RegionTimer reg (timer);
+
     Array<int> & vert2dof_fine = *(v2d_on_lvl[finelevel]);
     Array<int> & vert2dof_coarse = *(v2d_on_lvl[finelevel-1]);
 
@@ -78,7 +81,8 @@ namespace ngmg
       throw Exception("call Update before restricting");
     if (v.EntrySize() > 1)
       throw Exception("no dim>1 yet");
-    static Timer t("Restrict"); RegionTimer r(t);
+    static int timer = NgProfiler::CreateTimer ("Restrict");
+    NgProfiler::RegionTimer reg (timer);
 
     Array<int> & vert2dof_fine = *(v2d_on_lvl[finelevel]);
     Array<int> & vert2dof_coarse = *(v2d_on_lvl[finelevel-1]);
@@ -152,7 +156,8 @@ namespace ngmg
       throw Exception("call Update before prolongating");
     if (v.EntrySize() > 1)
       throw Exception("no dim>1 yet");    
-    static Timer t("Prolongate"); RegionTimer r(t);
+    static int timer = NgProfiler::CreateTimer ("Prolongate");
+    NgProfiler::RegionTimer reg (timer);
     
 
 
@@ -347,7 +352,10 @@ namespace ngmg
       throw Exception("call Update before prolongating");
     if (v.EntrySize() > 1)
       throw Exception("no dim>1 yet");    
-    static Timer t("Prolongate"); RegionTimer r(t);
+    static int timer = NgProfiler::CreateTimer ("Prolongate");
+    NgProfiler::RegionTimer reg (timer);
+
+
 
     Array<int> & vert2dof_fine = *(v2d_on_lvl[finelevel]);
     Array<int> & vert2dof_coarse = *(v2d_on_lvl[finelevel-1]);    
@@ -419,7 +427,8 @@ void P2CutProlongation :: RestrictInline (int finelevel, BaseVector & v) const
       throw Exception("call Update before restricting");
     if (v.EntrySize() > 1)
       throw Exception("no dim>1 yet");
-    static Timer t("Restrict"); RegionTimer r(t);
+    static int timer = NgProfiler::CreateTimer ("Restrict");
+    NgProfiler::RegionTimer reg (timer);
 
     size_t nvC = nVertLevel[finelevel-1];
     size_t nvF = nVertLevel[finelevel];

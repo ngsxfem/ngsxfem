@@ -1,7 +1,7 @@
 import pytest
-from ngsolve import *
 from ngsolve.meshes import *
 from netgen.csg import *
+from ngsolve import *
 from xfem import *
 from math import pi
 import netgen.meshing as ngm
@@ -111,7 +111,7 @@ def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
 
     a = BilinearForm(st_fes,symmetric=False)
     a += SymbolicBFI(levelset_domain = lset_neg, form = delta_t*grad(u)*grad(v), time_order=2)
-    a += SymbolicBFI(form = fix_t(u,0)*fix_t(v,0) )
+    a += SymbolicBFI(form = fix_tref(u,0)*fix_tref(v,0) )
     a += SymbolicBFI(levelset_domain = lset_neg, form = dt(u)*v, time_order=2)
     a.Assemble()
 
@@ -123,7 +123,7 @@ def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
     while tend - t_old > delta_t/2:
         f = LinearForm(st_fes)
         f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
-        f += SymbolicLFI(form = u0_ic*fix_t(v,0))
+        f += SymbolicLFI(form = u0_ic*fix_tref(v,0))
         if pitfal2:
             f += SymbolicLFI(form = u0_ic*v)
         f.Assemble()
@@ -288,10 +288,10 @@ def test_spacetime_model_spacetime_caller():
 #         patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v_t-v_t.Other()),
 #                                                         skeleton=False, time_order=time_order))
 
-#     hasneg_integrators_a_i.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u_i,1)*fix_t(v_t,1)))
+#     hasneg_integrators_a_i.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_tref(u_i,1)*fix_tref(v_t,1)))
 
-#     hasneg_integrators_a_e.append(SymbolicBFI(levelset_domain = lset_neg_bottom, form = -fix_t(u_e,0)*fix_t(v_t,0)))
-#     #hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
+#     hasneg_integrators_a_e.append(SymbolicBFI(levelset_domain = lset_neg_bottom, form = -fix_tref(u_e,0)*fix_tref(v_t,0)))
+#     #hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_tref(v,0)))
 
 #     hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v_t, time_order=time_order)) 
 
@@ -444,13 +444,13 @@ def test_spacetime_spaceP1_timeDGP1():
     hasneg_integrators_f = []
     patch_integrators_a = []
     hasneg_integrators_a.append(SpaceTimeNegBFI(form = delta_t*alpha*grad(u)*grad(v)))
-    hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_t(u,1)*fix_t(v,1)))
+    hasneg_integrators_a.append(SymbolicBFI(levelset_domain = lset_neg_top, form = fix_tref(u,1)*fix_tref(v,1)))
     hasneg_integrators_a.append(SpaceTimeNegBFI(form = -u*dt(v)))
     hasneg_integrators_a.append(SpaceTimeNegBFI(form = -delta_t*u*InnerProduct(w,grad(v))))
     patch_integrators_a.append(SymbolicFacetPatchBFI(form = delta_t*1.05*h**(-2)*(u-u.Other())*(v-v.Other()),
                                                     skeleton=False, time_order=time_order))
     hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=time_order)) 
-    hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_t(v,0)))
+    hasneg_integrators_f.append(SymbolicLFI(levelset_domain = lset_neg_bottom,form = u_last*fix_tref(v,0)))
 
 
     a = BilinearForm(st_fes,check_unused=False,symmetric=False)

@@ -1,0 +1,136 @@
+name: test-github-actions
+on: [push]
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    outputs:
+      uid_gid: ${{ steps.get-user.outputs.uid_gid }}
+    steps:
+      - id: get-user
+        run: echo "::set-output name=uid_gid::$(id -u):$(id -g)"
+  
+  build:
+    needs: configure
+    runs-on: ubuntu-latest
+    container: 
+      image: schruste/ngsolve:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build ngsxfem
+        run: |
+          git submodule update --init --recursive
+          mkdir build
+          mkdir install    
+          cd build
+          cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+          make install
+      - name: Chache build results
+        uses: actions/cache@v2
+        with:
+          path: |
+            build
+            install
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
+
+  ctests-tutorials:
+    needs: [configure, build]
+    runs-on: ubuntu-latest
+    container: 
+      image: schruste/ngsolve:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve chached build results
+        uses: actions/cache@v2
+        with:
+          path: |
+            build
+            install
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
+      - name: run-ctests-tutorials
+        run: .ci/ci_ctests.sh tutorial
+        shell: bash
+    continue-on-error: true
+
+  ctest-mayfail:
+    needs: [configure, build]
+    runs-on: ubuntu-latest
+    container: 
+      image: schruste/ngsolve:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve chached build results
+        uses: actions/cache@v2
+        with:
+          path: |
+            build
+            install
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
+      - name: run-ctests-mayfail
+        run: .ci/ci_ctests.sh mayfail
+        shell: bash
+    continue-on-error: true
+  
+  ctest-pytests:
+    needs: [configure, build]
+    runs-on: ubuntu-latest
+    container: 
+      image: schruste/ngsolve:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve chached build results
+        uses: actions/cache@v2
+        with:
+          path: |
+            build
+            install
+          key: ${{ runner.os }}-${{ github.sha }}-build-results
+      - name: install dependencey packages
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install psutil
+      - name: run-ctests-pytests
+        run: .ci/ci_ctests.sh pytests
+        shell: bash
+
+  # metrics:
+  #   needs: [configure, build]
+  #   runs-on: ubuntu-latest
+  #   container: 
+  #     image: schruste/ngsolve:latest
+  #     options: --user ${{ needs.configure.outputs.uid_gid }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Retrieve chached build results
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           build
+  #           install
+  #         key: ${{ runner.os }}-${{ github.sha }}-build-results
+  #     - name: run-metrics
+  #       run: |
+  #         export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
+  #         export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+  #         python3 tests/ngsxfem_report.py 2> metrics.txt
+  #       shell: bash
+  #     - name: archive metrics artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: metrics-report
+  #         path: metrics.txt
+  
+  check-demo-codestyle:
+    runs-on: ubuntu-latest  
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install python dependences
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pycodestyle
+      - name: Check PEP8 conformity
+        run: python3 -m pycodestyle demos/{*,spacetime/*,mpi/*}.py
+        continue-on-error: true

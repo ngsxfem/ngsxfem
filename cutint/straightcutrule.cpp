@@ -39,11 +39,11 @@ namespace xintegration
   }
 
   PolytopE SimpleX::CalcIFPolytopEUsingLset(vector<double> lset_on_points){
-      static Timer t ("SimpleX::CalcIFPolytopEUsingLset");
+      //static Timer t ("SimpleX::CalcIFPolytopEUsingLset");
       // RegionTimer reg(t);
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       if(CheckIfStraightCut(lset_on_points) != IF) {
-          cout << "Lsetvals: ";
+          cout << IM(1) << "Lsetvals: ";
           for(auto d: lset_on_points) cout << d << endl;
           throw Exception ("You tried to cut a simplex with a plain geometry lset function");
       }
@@ -78,7 +78,7 @@ namespace xintegration
   }
 
   void SimpleX::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
-      static Timer t ("SimpleX::GetPlainIntegrationRule");
+      //static Timer t ("SimpleX::GetPlainIntegrationRule");
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       // RegionTimer reg(t);
       double trafofac = GetVolume();
@@ -129,7 +129,7 @@ namespace xintegration
   }
 
   void LevelsetCutSimplex::Decompose(){
-      static Timer t ("LevelsetCutSimplex::Decompose");
+      //static Timer t ("LevelsetCutSimplex::Decompose");
       //RegionTimer reg(t);
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       vector<double> lsetvals = lset.initial_coefs;
@@ -142,8 +142,8 @@ namespace xintegration
               SimplexDecomposition.Append(SimpleX({s_cut.points[0],s_cut.points[2],s_cut.points[3]}));
           }
           else {
-            cout << "s.D = " << s.D << " , s_cut.points.Size() = " << s_cut.points.Size() << endl;
-            cout << "@ lset vals: " << endl;
+            cout << IM(1) << "s.D = " << s.D << " , s_cut.points.Size() = " << s_cut.points.Size() << endl;
+            cout << IM(1) << "@ lset vals: " << endl;
             for (auto d: lsetvals) cout << d << endl;
             throw Exception("Bad length of s_cut!");
           }
@@ -188,7 +188,7 @@ namespace xintegration
               SimplexDecomposition.Append(point_listC);
           }
           else {
-              cout << "@ lset vals: " << endl;
+              cout << IM(1) << "@ lset vals: " << endl;
               for (auto d: lsetvals) cout << d << endl;
               throw Exception("Cutting this part of a tetraeder is not implemented yet!");
           }
@@ -196,8 +196,8 @@ namespace xintegration
   }
 
   void LevelsetCutSimplex::GetIntegrationRule(IntegrationRule &intrule, int order){
-      static Timer t ("LevelsetCutSimplex::GetIntegrationRule");
-      // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
+      //static Timer t ("LevelsetCutSimplex::GetIntegrationRule");
+      //ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       //RegionTimer reg(t);
       Decompose();
       for(auto s : SimplexDecomposition) s.GetPlainIntegrationRule(intrule, order);
@@ -217,7 +217,7 @@ namespace xintegration
   }
 
   void LevelsetCutQuadrilateral::Decompose(){
-      static Timer t ("LevelsetCutQuadrilateral::Decompose");
+      //static Timer t ("LevelsetCutQuadrilateral::Decompose");
       //RegionTimer reg(t);
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       set<double> TopologyChangeXisS{0,1};
@@ -286,14 +286,14 @@ namespace xintegration
                   if(q.D == 2) if_scale_factor = L2Norm(lset_grad)/abs(lset_grad[0]);
                   else if(q.D == 3) if_scale_factor = L2Norm(lset_grad)/sqrt(pow(lset_grad[0],2) + pow(lset_grad[1],2));
                   if( isnan(if_scale_factor) || if_scale_factor > C ){
-                      cout << "Straightcutrule WARNING: IF scaling factor larger than bound:" << endl;
-                      cout << "IF scaling factor: " << if_scale_factor << endl;
-                      cout << "dims: " << q.D << endl;
-                      cout << "c: " << c << endl;
-                      cout << "C: " << C << endl;
-                      cout << "This might happen in 3D if the child quad had a bad topology and called its fallback routine." << endl;
-                      cout << "If you haven't done so, maybe try POL= OPTIMAL to avoid this" << endl;
-                      //throw Exception("if_scale_factor larger than bound");
+                      cout << IM(1) << "Straightcutrule WARNING: IF scaling factor larger than bound:" << endl;
+                      cout << IM(1) << "IF scaling factor: " << if_scale_factor << endl;
+                      cout << IM(1) << "dims: " << q.D << endl;
+                      cout << IM(1) << "c: " << c << endl;
+                      cout << IM(1) << "C: " << C << endl;
+                      cout << IM(1) << "This might happen in 3D if the child quad had a bad topology and called its fallback routine." << endl;
+                      cout << IM(1) << "If you haven't done so, maybe try POL= OPTIMAL to avoid this" << endl;
+                      throw Exception("if_scale_factor larger than bound");
                   }
               }
               intrule.Append(IntegrationPoint( ip , p2.Weight()*p1.Weight()*(xi1-xi0)*if_scale_factor));
@@ -587,29 +587,29 @@ namespace xintegration
                                                      bool spacetime_mode,
                                                      double tval)
   {
-    static Timer t ("NewStraightCutIntegrationRule");
-    static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);
-    static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule",2);
+    static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRule"); 
+    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
 
-    // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
-    // RegionTimer reg(t);
+    //static Timer t ("NewStraightCutIntegrationRule");
+    // static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);
+    // static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule",2);
 
     int DIM = trafo.SpaceDim();
 
     auto et = trafo.GetElementType();
 
     if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
-      cout << "Element Type: " << et << endl;
+      cout << IM(1) << "Element Type: " << et << endl;
       throw Exception("only trigs, tets, quads for now");
     }
 
     bool is_quad = (et == ET_QUAD) || (et == ET_HEX);
 
-    timercutgeom.Start();
+    //timercutgeom.Start();
     auto element_domain = CheckIfStraightCut(cf_lset_at_element);
-    timercutgeom.Stop();
+    //timercutgeom.Stop();
 
-    timermakequadrule.Start();
+    //timermakequadrule.Start();
     IntegrationRule quad_untrafo;
     vector<double> lset_vals(cf_lset_at_element.Size());
     for(int i=0; i<lset_vals.size(); i++) lset_vals[i] = cf_lset_at_element[i];
@@ -617,8 +617,8 @@ namespace xintegration
 
     if (element_domain == IF)
     {
-      static Timer timer1("StraightCutElementGeometry::Load+Cut",2);
-      timer1.Start();
+      //static Timer timer1("StraightCutElementGeometry::Load+Cut",2);
+      //timer1.Start();
       if(!is_quad){
           LevelsetCutSimplex s(lset, dt, SimpleX(et));
           s.GetIntegrationRule(quad_untrafo, intorder);
@@ -627,12 +627,12 @@ namespace xintegration
           LevelsetCutQuadrilateral q(lset, dt, Quadrilateral(et), quad_dir_policy);
           q.GetIntegrationRule(quad_untrafo, intorder);
       }
-      timer1.Stop();
+      //timer1.Stop();
     }
 
     const IntegrationRule* ir = nullptr;
 
-    timermakequadrule.Stop();
+    //timermakequadrule.Stop();
 
     if (element_domain == IF) // there is a cut on the current element
     {
@@ -677,7 +677,7 @@ namespace xintegration
     int M = cf_lsets_at_element.Width();
 
     if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM)){
-      cout << "Element Type: " << et << endl;
+      cout << IM(1) << "Element Type: " << et << endl;
       throw Exception("only trigs, tets for now");
     }
 
@@ -803,23 +803,22 @@ namespace xintegration
                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                        LocalHeap & lh)
     {
-      static Timer t ("NewStraightCutIntegrationRule");
-      static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
-      static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule");
+      static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRuleUntransformed"); NgProfiler::RegionTimer reg (timer);
+      //   static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
+      //   static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule");
 
-      RegionTimer reg(t);
 
       if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
-        cout << "Element Type: " << et << endl;
+        cout << IM(1) <<  "Element Type: " << et << endl;
         throw Exception("only trigs, tets, quads for now");
       }
       bool is_quad = (et == ET_QUAD) || (et == ET_HEX);
 
-      timercutgeom.Start();
+      //timercutgeom.Start();
       auto element_domain = CheckIfStraightCut(cf_lset_at_element);
-      timercutgeom.Stop();
+      //timercutgeom.Stop();
 
-      timermakequadrule.Start();
+      //timermakequadrule.Start();
       IntegrationRule quad_untrafo;
       vector<double> lset_vals(cf_lset_at_element.Size());
       for(int i=0; i<lset_vals.size(); i++) lset_vals[i] = cf_lset_at_element[i];
@@ -827,8 +826,8 @@ namespace xintegration
 
       if (element_domain == IF)
       {
-        static Timer timer1("StraightCutElementGeometry::Load+Cut");
-        timer1.Start();
+        //static Timer timer1("StraightCutElementGeometry::Load+Cut");
+        //timer1.Start();
         if(!is_quad){
             LevelsetCutSimplex s(lset, dt, SimpleX(et));
             s.GetIntegrationRule(quad_untrafo, intorder);
@@ -837,12 +836,12 @@ namespace xintegration
             LevelsetCutQuadrilateral q(lset, dt, Quadrilateral(et), quad_dir_policy);
             q.GetIntegrationRule(quad_untrafo, intorder);
         }
-        timer1.Stop();
+        //timer1.Stop();
       }
 
       const IntegrationRule* ir = nullptr;
 
-      timermakequadrule.Stop();
+      //timermakequadrule.Stop();
 
       if (element_domain == IF) // there is a cut on the current element
       {

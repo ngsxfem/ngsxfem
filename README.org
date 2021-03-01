@@ -1,148 +1,174 @@
 #+OPTIONS: toc:2   
+
 * About =ngsxfem= 
-=ngsxfem= is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... .
-=ngsxfem= is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+=ngsxfem= is an add-on library to the finite element package [[https://ngsolve.org][Netgen/NGSolve]] which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... .
+=ngsxfem= is an academic software. 
+Its primary intention is to facilitate the development and validation of new numerical methods.
 
 ** The main features
-*** Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
-Given a level set function \phi which describes the geometry (e.g. \Omega = { \phi < 0 }) a piecewise linear approximation is made. On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
-On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) subdomains where the level set is positive/negative/zero.
-#+html: <p align="center"><img src="doc/graphics/cuttet.jpg" height="175"/><img src="doc/graphics/intpoints.jpg" height="175"/></p>
+The main features of this tool are listed below. In [[doc/paper.md]] more details and references are given.
+* Numerical integration on implicitly described (via a level set function) geometries which are not fitted to the mesh
+* Tools to work on an "active mesh" only
+* Higher order representation of implicit level-set geometries 
+* Space-Time Finite Elements for the treatment of moving domain problems
+* Geometries described by multiple level sets
 
-*** Tools to work on an "active mesh" only
-In unfitted finite element methods some functions and integrals are only defined on a subset of the mesh. Accordingly finite element spaces and integrals have to be defined only on this active mesh. 
-=ngsxfem= offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces. On cut elements one often also uses locally modified finite elements, e.g. by restriction of finite elements on the background mesh.
-#+html: <p align="center"><img src="doc/graphics/unfittedmesh.jpg" height="175"/> <img src="doc/graphics/xfem.jpg" height="175"/></p> 
+*** feature matrix
+Not all features combine directly. Here is an overview of features and which work or 
+may not work together:
 
-*** Higher order representation of implicit level-set geometries 
-To obtain higher order accuracy, we offer a mesh transformation technique in the spirit of isoparametric finite element methods. Thereby the piecewise linear approximation (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
-#+attr_html: :width 175px
-#+html: <p align="center"><img src="doc/graphics/lsetcurv.jpg" height="175"/></p>
+|               | CutFEM/XFEM | isoparam | mlset | space-time | mpi | ghost penalty |
+|---------------+-------------+----------+-------+------------+-----+---------------|
+| CutFEM/XFEM   | /           | yes      | yes   | no         | yes | yes           |
+| isoparam      | yes         | /        | no    | yes        | yes | yes           |
+| mlset         | yes         | no       | /     | no         | yes | yes           |
+| space-time    | yes         | yes      | no    | /          | yes | yes           |
+| mpi           | yes         | yes      | yes   | yes        | /   | no            |
+| ghost penalty | yes         | yes      | yes   | yes        | no  | /             |
+|---------------+-------------+----------+-------+------------+-----+---------------|
 
-*** Space-Time Finite Elements for the treatment of moving domain problems
-To obtain robust method for PDEs on unfitted moving domain we can formulate space-time discretization. =ngsxfem= provides necessary tools (so far only in two space dimensions) to define space-time finite element spaces and to integrate on space-time domains. Further, it extends the tools for higher order accurate geometry handling to the space-time setting.
-#+html: <p align="center"><img src="doc/graphics/spacetime1.png" height="175"/><img src="doc/graphics/spacetime2.png" height="175"/></p> 
+The nos on mpi+ghost penalty and space-time+mlset are however work in progress.
 
-*** Geometries described by multiple level sets
-Many geometries do not have -- due to sharp corners or edges -- an implicit description by a *smooth* level set function. Instead multiple level set functions can be used to describe theses geometries. 
-#+html: <p align="center"><img src="doc/graphics/zdisc-cut-elements.png" height="175"/></p> 
-
-** Applications
-Two-phase diffusion problems / viscous flow problems (Stokes). This section is to be added soon ...
+=ngsxfem= has been used in a variety of applications see also [[file:doc/paper.md][paper.md]].
 
 * Installation
-** Installation with pip
-If you run Linux you can install =ngsxfem= through pip:
+** Docker container
 #+BEGIN_SRC shell
-pip install git+https://github.com/ngsxfem/ngsxfem.git@master --user --upgrade --verbose
-#+END_SRC
-This will build =ngsxfem= assuming that a compatible =NGSolve= version is installed. If this fails (e.g. because you are not using MacOS or you haven't installed =NGSolve= yet consider the build steps below).
-You also will need cmake, NGSolve and a (modestly) recent compiler (e.g. clang) installed.
-
-** Linux Build Steps
-You require Netgen/NGSolve to run and build the xfem module (=ngsxfem=). 
-You can either install it before hand (default option) 
-or let Netgen/NGSolve be installed as an external dependency. 
-#+BEGIN_SRC shell
-git clone https://github.com/ngsxfem/ngsxfem.git
-cd ngsxfem
-mkdir build
-cd build
+docker run -i -t schruste/ngsxfem:latest /bin/bash
 #+END_SRC
 
-*** Building xfem with pre-installed NGSolve 
-You have Netgen/NGSolve installed? Perfect. Then let INSTLOCATION be the location 
-Netgen/NGSolve is already installed to. To install xfem make sure that you have 
-write access to that same directory. Then build =ngsxfem= with 
+** Pre-compiled binaries
+TODO
+
+** Building from source
+
+To build =ngsxfem= from source, the corresponding version of =Netgen/NGSolve= is required to be installed. This can either be done in advance (default option), or as an external dependency.
+=ngsolve= is pulled as a submodule. The version of the submodule is compatible with this version of =ngsxfem=. If in doubt make sure that you install exactly this version of =NGSolve= before building =ngsxfem=.
+
+
+*** Linux
+**** Prerequisites on Ubuntu
+On Ubuntu =python3-dev= similar dependencies as required by =NGSolve=, see [[https://ngsolve.org/docu/latest/install/installlinux.html][www.ngsolve.org]]
+
+**** Building =ngsxfem= with pre-installed =NGSolve=
+Make sure that the installed version of =NGSolve= is compatible with the current =ngsxfem= release. If you are building the latest release of =ngsxfem=, then the latest release of =NGSolve= will be sufficient.
+
+Choose a directory where you wish to download the source files and build the library. We shall refer to this location as =BASEDIR=. Here the git repository need to be cloned.
 #+BEGIN_SRC shell
-cmake ../ -DCMAKE_INSTALL_PREFIX=INSTLOCATION -DBUILD_NGSOLVE=OFF
+export BASEDIR=`pwd`
+
+git clone https://github.com/ngsxfem/ngsxfem.git src-xfem
+#+END_SRC
+
+You then need to create a build directory, configure the build, build and install the build. Here =INSTLOCATION= should be the install directory of =NGSolve=. This depends on the way in which =NGSolve= was installed.
+#+BEGIN_SRC shell
+mkdir build-xfem
+cd build-xfem
+
+cmake \
+ -DCMAKE_INSTALL_PREFIX=INSTLOCATION \
+ -DBUILD_NGSOLVE=OFF \
+ ${BASEDIR}/src-xfem
+
 make
 make install
 #+END_SRC
 
-**** Prerequisites on Ubuntu
-On Ubuntu you require =python3-dev= to build =ngsxfem= (and similar dependencies as NGSolve has, cf. [[www.ngsolve.org]])
+You may want to add =-jx= with 'x' the number of threads you wish to compile with.
+
+**** Building the NGS-Suite and =ngsxfem= together 
+If you do not have =Netgen/NGSolve= installed in advance, you can build this as a sub-module. Again, choose a directory where you wish to build and install everything.
+
+#+BEGIN_SRC shell
+export BASEDIR=`pwd`
+
+git clone https://github.com/ngsxfem/ngsxfem.git src-xfem
+cd src-xfem
+git submodule update --init
+
+cd ${BASEDIR}
+mkdir -p ${BASEDIR}/build-xfem ${BASEDIR}/inst
+
+cd ${BASEDIR}/build-xfem
+cmake \
+ -DCMAKE_INSTALL_PREFIX=${BASEDIR}/inst \
+ -DBUILD_NGSOLVE=ON \
+ ${BASEDIR}/src-xfem
+
+make
+make install
+#+END_SRC
+Now to start =Netgen= from the command line =${BASEDIR}/inst/bin= has to added to the =PATH=. To run python scripts, the =PYTHONPATH= must be set appropriately
+#+BEGIN_SRC shell
+export PYTHONPATH=${BASEDIR}/inst/`python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1,0,''))"`
+#+END_SRC
+
 
 **** Fix of potential issues
 If you have compiling problems or at run time some NGSolve symbols are not found, it may be (happened in some configurations) that the NGSolve compiler and linker wrapper =ngscxx= and =ngsld= were not used. In this case you may add
 #+BEGIN_SRC shell
-cmake ... -DCMAKE_CXX_COMPILER=ngscxx -DCMAKE_LINKER=ngsld
+-DCMAKE_CXX_COMPILER=ngscxx -DCMAKE_LINKER=ngsld
 #+END_SRC
 to the cmake configuration.
 
-**** =ngsxfem= on MacOSX
-On MacOSX, you need to add the location of the NGSolve cmake configuration files, i.e.:
+**** Updating =ngsxfem=
+To update =ngsxfem=, update the source files and build everything again:
 #+BEGIN_SRC shell
-cmake \
--DCMAKE_INSTALL_PREFIX=NGSOLVE_INSTALLATION_LOCATION \
--DNGSolve_DIR=NGSOLVE_INSTALLATION_LOCATION/Contents/Resources/CMake \
--DBUILD_NGSOLVE=OFF \
-..
-#+END_SRC
-If NGSolve is installed from the dmg-file =NGSOLVE_INSTALLATION_LOCATION= is =/Applications/Netgen.app=.
-*** Building the NGS-Suite and =ngsxfem= together 
-If you do not have Netgen/NGSolve installed, you may first call
-#+BEGIN_SRC shell
-git submodule update --init
-#+END_SRC
-which pulls Netgen/NGSolve as external dependencies. Then, just call
-#+BEGIN_SRC shell
-cmake ../ -DCMAKE_INSTALL_PREFIX=INSTLOCATION -DBUILD_NGSOLVE=ON
+cd ${BASEDIR}/src-xfem
+git pull
+
+cd ${BASEDIR}/build
+
 make
 make install
 #+END_SRC
-For INSTLOCATION you choose a nice installation location.
-Afterwards make sure that the installed NGS/xfem-libraries and executable will be found 
-by PATH and python.
+If =NGSolve= was built as a submodule, then after pulling the lates =ngsxfem= sources, also update NGSolve by calling =git submodule update --init= in the =src-xfem= directory.
 
-** Updating =ngsxfem=
-To update =ngsxfem=, update the sources
+*** MacOS
+To build on MacOS you require the Xcode Command Line Tools. These can be installed by calling =xcode-select --install= from within a terminal. Furthermore, CMake must be downloaded and installed. This can be done via [[https://cmake.org][CMake website]]. To use cmake from a terminal, make sure to install the command line tools: Open CMake, in the "Tools" menu click on "How to Install For Command Line Use" and follow one of the suggested options.
+
+We recommend that you install =NGSolve= this can either be done [[https://ngsolve.org/docu/latest/install/installmacnative.html][from source]] or by installing the latest [[https://ngsolve.org/downloads][pre-built dmg]]. Make sure that all environment variables have been [[https://ngsolve.org/docu/latest/install/gettingstarted.html#mac-os-x][set correctly]].
+
+The only difference compared to linux is that CMake needs to be given the location of the NGSolve cmake configuration. This is done by giving the additional flag =-DNGSolve_DIR=INSTLOCATION/Contents/Resources/CMake=. If you have installed NGSolve using the dmg file, then =INSTLOCATION= is =/Applications/Netgen.app=. Once NGSolve is successfully installed, then =ngsxfem= can be build using the following steps:
 #+BEGIN_SRC shell
-git pull origin master
+export BASEDIR=`pwd`
+git clone https://github.com/ngsxfem/ngsxfem.git src-xfem
+
+mkdir -p ${BASEDIR}/build-xfem
+cd ${BASEDIR}/build-xfem
+
+cmake \
+ -DCMAKE_INSTALL_PREFIX=INSTLOCATION \
+ -DNGSolve_DIR=INSTLOCATION/Contents/Resources/CMake \
+ -DBUILD_NGSOLVE=OFF \
+ ${BASEDIR}/src-xfem
+
+make
+make install
 #+END_SRC
-As the ngsolve-version that the updated xfem-version depends on can be updated in the mean time, 
-make sure to update NGSolve. 
-If you build NGSolve as an external dependency update the submodule NGSolve:
-#+BEGIN_SRC shell
-git submodule update --init --recursive
-#+END_SRC
-Otherwise update your NGSolve version manually. 
-As a rule we try to be compatible to the latest release of NGSolve. 
-To be sure check the version in external_dependencies/ngsolve
 
 
-** Examples
-To run the python examples be sure to follow the build steps above.
-Then navigate into the =py_tutorials= and run
-#+BEGIN_SRC shell
-netgen example.py
-#+END_SRC
-where =example.py= stands for any of the available python files.
+** Testing the installation
+We run test by default. I you wish to test your self-built binaries, go to the =build-xfem= directory and run =make test= or =ctest=. 
+If you need to see specific tests failing use ctest -V.
+To run individual tests use ctest -R <regex>. E.g. ctest -R cutint to only run cut integration tests.
+Note that we use =pytest= and =psutil= (with python version > 3). These can easily be installed using =pip=. 
 
-** Testing
-Tests are enabled by default.
-To run the test navigate to the build directory and run =make test=
-or =ctest=.
-If you need to see specific tests failing use =ctest -V=.
-To run individual tests use =ctest -R <regex>=. E.g. =ctest -R cutint= to only run cut integration tests.
-Note that we use pytest (with python version > 3). 
 
-** pde vs. py files
-From version 1.0.0 on there are no pde-files used in this project anymore. 
-Only python-files are used.
-
-* Examples 
+* Examples and Documentation
 At [[https://github.com/ngsxfem/ngsxfem-jupyter]] you can find tutorial-style jupyter notebooks for ngsxfem.
-Further, in =py_tutorials/= there are some simple examples for some known unfitted discretizations:
- * =py_tutorials/cutfem.py= : stationary interface problem with a (P1) CutFEM method with Nitsche
- * =py_tutorials/nxfem.py= : stationary interface problem with a (P1) XFEM method with Nitsche (similar to =cutfem.py=)
- * =py_tutorials/nxfem_higher_order.py= : stationary interface problem with a higher order isoparametric unfitted FEM with Nitsche (similar to =nxfem.py=)
- * =py_tutorials/fictdom_ghostpen.py= : stationary fictitious domain problem with isoparametric CutFEM, Nitsche and ghost penalty stabilization
- * =py_tutorials/fictdom_dg_ghostpen.py= : stationary fictitious domain problem with isoparametric Cut-DG-FEM, Nitsche and ghost penalty stabilization
- * =py_tutorials/stokescutfem.py= : stationary Stokes interface problem with an unfitted isoparametric (P2/P1) Taylor-Hood-Nitsche discretization
- * =py_tutorials/tracefem.py= : stationary 2D surface PDE problem with a TraceFEM discretization (low order)
- * =py_tutorials/tracefem3d.py= : stationary 3D surface PDE problem with a TraceFEM discretization (higher order)
- * =spacetime/py_tutorials/spacetimeP1P1.py= : moving fictitous domain problem using a space time unfitted FEM
+These explain the core functionalities and usage of the tools provided by =ngsxfem=.
+
+In addition to this, there are a number of demo files located in =demos/= illustrating the use of =ngsxfem= for some known unfitted finite element discretisations:
+ * =demos/cutfem.py= : stationary interface problem with a (P1) CutFEM method with Nitsche
+ * =demos/nxfem.py= : stationary interface problem with a (P1) XFEM method with Nitsche (similar to =cutfem.py=)
+ * =demos/nxfem_higher_order.py= : stationary interface problem with a higher order isoparametric unfitted FEM with Nitsche (similar to =nxfem.py=)
+ * =demos/fictdom_ghostpen.py= : stationary fictitious domain problem with isoparametric CutFEM, Nitsche and ghost penalty stabilization
+ * =demos/fictdom_dg_ghostpen.py= : stationary fictitious domain problem with isoparametric Cut-DG-FEM, Nitsche and ghost penalty stabilization
+ * =demos/stokescutfem.py= : stationary Stokes interface problem with an unfitted isoparametric (P2/P1) Taylor-Hood-Nitsche discretization
+ * =demos/tracefem.py= : stationary 2D surface PDE problem with a TraceFEM discretization (low order)
+ * =demos/tracefem3d.py= : stationary 3D surface PDE problem with a TraceFEM discretization (higher order)
+ * =demos/spacetime/spacetimeP1P1.py= : moving fictitous domain problem using a space time unfitted FEM
 
 * List of contributing authors (with major contributions)
  * Christoph Lehrenfeld
@@ -151,32 +177,5 @@ Further, in =py_tutorials/= there are some simple examples for some known unfitt
  * Thomas Ludescher (multigrid)
  * Henry von Wahl (multiple levelsets)
 
-* Literature
-=ngsxfem= has been used in the following scientific works (that we are aware of):
-** Journal publications / preprints:
- * E.N. Karatzas, M. Nonino, F. Ballarin and G. Rozza, A Reduced Order Cut Finite Element method for geometrically parametrized steady and unsteady Navier-Stokes problems. [[https://arxiv.org/pdf/2010.04953.pdf][pdf]]
- * A. Aretaki and E.N. Karatzas. Random geometries and quasi Monte Carlo methods for optimal control PDE problems based on fictitious domain FEMs and cut elements. [[https://arxiv.org/pdf/2003.00352.pdf][pdf]]
- * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data. [[https://arxiv.org/pdf/2011.08691.pdf][pdf]]
- * H. von Wahl, T. Richter, C. Lehrenfeld. An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains. [[https://arxiv.org/pdf/2002.02352][pdf]]        
- * P. Brandner, A. Reusken. Finite element error analysis of surface Stokes equations in stream function formulation. [[https://www.igpm.rwth-aachen.de/Download/reports/pdf/IGPM493.pdf][pdf]]         
- * T. Jankuhn, A. Reusken. Higher order Trace Finite Element Methods for the Surface Stokes Equation [[https://arxiv.org/pdf/1909.08327][pdf]] 
- * T. Jankuhn, A. Reusken. Trace Finite Element Methods for Surface Vector-Laplace Equations [[https://arxiv.org/pdf/1904.12494][pdf]] 
- * E. N. Karatzas, F. Ballarin, G. Rozza. Projection-based reduced order models for a cut finite element method in parametrized domains [[https://arxiv.org/pdf/1901.03846][pdf]] 
- * C. Lehrenfeld, M. A. Olshanskii. An Eulerian finite element method for PDEs in time-dependent domains [[https://arxiv.org/pdf/1803.01779.pdf][pdf]]
- * F. Heimann, C. Lehrenfeld. Numerical integration on hyperrectangles in isoparametric unfitted finite elements. [[https://link.springer.com/chapter/10.1007/978-3-319-96415-7_16][link]]
- * C. Lehrenfeld, A. Reusken. L2-estimates for a high order unfitted finite element method for elliptic interface problems. [[https://www.degruyter.com/view/j/jnma.just-accepted/jnma-2017-0109/jnma-2017-0109.xml?format=INT][http]]
- * J. Grande, C. Lehrenfeld, A. Reusken. Analysis of a high-order trace finite element method for PDEs on level set surfaces [[http://epubs.siam.org/doi/abs/10.1137/16M1102203][http]]
- * C. Lehrenfeld, A. Reusken. Analysis of a high order unfitted finite element method for an elliptic interface problem. [[https://academic.oup.com/imajna/article-abstract/doi/10.1093/imanum/drx041/4084723/Analysis-of-a-highorder-unfitted-finite-element][http]]
- * C. Lehrenfeld, A. Reusken. Optimal preconditioners for Nitsche-XFEM discretizations of interface problems. [[https://link.springer.com/article/10.1007/s00211-016-0801-6][http]]
- * C. Lehrenfeld. High order unfitted finite element methods on level set domains using isoparametric mappings. [[http://www.sciencedirect.com/science/article/pii/S0045782515004004][http]]
- * C. Lehrenfeld. A higher order isoparametric fictitious domain method for level set domains. [[https://link.springer.com/chapter/10.1007/978-3-319-71431-8_3][http]]
- * P. Lederer, C.-M. Pfeiler, C. Wintersteiger, C. Lehrenfeld. Higher order unfitted FEM for Stokes interface problems. [[https://onlinelibrary.wiley.com/doi/abs/10.1002/pamm.201610003][http]]
- * C. Lehrenfeld. Removing the stabilization parameter in fitted and unfitted symmetric Nitsche formulations. [[https://www.eccomas2016.org/proceedings/pdf/4573.pdf][http]]
-** PhD theses:
- * T. Ludescher: Multilevel Preconditioning of Stabilized Unfitted Finite Element Discretizations 
-** Master theses:
- * J. Preuss: Higher order unfitted isoparametric space-time FEM on moving domains
- * H.G. Raumer: Shape Optimization for Interface Problems using unfitted Finite Elements
- * F. Heimann: On Discontinuous- and Continuous-In-Time Unfitted Space-Time Methods for PDEs on Moving Domains
-** Bachelor theses:
- * F. Heimann: Higher order Discontinuous Galerkin methods for the Laplace-Beltrami problem on unfitted smooth surfaces
+* Notes
+ * *pde vs. py files*: From version 1.0.0 on there are no pde-files used in this project anymore. Only python-files are used.

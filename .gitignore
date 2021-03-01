@@ -8,3 +8,6 @@ build
 paper.pdf
 .env
 workspace.code-workspace
+**/ng*.html
+**/ng*.trace
+*.vtk

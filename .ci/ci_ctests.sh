@@ -12,8 +12,8 @@ export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
 
 cd build
 
-if [ $1 == "tutorial" ]; then
-  ctest -V -R 'py_tutorial'
+if [ $1 == "demos" ]; then
+  ctest -V -R 'py_demo'
 fi
 
 if [ $1 == "mayfail" ]; then
@@ -22,9 +22,4 @@ fi
 
 if [ $1 == "pytests" ]; then
     ctest -V -R 'pytests'
-fi
-
-if [ $1 == "go4quads-tests" ]; then
-   cd ../cutint/py_demos/
-   python3 area_of_a_circle_quads.py
 fi

@@ -46,7 +46,13 @@ function) (and options).
     order_qn = 2
     order_lset = 2
 
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, eps_perturbation = 1e-14, heapsize=1000000):
+    gf_to_project = []
+
+    @TimeFunction
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, 
+                 threshold = -1, discontinuous_qn = False, 
+                 eps_perturbation = 1e-14, heapsize=1000000,
+                 levelset = None):
         """
 The computed deformation depends on different options:
 
@@ -78,6 +84,9 @@ The computed deformation depends on different options:
 
   heapsize : int
     heapsize for local computations.
+
+  levelset : CoefficientFunction or None(default)
+    If a level set function is prescribed the deformation is computed right away.
         """
         self.order_deform = order
         self.order_qn = order
@@ -89,6 +98,7 @@ The computed deformation depends on different options:
 
         self.eps_perturbation = eps_perturbation
         
+        self.mesh = mesh
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho = GridFunction (self.v_ho, "lset_ho")
 
@@ -103,9 +113,32 @@ The computed deformation depends on different options:
 
         self.v_def = H1(mesh, order=self.order_deform, dim=mesh.dim)
         self.deform = GridFunction(self.v_def, "deform")
+        self.deform_last = GridFunction(self.v_def, "deform_last")
         self.heapsize = heapsize
+        if levelset != None:
+          self.CalcDeformation(levelset)
 
-    def CalcDeformation(self, levelset, ba =None, blending=None):
+        
+    def ProjectOnUpdate(self,gf):
+        if isinstance(gf,list):
+            self.gf_to_project.extend(gf)
+        else:
+            self.gf_to_project.append(gf)
+
+    @TimeFunction
+    def ProjectGFs(self):
+        timer = Timer("ProjectGFs")
+        timer.Start()
+        for gf in self.gf_to_project:
+            # make tmp copy 
+            gfcopy = GridFunction(gf.space)
+            gfcopy.vec.data = gf.vec
+            gf.Set(shifted_eval(gfcopy, back = self.deform_last, forth = self.deform))
+            print("updated ", gf.name)
+        timer.Stop()
+
+    @TimeFunction
+    def CalcDeformation(self, levelset, ba =None, blending=None, dont_project_gfs=False):
         """
 Compute the mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise linear
 approximation) are mapped towards the corresponding isolines of a given function
@@ -137,6 +170,7 @@ blending : None/string/CoefficientFunction
         self.qn.Update()
         self.v_def.Update()
         self.deform.Update()
+        self.deform_last.Update()
         
         self.lset_ho.Set(levelset)
         self.qn.Set(self.lset_ho.Deriv())
@@ -150,6 +184,7 @@ blending : None/string/CoefficientFunction
             scale=sqrt(self.lset_p1.space.mesh.dim) * specialcf.mesh_size
             blending = self.lset_p1*self.lset_p1*self.lset_p1*self.lset_p1/(scale*scale*scale*scale)
             
+        self.deform_last.vec.data = self.deform.vec
         ProjectShift(self.lset_ho,
                      self.lset_p1,
                      self.deform,
@@ -160,26 +195,65 @@ blending : None/string/CoefficientFunction
                      upper=self.lset_upper_bound,
                      threshold=self.threshold,
                      heapsize=self.heapsize)
+
+        if not dont_project_gfs:
+            self.ProjectGFs()
+
         return self.deform
 
+    def __enter__(self):
+      self.mesh.SetDeformation(self.deform)
+      return self.lset_p1
 
-    # def CalcDistances(self, levelset,  lset_stats):
-    #     """
-    #     Compute largest distance
-    #     """
-    #     CalcDistances(levelset,self.lset_p1,self.deform,lset_stats)
+    def __exit__(self, type, value, tb):
+      self.mesh.UnsetDeformation()
 
-    def CalcMaxDistance(self, levelset, heapsize=None):
+    @TimeFunction
+    def CalcMaxDistance(self, levelset, order=None, heapsize=None, deform=False):
         """
-Compute approximated distance between of the isoparametrically obtained geometry.
-
-See documentation of xfem.CalcMaxDistance 
+Compute approximated distance between of the isoparametrically obtained geometry
+(should be called in deformed state)
         """
-        if (heapsize == None):
-            return CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=self.heapsize)
+        if order == None:
+          order = 2 * self.order_qn
+        if heapsize == None:
+          heapsize = self.heapsize
+        lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order}
+        if self.mesh.deformation or not deform:
+          minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
         else:
-            return CalcMaxDistance(levelset,self.lset_p1,self.deform,heapsize=heapsize)
-        
+          self.mesh.deformation = self.deform
+          minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
+          self.mesh.deformation = None
+        return max(abs(minv),abs(maxv))
+
+    def levelset_domain(self, domain_type = IF):
+        return { "levelset" : self.lset_p1, "domain_type" : domain_type}
+
+    def Integrator(self, SymbolicFI, domain_type, form, definedonelements = None):
+        fi = SymbolicFI(levelset_domain = self.levelset_domain(domain_type), 
+                         form = form, 
+                         deformation=self.deform)
+        if definedonelements != None:
+            fi.SetDefinedOnElements(definedonelements)       
+        return fi
+
+    def LFI(self, domain_type, form, definedonelements = None):
+        return self.Integrator(SymbolicLFI, domain_type, form, definedonelements)
+
+    def BFI(self, domain_type, form, definedonelements = None):
+        return self.Integrator(SymbolicBFI, domain_type, form, definedonelements)
+
+    @TimeFunction
+    def Integrate(self, domain_type, cf, order = 5):
+        self.mesh.SetDeformation(self.deform)
+        fi = Integrate(levelset_domain = self.levelset_domain(domain_type), 
+                       mesh = self.mesh, cf = cf, order = order)
+        self.mesh.UnsetDeformation()
+        return fi
+
+
+    @TimeFunction
     def MarkForRefinement(self, levelset = None, refine_threshold = 0.1, absolute = False):
         """
 Marks elements for refinement where the geometry approximation is larger than a prescrbed relative

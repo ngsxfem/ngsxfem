@@ -413,20 +413,20 @@ namespace xintegration
     
     virtual void SetDistanceThreshold( double a_distance_threshold )
     {  
-      std::cout << " base class is doing nothing " << std::endl;
+      std::cout << IM(3) << " base class is doing nothing " << std::endl;
     }
 
 
     virtual void SetSimplexArrays(Array<Simplex<2>*> & simplex_array_neg,
                                   Array<Simplex<2>*> & simplex_array_pos)
-    { cout << " baseclass: doing nothing" << endl;} 
+    { cout << IM(3) << " baseclass: doing nothing" << endl;} 
     virtual void SetSimplexArrays(Array<Simplex<3>*> & simplex_array_neg,
                                   Array<Simplex<3>*> & simplex_array_pos)
-    { cout << " baseclass: doing nothing" << endl;} 
+    { cout << IM(3) << " baseclass: doing nothing" << endl;} 
     virtual void SetSimplexArrays(Array<Simplex<4>*> & simplex_array_neg,
                                   Array<Simplex<4>*> & simplex_array_pos)
-    { cout << " baseclass: doing nothing" << endl;} 
-    virtual void ClearArrays(){ cout << " baseclass: doing nothing" << endl;}
+    { cout << IM(3) << " baseclass: doing nothing" << endl;} 
+    virtual void ClearArrays(){ cout << IM(3) << " baseclass: doing nothing" << endl;}
 
 
   };
