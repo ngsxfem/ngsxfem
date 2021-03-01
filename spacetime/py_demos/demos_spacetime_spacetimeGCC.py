@@ -79,7 +79,9 @@ tfe_i = GCC3FE(skip_first_nodes=True)  # interior shapes
 tfe_e = GCC3FE(only_first_nodes=True)  # exterior shapes (init. val.)
 tfe_t = ScalarTimeFE(1)                    # test shapes
 # space-time finite element space
-st_fes_i, st_fes_e, st_fes_t = [tfe * fes for tfe in [tfe_i, tfe_e, tfe_t]]
+st_fes_i = SpaceTimeFESpace(fes,tfe_i, flags = {"dgjumps": True})
+st_fes_e = SpaceTimeFESpace(fes,tfe_e, flags = {"dgjumps": True})
+st_fes_t = SpaceTimeFESpace(fes,tfe_t, flags = {"dgjumps": True})
 
 # Space time version of Levelset Mesh Adaptation object. Also offers integrator
 # helper functions that involve the correct mesh deformation
