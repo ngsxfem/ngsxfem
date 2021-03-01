@@ -191,7 +191,7 @@ namespace ngfem
                                      BareSliceVector<> shape) const
       {
          AutoDiff<1> x (ip(0), 0);
-         int begin = skip_first_nodes ? 1 : 0;
+         int begin = skip_first_nodes ? 2 : 0;
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          if (!skip_first_nodes)
@@ -212,7 +212,7 @@ namespace ngfem
                                       BareSliceMatrix<> dshape) const
       {
          AutoDiff<1> x (ip(0), 0);
-         int begin = skip_first_nodes ? 1 : 0;
+         int begin = skip_first_nodes ? 2 : 0;
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          if (!skip_first_nodes)
