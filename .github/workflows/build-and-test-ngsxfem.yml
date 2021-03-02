@@ -1,4 +1,4 @@
-name: test-github-actions
+name: Build, test (and publish release) of ngsxfem
 on: [push]
 jobs:
   configure:
