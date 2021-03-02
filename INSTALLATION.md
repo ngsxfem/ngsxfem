@@ -6,7 +6,8 @@ We provide two (and a half) ways to setup `ngsxfem` on your machine:
 
 # Installation through `pip` (`pip3`)
 
-**TODO**
+We automatically publish a source distribution of the releases/release branch of `ngsxfem` on PyPI for installation via `pip3`. Since this is a source code distribution and not a binary distribution, the installation via `pip` requires the same prerequisites as installing from sources. For details of these, please see below.
+
 ### Releases
 * Linux
 * Mac
@@ -111,9 +112,14 @@ If `NGSolve` was built as a submodule, then after pulling the latest `ngsxfem` s
 
 ### MacOS
 
+#### 1.  Prerequisites
+There are no additional dependencies compared to building `NGSolve` from sources, see [www.ngsolve.org](https://ngsolve.org/docu/latest/install/installmacnative.html).
+
 To build on MacOS you require the Xcode Command Line Tools. These can be installed by calling `xcode-select --install` from within a terminal. Furthermore, CMake must be downloaded and installed. This can be done via [CMake website](https://cmake.org). To use cmake from a terminal, make sure to install the command line tools: Open CMake, in the \"Tools\" menu click on \"How to Install For Command Line Use\" and follow one of the suggested options.
 
-We recommend that you install `NGSolve` this can either be done [from source](https://ngsolve.org/docu/latest/install/installmacnative.html) or by installing the latest [pre-built dmg](https://ngsolve.org/downloads). Make sure that all environment variables have been [set correctly](https://ngsolve.org/docu/latest/install/gettingstarted.html#mac-os-x).
+We recommend that you install `NGSolve`, rather than building both together. This can either be done [from source](https://ngsolve.org/docu/latest/install/installmacnative.html) or by installing the latest [pre-built dmg](https://ngsolve.org/downloads). Make sure that all environment variables have been [set correctly](https://ngsolve.org/docu/latest/install/gettingstarted.html#mac-os-x).
+
+#### 2.  Building `ngsxfem` with pre-installed `NGSolve`
 
 The only difference compared to linux is that CMake needs to be given the location of the NGSolve cmake configuration. This is done by giving the additional flag `-DNGSolve_DIR=INSTLOCATION/Contents/Resources/CMake`. If you have installed NGSolve using the dmg file, then `INSTLOCATION` is `/Applications/Netgen.app`. Once NGSolve is successfully installed, then `ngsxfem` can be build using the following steps:
 
@@ -134,6 +140,8 @@ make
 make install
 ```
 
+#### 3.  Updating `ngsxfem`
+See **5.  Updating `ngsxfem`** for linux above.
 
 
 ## Testing the installation
