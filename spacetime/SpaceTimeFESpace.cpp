@@ -53,7 +53,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     if (ma->GetDimension() < 2)
         throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
 
-    integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
+     integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
 
     if (dimension > 1)
@@ -163,7 +163,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
              return;
            }
            else
+           {
              continue;
+           }
          }
            
          if(abs(time - nodes[i]) < EPS) {
