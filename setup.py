@@ -9,7 +9,7 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
-from utils.ngs_version_util import check_if_ngsolve_newer_than, __ngsolve_required__
+from utils.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
@@ -78,6 +78,6 @@ setup(
                  "xfem.lset_spacetime" : "spacetime",
                  "xfem.mlset" : "python",
                  "xfem.utils" : "utils",
-                 "xfem.ngs_version_util" : "utils"},
+                 "xfem.ngs_check" : "utils"},
     python_requires='>=3.5',
 )

@@ -4,7 +4,6 @@ def check_if_ngsolve_newer_than(ngsolve_version_required):
     """
     Check for compatibiilty of ngsolve version
     """
-    print('hello from check')
     import ngsolve
     import re
     ngsver = [0 for i in range(4)]

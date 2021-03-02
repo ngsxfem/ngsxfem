@@ -114,8 +114,8 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_subdirectory(python)
 add_subdirectory(utils)
+add_subdirectory(python)
 add_subdirectory(cutint)
 add_subdirectory(xfem)
 add_subdirectory(demos)
