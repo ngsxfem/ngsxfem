@@ -161,7 +161,7 @@ dgjumps : bool
   {
     if ((skip_first_nodes||skip_first_node) && (only_first_nodes||only_first_node))
       throw Exception("can't skip and keep first node at the same time.");
-    return make_shared<NodalTimeFE>(order, skip_first_nodes || skip_first_nodes, only_first_nodes || only_first_node);
+    return make_shared<NodalTimeFE>(order, skip_first_nodes || skip_first_node, only_first_nodes || only_first_node);
   }),
   py::arg("order") = 0,
   py::arg("skip_first_nodes") = false,
