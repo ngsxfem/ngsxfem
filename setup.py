@@ -71,13 +71,9 @@ setup(
     url="https://github.com/ngsxfem/ngsxfem",
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=["xfem"], 
-    package_dir={"xfem" : "python",
-                 "xfem.cutmg" : "python",
-                 "xfem.lsetcurv" : "lsetcurving",
-                 "xfem.lset_spacetime" : "spacetime",
-                 "xfem.mlset" : "python",
-                 "xfem.utils" : "utils",
-                 "xfem.ngs_check" : "utils"},
+    packages=["xfem", "xfem.ngs_check"],
+    package_dir={"xfem": "python",
+                 "xfem.ngs_check": "utils/ngs_check"
+                 },
     python_requires='>=3.5',
 )
