@@ -59,7 +59,7 @@ levelset = r - R
 # diffusion coeff
 alpha = 1
 # solution
-u_exact = cos(pi * r / R) * sin(pi * t)
+u_exact = cos(pi * r / R) * (1-cos(pi * t))
 # r.h.s.
 coeff_f = (u_exact.Diff(t)
            - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
@@ -79,9 +79,9 @@ tfe_i = GCC3FE(skip_first_nodes=True)  # interior shapes
 tfe_e = GCC3FE(only_first_nodes=True)  # exterior shapes (init. val.)
 tfe_t = ScalarTimeFE(1)                    # test shapes
 # space-time finite element space
-st_fes_i = SpaceTimeFESpace(fes,tfe_i, flags = {"dgjumps": True})
-st_fes_e = SpaceTimeFESpace(fes,tfe_e, flags = {"dgjumps": True})
-st_fes_t = SpaceTimeFESpace(fes,tfe_t, flags = {"dgjumps": True})
+st_fes_i = tfe_i * fes
+st_fes_e = tfe_e * fes
+st_fes_t = tfe_t * fes
 
 # Space time version of Levelset Mesh Adaptation object. Also offers integrator
 # helper functions that involve the correct mesh deformation
@@ -96,10 +96,9 @@ eps = 2 * max_velocity * delta_t
 gfu_i = GridFunction(st_fes_i)
 gfu_e = GridFunction(st_fes_e)
 
-u_last = CreateTimeRestrictedGF(gfu_e, 0)
+u_last = CreateTimeRestrictedGF(gfu_e)
 
 u_i = st_fes_i.TrialFunction()
-u_e = st_fes_e.TrialFunction()
 v_t = st_fes_t.TestFunction()
 
 scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
@@ -143,6 +142,7 @@ f += -(v_t * InnerProduct(w, grad(gfu_e))) * dQ
 
 # set initial values
 u_last.Set(fix_tref(u_exact, 0))
+gfu_i.vec.FV()[0:fes.ndof] = u_last.vec.FV()
 # project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
 
@@ -150,8 +150,10 @@ lsetadap.ProjectOnUpdate(u_last)
 #ba_plus_hasneg_old.Set()
 
 while tend - told.Get() > delta_t / 2:
-    lsetadap.CalcDeformation(levelset)
-    gfu_e.Set(u_last)
+    #lsetadap.CalcDeformation(levelset)
+    # this only works for undeformed case so far:
+    gfu_e.vec.data = gfu_i.vec #[0:2*fes.ndof]
+    #gfu_e.Set(u_last)
 
     # update markers in (space-time) mesh
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
@@ -178,6 +180,7 @@ while tend - told.Get() > delta_t / 2:
 
     a_i.Assemble()
     f.Assemble()
+    print(Norm(f.vec))
 
     # solve linear system
     gfu_i.vec.data = a_i.mat.Inverse(active_dofs) * f.vec

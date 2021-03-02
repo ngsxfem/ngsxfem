@@ -49,14 +49,15 @@ namespace ngfem
 
     class NodalTimeFE : public ScalarFiniteElement<1>
       {
+      protected:
         int vnums[2];
         int k_t;
-        bool skip_first_node = false;
-        bool only_first_node = false;
+        bool skip_first_nodes = false;
+        bool only_first_nodes = false;
         Array<double> nodes;
 
       public:
-        NodalTimeFE (int order, bool askip_first_node, bool aonly_first_node);
+        NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node = 1);
         virtual ELEMENT_TYPE ElementType() const { return ET_SEGM; }
         void SetVertexNumber (int i, int v) { vnums[i] = v; }
 
@@ -66,21 +67,21 @@ namespace ngfem
         virtual void CalcDShape (const IntegrationPoint & ip,
                                  BareSliceMatrix<> dshape) const;
 
-        bool IsNodeActive(int i) const
+        virtual bool IsNodeActive(int i) const
         {
           if (i<0 || i > k_t+1)
             throw Exception("node outside node range");
-          if (i==0 && skip_first_node) 
+          if (i==0 && skip_first_nodes) 
             return false;
-          else if (i!=0 && only_first_node)
+          else if (i!=0 && only_first_nodes)
             return false;
           else
             return true;
         }
 
         void CalcInterpolationPoints ();
-        Array<double> & GetNodes() { return nodes; }
-        int order_time() const { return k_t; }
+        virtual Array<double> & GetNodes() { return nodes; }
+        virtual int order_time() const { return k_t; }
 
         template <class T>
         T Lagrange_Pol (T x, int i) const
@@ -96,17 +97,10 @@ namespace ngfem
 
       };
 
-    class GCC3FE : public ScalarFiniteElement<1>
+    class GCC3FE : public NodalTimeFE
       {
-        int vnums[2];
-        bool skip_first_nodes = false;
-        bool only_first_nodes = false;
-        Array<double> nodes;
-
       public:
         GCC3FE (bool askip_first_nodes, bool aonly_first_nodes);
-        virtual ELEMENT_TYPE ElementType() const { return ET_SEGM; }
-        void SetVertexNumber (int i, int v) { vnums[i] = v; }
 
         virtual void CalcShape (const IntegrationPoint & ip,
                                 BareSliceVector<> shape) const;
@@ -114,7 +108,7 @@ namespace ngfem
         virtual void CalcDShape (const IntegrationPoint & ip,
                                  BareSliceMatrix<> dshape) const;
 
-        bool IsNodeActive(int i) const
+        virtual bool IsNodeActive(int i) const
         {
           if (i<0 || i > 3+1 /*???*/)
             throw Exception("node outside node range");
@@ -126,21 +120,7 @@ namespace ngfem
             return true;
         }
 
-        void CalcInterpolationPoints ();
-        Array<double> & GetNodes() { return nodes; }
-        int order_time() const { return 3; }
-
-      //   template <class T>
-      //   T Lagrange_Pol (T x, int i) const
-      //   {
-      //      T result  = 1;
-      //      for (int j = 0; j < nodes.Size(); j++) {
-      //          if ( j != i)
-      //               result *= ( x-nodes[j] ) / ( nodes[i] - nodes[j] );
-      //      }
-
-      //      return result;
-      //   }
+        virtual int order_time() const { return 3; }
 
       };
   
