@@ -16,20 +16,20 @@ ngsglobals.msg_level = 1
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
 i = 2
-n_steps = 10 * 2**i
+n_steps = 4*2**i
 space_refs = i
 
 # polynomial order in time
-k_t = 1
+k_t = 3
 # polynomial order in space
-k_s = k_t
+k_s = 3 #k_t
 # polynomial order in time for level set approximation
 lset_order_time = k_t
 # integration order in time
 time_order = 2 * k_t
 # time stepping parameters
 tstart = 0
-tend = 1
+tend = 0.5
 delta_t = (tend - tstart) / n_steps
 maxh = 0.5
 # ghost penalty parameter
@@ -42,7 +42,7 @@ t = told + delta_t * tref
 
 # outer domain:
 rect = SplineGeometry()
-rect.AddRectangle([-0.6, -1], [0.6, 1])
+rect.AddRectangle([-1, -1], [1, 1])
 
 # level set geometry
 # radius of disk (the geometry)
@@ -60,12 +60,12 @@ levelset = r - R
 alpha = 1
 # solution
 #u_exact = cos(pi * r / R) * (1-cos(pi * t))
-u_exact = (1-cos(pi * t))
+u_exact = cos(pi*x)*cos(pi*y)* (1-cos(pi * t))
+#u_exact = (1-cos(pi * t))
 # r.h.s.
-# coeff_f = (u_exact.Diff(t)
-#            - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
-#            + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
-coeff_f = pi*sin(pi*t)
+coeff_f = (u_exact.Diff(t)
+           - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
+           + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
 #coeff_f = 2*t
 
 # ----------------------------------- MAIN ------------------------------------
@@ -80,14 +80,17 @@ fes = H1(mesh, order=k_s, dgjumps=True)
 # time finite elements (nodal!)
 tfe_i = GCC3FE(skip_first_nodes=True)  # interior shapes
 tfe_e = GCC3FE(only_first_nodes=True)  # exterior shapes (init. val.)
-tfe_t = ScalarTimeFE(1)                    # test shapes
+tfe_t = ScalarTimeFE(0)                    # test shapes
 # space-time finite element space
-st_fes_i = SpaceTimeFESpace(fes,tfe_i, flags = {"dgjumps": True})
-st_fes_e = SpaceTimeFESpace(fes,tfe_e, flags = {"dgjumps": True})
-st_fes_t = SpaceTimeFESpace(fes,tfe_t, flags = {"dgjumps": True})
-#st_fes_i = tfe_i * fes
-#st_fes_e = tfe_e * fes
-#st_fes_t = tfe_t * fes
+
+st_fes_i = tfe_i * fes
+st_fes_e = tfe_e * fes
+st_fes_t = tfe_t * fes
+
+fes_t = st_fes_t * fes 
+
+u_i = st_fes_i.TrialFunction()
+v_t, w_t  = fes_t.TestFunction()
 
 # Space time version of Levelset Mesh Adaptation object. Also offers integrator
 # helper functions that involve the correct mesh deformation
@@ -104,8 +107,6 @@ gfu_e = GridFunction(st_fes_e)
 
 u_last = CreateTimeRestrictedGF(gfu_e)
 
-u_i = st_fes_i.TrialFunction()
-v_t = st_fes_t.TestFunction()
 
 #scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
 #               deformation=lsetadap.deformation[TOP])
@@ -138,30 +139,38 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
 def dt(u): return 1 / delta_t * dtref(u)
 
 
-a_i = BilinearForm(trialspace=st_fes_i, testspace=st_fes_t, check_unused=False)
+a_i = BilinearForm(trialspace=st_fes_i, testspace=fes_t, check_unused=False)
 
 a_i += v_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dQ
 a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
 a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
+
+a_i += fix_tref(w_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)),1) * dOmnew
+a_i += fix_tref(alpha * InnerProduct(grad(u_i), grad(w_t)),1) * dOmnew
+a_i += fix_tref(w_t * InnerProduct(w, grad(u_i)),1) * dOmnew
+
+
 #a_i += h**(-2) * (1 + delta_t / h) * gamma * \
 #    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
 
-f = LinearForm(st_fes_t)
+f = LinearForm(fes_t)
 f += coeff_f * v_t* dQ
 f += -v_t * (dt(gfu_e)- dt(lsetadap.deform) * grad(gfu_e)) * dQ
-#f += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
 f += -(v_t * InnerProduct(w, grad(gfu_e))) * dQ
+f += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
 
+f += fix_tref(coeff_f * w_t,1)* dOmnew
+f += fix_tref(-w_t * (dt(gfu_e)- dt(lsetadap.deform) * grad(gfu_e)),1)* dOmnew
+f += fix_tref(-alpha * InnerProduct(grad(gfu_e), grad(w_t)),1)* dOmnew
+f += fix_tref(-w_t * InnerProduct(w, grad(gfu_e)),1)* dOmnew
 
-g = LinearForm(st_fes_t)
-g += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
 
 # set initial values
 u_last.Set(fix_tref(u_exact, 0))
 gfu_i.vec.FV()[0:fes.ndof] = u_last.vec.FV()
 # project u_last at the beginning of each time step
 #lsetadap.ProjectOnUpdate(u_last)
-
+gfu_i.vec[:] = 0
 #ba_plus_hasneg_old, els_test = BitArray(mesh.ne), BitArray(mesh.ne)
 #ba_plus_hasneg_old.Set()
 
@@ -170,7 +179,6 @@ while tend - told.Get() > delta_t / 2:
     # this only works for undeformed case so far:
     gfu_e.vec.data = gfu_i.vec #[0:2*fes.ndof]
     #gfu_e.Set(u_last)
-
     # update markers in (space-time) mesh
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
 
@@ -196,10 +204,6 @@ while tend - told.Get() > delta_t / 2:
 
     a_i.Assemble()
     f.Assemble()
-
-    g.Assemble()
-    #f.vec.data += g.vec
-    print(Norm(g.vec))
 
     # solve linear system
     gfu_i.vec.data = a_i.mat.Inverse(active_dofs) * f.vec
