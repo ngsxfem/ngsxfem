@@ -16,11 +16,11 @@ ngsglobals.msg_level = 1
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
 i = 2
-n_steps = 2**i
+n_steps = 10 * 2**i
 space_refs = i
 
 # polynomial order in time
-k_t = 2
+k_t = 1
 # polynomial order in space
 k_s = k_t
 # polynomial order in time for level set approximation
@@ -29,7 +29,7 @@ lset_order_time = k_t
 time_order = 2 * k_t
 # time stepping parameters
 tstart = 0
-tend = 0.5
+tend = 1
 delta_t = (tend - tstart) / n_steps
 maxh = 0.5
 # ghost penalty parameter
@@ -46,7 +46,7 @@ rect.AddRectangle([-0.6, -1], [0.6, 1])
 
 # level set geometry
 # radius of disk (the geometry)
-R = 0.5
+R = 10.5
 # position shift of the geometry in time
 rho = CoefficientFunction(0.)
 # convection velocity:
@@ -59,11 +59,14 @@ levelset = r - R
 # diffusion coeff
 alpha = 1
 # solution
-u_exact = cos(pi * r / R) * (1-cos(pi * t))
+#u_exact = cos(pi * r / R) * (1-cos(pi * t))
+u_exact = (1-cos(pi * t))
 # r.h.s.
-coeff_f = (u_exact.Diff(t)
-           - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
-           + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
+# coeff_f = (u_exact.Diff(t)
+#            - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
+#            + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
+coeff_f = pi*sin(pi*t)
+#coeff_f = 2*t
 
 # ----------------------------------- MAIN ------------------------------------
 
@@ -79,9 +82,12 @@ tfe_i = GCC3FE(skip_first_nodes=True)  # interior shapes
 tfe_e = GCC3FE(only_first_nodes=True)  # exterior shapes (init. val.)
 tfe_t = ScalarTimeFE(1)                    # test shapes
 # space-time finite element space
-st_fes_i = tfe_i * fes
-st_fes_e = tfe_e * fes
-st_fes_t = tfe_t * fes
+st_fes_i = SpaceTimeFESpace(fes,tfe_i, flags = {"dgjumps": True})
+st_fes_e = SpaceTimeFESpace(fes,tfe_e, flags = {"dgjumps": True})
+st_fes_t = SpaceTimeFESpace(fes,tfe_t, flags = {"dgjumps": True})
+#st_fes_i = tfe_i * fes
+#st_fes_e = tfe_e * fes
+#st_fes_t = tfe_t * fes
 
 # Space time version of Levelset Mesh Adaptation object. Also offers integrator
 # helper functions that involve the correct mesh deformation
@@ -101,7 +107,13 @@ u_last = CreateTimeRestrictedGF(gfu_e)
 u_i = st_fes_i.TrialFunction()
 v_t = st_fes_t.TestFunction()
 
-scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
+#scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
+#               deformation=lsetadap.deformation[TOP])
+# scene0 = DrawDC(lsetadap.levelsetp1[TOP], fix_tref(grad(gfu_i)[0],1), 0, mesh, "du_last",
+#                deformation=lsetadap.deformation[TOP])
+# scene1 = DrawDC(lsetadap.levelsetp1[TOP], fix_tref(grad(gfu_e)[0],0), 0, mesh, "du2_last",
+#                deformation=lsetadap.deformation[TOP])
+scene = DrawDC(lsetadap.levelsetp1[TOP], fix_tref(gfu_i,1), 0, mesh, "u_last",
                deformation=lsetadap.deformation[TOP])
 
 lset_p1_slice = GridFunction(lsetadap.levelsetp1[BOTTOM].space)
@@ -123,7 +135,7 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
                            #deformation=lsetadap.deformation[INTERVAL])
 
 
-def dt(u): return 1.0 / delta_t * dtref(u)
+def dt(u): return 1 / delta_t * dtref(u)
 
 
 a_i = BilinearForm(trialspace=st_fes_i, testspace=st_fes_t, check_unused=False)
@@ -132,25 +144,29 @@ a_i += v_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dQ
 a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
 a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
 #a_i += h**(-2) * (1 + delta_t / h) * gamma * \
-    #(u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
+#    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
 
 f = LinearForm(st_fes_t)
-f += coeff_f * v_t * dQ
-f += -v_t * (dt(gfu_e) - dt(lsetadap.deform) * grad(gfu_e)) * dQ
-f += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
+f += coeff_f * v_t* dQ
+f += -v_t * (dt(gfu_e)- dt(lsetadap.deform) * grad(gfu_e)) * dQ
+#f += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
 f += -(v_t * InnerProduct(w, grad(gfu_e))) * dQ
+
+
+g = LinearForm(st_fes_t)
+g += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
 
 # set initial values
 u_last.Set(fix_tref(u_exact, 0))
 gfu_i.vec.FV()[0:fes.ndof] = u_last.vec.FV()
 # project u_last at the beginning of each time step
-lsetadap.ProjectOnUpdate(u_last)
+#lsetadap.ProjectOnUpdate(u_last)
 
 #ba_plus_hasneg_old, els_test = BitArray(mesh.ne), BitArray(mesh.ne)
 #ba_plus_hasneg_old.Set()
 
 while tend - told.Get() > delta_t / 2:
-    #lsetadap.CalcDeformation(levelset)
+    lsetadap.CalcDeformation(levelset)
     # this only works for undeformed case so far:
     gfu_e.vec.data = gfu_i.vec #[0:2*fes.ndof]
     #gfu_e.Set(u_last)
@@ -180,7 +196,10 @@ while tend - told.Get() > delta_t / 2:
 
     a_i.Assemble()
     f.Assemble()
-    print(Norm(f.vec))
+
+    g.Assemble()
+    #f.vec.data += g.vec
+    print(Norm(g.vec))
 
     # solve linear system
     gfu_i.vec.data = a_i.mat.Inverse(active_dofs) * f.vec
@@ -192,7 +211,7 @@ while tend - told.Get() > delta_t / 2:
 
     # compute error at final time
     l2error = sqrt(
-        Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
+        Integrate((fix_tref(u_exact - gfu_i, 1))**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
