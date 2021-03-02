@@ -47,7 +47,7 @@ Distinct features:
 * multiple level sets
 
 Applications:
-* PDEs on moving domains @Pre18 @Hei20 @Lud20 @LO19 (e.g. two-phase flows, FSI @vWRL20 @vWRFH21) 
+* PDEs on moving domains @Pre18 @Hei20 @Lud20 @LO19 @vWRL20 (e.g. two-phase flows, FSI @vWRFH21 @vWR21) 
 * flows on surfaces @JR19a, @JR19, 
 * interface problems (Stokes @LPWL16 / scalar @LR16, @Leh16)
 * fictitous domains @Leh16a
@@ -98,7 +98,7 @@ To enable integration on such domains `ngsxfem` generates quadrature rules with 
 
 As far as we are aware `ngsxfem` has been used in the following scientific literature:
 
-* *Journal Publications and pre-prints*: @vWRFH21, @OQS21, @BR20, @KNBR20, @AK20, @vWRL20, @KBR20, @LR19, @JR19a, @JR19, @LO19, @HL19, @GLR18, @LR17, @Leh17, @LPWL16, @LR16, @Leh16a, @Leh16
+* *Journal Publications and pre-prints*: @vWRFH21 @vWR21, @OQS21, @BR20, @KNBR20, @AK20, @vWRL20, @KBR20, @LR19, @JR19a, @JR19, @LO19, @HL19, @GLR18, @LR17, @Leh17, @LPWL16, @LR16, @Leh16a, @Leh16
 * *Accompanying source code* @vWRFH20a, @vWRL20a
 * *Thesis* @Hei20, @Lud20, @Hei18, @Rau18, @Pre18,
 
