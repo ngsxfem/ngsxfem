@@ -9,12 +9,15 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+from utils.ngs_version_util import check_if_ngsolve_newer_than, __ngsolve_required__
+
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 class CMakeBuild(build_ext):
     def run(self):
+        assert check_if_ngsolve_newer_than(__ngsolve_required__)
         try:
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
@@ -74,6 +77,7 @@ setup(
                  "xfem.lsetcurv" : "lsetcurving",
                  "xfem.lset_spacetime" : "spacetime",
                  "xfem.mlset" : "python",
-                 "xfem.utils" : "utils"},
+                 "xfem.utils" : "utils",
+                 "xfem.ngs_version_util" : "utils"},
     python_requires='>=3.5',
 )

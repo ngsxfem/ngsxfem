@@ -21,42 +21,7 @@ from ngsolve.comp import ProxyFunction
 from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
 from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
 from xfem.ngsxfem_py import *
-
-__ngsolve_required__ = "6.2.2101-122"
-
-def check_if_ngsolve_newer_than(ngsolve_version_required):
-    """
-    Check for compatibiilty of ngsolve version
-    """
-    import ngsolve
-    import re
-    ngsver = [0 for i in range(4)]
-    res = re.split(r'-', ngsolve.__version__)
-    if len(res) > 1:
-        mmp, ngsver[3], h = res
-    else:
-        mmp = res[0]
-        ngsver[3] = "0"
-    ngsver[0], ngsver[1], ngsver[2] = re.split(re.compile('[.bv]'), mmp)
-
-    ngsver_required = [0 for i in range(4)]
-    mmp, ngsver_required[3] =  re.split(re.compile('[-bv]'), ngsolve_version_required)
-    ngsver_required[0:3] = re.split(re.compile('[.bv]'), mmp)
-
-    for i in range(3):
-        if int(ngsver[i]) < int(ngsver_required[i]):
-            print("""
-####################################################
-                     WARNING!""")
-            print("Your NGSolve-Version (" + ngsolve.__version__+")")
-            print("is older than recommended (>=" + ngsolve_version_required +")",end="")
-            print("""
-####################################################
-""")
-            return False
-        elif int(ngsver[i]) > int(ngsver_required[i]):
-            break
-    return True
+from xfem.ngs_version_util import check_if_ngsolve_newer_than, __ngsolve_required__
 
 check_if_ngsolve_newer_than(__ngsolve_required__)
 
