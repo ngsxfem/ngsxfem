@@ -127,6 +127,8 @@ h = specialcf.mesh_size
 #ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=time_order)
 #ci_slice = CutInfo(mesh)
+ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
+lsetadap.CalcDeformation(levelset)
 
 dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     deformation=lsetadap.deformation[INTERVAL],
@@ -135,7 +137,6 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG)
 #dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            #deformation=lsetadap.deformation[INTERVAL])
 
-lsetadap.CalcDeformation(levelset)
 print("lsetadap.levelsetp1[TOP].vec: ", lsetadap.levelsetp1[TOP].vec)
 print("Integrate( CoefficientFunction(1.) * dOmnew, mesh): ", Integrate( CoefficientFunction(1.) * dOmnew, mesh))
 
