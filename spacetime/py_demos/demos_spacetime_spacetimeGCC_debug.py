@@ -145,11 +145,12 @@ def dt(u): return 1. / delta_t * dtref(u)
 
 a_i = BilinearForm(trialspace=st_fes_i, testspace=fes_t, check_unused=False)
 
-#a_i += (v_t * (dt(u_i))) * dQ
+a_i += (v_t * (dt(u_i))) * dQ
 #a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
 #a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
 
-a_i +=  (w_t * fix_tref(u_i, 1)) * dOmnew
+a_i +=  (w_t * fix_t_proxy(dtref(u_i), 1)) * dOmnew
+#a_i +=  (w_t * fix_t(1.*dtref(u_i), 1)) * dOmnew
 #a_i += fix_tref(alpha * InnerProduct(grad(u_i), grad(w_t)),1) * dOmnew
 #a_i += fix_tref(w_t * InnerProduct(w, grad(u_i)),1) * dOmnew
 
