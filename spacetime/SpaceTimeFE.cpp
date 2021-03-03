@@ -229,6 +229,12 @@ namespace ngfem
            dshape(cnt++,0) = (x*x*(x-1)).DValue(0);
          }
       }
+      
+      void GCC3FE :: CalcInterpolationPoints ()
+      {
+         nodes.SetSize(4);
+        nodes[0] = 0.0; nodes[1] = 0.0; nodes[2] = 1.0; nodes[3] = 1.0;
+      }
 
   
       template class SpaceTimeFE<2>;

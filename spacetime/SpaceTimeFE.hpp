@@ -79,7 +79,7 @@ namespace ngfem
             return true;
         }
 
-        void CalcInterpolationPoints ();
+        virtual void CalcInterpolationPoints ();
         virtual Array<double> & GetNodes() { return nodes; }
         virtual int order_time() const { return k_t; }
 
@@ -121,6 +121,7 @@ namespace ngfem
         }
 
         virtual int order_time() const { return 3; }
+        virtual void CalcInterpolationPoints ();
 
       };
   
