@@ -19,17 +19,19 @@ def check_if_ngsolve_newer_than(ngsolve_version_required):
     mmp, ngsver_required[3] =  re.split(re.compile('[-bv]'), ngsolve_version_required)
     ngsver_required[0:3] = re.split(re.compile('[.bv]'), mmp)
 
+    ret = True
     for i in range(3):
         if int(ngsver[i]) < int(ngsver_required[i]):
+            ret = False
             print("""
 ####################################################
                      WARNING!""")
             print("Your NGSolve-Version (" + ngsolve.__version__+")")
-            print("is older than recommended (>=" + ngsolve_version_required +")",end="")
+            print("is older than required (>=" + ngsolve_version_required +").",end="")
             print("""
 ####################################################
 """)
             return False
         elif int(ngsver[i]) > int(ngsver_required[i]):
             break
-    return True
+    return ret
