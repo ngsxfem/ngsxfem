@@ -165,10 +165,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
            else
            {
              continue;
-<<<<<<< HEAD
-=======
            }
->>>>>>> 99b339c (ngsolve compatibility (SetDimensions))
          }
            
          if(abs(time - nodes[i]) < EPS) {
