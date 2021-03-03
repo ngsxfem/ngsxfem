@@ -132,26 +132,26 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     deformation=lsetadap.deformation[INTERVAL],
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
-              deformation=lsetadap.deformation[TOP],
               definedonelements=ci.GetElementsOfType(HASNEG))
 #dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            #deformation=lsetadap.deformation[INTERVAL])
 
-print("Integrate( CoefficientFunction(1.) * dOmnew, mesh): ", Integrate( CoefficientFunction(1.) * dOmnew, mesh))
+lsetadap.CalcDeformation(levelset)
+print("lsetadap.levelsetp1[TOP].vec: ", lsetadap.levelsetp1[TOP].vec)
+print("Integrate( CoefficientFunction(1.) * dOmnew, mesh): ", Integrate( CoefficientFunction(1.) * dx, mesh))
 
 def dt(u): return 1. / delta_t * dtref(u)
 
 
 a_i = BilinearForm(trialspace=st_fes_i, testspace=fes_t, check_unused=False)
 
-#a_i += v_t * (dt(u_i)) * dQ
+#a_i += (v_t * (dt(u_i))) * dQ
 #a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
 #a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
 
-a_i +=  (0*w_t + 1) * dOmnew
+a_i +=  (w_t * fix_tref(dt(u_i), 1)) * dOmnew
 #a_i += fix_tref(alpha * InnerProduct(grad(u_i), grad(w_t)),1) * dOmnew
 #a_i += fix_tref(w_t * InnerProduct(w, grad(u_i)),1) * dOmnew
-
 
 #a_i += h**(-2) * (1 + delta_t / h) * gamma * \
 #    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
