@@ -138,7 +138,7 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
 
 lsetadap.CalcDeformation(levelset)
 print("lsetadap.levelsetp1[TOP].vec: ", lsetadap.levelsetp1[TOP].vec)
-print("Integrate( CoefficientFunction(1.) * dOmnew, mesh): ", Integrate( CoefficientFunction(1.) * dx, mesh))
+print("Integrate( CoefficientFunction(1.) * dOmnew, mesh): ", Integrate( CoefficientFunction(1.) * dOmnew, mesh))
 
 def dt(u): return 1. / delta_t * dtref(u)
 
