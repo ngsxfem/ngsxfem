@@ -76,7 +76,7 @@ else(BUILD_NGSOLVE)
   )
 
 
-  execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/utils/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
+  execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/python/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
   if (CHECK_NGSOLVE_VERSION)
     if (NOT ${ngsfits} EQUAL 1)
       message(FATAL_ERROR "
@@ -128,8 +128,8 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_subdirectory(utils)
 add_subdirectory(python)
+add_subdirectory(utils)
 add_subdirectory(cutint)
 add_subdirectory(xfem)
 add_subdirectory(demos)

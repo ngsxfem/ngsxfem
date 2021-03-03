@@ -42,7 +42,7 @@ if(NETGEN_USE_PYTHON)
     # target_link_libraries(ngsxfem_py ngsxfem_lsetcurving ngsxfem_utils ngsxfem_cutint ngsxfem_xfem ngsxfem_spacetime)
 
     install (FILES
-        __init__.py cutmg.py mlset.py lset_spacetime.py lsetcurv.py utils.py
+        __init__.py cutmg.py mlset.py lset_spacetime.py lsetcurv.py utils.py ngs_check.py
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
     )

@@ -9,7 +9,6 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
-from utils.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
@@ -17,7 +16,6 @@ class CMakeExtension(Extension):
         self.sourcedir = os.path.abspath(sourcedir)
 class CMakeBuild(build_ext):
     def run(self):
-        assert check_if_ngsolve_newer_than(__ngsolve_required__)
         try:
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
@@ -71,9 +69,7 @@ setup(
     url="https://github.com/ngsxfem/ngsxfem",
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=["xfem", "xfem.ngs_check"],
-    package_dir={"xfem": "python",
-                 "xfem.ngs_check": "utils/ngs_check"
-                 },
+    packages=["xfem"],
+    package_dir={"xfem": "python"},
     python_requires='>=3.5',
 )

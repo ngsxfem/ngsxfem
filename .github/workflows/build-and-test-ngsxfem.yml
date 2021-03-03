@@ -24,6 +24,7 @@ jobs:
           mkdir install    
           cd build
           cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+          make -j2
           make install
       - name: Chache build results
         uses: actions/cache@v2
