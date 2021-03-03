@@ -149,7 +149,7 @@ a_i = BilinearForm(trialspace=st_fes_i, testspace=fes_t, check_unused=False)
 #a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
 #a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
 
-a_i +=  (w_t * fix_tref( 1.*u_i, 1)) * dOmnew
+a_i +=  (w_t * fix_tref(u_i, 1)) * dOmnew
 #a_i += fix_tref(alpha * InnerProduct(grad(u_i), grad(w_t)),1) * dOmnew
 #a_i += fix_tref(w_t * InnerProduct(w, grad(u_i)),1) * dOmnew
 
