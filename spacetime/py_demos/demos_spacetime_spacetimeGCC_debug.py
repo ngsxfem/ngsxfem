@@ -131,8 +131,7 @@ ci = CutInfo(mesh, time_order=time_order)
 dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     deformation=lsetadap.deformation[INTERVAL],
                     definedonelements=ci.GetElementsOfType(HASNEG))
-dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
-              definedonelements=ci.GetElementsOfType(HASNEG))
+dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG)
 #dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            #deformation=lsetadap.deformation[INTERVAL])
 
