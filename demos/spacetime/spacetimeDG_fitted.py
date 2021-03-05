@@ -65,6 +65,8 @@ u_last = CreateTimeRestrictedGF(gfu, 1)
 u, v = st_fes.TnT()
 
 dxt = delta_t * dxtref(mesh, time_order=2)
+dxold = dmesh(mesh, tref=0)
+dxnew = dmesh(mesh, tref=1)
 
 
 def dt(u): return 1.0 / delta_t * dtref(u)
@@ -72,13 +74,13 @@ def dt(u): return 1.0 / delta_t * dtref(u)
 
 a = BilinearForm(st_fes, symmetric=False)
 a += grad(u) * grad(v) * dxt
-a += fix_tref(u, 0) * fix_tref(v, 0) * dx
+a += u * v * dxold
 a += dt(u) * v * dxt
 a.Assemble()
 
 f = LinearForm(st_fes)
 f += coeff_f * v * dxt
-f += u_last * fix_tref(v, 0) * dx
+f += u_last * v * dxold
 
 u_last.Set(fix_tref(u_exact, 0))
 Draw(u_last, mesh, "u")
@@ -87,7 +89,7 @@ while tend - told.Get() > delta_t / 2:
     f.Assemble()
     gfu.vec.data = a.mat.Inverse(st_fes.FreeDofs(), "umfpack") * f.vec
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
-    l2error = sqrt(Integrate((fix_tref(u_exact, 1) - u_last) ** 2, mesh))
+    l2error = sqrt(Integrate((u_exact-gfu) ** 2*dxnew, mesh))
     Redraw()
     told.Set(told.Get() + delta_t)
     print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))

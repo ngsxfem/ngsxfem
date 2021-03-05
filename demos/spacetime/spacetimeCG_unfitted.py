@@ -148,7 +148,7 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
-              definedonelements=ci.GetElementsOfType(HASNEG))
+              definedonelements=ci.GetElementsOfType(HASNEG), tref=1)
 dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
 
@@ -219,7 +219,7 @@ while tend - told.Get() > delta_t / 2:
 
     # compute error at final time
     l2error = sqrt(
-        Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
+        Integrate((u_exact - u_last)**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
