@@ -533,18 +533,29 @@ reference time that is fixed.
     if not isinstance(time, Parameter):
       if isinstance(obj,GridFunction) or isinstance(obj,ProxyFunction):
         if time == 0:
-          return obj.Operator("fix_t_bottom")
+          return obj.Operator("fix_tref_bottom")
         elif time == 1: 
-          return obj.Operator("fix_t_top")
+          return obj.Operator("fix_tref_top")
         elif isinstance(obj,GridFunction):
-          return fix_t_gf(obj,time,*args,**kwargs)
+          return fix_tref_gf(obj,time,*args,**kwargs)
       elif isinstance(obj,ProxyFunction):
-        return fix_t_proxy(obj,time,*args,**kwargs)
+        return fix_tref_proxy(obj,time,*args,**kwargs)
 
     if isinstance(obj,CoefficientFunction):
-      return fix_t_coef(obj,time,*args,**kwargs)
+      return fix_tref_coef(obj,time,*args,**kwargs)
     else:
       raise Exception("obj is not a CoefficientFunction")
+
+def fix_t_coef(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_coef is deprecated. Use \"fix_tref_coef\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_coef(obj,time,*args,**kwargs)
+def fix_t_gf(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_gf is deprecated. Use \"fix_tref_gf\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_gf(obj,time,*args,**kwargs)
+def fix_t_proxy(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_proxy is deprecated. Use \"fix_tref_proxy\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_proxy(obj,time,*args,**kwargs)
+
 
 def fix_t(obj,time,*args,**kwargs):
   """
