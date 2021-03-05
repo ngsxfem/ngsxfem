@@ -15,7 +15,7 @@ xfem.utils ... some example level set geometries
 
 
 from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
-                     GridFunction, H1, IfPos, LinearForm, Parameter)
+                     GridFunction, H1, IfPos, LinearForm, Parameter, dx)
 from ngsolve.comp import Integrate as ngsolve_Integrate
 from ngsolve.comp import ProxyFunction
 from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
@@ -778,6 +778,9 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         Order in time that is used in the space-time integration.
         Default: time_order=-1 means that no space-time rule will be
         applied. This is only relevant for space-time discretizations.
+    tref : float
+        turns a spatial integral resulting in spatial integration rules
+        into a space-time quadrature rule with fixed reference time tref
     levelset_domain : dict
         description of integration domain through a dictionary 
         (deprecated).
@@ -796,6 +799,9 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         lsetdom["subdivlvl"] = subdivlvl
     if time_order > -1 and "time_order" not in lsetdom.keys():
         lsetdom["time_order"] = time_order
+    if "tref" in kwargs:
+        lsetdom["tref"] = kwargs["tref"]
+        del kwargs["tref"]
 
     return _dCut_raw(lsetdom, **kwargs)
 
@@ -846,6 +852,49 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
         lsetdom["time_order"] = time_order
 
     return _dCut_raw(lsetdom, **kwargs)
+
+def dmesh(mesh=None,*args,**kwargs):
+    """
+    Differential symbol for the integration over all elements in the mesh.
+
+    Parameters
+    ----------
+    mesh : ngsolve.Mesh
+        The spatial mesh.
+        The domain type of interest.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    tref : float
+        turns a spatial integral resulting in spatial integration rules
+        into a space-time quadrature rule with fixed reference time tref
+
+    Return
+    ------
+        CutDifferentialSymbol(VOL)
+    """
+    if "tref" in kwargs:
+        if mesh == None:
+            raise Exception("dx(..,tref..) needs mesh")
+        gflset = GridFunction(H1(mesh))
+        gflset.vec[:] = 1
+        lsetdom = {"levelset": gflset, "domain_type": POS, "tref" : kwargs["tref"]}
+        del kwargs["tref"]
+        return _dCut_raw(lsetdom, **kwargs)
+    else:
+        return dx(*args,**kwargs)
 
 # some global scope manipulations (monkey patches etc..):
 

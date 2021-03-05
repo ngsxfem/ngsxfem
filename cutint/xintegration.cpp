@@ -19,6 +19,8 @@ namespace xintegration
     ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     if (lsetintdom.IsMultiLevelsetDomain())
     {
+      if (lsetintdom.HasReferenceTime())
+        throw Exception("No tref-fixing for mlset yet.");
       return CreateMultiLevelsetCutIntegrationRule(lsetintdom, trafo, lh);
     }
     else
@@ -38,6 +40,8 @@ namespace xintegration
         FlatVector<> elvec(dnums.Size(),lh);
         gflset->GetVector().GetIndirect(dnums,elvec);
         if (time_intorder >= 0) {
+          if (lsetintdom.HasReferenceTime())
+            throw Exception("space-time quadrature rule shall not have a fixed reference time.");
           FESpace* raw_FE = (gflset->GetFESpace()).get();
           SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
           ScalarFiniteElement<1>* fe_time = nullptr;
@@ -56,16 +60,37 @@ namespace xintegration
           return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
         } else {
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
-          if(ir != nullptr) {
-            Array<double> wei_arr (ir->Size());
-            for(int i=0; i< ir->Size(); i++) wei_arr [i] = (*ir)[i].Weight();
-            return make_tuple(ir, wei_arr);
+          if (ir != nullptr) 
+          {
+            if (lsetintdom.HasReferenceTime())
+            {
+              IntegrationRule * ir2 = new(lh) IntegrationRule(ir->Size(),lh);
+              Array<double> wei_arr (ir->Size());
+              for (int i = 0; i < ir->Size(); i ++)
+              for(int i=0; i< ir->Size(); i++)
+              { 
+                wei_arr [i] = (*ir)[i].Weight();
+                (*ir2)[i] = (*ir)[i];
+                (*ir2)[i].SetWeight(lsetintdom.ReferenceTime());
+                MarkAsSpaceTimeIntegrationPoint((*ir2)[i]);                
+              }
+              return make_tuple(ir2, wei_arr);
+            }
+            else 
+            {
+              Array<double> wei_arr (ir->Size());
+              for(int i=0; i< ir->Size(); i++) 
+                wei_arr [i] = (*ir)[i].Weight();
+              return make_tuple(ir, wei_arr);
+            }
           }
           else return make_tuple(nullptr, Array<double>());
         }
       }
       else if (cflset != nullptr)
       {
+        if (lsetintdom.HasReferenceTime())
+          throw Exception("No tref-fixing for old quadrature rules (yet).");
         if (time_intorder < 0) {
           const IntegrationRule * ir = CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
           if(ir != nullptr) {
