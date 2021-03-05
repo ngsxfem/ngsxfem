@@ -15,7 +15,7 @@ namespace ngcomp
         evaluator[vb] = make_shared<RestrictedDifferentialOperator>(space->GetEvaluator(vb));
       if (space->GetFluxEvaluator(vb))
         flux_evaluator[vb] = make_shared<RestrictedDifferentialOperator>(space->GetFluxEvaluator(vb));
-      integrator[vb] = space->GetIntegrator(vb);
+      integrator[vb] = FESpace::GetIntegrator(vb);
     }
 
   }
@@ -52,7 +52,7 @@ namespace ngcomp
 
   FiniteElement & RestrictedFESpace::GetFE (ElementId ei, Allocator & lh) const
   {
-    if (!active_els || active_els->Test(ei.Nr()))
+    if ((ei.VB() != VOL) || (!active_els || active_els->Test(ei.Nr())))
       return space->GetFE(ei,lh);
     else
       return SwitchET(ma->GetElType(ei), [&lh] (auto type) -> FiniteElement&
@@ -61,7 +61,7 @@ namespace ngcomp
 
   void RestrictedFESpace::GetDofNrs (ElementId ei, Array<DofId> & dnums) const
   {
-    if (!active_els || active_els->Test(ei.Nr()))
+    if ((ei.VB() != VOL) || (!active_els || active_els->Test(ei.Nr())))
     {
       space->GetDofNrs(ei,dnums);
       WrapDofs(dnums);
@@ -74,8 +74,11 @@ namespace ngcomp
 
   void RestrictedFESpace::GetElementDofsOfType (ElementId ei, Array<DofId> & dnums, COUPLING_TYPE ctype) const
   {
-    if (!active_els || active_els->Test(ei.Nr()))
+    if ((ei.VB() != VOL) || (!active_els || active_els->Test(ei.Nr())))
+    {
       space->GetElementDofsOfType(ei,dnums,ctype);
+      WrapDofs(dnums);
+    }
     else  
       dnums.SetSize(0);
   }
