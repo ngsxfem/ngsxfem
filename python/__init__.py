@@ -15,12 +15,15 @@ xfem.utils ... some example level set geometries
 
 
 from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
-                     GridFunction, H1, IfPos, LinearForm, Parameter)
+                     GridFunction, H1, IfPos, LinearForm, Parameter, dx)
 from ngsolve.comp import Integrate as ngsolve_Integrate
 from ngsolve.comp import ProxyFunction
 from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
 from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
 from xfem.ngsxfem_py import *
+from xfem.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
+
+check_if_ngsolve_newer_than(__ngsolve_required__)
 
 def HAS(domain_type):
     """
@@ -493,12 +496,19 @@ all_combined_domain_types = [ COMBINED_DOMAIN_TYPE.NO,
                               COMBINED_DOMAIN_TYPE.ANY ]            
 
 def SpaceTimeWeakSet(gfu_e, cf, space_fes):
+    """
+Ondocumented feature
+    """
     gfu_e_repl = GridFunction(space_fes)
     gfu_e_repl.Set( cf )
     gfu_e.vec[:].data = gfu_e_repl.vec
 
 ngsolveSet = GridFunction.Set
 def SpaceTimeSet(self, cf, *args, **kwargs):
+    """
+Overrides the NGSolve version of Set in case of a space-time FESpace.
+In this case the usual Set() is used on each nodal dof in time.
+    """
     if (isinstance(self.space,CSpaceTimeFESpace)):
       cf = CoefficientFunction(cf)
       gfs = GridFunction(self.space.spaceFES)
@@ -513,21 +523,39 @@ def SpaceTimeSet(self, cf, *args, **kwargs):
       ngsolveSet(self,cf, *args, **kwargs)
 
 def fix_tref(obj,time,*args,**kwargs):
+    """
+Takes a (possibly space-time) CoefficientFunction and fixes the temporal
+variable to `time` and return this as a new CoefficientFunction.
+Note that all operations are done on the unit interval it is the 
+reference time that is fixed. 
+    """
+
     if not isinstance(time, Parameter):
       if isinstance(obj,GridFunction) or isinstance(obj,ProxyFunction):
         if time == 0:
-          return obj.Operator("fix_t_bottom")
+          return obj.Operator("fix_tref_bottom")
         elif time == 1: 
-          return obj.Operator("fix_t_top")
+          return obj.Operator("fix_tref_top")
         elif isinstance(obj,GridFunction):
-          return fix_t_gf(obj,time,*args,**kwargs)
+          return fix_tref_gf(obj,time,*args,**kwargs)
       elif isinstance(obj,ProxyFunction):
-        return fix_t_proxy(obj,time,*args,**kwargs)
+        return fix_tref_proxy(obj,time,*args,**kwargs)
 
     if isinstance(obj,CoefficientFunction):
-      return fix_t_coef(obj,time,*args,**kwargs)
+      return fix_tref_coef(obj,time,*args,**kwargs)
     else:
       raise Exception("obj is not a CoefficientFunction")
+
+def fix_t_coef(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_coef is deprecated. Use \"fix_tref_coef\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_coef(obj,time,*args,**kwargs)
+def fix_t_gf(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_gf is deprecated. Use \"fix_tref_gf\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_gf(obj,time,*args,**kwargs)
+def fix_t_proxy(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_proxy is deprecated. Use \"fix_tref_proxy\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_proxy(obj,time,*args,**kwargs)
+
 
 def fix_t(obj,time,*args,**kwargs):
   """
@@ -602,18 +630,26 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
     return ret
 
 class NoDeformation:
-    lsetp1 = None
-    def __init__(self,mesh = None, levelset=None):
-        self.deform = None
+    """
+Dummy deformation class. Does nothing to the mesh. Has two dummy members:
+  * lset_p1 : ngsolve.GridFunction
+    The piecewise linear level set function 
+  * deform : ngsolve.GridFunction
+    A zero GridFunction (for compatibility with netgen Draw(... deformation=)) 
+    """
+
+    def __init__(self, mesh=None, levelset=None):
+        self.deform = GridFunction(H1(mesh, order=1, dim=mesh.dim), "dummy_deform")
+        self.deform.vec.data[:] = 0.0
         if levelset != None:
             if mesh == None:
-                raise Exception("need mesh");
-            self.lsetp1 = GridFunction(H1(mesh))
-            InterpolateToP1(levelset,self.lsetp1)
+                raise Exception("need mesh")
+            self.lset_p1 = GridFunction(H1(mesh, order=1))
+            InterpolateToP1(levelset, self.lset_p1)
 
-        pass
     def __enter__(self):
-        return self.lsetp1
+        return self.lset_p1
+
     def __exit__(self, type, value, tb):
         pass
 
@@ -633,6 +669,20 @@ try:
                                                     continuous_update=True,
                                                     min=0,max=1,step=.025))
     def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
+        """
+Draw a (reference) time-dependent function that is discontinuous across an 
+interface described by a level set function. Change reference time through
+widget slider.
+
+        Args:
+            cf1 (CoefficientFunction): level set function
+            cf2 (CoefficientFunction): function to draw where lset is negative
+            cf3 (CoefficientFunction): function to draw where lset is positive
+            mesh (Mesh): Mesh
+
+        Returns:
+            widget element that allows to vary the reference time. 
+        """
         DrawDC = MakeDiscontinuousDraw(Draw)
         if not isinstance(cf1,CoefficientFunction):
             cf1=CoefficientFunction(cf1)
@@ -728,6 +778,9 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         Order in time that is used in the space-time integration.
         Default: time_order=-1 means that no space-time rule will be
         applied. This is only relevant for space-time discretizations.
+    tref : float
+        turns a spatial integral resulting in spatial integration rules
+        into a space-time quadrature rule with fixed reference time tref
     levelset_domain : dict
         description of integration domain through a dictionary 
         (deprecated).
@@ -746,6 +799,9 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         lsetdom["subdivlvl"] = subdivlvl
     if time_order > -1 and "time_order" not in lsetdom.keys():
         lsetdom["time_order"] = time_order
+    if "tref" in kwargs:
+        lsetdom["tref"] = kwargs["tref"]
+        del kwargs["tref"]
 
     return _dCut_raw(lsetdom, **kwargs)
 
@@ -796,6 +852,49 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
         lsetdom["time_order"] = time_order
 
     return _dCut_raw(lsetdom, **kwargs)
+
+def dmesh(mesh=None,*args,**kwargs):
+    """
+    Differential symbol for the integration over all elements in the mesh.
+
+    Parameters
+    ----------
+    mesh : ngsolve.Mesh
+        The spatial mesh.
+        The domain type of interest.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    tref : float
+        turns a spatial integral resulting in spatial integration rules
+        into a space-time quadrature rule with fixed reference time tref
+
+    Return
+    ------
+        CutDifferentialSymbol(VOL)
+    """
+    if "tref" in kwargs:
+        if mesh == None:
+            raise Exception("dx(..,tref..) needs mesh")
+        gflset = GridFunction(H1(mesh))
+        gflset.vec[:] = 1
+        lsetdom = {"levelset": gflset, "domain_type": POS, "tref" : kwargs["tref"]}
+        del kwargs["tref"]
+        return _dCut_raw(lsetdom, **kwargs)
+    else:
+        return dx(*args,**kwargs)
 
 # some global scope manipulations (monkey patches etc..):
 

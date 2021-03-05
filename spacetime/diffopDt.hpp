@@ -73,8 +73,7 @@ template<int SpaceD>
     DiffOpFixAnyTime(double atime)
       : DifferentialOperator(DIM_DMAT, 1, VorB(int(DIM_SPACE)-int(DIM_ELEMENT)), DIFFORDER)
     {
-      //dimensions = DIFFOP::GetDimensions();
-      dimensions = Array<int> ( { DIM_DMAT } );
+      SetDimensions(Array<int> ( { DIM_DMAT } ));
       time = atime;
     }
     /*

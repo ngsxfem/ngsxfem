@@ -259,7 +259,7 @@ ngsxfem.__init__ defines tref.
 
    // DiffOpFixt
 
-  m.def("fix_t_proxy", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
+  m.def("fix_tref_proxy", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
   {
     Array<int> comparr(0);
     if (py::extract<int> (comp).check())
@@ -324,7 +324,7 @@ ngsxfem.__init__ defines tref.
           py::arg("use_FixAnyTime") = false
           );
 
-  m.def("fix_t_coef", [](PyCF self, py::object time) -> PyCF
+  m.def("fix_tref_coef", [](PyCF self, py::object time) -> PyCF
   {
     shared_ptr<ParameterCoefficientFunction<double>> t = nullptr;
     auto t1 = py::extract<shared_ptr<ParameterCoefficientFunction<double>>> (time);
@@ -356,7 +356,7 @@ time: Parameter or double
 )raw_string")
      );
      
-   m.def("fix_t_gf", [](PyGF self, double time) -> PyCF
+   m.def("fix_tref_gf", [](PyGF self, double time) -> PyCF
    {
      shared_ptr<DifferentialOperator> diffopfixt;
      const int SpaceD = self->GetFESpace()->GetSpatialDimension();

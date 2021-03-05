@@ -6,6 +6,9 @@ else(APPLE)
     add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
 endif(APPLE)
 
+add_test(NAME pytests_ngsolve_version COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_ngsolve_version.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 add_test(NAME py_demo_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/tracefem.py" "testmode")
 
@@ -13,13 +16,19 @@ add_test(NAME py_demo_stokescutfem COMMAND ${NETGEN_PYTHON_EXECUTABLE}
   "${PROJECT_SOURCE_DIR}/demos/stokescutfem.py" "testmode")
 
 add_test(NAME py_demo_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/demos/fictdom_ghostpen.py" "testmode")
+  "${PROJECT_SOURCE_DIR}/demos/fictdom.py" "testmode")
 
 add_test(NAME py_demo_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/demos/fictdom_dg_ghostpen.py" "testmode")
+  "${PROJECT_SOURCE_DIR}/demos/fictdom_dg.py" "testmode")
+
+add_test(NAME py_demo_fictdom_mlset COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/fictdom_mlset.py" "testmode")
 
 add_test(NAME py_demo_unfitted_poisson COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/demos/unfitted_poisson.py" "testmode")
+  "${PROJECT_SOURCE_DIR}/demos/unf_interf_prob.py" "testmode")
+
+add_test(NAME py_demo_spacetime_unfitted_DG COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/spacetime/spacetimeDG_unfitted.py" "testmode")
 
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")

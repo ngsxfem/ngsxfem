@@ -261,8 +261,27 @@ heapsize : int
 )raw_string"));
 
 
-  py::class_<CutDifferentialSymbol,DifferentialSymbol>(m, "CutDifferentialSymbol")
-    .def(py::init<VorB>())
+  py::class_<CutDifferentialSymbol,DifferentialSymbol>(m, "CutDifferentialSymbol",
+docu_string(R"raw_string(
+CutDifferentialSymbol that allows to formulate linear, bilinear forms and integrals on
+level set domains in an intuitive form:
+
+Example use case:
+
+  dCut = CutDifferentialSymbol(VOL)
+  dx = dCut(lset,NEG)
+  a = BilinearForm(...)
+  a += u * v * dx
+
+Note that the most important options are set in the second line when the basic
+CutDifferentialSymbol is further specified.
+)raw_string")  
+  )
+    .def(py::init<VorB>(), docu_string(R"raw_string(
+Constructor of CutDifferentialSymbol.
+
+  Argument: VOL_or_BND (boundary or volume form?).
+)raw_string"))
     .def("__call__", [](CutDifferentialSymbol & self,
                         py::dict lsetdom,
                         optional<variant<Region,string>> definedon,
@@ -294,7 +313,24 @@ heapsize : int
          py::arg("element_vb")=VOL,
          py::arg("skeleton")=false,
          py::arg("deformation")=nullptr,
-         py::arg("definedonelements")=nullptr)
+         py::arg("definedonelements")=nullptr,
+docu_string(R"raw_string(
+The call of a CutDifferentialSymbol allows to specify what is needed to specify the 
+integration domain. It returns a new CutDifferentialSymbol.
+
+Parameters:
+
+levelset_domain (dict) : specifies the level set domain.
+definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
+  the current form shall be defined.
+element_boundary (bool) : Does the integral take place on the boundary of an element-
+element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
+  of an element.
+skeleton (bool) : is it an integral on facets (the skeleton)?
+deformation (GridFunction) : which mesh deformation shall be applied (default : None)
+definedonelements (BitArray) : Set of elements or facets where the integral shall be
+  defined.
+)raw_string"))
     .def("__rmul__", [](CutDifferentialSymbol & self, double x)
     {
       return CutDifferentialSymbol(self, x );
@@ -308,8 +344,23 @@ heapsize : int
     py::arg("order"))
     ;
     
-  py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol")
-    .def(py::init<VorB>())
+  py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol",
+docu_string(R"raw_string(
+FacetPatchDifferentialSymbol that allows to formulate integrals on facet patches.
+Example use case:
+
+  dFacetPatch = FacetPatchDifferentialSymbol(VOL)
+  dw = dFacetPatch(definedonelements = ...)
+  a = BilinearForm(...)
+  a += (u-u.Other()) * (v-v.Other()) * dw
+
+)raw_string")  
+  )
+    .def(py::init<VorB>(), docu_string(R"raw_string(
+Constructor of FacetPatchDifferentialSymbol.
+
+  Argument: VOL_or_BND (boundary or volume form?).
+)raw_string"))
     .def("__call__", [](FacetPatchDifferentialSymbol & self,
                         optional<variant<Region,string>> definedon,
                         bool element_boundary,
@@ -340,8 +391,26 @@ heapsize : int
          py::arg("skeleton")=false,
          py::arg("deformation")=nullptr,
          py::arg("definedonelements")=nullptr,
-         py::arg("time_order")=-1
-         )
+         py::arg("time_order")=-1,
+docu_string(R"raw_string(
+The call of a FacetPatchDifferentialSymbol allows to specify what is needed to specify the 
+integration domain of an integral that runs over the volume patch of each facet. 
+It returns a new CutDifferentialSymbol.
+
+Parameters:
+
+definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
+  the current form shall be defined.
+element_boundary (bool) : Does the integral take place on the boundary of an element-
+element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
+  of an element.
+skeleton (bool) : is it an integral on facets (the skeleton)?
+deformation (GridFunction) : which mesh deformation shall be applied (default : None)
+definedonelements (BitArray) : Set of elements or facets where the integral shall be
+  defined.
+time_order (int) : integration order in time (for space-time) (default : -1).
+)raw_string"         
+         ))
     .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)
     {
       return FacetPatchDifferentialSymbol(self, x );

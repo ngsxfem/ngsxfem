@@ -9,6 +9,7 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -68,12 +69,7 @@ setup(
     url="https://github.com/ngsxfem/ngsxfem",
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=["xfem"], 
-    package_dir={"xfem" : "python",
-                 "xfem.cutmg" : "python",
-                 "xfem.lsetcurv" : "lsetcurving",
-                 "xfem.lset_spacetime" : "spacetime",
-                 "xfem.mlset" : "python",
-                 "xfem.utils" : "utils"},
+    packages=["xfem"],
+    package_dir={"xfem": "python"},
     python_requires='>=3.5',
 )

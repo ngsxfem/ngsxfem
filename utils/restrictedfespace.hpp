@@ -76,7 +76,7 @@ namespace ngfem
     RestrictedDifferentialOperator (shared_ptr<DifferentialOperator> adiffop)
       : DifferentialOperator(adiffop->Dim(), adiffop->BlockDim(),
                              adiffop->VB(), adiffop->DiffOrder()), diffop(adiffop) { 
-      dimensions = adiffop->Dimensions();
+      SetDimensions(adiffop->Dimensions());
     }
 
     NGS_DLL_HEADER virtual ~RestrictedDifferentialOperator (){ ; };

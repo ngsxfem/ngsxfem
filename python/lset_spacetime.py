@@ -11,8 +11,47 @@ from numpy import pi
 
 class LevelSetMeshAdaptation_Spacetime:
     """
-    Deformation from level set in space-time based on the 
-    LevelSetMeshAdaptation class.
+Class to compute a proper mesh deformation to improve a piecewise (multi-) 
+linear (in space!) level set approximation to obtain a higher order 
+accurate approximation.
+
+Computes a continuous function that describes a shift between points that 
+are on the (P1-in-space ) approximated level set function and its higher 
+order accurate approximation. The transformation is only applied on elements 
+where a level value inside a certain interval (lower,upper) exists.
+
+The result is a space-time finite element deformation (`deform`). For each 
+fixed time the behavior is as for an `LevelSetMeshAdaptation` object, i.e.
+
+
+1)phi_lin( Psi(x) ) = phi_h(x)
+
+  with Psi(x) = x + d(x) qn(x) =: D(x)
+
+for all x on 'cut' elements
+
+with
+
+  phi_h : self.lset_ho
+    the higher order space-time level set function
+
+  phi_lin : self.lset_p1
+    the P1-in-space space-time level set function
+
+  Psi : Id + self.deform
+    the resulting deformation
+
+  qn : self.qn
+    normal direction field
+
+This class holds its own members for the higher order and lower order
+ (P1-in-space) space-time approximation of the level set function and 
+ only depends on the input of a mesh and a CoefficientFunction 
+ (the levelset function) (and options).
+
+ A LevelSetMeshAdaptation_Spacetime can also be used as a context
+ manager. In this case, the mesh deformation is applied on the mesh
+ inside the context.
     """
 
     order_deform = 2
@@ -24,8 +63,45 @@ class LevelSetMeshAdaptation_Spacetime:
     @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
                  lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000,periodic=False):
+
         """
-        Deformation
+The computed deformation depends on different options:
+
+  order_space : int
+    order of deformation GridFunction (ideally) order + 1 is the accuracy of the geometry
+    approximation after applying the deformation on the mesh
+
+  order_time : int
+    order in time for space-time tensor-product spaces
+
+  lset_lower_bound: float
+    smallest relevant level set value to define the 'cut' elements where the mapping should be
+    applied
+    
+  lset_upper_bound: float
+    largest relevant level set value to define the 'cut' elements where the mapping should be
+    applied
+    
+  threshold: float
+    maximum (pointwise) value for d(x)/h in the mapping
+      Psi(x) = x + d(x) qn(x)
+    of the mesh transformation. A small value might be necessary if the geometry is only coarsely
+    approximated to avoid irregular meshes after a corresponding mesh deformation.
+
+  discontinuous_qn: boolean
+    As an approximation for the normal direction we use n_h = nabla phi_h (gradient of higher order
+    level set approximation) depending on the discontinuous_qn flag this normal field will be
+    projected onto a continuous finite element space or not.
+
+  eps_perturbation: float
+    epsilon perturbation that is used to interpolate to P1
+
+  heapsize : int
+    heapsize for local computations.
+
+  levelset : CoefficientFunction or None(default)
+    If a level set function is prescribed the deformation is computed right away. Otherwise the 
+    computation is triggered only at calls for `CalcDeformation`.
         """
         self.order_deform = order_space
         self.order_qn = order_space
@@ -117,6 +193,16 @@ class LevelSetMeshAdaptation_Spacetime:
 
         
     def ProjectOnUpdate(self,gf):
+        """
+When the LevelsetMeshAdaptation class generates a new deformation (due to 
+a new level set function) all GridFunction that have been stored through
+`ProjectOnUpdate` will be projected from the previous to the new mesh
+by an essentially local projection (Oswald projection of the shifted 
+evaluation)
+
+  gfu : GridFunction (or list of GridFunctions)
+    GridFunction(s) to store for later deformation updates.
+        """      
         if isinstance(gf,list):
             self.gf_to_project.extend(gf)
         else:
@@ -124,6 +210,12 @@ class LevelSetMeshAdaptation_Spacetime:
 
     @TimeFunction
     def ProjectGFs(self):
+        """
+ProjectGFs projects all stored GridFunctions to the currect deformation.
+This function is typically only called in the `CalcDeformation` unless
+`CalcDeformation` is called with the argument `dont_project_gfs = True`.
+        """      
+
         for gf in self.gf_to_project:
             # make tmp copy 
             gfcopy = GridFunction(gf.space)
@@ -133,6 +225,11 @@ class LevelSetMeshAdaptation_Spacetime:
 
     @TimeFunction
     def interpol_ho(self,levelset):
+        """
+Internal function that is called inside `CalcDeformation`. It projects 
+the space-time coefficient function to a space-time tensor product finite 
+element function.
+        """
         times = [xi for xi in self.v_ho_st.TimeFE_nodes()]
         for i,ti in enumerate(times):
             self.lset_ho_node.Set(fix_tref(levelset,ti))
@@ -140,6 +237,12 @@ class LevelSetMeshAdaptation_Spacetime:
 
     @TimeFunction
     def interpol_p1(self):
+        """
+Internal function that is called inside `CalcDeformation`. It projects 
+the space-time tensor product finite element approximation lset_ho 
+to a piecewise linear-in-space approximation through interpolation
+(in space).
+        """
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             InterpolateToP1(self.lset_ho_node,self.lset_p1_node)
@@ -148,7 +251,22 @@ class LevelSetMeshAdaptation_Spacetime:
     @TimeFunction
     def CalcDeformation(self, levelset, calc_kappa = False, dont_project_gfs = False):
         """
-        Compute the deformation
+Compute the space-time mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise 
+linear-in-space tensor product approximation) are mapped towards the corresponding isolines of 
+a given space-time function
+
+Parameters:
+
+levelset : CoefficientFunction
+  The coefficient function that prescribes where the piecewise linear-in-space iso lines should 
+  be mapped to.
+
+calc_kappa : bool
+  Compute the cut ratio of a spatial element as a space-time function. Populates `self.kappa`.
+
+dont_project_gfs : bool
+  Usually, all stored GridFunctions are projected on the new deformed mesh. This flag
+  can be used to avoid the call of the projection step (`ProjectGFs`).
         """
 
         self.v_ho.Update()
@@ -210,11 +328,31 @@ class LevelSetMeshAdaptation_Spacetime:
       self.mesh.UnsetDeformation()
 
     def levelset_domain(self, domain_type = IF, time_type = INTERVAL):
+        """
+Return a levelset_domain dictionary.
+      Args:
+          domain_type (DOMAIN_TYPE: NEG/POS/IF, optional): domain type for level set doamin. Defaults to IF.
+          time_type (BOTTOM/TOP/INTERVAL): type of integral on the space-time domain
+
+      Returns:
+          dict: levelset domain
+        """        
         return { "levelset" : self.levelsetp1[time_type], "domain_type" : domain_type}
 
 
 
     def Integrator(self, SymbolicFI, domain_type, time_type, form, time_order = None, definedonelements = None):
+        """
+Convenience function to construct space-time Symbolic(Cut)LFI/Symbolic(Cut)BFI
+
+        Args:
+            SymbolicFI (SymbolicLFI/SymbolicBFI): type of integrator (LFI vs. BFI)
+            domain_type (DOMAIN_TYPE: NEG/POS/IF): domain type to integrate on
+            time_type (BOTTOM/TOP/INTERVAL): type of integral on the space-time domain
+            form (CoefficientFunction): integrand
+            time_order (int, optional): integration order in time. Defaults to None.
+            defineonelement (BitArray, optional): elements to define the linear form on. Defaults to None.
+        """    
         if time_order == None:
             time_order = 2 * self.order_time
         
@@ -227,13 +365,48 @@ class LevelSetMeshAdaptation_Spacetime:
         return fi
 
     def LFI(self, domain_type, time_type, form, time_order = None, definedonelements = None):
+        """
+Convenience function to construct Symbolic(Cut)LFI based on the domain_type 
+and the known space-time level set function.
+
+        Args:
+            domain_type (DOMAIN_TYPE: NEG/POS/IF): domain type to integrate on
+            time_type (BOTTOM/TOP/INTERVAL): type of integral on the space-time domain
+            form (CoefficientFunction): integrand
+            time_order (int, optional): integration order in time. Defaults to None.
+            defineonelement (BitArray, optional): elements to define the linear form on. Defaults to None.
+        """    
         return self.Integrator(SymbolicLFI, domain_type, time_type, form, time_order, definedonelements)
 
     def BFI(self, domain_type, time_type, form, time_order = None, definedonelements = None):
+        """
+Convenience function to construct Symbolic(Cut)LFI based on the domain_type 
+and the known space-time level set function.
+
+        Args:
+            domain_type (DOMAIN_TYPE: NEG/POS/IF): domain type to integrate on
+            time_type (BOTTOM/TOP/INTERVAL): type of integral on the space-time domain
+            form (CoefficientFunction): integrand
+            time_order (int, optional): integration order in time. Defaults to None.
+            defineonelement (BitArray, optional): elements to define the bilinear form on. Defaults to None.
+        """    
         return self.Integrator(SymbolicBFI, domain_type, time_type, form, time_order, definedonelements)
 
     @TimeFunction
     def Integrate(self, domain_type, time_type, cf, order = 5, time_order = None):
+        """
+Convenience function to Integrate on cut space-time domain.
+
+        Args:
+            domain_type (DOMAIN_TYPE: NEG/POS/IF): domain type to integrate on
+            time_type (BOTTOM/TOP/INTERVAL): type of integral on the space-time domain
+            cf (CoefficientFunction): integrand
+            order (int, optional): integration order in space. Defaults to 5.
+            time_order (int, optional): integration order in time. Defaults to None.
+
+        Returns:
+            float: return value of (cut) integral
+        """
         if time_order == None:
             time_order = 2 * self.order_time
         self.mesh.SetDeformation(self.deformation[time_type])
@@ -249,6 +422,13 @@ class LevelSetMeshAdaptation_Spacetime:
         """
 Compute approximated distance between of the isoparametrically obtained geometry
 (should be called in deformed state)
+
+        Args:
+            levelset (CoefficientFunction): implicit geometry description, 
+              assumed to be a signed distance function.
+            order (int, optional): integration order in space. Defaults to 5.
+            time_order (int, optional): integration order in time. Defaults to None.
+            heapsize (int, optional): heap size for local memory. Defaults to None.
         """
         if order == None:
           order = 2 * self.order_qn

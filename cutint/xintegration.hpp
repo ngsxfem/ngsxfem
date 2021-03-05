@@ -82,7 +82,7 @@ namespace xintegration
   };
 
   /// outstream which add the identifier for the domain types
-  ostream & operator<<(ostream & s, DOMAIN_TYPE dt);
+  //ostream & operator<<(ostream & s, DOMAIN_TYPE dt);
 
   /// simple class that constitutes a quadrature
   /// (here we don't use) IntegrationPoints or IntegrationRule

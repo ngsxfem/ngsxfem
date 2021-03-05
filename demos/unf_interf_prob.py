@@ -50,7 +50,7 @@ Implementational aspects:
   accurate numerical integration is provided.
   For higher order approximation an additional mesh deformation is
   applied that maps the low order interface approximation to something
-  more accurate.
+  more accurate. See also jupyter tutorials `intlset` and `cutfem`
 
 * Linear systems: A (sparse) direct solver is applied to solve the
   arising linear systems.

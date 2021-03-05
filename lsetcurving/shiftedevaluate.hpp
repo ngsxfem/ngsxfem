@@ -29,9 +29,7 @@ namespace ngfem
       : DifferentialOperator(DIM_DMAT, 1, VorB(int(DIM_SPACE)-int(DIM_ELEMENT)), DIFFORDER),
         back(aback), forth(aforth)
     {
-      //dimensions = DIFFOP::GetDimensions();
-      dimensions = Array<int> ( { DIM_DMAT } );
-
+      SetDimensions(Array<int> ( { DIM_DMAT } ));
     }
     /*
     virtual int Dim() const { return DIM_DMAT; }
