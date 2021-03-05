@@ -15,9 +15,9 @@ ngsglobals.msg_level = 1
 
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
-i = 2
-n_steps = 4*2**i
-space_refs = i
+i = 1
+n_steps = 2**i
+space_refs = i+1
 
 # polynomial order in time
 k_t = 3
@@ -131,7 +131,7 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
-              definedonelements=ci.GetElementsOfType(HASNEG))
+              definedonelements=ci.GetElementsOfType(HASNEG), tref = 1)
 #dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            #deformation=lsetadap.deformation[INTERVAL])
 
@@ -145,9 +145,9 @@ a_i += v_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dQ
 a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
 a_i += (v_t * InnerProduct(w, grad(u_i))) * dQ
 
-a_i += fix_tref(w_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)),1) * dOmnew
-a_i += fix_tref(alpha * InnerProduct(grad(u_i), grad(w_t)),1) * dOmnew
-a_i += fix_tref(w_t * InnerProduct(w, grad(u_i)),1) * dOmnew
+a_i += w_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dOmnew
+a_i += alpha * InnerProduct(grad(u_i), grad(w_t)) * dOmnew
+a_i += w_t * InnerProduct(w, grad(u_i)) * dOmnew
 
 
 #a_i += h**(-2) * (1 + delta_t / h) * gamma * \
@@ -159,10 +159,10 @@ f += -v_t * (dt(gfu_e)- dt(lsetadap.deform) * grad(gfu_e)) * dQ
 f += -(v_t * InnerProduct(w, grad(gfu_e))) * dQ
 f += -(alpha * InnerProduct(grad(gfu_e), grad(v_t))) * dQ
 
-f += fix_tref(coeff_f * w_t,1)* dOmnew
-f += fix_tref(-w_t * (dt(gfu_e)- dt(lsetadap.deform) * grad(gfu_e)),1)* dOmnew
-f += fix_tref(-alpha * InnerProduct(grad(gfu_e), grad(w_t)),1)* dOmnew
-f += fix_tref(-w_t * InnerProduct(w, grad(gfu_e)),1)* dOmnew
+f += coeff_f * w_t * dOmnew
+f += -w_t * (dt(gfu_e)- dt(lsetadap.deform) * grad(gfu_e)) * dOmnew
+f += -alpha * InnerProduct(grad(gfu_e), grad(w_t)) * dOmnew
+f += -w_t * InnerProduct(w, grad(gfu_e)) * dOmnew
 
 
 # set initial values
@@ -214,8 +214,7 @@ while tend - told.Get() > delta_t / 2:
     RestrictGFInTime(spacetime_gf=gfu_i, reference_time=1.0, space_gf=u_last)
 
     # compute error at final time
-    l2error = sqrt(
-        Integrate((fix_tref(u_exact - gfu_i, 1))**2 * dOmnew, mesh))
+    l2error = sqrt(Integrate((u_exact - gfu_i)**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
