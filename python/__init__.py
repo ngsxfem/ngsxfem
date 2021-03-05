@@ -620,23 +620,25 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
 
 class NoDeformation:
     """
-Dummy deformation class. Does nothing to the mesh. Has
-two dummy members:
-* lsetp1
-* deform (= None)    
+Dummy deformation class. Does nothing to the mesh. Has two dummy members:
+  * lset_p1 : ngsolve.GridFunction
+    The piecewise linear level set function 
+  * deform : ngsolve.GridFunction
+    A zero GridFunction (for compatibility with netgen Draw(... deformation=)) 
     """
-    lsetp1 = None
-    def __init__(self,mesh = None, levelset=None):
-        self.deform = None
+
+    def __init__(self, mesh=None, levelset=None):
+        self.deform = GridFunction(H1(mesh, order=1, dim=mesh.dim), "dummy_deform")
+        self.deform.vec.data[:] = 0.0
         if levelset != None:
             if mesh == None:
-                raise Exception("need mesh");
-            self.lsetp1 = GridFunction(H1(mesh))
-            InterpolateToP1(levelset,self.lsetp1)
+                raise Exception("need mesh")
+            self.lset_p1 = GridFunction(H1(mesh, order=1))
+            InterpolateToP1(levelset, self.lset_p1)
 
-        pass
     def __enter__(self):
-        return self.lsetp1
+        return self.lset_p1
+
     def __exit__(self, type, value, tb):
         pass
 
