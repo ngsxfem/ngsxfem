@@ -138,24 +138,24 @@ namespace xintegration
   template class PointContainer<3>;
   template class PointContainer<4>;
 
-  ostream & operator<<(ostream & s, DOMAIN_TYPE dt)
-  {
-    switch (dt)
-  {
-  case NEG:
-      s << "NEG";
-      break;
-  case POS:
-      s << "POS";
-      break;
-  case IF:
-      s << "IF";
-      break;
-  default:
-      ;
-  }
-    return s;
-  }
+  // ostream & operator<<(ostream & s, DOMAIN_TYPE dt)
+  // {
+  //   switch (dt)
+  // {
+  // case NEG:
+  //     s << "NEG";
+  //     break;
+  // case POS:
+  //     s << "POS";
+  //     break;
+  // case IF:
+  //     s << "IF";
+  //     break;
+  // default:
+  //     ;
+  // }
+  //   return s;
+  // }
 
 
   template<>
