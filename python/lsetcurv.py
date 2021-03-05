@@ -40,6 +40,9 @@ with
 This class holds its own members for the higher order an lower order (P1) approximation of the level
 set function and only depends on the input of a mesh and a CoefficientFunction (the levelset
 function) (and options).
+
+A LevelSetMeshAdaptation can also be used as a context  manager. In this case, 
+the mesh deformation is applied on the mesh inside the context.
     """
 
     order_deform = 2
@@ -120,6 +123,16 @@ The computed deformation depends on different options:
 
         
     def ProjectOnUpdate(self,gf):
+        """
+When the LevelsetMeshAdaptation class generates a new deformation (due to 
+a new level set function) all GridFunction that have been stored through
+`ProjectOnUpdate` will be projected from the previous to the new mesh
+by an essentially local projection (Oswald projection of the shifted 
+evaluation)
+
+  gfu : GridFunction (or list of GridFunctions)
+    GridFunction(s) to store for later deformation updates.
+        """      
         if isinstance(gf,list):
             self.gf_to_project.extend(gf)
         else:
@@ -127,6 +140,12 @@ The computed deformation depends on different options:
 
     @TimeFunction
     def ProjectGFs(self):
+        """
+ProjectGFs projects all stored GridFunctions to the currect deformation.
+This function is typically only called in the `CalcDeformation` unless
+`CalcDeformation` is called with the argument `dont_project_gfs = True`.
+        """      
+
         timer = Timer("ProjectGFs")
         timer.Start()
         for gf in self.gf_to_project:
@@ -161,6 +180,9 @@ blending : None/string/CoefficientFunction
      blending function that is 0 at the zero level set (of lset_p1) and increases like a fourth
      order polynomial with lset_p1. It is scaled with h, so that value 1 is not reached within cut
      elements.
+dont_project_gfs : bool
+  Usually, all stored GridFunctions are projected on the new deformed mesh. This flag
+  can be used to avoid the call of the projection step (`ProjectGFs`).
         """
         self.v_ho.Update()
         self.lset_ho.Update()
@@ -228,9 +250,20 @@ Compute approximated distance between of the isoparametrically obtained geometry
         return max(abs(minv),abs(maxv))
 
     def levelset_domain(self, domain_type = IF):
+        """
+  Return a levelset_domain dictionary.
+        Args:
+            domain_type (DOMAIN_TYPE, optional): domain type for level set doamin. Defaults to IF.
+
+        Returns:
+            dict: levelset domain
+        """
         return { "levelset" : self.lset_p1, "domain_type" : domain_type}
 
     def Integrator(self, SymbolicFI, domain_type, form, definedonelements = None):
+        """
+  Convenience function to construct Symbolic(Cut)LFI/Symbolic(Cut)BFI
+        """    
         fi = SymbolicFI(levelset_domain = self.levelset_domain(domain_type), 
                          form = form, 
                          deformation=self.deform)
@@ -239,13 +272,24 @@ Compute approximated distance between of the isoparametrically obtained geometry
         return fi
 
     def LFI(self, domain_type, form, definedonelements = None):
+        """
+  Convenience function to construct Symbolic(Cut)LFI based on the domain_type 
+  and the known level set function.
+        """    
         return self.Integrator(SymbolicLFI, domain_type, form, definedonelements)
 
     def BFI(self, domain_type, form, definedonelements = None):
+        """
+  Convenience function to construct Symbolic(Cut)BFI based on the domain_type
+  and the known level set function.
+        """    
         return self.Integrator(SymbolicBFI, domain_type, form, definedonelements)
 
     @TimeFunction
     def Integrate(self, domain_type, cf, order = 5):
+        """
+  Convenience function to Integrate on cut domain.
+        """    
         self.mesh.SetDeformation(self.deform)
         fi = Integrate(levelset_domain = self.levelset_domain(domain_type), 
                        mesh = self.mesh, cf = cf, order = order)

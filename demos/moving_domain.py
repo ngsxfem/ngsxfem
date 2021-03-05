@@ -6,7 +6,9 @@ discretisation and utilised ghost-penalty stabilisation to realise a
 discrete extension of the solution into an extension strip. With this
 extension, a method of lines approximation of the time-derivative is
 possible to create an Eulerian time-stepping method. For the numerical
-analysis of this method, see [1].
+analysis of this method, see [1]. In contrast to [1], this file uses
+an isoparametric mapping approach to realise a higher-order geometry
+approximation.
 
 Used Features:
 --------------
@@ -14,6 +16,8 @@ Used Features:
     jupyter tutorial.
   * Integrators with respect to level set geometry, see the 'cutfem'
     jupyter tutorial.
+  * Higher-order geometry approximation, see the 'cutfem' jupyter
+    tutorial.
   * Ghost-penalty stabilisation, see the 'spacetime' jupyter tutorial.
 
 Literature:
@@ -27,6 +31,7 @@ Literature:
 from netgen.geom2d import SplineGeometry
 from ngsolve import *
 from xfem import *
+from xfem.lsetcurv import *
 
 from math import pi, ceil
 
@@ -47,7 +52,7 @@ t = Parameter(0.0)
 nu = 1e-5
 c_gamma = 1
 
-inverse = "pardiso"
+inverse = "umfpack"
 
 # Problem Data
 # Initial condition and right-hand side
@@ -61,8 +66,9 @@ u_ex = CoefficientFunction(cos(r1 * sqrt((x - rho)**2 + y**2))**2)
 
 grad_u_ex = CoefficientFunction((-pi * sin(pi / r0 * sqrt((x - rho)**2 + y**2))
                                  * (x - rho) / sqrt((x - rho)**2 + y**2),
-                                - pi * sin(pi / r0 * sqrt((x - rho)**2 + y**2))
-                                * y / sqrt((x - rho)**2 + y**2)))
+                                 - pi * sin(pi / r0 *
+                                            sqrt((x - rho)**2 + y**2))
+                                 * y / sqrt((x - rho)**2 + y**2)))
 # rhs from py_tutorial
 rhs = nu * CoefficientFunction(-(pi / r0) * r1
                                * (sin(r1 * sqrt((x - rho)**2 + y**2))
@@ -102,14 +108,17 @@ h_max = h0 * 0.5**Lx
 V = H1(mesh, order=k, dgjumps=True)
 gfu = GridFunction(V)
 
-# Discrete level set and cut info classes
-lsetp1 = GridFunction(H1(mesh, order=1))
-InterpolateToP1(levelset_func(t), lsetp1)
+
+# Higher order discrete level set approximation
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=k, threshold=0.1,
+                                      discontinuous_qn=True)
+deformation = lsetmeshadap.deform
+lsetp1 = lsetmeshadap.lset_p1
 
 # Cut-Info classes for element marking
-ci_main = CutInfo(mesh, lsetp1)
-ci_inner = CutInfo(mesh, lsetp1)
-ci_outer = CutInfo(mesh, lsetp1)
+ci_main = CutInfo(mesh)
+ci_inner = CutInfo(mesh)
+ci_outer = CutInfo(mesh)
 
 # Element and facet markers
 els_hasneg = ci_main.GetElementsOfType(HASNEG)
@@ -128,8 +137,9 @@ gamma_s = c_gamma * K_tilde
 u, v = V.TnT()
 h = specialcf.mesh_size
 
-dx = dCut(levelset=lsetp1, domain_type=NEG, definedonelements=els_hasneg)
-dw = dFacetPatch(definedonelements=facets_ring)
+dx = dCut(levelset=lsetp1, domain_type=NEG, definedonelements=els_hasneg,
+          deformation=deformation)
+dw = dFacetPatch(definedonelements=facets_ring, deformation=deformation)
 
 # Bilinear and linear forms
 a = RestrictedBilinearForm(V, element_restriction=els_outer,
@@ -159,6 +169,10 @@ def CompErrs():
     return l2
 
 
+# Project the solution defined with respect to the last mesh deformation
+# onto the the mesh with the current mesh deformation.
+lsetmeshadap.ProjectOnUpdate(gfu)
+
 # Time stepping loop
 gfu.Set(u0)
 els_outer_old.Set()
@@ -168,6 +182,8 @@ Draw(gfu - u_ex, mesh, "l2err")
 
 for it in range(1, int(T_end / dt + 0.5) + 1):
     t.Set(it * dt)
+    # Update mesh deformation (Note: this updates gfu)
+    deformation = lsetmeshadap.CalcDeformation(levelset_func(t))
 
     # Update Element markers: extension facets. Updating the cut-info
     # classes automatically updates the marker BitArrays.
@@ -192,13 +208,12 @@ for it in range(1, int(T_end / dt + 0.5) + 1):
 
     els_outer_old[:] = els_outer
 
-    with TaskManager():
-        # Update Linear System
-        a.Assemble(reallocate=True)
-        f.Assemble()
-        inv = a.mat.Inverse(active_dofs, inverse=inverse)
-        # Solve Problem
-        gfu.vec.data = inv * f.vec
+    # Update Linear System
+    a.Assemble(reallocate=True)
+    f.Assemble()
+    inv = a.mat.Inverse(active_dofs, inverse=inverse)
+    # Solve Problem
+    gfu.vec.data = inv * f.vec
 
     # Compute Errors
     l2err = CompErrs()

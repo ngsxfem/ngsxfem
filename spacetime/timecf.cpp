@@ -76,7 +76,20 @@ namespace ngfem
   FixTimeCoefficientFunction::FixTimeCoefficientFunction (shared_ptr<CoefficientFunction> coef_, 
                                                           shared_ptr<ParameterCoefficientFunction<double>> t)
     : CoefficientFunction(coef_->Dimension(),coef_->IsComplex()), coef(coef_), time(t)
-  { ; }
+  { 
+    bool hasproxy = false;
+    coef->TraverseTree ([&hasproxy] (CoefficientFunction & cf)
+    {
+      if (dynamic_cast<ProxyFunction*> (&cf))
+        hasproxy = true;
+    });
+    if (hasproxy)
+      throw Exception("FixTimeCoef is called on a CoefficientFunction that contains a ProxyFunction.\n\
+It is suggested to do the following instead:\n\
+  * Use fix_tref_proxy(..,tref) directly on the involved proxies (if possible) or\n\
+  * fix the integration domain. E.g. dCut(..,tref=1) yields space-time instead of spatial integration\n\
+    points with fixed (reference) time value tref=1.");
+  }
 
   ///
   double FixTimeCoefficientFunction::Evaluate (const BaseMappedIntegrationPoint & mip) const

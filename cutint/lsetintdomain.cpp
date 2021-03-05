@@ -10,13 +10,15 @@ namespace xintegration
                                                         int intorder_in,
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
-                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in,
+                                                        optional<double> tref_in)
   : gfs_lset(gfs_lset_in),
     cfs_lset(cfs_lset_in),
     dts(dts_in),
     intorder(intorder_in),
     subdivlvl(subdivlvl_in),
-    quad_dir_policy(quad_dir_policy_in)
+    quad_dir_policy(quad_dir_policy_in),
+    tref(tref_in)
   {
     ;
   }
@@ -26,14 +28,16 @@ namespace xintegration
                                                         int intorder_in,
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
-                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in,
+                                                        optional<double> tref_in)
   : gfs_lset(gfs_lset_in),
     cfs_lset(0),
     dts(dts_in),
     intorder(intorder_in),
     time_intorder(time_intorder_in),
     subdivlvl(subdivlvl_in),
-    quad_dir_policy(quad_dir_policy_in)
+    quad_dir_policy(quad_dir_policy_in),
+    tref(tref_in)
   {
     ;
   }
@@ -43,14 +47,16 @@ namespace xintegration
                                                         int intorder_in,
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
-                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in,
+                                                        optional<double> tref_in)
   : gfs_lset(0),
     cfs_lset(cfs_lset_in),
     dts(dts_in),
     intorder(intorder_in),
     time_intorder(time_intorder_in),
     subdivlvl(subdivlvl_in),
-    quad_dir_policy(quad_dir_policy_in)
+    quad_dir_policy(quad_dir_policy_in),
+    tref(tref_in)
   {
     ;
   }
@@ -61,14 +67,16 @@ namespace xintegration
                                                         int intorder_in,
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
-                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in,
+                                                        optional<double> tref_in)
   : gfs_lset(1),
     cfs_lset(1),
     dts(1),
     intorder(intorder_in),
     time_intorder(time_intorder_in),
     subdivlvl(subdivlvl_in),
-    quad_dir_policy(quad_dir_policy_in)
+    quad_dir_policy(quad_dir_policy_in),
+    tref(tref_in)
   {
     gfs_lset[0] = gf_lset_in;    
     cfs_lset[0] = cf_lset_in;    
@@ -80,14 +88,16 @@ namespace xintegration
                                                         int intorder_in,
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
-                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in,
+                                                        optional<double> tref_in)
   : gfs_lset(1),
     cfs_lset(1),
     dts(1),
     intorder(intorder_in),
     time_intorder(time_intorder_in),
     subdivlvl(subdivlvl_in),
-    quad_dir_policy(quad_dir_policy_in)
+    quad_dir_policy(quad_dir_policy_in),
+    tref(tref_in)
   {
     tie(cfs_lset[0],gfs_lset[0]) = CF2GFForStraightCutRule(cf_lset_in,subdivlvl);
     if (cfs_lset[0] == nullptr)
@@ -102,14 +112,16 @@ namespace xintegration
                                                         int intorder_in,
                                                         int time_intorder_in,
                                                         int subdivlvl_in,
-                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in)
+                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy_in,
+                                                        optional<double> tref_in)
   : gfs_lset(1),
     cfs_lset(0),
     dts(1),
     intorder(intorder_in),
     time_intorder(time_intorder_in),
     subdivlvl(subdivlvl_in),
-    quad_dir_policy(quad_dir_policy_in)
+    quad_dir_policy(quad_dir_policy_in),
+    tref(tref_in)    
   {
     gfs_lset[0] = gf_lset_in;    
     dts[0].SetSize(1); dts[0][0] = dt;    
@@ -135,6 +147,8 @@ namespace xintegration
     ost << "Time IntegrationOrder: \n " << lsetintdom.GetTimeIntegrationOrder() << endl;
     ost << "Number of subdivision levels: \n " << lsetintdom.GetNSubdivisionLevels() << endl;
     ost << "Policy on Quads/Hexes: \n " << lsetintdom.GetSwapDimensionPolicy() << endl;
+    if (lsetintdom.HasReferenceTime())
+      ost << "Fixed reference time : \n " << lsetintdom.ReferenceTime() << endl;
     return ost;
   }
 
@@ -164,7 +178,12 @@ namespace xintegration
     
     if (!dictionary.contains("domain_type"))
       throw Exception("You need to provide (a) domain type(s).");
-      
+
+    optional<double> tref = nullopt;
+
+    if (dictionary.contains("tref"))
+      tref = py::cast<double>(dictionary["tref"]);
+
     py::object lset = dictionary["levelset"];
     py::object dt_in = dictionary["domain_type"];
 
@@ -213,7 +232,7 @@ namespace xintegration
       shared_ptr<GridFunction> gf_lset = nullptr;
       shared_ptr<CoefficientFunction> cf_lset = nullptr;
       tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(pycf(),subdivlvl);
-      return make_shared<LevelsetIntegrationDomain>(cf_lset,gf_lset,DOMAIN_TYPE(dt()),order,time_order,subdivlvl,quad_dir_policy);
+      return make_shared<LevelsetIntegrationDomain>(cf_lset,gf_lset,DOMAIN_TYPE(dt()),order,time_order,subdivlvl,quad_dir_policy,tref);
     }
     else
     {
@@ -239,7 +258,7 @@ namespace xintegration
         Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
         Array<Array<DOMAIN_TYPE>> dts(1);
         dts[0] = dts_;
-        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy);
+        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy,tref);
       }
       
       py::list dts_list;
@@ -273,7 +292,7 @@ namespace xintegration
         dtas[i] = makeCArray<DOMAIN_TYPE> (dta);
       }
 
-      return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy);
+      return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy,tref);
     }
   }
   

@@ -1,3 +1,4 @@
+name: Compile JOSS Paper
 on: [push]
 
 jobs:

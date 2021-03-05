@@ -1,6 +1,48 @@
 """
-unfitted Heat equation with Neumann b.c. solved with an unfitted isoparametric
-space-time discretisation.
+In this example we solve a scalar *unfitted* PDE problem on a moving
+domain. A discontinuous-in-time space-time formulation is applied.
+Natural boundary conditions are applied which simplifies the variational
+formulation. To stabilize arbitray cut configurations, we use a space-time
+version of the ghost penalty method.
+
+Domain:
+-------
+
+The background domain is [-0.6,0.6]x[-1,1]x[0,0.5] (2D+time interval)
+while the physical domain is a circle that is traveling up and down
+over time.
+
+PDE problem:
+------------
+  u_t + wx·u_x + wy·u_y - (u_xx + u_yy) = f in  Omega(t) (where lset is neg.)
+        (-u_x+wx u)·nx+(-u_y+wy u)·ny u = 0 on dOmega(t) (where lset is zero.)
+where w = (wx,wy) is a divergence-free vector field.
+The r.h.s. term f is chosen according to a manufactured solution.
+
+Discretisation:
+---------------
+* Background space-time finite element space restricted to active domain
+* Ghost penalty stabilization to deal with bad cuts (version as in [1])
+
+Implementational aspects (cf. [1] and [2] for details):
+-------------------------------------------------------
+* Geometry approximation in space-time using isoparametric unfitted FEM
+* Projection operator that maps solutions from one deformed mesh to another
+* A (sparse) direct solver is applied to solve the arising linear systems.
+
+References:
+-----------
+All concepts that are used here are explained in the jupyter-tuorials
+`spacetime.ipynb`. As a simplified setting without cut configurations,
+we also refer to the `spacetimeDG_fitted.py` demo.
+
+Literature:
+-----------
+[1] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving
+    domains. Master's thesis, NAM, University of Göttingen, 2018.
+[2] F. Heimann. On Discontinuous- and Continuous-In-Time Unfitted Space-Time
+    Methods for PDEs on Moving Domains. Master's thesis, NAM, University of
+    Göttingen, 2020.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -102,10 +144,10 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
               deformation=lsetadap.deformation[BOTTOM],
-              definedonelements=ci.GetElementsOfType(HASNEG))
+              definedonelements=ci.GetElementsOfType(HASNEG), tref=0)
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
-              definedonelements=ci.GetElementsOfType(HASNEG))
+              definedonelements=ci.GetElementsOfType(HASNEG), tref=1)
 dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
 
@@ -119,13 +161,13 @@ a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
 a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
 a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
 a += (v * InnerProduct(w, grad(u))) * dQ
-a += (fix_tref(u, 0) * fix_tref(v, 0)) * dOmold
+a += u * v * dOmold
 a += h**(-2) * (1 + delta_t / h) * gamma * \
     (u - u.Other()) * (v - v.Other()) * dw
 
 f = LinearForm(st_fes)
 f += coeff_f * v * dQ
-f += u_last * fix_tref(v, 0) * dOmold
+f += u_last * v * dOmold
 
 # set initial values
 u_last.Set(fix_tref(u_exact, 0))
@@ -148,7 +190,7 @@ while tend - told.Get() > delta_t / 2:
     f.Assemble()
 
     # solve linear system
-    inv = a.mat.Inverse(active_dofs)
+    inv = a.mat.Inverse(active_dofs, inverse="umfpack")
     gfu.vec.data = inv * f.vec.data
 
     # evaluate upper trace of solution for
@@ -157,8 +199,7 @@ while tend - told.Get() > delta_t / 2:
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
 
     # compute error at final time
-    l2error = sqrt(
-        Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
+    l2error = sqrt(Integrate((u_exact - u_last)**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)

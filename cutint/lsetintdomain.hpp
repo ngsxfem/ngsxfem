@@ -19,6 +19,7 @@ namespace xintegration
     int time_intorder = -1;
     int subdivlvl = 0;
     SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL;
+    optional<double> tref;
   public:
     LevelsetIntegrationDomain( const Array<shared_ptr<CoefficientFunction>> & cfs_lset_in,
                                const Array<shared_ptr<GridFunction>> & gfs_lset_in,
@@ -26,42 +27,60 @@ namespace xintegration
                                int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
-                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
+                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL,
+                               optional<double> tref = nullopt);
     LevelsetIntegrationDomain( const Array<shared_ptr<GridFunction>> & gfs_lset_in,
                                const Array<Array<DOMAIN_TYPE>> & dts_in,
                                int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
-                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
+                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL,
+                               optional<double> tref = nullopt);
     LevelsetIntegrationDomain( const Array<shared_ptr<CoefficientFunction>> & cfs_lset_in,
                                const Array<Array<DOMAIN_TYPE>> & dts_in,
                                int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
-                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
+                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL,
+                               optional<double> tref = nullopt);
     LevelsetIntegrationDomain( const shared_ptr<CoefficientFunction> & cf_lset_in,
                                const shared_ptr<GridFunction> & gf_lset_in,
                                DOMAIN_TYPE dt_in,
                                int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
-                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
+                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL,
+                               optional<double> tref = nullopt);
     LevelsetIntegrationDomain( const shared_ptr<GridFunction> & gf_lset_in,
                                DOMAIN_TYPE dt_in,
                                int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
-                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
+                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL,
+                               optional<double> tref = nullopt);
     LevelsetIntegrationDomain( const shared_ptr<CoefficientFunction> & cf_lset_in,
                                DOMAIN_TYPE dt_in,
                                int intorder_in = -1,
                                int time_intorder_in = -1,
                                int subdivlvl_in = 0,
-                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL);
+                               SWAP_DIMENSIONS_POLICY quad_dir_policy_in = FIND_OPTIMAL,
+                               optional<double> tref = nullopt);
 
     bool IsMultiLevelsetDomain () const
     {
       return ((gfs_lset.Size() > 1) || (dts.Size() > 1) || (dts[0].Size() > 1));
+    }
+
+    optional<double> OptionalReferenceTime() const {return tref;}
+    bool HasReferenceTime() const { if (tref) return true; else return false; }
+    double ReferenceTime() const 
+    { 
+      if (tref)
+      {
+        return *tref;
+      }
+      else
+        throw Exception("no reference time stored.");
     }
 
     shared_ptr<CoefficientFunction> GetLevelsetCF () const

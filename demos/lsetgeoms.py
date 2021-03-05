@@ -1,7 +1,12 @@
 """
-This examples shows a number of pre-implemented 3d level set geometries,
-computes the distance between the smooth level set and the P1
+These examples show a number of pre-implemented 3d level set geometries,
+computes the distance between the smooth level set and the (deformed) P1
 approximation as well as the order of convergence thereof.
+
+References:
+-----------
+All concepts that are used here are explained in the jupyter-tuorials
+`basics` and `intlset`.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -15,6 +20,7 @@ from xfem.utils import LevelsetExamples, BoundingBoxes
 
 import sys
 
+ngsglobals.msg_level = 2
 
 # -------------------------------- PARAMETERS ---------------------------------
 maxh = 0.5
@@ -23,18 +29,6 @@ maxreflvl = 4
 
 
 # ----------------------------------- MAIN ------------------------------------
-# Visual options for the Netgen GUI
-# viewoptions.clipping.enable = 1
-# viewoptions.clipping.nx = 0.0
-# viewoptions.clipping.ny = 1
-# viewoptions.clipping.nz = 0.0
-# visoptions.mminval = 0.0
-# visoptions.mmaxval = 0.0
-# visoptions.autoscale = False
-# visoptions.isosurf = 1
-# visoptions.numiso = 1
-# visoptions.subdivisions = 1
-
 # Main loop
 for lsetgeom in ["cheese", "torus", "dziukelliott", "dziuk88", "sphere"]:
     print('Geometry: ', lsetgeom)

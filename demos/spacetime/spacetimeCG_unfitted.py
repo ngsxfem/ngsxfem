@@ -1,6 +1,37 @@
 """
-unfitted Heat equation with Neumann b.c. solved with an unfitted isoparametric
-space-time discretisation.
+In this example we solve a scalar *unfitted* PDE problem on a moving
+domain. The setting is the same as in `spacetimeDG_unfitted.py`
+However, here, we apply a continuous-in-time Petrov-Galerkin method.
+
+Domain + PDE problem:
+---------------------
+As in `spacetimeDG_unfitted.py`
+
+Discretisation:
+---------------
+* Background space-time finite element space restricted to active domain
+* Ghost penalty stabilization to deal with bad cuts (version as in [1])
+  and in order to define a proper extension to a neighborhood, cf. [2]
+
+Implementational aspects (cf. [1] and [2] for details):
+-------------------------------------------------------
+* Geometry approximation in space-time using isoparametric unfitted FEM
+* Projection operator that maps solutions from one deformed mesh to another
+* A (sparse) direct solver is applied to solve the arising linear systems.
+
+References:
+-----------
+All concepts that are used here are explained in the jupyter-tuorials
+`spacetime.ipynb`. As a simplified setting without cut configurations,
+we also refer to the `spacetimeDG_fitted.py` demo.
+
+Literature:
+-----------
+[1] J. Preuß, Higher order unfitted isoparametric space-time FEM on moving
+    domains. Master's thesis, NAM, University of Göttingen, 2018.
+[2] F. Heimann. On Discontinuous- and Continuous-In-Time Unfitted Space-Time
+    Methods for PDEs on Moving Domains. Master's thesis, NAM, University of
+    Göttingen, 2020.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -117,7 +148,7 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
-              definedonelements=ci.GetElementsOfType(HASNEG))
+              definedonelements=ci.GetElementsOfType(HASNEG), tref=1)
 dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
 
@@ -167,11 +198,12 @@ while tend - told.Get() > delta_t / 2:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
                                               b=ba_plus_hasneg)
     active_dofs = GetDofsOfElements(st_fes_i, ba_plus_hasneg)
-    
+
     # Check element history for method of lines time-derivative approx.
     els_test[:] = ci.GetElementsOfType(HASNEG) & ~ba_plus_hasneg_old
-    assert sum(els_test) == 0, 'Some active elements do not have a history. You might want to increase eps'
-    
+    assert sum(els_test) == 0, 'Some active elements do not have a history.\
+        You might want to increase eps'
+
     ba_plus_hasneg_old[:] = ba_plus_hasneg
 
     a_i.Assemble()
@@ -187,7 +219,7 @@ while tend - told.Get() > delta_t / 2:
 
     # compute error at final time
     l2error = sqrt(
-        Integrate((fix_tref(u_exact, 1) - u_last)**2 * dOmnew, mesh))
+        Integrate((u_exact - u_last)**2 * dOmnew, mesh))
 
     # update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
