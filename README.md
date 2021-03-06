@@ -28,7 +28,7 @@ Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an
 | `MLS`: multiple level set | yes | no | no | no | / | no | yes | no | yes | yes |
 | `STF`: space-time finite elements | yes | no | no | yes | no | / | yes | yes | yes | yes |
 | `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | yes | yes | no |
-| `Hex`: hyperrectangles (quads/hexes) | yes | yes | no? | yes | no | yes | yes | / | / | yes |
+| `Hex`: hyperrectangles (quads/hexes) | yes | yes | no | yes | no | yes | yes | / | / | yes |
 | `Tet`: simplices (trigs./tets) | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
 | `MPI`: MPI | yes | yes | no | yes | yes | yes | no | yes | yes | / |
 
