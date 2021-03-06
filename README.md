@@ -22,18 +22,17 @@ Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `CFE`: CutFEM formulation | / | / | yes | yes | yes | no | yes | yes | yes | yes |
-| `XFE`: XFEM formulation | / | / | yes | yes | no? | no | yes | yes | yes | yes |
-| `DGF`: Discontinuous Galerkin form. | yes | yes | / | yes | no | no? | yes | no? | yes | no* |
+| `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | yes | yes | yes |
+| `DGF`: Discontinuous Galerkin form. | yes | yes | / | yes | no | no | yes | no | yes | no |
 | `Iso`: isoparametric mesh deformation | yes | yes | yes | / | no | yes | yes | yes | yes | yes |
-| `MLS`: multiple level set | yes | no? | no | no | / | no | yes | no | yes | yes |
-| `STF`: space-time finite elements | yes | no | no? | yes | no | / | yes | yes | yes | yes |
+| `MLS`: multiple level set | yes | no | no | no | / | no | yes | no | yes | yes |
+| `STF`: space-time finite elements | yes | no | no | yes | no | / | yes | yes | yes | yes |
 | `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | yes | yes | no |
 | `Hex`: hyperrectangles (quads/hexes) | yes | yes | no? | yes | no | yes | yes | / | / | yes |
 | `Tet`: simplices (trigs./tets) | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
-| `MPI`: MPI | yes | yes | no* | yes | yes | yes | no | yes | yes | / |
+| `MPI`: MPI | yes | yes | no | yes | yes | yes | no | yes | yes | / |
 
-
-Some of the *no*s are work in progress (e.g. `MLS`&`STF`) and some have not been considered so far (e.g. `DGF`&`STF`). 
+Some of the *no*s are work in progress (e.g. `MLS`&`STF`) and some have not been considered so far (e.g. `DGF`&`STF`). If you need a certain combination to work, please contact us and we will see what we can do. 
 
 # Examples and Documentation
 
