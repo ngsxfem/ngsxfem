@@ -6,32 +6,12 @@ We provide two (and a half) ways to setup `ngsxfem` on your machine:
 
 Below we discuss these installation steps in more detail. If you observe any problems with the installation, you can contact us through the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) or the [``NGSolve` user forum`](https://ngsolve.org/forum/index).
 
-## Table of further contents:
-
-- [Installation through `pip` (`pip3`)](#installation-through-pip-pip3)
+# Installation through `pip` (`pip3`)
+Table of contents for `pip` install:
   * [Releases](#releases)
   * [Development version](#development-version)
   * [Troubleshooting](#troubleshooting)
-- [Installation from source](#installation-from-source)
-  * [Prerequisite `NGSolve`](#prerequisite-ngsolve)
-    + [Independent `NGSolve` installation](#independent-ngsolve-installation)
-      - [Required version of `NGSolve`](#required-version-of-ngsolve)
-      - [Installation of `NGSolve`](#installation-of-ngsolve)
-    + [Include `NGSolve` installation in `ngsxfem` build.](#include-ngsolve-installation-in-ngsxfem-build)
-  * [Installation guide for build from source](#installation-guide-for-build-from-source)
-    + [Installation steps on Linux](#installation-steps-on-linux)
-      - [1a.  Building `ngsxfem` with pre-installed `NGSolve`](#1a-building-ngsxfem-with-pre-installed-ngsolve)
-      - [1b.  Building `ngsxfem` and `NGSolve` together](#2b-building-ngsxfem-and-ngsolve-together)
-      - [2. Troubleshooting](#2-troubleshooting)
-      - [3. Updating `ngsxfem`](#3-updating-ngsxfem)
-    + [Installation steps on MacOs](#installation-steps-on-macos)
-      - [0.  Building prerequisites on MacOs](#0-building-prerequisites-on-macos)
-      - [1.  Building `ngsxfem` with pre-installed `NGSolve`](#1-building-ngsxfem-with-pre-installed-ngsolve)
-      - [2.  Updating `ngsxfem`](#2-updating-ngsxfem)
-  * [Testing the installation](#testing-the-installation)
-- [Docker container](#docker-container)
-
-# Installation through `pip` (`pip3`)
+---
 
 We automatically publish a *source distribution* of the releases of `ngsxfem` on PyPI for installation via `pip3`. Since this is a source code distribution and not a binary distribution, the installation via `pip` requires a sufficiently new pre-installed `NGSolve` and the same prerequisites as installing `NGSolve` from source. For details of these, please consult the [corresponding section on the `NGSolve` homepage](https://ngsolve.org/docu/latest/install/installlinux.html). The necessary `NGSolve` version for compatibility will be checked for during installation and can be found in the first line of [`python/ngs_check.py`](python/ngs_check.py). Note that the version of the submodule `ngsolve` in `external dependencies` is also sufficient.
 
@@ -55,7 +35,28 @@ The `pip`-installation builds `ngsxfem` from source using default parameters for
 as it gives you more fine-grained control on the installation. 
 
 # Installation from source
-You can build `ngsxfem` also directly from sources. This should work for both the releases and the master branch. As `ngsxfem` is an Add-on to `N NGSolve` you require a proper version of `NGSolve`, the installation of which we discuss first.
+You can build `ngsxfem` also directly from sources. This should work for both the releases and the master branch. As `ngsxfem` is an Add-on to `NGSolve` you require a proper version of `NGSolve`, the installation of which we discuss first before we explain the further build steps.
+
+Table of contents for install from source:
+* [Prerequisite `NGSolve`](#prerequisite-ngsolve)
+  + [Independent `NGSolve` installation](#independent-ngsolve-installation)
+    - [Required version of `NGSolve`](#required-version-of-ngsolve)
+    - [Installation of `NGSolve`](#installation-of-ngsolve)
+  + [Include `NGSolve` installation in `ngsxfem` build.](#include-ngsolve-installation-in-ngsxfem-build)
+* [Installation guide for build from source](#installation-guide-for-build-from-source)
+  + [Installation steps on Linux](#installation-steps-on-linux)
+    - [1a.  Building `ngsxfem` with pre-installed `NGSolve`](#1a-building-ngsxfem-with-pre-installed-ngsolve)
+    - [1b.  Building `ngsxfem` and `NGSolve` together](#1b-building-ngsxfem-and-ngsolve-together)
+    - [2. Troubleshooting](#2-troubleshooting)
+    - [3. Updating `ngsxfem`](#3-updating-ngsxfem)
+  + [Installation steps on MacOs](#installation-steps-on-macos)
+    - [0.  Building prerequisites on MacOs](#0-building-prerequisites-on-macos)
+    - [1.  Building `ngsxfem` with pre-installed `NGSolve`](#1-building-ngsxfem-with-pre-installed-ngsolve)
+    - [2.  Updating `ngsxfem`](#2-updating-ngsxfem)
+* [Testing the installation](#testing-the-installation)
+---
+
+
 ## Prerequisite `NGSolve`
 To build `ngsxfem` from source, the corresponding version of `Netgen/NGSolve` is required to be installed. This can either be done in advance (default and recommended option), or as an external dependency. 
 
