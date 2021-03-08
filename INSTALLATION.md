@@ -193,10 +193,10 @@ We run tests by default. I you wish to test your self-built binaries, go to the 
 
 # Docker container
 A convenient and reproducable way to set up `ngsxfem` is the usage of [a docker image](https://hub.docker.com/r/schruste/ngsxfem) that we provide here:
-<https://hub.docker.com/r/schruste/ngsxfem>. 
+<https://hub.docker.com/r/ngsxfem/ngsxfem>.
 Installation of `docker` on the common platforms is described [here](https://docs.docker.com/get-docker/). After installation the `Docker daemon` has to be started. This can either be done on boot or manually. In most Linux distributions the command for the latter is either `systemctl start docker` or `service docker start`.
 
 Assuming an installed `docker` with running docker daemon, you can spawn into the `ngsxfem` image with
 ``` {.shell}
-docker run -i -t schruste/ngsxfem:latest /bin/bash
+docker run -i -t ngsxfem/ngsxfem:latest /bin/bash
 ```
