@@ -4,7 +4,7 @@ We provide two (and a half) ways to setup `ngsxfem` on your machine:
 * [Installation from source](#installation-from-source)
 * [Running a docker image](#docker-container)
 
-Below we discuss these installation steps in more detail. If you observe any problems with the installation, you can contact us through the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) or the [``NGSolve` user forum`](https://ngsolve.org/forum/index).
+Below we discuss these installation steps in more detail. If you observe any problems with the installation, you can contact us through the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) or the [`'NGSolve' user forum`](https://ngsolve.org/forum/index).
 
 # Installation through `pip` (`pip3`)
 Table of contents for `pip` install:
