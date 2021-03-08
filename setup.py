@@ -61,7 +61,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='xfem',
-    version='1.3.dev3',
+    version='1.4.dev.1',
     author='Christoph Lehrenfeld',
     author_email='lehrenfeld@math.uni-goettingen.de',
     description='(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM.',
