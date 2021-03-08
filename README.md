@@ -1,12 +1,21 @@
+[![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/ngsxfem/ngsxfem/master?label=github%20workflow)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/y/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem) 
+[![GitHub last commit](https://img.shields.io/github/last-commit/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem) 
+[![LGPL](https://img.shields.io/github/license/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem/blob/release/LICENSE)
+
+
+[![PyPI](https://img.shields.io/pypi/v/xfem?color=blue&label=latest%20PyPI%20version)](https://pypi.org/project/xfem/)
+[![PyPI - Wheel](https://img.shields.io/pypi/wheel/xfem)](https://pypi.org/project/xfem/)
+[![PyPI - Implementation](https://img.shields.io/pypi/implementation/xfem)](https://pypi.org/project/xfem/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/xfem?color=green&label=PyPI%20downloads)](https://pypi.org/project/xfem/)
+
+[![docker build](https://img.shields.io/docker/cloud/build/ngsxfem/ngsxfem)](https://hub.docker.com/repository/docker/ngsxfem/ngsxfem) 
+[![Docker Pulls](https://img.shields.io/docker/pulls/ngsxfem/ngsxfem)](https://hub.docker.com/repository/docker/ngsxfem/ngsxfem) 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ngsxfem/ngsxfem-jupyter/HEAD?filepath=tutorials.ipynb)
+
 # About `ngsxfem`
 
 `ngsxfem` is an add-on library to the finite element package [`Netgen`/`NGSolve`](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods for partial differential equations.
-
-| | Status |
-| --- | --- |
-| Development: build and test | [![development: build and test](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml/badge.svg?branch=master)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) |
-| Release: build, test and publish on PyPI | [![](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml/badge.svg?branch=release)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) |
-| Interactive tutorials on binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ngsxfem/ngsxfem-jupyter/HEAD?filepath=tutorials.ipynb)    |
 
 # The features of `ngsxfem`
 
