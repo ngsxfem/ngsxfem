@@ -30,10 +30,10 @@ bibliography: lit-ngsxfem.bib
 ---
 
 # Summary
-`ngsxfem` is an Add-on library to [`Netgen/NGSolve`](www.ngsolve.org), a general purpose, high performance finite element library. The add-on enables the use of geometrically unfitted finite element technologies known under different labels, e.g. *XFEM*, *CutFEM*, *TraceFEM*, *Finite Cell*, *fictitious domain method* or *Cut-Cell methods*, etc.. `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+`ngsxfem` is an add-on library to [`Netgen/NGSolve`](www.ngsolve.org), a general purpose, high performance finite element library. The add-on enables the use of geometrically unfitted finite element technologies known under different labels, e.g. *XFEM*, *CutFEM*, *TraceFEM*, *Finite Cell*, *fictitious domain method* or *Cut-Cell methods*, etc.. `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
 # Statement of need
-Typically, in the finite element method for the discretization of PDEs, the geometry under consideration is parametrized by the computational mesh yielding *geometrically fitted* finite element methods. The generation and adaptation of geometrically fitted computational meshes can be a burden on simulation methods, e.g. if the geometries are complex or especially if they are evolving in time. To be more flexible w.r.t. the geometry *geometrically unfitted* finite element methods can be considered which break the direct link between the geometry parametrization and the computational mesh. Instead, a separate description of the geometry, e.g. through a *level set function* is used. `ngsxfem` aims at providing the necessary tools to robustly work in a *geometrically unfitted* setting where the geometry is described by one (or multiple) *level set functions*. The essential tools extending standard finite element codes for the *geometrically unfitted* setting are:
+Typically, in the finite element method for the discretization of PDEs, the geometry under consideration is parametrized by the computational mesh yielding *geometrically fitted* finite element methods. The generation and adaptation of geometrically fitted computational meshes can be a burden on simulation methods, e.g. if the geometries are complex or especially if they are evolving in time. To be more flexible w.r.t. the geometry, *geometrically unfitted* finite element methods can be considered which break the direct link between the geometry parametrization and the computational mesh. Instead, a separate description of the geometry, e.g. through a *level set function* is used. `ngsxfem` aims at providing the necessary tools to robustly work in a *geometrically unfitted* setting where the geometry is described by one (or multiple) *level set function(s)*. The essential tools extending standard finite element codes for the *geometrically unfitted* setting are:
 
 * formulation of geometrically unfitted geometry through level set function(s)
 * classification of elements in the computational mesh according to the unfitted geometry
@@ -50,7 +50,7 @@ First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other fini
 
 * Scalar fictitious domain problems have been investigated in @Leh17.
 * Scalar and Stokes interface problems as in two-phase flow problems have been investigated in @LR16, @Leh16, @Leh16a, @LR19, @LPWL16, @OQS21 and @Lud20. In the latter publication Multigrid preconditioners have been developed. 
-* PDEs on moving domains have been considered and discretizations have been implemented in `ngsxfem` in several publications. In @Pre18, @Hei20 space-time discretizations for scalar parabolic model problems are considered whereas a Eulerian time stepping method for scalar and unsteady Stokes problems have been considered in @LO19 and @vWRL20, see also the reproduction data in @vWRL20a. 
+* PDEs on moving domains have been considered and discretizations have been implemented in `ngsxfem` in several publications. In @Pre18, @Hei20 space-time discretizations for scalar parabolic model problems are considered, whereas Eulerian time stepping methods for scalar and unsteady Stokes problems have been considered in @LO19 and @vWRL20, see also the reproduction data in @vWRL20a. 
 * Fluid-structure interaction problems have been investigated in @vWR21 and @vWRFH21, see also the reproduction data in @vWRFH20a.
 * Surface PDEs have also been considered ranging from scalar ones in @GLR18 and @Hei18 over Vector-Laplacians in @JR19 and @R20 to flows on smooth surfaces in @JR19a and @BR20.
 * Shape optimization for geometries that are described by level set functions have been considered in @Rau18.
@@ -64,10 +64,10 @@ In unfitted finite element methods some functions and integrals are only defined
 `ngsxfem` offers the tools to mark the corresponding elements and facets and use the marking during assembly and definition of finite element spaces. 
 On cut elements one often also uses locally modified finite elements, e.g. by restriction of finite elements on the background mesh.
 
-![Left: *Active mesh*. Right: Basis function restricted to a subdomain.](graphics/xfes.png){ height=3cm align=center}
+![Left: Active mesh. Right: Basis function restricted to a subdomain.](graphics/xfes.png){ height=3cm align=center}
 
 ### Numerical integration on unfitted geometries described by one level set function
-Given a level set function $\phi$ which describes the geometry (e.g. $\Omega = \{ \phi < 0 \}$) a piecewise linear (or bilinear on hyperrectangles, cf. @HL19) approximation is made. How to obtain a higher order reconstruction from this basis approximation is discussed [below](#higher-order-representation-of-implicit-level-set-geometries).
+Given a level set function $\phi$ which describes the geometry (e.g. $\Omega = \{ \phi < 0 \}$), a piecewise linear (or bilinear on hyperrectangles, cf. @HL19) approximation is made. How to obtain a higher order reconstruction from this basis approximation is discussed [below](#higher-order-representation-of-implicit-level-set-geometries).
 
 On simplices (triangles and tetrahedra) this gives a planar intersection on every element which allows for an explicit decomposition into simple geometries.
 On these simple (uncut) geometries standard quadrature rules of arbitrary order can be applied which results in quadrature rules for the (approximated) sub-domains where the level set is positive/negative/zero.
