@@ -196,7 +196,16 @@ A convenient and reproducable way to set up `ngsxfem` is the usage of [a docker 
 <https://hub.docker.com/r/ngsxfem/ngsxfem>.
 Installation of `docker` on the common platforms is described [here](https://docs.docker.com/get-docker/). After installation the `Docker daemon` has to be started. This can either be done on boot or manually. In most Linux distributions the command for the latter is either `systemctl start docker` or `service docker start`.
 
+## Jupyter through docker
 Assuming an installed `docker` with running docker daemon, you can spawn into the `ngsxfem` image with
 ``` {.shell}
 docker run -i -t ngsxfem/ngsxfem:latest /bin/bash
+```
+To directly spawn a jupyter server in the docker that you can access from a browser start
+```
+docker run -p 8888:8888 ngsxfem/ngsxfem-jupyter
+```
+and open a browser and past in the URL that you obtain in the terminal. You will have the jupyter tutorial files from the docker container available to work with. Note that changes will not be persistent in the image. To work on local files (with persistent changes) mount a local directory to the docker container, e.g.
+```
+docker run -p 8888:8888 -v ${PWD}:/home/jovyan ngsxfem/ngsxfem-jupyter
 ```
