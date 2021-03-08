@@ -4,7 +4,6 @@ space-time finite element discretisation
 
 Domain:
 -------
-
 The background domain is [-0.6,0.6]x[-1,1]x[0,0.5] (2D+time interval)
 while the physical domain is a circle that is traveling up and down
 over time.
@@ -37,9 +36,13 @@ from math import pi
 ngsglobals.msg_level = 1
 
 # -------------------------------- PARAMETERS ---------------------------------
+# Space finite element order
 order = 1
+# Time finite element order
 k_t = 1
+# Final simulation time
 tend = 1.0
+# Time step
 delta_t = 1 / 32
 
 
@@ -69,7 +72,8 @@ dxold = dmesh(mesh, tref=0)
 dxnew = dmesh(mesh, tref=1)
 
 
-def dt(u): return 1.0 / delta_t * dtref(u)
+def dt(u):
+    return 1.0 / delta_t * dtref(u)
 
 
 a = BilinearForm(st_fes, symmetric=False)
@@ -89,7 +93,7 @@ while tend - told.Get() > delta_t / 2:
     f.Assemble()
     gfu.vec.data = a.mat.Inverse(st_fes.FreeDofs(), "umfpack") * f.vec
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
-    l2error = sqrt(Integrate((u_exact-gfu) ** 2*dxnew, mesh))
+    l2error = sqrt(Integrate((u_exact - gfu)**2 * dxnew, mesh))
     Redraw()
     told.Set(told.Get() + delta_t)
     print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))

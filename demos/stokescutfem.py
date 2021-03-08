@@ -68,7 +68,6 @@ Literature:
 [3] A. Hansbo, P. Hansbo, An unfitted finite element method, based on
     Nitsche's method, for elliptic interface problems, Comp. Meth. Appl.
     Mech. Eng., 191(47):5537-5552, 2002
-
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -79,7 +78,7 @@ from xfem.lsetcurv import *
 
 
 # -------------------------------- PARAMETERS ---------------------------------
-# mesh size
+# Mesh size
 maxh = 0.125
 # Finite element order (k of P^k/P^{k-1} Taylor-Hood elements)
 order = 3
@@ -97,9 +96,8 @@ apos = 1.0 / mu[1] + (1.0 / mu[0] - 1.0 / mu[1]) * exp(x * x + y * y - R * R)
 # Stabilization parameters for ghost-penalty
 gamma_stab_v = 0.05  # if set to zero: no GP-stabilization for velocity
 gamma_stab_p = 0.05
-# stabilization parameter for Nitsche
+# Stabilization parameter for Nitsche
 lambda_nitsche = 0.5 * (mu[0] + mu[1]) * 20 * order * order
-
 
 # ----------------------------------- MAIN ------------------------------------
 # Generate the background mesh
@@ -123,10 +121,9 @@ vel_exact = [a * CoefficientFunction((-y, x)) * exp(-1 * rsqr)
              for a in [aneg, apos]]
 pre_exact = [x**3, x**3 - gammaf]
 
+
 # Some helper expressions to compute the r.h.s. of the Stokes system for
 # a given solution:
-
-
 def Coef_Grad(v):
     func = tuple([v[i].Diff(w) for w in [x, y] for i in [0, 1]])
     return CoefficientFunction(func, dims=(d, d)).trans

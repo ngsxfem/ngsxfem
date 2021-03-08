@@ -5,8 +5,8 @@ approximation as well as the order of convergence thereof.
 
 References:
 -----------
-All concepts that are used here are explained in the jupyter-tuorials
-`basics` and `intlset`.
+* All concepts that are used here are explained in the jupyter-tuorials
+  `basics` and `intlset`.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -23,10 +23,12 @@ import sys
 ngsglobals.msg_level = 2
 
 # -------------------------------- PARAMETERS ---------------------------------
+# Initial mesh size
 maxh = 0.5
+# Mesh deformation order
 order = 2
+# Refine cut elements
 maxreflvl = 4
-
 
 # ----------------------------------- MAIN ------------------------------------
 # Main loop

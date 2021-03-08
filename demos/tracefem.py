@@ -6,10 +6,12 @@ this time. To be robust w.r.t. the interface position also in the
 condition number we use the normal diffusion stabilization, cf.[1,2].
 
 Used features:
--------------------------
+--------------
 * Higher order geometry approximation, cf. jupyter tutorial `lsetint`
+
 * Restricted finite element space to condense the system to active dofs,
   cf. jupyter tutorial `basics`
+
 * Visualization: The visualization of the solution is most convenient
   with paraview and the generated vtk file.
 
@@ -35,7 +37,7 @@ from math import pi
 # -------------------------------- PARAMETERS ---------------------------------
 # Mesh diameter
 maxh = 0.6
-# Refine cut elements of (initial) mesh
+# Bisect cut elements of (initial) mesh
 n_cut_ref = 2
 # Polynomial order of FE space
 order = 2
@@ -55,7 +57,7 @@ coef_f = (sin(pi * z) * (diff_cf * pi * pi * (1 - z * z) + reac_cf)
           + diff_cf * cos(pi * z) * 2 * pi * z)
 
 # ----------------------------------- MAIN ------------------------------------
-# preliminary refinements
+# Preliminary refinements
 for i in range(n_cut_ref):
     lsetp1 = GridFunction(H1(mesh, order=1))
     InterpolateToP1(levelset, lsetp1)
@@ -79,22 +81,21 @@ VhG = Restrict(Vh, ba_IF)
 
 gfu = GridFunction(VhG)
 
-# coefficients / parameters:
+# Coefficients / parameters:
 n = Normalize(grad(lset_approx))
 h = specialcf.mesh_size
 
+
 # Tangential projection
-
-
 def P(u):
     return u - (u * n) * n
 
 
 u, v = VhG.TnT()
 
-# measure on surface
+# Measure on surface
 ds = dCut(lset_approx, IF, definedonelements=ba_IF, deformation=deformation)
-# measure on the bulk around the surface
+# Measure on the bulk around the surface
 dx = dx(definedonelements=ba_IF, deformation=deformation)
 
 # Bilinear forms:
