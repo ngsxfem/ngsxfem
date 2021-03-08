@@ -46,7 +46,7 @@ We provide two main sources to learn how to use `ngsxfem`:
  # List of contributing authors (with major contributions)
 
 -   Christoph Lehrenfeld (main author)
--   Fabian Heimann (cutIntegration, space-time)
+-   Fabian Heimann (cut integration, space-time)
 -   Thomas Ludescher (multigrid)
 -   Janosch Preuss (space-time)
 -   Henry von Wahl (multiple levelsets)
