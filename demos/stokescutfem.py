@@ -121,7 +121,7 @@ levelset = r - R
 gammaf = 0.5  # surface tension = pressure jump
 vel_exact = [a * CoefficientFunction((-y, x)) * exp(-1 * rsqr)
              for a in [aneg, apos]]
-pres_exact = [x**3, x**3 - gammaf]
+pre_exact = [x**3, x**3 - gammaf]
 
 # Some helper expressions to compute the r.h.s. of the Stokes system for
 # a given solution:
@@ -144,7 +144,7 @@ def Coef_Div(v):
 
 # Manufactured right-hand side:
 coef_g = [Coef_Div(-2 * mu[i] * Coef_Eps(vel_exact[i])
-                   + pres_exact[i] * Id(d)) for i in [0, 1]]
+                   + pre_exact[i] * Id(d)) for i in [0, 1]]
 
 
 # Discretisation
@@ -177,17 +177,18 @@ gfu, gfp, gfn = gfup.components
 gfu_neg, gfu_pos = gfu.components
 gfp_neg, gfp_pos = gfp.components
 
-# Describe the integration regions
-lset_neg = {"levelset": lsetp1, "domain_type": NEG}
-lset_pos = {"levelset": lsetp1, "domain_type": POS}
-lset_doms = [lset_neg, lset_pos]
-lset_if = {"levelset": lsetp1, "domain_type": IF}
 
 # Element, facet and dof marking w.r.t. boundary approximation with lsetp1:
 ba_facets = [GetFacetsWithNeighborTypes(mesh, a=ci.GetElementsOfType(HASNEG),
                                         b=ci.GetElementsOfType(IF)),
              GetFacetsWithNeighborTypes(mesh, a=ci.GetElementsOfType(HASPOS),
                                         b=ci.GetElementsOfType(IF))]
+
+# Describe the integration regions
+dx = tuple([dCut(lsetp1, dt, deformation=deformation) for dt in [NEG, POS]])
+ds = dCut(lsetp1, IF, deformation=deformation)
+dw = tuple([dFacetPatch(definedonelements=els_gp, deformation=deformation)
+            for els_gp in ba_facets])
 
 
 # Construct (Bi-)linear forms
@@ -225,33 +226,26 @@ def jump(u):
 
 # Stokes variational formulation:
 for i in [0, 1]:  # Loop over domains
-    a += SymbolicBFI(lset_doms[i], form=2 * mu[i] *
-                     InnerProduct(eps(u[i]), eps(v[i])))
-    a += SymbolicBFI(lset_doms[i], form=- div(u[i]) * q[i] - div(v[i]) * p[i])
-    f += SymbolicLFI(lset_doms[i], form=coef_g[i] * v[i])
-# Constraining the pressure integral
-a += SymbolicBFI(lset_neg, form=n * q[0] + m * p[0])
+    a += 2 * mu[i] * InnerProduct(eps(u[i]), eps(v[i])) * dx[i]
+    a += (- div(u[i]) * q[i] - div(v[i]) * p[i]) * dx[i]
+    f += coef_g[i] * v[i] * dx[i]
+
+# Constrain the pressure integral
+a += (n * q[0] + m * p[0]) * dx[0]
 # Nitsche parts:
-a += SymbolicBFI(lset_if, form=average_flux(u, p) * jump(v))
-a += SymbolicBFI(lset_if, form=average_flux(v, p) * jump(u))
-a += SymbolicBFI(lset_if, form=lambda_nitsche / h * jump(u) * jump(v))
+a += (average_flux(u, p) * jump(v) + average_flux(v, p) * jump(u)) * ds
+a += lambda_nitsche / h * jump(u) * jump(v) * ds
 # Surface tension:
-f += SymbolicLFI(lset_if, form=-gammaf * average_inv(v) * n_lset)
+f += -gammaf * average_inv(v) * n_lset * ds
 
 # Ghost-penalty terms:
 for i in [0, 1]:
-    gp_v = gamma_stab_v / h**2 * (u[i] - u[i].Other()) * (v[i] - v[i].Other())
-    gp_p = -gamma_stab_p * (p[i] - p[i].Other()) * (q[i] - q[i].Other())
     if gamma_stab_v > 0:
-        a += SymbolicFacetPatchBFI(form=gp_v, skeleton=False,
-                                   definedonelements=ba_facets[i])
+        a += gamma_stab_v / h**2 * \
+            (u[i] - u[i].Other()) * (v[i] - v[i].Other()) * dw[i]
     if gamma_stab_p > 0:
-        a += SymbolicFacetPatchBFI(form=gp_p, skeleton=False,
-                                   definedonelements=ba_facets[i])
-
-
-# Apply mesh adaptation for higher order geometry approximation
-mesh.deformation = deformation
+        a += -gamma_stab_p * \
+            (p[i] - p[i].Other()) * (q[i] - q[i].Other()) * dw[i]
 
 
 # Assemble and solve the resulting linear system
@@ -268,22 +262,20 @@ with TaskManager():
     gfup.vec.data += a.mat.Inverse(WhG.FreeDofs()) * f.vec
 
 # Measure the error
-vl2error = sqrt(sum([Integrate(lset_doms[i],
-                               Norm(gfu.components[i] - vel_exact[i])**2,
-                               mesh=mesh)
-                     for i in [0, 1]]))
-vh1error = sqrt(sum([Integrate(lset_doms[i],
-                               Norm(Grad(gfu.components[i])
-                                    - Coef_Grad(vel_exact[i]))**2, mesh=mesh)
-                     for i in [0, 1]]))
-pl2error = sqrt(sum([Integrate(lset_doms[i],
-                               Norm(gfp.components[i] - pres_exact[i])**2,
-                               mesh=mesh)
-                     for i in [0, 1]]))
+err2 = {'vl2': 0, 'vh1': 0, 'pl2': 0.0}
+for i in [0, 1]:
+    _dx = dx[i].order(2 * order)
+    err2['vl2'] += Integrate(Norm(gfu.components[i] - vel_exact[i])**2 * _dx,
+                             mesh=mesh)
+    err2['vh1'] += Integrate(Norm(Grad(gfu.components[i])
+                                  - Coef_Grad(vel_exact[i]))**2 * _dx,
+                             mesh=mesh)
+    err2['pl2'] += Integrate(Norm(gfp.components[i] - pre_exact[i])**2 * _dx,
+                             mesh=mesh)
 
-print("L2 Error of velocity: {:10.8e}".format(vl2error))
-print("H1 Error of velocity: {:10.8e}".format(vh1error))
-print("L2 Error of pressure: {:10.8e}".format(pl2error))
+print("L2 Error of velocity: {:10.8e}".format(sqrt(err2['vl2'])))
+print("H1 Error of velocity: {:10.8e}".format(sqrt(err2['vh1'])))
+print("L2 Error of pressure: {:10.8e}".format(sqrt(err2['pl2'])))
 
 # Unset mesh adaptation
 mesh.deformation = None
