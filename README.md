@@ -2,6 +2,12 @@
 
 `ngsxfem` is an add-on library to the finite element package [`Netgen`/`NGSolve`](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods for partial differential equations.
 
+| | Status |
+| --- | --- |
+| Development: build and test | [![development: build and test](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml/badge.svg?branch=master)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) |
+| Release: build, test and publish on PyPI | [![](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml/badge.svg?branch=release)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) |
+| Interactive tutorials on binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ngsxfem/ngsxfem-jupyter/HEAD?filepath=tutorials.ipynb)    |
+
 # The features of `ngsxfem`
 
 The main features of `ngsxfem` are:
