@@ -35,15 +35,15 @@ The main features of `ngsxfem` are:
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `CFE`: CutFEM formulation | / | / | yes | yes | yes | no | yes | yes | yes | yes |
+| `CFE`: CutFEM form. | / | / | yes | yes | yes | no | yes | yes | yes | yes |
 | `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | yes | yes | yes |
-| `DGF`: Discontinuous Galerkin form. | yes | yes | / | yes | no | no | yes | no | yes | no |
-| `Iso`: isoparametric mesh deformation | yes | yes | yes | / | no | yes | yes | yes | yes | yes |
+| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | no | yes | no | yes | no |
+| `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes | yes | yes |
 | `MLS`: multiple level set | yes | no | no | no | / | no | yes | no | yes | yes |
-| `STF`: space-time finite elements | yes | no | no | yes | no | / | yes | yes | yes | yes |
+| `STF`: space-time FEM | yes | no | no | yes | no | / | yes | yes | yes | yes |
 | `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | yes | yes | no |
-| `Hex`: hyperrectangles (quads/hexes) | yes | yes | no | yes | no | yes | yes | / | / | yes |
-| `Tet`: simplices (trigs./tets) | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
+| `Hex`: quads / hexes | yes | yes | no | yes | no | yes | yes | / | / | yes |
+| `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
 | `MPI`: MPI | yes | yes | no | yes | yes | yes | no | yes | yes | / |
 
 Some of the *no*s are work in progress (e.g. `MLS`&`STF`) and some have not been considered so far (e.g. `DGF`&`STF`). If you need a certain combination to work, please contact us and we will see what we can do. 
