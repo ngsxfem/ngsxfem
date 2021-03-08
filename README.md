@@ -1,6 +1,6 @@
 # About `ngsxfem`
 
-`ngsxfem` is an add-on library to the finite element package [Netgen/NGSolve](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+`ngsxfem` is an add-on library to the finite element package [`Netgen`/`NGSolve`](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods for partial differential equations.
 
 # The features of `ngsxfem`
 
@@ -36,14 +36,14 @@ Some of the *no*s are work in progress (e.g. `MLS`&`STF`) and some have not been
 
 # Examples and Documentation
 
-We provide two main sources to learn how to use `ngsxfem`:
- * At <https://github.com/ngsxfem/ngsxfem-jupyter> you can find tutorial-style jupyter notebooks for ngsxfem. These explain the core functionalities and usage of the tools provided by `ngsxfem`. You can run those tutorials interactively (without the need of a local installation) through binder. 
+We provide two main sources with which to learn how to use `ngsxfem`:
+ * At <https://github.com/ngsxfem/ngsxfem-jupyter> you can find tutorial-style jupyter notebooks for `ngsxfem`. These explain the core functionalities and usage of the tools provided by `ngsxfem`. You can run those tutorials interactively (without the need of a local installation) through binder. 
  * in the [`demos`](./demos)-directory we provide several examples that demonstrate the usage of `ngsxfem` features. See [`demos/README.md`](demos/README.md) for details.
 
  # Installation
- We provide installation instructions for installation through `pip` and installation from source in [`INSTALLATION.md`](INSTALLATION.md). Further, [a docker image](https://hub.docker.com/r/schruste/ngsxfem) is available that can be used to run `ngsxfem` through docker.
+ We provide installation instructions for building/installing through `pip` and building/installing from sources in [`INSTALLATION.md`](INSTALLATION.md). Further, [a docker image](https://hub.docker.com/r/schruste/ngsxfem) is available which can be used to run `ngsxfem` through docker.
 
- # List of contributing authors (with major contributions)
+# List of contributing authors (with major contributions)
 
 -   Christoph Lehrenfeld (main author)
 -   Fabian Heimann (cut integration, space-time)
@@ -54,4 +54,4 @@ We provide two main sources to learn how to use `ngsxfem`:
 # Community guidelines
 If you observe any problems with the software / examples / documentation / installation or want to contribute, you can get in touch with us through either:
  * the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
- * the [`'NGSolve' user forum`](https://ngsolve.org/forum/index).
+ * the [`NGSolve` user forum](https://ngsolve.org/forum/index).

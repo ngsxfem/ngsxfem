@@ -1,7 +1,7 @@
 # Installation of `ngsxfem`
 We provide two (and a half) ways to setup `ngsxfem` on your machine:
-* [Installation through `pip`](#installation-through-pip-pip3)
-* [Installation from source](#installation-from-source)
+* [Building/Installing through `pip`](#installation-through-pip-pip3)
+* [Building/Installing from sources](#installation-from-source)
 * [Running a docker image](#docker-container)
 
 Below we discuss these installation steps in more detail. If you observe any problems with the installation, you can contact us through the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) or the [`'NGSolve' user forum`](https://ngsolve.org/forum/index).
@@ -50,7 +50,7 @@ Table of contents for install from source:
     - [2. Troubleshooting](#2-troubleshooting)
     - [3. Updating `ngsxfem`](#3-updating-ngsxfem)
   + [Installation steps on MacOs](#installation-steps-on-macos)
-    - [0.  Building prerequisites on MacOs](#0-building-prerequisites-on-macos)
+    - [0.  Building prerequisites on MacOS](#0-building-prerequisites-on-macos)
     - [1.  Building `ngsxfem` with pre-installed `NGSolve`](#1-building-ngsxfem-with-pre-installed-ngsolve)
     - [2.  Updating `ngsxfem`](#2-updating-ngsxfem)
 * [Testing the installation](#testing-the-installation)
@@ -156,7 +156,7 @@ make install
 
 If `NGSolve` was built as a submodule, then after pulling the latest `ngsxfem` sources, also update `NGSolve` by calling `git submodule update --init` in the `src-xfem` directory.
 
-### Installation steps on MacOs
+### Installation steps on MacOS
 
 #### 0.  Building prerequisites on MacOs
 To build on MacOS you require the Xcode Command Line Tools. These can be installed by calling `xcode-select --install` from within a terminal. Furthermore, CMake must be downloaded and installed. This can be done via [CMake website](https://cmake.org). To use cmake from a terminal, make sure to install the command line tools: Open CMake, in the \"Tools\" menu click on \"How to Install For Command Line Use\" and follow one of the suggested options.
@@ -192,7 +192,7 @@ We run tests by default. I you wish to test your self-built binaries, go to the 
 
 
 # Docker container
-A convenient and reproducable way to set up `ngsxfem` is the usage of [a docker image](https://hub.docker.com/r/schruste/ngsxfem) that we provide here:
+A convenient and reproducible way to set up `ngsxfem` is the usage of [a docker image](https://hub.docker.com/r/schruste/ngsxfem) that we provide here:
 <https://hub.docker.com/r/ngsxfem/ngsxfem>.
 Installation of `docker` on the common platforms is described [here](https://docs.docker.com/get-docker/). After installation the `Docker daemon` has to be started. This can either be done on boot or manually. In most Linux distributions the command for the latter is either `systemctl start docker` or `service docker start`.
 
