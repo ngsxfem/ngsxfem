@@ -25,7 +25,7 @@ Implementational aspects:
 
 References:
 -----------
-* All concepts that are used here are explained in the jupyter-tuorials
+* All concepts that are used here are explained in the jupyter tutorials
   `basics`, `intlset` and `cutfem`.
 
 
