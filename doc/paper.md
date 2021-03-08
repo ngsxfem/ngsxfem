@@ -12,6 +12,7 @@ authors:
     orcid: 0000-0003-0170-8468
     affiliation: 1
   - name: Fabian Heimann
+    orcid: 0000-0002-8969-6504
     affiliation: 1
   - name: Janosch Preuß
     orcid: 0000-0002-7384-535X
