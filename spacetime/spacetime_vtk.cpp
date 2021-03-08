@@ -210,7 +210,7 @@ namespace ngcomp
           *fileout << "13 " << endl;
         break;
       default:
-        cout << "SpaceTimeVTKOutput Element Type " << ma->GetElType(e) << " not supported!" << endl;
+        cout << IM(1) << "SpaceTimeVTKOutput Element Type " << ma->GetElType(e) << " not supported!" << endl;
         throw Exception("shouldn't get this element type");
       }
     }

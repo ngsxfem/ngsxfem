@@ -138,7 +138,7 @@ class LinearMGIterator(BaseMatrix):
         
         print( type(self.CutVh) )
         #check for compound space
-        if( type(self.CutVh) == ngsolve.comp.CompoundFESpace ):
+        if isinstance(self.CutVh,ProductSpace):
             print('creating compound cut prolongation')
             self.CutProl = CompoundProlongation( self.CutVh )
             # construct prolongation for neg/pos space

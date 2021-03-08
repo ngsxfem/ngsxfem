@@ -10,9 +10,11 @@
 
 #include <fem.hpp>
 #include "../xfem/symboliccutlfi.hpp"
+#include "../xfem/symboliccutbfi.hpp"
 #include "../cutint/xintegration.hpp"
 namespace ngfem
 {
+
 
   SymbolicCutLinearFormIntegrator ::
   SymbolicCutLinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
@@ -53,7 +55,8 @@ namespace ngfem
                        FlatVector<SCAL> elvec,
                        LocalHeap & lh) const
   {
-    static Timer t("symbolicCutLFI - CalcElementVector", 2);
+    static int timer = NgProfiler::CreateTimer ("symbolicCutLFI - CalcElementVector");
+    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     HeapReset hr(lh);
     
     // tstart.Start();
@@ -77,11 +80,10 @@ namespace ngfem
           }
       }
     
-    RegionTimer reg(t);
 
     auto et = trafo.GetElementType();
     if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
-      throw Exception("SymbolicCutBFI can only treat simplices right now");
+      throw Exception("SymbolicCutlfi can only treat simplices right now");
 
     LevelsetIntegrationDomain lsetintdom_local(lsetintdom);    
     if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom

@@ -43,7 +43,7 @@ namespace xintegration
             static bool first = true;
             if (first)
             {
-              cout << "Calling bisection for root finding ..." << endl;
+              cout << IM(3) << "Calling bisection for root finding ..." << endl;
               first = false;
             }
             vector<double> vals(subdivs+1); vector<tuple<double,double>> sign_change_intervals;
@@ -87,7 +87,7 @@ namespace xintegration
                     else throw Exception("Strange sign structure during bisection!");
                 }
                 if(j == bisection_iterations)
-                    cout << "WARNING: Bisection search did not converge. Resiual: " << eval(0.5*(a+b)) << endl;
+                    cout << IM(2) << "WARNING: Bisection search did not converge. Residual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
             return roots;
@@ -102,6 +102,9 @@ namespace xintegration
                                                         int order_space,
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                         LocalHeap & lh){
+        static Timer timer("SpaceTimeCutIntegrationRule",1);
+        RegionTracer rt(TaskManager::GetThreadId(), timer);
+        ThreadRegionTimer reg(timer,TaskManager::GetThreadId());
         //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
         

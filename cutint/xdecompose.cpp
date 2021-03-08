@@ -7,7 +7,7 @@ namespace xintegration
   template<int SD>
   double Measure(const Array< const Vec<SD> *> & s)
   {
-      cout << " not implemented for SD=" << SD << endl;
+      cout << IM(1) << " not implemented for SD=" << SD << endl;
     throw Exception("not implemented");
     return 0;
   }

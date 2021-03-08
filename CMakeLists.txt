@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(xfem)
 
 set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
+set(CHECK_NGSOLVE_VERSION ON CACHE BOOL "Check if installed NGSolve (if exist) is compatible")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
 set(USE_GUI ON CACHE BOOL "use Netgen GUI")
@@ -73,6 +74,19 @@ else(BUILD_NGSOLVE)
   find_package(NGSolve CONFIG REQUIRED
     HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen $ENV{NETGENDIR}/../lib/cmake/ngsolve/ $ENV{NETGENDIR}/../Resources/CMake
   )
+
+
+  execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/python/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
+  if (CHECK_NGSOLVE_VERSION)
+    if (NOT ${ngsfits} EQUAL 1)
+      message(FATAL_ERROR "
+NGSolve version is smaller than required.
+Update NGSolve or downgrade ngsxfem!
+If you know what you are doing you can turn off this check by setting the cmake option CHECK_NGSOLVE_VERSION off: \"cmake -DCHECK_NGSOLVE_VERSION=OFF ...\"
+")
+    endif (NOT ${ngsfits} EQUAL 1)
+  endif (CHECK_NGSOLVE_VERSION)
+
 endif(BUILD_NGSOLVE)
 
 if(USE_CCACHE)
@@ -91,7 +105,7 @@ endif(SPACETIME_SANITY_CHECKS)
 find_package(NGSolve REQUIRED CONFIG)
 set(NGSXFEM_VERSION_MAJOR 1)
 set(NGSXFEM_VERSION_MINOR 3)
-set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}-dev")
+set(NGSXFEM_VERSION "${NGSXFEM_VERSION_MAJOR}.${NGSXFEM_VERSION_MINOR}.dev")
 set(PACKAGE_VERSION ${NGSXFEM_VERSION})
 
 
@@ -114,11 +128,11 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-add_subdirectory(cutint)
 add_subdirectory(python)
 add_subdirectory(utils)
+add_subdirectory(cutint)
 add_subdirectory(xfem)
-add_subdirectory(py_tutorials)
+add_subdirectory(demos)
 add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 add_subdirectory(spacetime)
@@ -143,6 +157,7 @@ endfunction()
 
 string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" name)
 set(flags "${${name}} ${CMAKE_CXX_FLAGS}")
+
 
 message("
 ------------------------------------------------------------------------

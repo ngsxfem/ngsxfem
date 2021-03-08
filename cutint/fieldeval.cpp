@@ -51,7 +51,7 @@ namespace ngfem
     case 2 :
       return new (a_lh) CoefficientFunctionEvaluator<2>(evalf, eltrans, t);
     case 3 :
-      cout << " ScalarFieldEvaluator::Create - eval functions only evaluate in 3 dimensions"
+      cout << IM(1) << " ScalarFieldEvaluator::Create - eval functions only evaluate in 3 dimensions"
            << " - prescribing the 4th dimension does not make sense" << endl;
       return new (a_lh) CoefficientFunctionEvaluator<3>(evalf, eltrans, t);
     default :

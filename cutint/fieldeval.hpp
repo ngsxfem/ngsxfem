@@ -63,7 +63,7 @@ namespace ngfem
       // if (st_fe == NULL && s_fe == NULL)
       if (s_fe == NULL)
       {
-        cout << " D = " << D << endl;
+        cout << IM(1) << " D = " << D << endl;
         throw Exception("ScalarFEEvaluator - constructor: cast failed...");
       }
     }

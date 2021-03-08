@@ -6,26 +6,30 @@ else(APPLE)
     add_test(NAME cpu_usage COMMAND top "-n1" "-b" )
 endif(APPLE)
 
-add_test(NAME py_tutorial_nxfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem.py" "testmode")
+add_test(NAME pytests_ngsolve_version COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_ngsolve_version.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
-add_test(NAME py_tutorial_cutfem_lo COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/cutfem.py" "testmode")
+add_test(NAME py_demo_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/tracefem.py" "testmode")
 
-add_test(NAME py_tutorial_nxfem_ho COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/nxfem_higher_order.py" "testmode")
+add_test(NAME py_demo_stokescutfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/stokescutfem.py" "testmode")
 
-add_test(NAME py_tutorial_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/tracefem.py" "testmode")
+add_test(NAME py_demo_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/fictdom.py" "testmode")
 
-add_test(NAME py_tutorial_stokescutfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/stokescutfem.py" "testmode")
+add_test(NAME py_demo_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/fictdom_dg.py" "testmode")
 
-add_test(NAME py_tutorial_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_ghostpen.py" "testmode")
+add_test(NAME py_demo_fictdom_mlset COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/fictdom_mlset.py" "testmode")
 
-add_test(NAME py_tutorial_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
-  "${PROJECT_SOURCE_DIR}/py_tutorials/fictdom_dg_ghostpen.py" "testmode")
+add_test(NAME py_demo_unfitted_poisson COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/unf_interf_prob.py" "testmode")
+
+add_test(NAME py_demo_spacetime_unfitted_DG COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+  "${PROJECT_SOURCE_DIR}/demos/spacetime/spacetimeDG_unfitted.py" "testmode")
+
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
@@ -62,9 +66,12 @@ add_test(NAME pytests_num_nxfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_spacetimecutrule COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetimecutrule.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_spacetime_lsetcurv COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetime_lsetcurv.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+  
 add_test(NAME pytests_spacetime_set COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetime_set.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
-
+    
 add_test(NAME pytests_spacetime_vtk COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetime_vtk.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
