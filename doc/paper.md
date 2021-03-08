@@ -41,10 +41,11 @@ Typically, in the finite element method for the discretization of PDEs, the geom
 * facilities to provide robust numerical integration on cut elements 
 * stabilization techniques to deal with arbitrary bad cuts (e.g. "ghost penalty")
 
-First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other finite element frameworks similar libraries exists, e.g. `libcutfem` or `multimesh` for the `FEniCS` project, cf. @fenics and `dune-udg`, cf. @dune:udg, for `dune`, cf. @dune (more precisely `dune-pdelab`, cf. @dune:pdelab ). In addition, `ngsxfem` has two advanced features beyond that:
+First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other finite element frameworks similar libraries exists, e.g. `libcutfem` or `multimesh` for the `FEniCS` project, cf. @fenics and `dune-udg`, cf. @dune:udg, for `dune`, cf. @dune (more precisely `dune-pdelab`, cf. @dune:pdelab ). Let us also mention the `FEMPAR` finite element package which directly handles unfitted geometries, cf.  @fempar. In addition, `ngsxfem` has three advanced features beyond that:
 
 * higher order handling of curved level set geometries using isoparametric unfitted FEM, cf. @Leh16, @LR16, @Leh17
 * space-time finite elements and quadrature for unfitted space-time finite element discretizations of PDEs on moving domains, cf. @Pre18, @Hei20
+* the so-called direct version of the ghost penalty stabilization as introduced in @Pre18
 
 `ngsxfem` has already been used to develop and investigate the performance of different unfitted discretizations in several application fields:
 
