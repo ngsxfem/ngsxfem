@@ -1,5 +1,4 @@
-[![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/ngsxfem/ngsxfem/master?label=github%20workflow)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/y/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem) 
+[![Build, test (and publish release) of ngsxfem](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml/badge.svg)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) [![Compile JOSS Paper](https://github.com/ngsxfem/ngsxfem/actions/workflows/paper-workflow.yml/badge.svg)](https://github.com/ngsxfem/ngsxfem/actions/workflows/paper-workflow.yml) [![GitHub commit activity](https://img.shields.io/github/commit-activity/y/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem) 
 [![GitHub last commit](https://img.shields.io/github/last-commit/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem) 
 [![LGPL](https://img.shields.io/github/license/ngsxfem/ngsxfem)](https://github.com/ngsxfem/ngsxfem/blob/release/LICENSE)
 
