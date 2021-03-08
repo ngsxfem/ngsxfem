@@ -96,6 +96,6 @@ To obtain robust methods for partial differential equations on unfitted moving d
 ![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a linear-in-space space-time level set function on the reference configuration (red).](graphics/spacetime.png){ height=2.5cm align=center}
 
 # Acknowledgements
-The authors acknowledge the support by the `NGSolve` crew, especially Matthias Hochsteger and Christoph Lackner for keeping the build system compatible with `NGSolve`. The authors also want to thank T. Ludescher for his developments on MultiGrid for unfitted FEM that he contributed to the project. Further, part of the implementation of the numerical integration routines has been developed within the project “LE 3726/1-1” funded by the Deutsche Forschungsgemeinschaft (DFG, German Science Foundation).
+The authors acknowledge the support by the `NGSolve` crew, especially Matthias Hochsteger and Christopher Lackner for keeping the build system compatible with `NGSolve`. The authors also want to thank Thomas Ludescher for his developments on MultiGrid for unfitted FEM that he contributed to the project. Further, part of the implementation of the numerical integration routines has been developed within the project “LE 3726/1-1” funded by the Deutsche Forschungsgemeinschaft (DFG, German Science Foundation).
 
 # References
