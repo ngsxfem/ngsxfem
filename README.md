@@ -54,4 +54,4 @@ We provide two main sources to learn how to use `ngsxfem`:
 # Community guidelines
 If you observe any problems with the software / examples / documentation / installation or want to contribute, you can get in touch with us through either:
  * the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
- * the [``NGSolve` user forum`](https://ngsolve.org/forum/index).
+ * the [`'NGSolve' user forum`](https://ngsolve.org/forum/index).
