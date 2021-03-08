@@ -2,12 +2,11 @@
 In this example we solve a scalar *unfitted* PDE problem on a moving
 domain. A discontinuous-in-time space-time formulation is applied.
 Natural boundary conditions are applied which simplifies the variational
-formulation. To stabilize arbitray cut configurations, we use a space-time
-version of the ghost penalty method.
+formulation. To stabilize arbitrary cut configurations, we use a
+space-time version of the ghost penalty method.
 
 Domain:
 -------
-
 The background domain is [-0.6,0.6]x[-1,1]x[0,0.5] (2D+time interval)
 while the physical domain is a circle that is traveling up and down
 over time.
@@ -22,12 +21,15 @@ The r.h.s. term f is chosen according to a manufactured solution.
 Discretisation:
 ---------------
 * Background space-time finite element space restricted to active domain
+
 * Ghost penalty stabilization to deal with bad cuts (version as in [1])
 
 Implementational aspects (cf. [1] and [2] for details):
 -------------------------------------------------------
 * Geometry approximation in space-time using isoparametric unfitted FEM
+
 * Projection operator that maps solutions from one deformed mesh to another
+
 * A (sparse) direct solver is applied to solve the arising linear systems.
 
 References:
@@ -54,70 +56,69 @@ from xfem.lset_spacetime import *
 ngsglobals.msg_level = 1
 
 # -------------------------------- PARAMETERS ---------------------------------
-
 # DISCRETIZATION PARAMETERS:
-# parameter for refinement study:
+
+# Parameter for refinement study:
 i = 2
 n_steps = 2**i
 space_refs = i
 
-# polynomial order in time
+# Polynomial order in time
 k_t = 2
-# polynomial order in space
+# Polynomial order in space
 k_s = k_t
-# polynomial order in time for level set approximation
+# Polynomial order in time for level set approximation
 lset_order_time = k_t
-# integration order in time
+# Integration order in time
 time_order = 2 * k_t
-# time stepping parameters
+# Time stepping parameters
 tstart = 0
 tend = 0.5
 delta_t = (tend - tstart) / n_steps
 maxh = 0.5
-# ghost penalty parameter
+# Ghost-penalty parameter
 gamma = 0.05
-# map from reference time to physical time
+# Map from reference time to physical time
 told = Parameter(tstart)
 t = told + delta_t * tref
 
 # PROBLEM SETUP:
 
-# outer domain:
+# Outer domain:
 rect = SplineGeometry()
 rect.AddRectangle([-0.6, -1], [0.6, 1])
 
-# level set geometry
-# radius of disk (the geometry)
+# Level set geometry
+# Radius of disk (the geometry)
 R = 0.5
-# position shift of the geometry in time
+# Position shift of the geometry in time
 rho = (1 / (pi)) * sin(2 * pi * t)
-# convection velocity:
+# Convection velocity:
 w = CoefficientFunction((0, rho.Diff(t)))
-# level set
+# Level set
 r = sqrt(x**2 + (y - rho)**2)
 levelset = r - R
 
-# diffusion coeff
+# Diffusion coefficient
 alpha = 1
-# solution
+# Solution
 u_exact = cos(pi * r / R) * sin(pi * t)
-# r.h.s.
+# R.h.s.
 coeff_f = (u_exact.Diff(t)
            - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
            + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
 
 # ----------------------------------- MAIN ------------------------------------
-
 ngmesh = rect.GenerateMesh(maxh=maxh, quad_dominated=False)
 for j in range(space_refs):
     ngmesh.Refine()
 mesh = Mesh(ngmesh)
 
-# spatial FESpace for solution
+# Spatial FESpace for solution
 fes1 = H1(mesh, order=k_s, dgjumps=True)
-# time finite element (nodal!)
+# Time finite element (nodal!)
 tfe = ScalarTimeFE(k_t)
-# (tensor product) space-time finite element space
+# (Tensor product) space-time finite element space
 st_fes = tfe * fes1
 
 # Space time version of Levelset Mesh Adapation object. Also offers integrator
@@ -152,7 +153,8 @@ dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
 
 
-def dt(u): return 1.0 / delta_t * dtref(u)
+def dt(u):
+    return 1.0 / delta_t * dtref(u)
 
 
 a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
@@ -169,15 +171,15 @@ f = LinearForm(st_fes)
 f += coeff_f * v * dQ
 f += u_last * v * dOmold
 
-# set initial values
+# Set initial values
 u_last.Set(fix_tref(u_exact, 0))
-# project u_last at the beginning of each time step
+# Project u_last at the beginning of each time step
 lsetadap.ProjectOnUpdate(u_last)
 
 while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
 
-    # update markers in (space-time) mesh
+    # Update markers in (space-time) mesh
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=0)
 
     # re-compute the facets for stabilization:
@@ -189,19 +191,19 @@ while tend - told.Get() > delta_t / 2:
     a.Assemble(reallocate=True)
     f.Assemble()
 
-    # solve linear system
+    # Solve linear system
     inv = a.mat.Inverse(active_dofs, inverse="umfpack")
     gfu.vec.data = inv * f.vec.data
 
-    # evaluate upper trace of solution for
+    # Evaluate upper trace of solution for
     #  * for error evaluation
     #  * upwind-coupling to next time slab
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
 
-    # compute error at final time
+    # Compute error at final time
     l2error = sqrt(Integrate((u_exact - u_last)**2 * dOmnew, mesh))
 
-    # update time variable (ParameterCL)
+    # Update time variable (ParameterCL)
     told.Set(told.Get() + delta_t)
     print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))
 

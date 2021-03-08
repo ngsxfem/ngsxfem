@@ -12,19 +12,21 @@ approximation.
 
 Used Features:
 --------------
-  * Level set geometry description and element markings, see the 'basic'
-    jupyter tutorial.
-  * Integrators with respect to level set geometry, see the 'cutfem'
-    jupyter tutorial.
-  * Higher-order geometry approximation, see the 'cutfem' jupyter
-    tutorial.
-  * Ghost-penalty stabilisation, see the 'spacetime' jupyter tutorial.
+* Level set geometry description and element markings, see the 'basic'
+  jupyter tutorial.
+
+* Integrators with respect to level set geometry, see the 'cutfem'
+  jupyter tutorial.
+
+* Higher-order geometry approximation, see the 'cutfem' jupyter
+  tutorial.
+
+* Ghost-penalty stabilisation, see the 'spacetime' jupyter tutorial.
 
 Literature:
 -----------
-[1] C. Lehrenfeld, M. A. M. A. Olshanskii, An Eulerian finite element
-    method for PDEs in time-dependent domains. ESAIM M2AN 53(2):585-614,
-    2019.
+[1] C. Lehrenfeld, M. Olshanskii, An Eulerian finite element method for
+    PDEs in time-dependent domains. ESAIM M2AN 53(2):585-614, 2019.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -39,19 +41,26 @@ ngsglobals.msg_level = 2
 SetNumThreads(4)
 
 # -------------------------------- PARAMETERS ---------------------------------
+# Finite element space order
 k = 1
-Lx, Lt = 3, 3
+# Initial mesh size and time-step size
 h0, t0 = 0.2, 0.1
+# Number of mesh and time-step bisections
+Lx, Lt = 3, 3
 
+# Background geometry corners
 lowerleft, upperright = [-0.7, -0.7], [0.9, 0.7]
 
+# Time parameters
 dt = t0 * 0.5**Lt
 T_end = 0.4
 t = Parameter(0.0)
 
+# Problem and discretisation parameters
 nu = 1e-5
 c_gamma = 1
 
+# Sparse direct solver
 inverse = "umfpack"
 
 # Problem Data

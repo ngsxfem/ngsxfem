@@ -6,7 +6,6 @@ Domain + PDE problem + Discretization:
 --------------------------------------
 As `demos/unf_interf_prob.py` in (but only the XFEM version)
 
-
 Implementational aspects:
 -------------------------
 * Geometry approximation: As in `demos/unf_interf_prob.py`
@@ -35,9 +34,7 @@ np = comm.size
 if np > 1:
     from ngsolve import ngs2petsc
 
-
 ngsglobals.msg_level = 10
-
 
 # -------------------------------- PARAMETERS ---------------------------------
 # Domain corners
@@ -99,19 +96,19 @@ r66 = x**6 + y**6
 r41 = sqrt(sqrt(r44))
 r4m3 = 1.0 / r41**3
 solution = [1 + pi / 2 - sqrt(2.0) * cos(pi / 4 * r44), pi / 2 * r41]
-coef_f = [-alpha[i]*(solution[i].Diff(x).Diff(x)
-                     + solution[i].Diff(y).Diff(y)) for i in range(2)]
+coef_f = [-alpha[i] * (solution[i].Diff(x).Diff(x)
+                       + solution[i].Diff(y).Diff(y)) for i in range(2)]
 
 # Coefficients:
 n = 1.0 / grad(lsetp1).Norm() * grad(lsetp1)
 h = specialcf.mesh_size
 
-# the cut ratio extracted from the cutinfo-class
+# The cut ratio extracted from the cutinfo-class
 kappa = (CutRatioGF(ci), 1.0 - CutRatioGF(ci))
 # Nitsche stabilization parameter:
 stab = lambda_nitsche * (alpha[1] + alpha[0]) / h
 
-# expressions of test and trial functions:
+# Expressions of test and trial functions:
 u_std, u_x = VhG.TrialFunction()
 v_std, v_x = VhG.TestFunction()
 
@@ -140,7 +137,7 @@ a += sum(alpha[i] * gradu[i] * gradv[i] * dx[i] for i in [0, 1])
 a += (average_flux_u * (v[0] - v[1]) + average_flux_v * (u[0] - u[1])
       + stab * (u[0] - u[1]) * (v[0] - v[1])) * ds
 
-# r.h.s.:
+# R.h.s.:
 f = LinearForm(VhG)
 f += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
 
@@ -170,7 +167,7 @@ gfu.vec.data += update
 
 uh = [gfu.components[0] + op(gfu.components[1]) for op in [neg, pos]]
 
-err_sqr = sum([(uh[i] - solution[i])**2 * dx[i].order(2*order)
+err_sqr = sum([(uh[i] - solution[i])**2 * dx[i].order(2 * order)
                for i in [0, 1]])
 l2error = sqrt(Integrate(err_sqr, mesh))
 

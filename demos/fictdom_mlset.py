@@ -4,41 +4,46 @@ In this example we solve an unfitted Poisson problem similar to the one in
 unit square. This example shall illustrate the functionality of ngsxfem to
 solve PDE problems on geometries described via multiple level set functions.
 
-PDE problem + Discretisation + Geometry + Implementational aspects:
--------------------------------------------------------------------
-as in fictdom.py except for the different geometry and its handling.
+PDE problem + Discretisation + Geometry + Implementation aspects:
+-----------------------------------------------------------------
+* As in fictdom.py except for the different geometry and its handling.
 
 Used Features:
 --------------
-  * Quadrature with respect to multiple level set functions., see the
-    'mlset_pde' jupyter tutorial.
-  * MultiLevelsetCutInfo, see the 'mlset_basic' jupyter tutorial.
-  * DomainTypeArray convenience layer, see the 'mlset_basic' jupyter
-    tutorial.
-  * Restricted BilinearForm, jupyter tutorial `basics`.
-  * Cut Differential Symbols, jupyter tutorials `intlset` and `cutfem`.
+* Quadrature with respect to multiple level set functions., see the
+  'mlset_pde' jupyter tutorial.
+
+* MultiLevelsetCutInfo, see the 'mlset_basic' jupyter tutorial.
+
+* DomainTypeArray convenience layer, see the 'mlset_basic' jupyter
+  tutorial.
+
+* Restricted BilinearForm, jupyter tutorial `basics`.
+
+* Cut Differential Symbols, jupyter tutorials `intlset` and `cutfem`.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
 from netgen.geom2d import SplineGeometry
 from ngsolve import *
-from ngsolve.solvers import PreconditionedRichardson as PreRic
 from xfem import *
 from xfem.mlset import *
 
 ngsglobals.msg_level = 2
 
-
 # -------------------------------- PARAMETERS ---------------------------------
-# domain bounds
+# Domain corners
 ll, ur = (-0.2, -0.2), (1.2, 1.2)
+# Initial mesh diameter
 initial_maxh = 0.4
+# Number of mesh bisections
 nref = 3
+# Order of finite element space
 k = 1
 
-# stabilization parameter for ghost penalty
+# Stabilization parameter for ghost-penalty
 gamma_s = 0.5
-# stabilization parameter for Nitsche
+# Stabilization parameter for Nitsche
 gamma_n = 10
 
 # ----------------------------------- MAIN ------------------------------------
@@ -137,7 +142,7 @@ Draw(gfu, mesh, "uh")
 
 # Post-processing
 err_l2 = sqrt(Integrate((gfu - u_ex)**2 * dx.order(2 * k), mesh))
-err_h1 = sqrt(Integrate((Grad(gfu) - grad_u_ex)
-                        ** 2 * dx.order(2 * (k - 1)), mesh))
+err_h1 = sqrt(Integrate((Grad(gfu) - grad_u_ex)**2 * dx.order(2 * (k - 1)),
+                        mesh))
 
 print("L2 error = {:1.5e}".format(err_l2), "H1 error = {:1.5e}".format(err_h1))

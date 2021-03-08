@@ -6,7 +6,6 @@ impose the interface conditions.
 
 Domain:
 -------
-
 The domain is [-1.5,1.5]^2 while the interface is described by a level
 set function ( unit ball in the ||·||_4 norm ). In the discretisation
 the level set function is approximated with a piecewise linear
@@ -66,16 +65,16 @@ Literature:
 from netgen.geom2d import SplineGeometry
 from ngsolve import *
 from xfem import *
+from xfem.lsetcurv import LevelSetMeshAdaptation
 
 from math import pi
-
 
 # -------------------------------- PARAMETERS ---------------------------------
 # Domain corners
 ll, ur = (-1.5, -1.5), (1.5, 1.5)
-# mesh size
+# Mesh size
 maxh = 0.2
-# Finite element order
+# Finite element space order
 order = 2
 
 # Diffusion coefficients for the sub-domains (NEG/POS):
@@ -100,15 +99,13 @@ r66 = x**6 + y**6
 r41 = sqrt(sqrt(r44))
 r4m3 = 1.0 / r41**3
 solution = [1 + pi / 2 - sqrt(2.0) * cos(pi / 4 * r44), pi / 2 * r41]
-coef_f = [-alpha[i]*(solution[i].Diff(x).Diff(x)
-                     + solution[i].Diff(y).Diff(y)) for i in range(2)]
+coef_f = [-alpha[i] * (solution[i].Diff(x).Diff(x)
+                       + solution[i].Diff(y).Diff(y)) for i in range(2)]
 
-# Level set function of the domain (phi = ||x||_4 - 1) and its
-# interpolation:
+# Level set function of the domain (phi = ||x||_4 - 1) and its interpolation:
 levelset = r41 - 1.0
 
 if order > 1:
-    from xfem.lsetcurv import LevelSetMeshAdaptation
     lsetadap = LevelSetMeshAdaptation(mesh, order=order, levelset=levelset)
 else:
     lsetadap = NoDeformation(mesh, levelset)
@@ -152,10 +149,10 @@ print("unknowns in background FESpace : ", Vh.ndof)
 print("unknowns in " + formulation + " FESpace : ", VhG.ndof)
 
 
-# coefficients / parameters:
+# Coefficients / parameters:
 n = 1.0 / grad(lsetp1).Norm() * grad(lsetp1)
 h = specialcf.mesh_size
-# the cut ratio extracted from the cutinfo-class
+# The cut ratio extracted from the cutinfo-class
 kappa = (CutRatioGF(ci), 1.0 - CutRatioGF(ci))
 # Nitsche stabilization parameter:
 stab = lambda_nitsche * (alpha[1] + alpha[0]) / h
@@ -173,18 +170,18 @@ dx = tuple([dCut(lsetp1, dt, deformation=lsetadap.deform,
             for dt in [NEG, POS]])
 ds = dCut(lsetp1, IF, deformation=lsetadap.deform)
 
-# bilinear form for the unfitted Nitsche formulation:
+# Bilinear form for the unfitted Nitsche formulation:
 a = BilinearForm(VhG, symmetric=True)
 a += sum(alpha[i] * gradu[i] * gradv[i] * dx[i] for i in [0, 1])
 a += (average_flux_u * (v[0] - v[1]) + average_flux_v * (u[0] - u[1])
       + stab * (u[0] - u[1]) * (v[0] - v[1])) * ds
 
-# r.h.s.:
+# R.h.s.:
 f = LinearForm(VhG)
 f += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
 
-# setting domain boundary conditions:
-# the context manager lsetadap applies the mesh deformation
+# Setting domain boundary conditions:
+# The context manager lsetadap applies the mesh deformation
 # in the higher order case:
 with lsetadap:
     if formulation == "XFEM":
@@ -192,15 +189,15 @@ with lsetadap:
     else:
         gfu.components[1].Set(solution[1], BND)
 
-# setting up matrix and vector
+# Setting up matrix and vector
 a.Assemble()
 f.Assemble()
 
-# homogenization of boundary data and solution of linear system
+# Homogenization of boundary data and solution of linear system
 f.vec.data -= a.mat * gfu.vec
 gfu.vec.data += a.mat.Inverse(VhG.FreeDofs()) * f.vec
 
-# visualize levelset, interpolated levelset and discrete solution:
+# Visualize levelset, interpolated levelset and discrete solution:
 Draw(levelset, mesh, "levelset")
 Draw(lsetp1, mesh, "levelset_P1")
 # Note that standard netgen-gui visualization does not respect
@@ -210,6 +207,6 @@ DrawDC(lsetp1, gfu.components[0], gfu.components[1],
        mesh, "u", deformation=lsetadap.deform)
 
 # Computation of L2 error:
-err_sqr = sum([(gfuh[i] - solution[i])**2 * dx[i].order(2*order)
+err_sqr = sum([(gfuh[i] - solution[i])**2 * dx[i].order(2 * order)
                for i in [0, 1]])
 print("L2 error : ", sqrt(Integrate(err_sqr, mesh)))

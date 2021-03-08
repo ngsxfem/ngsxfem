@@ -1,12 +1,12 @@
 """
-This is a simple demonstration on how to use the SpaceTime VTK output for
-levelset-based moving domain problems in 2D.
-A circle is traveling around in a squared background domain.
-A piecewise linear-in-space approximation of the level set geometry is taken
-as an initial approximation. A space-time mesh deformation is then applied
-to recover higher order geometrical accuracy also in space-time.
-In this example only a few time steps are carried out and in each time step
-a VTK output is generated which allows to visualize the space-time geometries.
+This is a simple demonstration on how to use the SpaceTime VTK output
+for levelset-based moving domain problems in 2D. A circle is travelling
+around in a squared background domain. A piecewise linear-in-space
+approximation of the level set geometry is taken as an initial
+approximation. A space-time mesh deformation is then applied to recover
+higher order geometrical accuracy also in space-time. In this example
+only a few time steps are carried out and in each time step a VTK output
+is generated which allows to visualize the space-time geometries.
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -22,26 +22,28 @@ from math import pi
 
 ngsglobals.msg_level = 1
 
-
 # -------------------------------- PARAMETERS ---------------------------------
+# Half side-length of background square domain
 A = 1.25
+# Mesh size
 maxh = 0.3
 
-# radius of disk (the geometry)
+# Radius of disk (the geometry)
 r0 = 0.5
 
-# polynomial order in time
+# Polynomial order in time
 k_t = 2
-# polynomial order in space
+# Polynomial order in space
 k_s = 2
-# polynomial order in time for level set approximation
+# Polynomial order in time for level set approximation
 lset_order_time = 1
-# integration order in time
+# Integration order in time
 time_order = 2
 
+# End time
 tend = 1
+# Time-step
 delta_t = tend / 4
-
 
 # ----------------------------------- MAIN ------------------------------------
 square = SplineGeometry()
@@ -49,13 +51,12 @@ square.AddRectangle([-A, -A], [A, A])
 ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
 mesh = Mesh(ngmesh)
 
-# expression for the time variable:
+# Expression for the time variable:
 told = Parameter(0)
 t = told + delta_t * tref
 
-# the data:
 
-
+# The data:
 def x0(t):
     return r0 * cos(pi * t)
 
@@ -64,20 +65,19 @@ def y0(t):
     return r0 * sin(pi * t)
 
 
-# levelset= x - t
+# Level set = x - t
 levelset = sqrt((x - x0(t))**2 + (y - y0(t))**2) - 0.4
 
 
-# spatial FESpace for solution
+# Spatial FESpace for solution
 fesp1 = H1(mesh, order=1, dgjumps=True)
 
-# time finite element (nodal!)
+# Time finite element (nodal!)
 tfe = ScalarTimeFE(k_t)
-# space-time finite element space
+# Space-time finite element space
 st_fes = tfe * fesp1
 
 # Unfitted heat equation example
-
 lset_p1 = GridFunction(st_fes)
 
 lset_adap_st = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k_s,
