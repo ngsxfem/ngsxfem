@@ -6,7 +6,7 @@
 
 The main features of `ngsxfem` are:
 
-* Tools to work on an a subset of the trianguation, the \"active mesh\" only
+* Tools to work on an a subset of the triangulation, the \"active mesh\" only
 
 * Numerical integration on geometries that are (implicitly) described through level set functions.
 
