@@ -14,6 +14,6 @@ The python files in this directory provide several examples that demonstrate the
 | [`moving_domain.py`](moving_domain.py) | Parabolic PDE on a moving domain solved by an Eulerian time stepping method using isoparametric CutFEM and Ghost penalty stabilization. |
 | [`spacetime/spacetimeDG_fitted.py`](spacetime/spacetimeDG_fitted.py) | Parabolic PDE on a stationary fitted domain solved by a space-time DG-in-time method. |
 | [`spacetime/spacetimeDG_unfitted.py`](spacetime/spacetimeDG_fitted.py) | Parabolic PDE on a moving domain solved by a an unfitted isoparametric space-time DG-in-time method. |
-| [`spacetime/spacetimeCG_unfitted.py`](spacetime/spacetimeCG_fitted.py) | Parabolic PDE on a moving domain solved by a an unfitted isoparametric space-time continuous-in-time Petrov-Galerkin method. |
+| [`spacetime/spacetimeCG_unfitted.py`](spacetime/spacetimeCG_unfitted.py) | Parabolic PDE on a moving domain solved by a an unfitted isoparametric space-time continuous-in-time Petrov-Galerkin method. |
 | [`spacetime/spacetime_vtk.py`](spacetime/spacetime_vtk.py) | Demonstration on how to export functions on a (2D+time) time slab to a vtk output. |
 | [`mpi/mpi_nxfem.py`](mpi/mpi_nxfem.py) | MPI version of a solution of a scalar unfitted interface problem in Nitsche-XFEM formulation. |
