@@ -666,7 +666,7 @@ try:
         def UpdateTime(time): 
             ts.Set(time); scene.Redraw()
         return interact(UpdateTime,time=FloatSlider(description="tref:", 
-                                                    continuous_update=True,
+                                                    continuous_update=False,
                                                     min=0,max=1,step=.025))
     def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
         """
@@ -695,7 +695,7 @@ widget slider.
         def UpdateTime(time): 
             ts.Set(time); scene.Redraw()
         return interact(UpdateTime,time=FloatSlider(description="tref:", 
-                                                    continuous_update=True,
+                                                    continuous_update=False,
                                                     min=0,max=1,step=.025))
     import ngsolve.webgui
     DrawDC = MakeDiscontinuousDraw(ngsolve.webgui.Draw)
