@@ -367,10 +367,11 @@ Constructor of FacetPatchDifferentialSymbol.
                         VorB element_vb, bool skeleton,
                         shared_ptr<GridFunction> deformation,
                         shared_ptr<BitArray> definedonelements,
-                        int time_order)
+                        int time_order, 
+                        optional<double> tref)
          {
            if (element_boundary) element_vb = BND;
-           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton,time_order);
+           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton,time_order,tref);
            if (definedon)
              {
                if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
@@ -392,6 +393,7 @@ Constructor of FacetPatchDifferentialSymbol.
          py::arg("deformation")=nullptr,
          py::arg("definedonelements")=nullptr,
          py::arg("time_order")=-1,
+         py::arg("tref")=nullopt,
 docu_string(R"raw_string(
 The call of a FacetPatchDifferentialSymbol allows to specify what is needed to specify the 
 integration domain of an integral that runs over the volume patch of each facet. 
@@ -409,6 +411,7 @@ deformation (GridFunction) : which mesh deformation shall be applied (default : 
 definedonelements (BitArray) : Set of elements or facets where the integral shall be
   defined.
 time_order (int) : integration order in time (for space-time) (default : -1).
+tref (float) : turn space integral into space-time integral with fixed time tref.
 )raw_string"         
          ))
     .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)

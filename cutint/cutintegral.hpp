@@ -77,6 +77,7 @@ namespace ngfem
   {
   public:
     int time_order;
+    optional<double> tref = nullopt;
     FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
                  shared_ptr<FacetPatchDifferentialSymbol> _dx);
     virtual ~FacetPatchIntegral() { }
@@ -107,11 +108,12 @@ namespace ngfem
   public:
     int time_order;
     double scale = 1;
+    optional<double> tref = nullopt;
     FacetPatchDifferentialSymbol (VorB _vb) : DifferentialSymbol(_vb) { ; }
-    FacetPatchDifferentialSymbol (VorB _vb, VorB _element_vb, bool _skeleton, int _time_order)
-      : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), time_order(_time_order){ ; }
+    FacetPatchDifferentialSymbol (VorB _vb, VorB _element_vb, bool _skeleton, int _time_order, optional<double> _tref)
+      : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), time_order(_time_order), tref(_tref){ ; }
     FacetPatchDifferentialSymbol (FacetPatchDifferentialSymbol & _cds, double _scale)
-      : DifferentialSymbol(_cds), time_order(_cds.time_order), scale(_cds.scale*_scale) { ; }
+      : DifferentialSymbol(_cds), time_order(_cds.time_order), tref(_cds.tref), scale(_cds.scale*_scale) { ; }
 
     virtual ~FacetPatchDifferentialSymbol() { ; }
     virtual shared_ptr<Integral> MakeIntegral(shared_ptr<CoefficientFunction> cf) const

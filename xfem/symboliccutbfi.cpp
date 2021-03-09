@@ -1317,6 +1317,23 @@ namespace ngfem
       // cout << " *ir_spacetime1 = " << *ir_spacetime1 << endl;
       // cout << " *ir_spacetime2 = " << *ir_spacetime2 << endl;
     }
+    else if (has_tref)
+    {
+      ir_st1_wei_arr.SetSize(ir_patch1.Size());
+      for (int j = 0; j < ir_patch1.Size(); j++)
+      {
+        ir_st1_wei_arr[j] = ir_patch1[j].Weight();
+        ir_patch1[j].SetWeight(tref);
+        MarkAsSpaceTimeIntegrationPoint(ir_patch1[j]);
+      }
+      for (int j = 0; j < ir_patch2.Size(); j++)
+      {
+        ir_patch2[j].SetWeight(tref);
+        MarkAsSpaceTimeIntegrationPoint(ir_patch2[j]);
+      }
+      ir1 = &ir_patch1;
+      ir2 = &ir_patch2;
+    }
     else
     {
       ir1 = &ir_patch1;
@@ -1361,7 +1378,7 @@ namespace ngfem
           for (int i = 0; i < mir1.Size(); i++){
             // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
             // proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
-            if(time_order >=0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
+            if((time_order >=0)||(has_tref)) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
             else proxyvalues(i,STAR,STAR) *= mir1[i].GetWeight();
           }
 
