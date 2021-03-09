@@ -170,7 +170,7 @@ Complex CutIntegral::Integrate (const ngcomp::MeshAccess & ma,
 
 FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
                                         shared_ptr<FacetPatchDifferentialSymbol> _dx)
-      : Integral(_cf, *_dx), time_order(_dx->time_order) { ; }
+      : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref) { ; }
 
 
 shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator()
@@ -187,7 +187,11 @@ shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegra
     cout << IM(3) << " no Other() used?!" << endl;
 
   auto bfi = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf);
+  if ((tref) && (time_order > -1))
+    throw Exception("not reference time fixing for space-time integration domain");
   bfi->SetTimeIntegrationOrder(time_order);
+  if (tref)
+    bfi->SetReferenceTime(*tref);
 
   if (dx.definedon)
   {

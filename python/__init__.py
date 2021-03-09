@@ -729,6 +729,9 @@ def dFacetPatch(**kwargs):
         Order in time that is used in the space-time integration.
         Default: time_order=-1 means that no space-time rule will be
         applied. This is only relevant for space-time discretizations.
+    tref : double
+        Turn spatial integration into space-time integration with 
+        fixed time tref.
 
     Returns
     -------
