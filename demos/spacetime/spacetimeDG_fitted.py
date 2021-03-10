@@ -4,7 +4,7 @@ space-time finite element discretisation
 
 Domain:
 -------
-The domain of this examples is [0,0]x[1,1]x[0,1] (2D+time interval).
+The domain of this examples is [0,1]x[0,1]x[0,1] (2D+time interval).
 
 PDE problem:
 ------------
