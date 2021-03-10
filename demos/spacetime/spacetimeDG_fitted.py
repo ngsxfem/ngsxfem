@@ -4,9 +4,7 @@ space-time finite element discretisation
 
 Domain:
 -------
-The background domain is [-0.6,0.6]x[-1,1]x[0,0.5] (2D+time interval)
-while the physical domain is a circle that is traveling up and down
-over time.
+The domain of this examples is [0,1]x[0,1]x[0,1] (2D+time interval).
 
 PDE problem:
 ------------
