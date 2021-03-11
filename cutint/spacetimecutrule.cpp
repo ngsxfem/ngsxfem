@@ -43,10 +43,10 @@ namespace xintegration
             static bool first = true;
             if (first)
             {
-              cout << "Calling bisection for root finding ..." << endl;
+              cout << IM(3) << "Calling bisection for root finding ..." << endl;
               first = false;
             }
-            vector<double> vals(subdivs); vector<tuple<double,double>> sign_change_intervals;
+            vector<double> vals(subdivs+1); vector<tuple<double,double>> sign_change_intervals;
             vector<double> roots; double delta_x = 1./subdivs;
             FlatVector<> shape(li.Size(), lh);
             function<double(double)> eval = [&li, &fe_time, &shape](double xi) -> double {
@@ -87,7 +87,7 @@ namespace xintegration
                     else throw Exception("Strange sign structure during bisection!");
                 }
                 if(j == bisection_iterations)
-                    cout << "WARNING: Bisection search did not converge. Resiual: " << eval(0.5*(a+b)) << endl;
+                    cout << IM(2) << "WARNING: Bisection search did not converge. Residual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
             return roots;
@@ -102,8 +102,12 @@ namespace xintegration
                                                         int order_space,
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                         LocalHeap & lh){
+        static Timer timer("SpaceTimeCutIntegrationRule",1);
+        RegionTracer rt(TaskManager::GetThreadId(), timer);
+        ThreadRegionTimer reg(timer,TaskManager::GetThreadId());
         //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
+        
         int lset_nfreedofs = cf_lset_at_element.Size();
         int space_nfreedofs = ElementTopology::GetNVertices(et_space);
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
@@ -118,8 +122,14 @@ namespace xintegration
         sort(cut_points.begin(), cut_points.end());
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
-        auto ir = new (lh) IntegrationRule();
-        Array<double> wei_arr;
+        const IntegrationRule & stdir = SelectIntegrationRule (et_space, order_space);
+        const int MAXSIZE_PER = 5 * stdir.Size();
+        const int MAXSIZE = MAXSIZE_PER * (cut_points.size()-1) * ir_time.Size();
+        // MAXSIZE is an estimated maximum size for the IntegrationRule 
+        // (for fixed memory allocation on the LocalHeap)
+        IntegrationRule * ir = new (lh) IntegrationRule(MAXSIZE,lh); ir->SetSize0(); //local size 0, physical size MAXSIZE
+        Array<double> wei_arr(MAXSIZE,lh); // will be resized at the end
+        int ip_counter = 0;
 
         for(int i=0; i<cut_points.size() -1; i++){
             double t0 = cut_points[i], t1 = cut_points[i+1];
@@ -127,6 +137,7 @@ namespace xintegration
                 double t = t0 + ip.Point()[0]*(t1 - t0);
                 FlatVector<> cf_lset_at_t(space_nfreedofs,lh);
                 FlatVector<> shape(time_nfreedofs, lh);
+
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
                 for(auto &d : cf_lset_at_t) if(abs(d) < 1e-14) d = 1e-14;
@@ -135,18 +146,19 @@ namespace xintegration
 
                 const int offset = ir->Size();
                 if (element_domain == IF)
-                    ir->Append(*StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh, true, t));
+                {
+                    auto spir = StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh, true, t);
+                    ir->Append(*spir);
+                    ip_counter += spir->Size();
+                }
                 else if (element_domain == dt)
-                    ir->Append(SelectIntegrationRule (et_space, order_space));
+                {
+                    ir->Append(stdir);
+                    ip_counter += stdir.Size();
+                }
 
-                const int newsize = ir->Size(); wei_arr.SetSize(newsize);
-                for(int k = offset; k < newsize; k++) {
-                    //if(trafo.SpaceDim() == 1) (*ir)[k].Point()[1] = t;
-                    //if(trafo.SpaceDim() == 2) (*ir)[k].Point()[2] = t;
-
-                    double new_weight = (*ir)[k].Weight()*ip.Weight()*(t1-t0);
-                    wei_arr[k] = new_weight;
-
+                for(int k = offset; k < ir->Size(); k++) {
+                    wei_arr[k] = (*ir)[k].Weight()*ip.Weight()*(t1-t0);
                     (*ir)[k].SetWeight(t);
                     MarkAsSpaceTimeIntegrationPoint((*ir)[k]);
                 }
@@ -189,43 +201,14 @@ namespace xintegration
                 */
             }
         }
+        wei_arr.SetSize(ir->Size());
+        if (ip_counter > MAXSIZE)
+            throw Exception("memory allocation for integration rule was insufficient");
+
         if (ir->Size() == 0)
             return make_tuple(nullptr, wei_arr);
         else
             return make_tuple(ir, wei_arr);
     }
 
-    void DebugSpaceTimeCutIntegrationRule(){
-        /*LocalHeap lh(10000);
-
-        //vector<double> a2{-1.,-1.,1.,-1.,-1.,1.}; //Mimic the function phi(x,y,z) = 1- 2*x - 2*y
-        vector<double> a2{-1.,-1., 1.,-3.,-3.,-1}; //Mimic the function phi(x,y,z) = 1- 2*x - 2*y - 2*z
-        //vector<double> a2{1,1,1,-1,-2,-3}; //Maximal number of cuts in time
-        FlatVector<> a(6,lh);
-        for(int i=0; i<6; i++) a[i] = a2[i]; //Why isn't the Vec<6>{1,1,...} constructor working any more??
-        //auto time_fe = new NodalTimeFE(1);
-
-        NodalTimeFE time_fe(1);
-        auto ir_neg = SpaceTimeCutIntegrationRule(a, ET_TRIG, &time_fe, NEG, 0, 0, lh);
-        auto ir_pos = SpaceTimeCutIntegrationRule(a, ET_TRIG,&time_fe, POS, 0, 0, lh);
-        cout << "IR neg: " << *ir_neg << endl << "IR pos: " << *ir_pos << endl;
-        double V_pos, V_neg;
-        for(auto ip: *ir_neg) V_neg += ip.Weight();
-        for(auto ip: *ir_pos) V_pos += ip.Weight();
-
-        cout << "V_pos: " << V_pos << endl << "V_neg: " << V_neg << endl;
-        cout << "V_pos + V_neg = " << V_pos + V_neg << endl;
-
-        //Testing of the root_finding function
-        cout << "Testing of the root finding function: " << endl;
-
-        NodalTimeFE time_fe2(2);
-        auto roots = root_finding(Vector<>{-2, 0.1, 1}, &time_fe2, lh);
-        cout << "The roots: " << endl;
-        for(auto d:roots) cout << d << endl;
-
-        cout << "Testing of the problematic lset function: " << endl;
-        Vector<> iamproblematic{0.00673963, -0.0999511, -0.0127287, 0.0220921, -0.0849581, 0.000203323};
-        auto ir_neg2 = SpaceTimeCutIntegrationRule(iamproblematic, ET_TRIG, &time_fe, POS, 0,0,lh);*/
-    }
 }

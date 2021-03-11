@@ -56,6 +56,12 @@ namespace ngcomp
 
   void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order, LocalHeap & lh)
   {
+    static int timer = NgProfiler::CreateTimer ("CutInformation::Update");
+    NgProfiler::RegionTimer reg (timer);
+
+    if (time_order > 0)
+      cout << IM(3) << "Warning: you used CutInfo.Update with time_order > 0.\ntime_order = 0 suffices to detect the cut topology\nand should be prefered.\n";
+
     shared_ptr<GridFunction> gf_lset;
     tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(cf_lset,subdivlvl);
 
@@ -498,6 +504,9 @@ namespace ngcomp
                                                      shared_ptr<BitArray> a,
                                                      LocalHeap & lh)
   {
+    if (ma->GetCommunicator().Size() > 1)
+      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
+
     int nf = ma->GetNFacets();
     int ne = ma->GetNE();
     shared_ptr<BitArray> ret = make_shared<BitArray> (ne);
@@ -522,10 +531,6 @@ namespace ngcomp
                                          shared_ptr<BitArray> a,
                                          LocalHeap & lh)
   {
-    if (fes->GetMeshAccess()->GetCommunicator().Size() > 1)
-      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
-    
-    
     int ne = fes->GetMeshAccess()->GetNE();
     int ndof = fes->GetNDof();
     shared_ptr<BitArray> ret = make_shared<BitArray> (ndof);

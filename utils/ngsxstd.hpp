@@ -77,6 +77,12 @@ INLINE DOMAIN_TYPE INVERT( DOMAIN_TYPE dt)
   }
 }
 
+/// time domain types: Interval or one of the two of its ends (bottom / top)
+enum TIME_DOMAIN_TYPE {  BOTTOM = 0,
+                         TOP = 1,
+                         INTERVAL = 2
+};
+
 
 void IterateRange (int ne, LocalHeap & clh, const function<void(int,LocalHeap&)> & func);
 

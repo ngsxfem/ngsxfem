@@ -9,13 +9,15 @@
 */
 
 #include <fem.hpp>
+#include <variant>
 #include "../xfem/symboliccutbfi.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/straightcutrule.hpp"
 
 namespace ngfem
 {
-  
+
+
   SymbolicCutBilinearFormIntegrator ::
   SymbolicCutBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                      shared_ptr<CoefficientFunction> acf,
@@ -74,8 +76,9 @@ namespace ngfem
                           LocalHeap & lh) const
     
   {
-    static Timer t(string("SymbolicCutBFI::CalcElementMatrixAdd")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), 2);
-    // ThreadRegionTimer reg(t, TaskManager::GetThreadId());
+
+    static int timer = NgProfiler::CreateTimer ("SymbolicCutBFI::CalcElementMatrixAdd");
+    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
 
     if (element_vb != VOL)
       {
@@ -299,7 +302,7 @@ namespace ngfem
                                    LocalHeap & lh) const
 
                                        {
-      static Timer t("symbolicBFI - CalcElementMatrix EB", 2);
+      static int timer = NgProfiler::CreateTimer ("symbolicBFI - CalcElementMatrix EB");
       if (lsetintdom->IsMultiLevelsetDomain())
         throw Exception("cut element boundary integrals not implemented for multi level sets");
       /*
@@ -309,7 +312,7 @@ namespace ngfem
       static Timer tb("symbolicBFI - CalcElementMatrix EB - bmats", 2);
       static Timer tmult("symbolicBFI - CalcElementMatrix EB - mult", 2);
       */
-      RegionTimer reg(t);
+      NgProfiler::RegionTimer reg (timer);
 
       //elmat = 0;
 
@@ -675,8 +678,8 @@ namespace ngfem
     FlatMatrix<double> elmat,
     LocalHeap & lh) const
   {
-    static Timer t_all("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix", 2);
-    RegionTimer reg(t_all);
+    static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
+    NgProfiler::RegionTimer reg(timer);
     elmat = 0.0;
 
     if (lsetintdom->IsMultiLevelsetDomain())
@@ -704,7 +707,7 @@ namespace ngfem
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
       static Timer t("symbolicCutBFI - CoDim2-hack", 2);
-      RegionTimer reg(t);
+      ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       static bool first = true;
       if (first)
       {
@@ -925,10 +928,8 @@ namespace ngfem
         }
   }
   SymbolicFacetBilinearFormIntegrator2 ::
-  SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
-                                        int aforce_intorder)
-    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false),
-      force_intorder(aforce_intorder)
+  SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf)
+    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
     simd_evaluate=false;
   }
@@ -1081,10 +1082,8 @@ namespace ngfem
 
 
   SymbolicFacetPatchBilinearFormIntegrator ::
-  SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf,
-                                            int aforce_intorder)
-    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false),
-      force_intorder(aforce_intorder)
+  SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf)
+    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
     simd_evaluate=false;
   }
@@ -1318,6 +1317,23 @@ namespace ngfem
       // cout << " *ir_spacetime1 = " << *ir_spacetime1 << endl;
       // cout << " *ir_spacetime2 = " << *ir_spacetime2 << endl;
     }
+    else if (has_tref)
+    {
+      ir_st1_wei_arr.SetSize(ir_patch1.Size());
+      for (int j = 0; j < ir_patch1.Size(); j++)
+      {
+        ir_st1_wei_arr[j] = ir_patch1[j].Weight();
+        ir_patch1[j].SetWeight(tref);
+        MarkAsSpaceTimeIntegrationPoint(ir_patch1[j]);
+      }
+      for (int j = 0; j < ir_patch2.Size(); j++)
+      {
+        ir_patch2[j].SetWeight(tref);
+        MarkAsSpaceTimeIntegrationPoint(ir_patch2[j]);
+      }
+      ir1 = &ir_patch1;
+      ir2 = &ir_patch2;
+    }
     else
     {
       ir1 = &ir_patch1;
@@ -1362,7 +1378,7 @@ namespace ngfem
           for (int i = 0; i < mir1.Size(); i++){
             // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
             // proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
-            if(time_order >=0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
+            if((time_order >=0)||(has_tref)) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure()*ir_st1_wei_arr[i];
             else proxyvalues(i,STAR,STAR) *= mir1[i].GetWeight();
           }
 
@@ -1520,9 +1536,8 @@ namespace ngfem
       warned = true;
     }
 
-    static Timer t("symboliccutbfi - calclinearized", 2);
-    size_t tid = TaskManager::GetThreadId();
-    ThreadRegionTimer reg(t, tid);
+    static int timer = NgProfiler::CreateTimer ("symboliccutbfi - calclinearized");
+    NgProfiler::RegionTimer reg(timer);
     
     const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
     const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;

@@ -38,11 +38,19 @@ void ExportNgsx(py::module &m)
     .export_values()
     ;
 
+  py::enum_<TIME_DOMAIN_TYPE>(m, "TIME_DOMAIN_TYPE")
+    .value("BOTTOM", BOTTOM)
+    .value("TOP", TOP)
+    .value("INTERVAL", INTERVAL)
+    .export_values()
+    ;
+
+
 }
 
 PYBIND11_MODULE(ngsxfem_py, m)
 {
-  cout << "importing ngsxfem" << NGSXFEM_VERSION << endl;
+  cout << "importing ngsxfem-" << NGSXFEM_VERSION << endl;
   ExportNgsx(m);
   ExportNgsx_cutint(m);
   ExportNgsx_utils(m);

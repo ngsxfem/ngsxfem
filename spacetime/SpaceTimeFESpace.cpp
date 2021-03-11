@@ -1,10 +1,8 @@
 
-// SpaceTimeFESpace based on:
-
 /*********************************************************************/
-/* File:   myFESpace.cpp                                             */
-/* Author: Joachim Schoeberl                                         */
-/* Date:   26. Apr. 2009                                             */
+/* File:   SpaceTimeFESpace.cpp                                      */
+/* Author: Janosch Preuss & Christoph Lehrenfeld                     */
+/* Date:   2017                                                      */
 /*********************************************************************/
 
 #include "SpaceTimeFE.hpp"
@@ -13,6 +11,7 @@
 
 #include "../utils/p1interpol.hpp"
 #include "timecf.hpp"
+#include "diffopDt.hpp"
 
 const double EPS = 1e-9;
 
@@ -27,39 +26,32 @@ namespace ngcomp
 {
 
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
-  : FESpace (ama, flags), Vh_ptr(aVh)
+  : FESpace (ama, flags), Vh(aVh)
   {
-    cout << IM(3) << "AMA DIM: " << ama->GetDimension() << endl;
-    cout << IM(3) << "Constructor of SpaceTimeFESpace" << endl;
-    cout << IM(3) <<"Flags = " << flags << endl;
+    *testout << "AMA DIM: " << ama->GetDimension() << endl;
+    *testout << "Constructor of SpaceTimeFESpace" << endl;
+    *testout <<"Flags = " << flags << endl;
 
-    dimension = aVh->GetDimension ();
+    dimension = Vh->GetDimension ();
 
-    int order_s = aVh->GetOrder();
+    int order_s = Vh->GetOrder();
     int order_t = atfe->Order();
     bool linear_time = order_t == 1;
 
-    Vh = aVh.get();
     tfe = atfe.get();
 
-    cout << IM(3) <<"Hello from SpaceTimeFESpace.cpp" << endl;
-    cout << IM(3) <<"Order Space: " << order_s << endl;
-    cout << IM(3) <<"Order Time: " << order_t << endl;
+    *testout <<"Hello from SpaceTimeFESpace.cpp" << endl;
+    *testout <<"Order Space: " << order_s << endl;
+    *testout <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
-    if(ma->GetDimension() == 2) {
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<2>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<2>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<2>>>();
-    }
-    else if (ma->GetDimension() == 3){
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<3>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<3>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<3>>>();
-    }
-    else {
+    Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+2>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+2>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+2>>>();
+    });
+    if (ma->GetDimension() < 2)
         throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
-    }
 
      integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
@@ -70,9 +62,19 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
       evaluator[BND] = 
         make_shared<BlockDifferentialOperator> (evaluator[BND], dimension);
-      // flux_evaluator[BND] = 
-      //   make_shared<BlockDifferentialOperator> (flux_evaluator[BND], dimension);
+      Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
+        Switch<3> (dimension-1, [&] (auto DIM) {
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM+2,DIM+1>>>());
+        });
+      });
     }
+    else
+      Switch<2> (ma->GetDimension()-2, [&] (auto DIM) {
+        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+2>>>());
+        additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+2,0>>>());
+        additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+2,1>>>());
+      });
+    
 
     time=0;
   }
@@ -97,11 +99,11 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     }
     FESpace::Update();
     Vh->Update();
-    cout << IM(3) << "Dofs in base: " << Vh->GetNDof() << endl;
+    *testout << "Dofs in base: " << Vh->GetNDof() << endl;
 
     // number of dofs:
     ndof = (Vh->GetNDof()) * tfe->GetNDof();
-    cout << IM(3) << "Total number of Dofs: " << ndof << endl;
+    *testout << "Total number of Dofs: " << ndof << endl;
 
 
   }
@@ -146,7 +148,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   {
      auto st_vec = st_GF->GetVectorPtr()->FV<SCAL>();   
      auto restricted_vec = s_GF->GetVectorPtr()->FV<SCAL>();
-     //restricted_vec = SCAL(0.0);
 
      Array<double> & nodes = TimeFE_nodes();
 
@@ -155,18 +156,29 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      int cnt = 0;
      for(int i= 0; i < nodes.Size(); i++) {
          if (!IsTimeNodeActive(i))
-           continue;
+         {
+           if (abs(time - nodes[i]) < EPS)
+           {
+             restricted_vec = SCAL(0.0);
+             return;
+           }
+           else
+           {
+             continue;
+           }
+         }
+           
          if(abs(time - nodes[i]) < EPS) {
-             cout << IM(3) <<"Node case" << endl;
+             *testout <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
                  restricted_vec[j] = st_vec[j+cnt*Vh->GetNDof()];
              return;
          }
          cnt++;
      }
-     cout << IM(3) <<"General case" << endl;
+     *testout <<"General case" << endl;
      // General case
-     //cout << IM(3) <<"time fe:" << GetTimeFE() << endl;
+     //*testout <<"time fe:" << GetTimeFE() << endl;
      NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
 
      const int dim = Vh->GetDimension();
@@ -188,7 +200,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   shared_ptr<GridFunction> SpaceTimeFESpace :: CreateRestrictedGF(shared_ptr<GridFunction> st_GF, double time)
   {
      shared_ptr<GridFunction> restricted_GF = nullptr;
-     restricted_GF = make_shared < S_GridFunction < double > >( Vh_ptr);
+     restricted_GF = make_shared < S_GridFunction < double > >( Vh);
      restricted_GF->Update();
      switch (Vh->GetDimension())
      {
@@ -204,7 +216,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   void SpaceTimeFESpace ::InterpolateToP1(shared_ptr<CoefficientFunction> st_CF, shared_ptr<CoefficientFunction> ctref, shared_ptr<GridFunction> st_GF)
   {
     LocalHeapMem<100000> lh("SpacetimeInterpolateToP1");
-    auto node_gf = make_shared < S_GridFunction < double > >( Vh_ptr);
+    auto node_gf = make_shared < S_GridFunction < double > >( Vh);
     node_gf->Update();
     auto gf_vec = st_GF->GetVectorPtr()->FV<double>();
     auto node_gf_vec = node_gf->GetVectorPtr()->FV<double>();
@@ -221,9 +233,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
         InterpolateP1 iP1(st_CF, node_gf);
         iP1.Do(lh,1e-15,nodes[i]);
-        for(int j = 0; j < Vh_ptr->GetNDof();j++)
+        for(int j = 0; j < Vh->GetNDof();j++)
         {
-          gf_vec(i*Vh_ptr->GetNDof()+j) = node_gf_vec(j);
+          gf_vec(i*Vh->GetNDof()+j) = node_gf_vec(j);
         }
       }
     }        

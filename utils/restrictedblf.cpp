@@ -21,8 +21,8 @@ namespace ngcomp
   
   MatrixGraph RestrictedBilinearForm :: GetGraph (int level, bool symmetric)
   {
-    static Timer timer ("BilinearForm::GetGraph");
-    RegionTimer reg (timer);
+    static int timer = NgProfiler::CreateTimer ("BilinearForm::GetGraph");
+    NgProfiler::RegionTimer reg (timer);
 
     int ndof = fespace->GetNDof();
     int nf = ma->GetNFacets();

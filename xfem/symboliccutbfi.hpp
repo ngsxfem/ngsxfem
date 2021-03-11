@@ -110,7 +110,6 @@ namespace ngfem
     SymbolicCutFacetBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf_lset,
                                             shared_ptr<CoefficientFunction> acf,
                                             DOMAIN_TYPE adt,
-                                            int aforce_intorder,
                                             int asubdivlvl);
     SymbolicCutFacetBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
                                             shared_ptr<CoefficientFunction> acf);
@@ -165,11 +164,9 @@ namespace ngfem
   class SymbolicFacetBilinearFormIntegrator2 : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
-    int force_intorder = -1;
     int time_order = -1;
   public:
-    SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf,
-                                          int aforce_intorder);
+    SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf);
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
 
     virtual VorB VB () const { return vb; }
@@ -224,12 +221,13 @@ namespace ngfem
   class SymbolicFacetPatchBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
-    int force_intorder = -1;
     int time_order = -1;
+    bool has_tref = false;
+    double tref = 0.0;
   public:
-    SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf,
-                                          int aforce_intorder);
+    SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf);
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
+    void SetReferenceTime(double _tref) { has_tref = true; tref = _tref; }
 
     virtual VorB VB () const { return vb; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
