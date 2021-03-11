@@ -30,9 +30,9 @@ bibliography: lit-ngsxfem.bib
 ---
 
 # Summary
-`ngsxfem` is an add-on library to [`Netgen/NGSolve`](www.ngsolve.org), a general purpose, high performance finite element library. The add-on enables the use of geometrically unfitted finite element technologies known under different labels, e.g. *XFEM*, *CutFEM*, *TraceFEM*, *Finite Cell*, *fictitious domain method* or *Cut-Cell methods*, etc.. `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+`ngsxfem` is an add-on library to [`Netgen/NGSolve`](www.ngsolve.org), a general purpose, high performance finite element library for the numerical solution of partial differential equations. The add-on enables the use of geometrically unfitted finite element technologies known under different labels, e.g. *XFEM*, *CutFEM*, *TraceFEM*, *Finite Cell*, *fictitious domain method* or *Cut-Cell methods*, etc.. Both, `Netgen/NGSolve` and `ngsxfem` are written in C++ with a rich python interface through which it is typically used. 3`ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
-# Statement of need
+# Scope and purpose
 Typically, in the finite element method for the discretization of PDEs, the geometry under consideration is parametrized by the computational mesh yielding *geometrically fitted* finite element methods. The generation and adaptation of geometrically fitted computational meshes can be a burden on simulation methods, e.g. if the geometries are complex or especially if they are evolving in time. To be more flexible w.r.t. the geometry, *geometrically unfitted* finite element methods can be considered which break the direct link between the geometry parametrization and the computational mesh. Instead, a separate description of the geometry, e.g. through a *level set function* is used. `ngsxfem` aims at providing the necessary tools to robustly work in a *geometrically unfitted* setting where the geometry is described by one (or multiple) *level set function(s)*. The essential tools extending standard finite element codes for the *geometrically unfitted* setting are:
 
 * formulation of geometrically unfitted geometry through level set function(s)
@@ -96,6 +96,6 @@ To obtain robust methods for partial differential equations on unfitted moving d
 ![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a linear-in-space space-time level set function on the reference configuration (red).](graphics/spacetime.png){ height=2.5cm align=center}
 
 # Acknowledgements
-The authors acknowledge the support by the `NGSolve` crew, especially Matthias Hochsteger and Christopher Lackner for keeping the build system compatible with `NGSolve`. The authors also want to thank Thomas Ludescher for his developments on MultiGrid for unfitted FEM that he contributed to the project. Further, part of the implementation of the numerical integration routines has been developed within the project “LE 3726/1-1” funded by the Deutsche Forschungsgemeinschaft (DFG, German Science Foundation).
+The authors acknowledge the support by the `NGSolve` crew, especially Matthias Hochsteger and Christopher Lackner for keeping the build system compatible with `NGSolve`. The authors also want to thank Thomas Ludescher for his developments on MultiGrid for unfitted FEM that he contributed to the project. Further, part of the implementation of the numerical integration routines has been developed within the project “LE 3726/1-1” funded by the Deutsche Forschungsgemeinschaft (DFG, German Science Foundation). Henry von Wahl has been funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) - 314838170, GRK 2297 MathCoRe.
 
 # References

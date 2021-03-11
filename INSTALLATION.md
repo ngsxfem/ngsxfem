@@ -13,7 +13,11 @@ Table of contents for `pip` install:
   * [Troubleshooting](#troubleshooting)
 ---
 
-We automatically publish a *source distribution* of the releases of `ngsxfem` on PyPI for installation via `pip3`. Since this is a source code distribution and not a binary distribution, the installation via `pip` requires a sufficiently new pre-installed `NGSolve` and the same prerequisites as installing `NGSolve` from source. For details of these, please consult the [corresponding section on the `NGSolve` homepage](https://ngsolve.org/docu/latest/install/installlinux.html). The necessary `NGSolve` version for compatibility will be checked for during installation and can be found in the first line of [`python/ngs_check.py`](python/ngs_check.py). Note that the version of the submodule `ngsolve` in `external dependencies` is also sufficient.
+We automatically publish a *source distribution* of the releases of `ngsxfem` on PyPI for installation via `pip3`. Since this is a source code distribution and not a binary distribution, the installation via `pip` requires a sufficiently new pre-installed `NGSolve` and the some further prerequisites:
+ * cmake (e.g. `apt-get install cmake`) 
+ * git (e.g. `apt-get install git`) 
+ * pip (e.g. `apt-get install python3-pip`)
+The necessary `NGSolve` version for compatibility will be checked for during installation and can be found in the first line of [`python/ngs_check.py`](python/ngs_check.py). Note that the version of the submodule `ngsolve` in `external dependencies` is also sufficient.
 
 ## Releases
 Installation of `ngsxfem` releases through `pip` is carried with the command
@@ -158,7 +162,7 @@ If `NGSolve` was built as a submodule, then after pulling the latest `ngsxfem` s
 
 ### Installation steps on MacOS
 
-#### 0.  Building prerequisites on MacOs
+#### 0.  Building prerequisites on MacOS
 To build on MacOS you require the Xcode Command Line Tools. These can be installed by calling `xcode-select --install` from within a terminal. Furthermore, CMake must be downloaded and installed. This can be done via [CMake website](https://cmake.org). To use cmake from a terminal, make sure to install the command line tools: Open CMake, in the \"Tools\" menu click on \"How to Install For Command Line Use\" and follow one of the suggested options.
 
 #### 1.  Building `ngsxfem` with pre-installed `NGSolve`
