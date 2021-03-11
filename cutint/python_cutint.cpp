@@ -8,6 +8,7 @@
 #include "../cutint/straightcutrule.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/mlsetintegration.hpp"
+#include "../cutint/cutintegral.hpp"
 
 using namespace xintegration;
 
@@ -23,10 +24,11 @@ void ExportNgsx_cutint(py::module &m)
            shared_ptr<MeshAccess> ma,
            PyCF cf,
            py::object ip_container,
+           bool element_wise,
            int heapsize)
         {
-          static Timer t ("IntegrateX"); RegionTimer reg(t);
-
+          static int timer = NgProfiler::CreateTimer ("IntegrateX");
+          NgProfiler::RegionTimer reg (timer);
           py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
           if (ip_cont_.check())
@@ -37,9 +39,18 @@ void ExportNgsx_cutint(py::module &m)
           LocalHeap lh(heapsize, "lh-IntegrateX");
 
           double sum = 0.0;
+          Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
+          element_sum = 0.0;
+
           int DIM = ma->GetDimension();
 
-          Array<int> dnums;
+          int cfdim = cf->Dimension();
+          if(element_wise && cfdim != 1)
+            throw Exception("element_wise only implemented for 1 dimensional coefficientfunctions");
+
+          MyMutex mutex_ip_cont;
+          MyLock lock_ip_cont(mutex_ip_cont);
+
           ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
              {
@@ -62,21 +73,34 @@ void ExportNgsx_cutint(py::module &m)
 
                  if (ip_cont != nullptr)
                    for (int i = 0; i < mir.Size(); i++)
+                   {
+                     MyLock lock_ip_cont(mutex_ip_cont);
                      ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
                                                ma.get(), VOL, static_cast<int>(el.Nr())});
+                   }
+                 if (element_wise)
+                   element_sum(el.Nr()) = lsum;
                  
                  AtomicAdd(sum,lsum);
                }
              });
 
-          sum = ma->GetCommunicator().AllReduce(sum, MPI_SUM);
-          
-          return sum;
+          py::object result;
+          if (element_wise)
+          {
+            result = py::cast(element_sum);
+          }
+          else
+          {
+            result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
+          }
+          return result;
         },
         py::arg("levelset_domain"),
         py::arg("mesh"),
         py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
         py::arg("ip_container")=py::none(),
+        py::arg("element_wise")=false,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Integrate on a level set domains. The accuracy of the integration is 'order' w.r.t. a (multi-)linear
@@ -124,10 +148,277 @@ cf : ngsolve.CoefficientFunction
 ip_container : list (or None)
   a list to store integration points (for debugging or visualization purposes)
 
+element_wise : bool
+  result will return the integral w.r.t. each element individually.
+
 heapsize : int
   heapsize for local computations.
 )raw_string"));
 
+    m.def("IntegrationPointExtrema",
+        [](py::dict lsetdom,
+           shared_ptr<MeshAccess> ma,
+           PyCF cf,
+           int heapsize)
+        {
+          static int timer = NgProfiler::CreateTimer ("IntegrationPointExtrema"); NgProfiler::RegionTimer reg (timer);
+
+          shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
+          bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+          LocalHeap lh(heapsize, "lh-IntegrationPointExtrema");
+
+          double min = 1e99;
+          double max = -1e99;
+
+          int DIM = ma->GetDimension();
+          int cfdim = cf->Dimension();
+
+          ma->IterateElements
+            (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
+             {
+               auto & trafo = ma->GetTrafo (el, lh);
+
+               const IntegrationRule * ir;
+               Array<double> wei_arr;
+               tie (ir, wei_arr) = CreateCutIntegrationRule(*lsetintdom,trafo,lh);
+
+               if (ir != nullptr)
+               {
+                 BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+                 FlatMatrix<> val(mir.Size(), 1, lh);
+
+                 cf -> Evaluate (mir, val);
+
+                 double lmin = 1e99;
+                 double lmax = -1e99;
+                 for (int i = 0; i < mir.Size(); i++)
+                 {
+                     if (val(i,0) > lmax) 
+                       lmax = val(i,0);
+                     if (val(i,0) < lmin) 
+                       lmin = val(i,0);
+                 }
+
+                 AtomicMax(max,lmax);
+                 AtomicMin(min,lmin);
+               }
+             });
+          py::list minmax;
+          minmax.append(min);
+          minmax.append(max);
+          return py::tuple(minmax);
+        },
+        py::arg("levelset_domain"),
+        py::arg("mesh"),
+        py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+        py::arg("heapsize")=1000000,
+        docu_string(R"raw_string(
+Determine minimum and maximum on integration points on a level set domain. The sampling uses the same
+integration rule as in Integrate and is determined by 'order' w.r.t. a (multi-)linear
+approximation of the level set function. At first, this implies that the accuracy will, in general,
+only be second order. However, if the isoparametric approach is used (cf. lsetcurving functionality)
+this will be improved.
+
+Parameters
+
+levelset_domain : dictionary which provides levelsets, domain_types and integration specifica:
+  important keys are "levelset", "domain_type", "order", the remainder are additional:
+
+    "levelset" : ngsolve.CoefficientFunction or a list thereof
+      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
+      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+
+
+    "order" : int
+      integration order.
+
+    "domain_type" : {NEG,POS,IF} (ENUM) or a list (of lists) thereof
+      Integration on the domain where either:
+      * the level set function is negative (NEG)
+      * the level set function is positive (POS)
+      * the level set function is zero     (IF )
+
+    "subdivlvl" : int
+      On simplex meshes a subtriangulation is created on which the level set function lset is
+      interpolated piecewise linearly. Based on this approximation, the integration rule is
+      constructed. Note: this argument only works on simplices without space-time and without 
+      multiple levelsets.
+
+    "time_order" : int
+      integration order in time for space-time integration
+
+    "quad_dir_policy" : int
+      policy for the selection of the order of integration directions
+
+mesh : 
+  Mesh to integrate on (on some part) 
+
+cf : ngsolve.CoefficientFunction
+  the integrand
+
+heapsize : int
+  heapsize for local computations.
+)raw_string"));
+
+
+  py::class_<CutDifferentialSymbol,DifferentialSymbol>(m, "CutDifferentialSymbol",
+docu_string(R"raw_string(
+CutDifferentialSymbol that allows to formulate linear, bilinear forms and integrals on
+level set domains in an intuitive form:
+
+Example use case:
+
+  dCut = CutDifferentialSymbol(VOL)
+  dx = dCut(lset,NEG)
+  a = BilinearForm(...)
+  a += u * v * dx
+
+Note that the most important options are set in the second line when the basic
+CutDifferentialSymbol is further specified.
+)raw_string")  
+  )
+    .def(py::init<VorB>(), docu_string(R"raw_string(
+Constructor of CutDifferentialSymbol.
+
+  Argument: VOL_or_BND (boundary or volume form?).
+)raw_string"))
+    .def("__call__", [](CutDifferentialSymbol & self,
+                        py::dict lsetdom,
+                        optional<variant<Region,string>> definedon,
+                        bool element_boundary,
+                        VorB element_vb, bool skeleton,
+                        shared_ptr<GridFunction> deformation,
+                        shared_ptr<BitArray> definedonelements)
+         {
+           if (element_boundary) element_vb = BND;
+           auto dx = CutDifferentialSymbol(PyDict2LevelsetIntegrationDomain(lsetdom), 
+                                           self.vb, element_vb, skeleton);
+           if (definedon)
+             {
+               if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
+                 {
+                   dx.definedon = definedon_region->Mask();
+                   dx.vb = VorB(*definedon_region);
+                 }
+               if (auto definedon_string = get_if<string>(&*definedon); definedon_string)
+                 dx.definedon = *definedon_string;
+             }
+           dx.deformation = deformation;
+           dx.definedonelements = definedonelements;
+           return dx;
+         },
+         py::arg("levelset_domain"),
+         py::arg("definedon")=nullptr,
+         py::arg("element_boundary")=false,
+         py::arg("element_vb")=VOL,
+         py::arg("skeleton")=false,
+         py::arg("deformation")=nullptr,
+         py::arg("definedonelements")=nullptr,
+docu_string(R"raw_string(
+The call of a CutDifferentialSymbol allows to specify what is needed to specify the 
+integration domain. It returns a new CutDifferentialSymbol.
+
+Parameters:
+
+levelset_domain (dict) : specifies the level set domain.
+definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
+  the current form shall be defined.
+element_boundary (bool) : Does the integral take place on the boundary of an element-
+element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
+  of an element.
+skeleton (bool) : is it an integral on facets (the skeleton)?
+deformation (GridFunction) : which mesh deformation shall be applied (default : None)
+definedonelements (BitArray) : Set of elements or facets where the integral shall be
+  defined.
+)raw_string"))
+    .def("__rmul__", [](CutDifferentialSymbol & self, double x)
+    {
+      return CutDifferentialSymbol(self, x );
+    })
+    .def("order", [](CutDifferentialSymbol & self, int order)
+    {
+      auto _cds = CutDifferentialSymbol(self);
+      _cds.lsetintdom->SetIntegrationOrder(order);
+      return _cds;
+    },
+    py::arg("order"))
+    ;
+    
+  py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol",
+docu_string(R"raw_string(
+FacetPatchDifferentialSymbol that allows to formulate integrals on facet patches.
+Example use case:
+
+  dFacetPatch = FacetPatchDifferentialSymbol(VOL)
+  dw = dFacetPatch(definedonelements = ...)
+  a = BilinearForm(...)
+  a += (u-u.Other()) * (v-v.Other()) * dw
+
+)raw_string")  
+  )
+    .def(py::init<VorB>(), docu_string(R"raw_string(
+Constructor of FacetPatchDifferentialSymbol.
+
+  Argument: VOL_or_BND (boundary or volume form?).
+)raw_string"))
+    .def("__call__", [](FacetPatchDifferentialSymbol & self,
+                        optional<variant<Region,string>> definedon,
+                        bool element_boundary,
+                        VorB element_vb, bool skeleton,
+                        shared_ptr<GridFunction> deformation,
+                        shared_ptr<BitArray> definedonelements,
+                        int time_order, 
+                        optional<double> tref)
+         {
+           if (element_boundary) element_vb = BND;
+           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton,time_order,tref);
+           if (definedon)
+             {
+               if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
+                 {
+                   dx.definedon = definedon_region->Mask();
+                   dx.vb = VorB(*definedon_region);
+                 }
+               if (auto definedon_string = get_if<string>(&*definedon); definedon_string)
+                 dx.definedon = *definedon_string;
+             }
+           dx.deformation = deformation;
+           dx.definedonelements = definedonelements;
+           return dx;
+         },
+         py::arg("definedon")=nullptr,
+         py::arg("element_boundary")=false,
+         py::arg("element_vb")=VOL,
+         py::arg("skeleton")=false,
+         py::arg("deformation")=nullptr,
+         py::arg("definedonelements")=nullptr,
+         py::arg("time_order")=-1,
+         py::arg("tref")=nullopt,
+docu_string(R"raw_string(
+The call of a FacetPatchDifferentialSymbol allows to specify what is needed to specify the 
+integration domain of an integral that runs over the volume patch of each facet. 
+It returns a new CutDifferentialSymbol.
+
+Parameters:
+
+definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
+  the current form shall be defined.
+element_boundary (bool) : Does the integral take place on the boundary of an element-
+element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
+  of an element.
+skeleton (bool) : is it an integral on facets (the skeleton)?
+deformation (GridFunction) : which mesh deformation shall be applied (default : None)
+definedonelements (BitArray) : Set of elements or facets where the integral shall be
+  defined.
+time_order (int) : integration order in time (for space-time) (default : -1).
+tref (float) : turn space integral into space-time integral with fixed time tref.
+)raw_string"         
+         ))
+    .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)
+    {
+      return FacetPatchDifferentialSymbol(self, x );
+    })
+    ;
 
 
 

@@ -296,9 +296,7 @@ namespace ngcomp
       LocalHeapMem<100000> lh("T_XFESpace<D>::Update(private_cutinfo)");
       cutinfo->Update(coef_lset,0,-1,lh);
     }
-
-    static Timer timer ("XFESpace::Update");
-    RegionTimer reg (timer);
+    static int timer = NgProfiler::CreateTimer ("XFESpace::Update"); NgProfiler::RegionTimer reg (timer);
 
     FESpace::Update();
 

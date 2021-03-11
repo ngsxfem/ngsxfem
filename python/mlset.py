@@ -40,7 +40,12 @@ class DomainTypeArray():
         instance is compressed if persistent_compress=True.
     persistent_compress : bool
         Indicates, whether the instance to be compressed persistently
-        after operations.
+        after operations. the default value is False.
+    do_safety_checks : bool
+        Option to turn of safety checks on the input list. This is
+        useful if a copy of an existing DomainTypeArray is made and it
+        is known, that the input is permissible. Default is value is
+        True.
 
     Methods
     -------
@@ -63,37 +68,38 @@ class DomainTypeArray():
         defined on.
     """
 
-    def __init__(self, dtlist, lsets=None, persistent_compress=False):
+    def __init__(self, dtlist, lsets=None, persistent_compress=False,
+                 do_safety_checks=True):
         if type(dtlist) == tuple:
             dtlist = [dtlist]
         if type(dtlist) != list or type(dtlist[0]) != tuple:
             raise TypeError("Invalid input: dtlist must be a tuple or a list of tuples")
-        
+
         dtt_len = len(dtlist[0])
 
         self.codim = sum([1 for dt in dtlist[0] if dt == IF])
         if self.codim > 3:
             print("Warning: Codim > 3 !!!")
-
-        for dtt in dtlist:
-            for dt in dtt:
-                if dt not in [NEG, POS, IF, ANY]:
-                    raise Exception("Initialised with something other than NEG"
-                                    ", POS, IF, ANY")
-            n = dtt.count(IF)
-            if n != self.codim:
-                raise Exception("DomainTypeArray initialised with tuples of "
-                                "different co-dimension!")
-            if dtt_len != len(dtt):
-                raise Exception("DomainTypeArray initialised with tuples of "
-                                "different length!")
-        if lsets:
-            if len(lsets) != dtt_len:
-                raise Exception("The number of level sets does not match the "
-                                " length of the arrays domain tuples!")
-            if type(lsets[0]) != GridFunction:
-                raise Exception("The level set functions need to be "
-                                "ngsolve.GridFunctions!")
+        if do_safety_checks:
+            for dtt in dtlist:
+                for dt in dtt:
+                    if dt not in [NEG, POS, IF, ANY]:
+                        raise Exception("Initialised with something other than NEG"
+                                        ", POS, IF, ANY")
+                n = dtt.count(IF)
+                if n != self.codim:
+                    raise Exception("DomainTypeArray initialised with tuples of "
+                                    "different co-dimension!")
+                if dtt_len != len(dtt):
+                    raise Exception("DomainTypeArray initialised with tuples of "
+                                    "different length!")
+            if lsets:
+                if len(lsets) != dtt_len:
+                    raise Exception("The number of level sets does not match the "
+                                    " length of the arrays domain tuples!")
+                if type(lsets[0]) != GridFunction:
+                    raise Exception("The level set functions need to be "
+                                    "ngsolve.GridFunctions!")
 
         # Expansion of ANY
         if (ANY in chain.from_iterable(dtlist)):
@@ -255,10 +261,11 @@ class DomainTypeArray():
             raise Exception("The level set functions need to be "
                             "ngsolve.GridFunctions!")
 
+        mesh = lsets[0].space.mesh
         dtl_out = []
         for dtt in self.as_list:
             weight = Integrate({"levelset": lsets, "domain_type": dtt},
-                                cf=1, mesh=lsets[0].space.mesh, order=0)
+                               cf=1, mesh=mesh, order=0)
             if abs(weight) > 1e-12:
                 dtl_out.append(dtt)
         self.as_list = dtl_out
@@ -289,12 +296,12 @@ class DomainTypeArray():
         for dtt in self.as_list:
             for i, dt in enumerate(dtt):
                 if dt != IF:
-                    if ( dtt[:i] + tuple([POS]) + dtt[i+1:] in self and 
-                         dtt[:i] + tuple([NEG]) + dtt[i+1:] in self):
+                    if (dtt[:i] + (POS,) + dtt[i+1:] in self and
+                        dtt[:i] + (NEG,) + dtt[i+1:] in self):
                         continue
                     else:
                         is_relevant = True
-                        dtt_out = dtt[:i] + tuple([IF]) + dtt[i+1:]
+                        dtt_out = dtt[:i] + (IF,) + dtt[i+1:]
                         if self.lsets:
                             weight = Integrate({"levelset": self.lsets,
                                                 "domain_type": dtt_out},

@@ -25,8 +25,7 @@ namespace ngcomp
 
   void InterpolateP1::Do(LocalHeap & lh, double eps_perturbation, double tref_val)
   {
-    static Timer time_fct ("LsetCurv::InterpolateP1::Do");
-    RegionTimer reg (time_fct);
+    static int timer = NgProfiler::CreateTimer ("LsetCurv::InterpolateP1::Do"); NgProfiler::RegionTimer reg (timer);
 
     int nv=ma->GetNV();
     gf_p1->GetVector() = 0.0;

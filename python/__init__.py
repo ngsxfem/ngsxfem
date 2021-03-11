@@ -2,23 +2,42 @@
 (ngs)xfem
 =========
 
-A module for unfitted discretizations in NGSolve
+A module for unfitted finite element discretizations in NGSolve
 
-Modules:
+Submodules:
+xfem.cutmg ... MultiGrid for CutFEM
 xfem.lsetcurving ... isoparametric unfitted FEM
+xfem.lset_spacetime ... isoparametric unfitted space-time FEM
 xfem.mlset ... multiple level sets
+xfem.utils ... some example level set geometries
 """
 
-from ngsolve.comp import *
-from ngsolve.fem import *
-from ngsolve import BitArray
-from ngsolve.utils import L2
+
+
+from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
+                     GridFunction, H1, IfPos, LinearForm, Parameter, dx)
+from ngsolve.comp import Integrate as ngsolve_Integrate
+from ngsolve.comp import ProxyFunction
+from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
+from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
 from xfem.ngsxfem_py import *
-# from xfem.ngsxfem_utils_py import *
-# from xfem.ngsxfem_lsetcurving_py import *
-# from xfem.ngsxfem_xfem_py import *
-# from xfem.ngsxfem_cutint_py import *
-# from xfem.ngsxfem_spacetime_py import *
+from xfem.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
+
+check_if_ngsolve_newer_than(__ngsolve_required__)
+
+def HAS(domain_type):
+    """
+For a given domain_type return the combined domain type that 
+includes all elements that have a part in the domain type.
+    """
+    if domain_type == NEG:
+        return HASNEG
+    elif domain_type == POS:
+        return HASPOS
+    elif domain_type == IF:
+        return IF
+    else:
+        raise Exception("invalid domain type")
 
 def extend(func):
     """
@@ -105,8 +124,25 @@ This can lead to non-zero values also in domains where the level set function is
         return add
     raise Exception("cannot form neg_grad")
 
-SymbolicBFI_old = SymbolicBFI
-def SymbolicBFI(levelset_domain=None, *args, **kwargs):
+def dtref(func):
+    """
+Evaluates the time derivative (w.r.t. the reference time interval) of a Space-Time function.
+    """
+    add = func.Operator("dt")
+    if add:
+        return add
+    raise Exception("cannot form dt")
+
+def dt(func):
+    """
+Deprecated: use "dtref" instead
+    """
+    print("WARNING: dt is deprecated. Use \"dtref\" instead. \n         Note that the operator acts w.r.t. the reference time intervals.")
+    return dtref(func)
+
+
+
+def SymbolicBFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicBFI to allow for integrators on level set domains (see also
 SymbolicCutBFI). The dictionary contains the level set function (CoefficientFunciton or
@@ -194,12 +230,11 @@ Other Parameters :
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
         if (levelset_domain == None):
-            return SymbolicBFI_old(*args,**kwargs)
+            return ngsolve_SymbolicBFI(*args,**kwargs)
         else:
-            return SymbolicBFI_old(levelset_domain,*args,**kwargs)
+            return ngsolve_SymbolicBFI(levelset_domain,*args,**kwargs)
 
-SymbolicLFI_old = SymbolicLFI
-def SymbolicLFI(levelset_domain=None, *args, **kwargs):
+def SymbolicLFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicLFI to allow for integrators on level set domains (see also
 SymbolicCutLFI). The dictionary contains the level set function (CoefficientFunciton or
@@ -286,9 +321,9 @@ Other Parameters :
         return SymbolicCutLFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
         if (levelset_domain == None):
-            return SymbolicLFI_old(*args,**kwargs)
+            return ngsolve_SymbolicLFI(*args,**kwargs)
         else:
-            return SymbolicLFI_old(levelset_domain,*args,**kwargs)
+            return ngsolve_SymbolicLFI(levelset_domain,*args,**kwargs)
 
 def Integrate_X_special_args(levelset_domain={}, cf=None, mesh=None, VOL_or_BND=VOL, order=5, time_order=-1, region_wise=False, element_wise = False, heapsize=1000000, ip_container=None):
     """
@@ -303,12 +338,12 @@ See documentation of Integrate.
     return IntegrateX(levelset_domain = levelset_domain_local,
                       mesh=mesh, cf=cf,
                       ip_container=ip_container,
+                      element_wise=element_wise,
                       heapsize=heapsize
                       )
 
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO
-Integrate_old = Integrate
 def Integrate(levelset_domain=None, *args, **kwargs):
     """
 Integrate-wrapper. If a dictionary 'levelset_domain' is provided integration will be done on the
@@ -365,10 +400,10 @@ region_wise : bool
   (only active for non-levelset version)
 
 element_wise : bool
-  (only active for non-levelset version)
+  integration result is return per element
 
 ip_container : list (or None)
-  a list to store integration points (for debugging or visualization purposes)
+  a list to store integration points (for debugging or visualization purposes only!)
 
 heapsize : int
   heapsize for local computations.
@@ -379,12 +414,12 @@ heapsize : int
     else:
         # print("Integrate-Wrapper: original Integrate called")
         if (levelset_domain == None):
-            return Integrate_old(*args,**kwargs)
+            return ngsolve_Integrate(*args,**kwargs)
         else:
             newargs = [levelset_domain]
             for q in args:
                 newargs.append(q)
-            return Integrate_old(*newargs,**kwargs)
+            return ngsolve_Integrate(*newargs,**kwargs)
 
 def IndicatorCF(mesh, ba, facets = False):
     """
@@ -461,13 +496,91 @@ all_combined_domain_types = [ COMBINED_DOMAIN_TYPE.NO,
                               COMBINED_DOMAIN_TYPE.ANY ]            
 
 def SpaceTimeWeakSet(gfu_e, cf, space_fes):
+    """
+Ondocumented feature
+    """
     gfu_e_repl = GridFunction(space_fes)
     gfu_e_repl.Set( cf )
     gfu_e.vec[:].data = gfu_e_repl.vec
 
+ngsolveSet = GridFunction.Set
+def SpaceTimeSet(self, cf, *args, **kwargs):
+    """
+Overrides the NGSolve version of Set in case of a space-time FESpace.
+In this case the usual Set() is used on each nodal dof in time.
+    """
+    if (isinstance(self.space,CSpaceTimeFESpace)):
+      cf = CoefficientFunction(cf)
+      gfs = GridFunction(self.space.spaceFES)
+      ndof_node = len(gfs.vec)
+      j = 0
+      for i,ti in enumerate(self.space.TimeFE_nodes()):
+        if self.space.IsTimeNodeActive(i):
+          ngsolveSet(gfs,fix_tref(cf,ti), *args, **kwargs)
+          self.vec[j*ndof_node : (j+1)*ndof_node].data = gfs.vec[:]
+          j += 1
+    else:
+      ngsolveSet(self,cf, *args, **kwargs)
 
+def fix_tref(obj,time,*args,**kwargs):
+    """
+Takes a (possibly space-time) CoefficientFunction and fixes the temporal
+variable to `time` and return this as a new CoefficientFunction.
+Note that all operations are done on the unit interval it is the 
+reference time that is fixed. 
+    """
+
+    if not isinstance(time, Parameter):
+      if isinstance(obj,GridFunction) or isinstance(obj,ProxyFunction):
+        if time == 0:
+          return obj.Operator("fix_tref_bottom")
+        elif time == 1: 
+          return obj.Operator("fix_tref_top")
+        elif isinstance(obj,GridFunction):
+          return fix_tref_gf(obj,time,*args,**kwargs)
+      elif isinstance(obj,ProxyFunction):
+        return fix_tref_proxy(obj,time,*args,**kwargs)
+
+    if isinstance(obj,CoefficientFunction):
+      return fix_tref_coef(obj,time,*args,**kwargs)
+    else:
+      raise Exception("obj is not a CoefficientFunction")
+
+def fix_t_coef(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_coef is deprecated. Use \"fix_tref_coef\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_coef(obj,time,*args,**kwargs)
+def fix_t_gf(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_gf is deprecated. Use \"fix_tref_gf\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_gf(obj,time,*args,**kwargs)
+def fix_t_proxy(obj,time,*args,**kwargs):
+  print("WARNING: fix_t_proxy is deprecated. Use \"fix_tref_proxy\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref_proxy(obj,time,*args,**kwargs)
+
+
+def fix_t(obj,time,*args,**kwargs):
+  """
+  Deprecated: use "fix_tref" instead
+  """
+  print("WARNING: fix_t is deprecated. Use \"fix_tref\" instead. \n         Note that operators act w.r.t. the reference time intervals.")
+  return fix_tref(obj,time,*args,**kwargs)
+
+import ngsolve
 from ngsolve.internal import *
+
+
+class DummyScene:
+  def __init__(self):
+    pass
+  def Redraw(self,blocking=False):
+    ngsolve.Redraw(blocking=blocking)
+dummy_scene = DummyScene()
+
+
 def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
+    def StdDrawWithDummyScene(cf,*args,**kwargs):
+        StdDraw(cf,*args,**kwargs)
+        return dummy_scene
+
     if "deformation" in kwargs and StdDraw.__module__ == "ngsolve.solve":
         args2 = list(args[:])
         args2[1] = "deformation_"+args[1]
@@ -476,7 +589,7 @@ def DrawDiscontinuous_std(StdDraw,levelset, fneg, fpos, *args, **kwargs):
     if not "sd" in kwargs:
         kwargs["sd"] = 5
         
-    return StdDraw(IfPos(levelset,fpos,fneg),*args,**kwargs)
+    return StdDrawWithDummyScene(IfPos(levelset,fpos,fneg),*args,**kwargs)
     
 def DrawDiscontinuous_webgui(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs):
     fneg = CoefficientFunction(fneg)
@@ -515,4 +628,287 @@ Generates a Draw-like visualization function. If Draw is from the webgui, a spec
     *remainder* : *
         all remainder arguments are passed to """ +Draw.__module__ +".Draw"
     return ret
-    
+
+class NoDeformation:
+    """
+Dummy deformation class. Does nothing to the mesh. Has two dummy members:
+  * lset_p1 : ngsolve.GridFunction
+    The piecewise linear level set function 
+  * deform : ngsolve.GridFunction
+    A zero GridFunction (for compatibility with netgen Draw(... deformation=)) 
+    """
+
+    def __init__(self, mesh=None, levelset=None):
+        self.deform = GridFunction(H1(mesh, order=1, dim=mesh.dim), "dummy_deform")
+        self.deform.vec.data[:] = 0.0
+        if levelset != None:
+            if mesh == None:
+                raise Exception("need mesh")
+            self.lset_p1 = GridFunction(H1(mesh, order=1))
+            InterpolateToP1(levelset, self.lset_p1)
+
+    def __enter__(self):
+        return self.lset_p1
+
+    def __exit__(self, type, value, tb):
+        pass
+
+
+try:
+    __IPYTHON__
+    from ipywidgets import interact, FloatSlider
+    from ngsolve.webgui import Draw
+    def TimeSlider_Draw(cf,mesh,*args,**kwargs):
+        ts = Parameter(0)
+        if not isinstance(cf,CoefficientFunction):
+            cf = CoefficientFunction(cf)
+        scene = Draw(fix_tref(cf,ts),mesh,*args,**kwargs); 
+        def UpdateTime(time): 
+            ts.Set(time); scene.Redraw()
+        return interact(UpdateTime,time=FloatSlider(description="tref:", 
+                                                    continuous_update=False,
+                                                    min=0,max=1,step=.025))
+    def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
+        """
+Draw a (reference) time-dependent function that is discontinuous across an 
+interface described by a level set function. Change reference time through
+widget slider.
+
+        Args:
+            cf1 (CoefficientFunction): level set function
+            cf2 (CoefficientFunction): function to draw where lset is negative
+            cf3 (CoefficientFunction): function to draw where lset is positive
+            mesh (Mesh): Mesh
+
+        Returns:
+            widget element that allows to vary the reference time. 
+        """
+        DrawDC = MakeDiscontinuousDraw(Draw)
+        if not isinstance(cf1,CoefficientFunction):
+            cf1=CoefficientFunction(cf1)
+        if not isinstance(cf2,CoefficientFunction):
+            cf2=CoefficientFunction(cf2)
+        if not isinstance(cf3,CoefficientFunction):
+            cf3=CoefficientFunction(cf3)
+        ts = Parameter(0)
+        scene = DrawDC(fix_tref(cf1,ts),fix_tref(cf2,ts),fix_tref(cf3,ts),mesh,*args,**kwargs); 
+        def UpdateTime(time): 
+            ts.Set(time); scene.Redraw()
+        return interact(UpdateTime,time=FloatSlider(description="tref:", 
+                                                    continuous_update=False,
+                                                    min=0,max=1,step=.025))
+    import ngsolve.webgui
+    DrawDC = MakeDiscontinuousDraw(ngsolve.webgui.Draw)
+        
+except:
+    def TimeSlider_Draw(cf,mesh,*args,**kwargs):
+      print("TimeSlider_Draw only available in ipython mode")
+    def TimeSlider_DrawDC(cf1,cf2,cf3,mesh,*args,**kwargs):
+      print("TimeSlider_DrawDC only available in ipython mode")
+    import ngsolve
+    DrawDC = MakeDiscontinuousDraw(ngsolve.Draw)
+
+
+_dCut_raw = CutDifferentialSymbol(VOL)
+_dFacetPatch_raw = FacetPatchDifferentialSymbol(VOL)
+
+def dFacetPatch(**kwargs):
+    """
+    Differential symbol for facet patch integrators.
+
+    Parameters
+    ----------
+    definedon : Region
+        Domain description on where the integrator is defined.
+    deformation : ngsolve.GridFunction
+        Mesh deformation that is applied during integration. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on a set of facets
+        that are marked True. Default: None.
+    time_order : int
+        Order in time that is used in the space-time integration.
+        Default: time_order=-1 means that no space-time rule will be
+        applied. This is only relevant for space-time discretizations.
+    tref : double
+        Turn spatial integration into space-time integration with 
+        fixed time tref.
+
+    Returns
+    -------
+      FacetPatchDifferentialSymbol(VOL)
+    """
+    if "element_vb" in kwargs or "element_boundary" in kwargs \
+       or "skeleton" in kwargs:
+        raise Exception("facet patch integrators are fixed to facet patches")
+    return _dFacetPatch_raw(**kwargs)
+
+
+def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
+         levelset_domain=None, **kwargs):
+    """
+    Differential symbol for cut integration.
+
+    Parameters
+    ----------
+    levelset : ngsolve.GridFunction
+        The level set fct. describing the geometry 
+        (desirable: P1 approximation).
+    domain_type : {POS, IF, NEG, mlset.DomainTypeArray}
+        The domain type of interest.
+    order : int
+        Modify the order of the integration rule used.
+    subdivlvl : int
+        Number of additional subdivision used on cut elements to
+        generate the cut quadrature rule. Note: subdivlvl >0 only
+        makes sense if you don't provide a P1 level set function
+        and no isoparametric mapping is used.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation that is applied. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    time_order : int
+        Order in time that is used in the space-time integration.
+        Default: time_order=-1 means that no space-time rule will be
+        applied. This is only relevant for space-time discretizations.
+    tref : float
+        turns a spatial integral resulting in spatial integration rules
+        into a space-time quadrature rule with fixed reference time tref
+    levelset_domain : dict
+        description of integration domain through a dictionary 
+        (deprecated).
+
+    Returns
+    -------
+        CutDifferentialSymbol(VOL)
+    """
+    if levelset_domain is not None and type(levelset_domain) == dict:
+        lsetdom = levelset_domain
+    else:
+        lsetdom = {"levelset": levelset, "domain_type": domain_type}
+    if order is not None and "order" not in lsetdom.keys():
+        lsetdom["order"] = order
+    if subdivlvl is not None and "subdivlvl" not in lsetdom.keys():
+        lsetdom["subdivlvl"] = subdivlvl
+    if time_order > -1 and "time_order" not in lsetdom.keys():
+        lsetdom["time_order"] = time_order
+    if "tref" in kwargs:
+        lsetdom["tref"] = kwargs["tref"]
+        del kwargs["tref"]
+
+    return _dCut_raw(lsetdom, **kwargs)
+
+
+def dxtref(mesh, order=None, time_order=-1, **kwargs):
+    """
+    Differential symbol for the integration over all elements extruded by
+    the reference interval [0,1] to space-time prisms.
+
+    Parameters
+    ----------
+    mesh : ngsolve.Mesh
+        The spatial mesh.
+        The domain type of interest.
+    order : int
+        Modify the order of the integration rule used.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    time_order : int
+        Order in time that is used in the space-time integration.
+        Default: time_order=-1 means that no space-time rule will be
+        applied. This is only relevant for space-time discretizations.
+
+    Return
+    ------
+        CutDifferentialSymbol(VOL)
+    """
+    gflset = GridFunction(H1(mesh))
+    gflset.vec[:] = 1
+
+    lsetdom = {"levelset": gflset, "domain_type": POS}
+    if order is not None:
+        lsetdom["order"] = order
+    if time_order > -1:
+        lsetdom["time_order"] = time_order
+
+    return _dCut_raw(lsetdom, **kwargs)
+
+def dmesh(mesh=None,*args,**kwargs):
+    """
+    Differential symbol for the integration over all elements in the mesh.
+
+    Parameters
+    ----------
+    mesh : ngsolve.Mesh
+        The spatial mesh.
+        The domain type of interest.
+    definedon : Region
+        Domain description on where the integrator is defined.
+    element_boundary : bool
+        Integration on each element boundary. Default: False
+    element_vb : {VOL, BND, BBND}
+        Integration on each element or its (B)boundary. Default: VOL
+        (is overwritten by element_boundary if element_boundary 
+        is True)
+    skeleton : bool
+        Integration over element-interface. Default: False.
+    deformation : ngsolve.GridFunction
+        Mesh deformation. Default: None.
+    definedonelements : ngsolve.BitArray
+        Allows integration only on elements or facets (if skeleton=True)
+        that are marked True. Default: None.
+    tref : float
+        turns a spatial integral resulting in spatial integration rules
+        into a space-time quadrature rule with fixed reference time tref
+
+    Return
+    ------
+        CutDifferentialSymbol(VOL)
+    """
+    if "tref" in kwargs:
+        if mesh == None:
+            raise Exception("dx(..,tref..) needs mesh")
+        gflset = GridFunction(H1(mesh))
+        gflset.vec[:] = 1
+        lsetdom = {"levelset": gflset, "domain_type": POS, "tref" : kwargs["tref"]}
+        del kwargs["tref"]
+        return _dCut_raw(lsetdom, **kwargs)
+    else:
+        return dx(*args,**kwargs)
+
+# some global scope manipulations (monkey patches etc..):
+
+# monkey patches
+# print("|---------------------------------------------|")
+# print("| ngsxfem applied monkey patches for          |")
+# print("| GridFunction.Set, SymbolicLFI, SymbolicBFI. |")
+# print("|---------------------------------------------|")
+GridFunction.Set = SpaceTimeSet
+SymbolicLFI = SymbolicLFIWrapper
+SymbolicBFI = SymbolicBFIWrapper
+
+# global scope definitions:
+tref = ReferenceTimeVariable()

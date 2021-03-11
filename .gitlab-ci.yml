@@ -1,0 +1,80 @@
+stages:
+    - build
+    - test
+    - deploy
+        
+build:
+  stage: build
+  image: schruste/ngsolve:latest
+  script:
+    - git submodule update --init --recursive
+    - mkdir build
+    - mkdir install    
+    - cd build
+    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - make install
+  artifacts:
+    paths:
+      - build
+      - install
+
+ctests-demos:
+  stage: test
+  image: schruste/ngsolve:latest
+  script:
+    - bash .ci/ci_ctests.sh demos
+  when: always
+  allow_failure: false
+
+ctests-mayfail:
+  stage: test
+  image: schruste/ngsolve:latest
+  script:
+    - bash .ci/ci_ctests.sh mayfail
+  when: always
+  allow_failure: true
+
+ctests-pytests:
+  stage: test
+  image: schruste/ngsolve:latest
+  script:
+    -  bash .ci/ci_ctests.sh pytests
+  when: always
+  allow_failure: false
+
+metrics:
+  tags:
+    - c5
+  stage: test
+  image: schruste/ngsolve:latest
+  script:
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - python3 tests/ngsxfem_report.py 2> metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
+  when: always
+  allow_failure: true
+
+codestyle-demos:
+  stage: test
+  image: schruste/ngsolve:latest
+  script:
+    - pip3 install --user pycodestyle
+    - export PATH="${PATH}:/home/jovyan/.local/bin"
+    - pycodestyle demos/{*,spacetime/*,mpi/*}.py
+  when: always
+  allow_failure: true
+        
+paper:
+  stage: build
+  image:
+    name: openjournals/paperdraft
+    entrypoint: [""] 
+  script:
+    - cd doc
+    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md 
+  artifacts:
+    paths:
+      - doc/paper.pdf

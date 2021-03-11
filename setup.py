@@ -9,6 +9,7 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -60,7 +61,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='xfem',
-    version='1.3.2101dev1',
+    version='2.0',
     author='Christoph Lehrenfeld',
     author_email='lehrenfeld@math.uni-goettingen.de',
     description='(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM.',
@@ -68,12 +69,7 @@ setup(
     url="https://github.com/ngsxfem/ngsxfem",
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=["xfem"], 
-    package_dir={"xfem" : "python",
-                 "xfem.cutmg" : "python",
-                 "xfem.lsetcurv" : "lsetcurving",
-                 "xfem.lset_spacetime" : "spacetime",
-                 "xfem.mlset" : "python",
-                 "xfem.utils" : "utils"},
+    packages=["xfem"],
+    package_dir={"xfem": "python"},
     python_requires='>=3.5',
 )

@@ -33,7 +33,7 @@ namespace ngfem
       if (first0 && order==0)
       {
 
-        cout << " order, eps = " << order << ", " << eps << endl;
+        cout << IM(3) << " order, eps = " << order << ", " << eps << endl;
         first0 = false;
         // getchar();
       }
@@ -41,35 +41,35 @@ namespace ngfem
       if (first1 && order==1)
       {
 
-        cout << " order, eps = " << order << ", " << eps << endl;
+        cout << IM(3) << " order, eps = " << order << ", " << eps << endl;
         first1 = false;
         // getchar();
       }
       static bool first2 = true;
       if (first2 && order==2)
       {
-        cout << " order, eps = " << order << ", " << eps << endl;
+        cout << IM(3) << " order, eps = " << order << ", " << eps << endl;
         first2 = false;
         // getchar();
       }
       static bool first3 = true;
       if (first3 && order==3)
       {
-        cout << " order, eps = " << order << ", " << eps << endl;
+        cout << IM(3) << " order, eps = " << order << ", " << eps << endl;
         first3 = false;
         // getchar();
       }
       static bool first4 = true;
       if (first4 && order==4)
       {
-        cout << " order, eps = " << order << ", " << eps << endl;
+        cout << IM(3) << " order, eps = " << order << ", " << eps << endl;
         first4 = false;
         // getchar();
       }
       static bool first5 = true;
       if (first5 && order==5)
       {
-        cout << " order, eps = " << order << ", " << eps << endl;
+        cout << IM(3) << " order, eps = " << order << ", " << eps << endl;
         first5 = false;
         // getchar();
       }
