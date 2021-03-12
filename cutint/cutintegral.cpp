@@ -154,7 +154,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
       AtomicAdd(sum,lsum);
     }
   });
-  return sum;
+  return ma.GetCommunicator().AllReduce(sum, MPI_SUM);
 }
 
 
