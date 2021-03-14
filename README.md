@@ -1,6 +1,8 @@
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Build,%20test%20(and%20publish%20release)%20of%20ngsxfem?label=build%20and%20test&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Compile%20JOSS%20Paper?label=Compile%20paper%20draft&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/paper-workflow.yml)
  [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
+ 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Compile%20JOSS%20Paper?label=Compile%20paper%20draft&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/paper-workflow.yml)
+ [![DOI](https://joss.theoj.org/papers/10.21105/joss.03108/status.svg)](https://doi.org/)
 
 [![PyPI](https://img.shields.io/pypi/v/xfem?color=blue&label=latest%20PyPI%20version&logo=pypi&logoColor=white)](https://pypi.org/project/xfem/)
 [![PyPI - Implementation](https://img.shields.io/pypi/implementation/xfem?logo=pypi&logoColor=white)](https://pypi.org/project/xfem/)
