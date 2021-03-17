@@ -15,7 +15,7 @@ ngsglobals.msg_level = 1
 
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
-i = 1
+i = 2
 n_steps = 2**i
 space_refs = i+1
 
@@ -46,9 +46,9 @@ rect.AddRectangle([-1, -1], [1, 1])
 
 # level set geometry
 # radius of disk (the geometry)
-R = 10.5
+R = 0.5
 # position shift of the geometry in time
-rho = CoefficientFunction(0.)
+rho = (1 / (pi)) * sin(2 * pi * t)
 # convection velocity:
 w = CoefficientFunction((0, rho.Diff(t)))
 max_velocity = 2
@@ -121,10 +121,10 @@ lset_p1_slice = GridFunction(lsetadap.levelsetp1[BOTTOM].space)
 
 h = specialcf.mesh_size
 
-#ba_strip = BitArray(mesh.ne)
-#ba_facets = BitArray(mesh.nfacet)
+ba_strip = BitArray(mesh.ne)
+ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=time_order)
-#ci_slice = CutInfo(mesh)
+ci_slice = CutInfo(mesh)
 
 dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
                     deformation=lsetadap.deformation[INTERVAL],
@@ -132,8 +132,8 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2 * k_t,
 dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               deformation=lsetadap.deformation[TOP],
               definedonelements=ci.GetElementsOfType(HASNEG), tref = 1)
-#dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
-                           #deformation=lsetadap.deformation[INTERVAL])
+dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
+                           deformation=lsetadap.deformation[INTERVAL])
 
 
 def dt(u): return 1 / delta_t * dtref(u)
@@ -149,9 +149,8 @@ a_i += w_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dOmnew
 a_i += alpha * InnerProduct(grad(u_i), grad(w_t)) * dOmnew
 a_i += w_t * InnerProduct(w, grad(u_i)) * dOmnew
 
-
-#a_i += h**(-2) * (1 + delta_t / h) * gamma * \
-#    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
+a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
 
 f = LinearForm(fes_t)
 f += coeff_f * v_t* dQ
@@ -171,8 +170,8 @@ gfu_i.vec.FV()[0:fes.ndof] = u_last.vec.FV()
 # project u_last at the beginning of each time step
 #lsetadap.ProjectOnUpdate(u_last)
 gfu_i.vec[:] = 0
-#ba_plus_hasneg_old, els_test = BitArray(mesh.ne), BitArray(mesh.ne)
-#ba_plus_hasneg_old.Set()
+ba_plus_hasneg_old, els_test = BitArray(mesh.ne), BitArray(mesh.ne)
+ba_plus_hasneg_old.Set()
 
 while tend - told.Get() > delta_t / 2:
     lsetadap.CalcDeformation(levelset)
@@ -183,24 +182,24 @@ while tend - told.Get() > delta_t / 2:
     ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=time_order)
 
     # re-evaluate the "active dofs" in the space time slab
-    #InterpolateToP1(lsetadap.levelsetp1[BOTTOM] - eps, lset_p1_slice)
-    #ci_slice.Update(lset_p1_slice)
-    #ba_plus_hasneg = BitArray(ci_slice.GetElementsOfType(HASNEG))
+    InterpolateToP1(lsetadap.levelsetp1[BOTTOM] - eps, lset_p1_slice)
+    ci_slice.Update(lset_p1_slice)
+    ba_plus_hasneg = BitArray(ci_slice.GetElementsOfType(HASNEG))
 
-    #InterpolateToP1(lsetadap.levelsetp1[BOTTOM] + eps, lset_p1_slice)
-    #ci_slice.Update(lset_p1_slice)
-    #ba_minus_haspos = BitArray(ci_slice.GetElementsOfType(HASPOS))
+    InterpolateToP1(lsetadap.levelsetp1[BOTTOM] + eps, lset_p1_slice)
+    ci_slice.Update(lset_p1_slice)
+    ba_minus_haspos = BitArray(ci_slice.GetElementsOfType(HASPOS))
 
-    #ba_strip[:] = ba_minus_haspos & ba_plus_hasneg
-    #ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
-                                              #b=ba_plus_hasneg)
-    active_dofs = GetDofsOfElements(st_fes_i, ci.GetElementsOfType(HASNEG))
+    ba_strip[:] = ba_minus_haspos & ba_plus_hasneg
+    ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
+                                              b=ba_plus_hasneg)
+    active_dofs = GetDofsOfElements(st_fes_i, ba_plus_hasneg)
     
     ## Check element history for method of lines time-derivative approx.
-    #els_test[:] = ci.GetElementsOfType(HASNEG) & ~ba_plus_hasneg_old
-    #assert sum(els_test) == 0, 'Some active elements do not have a history. You might want to increase eps'
+    els_test[:] = ci.GetElementsOfType(HASNEG) & ~ba_plus_hasneg_old
+    assert sum(els_test) == 0, 'Some active elements do not have a history. You might want to increase eps'
     
-    #ba_plus_hasneg_old[:] = ba_plus_hasneg
+    ba_plus_hasneg_old[:] = ba_plus_hasneg
 
     a_i.Assemble()
     f.Assemble()
