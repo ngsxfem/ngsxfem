@@ -15,7 +15,7 @@ ngsglobals.msg_level = 1
 
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
-i = 1
+i = 2
 n_steps = 2**i
 space_refs = i+1
 
@@ -46,12 +46,12 @@ rect.AddRectangle([-1, -1], [1, 1])
 
 # level set geometry
 # radius of disk (the geometry)
-R = 0.5
+R = 0.2
 # position shift of the geometry in time
-rho = (1 / (pi)) * sin(2 * pi * t)
+rho = CoefficientFunction(0.) #(1 / (pi)) * sin(2 * pi * t)
 # convection velocity:
 w = CoefficientFunction((0, rho.Diff(t)))
-max_velocity = 2
+max_velocity = 0 #2
 # level set
 r = sqrt(x**2 + (y - rho)**2)
 levelset = r - R
@@ -151,11 +151,11 @@ a_i += w_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dOmnew
 a_i += alpha * InnerProduct(grad(u_i), grad(w_t)) * dOmnew
 a_i += w_t * InnerProduct(w, grad(u_i)) * dOmnew
 
-a_i += h**(-2) * (1 + delta_t / h) * gamma * \
-    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
+#a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    #(u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
 
-a_i += h**(-2) * (1 + delta_t / h) * gamma * \
-    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dwnew
+#a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    #(u_i - u_i.Other()) * (v_t - v_t.Other()) * dwnew
 
 f = LinearForm(fes_t)
 f += coeff_f * v_t* dQ
