@@ -12,10 +12,9 @@ from xfem.lset_spacetime import *
 ngsglobals.msg_level = 1
 
 # -------------------------------- PARAMETERS ---------------------------------
-
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
-i = 2
+i = 1
 n_steps = 2**i
 space_refs = i+1
 
@@ -33,7 +32,7 @@ tend = 0.5
 delta_t = (tend - tstart) / n_steps
 maxh = 0.5
 # ghost penalty parameter
-gamma = 0.05
+gamma = 0.25
 # map from reference time to physical time
 told = Parameter(tstart)
 t = told + delta_t * tref
@@ -46,12 +45,13 @@ rect.AddRectangle([-1, -1], [1, 1])
 
 # level set geometry
 # radius of disk (the geometry)
-R = 0.2
+R = 0.5
 # position shift of the geometry in time
-rho = CoefficientFunction(0.) #(1 / (pi)) * sin(2 * pi * t)
+q = 1
+rho = q * (1 / (pi)) * sin(2 * pi * t)
 # convection velocity:
 w = CoefficientFunction((0, rho.Diff(t)))
-max_velocity = 0 #2
+max_velocity = 2 * q
 # level set
 r = sqrt(x**2 + (y - rho)**2)
 levelset = r - R
@@ -59,8 +59,8 @@ levelset = r - R
 # diffusion coeff
 alpha = 1
 # solution
-#u_exact = cos(pi * r / R) * (1-cos(pi * t))
-u_exact = cos(pi*x)*cos(pi*y)* (1-cos(pi * t))
+u_exact = cos(pi * r / R) * (1-cos(pi * t))
+#u_exact = cos(pi*x)*cos(pi*y)* (1-cos(pi * t))
 #u_exact = (1-cos(pi * t))
 # r.h.s.
 coeff_f = (u_exact.Diff(t)
@@ -87,7 +87,7 @@ st_fes_i = tfe_i * fes
 st_fes_e = tfe_e * fes
 st_fes_t = tfe_t * fes
 
-#fes_t = st_fes_t * fes 
+#fes_t = st_fes_t * fes
 fes_t = FESpace([st_fes_t,fes],dgjumps=True)
 
 u_i = st_fes_i.TrialFunction()
@@ -151,11 +151,11 @@ a_i += w_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dOmnew
 a_i += alpha * InnerProduct(grad(u_i), grad(w_t)) * dOmnew
 a_i += w_t * InnerProduct(w, grad(u_i)) * dOmnew
 
-#a_i += h**(-2) * (1 + delta_t / h) * gamma * \
-    #(u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
+a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
 
-#a_i += h**(-2) * (1 + delta_t / h) * gamma * \
-    #(u_i - u_i.Other()) * (v_t - v_t.Other()) * dwnew
+a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    (u_i - u_i.Other()) * (w_t - w_t.Other()) * dwnew
 
 f = LinearForm(fes_t)
 f += coeff_f * v_t* dQ
@@ -199,11 +199,11 @@ while tend - told.Get() > delta_t / 2:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
                                               b=ba_plus_hasneg)
     active_dofs = GetDofsOfElements(st_fes_i, ba_plus_hasneg)
-    
+
     ## Check element history for method of lines time-derivative approx.
     els_test[:] = ci.GetElementsOfType(HASNEG) & ~ba_plus_hasneg_old
     assert sum(els_test) == 0, 'Some active elements do not have a history. You might want to increase eps'
-    
+
     ba_plus_hasneg_old[:] = ba_plus_hasneg
 
     a_i.Assemble()
