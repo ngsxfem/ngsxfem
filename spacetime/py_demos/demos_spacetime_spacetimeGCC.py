@@ -15,7 +15,7 @@ ngsglobals.msg_level = 1
 
 # DISCRETIZATION PARAMETERS:
 # parameter for refinement study:
-i = 2
+i = 1
 n_steps = 2**i
 space_refs = i+1
 
@@ -87,7 +87,8 @@ st_fes_i = tfe_i * fes
 st_fes_e = tfe_e * fes
 st_fes_t = tfe_t * fes
 
-fes_t = st_fes_t * fes 
+#fes_t = st_fes_t * fes 
+fes_t = FESpace([st_fes_t,fes],dgjumps=True)
 
 u_i = st_fes_i.TrialFunction()
 v_t, w_t  = fes_t.TestFunction()
@@ -134,7 +135,8 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
               definedonelements=ci.GetElementsOfType(HASNEG), tref = 1)
 dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
-
+dwnew = delta_t * dFacetPatch(definedonelements=ba_facets,
+                           deformation=lsetadap.deformation[TOP], tref=1)
 
 def dt(u): return 1 / delta_t * dtref(u)
 
@@ -151,6 +153,9 @@ a_i += w_t * InnerProduct(w, grad(u_i)) * dOmnew
 
 a_i += h**(-2) * (1 + delta_t / h) * gamma * \
     (u_i - u_i.Other()) * (v_t - v_t.Other()) * dw
+
+a_i += h**(-2) * (1 + delta_t / h) * gamma * \
+    (u_i - u_i.Other()) * (v_t - v_t.Other()) * dwnew
 
 f = LinearForm(fes_t)
 f += coeff_f * v_t* dQ
