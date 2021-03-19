@@ -17,6 +17,12 @@ namespace ngcomp
                             shared_ptr<BitArray> el_restriction,
                             shared_ptr<BitArray> fac_restriction,
                             const Flags & flags);
+    RestrictedBilinearForm (shared_ptr<FESpace> afespace,
+                            shared_ptr<FESpace> afespace2,
+                            const string & aname,
+                            shared_ptr<BitArray> el_restriction,
+                            shared_ptr<BitArray> fac_restriction,
+                            const Flags & flags);
     void SetElementRestriction(shared_ptr<BitArray> _el_restriction){ el_restriction = _el_restriction;}
     void SetFacetRestriction(shared_ptr<BitArray> _fac_restriction){ fac_restriction = _fac_restriction;}
     shared_ptr<BitArray> GetElementRestriction(){ return el_restriction; }

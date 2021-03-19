@@ -16,7 +16,21 @@ namespace ngcomp
   {
     ;
   }
-  
+
+  RestrictedBilinearForm :: 
+  RestrictedBilinearForm (shared_ptr<FESpace> afespace,
+                          shared_ptr<FESpace> afespace2,
+                          const string & aname,
+                          shared_ptr<BitArray> ael_restriction,
+                          shared_ptr<BitArray> afac_restriction,
+                          const Flags & flags)
+    : T_BilinearForm<double,double>(afespace, afespace2, aname, flags),
+      el_restriction(ael_restriction),
+      fac_restriction(afac_restriction)
+  {
+    ;
+  }
+
     //associate elements / specialelements / facets (DG) to dofs for precomputed sparsity pattern
   Table<int> MeshEntityToDofTable(shared_ptr<FESpace> fes, 
                                   shared_ptr<BitArray> active_elems = nullptr,
