@@ -141,6 +141,8 @@ lset_p1_slice = GridFunction(lsetadap.levelsetp1[BOTTOM].space)
 h = specialcf.mesh_size
 
 ba_strip = BitArray(mesh.ne)
+ba_plus_hasneg = BitArray(mesh.ne)
+ba_minus_haspos = BitArray(mesh.ne)
 ba_facets = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=time_order)
 ci_slice = CutInfo(mesh)
@@ -159,7 +161,10 @@ def dt(u):
     return 1.0 / delta_t * dtref(u)
 
 
-a_i = BilinearForm(trialspace=st_fes_i, testspace=st_fes_t, check_unused=False)
+a_i = RestrictedBilinearForm(trialspace=st_fes_i, testspace=st_fes_t,
+                             element_restriction=ci.GetElementsOfType(HASNEG),
+                             facet_restriction=ba_facets,
+                             check_unused=False)
 
 a_i += v_t * (dt(u_i) - dt(lsetadap.deform) * grad(u_i)) * dQ
 a_i += (alpha * InnerProduct(grad(u_i), grad(v_t))) * dQ
@@ -191,11 +196,11 @@ while tend - told.Get() > delta_t / 2:
     # Re-evaluate the "active dofs" in the space time slab
     InterpolateToP1(lsetadap.levelsetp1[BOTTOM] - eps, lset_p1_slice)
     ci_slice.Update(lset_p1_slice)
-    ba_plus_hasneg = BitArray(ci_slice.GetElementsOfType(HASNEG))
+    ba_plus_hasneg[:] = ci_slice.GetElementsOfType(HASNEG)
 
     InterpolateToP1(lsetadap.levelsetp1[BOTTOM] + eps, lset_p1_slice)
     ci_slice.Update(lset_p1_slice)
-    ba_minus_haspos = BitArray(ci_slice.GetElementsOfType(HASPOS))
+    ba_minus_haspos[:] = ci_slice.GetElementsOfType(HASPOS)
 
     ba_strip[:] = ba_minus_haspos & ba_plus_hasneg
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh, a=ba_strip,
@@ -209,7 +214,7 @@ while tend - told.Get() > delta_t / 2:
 
     ba_plus_hasneg_old[:] = ba_plus_hasneg
 
-    a_i.Assemble()
+    a_i.Assemble(reallocate=True)
     f.Assemble()
 
     # Solve linear system
