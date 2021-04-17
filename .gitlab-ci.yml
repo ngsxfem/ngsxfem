@@ -5,7 +5,7 @@ stages:
         
 build:
   stage: build
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2101-143
   script:
     - git submodule update --init --recursive
     - mkdir build
