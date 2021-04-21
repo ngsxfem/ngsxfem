@@ -22,6 +22,7 @@ namespace ngfem
       mat.Row(0) = dtshape;
     }
 
+  template class T_DifferentialOperator<DiffOpDt<1>>;
   template class T_DifferentialOperator<DiffOpDt<2>>;
   template class T_DifferentialOperator<DiffOpDt<3>>;
 
@@ -65,6 +66,9 @@ namespace ngfem
       mat.Row(0) = shape;
    }
 
+  template class T_DifferentialOperator<DiffOpFixt<1, 0>>;
+  template class T_DifferentialOperator<DiffOpFixt<1, 1>>;
+
   template class T_DifferentialOperator<DiffOpFixt<2, 0>>;
   template class T_DifferentialOperator<DiffOpFixt<2, 1>>;
 
@@ -107,6 +111,7 @@ namespace ngfem
     x = Trans(mat) * flux;
   }
 
+  template class DiffOpFixAnyTime<1>;
   template class DiffOpFixAnyTime<2>;
   template class DiffOpFixAnyTime<3>;
 

@@ -45,13 +45,13 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     *testout <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
-    Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+2>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+2>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+2>>>();
+    Switch<2> (ma->GetDimension()-1, [&] (auto SDIM) {
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+1>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+1>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+1>>>();
     });
-    if (ma->GetDimension() < 2)
-        throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
+    //if (ma->GetDimension() < 2)
+    //    throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
 
      integrator[VOL] = GetIntegrators().CreateBFI("mass", ma->GetDimension(),
                                                  make_shared<ConstantCoefficientFunction>(1));
@@ -69,10 +69,10 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       });
     }
     else
-      Switch<2> (ma->GetDimension()-2, [&] (auto DIM) {
-        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+2>>>());
-        additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+2,0>>>());
-        additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+2,1>>>());
+      Switch<2> (ma->GetDimension()-1, [&] (auto DIM) {
+        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1>>>());
+        additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
+        additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
       });
     
 
@@ -139,8 +139,14 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
        SpaceTimeFE<3> * st_FE =  new (alloc) SpaceTimeFE<3>(s_FE3,t_FE,override_time,time);
        return *st_FE;
      }
+     else if (ma->GetDimension() == 1){
+       ScalarFiniteElement<1>* s_FE1 = dynamic_cast<ScalarFiniteElement<1>*>(&(Vh->GetFE(ei,alloc)));
+       //cout << "SpaceTimeFESpace :: GetFE for 3D called" << endl;
+       SpaceTimeFE<1> * st_FE =  new (alloc) SpaceTimeFE<1>(s_FE1,t_FE,override_time,time);
+       return *st_FE;
+     }
      else
-       throw Exception("SpaceTimeFESpace :: GetFE cannot help dimension != 2,3");
+       throw Exception("SpaceTimeFESpace :: GetFE cannot help dimension != 1,2,3");
    }
 
   template<typename SCAL>
