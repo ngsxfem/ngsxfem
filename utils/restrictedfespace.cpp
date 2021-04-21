@@ -245,9 +245,10 @@ namespace ngfem
 
   shared_ptr<CoefficientFunction> RestrictedDifferentialOperator ::
   DiffShape (shared_ptr<CoefficientFunction> proxy,
-             shared_ptr<CoefficientFunction> dir) const 
+             shared_ptr<CoefficientFunction> dir,
+             bool Eulerian) const 
   {
-    return diffop->DiffShape(proxy, dir);
+    return diffop->DiffShape(proxy, dir, Eulerian);
   }
 
 
