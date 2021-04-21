@@ -1508,7 +1508,7 @@ namespace ngfem
       }
         
       for (int i = 0; i < mir.Size(); i++)
-        proxyvalues.Row(i) *= mir[i].GetWeight();
+        proxyvalues.Row(i) *= mir[i].GetMeasure()*wei_arr[i];
 
       proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
       ely += ely1;
