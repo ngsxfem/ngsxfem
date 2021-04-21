@@ -1615,7 +1615,7 @@ namespace ngfem
               proxyvalues(STAR,l,k) = 0;
 
         for (int i = 0; i < mir.Size(); i++)
-          proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+          proxyvalues(i,STAR,STAR) *= mir[i].GetMeasure()*wei_arr[i]; //mir[i].GetWeight();
 
         FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
         FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);
