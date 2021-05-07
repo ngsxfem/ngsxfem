@@ -166,6 +166,13 @@ namespace ngcomp
       evaluator[VOL] = make_shared<BlockDifferentialOperator> (evaluator[VOL], dimension);
       flux_evaluator[VOL] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
     }
+    evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpX<D-1,DIFFOPX::EXTEND>>>();
+    //flux_evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpX<D-1,DIFFOPX::EXTEND_GRAD>>>();
+    if (dimension > 1)
+    {
+      evaluator[BND] = make_shared<BlockDifferentialOperator> (evaluator[VOL], dimension);
+      //flux_evaluator[BND] = make_shared<BlockDifferentialOperator> (flux_evaluator[VOL], dimension);
+    }
     private_cutinfo = false;
   }
 
