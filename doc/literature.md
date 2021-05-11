@@ -52,7 +52,7 @@ The library `ngsxfem` has been used in the following scientific literature:
 * P. Brandner and A. Reusken. “Finite element error analysis of surface Stokes equations in stream function formulation”. In: ESAIM Math. Model. Numer. Anal. 54.6 (12th Oct. 2020), pp. 2069–2097. doi: [10.1051/m2an/2020044](https://doi.org/10.1051/m2an/2020044).
 
 #### Shape optimization
-H.-G. Raumer. “Shape Optimization for Interface Problems using unfitted Finite Elements”. MA thesis. Georg-August Universität Göttingen, 28th Mar. 2018. url: http://cpde.math.uni-goettingen.de/data/Rau18_Ma.pdf.
+* H.-G. Raumer. “Shape Optimization for Interface Problems using unfitted Finite Elements”. MA thesis. Georg-August Universität Göttingen, 28th Mar. 2018. url: http://cpde.math.uni-goettingen.de/data/Rau18_Ma.pdf.
 
 #### Model order reduction and optimal control
 * A. Aretaki and E. N. Karatzas. Random geometries for optimal control PDE problems based on fictitious domain FEMs and cut elements. 29th Feb. 2020. arXiv: [2003.00352](https://arxiv.org/abs/2003.00352) [math.NA].
