@@ -80,19 +80,20 @@ paper:
     - cp *.pdf ../
   artifacts:
     paths:
-      paper:
+      - paper.pdf
+
+paper-appendix:
   stage: build
   image:
-    name: openjournals/paperdraft
+    name: schruste/latex
     entrypoint: [""] 
   script:
     - cd doc
-    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md
     - /usr/local/bin/pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
     - /usr/local/bin/pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
     - cp *.pdf ../
   artifacts:
     paths:
-      - paper.pdf
       - literature.pdf
       - feature-details.pdf
+        
