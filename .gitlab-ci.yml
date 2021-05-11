@@ -87,8 +87,8 @@ paper-appendix:
     entrypoint: [""] 
   script:
     - cd doc
-    - /usr/local/bin/pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
-    - /usr/local/bin/pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
+    - pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
+    - pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
     - cp *.pdf ../
   artifacts:
     paths:
