@@ -47,15 +47,7 @@ First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other fini
 * space-time finite elements and quadrature for unfitted space-time finite element discretizations of PDEs on moving domains, cf. @Pre18, @Hei20
 * the so-called direct version of the ghost penalty stabilization as introduced in @Pre18
 
-`ngsxfem` has already been used to develop and investigate the performance of different unfitted discretizations in several application fields:
-
-* Scalar fictitious domain problems have been investigated in @Leh17.
-* Scalar and Stokes interface problems as in two-phase flow problems have been investigated in @LR16, @Leh16, @Leh16a, @LR19, @LPWL16, @OQS21 and @Lud20. In the latter publication Multigrid preconditioners have been developed. 
-* PDEs on moving domains have been considered and discretizations have been implemented in `ngsxfem` in several publications. In @Pre18, @Hei20 space-time discretizations for scalar parabolic model problems are considered, whereas Eulerian time stepping methods for scalar and unsteady Stokes problems have been considered in @LO19 and @vWRL20, see also the reproduction data in @vWRL20a. 
-* Fluid-structure interaction problems have been investigated in @vWR21 and @vWRFH21, see also the reproduction data in @vWRFH20a.
-* Surface PDEs have also been considered ranging from scalar ones in @GLR18 and @Hei18 over Vector-Laplacians in @JR19 and @R20 to flows on smooth surfaces in @JR19a and @BR20.
-* Shape optimization for geometries that are described by level set functions have been considered in @Rau18.
-* Model order reduction and optimal control with geometry have been considered in @AK20 and @KBR20 .
+A detailed overview of the scientific literature which has utilised `ngsxfem` is given in the repository under `docu/literature.md`
 
 ## Feature details
 In the previous section we briefly explained or mentioned some tools of `ngsxfem`. In this section we elaborate on a few non-trivial aspects of them.

@@ -9,9 +9,8 @@
   eprinttype  = {arXiv},
 }
 
-
 @Online{OQS21,
-  author      = {M. Olshanskii and A.Quaini and Q. Sun},
+  author      = {M. Olshanskii and A. Quaini and Q. Sun},
   date        = {2021-01-24},
   title       = {An unfitted finite element method for two-phase {Stokes} problems with slip between phases},
   eprint      = {2101.09627},
@@ -41,15 +40,17 @@
   timestamp = {2021-01-05},
 }
 
-@Online{vWRL20,
-  author      = {H. von Wahl and T. Richter and C. Lehrenfeld},
-  date        = {2020-02-06},
-  title       = {An unfitted {Eulerian} finite element method for the time-dependent {Stokes} problem on moving domains},
-  eprint      = {2002.02352},
-  eprintclass = {math.NA},
-  eprinttype  = {arXiv},
-  keywords    = {math.NA, cs.NA},
-  timestamp   = {2021-01-05},
+@Article{vWRL20,
+  author       = {H. von Wahl and T. Richter and C. Lehrenfeld},
+  date         = {2021},
+  journaltitle = {IMA J. Numer. Anal.},
+  title        = {An unfitted {Eulerian} finite element method for the time-dependent {Stokes} problem on moving domains},
+  doi          = {10.1093/imanum/drab044},
+  eprint       = {2002.02352},
+  eprintclass  = {math.NA},
+  eprinttype   = {arXiv},
+  keywords     = {math.NA, cs.NA},
+  timestamp    = {2021-01-05},
 }
 
 @Dataset{vWRL20a,
@@ -77,16 +78,23 @@
   timestamp    = {2021-01-05},
 }
 
-@Online{JR19,
-  author      = {T. Jankuhn and A. Reusken},
-  date        = {2019-04-29},
-  title       = {Trace Finite Element Methods for Surface Vector-{Laplace} Equations},
-  eprint      = {1904.12494},
-  eprintclass = {math.NA},
-  eprinttype  = {arXiv},
-  keywords    = {math.NA, 65N30, 65N12, 65N15},
-  timestamp   = {2021-01-05},
-  doi         = {10.1093/imanum/drz062},
+@Article{JR19,
+  author       = {T. Jankuhn and A. Reusken},
+  date         = {2019-04-29},
+  journaltitle = {{IMA} Journal of Numerical Analysis},
+  title        = {Trace finite element methods for surface vector-Laplace equations},
+  doi          = {10.1093/imanum/drz062},
+  eprint       = {1904.12494},
+  eprintclass  = {math.NA},
+  eprinttype   = {arXiv},
+  number       = {1},
+  pages        = {48--83},
+  volume       = {41},
+  keywords     = {math.NA, 65N30, 65N12, 65N15},
+  month        = may,
+  publisher    = {Oxford University Press ({OUP})},
+  timestamp    = {2021-01-05},
+  year         = {2020},
 }
 
 @Online{JR19a,
@@ -239,16 +247,19 @@
   timestamp   = {2021-01-05},
 }
 
-@Online{Leh16a,
+@InProceedings{Leh16a,
   author      = {C. Lehrenfeld},
+  booktitle   = {Proceedings of the {VII} European Congress on Computational Methods in Applied Sciences and Engineering ({ECCOMAS} Congress 2016)},
   date        = {2016-03-02},
   title       = {Removing the stabilization parameter in fitted and unfitted symmetric {Nitsche} formulations},
+  doi         = {10.7712/100016.1820.4573},
   eprint      = {1603.00617},
   eprintclass = {math.NA},
   eprinttype  = {arXiv},
+  publisher   = {Institute of Structural Analysis and Antiseismic Research School of Civil Engineering National Technical University of Athens ({NTUA}) Greece},
   keywords    = {math.NA},
   timestamp   = {2021-01-05},
-  doi         = {10.7712/100016.1820.4573},
+  year        = {2016},
 }
 
 @Article{GLR18,
@@ -319,67 +330,70 @@
   timestamp   = {2021-03-02},
 }
 
-@article{fenics,
-  title = {{The FEniCS Project Version 1.5}},
-  author = {Martin S. Aln{\ae}s and Jan Blechta and Johan Hake and August Johansson and Benjamin Kehlet and Anders Logg and Chris Richardson and Johannes Ring and Marie E. Rognes and Garth N. Wells},
-  year = {2015},
-  journal = {Archive of Numerical Software},
-  volume = {3},
-  number = {100},
-  doi = {10.11588/ans.2015.100.20553},
-  page = {9-23},
+@Article{fenics,
+  author       = {Martin S. Aln{\ae}s and Jan Blechta and Johan Hake and August Johansson and Benjamin Kehlet and Anders Logg and Chris Richardson and Johannes Ring and Marie E. Rognes and Garth N. Wells},
+  date         = {2015},
+  journaltitle = {Archive of Numerical Software},
+  title        = {{The FEniCS Project Version 1.5}},
+  doi          = {10.11588/ans.2015.100.20553},
+  number       = {100},
+  volume       = {3},
+  page         = {9-23},
 }
 
-@incollection{dune:udg,
-  title={{Dune-UDG}: a cut-cell framework for unfitted discontinuous {Galerkin} methods},
-  author={Engwer, Christian and Heimann, Felix},
-  booktitle={Advances in DUNE},
-  pages={89--100},
-  year={2012},
-  publisher={Springer},
-  doi = {10.1007/978-3-642-28589-9_7},
-  url = {http://dx.doi.org/10.1007/978-3-642-28589-9_7}
+@InCollection{dune:udg,
+  author    = {Engwer, Christian and Heimann, Felix},
+  booktitle = {Advances in DUNE},
+  date      = {2012},
+  title     = {{Dune-UDG}: a cut-cell framework for unfitted discontinuous {Galerkin} methods},
+  doi       = {10.1007/978-3-642-28589-9_7},
+  pages     = {89--100},
+  publisher = {Springer},
 }
 
-@article{dune,
-  author = {M. Blatt and A. Burchardt and A. Dedner and Ch. Engwer
-    and J. Fahlke and B. Flemisch and Ch. Gersbacher and C. Gr\"aser
-    and F. Gruber and Ch. Gr\"uninger and D. Kempf and R. Kl{\"o}fkorn
-    and T. Malkmus and S. Müthing and M. Nolte and M. Piatkowski and O. Sander},
-  title = {{The Distributed and Unified Numerics Environment, Version 2.4}},
-  journal = {Archive of Numerical Software},
-  volume = {4},
-  number = {100},
-  year = {2016},
-  keywords = {DUNE, Numerical Software},
-  issn = {2197-8263},
-  pages = {13--29},
-  doi = {10.11588/ans.2016.100.26526},
-  url = {http://dx.doi.org/10.11588/ans.2016.100.26526}
+@Article{dune,
+  author       = {M. Blatt and A. Burchardt and A. Dedner and Ch. Engwer and J. Fahlke and B. Flemisch and Ch. Gersbacher and C. Gr\"aser and F. Gruber and Ch. Gr\"uninger and D. Kempf and R. Kl{\"o}fkorn and T. Malkmus and S. Müthing and M. Nolte and M. Piatkowski and O. Sander},
+  date         = {2016},
+  journaltitle = {Archive of Numerical Software},
+  title        = {{The Distributed and Unified Numerics Environment, Version 2.4}},
+  doi          = {10.11588/ans.2016.100.26526},
+  issn         = {2197-8263},
+  number       = {100},
+  pages        = {13--29},
+  volume       = {4},
+  keywords     = {DUNE, Numerical Software},
 }
 
-
-@article{dune:pdelab,
-  title={{Generic implementation of finite element methods in the Distributed and Unified Numerics Environment (DUNE)}},
-  author={Bastian, P. and Heimann, F. and Marnach, S.},
-  journal={Kybernetika},
-  year={2010},
-  volume={46},
-  pages={294-315}
+@Article{dune:pdelab,
+  author       = {Bastian, P. and Heimann, F. and Marnach, S.},
+  date         = {2010},
+  journaltitle = {Kybernetika},
+  title        = {{Generic implementation of finite element methods in the Distributed and Unified Numerics Environment (DUNE)}},
+  pages        = {294--315},
+  volume       = {46},
 }
 
-@article{fempar,
-  title={FEMPAR: An object-oriented parallel finite element framework},
-  author={Badia, Santiago and Mart{\'\i}n, Alberto F and Principe, Javier},
-  journal={Archives of Computational Methods in Engineering},
-  volume={25},
-  number={2},
-  pages={195--271},
-  year={2018},
-  publisher={Springer}
+@Article{fempar,
+  author       = {Badia, Santiago and Martín, Alberto F and Principe, Javier},
+  date         = {2018},
+  journaltitle = {Archives of Computational Methods in Engineering},
+  title        = {FEMPAR: An object-oriented parallel finite element framework},
+  number       = {2},
+  pages        = {195--271},
+  volume       = {25},
+  publisher    = {Springer},
 }
 
-
-
+@Online{FX21,
+  author      = {Guosheng Fu and Zhiliang Xu},
+  date        = {2021-05-03},
+  title       = {High-order space-time finite element methods for the Poisson-Nernst-Planck equations: Positivity and unconditional energy stability},
+  eprint      = {2105.01163},
+  eprintclass = {math.NA},
+  eprinttype  = {arXiv},
+  file        = {:http\://arxiv.org/pdf/2105.01163v1:PDF},
+  keywords    = {math.NA, cs.NA},
+  timestamp   = {2021-05-11},
+}
 
 @Comment{jabref-meta: databaseType:biblatex;}
