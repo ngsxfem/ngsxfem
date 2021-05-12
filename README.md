@@ -30,7 +30,7 @@ The main features of `ngsxfem` are:
 
 * All these features combined with the usual flexibility and power of [NGSolve](https://ngsolve.org).
 
-`ngsxfem` has been used in a variety of applications. In [`doc/paper.md`](doc/paper.md) more details on the features and references to applications where `ngsxfem` is used are given.
+`ngsxfem` has been used in a variety of applications. In the documents [`feature-details`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) more details on the features if given and in [`literature`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) to an overview of the scientific literature where `ngsxfem` is used is provided.
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
