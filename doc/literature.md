@@ -36,7 +36,7 @@ title: 'Scientific literature using `ngsxfem`'
 
 * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. “Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data”. In: Phys. Fluids 33.3, 033304 (2nd Mar. 2021). doi: [10.1063/5.0037971](https://doi.org/10.1063/5.0037971).
 
-* H. von Wahl and T. Richter. Using a deep neural network to predict the motion of under-resolved triangular rigid bodies in an incompressible flow. 23rd Feb. 2021. arXiv: [2102.11636 [physic](https://arxiv.org/abs/2102.11636) [physics.flu-dyn].
+* H. von Wahl and T. Richter. Using a deep neural network to predict the motion of under-resolved triangular rigid bodies in an incompressible flow. 23rd Feb. 2021. arXiv: [2102.11636](https://arxiv.org/abs/2102.11636) [physics.flu-dyn].
 
 
 ##  Surface PDEs
