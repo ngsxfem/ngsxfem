@@ -1,0 +1,35 @@
+name: Compile Extra Documentation
+on: [push]
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    outputs:
+      uid_gid: ${{ steps.get-user.outputs.uid_gid }}
+    steps:
+      - id: get-user
+        run: echo "::set-output name=uid_gid::$(id -u):$(id -g)"
+
+  features-paper:
+    needs: configure
+    runs-on: ubuntu-latest
+    container: 
+      image: schruste/latex:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: compile extra-features
+        run: |
+          cd doc
+          pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
+          pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
+      - name: Upload-features
+        uses: actions/upload-artifact@v1
+        with:
+          name: doc-features
+          path: doc/feature-details.pdf
+      - name: Upload-features
+        uses: actions/upload-artifact@v1
+        with:
+          name: doc-literature
+          path: doc/literature.pdf
