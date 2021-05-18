@@ -1,8 +1,8 @@
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Build,%20test%20(and%20publish%20release)%20of%20ngsxfem?label=build%20and%20test&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
  [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
+[![jossstatus](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb/status.svg)](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb)
+
  
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Compile%20JOSS%20Paper?label=Compile%20paper%20draft&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/paper-workflow.yml)
- [![DOI](https://joss.theoj.org/papers/10.21105/joss.03108/status.svg)](https://doi.org/)
 
 [![PyPI](https://img.shields.io/pypi/v/xfem?color=blue&label=latest%20PyPI%20version&logo=pypi&logoColor=white)](https://pypi.org/project/xfem/)
 [![PyPI - Implementation](https://img.shields.io/pypi/implementation/xfem?logo=pypi&logoColor=white)](https://pypi.org/project/xfem/)
@@ -30,7 +30,7 @@ The main features of `ngsxfem` are:
 
 * All these features combined with the usual flexibility and power of [NGSolve](https://ngsolve.org).
 
-`ngsxfem` has been used in a variety of applications. In the documents [`feature-details`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) more details on the features if given and in [`literature`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) to an overview of the scientific literature where `ngsxfem` is used is provided.
+`ngsxfem` has been used in a variety of applications. In the document [doc/feature-details.md](doc/feature-details.md) (see also [`compiled pdf`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) ) more details on the features is given and in [doc/literature.md](doc/literature.md) (see also [`literature`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) ) an overview of the scientific literature where `ngsxfem` is used is provided.
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
