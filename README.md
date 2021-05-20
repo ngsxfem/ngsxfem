@@ -55,7 +55,7 @@ We provide two main sources with which to learn how to use `ngsxfem`:
  * in the [`demos`](./demos)-directory we provide several examples that demonstrate the usage of `ngsxfem` features. See [`demos/README.md`](demos/README.md) for details.
 
  # Installation
- We provide installation instructions for building/installing through `pip` and building/installing from sources in [`INSTALLATION.md`](INSTALLATION.md). Further, [a docker image](https://hub.docker.com/r/schruste/ngsxfem) is available which can be used to run `ngsxfem` through docker.
+ We provide installation instructions for building/installing through `pip` and building/installing from sources in [`INSTALLATION.md`](INSTALLATION.md). Further, [a docker image](https://hub.docker.com/r/ngsxfem/ngsxfem) is available which can be used to run `ngsxfem` through docker.
 
 # List of contributing authors (with major contributions)
 
