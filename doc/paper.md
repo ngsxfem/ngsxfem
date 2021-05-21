@@ -47,7 +47,7 @@ First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other fini
 * space-time finite elements and quadrature for unfitted space-time finite element discretizations of PDEs on moving domains, cf. @Pre18, @Hei20
 * the so-called direct version of the ghost penalty stabilization as introduced in @Pre18
 
-A more detailed overview of the key features provided by `ngsxfem` can be found in the repository under `doc/feature-details.md` Furthermore, a detailed overview of the scientific literature which has utilised `ngsxfem` is given in the repository under `doc/literature.md`
+A more detailed overview of the key features provided by `ngsxfem` can be found in the repository under `doc/feature-details.md`. Furthermore, a detailed overview of the scientific literature which has utilised `ngsxfem` is given in the repository under `doc/literature.md`.
 
 
 # Acknowledgements
