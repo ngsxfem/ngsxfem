@@ -4,7 +4,8 @@
 namespace ngcomp
 {
 
-  class RestrictedBilinearForm : public T_BilinearForm<double,double>
+  template <class TM, class TV> 
+  class  RestrictedBilinearForm : public T_BilinearForm<TM,TV>
   {
     shared_ptr<BitArray> el_restriction = nullptr;
     shared_ptr<BitArray> fac_restriction = nullptr;
@@ -12,17 +13,32 @@ namespace ngcomp
     /// generate a bilinear-form
     // RestrictedBilinearForm () ;
     // /// generate a bilinear-form
-    RestrictedBilinearForm (shared_ptr<FESpace> afespace,
-                            const string & aname,
-                            shared_ptr<BitArray> el_restriction,
-                            shared_ptr<BitArray> fac_restriction,
-                            const Flags & flags);
-    RestrictedBilinearForm (shared_ptr<FESpace> afespace,
-                            shared_ptr<FESpace> afespace2,
-                            const string & aname,
-                            shared_ptr<BitArray> el_restriction,
-                            shared_ptr<BitArray> fac_restriction,
-                            const Flags & flags);
+    RestrictedBilinearForm (shared_ptr<FESpace> fespace,
+                            const string & name,
+                            shared_ptr<BitArray> ael_restriction,
+                            shared_ptr<BitArray> afac_restriction,
+                            const Flags & flags)
+      : T_BilinearForm<TM,TV>(fespace, name, flags),
+      el_restriction(ael_restriction),
+      fac_restriction(afac_restriction)
+    {
+      ;
+    }
+
+
+    RestrictedBilinearForm (shared_ptr<FESpace> fespace,
+                            shared_ptr<FESpace> fespace2,
+                            const string & name,
+                            shared_ptr<BitArray> ael_restriction,
+                            shared_ptr<BitArray> afac_restriction,
+                            const Flags & flags)
+    : T_BilinearForm<TM,TV>(fespace, fespace2, name, flags),
+      el_restriction(ael_restriction),
+      fac_restriction(afac_restriction)
+    {
+     ;
+    }
+
     void SetElementRestriction(shared_ptr<BitArray> _el_restriction){ el_restriction = _el_restriction;}
     void SetFacetRestriction(shared_ptr<BitArray> _fac_restriction){ fac_restriction = _fac_restriction;}
     shared_ptr<BitArray> GetElementRestriction(){ return el_restriction; }
@@ -36,7 +52,30 @@ namespace ngcomp
     //     	  const string & aname,
     //     	  const Flags & flags);
 
-    virtual MatrixGraph GetGraph (int level, bool symmetric);
+    virtual MatrixGraph GetGraph (int level, bool symmetric); 
+   /*
+    {
+    static Timer timer ("BilinearForm::GetGraph");
+    RegionTimer reg (timer);
+
+    size_t ndof = fespace->GetNDof();
+
+    auto table = MeshEntityToDofTable(fespace, el_restriction, fac_restriction, eliminate_internal, eliminate_hidden, &specialelements);
+    MatrixGraph * graph;
+  
+    if (!fespace2)
+      graph = new MatrixGraph (ndof, ndof, table, table, symmetric);        
+    else
+    {
+      auto table2 = MeshEntityToDofTable(fespace2, el_restriction, fac_restriction, eliminate_internal, eliminate_hidden, &specialelements);
+      size_t ndof2 = fespace2->GetNDof();
+      graph = new MatrixGraph (ndof2, ndof, table2, table, symmetric);
+    }
+    
+    graph -> FindSameNZE();
+    return move(*graph);
+   }*/
+
   };
 
 }

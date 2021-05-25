@@ -127,7 +127,7 @@ flags : ngsolve.Flags
   additional bilinear form flags
 )raw_string");
 
-  py::class_<RestrictedBilinearForm, shared_ptr<RestrictedBilinearForm>, BilinearForm> rblf(m, "RestrictedBilinearForm", docu_string(R"raw_string(
+  py::class_<RestrictedBilinearForm<double,double>, shared_ptr<RestrictedBilinearForm<double,double>>, BilinearForm> rblf(m, "RestrictedBilinearForm", docu_string(R"raw_string(
 BilinearForm restricted on a set of elements and facets.
 )raw_string") , py::dynamic_attr());
     
@@ -152,7 +152,7 @@ BilinearForm restricted on a set of elements and facets.
           if (fes->IsComplex())
             throw Exception("RestrictedBilinearForm not implemented for complex fespace");
 
-          auto biform = make_shared<RestrictedBilinearForm> (fes, aname, el_restriction, fac_restriction, flags);
+          auto biform = make_shared<RestrictedBilinearForm<double,double>> (fes, aname, el_restriction, fac_restriction, flags);
           biform -> SetCheckUnused (check_unused);
           return biform;
         }),
@@ -180,10 +180,10 @@ BilinearForm restricted on a set of elements and facets.
           if (py::extract<PyBA> (afac_restriction).check())
             fac_restriction = py::extract<PyBA>(afac_restriction)();
 
-          if (fes1->IsComplex() || fes2->IsComplex())
-            throw Exception("RestrictedBilinearForm not implemented for complex fespace");
+          //if (fes1->IsComplex() || fes2->IsComplex())
+          //  throw Exception("RestrictedBilinearForm not implemented for complex fespace");
 
-          auto biform = make_shared<RestrictedBilinearForm> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
+          auto biform = make_shared<RestrictedBilinearForm<double,double>> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
           biform -> SetCheckUnused (check_unused);
           return biform;
         }),
@@ -195,11 +195,11 @@ BilinearForm restricted on a set of elements and facets.
         py::arg("check_unused") = true,
         rblf_string)        
   .def_property("element_restriction", 
-                  &RestrictedBilinearForm::GetElementRestriction,
-                  &RestrictedBilinearForm::SetElementRestriction, "element restriction")
+                  &RestrictedBilinearForm<double,double>::GetElementRestriction,
+                  &RestrictedBilinearForm<double,double>::SetElementRestriction, "element restriction")
   .def_property("facet_restriction", 
-                  &RestrictedBilinearForm::GetFacetRestriction,
-                  &RestrictedBilinearForm::SetFacetRestriction, "facet restriction")
+                  &RestrictedBilinearForm<double,double>::GetFacetRestriction,
+                  &RestrictedBilinearForm<double,double>::SetFacetRestriction, "facet restriction")
 
 ;
 
