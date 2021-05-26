@@ -4,41 +4,7 @@
 namespace ngcomp
 {
   
-  // constructor moved into header file 
-  /* 
-  template <class TM, class TV>	
-  RestrictedBilinearForm :: 
-  RestrictedBilinearForm (shared_ptr<FESpace> afespace,
-                          const string & aname,
-                          shared_ptr<BitArray> ael_restriction,
-                          shared_ptr<BitArray> afac_restriction,
-                          const Flags & flags)
-    : T_BilinearForm<TM,TV>(afespace, aname, flags),
-      el_restriction(ael_restriction),
-      fac_restriction(afac_restriction)
-  {
-    ;
-  }*/
-
-  /*
-  template <class TM, class TV>	
-  RestrictedBilinearForm :: 
-  RestrictedBilinearForm (shared_ptr<FESpace> afespace,
-                          shared_ptr<FESpace> afespace2,
-                          const string & aname,
-                          shared_ptr<BitArray> ael_restriction,
-                          shared_ptr<BitArray> afac_restriction,
-                          const Flags & flags)
-    : T_BilinearForm<TM,TV>(afespace, afespace2, aname, flags),
-      el_restriction(ael_restriction),
-      fac_restriction(afac_restriction)
-  {
-    ;
-  }
-  */
-  
-
-    //associate elements / specialelements / facets (DG) to dofs for precomputed sparsity pattern
+  //associate elements / specialelements / facets (DG) to dofs for precomputed sparsity pattern
   Table<int> MeshEntityToDofTable(shared_ptr<FESpace> fes, 
                                   shared_ptr<BitArray> active_elems = nullptr,
                                   shared_ptr<BitArray> active_facets = nullptr,
@@ -196,9 +162,7 @@ namespace ngcomp
     return move(*graph);
   }
 
-
 template class RestrictedBilinearForm<double,double>;
-//template class RestrictedBilinearForm<double,Complex>; 
-// does not work because template class T_BilinearForm<double,Complex> is not eplicitly instantiated like template class T_BilinearForm<double,double> in bilinearform.cpp
+template class RestrictedBilinearForm<Complex,Complex>; 
 } 
 

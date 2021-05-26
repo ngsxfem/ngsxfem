@@ -53,28 +53,6 @@ namespace ngcomp
     //     	  const Flags & flags);
 
     virtual MatrixGraph GetGraph (int level, bool symmetric); 
-   /*
-    {
-    static Timer timer ("BilinearForm::GetGraph");
-    RegionTimer reg (timer);
-
-    size_t ndof = fespace->GetNDof();
-
-    auto table = MeshEntityToDofTable(fespace, el_restriction, fac_restriction, eliminate_internal, eliminate_hidden, &specialelements);
-    MatrixGraph * graph;
-  
-    if (!fespace2)
-      graph = new MatrixGraph (ndof, ndof, table, table, symmetric);        
-    else
-    {
-      auto table2 = MeshEntityToDofTable(fespace2, el_restriction, fac_restriction, eliminate_internal, eliminate_hidden, &specialelements);
-      size_t ndof2 = fespace2->GetNDof();
-      graph = new MatrixGraph (ndof2, ndof, table2, table, symmetric);
-    }
-    
-    graph -> FindSameNZE();
-    return move(*graph);
-   }*/
 
   };
 
