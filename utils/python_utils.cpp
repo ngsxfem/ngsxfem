@@ -322,7 +322,6 @@ BilinearForm restricted on a set of elements and facets.
 
 ;
 
-
   m.def("CompoundBitArray",
         [] (py::list balist)
         {
