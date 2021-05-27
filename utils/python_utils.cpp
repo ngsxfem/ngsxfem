@@ -201,7 +201,7 @@ heapsize : int
     ;
 
   // Export RestrictedBilinearForm for different data types 
-  declare_RestrictedBilinearForm<double,double>(m,"");
+  declare_RestrictedBilinearForm<double,double>(m,"Double");
   declare_RestrictedBilinearForm<Complex,Complex>(m,"Complex");
 
   m.def("CompoundBitArray",

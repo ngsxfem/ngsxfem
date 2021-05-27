@@ -899,8 +899,6 @@ def dmesh(mesh=None,*args,**kwargs):
     else:
         return dx(*args,**kwargs)
 
-# Patch RestrictedBilinearForm for treating complex fespaces. If not wanted just outcomment the whole thing.
-from xfem.ngsxfem_py import RestrictedBilinearForm as RestrictedBilinearForm_real 
 def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_restriction=None,trialspace=None,testspace=None,check_unused=True,**kwargs):
     """
     Creates a restricted bilinear form, which is bilinear form with a reduced MatrixGraph
@@ -960,7 +958,7 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
         if trialspace.is_complex and testspace.is_complex:
             return RestrictedBilinearFormComplex(trialspace,testspace,*argument_list,**kwargs)
         elif (not trialspace.is_complex) and (not testspace.is_complex):
-            return RestrictedBilinearForm_real(trialspace,testspace,*argument_list,**kwargs)
+            return RestrictedBilinearFormDouble(trialspace,testspace,*argument_list,**kwargs)
         else:
             raise Exception("Trialspace is real and testspace is complex or vice versa. RestrictedBilinearForm not implemented for this case!")
     else: 
@@ -969,7 +967,7 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
         if space.is_complex:
             return RestrictedBilinearFormComplex(space,*argument_list,**kwargs)
         else:
-            return RestrictedBilinearForm_real(space,*argument_list,**kwargs)
+            return RestrictedBilinearFormDouble(space,*argument_list,**kwargs)
 
 
 # some global scope manipulations (monkey patches etc..):
