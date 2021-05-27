@@ -958,7 +958,7 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
 
     if trialspace != None and testspace != None:
         if trialspace.is_complex and testspace.is_complex:
-            return RestrictedBilinearFormC(trialspace,testspace,*argument_list,**kwargs)
+            return RestrictedBilinearFormComplex(trialspace,testspace,*argument_list,**kwargs)
         elif (not trialspace.is_complex) and (not testspace.is_complex):
             return RestrictedBilinearForm_real(trialspace,testspace,*argument_list,**kwargs)
         else:
@@ -967,7 +967,7 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
         if space == None:
             raise Exception("No space given for RestrictedBilinearForm!")
         if space.is_complex:
-            return RestrictedBilinearFormC(space,*argument_list,**kwargs)
+            return RestrictedBilinearFormComplex(space,*argument_list,**kwargs)
         else:
             return RestrictedBilinearForm_real(space,*argument_list,**kwargs)
 

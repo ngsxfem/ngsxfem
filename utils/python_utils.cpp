@@ -12,6 +12,125 @@
 #include "../utils/restrictedfespace.hpp"
 
 using namespace ngcomp;
+typedef shared_ptr<BitArray> PyBA;
+
+
+ auto rblf_string_T = docu_string(R"raw_string(
+A restricted bilinear form is a bilinear form with a reduced MatrixGraph
+compared to the usual BilinearForm. BitArray(s) define on which elements/facets entries will be
+created.
+
+Use cases:
+
+ * ghost penalty type stabilization:
+    Facet-stabilization that are introduced only act on a few facets in the mesh. By providing the
+    information on the corresponding facets, these additional couplings will only be introduced
+    where necessary.
+
+ * fictitious domain methods:
+    When PDE problems are only solved on a part of a domain while a finite element space is used
+    that is still defined on the whole domain, a BitArray can be used to mark the 'active' part of
+    the mesh.
+
+Parameters
+
+space (trialspace) : ngsolve.FESpace
+  finite element space on which the bilinear form is defined 
+  (trial space and (if no test space is defined) test space).
+
+testspace : ngsolve.FESpace
+  finite element space on which the bilinear form is defined
+  (test space).
+
+name : string
+  name of the bilinear form
+
+element_restriction : ngsolve.BitArray
+  BitArray defining the 'active mesh' element-wise
+
+facet_restriction : ngsolve.BitArray
+  BitArray defining the 'active facets'. This is only relevant if FESpace has DG-terms (dgjumps=True)
+
+check_unused : boolean
+  Check if some degrees of freedoms are not considered during assembly
+
+flags : ngsolve.Flags
+  additional bilinear form flags
+)raw_string");
+
+template <class TM,class TV>
+void declare_RestrictedBilinearForm(py::module &m, std::string const &typestr) {
+using Rbfi_TT = RestrictedBilinearForm<TM,TV>;
+std::string pyclass_name_T = std::string("RestrictedBilinearForm") + typestr;
+
+py::class_<Rbfi_TT, shared_ptr<Rbfi_TT>, BilinearForm> rblf_T(m, pyclass_name_T.c_str(),docu_string(R"raw_string(BilinearForm restricted on a set of elements and facets.
+)raw_string") , py::dynamic_attr());
+
+rblf_T.def(py::init([](shared_ptr<FESpace> fes,
+      const string & aname,
+      py::object ael_restriction,
+      py::object afac_restriction,
+      bool check_unused,
+      py::kwargs kwargs)
+  {
+    auto flags = CreateFlagsFromKwArgs(kwargs);
+
+    shared_ptr<BitArray> el_restriction = nullptr;
+    shared_ptr<BitArray> fac_restriction = nullptr;
+    if (py::extract<PyBA> (ael_restriction).check())
+      el_restriction = py::extract<PyBA>(ael_restriction)();
+
+    if (py::extract<PyBA> (afac_restriction).check())
+      fac_restriction = py::extract<PyBA>(afac_restriction)();
+
+    auto biform = make_shared<Rbfi_TT> (fes, aname, el_restriction, fac_restriction, flags);
+    biform -> SetCheckUnused (check_unused);
+    return biform;
+  }),
+  py::arg("space"),
+  py::arg("name") = "bfa",
+  py::arg("element_restriction") = DummyArgument(),
+  py::arg("facet_restriction") = DummyArgument(),
+  py::arg("check_unused") = true,
+  rblf_string_T)
+.def(py::init([](shared_ptr<FESpace> fes1,
+   shared_ptr<FESpace> fes2,
+   const string & aname,
+   py::object ael_restriction,
+   py::object afac_restriction,
+   bool check_unused,
+   py::kwargs kwargs)
+{
+   auto flags = CreateFlagsFromKwArgs(kwargs);
+
+   shared_ptr<BitArray> el_restriction = nullptr;
+   shared_ptr<BitArray> fac_restriction = nullptr;
+   if (py::extract<PyBA> (ael_restriction).check())
+     el_restriction = py::extract<PyBA>(ael_restriction)();
+
+   if (py::extract<PyBA> (afac_restriction).check())
+     fac_restriction = py::extract<PyBA>(afac_restriction)();
+
+   auto biform = make_shared<Rbfi_TT> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
+   biform -> SetCheckUnused (check_unused);
+   return biform;
+}),
+py::arg("trialspace"),
+py::arg("testspace"),
+py::arg("name") = "bfa",
+py::arg("element_restriction") = DummyArgument(),
+py::arg("facet_restriction") = DummyArgument(),
+py::arg("check_unused") = true,
+rblf_string_T)        
+.def_property("element_restriction", 
+	  &Rbfi_TT::GetElementRestriction,
+	  &Rbfi_TT::SetElementRestriction, "element restriction")
+.def_property("facet_restriction", 
+	  &Rbfi_TT::GetFacetRestriction,
+	  &Rbfi_TT::SetFacetRestriction, "facet restriction");
+}
+
+
 
 void ExportNgsx_utils(py::module &m)
 {
@@ -81,246 +200,9 @@ heapsize : int
     )
     ;
 
-  
-  typedef shared_ptr<BitArray> PyBA;
-
-  auto rblf_string = docu_string(R"raw_string(
-A restricted bilinear form is a (so far real-valued) bilinear form with a reduced MatrixGraph
-compared to the usual BilinearForm. BitArray(s) define on which elements/facets entries will be
-created.
-
-Use cases:
-
- * ghost penalty type stabilization:
-    Facet-stabilization that are introduced only act on a few facets in the mesh. By providing the
-    information on the corresponding facets, these additional couplings will only be introduced
-    where necessary.
-
- * fictitious domain methods:
-    When PDE problems are only solved on a part of a domain while a finite element space is used
-    that is still defined on the whole domain, a BitArray can be used to mark the 'active' part of
-    the mesh.
-
-Parameters
-
-space (trialspace) : ngsolve.FESpace
-  finite element space on which the bilinear form is defined 
-  (trial space and (if no test space is defined) test space).
-
-testspace : ngsolve.FESpace
-  finite element space on which the bilinear form is defined
-  (test space).
-
-name : string
-  name of the bilinear form
-
-element_restriction : ngsolve.BitArray
-  BitArray defining the 'active mesh' element-wise
-
-facet_restriction : ngsolve.BitArray
-  BitArray defining the 'active facets'. This is only relevant if FESpace has DG-terms (dgjumps=True)
-
-check_unused : boolean
-  Check if some degrees of freedoms are not considered during assembly
-
-flags : ngsolve.Flags
-  additional bilinear form flags
-)raw_string");
-
-  py::class_<RestrictedBilinearForm<double,double>, shared_ptr<RestrictedBilinearForm<double,double>>, BilinearForm> rblf(m, "RestrictedBilinearForm", docu_string(R"raw_string(
-BilinearForm restricted on a set of elements and facets.
-)raw_string") , py::dynamic_attr());
-    
-
-  rblf.def(py::init([](shared_ptr<FESpace> fes,
-           const string & aname,
-           py::object ael_restriction,
-           py::object afac_restriction,
-           bool check_unused,
-           py::kwargs kwargs)
-        {
-          auto flags = CreateFlagsFromKwArgs(kwargs);
-
-          shared_ptr<BitArray> el_restriction = nullptr;
-          shared_ptr<BitArray> fac_restriction = nullptr;
-          if (py::extract<PyBA> (ael_restriction).check())
-            el_restriction = py::extract<PyBA>(ael_restriction)();
-
-          if (py::extract<PyBA> (afac_restriction).check())
-            fac_restriction = py::extract<PyBA>(afac_restriction)();
-
-          if (fes->IsComplex())
-            throw Exception("RestrictedBilinearForm not implemented for complex fespace");
-
-          auto biform = make_shared<RestrictedBilinearForm<double,double>> (fes, aname, el_restriction, fac_restriction, flags);
-          biform -> SetCheckUnused (check_unused);
-          return biform;
-        }),
-        py::arg("space"),
-        py::arg("name") = "bfa",
-        py::arg("element_restriction") = DummyArgument(),
-        py::arg("facet_restriction") = DummyArgument(),
-        py::arg("check_unused") = true,
-        rblf_string)
-.def(py::init([](shared_ptr<FESpace> fes1,
-           shared_ptr<FESpace> fes2,
-           const string & aname,
-           py::object ael_restriction,
-           py::object afac_restriction,
-           bool check_unused,
-           py::kwargs kwargs)
-        {
-          auto flags = CreateFlagsFromKwArgs(kwargs);
-
-          shared_ptr<BitArray> el_restriction = nullptr;
-          shared_ptr<BitArray> fac_restriction = nullptr;
-          if (py::extract<PyBA> (ael_restriction).check())
-            el_restriction = py::extract<PyBA>(ael_restriction)();
-
-          if (py::extract<PyBA> (afac_restriction).check())
-            fac_restriction = py::extract<PyBA>(afac_restriction)();
-
-          if (fes1->IsComplex() || fes2->IsComplex())
-            throw Exception("RestrictedBilinearForm not implemented for complex fespace");
-
-          auto biform = make_shared<RestrictedBilinearForm<double,double>> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
-          biform -> SetCheckUnused (check_unused);
-          return biform;
-        }),
-        py::arg("trialspace"),
-        py::arg("testspace"),
-        py::arg("name") = "bfa",
-        py::arg("element_restriction") = DummyArgument(),
-        py::arg("facet_restriction") = DummyArgument(),
-        py::arg("check_unused") = true,
-        rblf_string)        
-  .def_property("element_restriction", 
-                  &RestrictedBilinearForm<double,double>::GetElementRestriction,
-                  &RestrictedBilinearForm<double,double>::SetElementRestriction, "element restriction")
-  .def_property("facet_restriction", 
-                  &RestrictedBilinearForm<double,double>::GetFacetRestriction,
-                  &RestrictedBilinearForm<double,double>::SetFacetRestriction, "facet restriction")
-
-;
-
-  auto rblfC_string = docu_string(R"raw_string(
-A restricted bilinear form is a complex bilinear form with a reduced MatrixGraph
-compared to the usual BilinearForm. BitArray(s) define on which elements/facets entries will be
-created.
-
-Use cases:
-
- * ghost penalty type stabilization:
-    Facet-stabilization that are introduced only act on a few facets in the mesh. By providing the
-    information on the corresponding facets, these additional couplings will only be introduced
-    where necessary.
-
- * fictitious domain methods:
-    When PDE problems are only solved on a part of a domain while a finite element space is used
-    that is still defined on the whole domain, a BitArray can be used to mark the 'active' part of
-    the mesh.
-
-Parameters
-
-space (trialspace) : ngsolve.FESpace
-  finite element space on which the bilinear form is defined 
-  (trial space and (if no test space is defined) test space).
-
-testspace : ngsolve.FESpace
-  finite element space on which the bilinear form is defined
-  (test space).
-
-name : string
-  name of the bilinear form
-
-element_restriction : ngsolve.BitArray
-  BitArray defining the 'active mesh' element-wise
-
-facet_restriction : ngsolve.BitArray
-  BitArray defining the 'active facets'. This is only relevant if FESpace has DG-terms (dgjumps=True)
-
-check_unused : boolean
-  Check if some degrees of freedoms are not considered during assembly
-
-flags : ngsolve.Flags
-  additional bilinear form flags
-)raw_string");
-
-  py::class_<RestrictedBilinearForm<Complex,Complex>, shared_ptr<RestrictedBilinearForm<Complex,Complex>>, BilinearForm> rblfC(m, "RestrictedBilinearFormC", docu_string(R"raw_string(
-BilinearForm restricted on a set of elements and facets.
-)raw_string") , py::dynamic_attr());
-    
-
-  rblfC.def(py::init([](shared_ptr<FESpace> fes,
-           const string & aname,
-           py::object ael_restriction,
-           py::object afac_restriction,
-           bool check_unused,
-           py::kwargs kwargs)
-        {
-          auto flags = CreateFlagsFromKwArgs(kwargs);
-
-          shared_ptr<BitArray> el_restriction = nullptr;
-          shared_ptr<BitArray> fac_restriction = nullptr;
-          if (py::extract<PyBA> (ael_restriction).check())
-            el_restriction = py::extract<PyBA>(ael_restriction)();
-
-          if (py::extract<PyBA> (afac_restriction).check())
-            fac_restriction = py::extract<PyBA>(afac_restriction)();
-
-          if (!(fes->IsComplex()))
-            throw Exception("For real fespace use RestrictedBilinearForm");
-
-          auto biform = make_shared<RestrictedBilinearForm<Complex,Complex>> (fes, aname, el_restriction, fac_restriction, flags);
-          biform -> SetCheckUnused (check_unused);
-          return biform;
-        }),
-        py::arg("space"),
-        py::arg("name") = "bfa",
-        py::arg("element_restriction") = DummyArgument(),
-        py::arg("facet_restriction") = DummyArgument(),
-        py::arg("check_unused") = true,
-        rblf_string)
-.def(py::init([](shared_ptr<FESpace> fes1,
-           shared_ptr<FESpace> fes2,
-           const string & aname,
-           py::object ael_restriction,
-           py::object afac_restriction,
-           bool check_unused,
-           py::kwargs kwargs)
-        {
-          auto flags = CreateFlagsFromKwArgs(kwargs);
-
-          shared_ptr<BitArray> el_restriction = nullptr;
-          shared_ptr<BitArray> fac_restriction = nullptr;
-          if (py::extract<PyBA> (ael_restriction).check())
-            el_restriction = py::extract<PyBA>(ael_restriction)();
-
-          if (py::extract<PyBA> (afac_restriction).check())
-            fac_restriction = py::extract<PyBA>(afac_restriction)();
-
-          if ( !(fes1->IsComplex()) || !(fes2->IsComplex() ))
-            throw Exception("For real fespaces use RestrictedBilinearForm");
-
-          auto biform = make_shared<RestrictedBilinearForm<Complex,Complex>> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
-          biform -> SetCheckUnused (check_unused);
-          return biform;
-        }),
-        py::arg("trialspace"),
-        py::arg("testspace"),
-        py::arg("name") = "bfa",
-        py::arg("element_restriction") = DummyArgument(),
-        py::arg("facet_restriction") = DummyArgument(),
-        py::arg("check_unused") = true,
-        rblf_string)        
-  .def_property("element_restriction", 
-                  &RestrictedBilinearForm<Complex,Complex>::GetElementRestriction,
-                  &RestrictedBilinearForm<Complex,Complex>::SetElementRestriction, "element restriction")
-  .def_property("facet_restriction", 
-                  &RestrictedBilinearForm<Complex,Complex>::GetFacetRestriction,
-                  &RestrictedBilinearForm<Complex,Complex>::SetFacetRestriction, "facet restriction")
-
-;
+  // Export RestrictedBilinearForm for different data types 
+  declare_RestrictedBilinearForm<double,double>(m,"");
+  declare_RestrictedBilinearForm<Complex,Complex>(m,"Complex");
 
   m.def("CompoundBitArray",
         [] (py::list balist)
@@ -423,13 +305,6 @@ active_els : BitArray or None
     ;
 
 
-
-
-
-
-
-
-
   typedef shared_ptr<P1Prolongation> PyP1P;
   py::class_<P1Prolongation, PyP1P, Prolongation>
     (m, "P1Prolongation",
@@ -520,3 +395,4 @@ for prototype and testing...
 
 
 }
+
