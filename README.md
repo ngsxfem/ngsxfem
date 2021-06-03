@@ -35,7 +35,7 @@ The main features of `ngsxfem` are:
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `CFE`: CutFEM form. | / | / | yes | yes | yes | no | yes | yes | yes | yes |
+| `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes |
 | `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | yes | yes | yes |
 | `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | no | yes | no | yes | no |
 | `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes | yes | yes |
