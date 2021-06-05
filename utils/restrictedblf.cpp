@@ -3,35 +3,8 @@
 
 namespace ngcomp
 {
-
-  RestrictedBilinearForm :: 
-  RestrictedBilinearForm (shared_ptr<FESpace> afespace,
-                          const string & aname,
-                          shared_ptr<BitArray> ael_restriction,
-                          shared_ptr<BitArray> afac_restriction,
-                          const Flags & flags)
-    : T_BilinearForm<double,double>(afespace, aname, flags),
-      el_restriction(ael_restriction),
-      fac_restriction(afac_restriction)
-  {
-    ;
-  }
-
-  RestrictedBilinearForm :: 
-  RestrictedBilinearForm (shared_ptr<FESpace> afespace,
-                          shared_ptr<FESpace> afespace2,
-                          const string & aname,
-                          shared_ptr<BitArray> ael_restriction,
-                          shared_ptr<BitArray> afac_restriction,
-                          const Flags & flags)
-    : T_BilinearForm<double,double>(afespace, afespace2, aname, flags),
-      el_restriction(ael_restriction),
-      fac_restriction(afac_restriction)
-  {
-    ;
-  }
-
-    //associate elements / specialelements / facets (DG) to dofs for precomputed sparsity pattern
+  
+  //associate elements / specialelements / facets (DG) to dofs for precomputed sparsity pattern
   Table<int> MeshEntityToDofTable(shared_ptr<FESpace> fes, 
                                   shared_ptr<BitArray> active_elems = nullptr,
                                   shared_ptr<BitArray> active_facets = nullptr,
@@ -164,26 +137,32 @@ namespace ngcomp
   }
 
   
-  MatrixGraph RestrictedBilinearForm :: GetGraph (int level, bool symmetric)
+   
+  template <class TM, class TV> 
+  MatrixGraph RestrictedBilinearForm<TM,TV> :: GetGraph (int level, bool symmetric)
   {
     static Timer timer ("BilinearForm::GetGraph");
     RegionTimer reg (timer);
 
-    size_t ndof = fespace->GetNDof();
+    size_t ndof = this->fespace->GetNDof();
 
-    auto table = MeshEntityToDofTable(fespace, el_restriction, fac_restriction, eliminate_internal, eliminate_hidden, &specialelements);
+    auto table = MeshEntityToDofTable(this->fespace, el_restriction, fac_restriction, this->eliminate_internal, this->eliminate_hidden, &(this->specialelements) );
     MatrixGraph * graph;
   
-    if (!fespace2)
+    if (!(this->fespace2))
       graph = new MatrixGraph (ndof, ndof, table, table, symmetric);        
     else
     {
-      auto table2 = MeshEntityToDofTable(fespace2, el_restriction, fac_restriction, eliminate_internal, eliminate_hidden, &specialelements);
-      size_t ndof2 = fespace2->GetNDof();
+      auto table2 = MeshEntityToDofTable(this->fespace2, el_restriction, fac_restriction, this->eliminate_internal, this->eliminate_hidden, &(this->specialelements));
+      size_t ndof2 = this->fespace2->GetNDof();
       graph = new MatrixGraph (ndof2, ndof, table2, table, symmetric);
     }
     
     graph -> FindSameNZE();
     return move(*graph);
   }
-}
+
+template class RestrictedBilinearForm<double,double>;
+template class RestrictedBilinearForm<Complex,Complex>; 
+} 
+
