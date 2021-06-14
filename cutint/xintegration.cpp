@@ -15,8 +15,8 @@ namespace xintegration
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
   {
-    static int timer = NgProfiler::CreateTimer ("CreateCutIntegrationRule");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    static Timer timer("CreateCutIntegrationRule");
+    RegionTimer reg (timer);
     if (lsetintdom.IsMultiLevelsetDomain())
     {
       if (lsetintdom.HasReferenceTime())
@@ -592,7 +592,6 @@ namespace xintegration
     //enum { SD = ET_trait<ET_SPACE>::DIM + ET_trait<ET_TIME>::DIM}; // total dimension (space+time)
 
     //static Timer timer ("NumIntStrategy::CheckifCut (the prism check)");
-    // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
     // RegionTimer reg (timer);
 
     bool haspos = false;
@@ -960,7 +959,6 @@ namespace xintegration
     {
       //static Timer timer ("MakeQuadRule::FillUnCutSimplex");
       //RegionTimer reg (timer);
-      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
 
       double trafofac = 1.0;
       if (D==2)
@@ -1518,7 +1516,6 @@ namespace xintegration
       enum { SD = 1};
 
       // static Timer timer ("CutSimplex<1>::MakeQuad");
-      // ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
       // RegionTimer reg (timer);
 
       const Vec<1> & left = *(s.p[0]);

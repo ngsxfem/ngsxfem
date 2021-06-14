@@ -41,7 +41,6 @@ namespace xintegration
   PolytopE SimpleX::CalcIFPolytopEUsingLset(vector<double> lset_on_points){
       //static Timer t ("SimpleX::CalcIFPolytopEUsingLset");
       // RegionTimer reg(t);
-      // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       if(CheckIfStraightCut(lset_on_points) != IF) {
           cout << IM(1) << "Lsetvals: ";
           for(auto d: lset_on_points) cout << d << endl;
@@ -79,7 +78,6 @@ namespace xintegration
 
   void SimpleX::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
       //static Timer t ("SimpleX::GetPlainIntegrationRule");
-      // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       // RegionTimer reg(t);
       double trafofac = GetVolume();
 
@@ -102,7 +100,6 @@ namespace xintegration
   void Quadrilateral::GetPlainIntegrationRule(IntegrationRule &intrule, int order) {
       static Timer t ("Quadrilateral::GetPlainIntegrationRule");
       //RegionTimer reg(t);
-      // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       double trafofac = GetVolume();
 
       const IntegrationRule * ir_ngs;
@@ -131,7 +128,6 @@ namespace xintegration
   void LevelsetCutSimplex::Decompose(){
       //static Timer t ("LevelsetCutSimplex::Decompose");
       //RegionTimer reg(t);
-      // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       vector<double> lsetvals = lset.initial_coefs;
       PolytopE s_cut = s.CalcIFPolytopEUsingLset(lsetvals);
 
@@ -197,7 +193,6 @@ namespace xintegration
 
   void LevelsetCutSimplex::GetIntegrationRule(IntegrationRule &intrule, int order){
       //static Timer t ("LevelsetCutSimplex::GetIntegrationRule");
-      //ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       //RegionTimer reg(t);
       Decompose();
       for(auto s : SimplexDecomposition) s.GetPlainIntegrationRule(intrule, order);
@@ -219,7 +214,6 @@ namespace xintegration
   void LevelsetCutQuadrilateral::Decompose(){
       //static Timer t ("LevelsetCutQuadrilateral::Decompose");
       //RegionTimer reg(t);
-      // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       set<double> TopologyChangeXisS{0,1};
       int xi = q.D ==2 ? 1 : 2;
       vector<tuple<int,int>> EdgesOfDimXi;
@@ -587,8 +581,8 @@ namespace xintegration
                                                      bool spacetime_mode,
                                                      double tval)
   {
-    static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRule"); 
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    static Timer timer("StraightCutIntegrationRule"); 
+    RegionTimer reg (timer);
 
     //static Timer t ("NewStraightCutIntegrationRule");
     // static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);
@@ -803,7 +797,7 @@ namespace xintegration
                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                        LocalHeap & lh)
     {
-      static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRuleUntransformed"); NgProfiler::RegionTimer reg (timer);
+      static Timer timer("StraightCutIntegrationRuleUntransformed"); RegionTimer reg (timer);
       //   static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
       //   static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule");
 

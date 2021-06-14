@@ -102,9 +102,8 @@ namespace xintegration
                                                         int order_space,
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                         LocalHeap & lh){
-        static Timer timer("SpaceTimeCutIntegrationRule",1);
-        RegionTracer rt(TaskManager::GetThreadId(), timer);
-        ThreadRegionTimer reg(timer,TaskManager::GetThreadId());
+        static Timer timer("SpaceTimeCutIntegrationRule");
+        RegionTimer rt(timer);
         //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
         

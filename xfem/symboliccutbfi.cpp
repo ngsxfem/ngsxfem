@@ -77,8 +77,8 @@ namespace ngfem
     
   {
 
-    static int timer = NgProfiler::CreateTimer ("SymbolicCutBFI::CalcElementMatrixAdd");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    static Timer timer("SymbolicCutBFI::CalcElementMatrixAdd");
+    RegionTimer reg (timer);
 
     if (element_vb != VOL)
       {
@@ -302,7 +302,7 @@ namespace ngfem
                                    LocalHeap & lh) const
 
                                        {
-      static int timer = NgProfiler::CreateTimer ("symbolicBFI - CalcElementMatrix EB");
+      static Timer timer("symbolicBFI - CalcElementMatrix EB");
       if (lsetintdom->IsMultiLevelsetDomain())
         throw Exception("cut element boundary integrals not implemented for multi level sets");
       /*
@@ -312,7 +312,7 @@ namespace ngfem
       static Timer tb("symbolicBFI - CalcElementMatrix EB - bmats", 2);
       static Timer tmult("symbolicBFI - CalcElementMatrix EB - mult", 2);
       */
-      NgProfiler::RegionTimer reg (timer);
+      RegionTimer reg (timer);
 
       //elmat = 0;
 
@@ -438,7 +438,7 @@ namespace ngfem
                                                               &bbmat2(0,0));
 
                         {
-                          // ThreadRegionTimer regbmat(timer_SymbBFIbmat, TaskManager::GetThreadId());
+                          // RegionTimer regbmat(timer_SymbBFIbmat);
                           proxy1->Evaluator()->CalcMatrix(fel_trial, mir, bbmat1);
                           if (!samediffop)
                             proxy2->Evaluator()->CalcMatrix(fel_test, mir, bbmat2);
@@ -678,8 +678,8 @@ namespace ngfem
     FlatMatrix<double> elmat,
     LocalHeap & lh) const
   {
-    static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
-    NgProfiler::RegionTimer reg(timer);
+    static Timer timer("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
+    RegionTimer reg(timer);
     elmat = 0.0;
 
     if (lsetintdom->IsMultiLevelsetDomain())
@@ -706,8 +706,8 @@ namespace ngfem
 
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
-      static Timer t("symbolicCutBFI - CoDim2-hack", 2);
-      ThreadRegionTimer reg (t, TaskManager::GetThreadId());
+      static Timer t("symbolicCutBFI - CoDim2-hack", NoTracing);
+      RegionTimer reg (t);
       static bool first = true;
       if (first)
       {
@@ -1536,8 +1536,8 @@ namespace ngfem
       warned = true;
     }
 
-    static int timer = NgProfiler::CreateTimer ("symboliccutbfi - calclinearized");
-    NgProfiler::RegionTimer reg(timer);
+    static Timer timer("symboliccutbfi - calclinearized");
+    RegionTimer reg(timer);
     
     const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
     const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
