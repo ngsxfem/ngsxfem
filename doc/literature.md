@@ -19,6 +19,8 @@ title: 'Scientific literature using `ngsxfem`'
 
 * M. Olshanskii, A.Quaini and Q. Sun. An unfitted finite element method for two-phase Stokes problems with slip between phases. 24th Jan. 2021. arXiv: [2101.09627](https://arxiv.org/abs/2101.09627) [math.NA].
 
+* M. Olshanskii, A.Quaini and Q. Sun. A finite element method for two-phase flow with material viscous interface. 5th June 2021. arXiv: [2106.02922](https://arxiv.org/abs/2106.02922) [math.NA].
+
 * T. Ludescher. “Multilevel preconditioning of stabilized unfitted finite element discretizations”. PhD thesis. RWTH Aachen University, 27th May 2020. doi: [10.18154/RWTH-2020-07305](https://doi.org/10.18154/RWTH-2020-07305.)
 
 ## PDEs on moving domains: Space-time methods
