@@ -76,6 +76,7 @@ from ngsolve import *
 from xfem import *
 from xfem.lsetcurv import *
 
+SetHeapSize(100000000)
 
 # -------------------------------- PARAMETERS ---------------------------------
 # Mesh size
