@@ -22,6 +22,10 @@ namespace ngfem
       mat.Row(0) = dtshape;
     }
 
+// explicit instantiation (needed for clang starting from NGSolve v6.2.2103 - not sure why exactly though)
+  template void DiffOpDt<1>::GenerateMatrix(const FiniteElement & bfel, const ngfem::MappedIntegrationPoint<1, 1, double> & mip,
+                                            ngbla::FlatMatrixFixHeight<1, double, 1> & mat, LocalHeap & lh);
+
   template class T_DifferentialOperator<DiffOpDt<1>>;
   template class T_DifferentialOperator<DiffOpDt<2>>;
   template class T_DifferentialOperator<DiffOpDt<3>>;
