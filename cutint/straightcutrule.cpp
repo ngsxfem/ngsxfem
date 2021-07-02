@@ -588,7 +588,7 @@ namespace xintegration
                                                      double tval)
   {
     static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRule"); 
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    NgProfiler::RegionTimer reg (timer);
 
     //static Timer t ("NewStraightCutIntegrationRule");
     // static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);

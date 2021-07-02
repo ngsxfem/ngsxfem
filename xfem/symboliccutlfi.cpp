@@ -56,7 +56,7 @@ namespace ngfem
                        LocalHeap & lh) const
   {
     static int timer = NgProfiler::CreateTimer ("symbolicCutLFI - CalcElementVector");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    NgProfiler::RegionTimer reg (timer);
     HeapReset hr(lh);
     
     // tstart.Start();

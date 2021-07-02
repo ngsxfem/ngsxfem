@@ -16,7 +16,7 @@ namespace xintegration
                                                                          LocalHeap & lh)
   {
     static int timer = NgProfiler::CreateTimer ("CreateCutIntegrationRule");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    NgProfiler::RegionTimer reg (timer);
     if (lsetintdom.IsMultiLevelsetDomain())
     {
       if (lsetintdom.HasReferenceTime())
