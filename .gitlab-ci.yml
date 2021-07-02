@@ -20,7 +20,7 @@ build:
 
 ctests-demos:
   stage: test
-  image: schruste/ngsolve:latest
+  image: nsgxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh demos
   when: always
@@ -28,7 +28,7 @@ ctests-demos:
 
 ctests-mayfail:
   stage: test
-  image: schruste/ngsolve:latest
+  image: nsgxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -36,7 +36,7 @@ ctests-mayfail:
 
 ctests-pytests:
   stage: test
-  image: schruste/ngsolve:latest
+  image: nsgxfem/ngsolve:latest
   script:
     -  bash .ci/ci_ctests.sh pytests
   when: always
@@ -46,7 +46,7 @@ metrics:
   tags:
     - c5
   stage: test
-  image: schruste/ngsolve:latest
+  image: nsgxfem/ngsolve:latest
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
@@ -59,7 +59,7 @@ metrics:
 
 codestyle-demos:
   stage: test
-  image: schruste/ngsolve:latest
+  image: nsgxfem/ngsolve:latest
   script:
     - pip3 install --user pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
