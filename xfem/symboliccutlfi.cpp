@@ -55,8 +55,8 @@ namespace ngfem
                        FlatVector<SCAL> elvec,
                        LocalHeap & lh) const
   {
-    static int timer = NgProfiler::CreateTimer ("symbolicCutLFI - CalcElementVector");
-    NgProfiler::RegionTimer reg (timer);
+    static Timer timer("symbolicCutLFI - CalcElementVector");
+    RegionTimer reg (timer);
     HeapReset hr(lh);
     
     // tstart.Start();

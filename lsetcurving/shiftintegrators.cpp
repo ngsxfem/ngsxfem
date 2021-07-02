@@ -43,8 +43,7 @@ namespace ngfem
                                                 shared_ptr<LsetEvaluator<D>> lseteval) const
   {
     static Timer timer ("ShiftIntegrator<D>::CalcElementVector"); 
-    RegionTracer regt (TaskManager::GetThreadId(),timer);
-    NgProfiler::RegionTimer reg (timer);
+    RegionTimer reg (timer);
     
     elvec = 0.0;
     const ScalarFiniteElement<D> & scafe = dynamic_cast<const ScalarFiniteElement<D> &>(fel);

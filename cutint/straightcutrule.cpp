@@ -587,8 +587,8 @@ namespace xintegration
                                                      bool spacetime_mode,
                                                      double tval)
   {
-    static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRule"); 
-    NgProfiler::RegionTimer reg (timer);
+    static Timer timer("StraightCutIntegrationRule"); 
+    RegionTimer reg (timer);
 
     //static Timer t ("NewStraightCutIntegrationRule");
     // static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast",2);

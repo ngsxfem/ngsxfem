@@ -103,8 +103,7 @@ namespace xintegration
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                         LocalHeap & lh){
         static Timer timer("SpaceTimeCutIntegrationRule");
-        RegionTracer rt(TaskManager::GetThreadId(), timer);
-        NgProfiler::RegionTimer reg(timer);
+        RegionTimer rt(timer);
         //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
         

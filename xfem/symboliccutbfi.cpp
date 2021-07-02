@@ -77,8 +77,8 @@ namespace ngfem
     
   {
 
-    static int timer = NgProfiler::CreateTimer ("SymbolicCutBFI::CalcElementMatrixAdd");
-    NgProfiler::RegionTimer reg (timer);
+    static Timer timer("SymbolicCutBFI::CalcElementMatrixAdd");
+    RegionTimer reg (timer);
 
     if (element_vb != VOL)
       {
@@ -707,8 +707,8 @@ namespace ngfem
 
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
-      static Timer t("symbolicCutBFI - CoDim2-hack",NoTracing);
-      NgProfiler::RegionTimer reg (t);
+      static Timer t("symbolicCutBFI - CoDim2-hack", NoTracing);
+      RegionTimer reg (t);
       static bool first = true;
       if (first)
       {
