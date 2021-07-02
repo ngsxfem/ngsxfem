@@ -707,7 +707,7 @@ namespace ngfem
 
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
-      static Timer t("symbolicCutBFI - CoDim2-hack", NoTracing);
+      static Timer t("symbolicCutBFI - CoDim2-hack", ngcore::NoTracing);
       NgProfiler::RegionTimer reg (t);
       static bool first = true;
       if (first)
