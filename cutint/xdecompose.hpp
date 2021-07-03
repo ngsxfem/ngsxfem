@@ -33,7 +33,7 @@ namespace xintegration
 
     DOMAIN_TYPE CheckIfCut(const ScalarFieldEvaluator & lset) const
     {
-      static int timer = NgProfiler::CreateTimer ("Simplex::CheckifCut"); NgProfiler::RegionTimer reg (timer);
+      static Timer timer("Simplex::CheckifCut"); RegionTimer reg (timer);
 
       bool haspos = false;
       bool hasneg = false;

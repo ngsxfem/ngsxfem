@@ -1,4 +1,4 @@
-FROM ngsxfem/ngsolve:v6.2.2103
+FROM ngsxfem/ngsolve:latest
 
 ARG NB_USER=jovyan
 ARG NB_UID=1000

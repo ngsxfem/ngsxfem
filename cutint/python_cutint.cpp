@@ -27,8 +27,8 @@ void ExportNgsx_cutint(py::module &m)
            bool element_wise,
            int heapsize)
         {
-          static int timer = NgProfiler::CreateTimer ("IntegrateX");
-          NgProfiler::RegionTimer reg (timer);
+          static Timer timer("IntegrateX");
+          RegionTimer reg (timer);
           py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
           if (ip_cont_.check())
@@ -161,7 +161,7 @@ heapsize : int
            PyCF cf,
            int heapsize)
         {
-          static int timer = NgProfiler::CreateTimer ("IntegrationPointExtrema"); NgProfiler::RegionTimer reg (timer);
+          static Timer timer("IntegrationPointExtrema"); RegionTimer reg (timer);
 
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
