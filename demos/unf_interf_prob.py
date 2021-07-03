@@ -204,14 +204,20 @@ Draw(lsetp1, mesh, "levelset_P1")
 # the discontinuities, they are smeared out. To see kinks or jumps
 # more clearly increase the subdivision option in the visualization.
 if formulation == "CUTFEM":
-  DrawDC(lsetp1, gfu.components[0], gfu.components[1],
-         mesh, "u", deformation=lsetadap.deform)
-  Draw(IfPos(-lsetp1, alpha[0]*grad(gfu.components[0]), alpha[1]*grad(gfu.components[1])),
+    DrawDC(lsetp1, gfu.components[0], gfu.components[1],
+           mesh, "u", deformation=lsetadap.deform)
+    Draw(IfPos(-lsetp1,
+               alpha[0]*grad(gfu.components[0]),
+               alpha[1]*grad(gfu.components[1])),
          mesh, "sigma", deformation=lsetadap.deform)
 else:
-  DrawDC(lsetp1, gfu.components[0]+neg(gfu.components[1]), gfu.components[0]+pos(gfu.components[1]),
-         mesh, "u", deformation=lsetadap.deform)
-  Draw(IfPos(-lsetp1, alpha[0]*grad(gfu.components[0])+neg_grad(gfu.components[1]), alpha[1]*grad(gfu.components[0])+pos_grad(gfu.components[1])),
+    DrawDC(lsetp1,
+           gfu.components[0]+neg(gfu.components[1]),
+           gfu.components[0]+pos(gfu.components[1]),
+           mesh, "u", deformation=lsetadap.deform)
+    Draw(IfPos(-lsetp1,
+               alpha[0]*grad(gfu.components[0])+neg_grad(gfu.components[1]),
+               alpha[1]*grad(gfu.components[0])+pos_grad(gfu.components[1])),
          mesh, "sigma", deformation=lsetadap.deform)
 
 # Computation of L2 error:
