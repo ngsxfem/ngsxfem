@@ -30,21 +30,21 @@ bibliography: lit-ngsxfem.bib
 ---
 
 # Summary
-`ngsxfem` is an add-on library to [`Netgen/NGSolve`](www.ngsolve.org), a general purpose, high performance finite element library for the numerical solution of partial differential equations. The add-on enables the use of geometrically unfitted finite element technologies known under different labels, e.g. *XFEM*, *CutFEM*, *TraceFEM*, *Finite Cell*, *fictitious domain method* or *Cut-Cell methods*, etc.. Both, `Netgen/NGSolve` and `ngsxfem` are written in C++ with a rich python interface through which it is typically used. `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
+`ngsxfem` is an add-on library to [`Netgen/NGSolve`](www.ngsolve.org), a general purpose, high performance finite element library for the numerical solution of partial differential equations. The add-on enables the use of geometrically unfitted finite element technologies known under different labels, e.g.~*XFEM*, *CutFEM*, *TraceFEM*, *Finite Cell*, *fictitious domain method* or *Cut-Cell methods*, etc.. Both, `Netgen/NGSolve` and `ngsxfem` are written in C++ with a rich Python interface through which it is typically used. `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.
 
 # Statement of need
-Typically, in the finite element method for the discretization of PDEs, the geometry under consideration is parametrized by the computational mesh yielding *geometrically fitted* finite element methods. The generation and adaptation of geometrically fitted computational meshes can be a burden on simulation methods, e.g. if the geometries are complex or especially if they are evolving in time. To be more flexible w.r.t. the geometry, *geometrically unfitted* finite element methods can be considered which break the direct link between the geometry parametrization and the computational mesh. Instead, a separate description of the geometry, e.g. through a *level set function* is used. `ngsxfem` aims at providing the necessary tools to robustly work in a *geometrically unfitted* setting where the geometry is described by one (or multiple) *level set function(s)*. The essential tools extending standard finite element codes for the *geometrically unfitted* setting are:
+Typically, in the finite element method for the discretization of PDEs, the geometry under consideration is parametrized by the computational mesh yielding *geometrically fitted* finite element methods. The generation and adaptation of geometrically fitted computational meshes can be a burden on simulation methods, e.g.~if the geometries are complex or especially if they are evolving in time. To be more flexible with regard to the geometry, *geometrically unfitted* finite element methods can be considered which break the direct link between the geometry parametrization and the computational mesh. Instead, a separate description of the geometry, e.g.~through a *level set function* is used. `ngsxfem` aims at providing the necessary tools to robustly work in a *geometrically unfitted* setting where the geometry is described by one (or multiple) *level set function(s)*. The essential tools extending standard finite element codes for the *geometrically unfitted* setting are:
 
 * formulation of geometrically unfitted geometry through level set function(s)
 * classification of elements in the computational mesh according to the unfitted geometry
 * finite element spaces that consider the cut information 
-* facilities to provide robust numerical integration on cut elements 
-* stabilization techniques to deal with arbitrary bad cuts (e.g. "ghost penalty")
+* tools to provide robust numerical integration on cut elements 
+* stabilization techniques to deal with arbitrary bad cuts (e.g.~"ghost penalty")
 
-First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other finite element frameworks similar libraries exists, e.g. `libcutfem` or `multimesh` for the `FEniCS` project, cf. @fenics and `dune-udg`, cf. @dune:udg, for `dune`, cf. @dune (more precisely `dune-pdelab`, cf. @dune:pdelab ). Let us also mention the `FEMPAR` finite element package which directly handles unfitted geometries, cf.  @fempar. In addition, `ngsxfem` has three advanced features beyond that:
+First of all `ngsxfem` provides these tools for `Netgen/NGSolve`. For other finite element frameworks similar libraries exists, e.g.~`libcutfem` or `multimesh` for the `FEniCS` project, cf.~@fenics and `dune-udg`, cf.~@dune:udg, for `dune`, cf.~@dune (more precisely `dune-pdelab`, cf.~@dune:pdelab ). Let us also mention the `FEMPAR` finite element package which directly handles unfitted geometries, cf.~ @fempar. In addition, `ngsxfem` has three advanced features beyond these, including:
 
-* higher order handling of curved level set geometries using isoparametric unfitted FEM, cf. @Leh16, @LR16, @Leh17
-* space-time finite elements and quadrature for unfitted space-time finite element discretizations of PDEs on moving domains, cf. @Pre18, @Hei20
+* higher order handling of curved level set geometries using isoparametric unfitted FEM, cf.~@Leh16, @LR16, @Leh17
+* space-time finite elements and quadrature for unfitted space-time finite element discretizations of PDEs on moving domains, cf.~@Pre18, @Hei20
 * the so-called direct version of the ghost penalty stabilization as introduced in @Pre18
 
 A more detailed overview of the key features provided by `ngsxfem` can be found in the repository under `doc/feature-details.md`. Furthermore, a detailed overview of the scientific literature which has utilised `ngsxfem` is given in the repository under `doc/literature.md`.
