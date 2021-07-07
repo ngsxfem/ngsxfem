@@ -209,7 +209,7 @@ To directly spawn a jupyter server in the docker that you can access from a brow
 ``` {.shell}
 docker run -p 8888:8888 ngsxfem/ngsxfem-jupyter:v2.0
 ```
-and open a browser and past in the URL that you obtain in the terminal. You will have the jupyter tutorial files from the docker container available to work with. Note that changes will not be persistent in the image. To work on local files (with persistent changes) mount a local directory to the docker container, e.g.
+and open a browser on your host machine (not in the docker) and paste in the URL that you obtain in the terminal. All computations are carried out in the docker and passed through your browser for interaction. You will have the jupyter tutorial files from the docker container available to work with. Note that changes will not be persistent in the image. To work on local files (with persistent changes) mount a local directory to the docker container, e.g.
 ``` {.shell}
 docker run -p 8888:8888 -v ${PWD}:/home/jovyan ngsxfem/ngsxfem-jupyter:v2.0
 ```

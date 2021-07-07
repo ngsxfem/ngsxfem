@@ -5,7 +5,7 @@ stages:
         
 build:
   stage: build
-  image: schruste/ngsolve:latest
+  image: ngsxfem/ngsolve:latest
   script:
     - git submodule update --init --recursive
     - mkdir build
@@ -20,7 +20,7 @@ build:
 
 ctests-demos:
   stage: test
-  image: schruste/ngsolve:latest
+  image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh demos
   when: always
@@ -28,7 +28,7 @@ ctests-demos:
 
 ctests-mayfail:
   stage: test
-  image: schruste/ngsolve:latest
+  image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -36,7 +36,7 @@ ctests-mayfail:
 
 ctests-pytests:
   stage: test
-  image: schruste/ngsolve:latest
+  image: ngsxfem/ngsolve:latest
   script:
     -  bash .ci/ci_ctests.sh pytests
   when: always
@@ -46,7 +46,7 @@ metrics:
   tags:
     - c5
   stage: test
-  image: schruste/ngsolve:latest
+  image: ngsxfem/ngsolve:latest
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
@@ -59,7 +59,7 @@ metrics:
 
 codestyle-demos:
   stage: test
-  image: schruste/ngsolve:latest
+  image: ngsxfem/ngsolve:latest
   script:
     - pip3 install --user pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
@@ -74,7 +74,24 @@ paper:
     entrypoint: [""] 
   script:
     - cd doc
-    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md 
+    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md
+    - cp *.pdf ../
   artifacts:
     paths:
-      - doc/paper.pdf
+      - paper.pdf
+
+paper-appendix:
+  stage: build
+  image:
+    name: schruste/latex
+    entrypoint: [""] 
+  script:
+    - cd doc
+    - pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
+    - pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
+    - cp *.pdf ../
+  artifacts:
+    paths:
+      - literature.pdf
+      - feature-details.pdf
+        

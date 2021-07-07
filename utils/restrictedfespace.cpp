@@ -132,6 +132,18 @@ namespace ngfem
   
   void RestrictedDifferentialOperator ::
   CalcMatrix (const FiniteElement & fel,
+              const BaseMappedIntegrationPoint & mip,
+              SliceMatrix<Complex,ColMajor> mat, 
+              LocalHeap & lh) const 
+  {
+    if (fel.GetNDof() == 0)
+      mat = 0;
+    else
+      diffop->CalcMatrix (fel, mip, mat, lh);
+  }
+  
+  void RestrictedDifferentialOperator ::
+  CalcMatrix (const FiniteElement & fel,
               const SIMD_BaseMappedIntegrationRule & mir,
               BareSliceMatrix<SIMD<double>> mat) const
   {
@@ -141,6 +153,16 @@ namespace ngfem
       diffop->CalcMatrix(fel, mir, mat);
   }
   
+  void RestrictedDifferentialOperator ::
+  CalcMatrix (const FiniteElement & fel,
+              const SIMD_BaseMappedIntegrationRule & mir,
+              BareSliceMatrix<SIMD<Complex>> mat) const
+  {
+    if (fel.GetNDof() == 0)
+      mat *= 0.0;
+    else
+      diffop->CalcMatrix(fel, mir, mat);
+  }
 
   void RestrictedDifferentialOperator ::
   Apply (const FiniteElement & fel,
@@ -154,7 +176,19 @@ namespace ngfem
     else
       diffop->Apply(fel, mip, x, flux, lh);
   }
-
+  
+  void RestrictedDifferentialOperator ::
+  Apply (const FiniteElement & fel,
+         const BaseMappedIntegrationPoint & mip,
+         BareSliceVector<Complex> x, 
+         FlatVector<Complex> flux,
+         LocalHeap & lh) const
+  {
+    if (fel.GetNDof() == 0)
+      flux = 0.0;
+    else
+      diffop->Apply(fel, mip, x, flux, lh);
+  }
 
   void RestrictedDifferentialOperator ::
   Apply (const FiniteElement & fel,
@@ -168,8 +202,20 @@ namespace ngfem
     else
       diffop->Apply(fel, mir, x, flux);
   }
-  
-  
+ 
+  void RestrictedDifferentialOperator ::
+  Apply (const FiniteElement & fel,
+         const SIMD_BaseMappedIntegrationRule & mir,
+         BareSliceVector<Complex> x, 
+         BareSliceMatrix<SIMD<Complex>> flux) const
+  // LocalHeap & lh) const
+  {
+    if (fel.GetNDof() == 0)
+      flux *= 0.0;
+    else
+      diffop->Apply(fel, mir, x, flux);
+  }
+ 
   void RestrictedDifferentialOperator ::
   ApplyTrans (const FiniteElement & fel,
               const BaseMappedIntegrationPoint & mip,
@@ -245,9 +291,10 @@ namespace ngfem
 
   shared_ptr<CoefficientFunction> RestrictedDifferentialOperator ::
   DiffShape (shared_ptr<CoefficientFunction> proxy,
-             shared_ptr<CoefficientFunction> dir) const 
+             shared_ptr<CoefficientFunction> dir,
+             bool Eulerian) const 
   {
-    return diffop->DiffShape(proxy, dir);
+    return diffop->DiffShape(proxy, dir, Eulerian);
   }
 
 

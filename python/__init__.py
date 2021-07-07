@@ -899,6 +899,77 @@ def dmesh(mesh=None,*args,**kwargs):
     else:
         return dx(*args,**kwargs)
 
+def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_restriction=None,trialspace=None,testspace=None,check_unused=True,**kwargs):
+    """
+    Creates a restricted bilinear form, which is bilinear form with a reduced MatrixGraph
+    compared to the usual BilinearForm. BitArray(s) define on which elements/facets entries will be
+    created.
+
+    Use cases:
+
+      * ghost penalty type stabilization:
+        Facet-stabilization that are introduced only act on a few facets in the mesh. By providing the
+        information on the corresponding facets, these additional couplings will only be introduced
+        where necessary.
+
+      * fictitious domain methods (domain decomposition methods):
+        When PDE problems are only solved on a part of a domain while a finite element space is used
+        that is still defined on the whole domain, a BitArray can be used to mark the 'active' part of
+        the mesh. 
+
+    Parameters
+
+    space: ngsolve.FESpace
+      finite element space on which the bilinear form is defined. If trial space and test space are different 
+      they can be specified using the trialspace and testspace arguments.
+
+    name : string
+      name of the bilinear form
+
+    element_restriction : ngsolve.BitArray
+      BitArray defining the 'active mesh' element-wise
+
+    facet_restriction : ngsolve.BitArray
+      BitArray defining the 'active facets'. This is only relevant if FESpace has DG-terms (dgjumps=True)
+    
+    trialspace : ngsolve.FESpace
+      finite element space on which the bilinear form is defined
+      (trial space).
+    
+    testspace : ngsolve.FESpace
+      finite element space on which the bilinear form is defined
+      (test space).
+
+    check_unused : boolean
+      Check if some degrees of freedoms are not considered during assembly
+
+    flags : ngsolve.Flags
+      additional bilinear form flags 
+    """
+
+    argument_list = [name]
+    if element_restriction != None:
+        argument_list.append(element_restriction)
+    if facet_restriction != None:
+        argument_list.append(facet_restriction)
+    argument_list.append(check_unused)
+
+    if trialspace != None and testspace != None:
+        if trialspace.is_complex and testspace.is_complex:
+            return RestrictedBilinearFormComplex(trialspace,testspace,*argument_list,**kwargs)
+        elif (not trialspace.is_complex) and (not testspace.is_complex):
+            return RestrictedBilinearFormDouble(trialspace,testspace,*argument_list,**kwargs)
+        else:
+            raise Exception("Trialspace is real and testspace is complex or vice versa. RestrictedBilinearForm not implemented for this case!")
+    else: 
+        if space == None:
+            raise Exception("No space given for RestrictedBilinearForm!")
+        if space.is_complex:
+            return RestrictedBilinearFormComplex(space,*argument_list,**kwargs)
+        else:
+            return RestrictedBilinearFormDouble(space,*argument_list,**kwargs)
+
+
 # some global scope manipulations (monkey patches etc..):
 
 # monkey patches

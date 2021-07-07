@@ -562,6 +562,10 @@ heapsize : int = 1000000
 
 
           Flags flags = py::extract<Flags> (bpflags)();
+
+          if (basefes->IsComplex())
+            flags.SetFlag("complex");
+
           shared_ptr<XFESpace> ret = nullptr;
           shared_ptr<MeshAccess> ma = basefes->GetMeshAccess();
           if (cutinfo)

@@ -22,3 +22,6 @@ doc/paper.run.xml
 doc/paper.synctex.gz
 doc/paper.tex
 doc/betterbib_cache.sqlite
+demos/local
+doc/feature-details.pdf
+doc/literature.pdf

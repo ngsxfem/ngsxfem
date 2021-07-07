@@ -31,7 +31,7 @@ namespace ngmg
 
     virtual void Update (const FESpace & fes) override;
 
-    virtual SparseMatrix< double >* CreateProlongationMatrix( int finelevel ) const override
+    virtual shared_ptr<SparseMatrix< double >> CreateProlongationMatrix( int finelevel ) const override
     {
       throw Exception("P1Prolongation::CreateProlongationMatrix not implemented!");
     }
@@ -61,7 +61,7 @@ namespace ngmg
 
     virtual void Update (const FESpace & fes) override;
 
-    virtual SparseMatrix< double >* CreateProlongationMatrix( int finelevel ) const override
+    virtual shared_ptr<SparseMatrix< double >> CreateProlongationMatrix( int finelevel ) const override
     {
       throw Exception("P2Prolongation::CreateProlongationMatrix not implemented!");
     }
@@ -92,7 +92,7 @@ namespace ngmg
 
     virtual void Update (const FESpace & fes) override;
 
-    virtual SparseMatrix< double >* CreateProlongationMatrix( int finelevel ) const override
+    virtual shared_ptr<SparseMatrix< double >> CreateProlongationMatrix( int finelevel ) const override
     {
       throw Exception("P2Prolongation::CreateProlongationMatrix not implemented!");
     }
