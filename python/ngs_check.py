@@ -1,8 +1,8 @@
-__ngsolve_required__ = "6.2.2103-72"
+__ngsolve_required__ = "6.2.2104-00"
 
 def check_if_ngsolve_newer_than(ngsolve_version_required):
     """
-    Check for compatibiilty of ngsolve version
+    Check for compatibility of ngsolve version
     """
     import ngsolve
     import re
