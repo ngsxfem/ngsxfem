@@ -13,7 +13,7 @@ jobs:
     needs: configure
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:latest
+      image: ngsxfem/ngsolve:v6.2.2104
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
     needs: [configure, build]
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:latest
+      image: ngsxfem/ngsolve:v6.2.2104
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
     needs: [configure, build]
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:latest
+      image: ngsxfem/ngsolve:v6.2.2104
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -78,7 +78,7 @@ jobs:
     needs: [configure, build]
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:latest
+      image: ngsxfem/ngsolve:v6.2.2104
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
