@@ -31,8 +31,8 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
 
     ci = CutInfo(mesh, lset_h)
     els_hasdom = ci.GetElementsOfType(HAS(DOM))
-    facests_none = BitArray(mesh.nedge)
-    facests_none.Clear()
+    facets_none = BitArray(mesh.nedge)
+    facets_none.Clear()
 
     V = H1(mesh, order=order)
     u, v = V.TnT()
@@ -47,7 +47,7 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
               deformation=deform)
 
     a1 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
-                                facet_restriction=facests_none,
+                                facet_restriction=facets_none,
                                 check_unused=False)
     a1 += Grad(u) * Grad(v) * dx
     a1 += u * v * dx
@@ -57,12 +57,81 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
     # SymbolicBFI version
     lset_dom = {'levelset': lset_h, 'domain_type': DOM, 'subdivlvl': subdivlvl}
     a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
-                                facet_restriction=facests_none,
+                                facet_restriction=facets_none,
                                 check_unused=False)
     a2 += SymbolicBFI(levelset_domain=lset_dom, form=Grad(u) * Grad(v),
                       definedonelements=els_hasdom)
     a2 += SymbolicBFI(levelset_domain=lset_dom, form=u * v,
                       definedonelements=els_hasdom)
+    mesh.SetDeformation(deform)
+    a2.Assemble()
+    mesh.UnsetDeformation()
+    w2.data = a2.mat * gfu.vec
+
+    # Check
+    w1.data -= w2
+    diff = Norm(w1)
+    print(f'diff : {diff}')
+    assert diff < 1e-12
+
+
+@pytest.mark.parametrize('order', [1, 2, 3])
+@pytest.mark.parametrize('DOM', [POS, NEG])
+@pytest.mark.parametrize('skeleton', [True, False])
+@pytest.mark.parametrize('element_boundary', [True, False])
+
+def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
+    if skeleton is False and element_boundary is False:
+        return None
+    if order > 1:
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order,
+                                              levelset=levelset)
+    else:
+        lsetmeshadap = NoDeformation(mesh, levelset)
+
+    lset_h = lsetmeshadap.lset_p1
+    deform = lsetmeshadap.deform
+
+    ci = CutInfo(mesh, lset_h)
+    els_hasdom = ci.GetElementsOfType(HAS(DOM))
+    facets_dom = GetFacetsWithNeighborTypes(mesh, a=els_hasdom, b=els_hasdom)
+    els_none = BitArray(mesh.ne)
+    els_none[:] = False
+
+    V = H1(mesh, order=order, dgjumps=True)
+    u, v = V.TnT()
+
+    gfu = GridFunction(V)
+    gfu.Set(sin(x))
+
+    w1, w2 = gfu.vec.CreateVector(), gfu.vec.CreateVector()
+
+    # Differential Symbol Version
+    dx = dCut(lset_h, DOM, definedonelements=facets_dom, deformation=deform,
+              skeleton=skeleton, element_boundary=element_boundary)
+
+    nF = specialcf.normal(mesh.dim)
+    flux_u = -0.5 * (grad(u) + grad(u.Other())) * nF
+    flux_v = -0.5 * (grad(v) + grad(v.Other())) * nF
+    jump_u = u - u.Other()
+    jump_v = v - v.Other()
+
+    a1 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+                                facet_restriction=facets_dom,
+                                check_unused=False)
+    a1 += (jump_u * jump_v + flux_u * jump_v + flux_v * jump_u) * dx
+    a1.Assemble()
+    w1.data = a1.mat * gfu.vec
+
+    # SymbolicBFI version
+    lset_dom = {'levelset': lset_h, 'domain_type': DOM, 'subdivlvl': 0}
+    a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+                                facet_restriction=facets_dom,
+                                check_unused=False)
+    a2 += SymbolicBFI(levelset_domain=lset_dom,
+                      form=jump_u * jump_v + flux_u * jump_v + flux_v * jump_u,
+                      definedonelements=facets_dom, skeleton=skeleton,
+                      element_boundary=element_boundary)
     mesh.SetDeformation(deform)
     a2.Assemble()
     mesh.UnsetDeformation()
