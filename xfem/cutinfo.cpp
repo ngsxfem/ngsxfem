@@ -476,8 +476,6 @@ namespace ngcomp
             ma->GetFacetElements (facet2, elnums_per);
             elnums.Append(elnums_per[0]);
           }
-          else
-            return;
         }
         
         bool a_left = a->Test(elnums[0]);
