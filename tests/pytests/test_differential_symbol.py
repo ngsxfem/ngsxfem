@@ -12,7 +12,6 @@ levelset = (x - 0.5)**2 + (y - 0.5)**2 - 0.33**2
 @pytest.mark.parametrize('order', [1, 2, 3])
 @pytest.mark.parametrize('DOM', [POS, IF, NEG])
 @pytest.mark.parametrize('subdivlvl', [0, 1, 2])
-
 def test_cut_symbols_straightcut(order, DOM, subdivlvl):
 
     if order > 1 and subdivlvl == 0:
@@ -42,15 +41,15 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
 
     w1, w2 = gfu.vec.CreateVector(), gfu.vec.CreateVector()
 
-    # Differential Symbol Version
-    dx = dCut(lset_h, DOM, subdivlvl=subdivlvl, definedonelements=els_hasdom,
-              deformation=deform)
+    # Bilinear Form
+    form = Grad(u) * Grad(v) + u * v
 
+    # Differential Symbol Version
     a1 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
                                 facet_restriction=facets_none,
                                 check_unused=False)
-    a1 += Grad(u) * Grad(v) * dx
-    a1 += u * v * dx
+    a1 += form * dCut(lset_h, DOM, subdivlvl=subdivlvl,
+                      definedonelements=els_hasdom, deformation=deform)
     a1.Assemble()
     w1.data = a1.mat * gfu.vec
 
@@ -59,9 +58,7 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
     a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
                                 facet_restriction=facets_none,
                                 check_unused=False)
-    a2 += SymbolicBFI(levelset_domain=lset_dom, form=Grad(u) * Grad(v),
-                      definedonelements=els_hasdom)
-    a2 += SymbolicBFI(levelset_domain=lset_dom, form=u * v,
+    a2 += SymbolicBFI(levelset_domain=lset_dom, form=form,
                       definedonelements=els_hasdom)
     mesh.SetDeformation(deform)
     a2.Assemble()
@@ -79,7 +76,6 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
 @pytest.mark.parametrize('DOM', [POS, NEG])
 @pytest.mark.parametrize('skeleton', [True, False])
 @pytest.mark.parametrize('element_boundary', [True, False])
-
 def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
     if skeleton is False and element_boundary is False:
         return None
@@ -106,20 +102,22 @@ def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
 
     w1, w2 = gfu.vec.CreateVector(), gfu.vec.CreateVector()
 
-    # Differential Symbol Version
-    dx = dCut(lset_h, DOM, definedonelements=facets_dom, deformation=deform,
-              skeleton=skeleton, element_boundary=element_boundary)
-
+    # Bilinear form to integrate
     nF = specialcf.normal(mesh.dim)
     flux_u = -0.5 * (grad(u) + grad(u.Other())) * nF
     flux_v = -0.5 * (grad(v) + grad(v.Other())) * nF
     jump_u = u - u.Other()
     jump_v = v - v.Other()
 
+    form = jump_u * jump_v + flux_u * jump_v + flux_v * jump_u
+
+    # Differential Symbol Version
     a1 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
                                 facet_restriction=facets_dom,
                                 check_unused=False)
-    a1 += (jump_u * jump_v + flux_u * jump_v + flux_v * jump_u) * dx
+    a1 += form * dCut(lset_h, DOM, definedonelements=facets_dom,
+                      deformation=deform, skeleton=skeleton,
+                      element_boundary=element_boundary)
     a1.Assemble()
     w1.data = a1.mat * gfu.vec
 
@@ -128,8 +126,7 @@ def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
     a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
                                 facet_restriction=facets_dom,
                                 check_unused=False)
-    a2 += SymbolicBFI(levelset_domain=lset_dom,
-                      form=jump_u * jump_v + flux_u * jump_v + flux_v * jump_u,
+    a2 += SymbolicBFI(levelset_domain=lset_dom, form=form,
                       definedonelements=facets_dom, skeleton=skeleton,
                       element_boundary=element_boundary)
     mesh.SetDeformation(deform)
@@ -146,7 +143,6 @@ def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
 
 @pytest.mark.parametrize('order', [1, 2, 3])
 @pytest.mark.parametrize('DOM', [POS, NEG])
-
 def test_cut_symbols_facetpatch(order, DOM):
 
     # Higher order level set approximation
@@ -173,13 +169,14 @@ def test_cut_symbols_facetpatch(order, DOM):
 
     w1, w2 = gfu.vec.CreateVector(), gfu.vec.CreateVector()
 
-    # Differential Symbol Version
-    dw = dFacetPatch(definedonelements=ba_facets, deformation=deform)
+    # Bilinear form
+    form = (u - u.Other()) * (v - v.Other())
 
+    # Differential Symbol Version
     a1 = RestrictedBilinearForm(V, element_restriction=els_gp,
                                 facet_restriction=ba_facets,
                                 check_unused=False)
-    a1 += (u - u.Other()) * (v - v.Other()) * dw
+    a1 += form * dFacetPatch(definedonelements=ba_facets, deformation=deform)
     a1.Assemble()
     w1.data = a1.mat * gfu.vec
 
@@ -187,8 +184,8 @@ def test_cut_symbols_facetpatch(order, DOM):
     a2 = RestrictedBilinearForm(V, element_restriction=els_gp,
                                 facet_restriction=ba_facets,
                                 check_unused=False)
-    a2 += SymbolicFacetPatchBFI(form=(u - u.Other()) * (v - v.Other()),
-                                skeleton=False, definedonelements=ba_facets)
+    a2 += SymbolicFacetPatchBFI(form=form, skeleton=False,
+                                definedonelements=ba_facets)
     mesh.SetDeformation(deform)
     a2.Assemble()
     mesh.UnsetDeformation()
@@ -204,7 +201,6 @@ def test_cut_symbols_facetpatch(order, DOM):
 @pytest.mark.parametrize('order', [1, 2, 3])
 @pytest.mark.parametrize('DOM', [POS, IF, NEG])
 @pytest.mark.parametrize('subdivlvl', [0, 1, 2])
-
 def test_cut_symbol_integrate(order, DOM, subdivlvl):
 
     if order > 1 and subdivlvl == 0:
@@ -223,10 +219,12 @@ def test_cut_symbol_integrate(order, DOM, subdivlvl):
 
     f = x**2 * sin(y)
 
+    # Differential Symbol version
     dx = dCut(levelset=lset_h, domain_type=DOM, order=order,
               subdivlvl=subdivlvl, deformation=deform)
     integral_dx = Integrate(f * dx, mesh=mesh)
 
+    # Old version
     lset_dom = {'levelset': lset_h, 'domain_type': DOM, 'subdivlvl': subdivlvl}
     mesh.SetDeformation(deform)
     integral = Integrate(levelset_domain=lset_dom, cf=f, mesh=mesh,
