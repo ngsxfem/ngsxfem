@@ -7,6 +7,7 @@ build:
   stage: build
   image: ngsxfem/ngsolve:latest
   script:
+    - python3 -c "import ngsolve"
     - git submodule update --init --recursive
     - mkdir build
     - mkdir install    

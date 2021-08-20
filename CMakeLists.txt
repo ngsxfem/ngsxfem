@@ -171,8 +171,14 @@ message("
   Compiler:
     CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}
     
+  Linker:
+    CMAKE_LINKER = ${CMAKE_LINKER}
+    
   Compiler Flags:
     flags = ${flags}
+
+    * NGSolve compile flags:
+      NGSOLVE_COMPILE_FLAGS = ${NGSOLVE_COMPILE_FLAGS}
 
   Generator:
     ${CMAKE_GENERATOR}
