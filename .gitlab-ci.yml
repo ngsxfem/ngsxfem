@@ -5,9 +5,8 @@ stages:
         
 build:
   stage: build
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2104
   script:
-    - python3 -c "import ngsolve"
     - git submodule update --init --recursive
     - mkdir build
     - mkdir install    
@@ -21,7 +20,7 @@ build:
 
 ctests-demos:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2104
   script:
     - bash .ci/ci_ctests.sh demos
   when: always
@@ -29,7 +28,7 @@ ctests-demos:
 
 ctests-mayfail:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2104
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -37,7 +36,7 @@ ctests-mayfail:
 
 ctests-pytests:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2104
   script:
     -  bash .ci/ci_ctests.sh pytests
   when: always
@@ -47,7 +46,7 @@ metrics:
   tags:
     - c5
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2104
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
@@ -60,7 +59,7 @@ metrics:
 
 codestyle-demos:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: ngsxfem/ngsolve:v6.2.2104
   script:
     - pip3 install --user pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
