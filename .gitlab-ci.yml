@@ -4,8 +4,6 @@ stages:
     - deploy
         
 build:
-  tags:
-    - c5
   stage: build
   image: ngsxfem/ngsolve:latest
   script:
@@ -21,8 +19,6 @@ build:
       - install
 
 ctests-demos:
-  tags:
-    - c5
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
@@ -31,8 +27,6 @@ ctests-demos:
   allow_failure: false
 
 ctests-mayfail:
-  tags:
-    - c5
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
@@ -41,8 +35,6 @@ ctests-mayfail:
   allow_failure: true
 
 ctests-pytests:
-  tags:
-    - c5
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
