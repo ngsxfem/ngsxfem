@@ -66,6 +66,10 @@ namespace ngfem
     }// xfe
   }// generate matrix
 
+  template class T_DifferentialOperator<DiffOpX<1,DIFFOPX::EXTEND>>;
+  template class T_DifferentialOperator<DiffOpX<1,DIFFOPX::RNEG>>;
+  template class T_DifferentialOperator<DiffOpX<1,DIFFOPX::RPOS>>;
+
   template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>;
   template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>;
   template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>;

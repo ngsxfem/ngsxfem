@@ -77,8 +77,8 @@ namespace ngfem
     
   {
 
-    static int timer = NgProfiler::CreateTimer ("SymbolicCutBFI::CalcElementMatrixAdd");
-    ThreadRegionTimer reg (timer, TaskManager::GetThreadId());
+    static Timer timer("SymbolicCutBFI::CalcElementMatrixAdd");
+    RegionTimer reg (timer);
 
     if (element_vb != VOL)
       {
@@ -670,17 +670,18 @@ namespace ngfem
     simd_evaluate=false;
   }
 
-  void  SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix (
+  template <typename SCAL, typename SCAL_SHAPES>
+  void  SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix (
     const FiniteElement & fel1, int LocalFacetNr1,
     const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
     const FiniteElement & fel2, int LocalFacetNr2,
     const ElementTransformation & trafo2, FlatArray<int> & ElVertices2,
-    FlatMatrix<double> elmat,
+    FlatMatrix<SCAL> elmat,
     LocalHeap & lh) const
   {
     static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
     NgProfiler::RegionTimer reg(timer);
-    elmat = 0.0;
+    elmat = SCAL(0.0);
 
     if (lsetintdom->IsMultiLevelsetDomain())
       throw Exception("cut element boundary integrals not implemented for multi level sets");
@@ -706,8 +707,8 @@ namespace ngfem
 
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
-      static Timer t("symbolicCutBFI - CoDim2-hack", 2);
-      ThreadRegionTimer reg (t, TaskManager::GetThreadId());
+      static Timer t("symbolicCutBFI - CoDim2-hack", NoTracing);
+      RegionTimer reg (t);
       static bool first = true;
       if (first)
       {
@@ -807,12 +808,12 @@ namespace ngfem
       for (int l1 : Range(test_proxies))
         {
           HeapReset hr(lh);
-          FlatMatrix<> val(mir1.Size(), 1,lh);
+          FlatMatrix<SCAL> val(mir1.Size(), 1,lh);
 
           auto proxy1 = trial_proxies[k1];
           auto proxy2 = test_proxies[l1];
 
-          FlatTensor<3> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
+          FlatTensor<3,SCAL> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
           /*
           FlatVector<> measure(mir1.Size(), lh);
           switch (trafo1.SpaceDim())
@@ -891,8 +892,8 @@ namespace ngfem
           IntRange test_range  = proxy2->IsOther() ? IntRange(fel1.GetNDof(), elmat.Height()) : IntRange(0, fel1.GetNDof());
 
           auto loc_elmat = elmat.Rows(test_range).Cols(trial_range);
-          FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
-          FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
 
           // enum { BS = 16 };
           constexpr size_t BS = 16;
@@ -900,8 +901,8 @@ namespace ngfem
             {
               int rest = min2(size_t(BS), mir1.Size()-i);
               HeapReset hr(lh);
-              FlatMatrix<double,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
-              FlatMatrix<double,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
+              FlatMatrix<SCAL,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
+              FlatMatrix<SCAL,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
 
               for (int j = 0; j < rest; j++)
                 {
@@ -927,6 +928,7 @@ namespace ngfem
             }
         }
   }
+
   SymbolicFacetBilinearFormIntegrator2 ::
   SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf)
     : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
@@ -934,12 +936,13 @@ namespace ngfem
     simd_evaluate=false;
   }
 
+  template <typename SCAL, typename SCAL_SHAPES>
   void SymbolicFacetBilinearFormIntegrator2 ::
-  CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
+  T_CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
                    const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
                    const FiniteElement & fel2, int LocalFacetNr2,
                    const ElementTransformation & trafo2, FlatArray<int> & ElVertices2,
-                   FlatMatrix<double> elmat,
+                   FlatMatrix<SCAL> elmat,
                    LocalHeap & lh) const
   {
     elmat = 0.0;
@@ -1014,12 +1017,12 @@ namespace ngfem
       for (int l1 : Range(test_proxies))
         {
           HeapReset hr(lh);
-          FlatMatrix<> val(mir1.Size(), 1,lh);
+          FlatMatrix<SCAL> val(mir1.Size(), 1,lh);
           
           auto proxy1 = trial_proxies[k1];
           auto proxy2 = test_proxies[l1];
 
-          FlatTensor<3> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
+          FlatTensor<3,SCAL> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
 
           mir1.ComputeNormalsAndMeasure (eltype1, LocalFacetNr1);
           mir2.ComputeNormalsAndMeasure (eltype2, LocalFacetNr2);
@@ -1044,16 +1047,16 @@ namespace ngfem
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());
 
           auto loc_elmat = elmat.Rows(test_range).Cols(trial_range);
-          FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
-          FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
 
           constexpr size_t BS = 16;
           for (size_t i = 0; i < mir1.Size(); i+=BS)
             {
               int rest = min2(size_t(BS), mir1.Size()-i);
               HeapReset hr(lh);
-              FlatMatrix<double,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
-              FlatMatrix<double,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
+              FlatMatrix<SCAL,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
+              FlatMatrix<SCAL_SHAPES,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
 
               for (int j = 0; j < rest; j++)
                 {
@@ -1185,12 +1188,13 @@ namespace ngfem
   }
 
 
+  template<typename SCAL, typename SCAL_SHAPES>
   void SymbolicFacetPatchBilinearFormIntegrator ::
-  CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
+  T_CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
                    const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
                    const FiniteElement & fel2, int LocalFacetNr2,
                    const ElementTransformation & trafo2, FlatArray<int> & ElVertices2,
-                   FlatMatrix<double> elmat,
+                   FlatMatrix<SCAL> elmat,
                    LocalHeap & lh) const
   {
     elmat = 0.0;
@@ -1353,12 +1357,12 @@ namespace ngfem
       for (int l1 : Range(test_proxies))
         {
           HeapReset hr(lh);
-          FlatMatrix<> val(mir1.Size(), 1,lh);
+          FlatMatrix<SCAL> val(mir1.Size(), 1,lh);
           
           auto proxy1 = trial_proxies[k1];
           auto proxy2 = test_proxies[l1];
 
-          FlatTensor<3> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
+          FlatTensor<3,SCAL> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
 
           // mir1.ComputeNormalsAndMeasure (eltype1, LocalFacetNr1);
           // mir2.ComputeNormalsAndMeasure (eltype2, LocalFacetNr2);
@@ -1386,16 +1390,16 @@ namespace ngfem
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1_test.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1_test.GetNDof());
 
           auto loc_elmat = elmat.Rows(test_range).Cols(trial_range);
-          FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
-          FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat1(proxy1->Dimension(), loc_elmat.Width(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat2(proxy2->Dimension(), loc_elmat.Height(), lh);
 
           constexpr size_t BS = 16;
           for (size_t i = 0; i < mir1.Size(); i+=BS)
             {
               int rest = min2(size_t(BS), mir1.Size()-i);
               HeapReset hr(lh);
-              FlatMatrix<double,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
-              FlatMatrix<double,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
+              FlatMatrix<SCAL,ColMajor> bdbmat1(rest*proxy2->Dimension(), loc_elmat.Width(), lh);
+              FlatMatrix<SCAL,ColMajor> bbmat2(rest*proxy2->Dimension(), loc_elmat.Height(), lh);
 
               for (int j = 0; j < rest; j++)
                 {
@@ -1492,13 +1496,13 @@ namespace ngfem
       proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
     
     // FlatVector<> ely1(ely.Size(), lh);
-    FlatVector ely1(ely.Size(), lh);   // can we really skip the <>  ???
+    FlatVector<double> ely1(ely.Size(), lh);   // can we really skip the <>  ???
 
-    FlatMatrix<> val(mir.Size(), 1,lh);
+    FlatMatrix<double> val(mir.Size(), 1,lh);
     for (auto proxy : test_proxies)
     {
       HeapReset hr(lh);
-      FlatMatrix<> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+      FlatMatrix<double> proxyvalues(mir.Size(), proxy->Dimension(), lh);
       for (int k = 0; k < proxy->Dimension(); k++)
       {
         ud.testfunction = proxy;
@@ -1508,7 +1512,7 @@ namespace ngfem
       }
         
       for (int i = 0; i < mir.Size(); i++)
-        proxyvalues.Row(i) *= mir[i].GetWeight();
+        proxyvalues.Row(i) *= mir[i].GetMeasure()*wei_arr[i];
 
       proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
       ely += ely1;
@@ -1615,7 +1619,7 @@ namespace ngfem
               proxyvalues(STAR,l,k) = 0;
 
         for (int i = 0; i < mir.Size(); i++)
-          proxyvalues(i,STAR,STAR) *= mir[i].GetWeight();
+          proxyvalues(i,STAR,STAR) *= mir[i].GetMeasure()*wei_arr[i]; //mir[i].GetWeight();
 
         FlatMatrix<double,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
         FlatMatrix<double,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);

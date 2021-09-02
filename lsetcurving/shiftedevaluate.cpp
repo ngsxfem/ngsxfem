@@ -8,8 +8,8 @@ namespace ngfem
 
   const int NEWTON_ITER_TRESHOLD = 100;
 
-  template <int D, int SpaceD>
-  void DiffOpShiftedEval<D, SpaceD> ::
+  template <int SpaceD>
+  void DiffOpShiftedEval<SpaceD> ::
   CalcMatrix (const FiniteElement & bfel,
               const BaseMappedIntegrationPoint & bmip,
               SliceMatrix<double,ColMajor> mat,
@@ -83,7 +83,7 @@ namespace ngfem
         scafe_back.CalcShape(ipx,shape_back);
         dvec_back = Trans(vector_back)*shape_back;
 
-        FlatVector<double> fv(D,&(ipx.Point())(0));
+        FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
 
         diff = zdiff - dvec_back - mip.GetJacobian() * fv;
         // cout << "diff = " << diff << endl;
@@ -183,6 +183,9 @@ namespace ngfem
       scafe.CalcShape(ipx,shape);
       mat = 0.0;
       mat.Row(0) = shape;
+      // for (int j = 0; j < D; j++)
+      //   for (int k = 0; k < shape.Size(); k++)
+      //     mat(j,k*D+j) = shape(k);      
     }
     else
     {
@@ -197,7 +200,7 @@ namespace ngfem
       // Fixed point iteration
       while (its < NEWTON_ITER_TRESHOLD)
       {
-        FlatVector<double> fv(D,&(ipx.Point())(0));
+        FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
         diff = zdiff - mip.GetJacobian() * fv;
         if ( L2Norm(diff) < 1e-8*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
@@ -208,16 +211,20 @@ namespace ngfem
 
       scafe.CalcShape(ipx,shape);
       mat = 0.0;
-      for (int j = 0; j < D; j++)
-        for (int k = 0; k < shape.Size(); k++)
-          mat(j,k*D+j) = shape(k);
+      // for (int j = 0; j < D; j++)
+      //   for (int k = 0; k < shape.Size(); k++)
+      //     mat(j,k*D+j) = shape(k);
+      mat.Row(0) = shape;
+      //mat.Row(1) = shape;
+
+      //cout << "mat:\n" << mat << endl;
     }
     
   }
 
 
-  template <int D, int SpaceD>
-  void DiffOpShiftedEval<D, SpaceD> ::
+  template <int SpaceD>
+  void DiffOpShiftedEval<SpaceD> ::
   Apply (const FiniteElement & fel,
          const BaseMappedIntegrationPoint & mip,
          BareSliceVector<double> x, 
@@ -230,8 +237,8 @@ namespace ngfem
     flux = mat * x;
   }
   
-  template <int D, int SpaceD>
-  void DiffOpShiftedEval<D, SpaceD> ::
+  template <int SpaceD>
+  void DiffOpShiftedEval<SpaceD> ::
   ApplyTrans (const FiniteElement & fel,
               const BaseMappedIntegrationPoint & mip,
               FlatVector<double> flux,
@@ -244,15 +251,9 @@ namespace ngfem
     x.Range(0,fel.GetNDof()) = Trans(mat) * flux;
   }
 
-  template class DiffOpShiftedEval<1, 1>;
-  template class DiffOpShiftedEval<2, 1>;
-  template class DiffOpShiftedEval<3, 1>;
-  template class DiffOpShiftedEval<1, 2>;
-  template class DiffOpShiftedEval<2, 2>;
-  template class DiffOpShiftedEval<3, 2>;
-  template class DiffOpShiftedEval<1, 3>;
-  template class DiffOpShiftedEval<2, 3>;
-  template class DiffOpShiftedEval<3, 3>;
+  template class DiffOpShiftedEval<1>;
+  template class DiffOpShiftedEval<2>;
+  template class DiffOpShiftedEval<3>;
 
 }
 

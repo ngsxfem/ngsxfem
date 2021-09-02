@@ -76,8 +76,8 @@ else(BUILD_NGSOLVE)
   )
 
 
-  execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/python/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
   if (CHECK_NGSOLVE_VERSION)
+    execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/python/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
     if (NOT ${ngsfits} EQUAL 1)
       message(FATAL_ERROR "
 NGSolve version is smaller than required.
@@ -86,6 +86,8 @@ If you know what you are doing you can turn off this check by setting the cmake 
 ")
     endif (NOT ${ngsfits} EQUAL 1)
   endif (CHECK_NGSOLVE_VERSION)
+  set(CMAKE_CXX_COMPILER "ngscxx" CACHE STRING "Default CXX compiler" FORCE)
+  set(CMAKE_LINKER "ngsld" CACHE STRING "Default linker" FORCE)
 
 endif(BUILD_NGSOLVE)
 
@@ -169,8 +171,14 @@ message("
   Compiler:
     CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}
     
+  Linker:
+    CMAKE_LINKER = ${CMAKE_LINKER}
+    
   Compiler Flags:
     flags = ${flags}
+
+    * NGSolve compile flags:
+      NGSOLVE_COMPILE_FLAGS = ${NGSOLVE_COMPILE_FLAGS}
 
   Generator:
     ${CMAKE_GENERATOR}

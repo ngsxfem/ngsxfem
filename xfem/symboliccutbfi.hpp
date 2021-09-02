@@ -72,8 +72,8 @@ namespace ngfem
     template <int D, typename SCAL, typename SCAL_SHAPES>
     void T_CalcLinearizedElementMatrixEB (const FiniteElement & fel,
                                           const ElementTransformation & trafo, 
-                                          FlatVector<double> elveclin,
-                                          FlatMatrix<double> elmat,
+                                          FlatVector<SCAL> elveclin,
+                                          FlatMatrix<SCAL> elmat,
                                           LocalHeap & lh) const
     {
       throw Exception("SymbolicCutBilinearFormIntegrator::T_CalcLinearizedElementMatrixEB not yet implemented");
@@ -91,8 +91,8 @@ namespace ngfem
     template <int D, typename SCAL, typename SCAL_SHAPES>
     void T_ApplyElementMatrixEB (const FiniteElement & fel, 
                                  const ElementTransformation & trafo, 
-                                 const FlatVector<double> elx, 
-                                 FlatVector<double> ely,
+                                 const FlatVector<SCAL> elx, 
+                                 FlatVector<SCAL> ely,
                                  void * precomputed,
                                  LocalHeap & lh) const
     {
@@ -120,13 +120,37 @@ namespace ngfem
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }
 
+    template <typename SCAL, typename SCAL_SHAPES = double>
+    void T_CalcFacetMatrix(const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<SCAL> elmat,
+                     LocalHeap & lh) const;
+
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
                      const FiniteElement & volumefel2, int LocalFacetNr2,
                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
                      FlatMatrix<double> elmat,
-                     LocalHeap & lh) const;
+                     LocalHeap & lh) const
+                     {
+                         T_CalcFacetMatrix(volumefel1,LocalFacetNr1,eltrans1,ElVertices1,volumefel2,LocalFacetNr2,eltrans2,ElVertices2,elmat,lh);
+                     }
+
+
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<Complex> elmat,
+                     LocalHeap & lh) const
+                     {
+                         T_CalcFacetMatrix(volumefel1,LocalFacetNr1,eltrans1,ElVertices1,volumefel2,LocalFacetNr2,eltrans2,ElVertices2,elmat,lh);
+                     }
+
     
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
@@ -174,14 +198,37 @@ namespace ngfem
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }
-    
+
+    template <typename SCAL, typename SCAL_SHAPES = double>
+    void T_CalcFacetMatrix(const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<SCAL> elmat,
+                     LocalHeap & lh) const;
+
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
                      const FiniteElement & volumefel2, int LocalFacetNr2,
                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
                      FlatMatrix<double> elmat,
-                     LocalHeap & lh) const;
+                     LocalHeap & lh) const
+                     {
+                         T_CalcFacetMatrix(volumefel1,LocalFacetNr1,eltrans1,ElVertices1,volumefel2,LocalFacetNr2,eltrans2,ElVertices2,elmat,lh);
+                     }
+
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<Complex> elmat,
+                     LocalHeap & lh) const
+                     {
+                         T_CalcFacetMatrix(volumefel1,LocalFacetNr1,eltrans1,ElVertices1,volumefel2,LocalFacetNr2,eltrans2,ElVertices2,elmat,lh);
+                     }
+
 
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
@@ -235,13 +282,35 @@ namespace ngfem
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }
     
+    template <typename SCAL, typename SCAL_SHAPES = double>
+    void T_CalcFacetMatrix(const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<SCAL> elmat,
+                     LocalHeap & lh) const;
+
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
                      const FiniteElement & volumefel2, int LocalFacetNr2,
                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
                      FlatMatrix<double> elmat,
-                     LocalHeap & lh) const;
+                     LocalHeap & lh) const
+                     {
+                         T_CalcFacetMatrix(volumefel1,LocalFacetNr1,eltrans1,ElVertices1,volumefel2,LocalFacetNr2,eltrans2,ElVertices2,elmat,lh);
+                     }
+
+    virtual void
+    CalcFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                     const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                     const FiniteElement & volumefel2, int LocalFacetNr2,
+                     const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                     FlatMatrix<Complex> elmat,
+                     LocalHeap & lh) const
+                     {
+                         T_CalcFacetMatrix(volumefel1,LocalFacetNr1,eltrans1,ElVertices1,volumefel2,LocalFacetNr2,eltrans2,ElVertices2,elmat,lh);
+                     }
 
     virtual void
     CalcLinearizedFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
@@ -287,6 +356,26 @@ namespace ngfem
         warned = true;
       }
       FlatMatrix<double> mat(ely.Size(), elx.Size(), lh);
+      CalcFacetMatrix (volumefel1, LocalFacetNr1, eltrans1, ElVertices1,
+                       volumefel2, LocalFacetNr2, eltrans2, ElVertices2, mat, lh);
+      ely = mat * elx;
+    }
+
+    virtual void
+    ApplyFacetMatrix (const FiniteElement & volumefel1, int LocalFacetNr1,
+                      const ElementTransformation & eltrans1, FlatArray<int> & ElVertices1,
+                      const FiniteElement & volumefel2, int LocalFacetNr2,
+                      const ElementTransformation & eltrans2, FlatArray<int> & ElVertices2,
+                      FlatVector<Complex> elx, FlatVector<Complex> ely,
+                      LocalHeap & lh) const
+    {
+      static bool warned = false;
+      if (!warned)
+      {
+        cout << IM(3) << "WARNING: SymbolicFacetPatchBilinearFormIntegrator::ApplyFacetMatrix called. The application is done through the computation of the element matrices (i.e. slower than possible).";
+        warned = true;
+      }
+      FlatMatrix<Complex> mat(ely.Size(), elx.Size(), lh);
       CalcFacetMatrix (volumefel1, LocalFacetNr1, eltrans1, ElVertices1,
                        volumefel2, LocalFacetNr2, eltrans2, ElVertices2, mat, lh);
       ely = mat * elx;

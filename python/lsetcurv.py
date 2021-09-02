@@ -49,8 +49,6 @@ the mesh deformation is applied on the mesh inside the context.
     order_qn = 2
     order_lset = 2
 
-    gf_to_project = []
-
     @TimeFunction
     def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, 
                  threshold = -1, discontinuous_qn = False, 
@@ -118,6 +116,7 @@ The computed deformation depends on different options:
         self.deform = GridFunction(self.v_def, "deform")
         self.deform_last = GridFunction(self.v_def, "deform_last")
         self.heapsize = heapsize
+        self.gf_to_project = []
         if levelset != None:
           self.CalcDeformation(levelset)
 
@@ -153,7 +152,7 @@ This function is typically only called in the `CalcDeformation` unless
             gfcopy = GridFunction(gf.space)
             gfcopy.vec.data = gf.vec
             gf.Set(shifted_eval(gfcopy, back = self.deform_last, forth = self.deform))
-            print("updated ", gf.name)
+            #print("updated ", gf.name)
         timer.Stop()
 
     @TimeFunction
