@@ -6,7 +6,7 @@ from netgen.meshing import MeshingParameters
 
 from ngsolve.internal import *
 from xfem import *
-from numpy import pi
+from math import pi
 
 
 class LevelSetMeshAdaptation_Spacetime:
