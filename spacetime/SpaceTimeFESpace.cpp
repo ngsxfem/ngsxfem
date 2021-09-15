@@ -45,7 +45,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     *testout <<"Order Time: " << order_t << endl;
 
     // needed to draw solution function
-    Switch<2> (ma->GetDimension()-1, [&] (auto SDIM) {
+    Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
         evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+1>>>();
         flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+1>>>();
         evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+1>>>();
@@ -69,7 +69,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       });
     }
     else
-      Switch<2> (ma->GetDimension()-1, [&] (auto DIM) {
+      Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
         additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1>>>());
         additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
         additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
