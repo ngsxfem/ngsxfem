@@ -51,11 +51,8 @@ element_restriction : ngsolve.BitArray
 facet_restriction : ngsolve.BitArray
   BitArray defining the 'active facets'. This is only relevant if FESpace has DG-terms (dgjumps=True)
 
-check_unused : boolean
-  Check if some degrees of freedoms are not considered during assembly
-
-flags : ngsolve.Flags
-  additional bilinear form flags
+kwargs : keyword args 
+  additional arguments that are passed to bilinear form (in form of flags)
 )raw_string");
 
 template <class TM,class TV>
@@ -70,7 +67,6 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
       const string & aname,
       py::object ael_restriction,
       py::object afac_restriction,
-      bool check_unused,
       py::kwargs kwargs)
   {
     auto flags = CreateFlagsFromKwArgs(kwargs);
@@ -84,25 +80,21 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
       fac_restriction = py::extract<PyBA>(afac_restriction)();
 
     auto biform = make_shared<Rbfi_TT> (fes, aname, el_restriction, fac_restriction, flags);
-    biform -> SetCheckUnused (check_unused);
     return biform;
   }),
   py::arg("space"),
   py::arg("name") = "bfa",
   py::arg("element_restriction") = DummyArgument(),
   py::arg("facet_restriction") = DummyArgument(),
-  py::arg("check_unused") = true,
   rblf_string_T)
 .def(py::init([](shared_ptr<FESpace> fes1,
    shared_ptr<FESpace> fes2,
    const string & aname,
    py::object ael_restriction,
    py::object afac_restriction,
-   bool check_unused,
    py::kwargs kwargs)
 {
    auto flags = CreateFlagsFromKwArgs(kwargs);
-
    shared_ptr<BitArray> el_restriction = nullptr;
    shared_ptr<BitArray> fac_restriction = nullptr;
    if (py::extract<PyBA> (ael_restriction).check())
@@ -112,7 +104,6 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
      fac_restriction = py::extract<PyBA>(afac_restriction)();
 
    auto biform = make_shared<Rbfi_TT> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
-   biform -> SetCheckUnused (check_unused);
    return biform;
 }),
 py::arg("trialspace"),
@@ -120,7 +111,6 @@ py::arg("testspace"),
 py::arg("name") = "bfa",
 py::arg("element_restriction") = DummyArgument(),
 py::arg("facet_restriction") = DummyArgument(),
-py::arg("check_unused") = true,
 rblf_string_T)        
 .def_property("element_restriction", 
 	  &Rbfi_TT::GetElementRestriction,
