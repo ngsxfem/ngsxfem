@@ -59,6 +59,7 @@ This class holds its own members for the higher order and lower order
     order_lset = 2
 
     gf_to_project = []
+    gf_to_project_tmp = [] # list for temporary copies
 
     @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
@@ -205,8 +206,10 @@ evaluation)
         """      
         if isinstance(gf,list):
             self.gf_to_project.extend(gf)
+            self.gf_to_project_tmp.extend(GridFunction(gf.space))
         else:
             self.gf_to_project.append(gf)
+            self.gf_to_project_tmp.append(GridFunction(gf.space))
 
     @TimeFunction
     def ProjectGFs(self):
@@ -216,11 +219,9 @@ This function is typically only called in the `CalcDeformation` unless
 `CalcDeformation` is called with the argument `dont_project_gfs = True`.
         """      
 
-        for gf in self.gf_to_project:
-            # make tmp copy 
-            gfcopy = GridFunction(gf.space)
-            gfcopy.vec.data = gf.vec
-            gf.Set(shifted_eval(gfcopy, back = self.deform_last_top, forth = self.deform_bottom))
+        for gf, gftmp in zip(self.gf_to_project,self.gf_to_project_tmp):
+            gftmp.vec.data = gf.vec
+            gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom))
             #print("updated ", gf.name)
 
     @TimeFunction
