@@ -10,10 +10,10 @@
 #include "../utils/p1interpol.hpp"
 #include "../utils/xprolongation.hpp"
 #include "../utils/restrictedfespace.hpp"
+#include "../utils/ngsxstd.hpp"
 
 using namespace ngcomp;
 typedef shared_ptr<BitArray> PyBA;
-
 
  auto rblf_string_T = docu_string(R"raw_string(
 A restricted bilinear form is a bilinear form with a reduced MatrixGraph
@@ -128,14 +128,14 @@ void ExportNgsx_utils(py::module &m)
   typedef GridFunction GF;
   typedef shared_ptr<GF> PyGF;
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
+  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
         {
           InterpolateP1 interpol(gf_ho, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
+          interpol.Do(lh);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
+        py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
 into a piecewise (multi-) linear function.
@@ -148,25 +148,20 @@ gf_ho : ngsolve.GridFunction
 gf_p1 : ngsolve.GridFunction
   Function to interpolate to (should be P1)
 
-eps_perturbation : float
-  If the absolute value if the function is smaller than eps_perturbation, it will be set to
-  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
-  configurations for level set based methods).
-
 heapsize : int
   heapsize of local computations.
 )raw_string")
     )
     ;
 
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
+  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, int heapsize)
         {
           InterpolateP1 interpol(coef, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
+          interpol.Do(lh);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
+        py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.
@@ -178,11 +173,6 @@ coef : ngsolve.CoefficientFunction
 
 gf_p1 : ngsolve.GridFunction
   Function to interpolate to (should be P1)
-
-eps_perturbation : float
-  If the absolute value if the function is smaller than eps_perturbation, it will be set to
-  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
-  configurations for level set based methods).
 
 heapsize : int
   heapsize of local computations.
@@ -225,6 +215,11 @@ CompoundFESpaces.
 )raw_string")
     );
 
+  m.def("SetEps", [] (double eps) {
+      cout << "Hello from SetEps function" << endl;
+      eps_collection.SetAll(eps);
+  },
+        py::arg("eps"));
 
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;

@@ -1,12 +1,12 @@
 #define FILE_SHIFTEDEVALUATE_CPP
 #include "shiftedevaluate.hpp"
 #include <diffop_impl.hpp>
-
+#include "../utils/ngsxstd.hpp"
 
 namespace ngfem
 {
 
-  const int NEWTON_ITER_TRESHOLD = 100;
+  const int NEWTON_ITER_TRESHOLD = 200;
 
   template <int SpaceD>
   void DiffOpShiftedEval<SpaceD> ::
@@ -88,7 +88,7 @@ namespace ngfem
         diff = zdiff - dvec_back - mip.GetJacobian() * fv;
         // cout << "diff = " << diff << endl;
         // cout << "its = " << its << endl;
-        if ( L2Norm(diff) < 1e-8*h ) break;
+        if ( L2Norm(diff) < eps_collection.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * (zdiff - dvec_back);
 
         its++;
@@ -202,7 +202,7 @@ namespace ngfem
       {
         FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
         diff = zdiff - mip.GetJacobian() * fv;
-        if ( L2Norm(diff) < 1e-8*h ) break;
+        if ( L2Norm(diff) < eps_collection.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
         its++;
       }

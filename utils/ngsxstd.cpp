@@ -56,3 +56,20 @@ ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt)
     };
   return ost;
 }
+
+eps_collection_class eps_collection;
+
+eps_collection_class::eps_collection_class() {
+    cout << IM(4) << "Hello from the eps_collection_class::eps_collection_class constructor" << endl;
+    SetAll(1e-14);
+}
+
+void eps_collection_class::SetAll(double val)  {
+        EPS_STCR_LSET_PERTUBATION = val;
+        EPS_STCR_ROOT_SEARCH_BISECTION = val;
+        EPS_INTERPOLATE_TO_P1 = val;
+        EPS_STFES_RESTRICT_GF = val;
+        EPS_SHIFTED_EVAL = val;
+        EPS_FACET_PATCH_INTEGRATOR = val;
+        cout << IM(3) << "All NGSXFEM eps values have been set to " << val << endl;
+}

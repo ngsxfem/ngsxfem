@@ -106,3 +106,19 @@ INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
 
 ostream & operator<< (ostream & ost, DOMAIN_TYPE dt);
 ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt);
+
+class eps_collection_class {
+public:
+    double EPS_STCR_LSET_PERTUBATION;
+    double EPS_STCR_ROOT_SEARCH_BISECTION;
+    double EPS_INTERPOLATE_TO_P1;
+    double EPS_STFES_RESTRICT_GF;
+    double EPS_SHIFTED_EVAL;
+    double EPS_FACET_PATCH_INTEGRATOR;
+    
+    eps_collection_class();
+    
+    void SetAll(double val);
+};
+
+extern eps_collection_class eps_collection;
