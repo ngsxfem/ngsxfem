@@ -69,3 +69,16 @@ We provide two main sources with which to learn how to use `ngsxfem`:
 If you observe any problems with the software / examples / documentation / installation or want to contribute, you can get in touch with us through either:
  * the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
  * the [`NGSolve` user forum](https://ngsolve.org/forum/index).
+
+
+# Citing
+
+If you use `ngsxfem` for academic work, please consider citing our publication:
+
+```
+C. Lehrenfeld, F. Heimann, J. Preuß and H. von Wahl
+ngsxfem: Add-on to NGSolve for geometrically unfitted finite element discretizations
+Journal of Open Source Software, 6(64), 3237,
+https://doi.org/10.21105/joss.03237
+```
+
