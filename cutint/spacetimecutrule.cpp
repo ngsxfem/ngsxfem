@@ -70,7 +70,7 @@ namespace xintegration
                   //secant rule stopping criteria
                   const double x_lin = a - aval*(b-a)/(bval-aval);
                   double val = eval(x_lin);
-                  if (2*abs(val) < eps_collection.EPS_STCR_ROOT_SEARCH_BISECTION)
+                  if (2*abs(val) < params.EPS_STCR_ROOT_SEARCH_BISECTION)
                   {
                     a=b=x_lin;
                     break;
@@ -140,10 +140,14 @@ namespace xintegration
 
                 fe_time->CalcShape(IntegrationPoint(Vec<3>{t,0,0}, 0.), shape);
                 cf_lset_at_t = Trans(lset_st)*shape;
-                for(auto &d : cf_lset_at_t) if(abs(d) < eps_collection.EPS_STCR_LSET_PERTUBATION){
-                    cout << IM(4) << "The ST eps pertubation trick has been applied" << endl;
-                    if(d >= 0) d = eps_collection.EPS_STCR_LSET_PERTUBATION;
-                    else d = -eps_collection.EPS_STCR_LSET_PERTUBATION;
+                for(auto &d : cf_lset_at_t) if(abs(d) < params.EPS_STCR_LSET_PERTUBATION){
+                    static bool first = true;
+                    if (first) {
+                        cout << IM(4) << "The ST eps pertubation trick has been applied" << endl;
+                        first = false;
+                    }
+                    if(d >= 0) d = params.EPS_STCR_LSET_PERTUBATION;
+                    else d = -params.EPS_STCR_LSET_PERTUBATION;
                 }
 
                 auto element_domain = CheckIfStraightCut(cf_lset_at_t);

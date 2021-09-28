@@ -57,19 +57,39 @@ ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt)
   return ost;
 }
 
-eps_collection_class eps_collection;
+ngsxfem_parameters params;
 
-eps_collection_class::eps_collection_class() {
-    cout << IM(4) << "Hello from the eps_collection_class::eps_collection_class constructor" << endl;
-    SetAll(1e-14);
+ngsxfem_parameters::ngsxfem_parameters() {
+    SetDefaults();
 }
 
-void eps_collection_class::SetAll(double val)  {
-        EPS_STCR_LSET_PERTUBATION = val;
-        EPS_STCR_ROOT_SEARCH_BISECTION = val;
-        EPS_INTERPOLATE_TO_P1 = val;
-        EPS_STFES_RESTRICT_GF = val;
-        EPS_SHIFTED_EVAL = val;
-        EPS_FACET_PATCH_INTEGRATOR = val;
-        cout << IM(3) << "All NGSXFEM eps values have been set to " << val << endl;
+void ngsxfem_parameters::SetDefaults()  {
+    EPS_STCR_LSET_PERTUBATION = 1e-14;
+    EPS_STCR_ROOT_SEARCH_BISECTION = 1e-15;
+    EPS_INTERPOLATE_TO_P1 = 1e-14;
+    EPS_STFES_RESTRICT_GF = 1e-9;
+    EPS_SHIFTED_EVAL = 1e-8;
+    EPS_FACET_PATCH_INTEGRATOR = 1e-12;
+    NEWTON_ITER_TRESHOLD = 200;
+    cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
+}
+
+void ngsxfem_parameters::MultiplyAllEps(double fac) {
+    EPS_STCR_LSET_PERTUBATION *= fac;
+    EPS_STCR_ROOT_SEARCH_BISECTION *= fac;
+    EPS_INTERPOLATE_TO_P1 *= fac;
+    EPS_STFES_RESTRICT_GF *= fac;
+    EPS_SHIFTED_EVAL *= fac;
+    EPS_FACET_PATCH_INTEGRATOR *= fac;
+}
+
+void ngsxfem_parameters::Output(){
+    cout << "Report of ngsxfem_parameters: " << endl;
+    cout << "EPS_STCR_LSET_PERTUBATION = " << EPS_STCR_LSET_PERTUBATION << endl;
+    cout << "EPS_STCR_ROOT_SEARCH_BISECTION = " << EPS_STCR_ROOT_SEARCH_BISECTION << endl;
+    cout << "EPS_INTERPOLATE_TO_P1 = " << EPS_INTERPOLATE_TO_P1 << endl;
+    cout << "EPS_STFES_RESTRICT_GF = " << EPS_STFES_RESTRICT_GF << endl;
+    cout << "EPS_SHIFTED_EVAL = " << EPS_SHIFTED_EVAL << endl;
+    cout << "EPS_FACET_PATCH_INTEGRATOR = " << EPS_FACET_PATCH_INTEGRATOR << endl;
+    cout << "NEWTON_ITER_TRESHOLD = " << NEWTON_ITER_TRESHOLD << endl;
 }

@@ -128,13 +128,14 @@ void ExportNgsx_utils(py::module &m)
   typedef GridFunction GF;
   typedef shared_ptr<GF> PyGF;
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
         {
           InterpolateP1 interpol(gf_ho, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh);
+          interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
+        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
@@ -148,20 +149,25 @@ gf_ho : ngsolve.GridFunction
 gf_p1 : ngsolve.GridFunction
   Function to interpolate to (should be P1)
 
+eps_perturbation : float
+  If the absolute value if the function is smaller than eps_perturbation, it will be set to
+  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
+  configurations for level set based methods).
+
 heapsize : int
   heapsize of local computations.
 )raw_string")
     )
     ;
 
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, int heapsize)
+  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
         {
           InterpolateP1 interpol(coef, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh);
+          interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.
@@ -173,6 +179,11 @@ coef : ngsolve.CoefficientFunction
 
 gf_p1 : ngsolve.GridFunction
   Function to interpolate to (should be P1)
+
+eps_perturbation : float
+  If the absolute value if the function is smaller than eps_perturbation, it will be set to
+  eps_perturbation. Thereby, exact and close-to zeros at vertices are avoided (Useful to reduce cut
+  configurations for level set based methods).
 
 heapsize : int
   heapsize of local computations.
@@ -215,12 +226,21 @@ CompoundFESpaces.
 )raw_string")
     );
 
-  m.def("SetEps", [] (double eps) {
-      cout << "Hello from SetEps function" << endl;
-      eps_collection.SetAll(eps);
-  },
-        py::arg("eps"));
+  m.def("ExportEpsColl", [ ] () {
+      return &params;
+  });
 
+  py::class_<ngsxfem_parameters>(m, "ngsxfem_parameters")
+          .def_readwrite("EPS_STCR_LSET_PERTUBATION", &ngsxfem_parameters::EPS_STCR_LSET_PERTUBATION)
+          .def_readwrite("EPS_STCR_ROOT_SEARCH_BISECTION", &ngsxfem_parameters::EPS_STCR_ROOT_SEARCH_BISECTION)
+          .def_readwrite("EPS_INTERPOLATE_TO_P1", &ngsxfem_parameters::EPS_INTERPOLATE_TO_P1)
+          .def_readwrite("EPS_STFES_RESTRICT_GF", &ngsxfem_parameters::EPS_STFES_RESTRICT_GF)
+          .def_readwrite("EPS_SHIFTED_EVAL", &ngsxfem_parameters::EPS_SHIFTED_EVAL)
+          .def_readwrite("EPS_FACET_PATCH_INTEGRATOR", &ngsxfem_parameters::EPS_FACET_PATCH_INTEGRATOR)
+          .def_readwrite("NEWTON_ITER_TRESHOLD", &ngsxfem_parameters::NEWTON_ITER_TRESHOLD)
+          .def("MultiplyAllEps", &ngsxfem_parameters::MultiplyAllEps)
+          .def("Output", &ngsxfem_parameters::Output);
+  
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>

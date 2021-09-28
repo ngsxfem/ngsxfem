@@ -15,8 +15,6 @@
 #include "timecf.hpp"
 #include "diffopDt.hpp"
 
-const double EPS = 1e-9;
-
 /*
 #include <diffop_impl.hpp>
 #ifdef WIN32
@@ -165,7 +163,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      for(int i= 0; i < nodes.Size(); i++) {
          if (!IsTimeNodeActive(i))
          {
-           if (abs(time - nodes[i]) < eps_collection.EPS_STFES_RESTRICT_GF)
+           if (abs(time - nodes[i]) < params.EPS_STFES_RESTRICT_GF)
            {
              restricted_vec = SCAL(0.0);
              return;
@@ -176,7 +174,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
            }
          }
            
-         if(abs(time - nodes[i]) < eps_collection.EPS_STFES_RESTRICT_GF) {
+         if(abs(time - nodes[i]) < params.EPS_STFES_RESTRICT_GF) {
              *testout <<"Node case" << endl;
              for(int j = 0; j < Vh->GetNDof();j++)
                  restricted_vec[j] = st_vec[j+cnt*Vh->GetNDof()];
@@ -240,7 +238,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
           coef_tref->FixTime(nodes[i]);
 
         InterpolateP1 iP1(st_CF, node_gf);
-        iP1.Do(lh,nodes[i]);
+        iP1.Do(lh, params.EPS_INTERPOLATE_TO_P1, nodes[i]);
         for(int j = 0; j < Vh->GetNDof();j++)
         {
           gf_vec(i*Vh->GetNDof()+j) = node_gf_vec(j);

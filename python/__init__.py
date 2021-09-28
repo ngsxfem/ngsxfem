@@ -979,3 +979,5 @@ SymbolicBFI = SymbolicBFIWrapper
 
 # global scope definitions:
 tref = ReferenceTimeVariable()
+
+ngsxglobals = ExportEpsColl()

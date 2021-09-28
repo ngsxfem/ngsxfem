@@ -107,7 +107,7 @@ INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
 ostream & operator<< (ostream & ost, DOMAIN_TYPE dt);
 ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt);
 
-class eps_collection_class {
+class ngsxfem_parameters {
 public:
     double EPS_STCR_LSET_PERTUBATION;
     double EPS_STCR_ROOT_SEARCH_BISECTION;
@@ -115,10 +115,14 @@ public:
     double EPS_STFES_RESTRICT_GF;
     double EPS_SHIFTED_EVAL;
     double EPS_FACET_PATCH_INTEGRATOR;
+
+    int NEWTON_ITER_TRESHOLD;
     
-    eps_collection_class();
+    ngsxfem_parameters();
     
-    void SetAll(double val);
+    void SetDefaults();
+    void MultiplyAllEps(double fac);
+    void Output();
 };
 
-extern eps_collection_class eps_collection;
+extern ngsxfem_parameters params;
