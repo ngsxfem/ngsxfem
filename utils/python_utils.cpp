@@ -226,7 +226,7 @@ CompoundFESpaces.
 )raw_string")
     );
 
-  m.def("ExportEpsColl", [ ] () {
+  m.def("ExportNGSXParams", [ ] () {
       return &params;
   });
 
