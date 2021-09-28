@@ -239,7 +239,8 @@ CompoundFESpaces.
           .def_readwrite("EPS_FACET_PATCH_INTEGRATOR", &ngsxfem_parameters::EPS_FACET_PATCH_INTEGRATOR)
           .def_readwrite("NEWTON_ITER_TRESHOLD", &ngsxfem_parameters::NEWTON_ITER_TRESHOLD)
           .def("MultiplyAllEps", &ngsxfem_parameters::MultiplyAllEps)
-          .def("Output", &ngsxfem_parameters::Output);
+          .def("Output", &ngsxfem_parameters::Output)
+          .def("SetDefaults", &ngsxfem_parameters::SetDefaults);
   
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
