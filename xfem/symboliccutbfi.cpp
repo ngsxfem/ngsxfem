@@ -1169,12 +1169,12 @@ namespace ngfem
     }
 
     if(its >= params.NEWTON_ITER_TRESHOLD || L2Norm(diff) > params.EPS_FACET_PATCH_INTEGRATOR*h){
-      cout << IM(1) << "MapPatchIntegrationPoint: Newton did not converge after "
+      cout << IM(4) << "MapPatchIntegrationPoint: Newton did not converge after "
            << its <<" iterations! (" << D <<"D)" << endl;
-      cout << IM(1) << "taking a low order guess" << endl;
-      cout << IM(1) << "diff = " << first_diffnorm << endl;
-      params.Output();
-      cout << IM(1) << "eps_treshold: " << params.EPS_FACET_PATCH_INTEGRATOR << endl;
+      cout << IM(4) << "taking a low order guess" << endl;
+      cout << IM(4) << "diff = " << first_diffnorm << endl;
+      //params.Output();
+      cout << IM(4) << "eps_treshold: " << params.EPS_FACET_PATCH_INTEGRATOR << endl;
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
