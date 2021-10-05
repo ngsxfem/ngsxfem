@@ -57,13 +57,13 @@ ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt)
   return ost;
 }
 
-ngsxfem_parameters params;
+GlobalNgsxfemVariables params;
 
-ngsxfem_parameters::ngsxfem_parameters() {
+GlobalNgsxfemVariables::GlobalNgsxfemVariables() {
     SetDefaults();
 }
 
-void ngsxfem_parameters::SetDefaults()  {
+void GlobalNgsxfemVariables::SetDefaults()  {
     EPS_STCR_LSET_PERTUBATION = 1e-14;
     EPS_STCR_ROOT_SEARCH_BISECTION = 1e-15;
     EPS_INTERPOLATE_TO_P1 = 1e-14;
@@ -74,7 +74,7 @@ void ngsxfem_parameters::SetDefaults()  {
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
-void ngsxfem_parameters::MultiplyAllEps(double fac) {
+void GlobalNgsxfemVariables::MultiplyAllEps(double fac) {
     EPS_STCR_LSET_PERTUBATION *= fac;
     EPS_STCR_ROOT_SEARCH_BISECTION *= fac;
     EPS_INTERPOLATE_TO_P1 *= fac;
@@ -83,8 +83,8 @@ void ngsxfem_parameters::MultiplyAllEps(double fac) {
     EPS_FACET_PATCH_INTEGRATOR *= fac;
 }
 
-void ngsxfem_parameters::Output(){
-    cout << "Report of ngsxfem_parameters: " << endl;
+void GlobalNgsxfemVariables::Output(){
+    cout << "Report of GlobalNgsxfemVariables: " << endl;
     cout << "EPS_STCR_LSET_PERTUBATION = " << EPS_STCR_LSET_PERTUBATION << endl;
     cout << "EPS_STCR_ROOT_SEARCH_BISECTION = " << EPS_STCR_ROOT_SEARCH_BISECTION << endl;
     cout << "EPS_INTERPOLATE_TO_P1 = " << EPS_INTERPOLATE_TO_P1 << endl;
