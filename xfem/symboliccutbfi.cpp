@@ -13,6 +13,7 @@
 #include "../xfem/symboliccutbfi.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/straightcutrule.hpp"
+#include "../utils/ngsxstd.hpp"
 
 namespace ngfem
 {
@@ -1099,9 +1100,6 @@ namespace ngfem
                                 LocalHeap & lh, bool spacetime_mode = false, double from_ip_weight =0.)
   {
     // cout << " ------------------------------------------- " << endl;
-    const int max_its = 200;
-    const double eps_acc = 1e-12;
-
     HeapReset hr(lh);
 
     FlatVector<double> vec(D,lh);
@@ -1157,7 +1155,7 @@ namespace ngfem
 
     int its = 0;
     double w = 0;
-    while (its==0 || (L2Norm(diff) > eps_acc*h && its < max_its))
+    while (its==0 || (L2Norm(diff) > params.EPS_FACET_PATCH_INTEGRATOR*h && its < params.NEWTON_ITER_TRESHOLD))
     {
       if(spacetime_mode) { ip_x0->SetWeight(from_ip.Weight()); MarkAsSpaceTimeIntegrationPoint(*ip_x0); }
       MappedIntegrationPoint<D,D> mip_x0(*ip_x0,to_trafo);
@@ -1170,11 +1168,13 @@ namespace ngfem
       w = mip_x0.GetMeasure();
     }
 
-    if(its >= max_its){
+    if(its >= params.NEWTON_ITER_TRESHOLD || L2Norm(diff) > params.EPS_FACET_PATCH_INTEGRATOR*h){
       cout << IM(4) << "MapPatchIntegrationPoint: Newton did not converge after "
            << its <<" iterations! (" << D <<"D)" << endl;
       cout << IM(4) << "taking a low order guess" << endl;
       cout << IM(4) << "diff = " << first_diffnorm << endl;
+      //params.Output();
+      cout << IM(4) << "eps_treshold: " << params.EPS_FACET_PATCH_INTEGRATOR << endl;
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
