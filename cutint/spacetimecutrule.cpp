@@ -112,7 +112,19 @@ namespace xintegration
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
 
+        bool haspos = false;
+        bool hasneg = false;
+        for(auto d : cf_lset_at_element){
+            if (d < 0) hasneg = true;
+            if (d > 0) haspos = true;
+        }
+
         vector<double> cut_points{0,1};
+        if(hasneg && haspos){
+            int N = 20;
+            for(int i=1; i<N-1; i++) cut_points.push_back(((double)i)/N);
+        }
+
         /*for(int i=0; i<space_nfreedofs; i++){
             auto li = lset_st.Col(i);
             auto cp = root_finding(li, fe_time, lh);
