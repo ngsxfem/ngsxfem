@@ -113,27 +113,33 @@ namespace xintegration
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
 
-        bool haspos = false;
-        bool hasneg = false;
-        for(auto d : cf_lset_at_element){
-            if (d < 0) hasneg = true;
-            if (d > 0) haspos = true;
-        }
-
         vector<double> cut_points{0,1};
-        if(hasneg && haspos){
-            int N = 20;
-            for(int i=1; i<N-1; i++) cut_points.push_back(((double)i)/N);
-        }
+        if (params.DO_NAIVE_TIMEINT){
+            bool haspos = false;
+            bool hasneg = false;
+            for(auto d : cf_lset_at_element){
+                if (d < 0) hasneg = true;
+                if (d > 0) haspos = true;
+            }
 
-        /*for(int i=0; i<space_nfreedofs; i++){
-            auto li = lset_st.Col(i);
-            auto cp = root_finding(li, fe_time, lh);
-            if(cp.size() > 0) cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
-        }*/
+            if(params.NAIVE_TIMEINT_SUBDIVS < 1) throw Exception("NAIVE_TIMEINT_SUBDIVS < 1 is not possible");
+            else {
+                if(hasneg && haspos){
+                    for(int i=1; i<params.NAIVE_TIMEINT_SUBDIVS-1; i++) cut_points.push_back(((double)i)/(params.NAIVE_TIMEINT_SUBDIVS));
+                }
+            }
+        }
+        else {
+            for(int i=0; i<space_nfreedofs; i++){
+                auto li = lset_st.Col(i);
+                auto cp = root_finding(li, fe_time, lh);
+                if(cp.size() > 0) cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
+            }
+        }
         sort(cut_points.begin(), cut_points.end());
 
-        const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
+        const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, params.DO_NAIVE_TIMEINT ? params.NAIVE_TIMEINT_ORDER : order_time);
+        //const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         const IntegrationRule & stdir = SelectIntegrationRule (et_space, order_space);
         const int MAXSIZE_PER = 5 * stdir.Size();
         const int MAXSIZE = MAXSIZE_PER * (cut_points.size()-1) * ir_time.Size();

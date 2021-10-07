@@ -238,6 +238,9 @@ CompoundFESpaces.
           .def_readwrite("EPS_SHIFTED_EVAL", &ngsxfem_parameters::EPS_SHIFTED_EVAL)
           .def_readwrite("EPS_FACET_PATCH_INTEGRATOR", &ngsxfem_parameters::EPS_FACET_PATCH_INTEGRATOR)
           .def_readwrite("NEWTON_ITER_TRESHOLD", &ngsxfem_parameters::NEWTON_ITER_TRESHOLD)
+          .def_readwrite("DO_NAIVE_TIMEINT", &ngsxfem_parameters::DO_NAIVE_TIMEINT)
+          .def_readwrite("NAIVE_TIMEINT_ORDER", &ngsxfem_parameters::NAIVE_TIMEINT_ORDER)
+          .def_readwrite("NAIVE_TIMEINT_SUBDIVS", &ngsxfem_parameters::NAIVE_TIMEINT_SUBDIVS)
           .def("MultiplyAllEps", &ngsxfem_parameters::MultiplyAllEps)
           .def("Output", &ngsxfem_parameters::Output)
           .def("SetDefaults", &ngsxfem_parameters::SetDefaults);

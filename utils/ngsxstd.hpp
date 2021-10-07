@@ -117,7 +117,11 @@ public:
     double EPS_FACET_PATCH_INTEGRATOR;
 
     int NEWTON_ITER_TRESHOLD;
-    
+
+    bool DO_NAIVE_TIMEINT;
+    int NAIVE_TIMEINT_SUBDIVS;
+    int NAIVE_TIMEINT_ORDER;
+
     ngsxfem_parameters();
     
     void SetDefaults();
