@@ -125,7 +125,7 @@ namespace xintegration
             if(params.NAIVE_TIMEINT_SUBDIVS < 1) throw Exception("NAIVE_TIMEINT_SUBDIVS < 1 is not possible");
             else {
                 if(hasneg && haspos){
-                    for(int i=1; i<params.NAIVE_TIMEINT_SUBDIVS-1; i++) cut_points.push_back(((double)i)/(params.NAIVE_TIMEINT_SUBDIVS));
+                    for(int i=1; i<params.NAIVE_TIMEINT_SUBDIVS; i++) cut_points.push_back(((double)i)/(params.NAIVE_TIMEINT_SUBDIVS));
                 }
             }
         }
