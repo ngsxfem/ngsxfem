@@ -54,18 +54,24 @@ namespace ngcomp
     int order_time() const
     {    
       NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      if (time_FE == nullptr)
+        throw Exception("not a NodalTimeFE");
       return time_FE->order_time();
     }
 
     Array<double>& TimeFE_nodes() const
     { 
       NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      if (time_FE == nullptr)
+        throw Exception("not a NodalTimeFE");
       return time_FE->GetNodes();
     }
 
     bool IsTimeNodeActive(int i) const
     {
       NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      if (time_FE == nullptr)
+        throw Exception("not a NodalTimeFE");
       return time_FE->IsNodeActive(i);
     }
 

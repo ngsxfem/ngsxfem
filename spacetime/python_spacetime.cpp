@@ -157,13 +157,15 @@ dgjumps : bool
 
 
   py::class_<NodalTimeFE, shared_ptr<NodalTimeFE>,FiniteElement>(m, "ScalarTimeFE")
-  .def(py::init([] ( int order, bool skip_first_node, bool only_first_node) -> shared_ptr<NodalTimeFE>
+  .def(py::init([] ( int order, bool skip_first_nodes, bool only_first_nodes, bool skip_first_node, bool only_first_node) -> shared_ptr<NodalTimeFE>
   {
-    if (skip_first_node && only_first_node)
+    if ((skip_first_nodes||skip_first_node) && (only_first_nodes||only_first_node))
       throw Exception("can't skip and keep first node at the same time.");
-    return make_shared<NodalTimeFE>(order, skip_first_node, only_first_node);
+    return make_shared<NodalTimeFE>(order, skip_first_nodes || skip_first_node, only_first_nodes || only_first_node);
   }),
   py::arg("order") = 0,
+  py::arg("skip_first_nodes") = false,
+  py::arg("only_first_nodes") = false,
   py::arg("skip_first_node") = false,
   py::arg("only_first_node") = false,
   docu_string(R"raw_string(
@@ -177,12 +179,12 @@ The polynomial order of the discretisation. That controlls the number of
 points in the time interval. See Gauss-Lobatto points for further details.
 Currently, orders up to 5 are available.
 
-skip_first_node : bool
+skip_first_nodes : bool
 This will create the time finite element without the first node at t=0.
 That feature comes in handy for several CG like implementations in time.
 Also see only_first_node.
 
-only_first_node : bool
+only_first_nodes : bool
 This will create the time finite element with only the first node at t=0.
 That feature comes in handy for several CG like implementations in time.
 Also see skip_first_node.
@@ -209,6 +211,22 @@ Also see skip_first_node.
     return ret;
   })
   ;
+
+  py::class_<GCC3FE, shared_ptr<GCC3FE>,NodalTimeFE>(m, "GCC3FE")
+  .def(py::init([] ( bool skip_first_nodes, bool only_first_nodes) -> shared_ptr<GCC3FE>
+  {
+    if ((skip_first_nodes) && (only_first_nodes))
+      throw Exception("can't skip and keep first node at the same time.");
+    return make_shared<GCC3FE>(skip_first_nodes, only_first_nodes);
+  }),
+  py::arg("skip_first_nodes") = false,
+  py::arg("only_first_nodes") = false,
+  docu_string(R"raw_string(
+docu missing
+  )raw_string")
+  );
+  
+
 
   typedef shared_ptr<TimeVariableCoefficientFunction> PyTimeVariableCF;
 
