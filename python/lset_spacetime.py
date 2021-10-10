@@ -6,7 +6,7 @@ from netgen.meshing import MeshingParameters
 
 from ngsolve.internal import *
 from xfem import *
-from numpy import pi
+from math import pi
 
 
 class LevelSetMeshAdaptation_Spacetime:
@@ -59,6 +59,7 @@ This class holds its own members for the higher order and lower order
     order_lset = 2
 
     gf_to_project = []
+    gf_to_project_tmp = [] # list for temporary copies
 
     @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
@@ -192,7 +193,7 @@ The computed deformation depends on different options:
         self.deformation = {INTERVAL : self.deform, BOTTOM : self.deform_bottom, TOP : self.deform_top}
 
         
-    def ProjectOnUpdate(self,gf,update_domain= None):
+    def ProjectOnUpdate(self,gf,update_domain=None):
         """
 When the LevelsetMeshAdaptation class generates a new deformation (due to 
 a new level set function) all GridFunction that have been stored through
@@ -205,8 +206,10 @@ evaluation)
         """      
         if isinstance(gf,list):
             self.gf_to_project.extend((gf, update_domain))
+            self.gf_to_project_tmp.extend(GridFunction(gf.space))
         else:
             self.gf_to_project.append((gf, update_domain))
+            self.gf_to_project_tmp.append(GridFunction(gf.space))
 
     @TimeFunction
     def ProjectGFs(self):
@@ -216,14 +219,12 @@ This function is typically only called in the `CalcDeformation` unless
 `CalcDeformation` is called with the argument `dont_project_gfs = True`.
         """      
 
-        for (gf, update_domain) in self.gf_to_project:
-            # make tmp copy 
-            gfcopy = GridFunction(gf.space)
-            gfcopy.vec.data = gf.vec
+        for (gf, update_domain),gftmp in zip(self.gf_to_project, self.gf_to_project_tmp):
+            gftmp.vec.data = gf.vec
             if update_domain is None:
-                gf.Set(shifted_eval(gfcopy, back = self.deform_last_top, forth = self.deform_bottom))
+                gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom))
             else:
-                gf.Set(shifted_eval(gfcopy, back = self.deform_last_top, forth = self.deform_bottom), definedonelements=update_domain)
+                gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom), definedonelements=update_domain)
             #print("updated ", gf.name)
 
     @TimeFunction

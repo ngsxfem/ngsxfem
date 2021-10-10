@@ -120,9 +120,12 @@ namespace ngfem
     }
 
 
-    NodalTimeFE :: NodalTimeFE (int order, bool askip_first_node, bool aonly_first_node)
-        : ScalarFiniteElement<1> (askip_first_node ? order : (aonly_first_node ? 1 : order + 1), order), 
-        skip_first_node(askip_first_node), only_first_node(aonly_first_node)
+    NodalTimeFE :: NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node)
+        : ScalarFiniteElement<1> (askip_first_nodes ? order + 1 - ndof_first_node          // skip_first_nodes
+                                                    : (aonly_first_nodes ? ndof_first_node // only_first_nodes
+                                                                         : order + 1),     // neither
+                                  order), 
+        skip_first_nodes(askip_first_nodes), only_first_nodes(aonly_first_nodes)
       {
          k_t = order;
          CalcInterpolationPoints ();
@@ -133,8 +136,8 @@ namespace ngfem
                                      BareSliceVector<> shape) const
       {
          AutoDiff<1> adx (ip(0), 0);
-         int begin = skip_first_node ? 1 : 0;
-         int end = only_first_node ? 1 : ndof+begin;
+         int begin = skip_first_nodes ? 1 : 0;
+         int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          for(int i = begin; i < end; i++) {
              shape(cnt++) = Lagrange_Pol (adx, i).Value() ;
@@ -146,8 +149,8 @@ namespace ngfem
                                       BareSliceMatrix<> dshape) const
       {
          AutoDiff<1> adx (ip(0), 0);
-         int begin = skip_first_node ? 1 : 0;
-         int end = only_first_node ? 1 : ndof+begin;
+         int begin = skip_first_nodes ? 1 : 0;
+         int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          for(int i = begin; i < end; i++) {
              dshape(cnt++,0) = Lagrange_Pol(adx, i).DValue(0);
@@ -179,6 +182,61 @@ namespace ngfem
          }
       }
 
+    GCC3FE :: GCC3FE (bool askip_first_nodes, bool aonly_first_nodes)
+        : NodalTimeFE (3, askip_first_nodes, aonly_first_nodes, 2)
+      {
+         ;
+      }
+
+
+      void GCC3FE :: CalcShape (const IntegrationPoint & ip,
+                                     BareSliceVector<> shape) const
+      {
+         AutoDiff<1> x (ip(0), 0);
+         int begin = skip_first_nodes ? 2 : 0;
+         int end = only_first_nodes ? 1 : ndof+begin;
+         int cnt = 0;
+         if (!skip_first_nodes)
+         {
+           shape(cnt++) = ((1-x)*(1-x)*(1+2*x)).Value();
+           shape(cnt++) = ((1-x)*(1-x)*x).Value();
+         }
+         
+         if (!only_first_nodes)
+         {
+           shape(cnt++) = (x*x*(3-2*x)).Value();
+           shape(cnt++) = (x*x*(x-1)).Value();
+         }
+      }
+
+
+      void GCC3FE :: CalcDShape (const IntegrationPoint & ip,
+                                      BareSliceMatrix<> dshape) const
+      {
+         AutoDiff<1> x (ip(0), 0);
+         int begin = skip_first_nodes ? 2 : 0;
+         int end = only_first_nodes ? 1 : ndof+begin;
+         int cnt = 0;
+         if (!skip_first_nodes)
+         {
+           dshape(cnt++,0) = ((1-x)*(1-x)*(1+2*x)).DValue(0);
+           dshape(cnt++,0) = ((1-x)*(1-x)*x).DValue(0);
+         }
+         
+         if (!only_first_nodes)
+         {
+           dshape(cnt++,0) = (x*x*(3-2*x)).DValue(0);
+           dshape(cnt++,0) = (x*x*(x-1)).DValue(0);
+         }
+      }
+      
+      void GCC3FE :: CalcInterpolationPoints ()
+      {
+         nodes.SetSize(4);
+        nodes[0] = 0.0; nodes[1] = 0.0; nodes[2] = 1.0; nodes[3] = 1.0;
+      }
+
+  
       template class SpaceTimeFE<1>;
       template class SpaceTimeFE<2>;
       template class SpaceTimeFE<3>;

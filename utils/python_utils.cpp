@@ -310,6 +310,13 @@ active_els : BitArray or None
     ;
 
 
+
+
+
+
+
+
+
   typedef shared_ptr<P1Prolongation> PyP1P;
   py::class_<P1Prolongation, PyP1P, Prolongation>
     (m, "P1Prolongation",
@@ -400,4 +407,3 @@ for prototype and testing...
 
 
 }
-
