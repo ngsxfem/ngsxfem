@@ -10,10 +10,12 @@
 #include "../utils/p1interpol.hpp"
 #include "../utils/xprolongation.hpp"
 #include "../utils/restrictedfespace.hpp"
+#include "../utils/ngsxstd.hpp"
+
+static GlobalNgsxfemVariables globxvar;
 
 using namespace ngcomp;
 typedef shared_ptr<BitArray> PyBA;
-
 
  auto rblf_string_T = docu_string(R"raw_string(
 A restricted bilinear form is a bilinear form with a reduced MatrixGraph
@@ -51,11 +53,8 @@ element_restriction : ngsolve.BitArray
 facet_restriction : ngsolve.BitArray
   BitArray defining the 'active facets'. This is only relevant if FESpace has DG-terms (dgjumps=True)
 
-check_unused : boolean
-  Check if some degrees of freedoms are not considered during assembly
-
-flags : ngsolve.Flags
-  additional bilinear form flags
+kwargs : keyword args 
+  additional arguments that are passed to bilinear form (in form of flags)
 )raw_string");
 
 template <class TM,class TV>
@@ -70,7 +69,6 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
       const string & aname,
       py::object ael_restriction,
       py::object afac_restriction,
-      bool check_unused,
       py::kwargs kwargs)
   {
     auto flags = CreateFlagsFromKwArgs(kwargs);
@@ -84,25 +82,21 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
       fac_restriction = py::extract<PyBA>(afac_restriction)();
 
     auto biform = make_shared<Rbfi_TT> (fes, aname, el_restriction, fac_restriction, flags);
-    biform -> SetCheckUnused (check_unused);
     return biform;
   }),
   py::arg("space"),
   py::arg("name") = "bfa",
   py::arg("element_restriction") = DummyArgument(),
   py::arg("facet_restriction") = DummyArgument(),
-  py::arg("check_unused") = true,
   rblf_string_T)
 .def(py::init([](shared_ptr<FESpace> fes1,
    shared_ptr<FESpace> fes2,
    const string & aname,
    py::object ael_restriction,
    py::object afac_restriction,
-   bool check_unused,
    py::kwargs kwargs)
 {
    auto flags = CreateFlagsFromKwArgs(kwargs);
-
    shared_ptr<BitArray> el_restriction = nullptr;
    shared_ptr<BitArray> fac_restriction = nullptr;
    if (py::extract<PyBA> (ael_restriction).check())
@@ -112,7 +106,6 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
      fac_restriction = py::extract<PyBA>(afac_restriction)();
 
    auto biform = make_shared<Rbfi_TT> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
-   biform -> SetCheckUnused (check_unused);
    return biform;
 }),
 py::arg("trialspace"),
@@ -120,7 +113,6 @@ py::arg("testspace"),
 py::arg("name") = "bfa",
 py::arg("element_restriction") = DummyArgument(),
 py::arg("facet_restriction") = DummyArgument(),
-py::arg("check_unused") = true,
 rblf_string_T)        
 .def_property("element_restriction", 
 	  &Rbfi_TT::GetElementRestriction,
@@ -142,10 +134,11 @@ void ExportNgsx_utils(py::module &m)
         {
           InterpolateP1 interpol(gf_ho, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
+          interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1,
+        py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
 into a piecewise (multi-) linear function.
@@ -173,10 +166,10 @@ heapsize : int
         {
           InterpolateP1 interpol(coef, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
+          interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.
@@ -235,7 +228,19 @@ CompoundFESpaces.
 )raw_string")
     );
 
-
+  py::class_<GlobalNgsxfemVariables>(m, "GlobalNgsxfemVariables")
+          .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
+          .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
+          .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
+          .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
+          .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
+          .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
+          .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+          .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
+          .def("Output", &GlobalNgsxfemVariables::Output)
+          .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
+  
+  m.attr("ngsxfemglobals") = py::cast(&globxvar);
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>

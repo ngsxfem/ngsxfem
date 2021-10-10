@@ -899,7 +899,7 @@ def dmesh(mesh=None,*args,**kwargs):
     else:
         return dx(*args,**kwargs)
 
-def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_restriction=None,trialspace=None,testspace=None,check_unused=True,**kwargs):
+def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_restriction=None,trialspace=None,testspace=None,**kwargs):
     """
     Creates a restricted bilinear form, which is bilinear form with a reduced MatrixGraph
     compared to the usual BilinearForm. BitArray(s) define on which elements/facets entries will be
@@ -940,11 +940,8 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
       finite element space on which the bilinear form is defined
       (test space).
 
-    check_unused : boolean
-      Check if some degrees of freedoms are not considered during assembly
-
-    flags : ngsolve.Flags
-      additional bilinear form flags 
+    kwargs : keyword arguments
+      kwargs are pasre to flags and passed to bilinearform 
     """
 
     argument_list = [name]
@@ -952,7 +949,6 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
         argument_list.append(element_restriction)
     if facet_restriction != None:
         argument_list.append(facet_restriction)
-    argument_list.append(check_unused)
 
     if trialspace != None and testspace != None:
         if trialspace.is_complex and testspace.is_complex:
