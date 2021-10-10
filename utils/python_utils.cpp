@@ -10,10 +10,12 @@
 #include "../utils/p1interpol.hpp"
 #include "../utils/xprolongation.hpp"
 #include "../utils/restrictedfespace.hpp"
+#include "../utils/ngsxstd.hpp"
+
+static GlobalNgsxfemVariables globxvar;
 
 using namespace ngcomp;
 typedef shared_ptr<BitArray> PyBA;
-
 
  auto rblf_string_T = docu_string(R"raw_string(
 A restricted bilinear form is a bilinear form with a reduced MatrixGraph
@@ -132,10 +134,11 @@ void ExportNgsx_utils(py::module &m)
         {
           InterpolateP1 interpol(gf_ho, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
+          interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1,
+        py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
 into a piecewise (multi-) linear function.
@@ -163,10 +166,10 @@ heapsize : int
         {
           InterpolateP1 interpol(coef, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
-          interpol.Do(lh,eps_perturbation);
+          interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=1e-14,py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.
@@ -225,7 +228,19 @@ CompoundFESpaces.
 )raw_string")
     );
 
-
+  py::class_<GlobalNgsxfemVariables>(m, "GlobalNgsxfemVariables")
+          .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
+          .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
+          .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
+          .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
+          .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
+          .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
+          .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+          .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
+          .def("Output", &GlobalNgsxfemVariables::Output)
+          .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
+  
+  m.attr("ngsxfemglobals") = py::cast(&globxvar);
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>

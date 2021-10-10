@@ -6,6 +6,7 @@
 
 #include "p1interpol.hpp"
 #include "../cutint/spacetimecutrule.hpp"
+#include "../utils/ngsxstd.hpp"
 
 namespace ngcomp
 {
