@@ -1,4 +1,4 @@
-FROM ngsxfem/ngsolve:v6.2.2104
+FROM ngsxfem/ngsolve:v6.2.2105
 
 ARG NB_USER=jovyan
 ARG NB_UID=1000
@@ -24,8 +24,8 @@ WORKDIR ${HOME}
 #RUN pip3 install . --user --upgrade --verbose
 
 ## build based on github release:
-RUN git clone -b v2.0.2104 --single-branch https://github.com/ngsxfem/ngsxfem.git ngsxfem
-RUN pip3 install git+https://github.com/ngsxfem/ngsxfem.git@v2.0.2104 --user --upgrade --verbose
+RUN git clone -b v2.0.2105 --single-branch https://github.com/ngsxfem/ngsxfem.git ngsxfem
+RUN pip3 install git+https://github.com/ngsxfem/ngsxfem.git@v2.0.2105 --user --upgrade --verbose
                 
 RUN python3 -c "import ngsolve; import xfem"        
                 
