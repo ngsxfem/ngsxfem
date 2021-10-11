@@ -12,7 +12,7 @@
 #include "../utils/restrictedfespace.hpp"
 #include "../utils/ngsxstd.hpp"
 
-static GlobalNgsxfemVariables globxvar;
+GlobalNgsxfemVariables globxvar;
 
 using namespace ngcomp;
 typedef shared_ptr<BitArray> PyBA;
@@ -137,7 +137,7 @@ void ExportNgsx_utils(py::module &m)
           interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1,
+        py::arg("eps_perturbation")=globxvar.EPS_INTERPOLATE_TO_P1,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
@@ -169,7 +169,7 @@ heapsize : int
           interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=globxvar.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.

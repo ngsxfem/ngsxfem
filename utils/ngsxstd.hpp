@@ -125,4 +125,4 @@ public:
     void Output();
 };
 
-extern GlobalNgsxfemVariables params;
+extern GlobalNgsxfemVariables globxvar;
