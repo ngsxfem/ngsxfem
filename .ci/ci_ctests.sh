@@ -1,8 +1,8 @@
 #!/bin/bash
 
 set -e
-# echo "pwd: ${PWD}"
-# ls -al .
+echo "pwd: ${PWD}"
+ls -al .
 # echo "cmake-tests"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/"
 export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
