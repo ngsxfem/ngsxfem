@@ -1153,6 +1153,8 @@ namespace ngfem
       ip_x0->Point().Range(0,D) = ip_x00->Point();
     }
 
+    Array<Vec<D>> newtonlog;
+    newtonlog.Append(ip_x0->Point());
     int its = 0;
     double w = 0;
     while (its==0 || (L2Norm(diff) > globxvar.EPS_FACET_PATCH_INTEGRATOR*h && its < globxvar.NEWTON_ITER_TRESHOLD))
@@ -1163,7 +1165,7 @@ namespace ngfem
       if (its==0)
         first_diffnorm = L2Norm(diff);
       update = mip_x0.GetJacobianInverse() * diff;
-      ip_x0->Point().Range(0,D) += update;
+      ip_x0->Point().Range(0,D) += update; newtonlog.Append(ip_x0->Point());
       its++;
       w = mip_x0.GetMeasure();
     }
@@ -1175,9 +1177,49 @@ namespace ngfem
       cout << IM(4) << "diff = " << first_diffnorm << endl;
       //globxvar.Output();
       cout << IM(4) << "eps_treshold: " << globxvar.EPS_FACET_PATCH_INTEGRATOR << endl;
+
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
+    }
+    if(L2Norm(ip_x0->Point() - ip_x00->Point()) > 1) {
+        /*{
+        IntegrationPoint * ip_xE = new(lh) IntegrationPoint(0,0,0);
+
+        static int N = 0;
+
+          auto eval = [&ip_xE, &spacetime_mode, &to_trafo, &vec, &from_ip](Vec<D> p) {
+                    ip_xE->Point().Range(0,D) = p;
+                    if(spacetime_mode) { ip_xE->SetWeight(from_ip.Weight()); MarkAsSpaceTimeIntegrationPoint(*ip_xE); }
+                    MappedIntegrationPoint<D,D> mip_xE(*ip_xE,to_trafo);
+                    return L2Norm(vec - mip_xE.GetPoint());
+                };
+          ofstream newtoninfo("newtoninfo"+to_string(N)+".dat");
+          Vec<D> s(0.);
+          int N_S = 250; double xmin = ip_x00->Point()[0] - 0.7, xmax = ip_x00->Point()[0] + 0.7, ymin= ip_x00->Point()[1] - 0.7, ymax = ip_x00->Point()[1] + 0.7;
+          ofstream newtoninfoPI("newtoninfoPI"+to_string(N)+".dat");
+          newtoninfoPI << xmin << "\t" << xmax << endl;
+          newtoninfoPI << ymin << "\t" << ymax << endl;
+          for(int s_i = 0; s_i <= N_S; s_i++){
+              for(int s_j = 0; s_j <= N_S; s_j++){
+                  s[0] = (xmax - xmin)*s_j/N_S + xmin;
+                  s[1] = (ymax- ymin)*s_i/N_S + ymin;
+                  newtoninfo << eval(s) << "\t";
+              }
+              newtoninfo << endl;
+          }
+          ip_x0->Point().Range(0,D) = ip_x00->Point().Range(0,D);
+          ofstream newtoninfoB("newtoninfoB"+to_string(N)+".dat", ofstream::out);
+
+          for(auto v : newtonlog){
+            newtoninfoB << v[0] << "\t" << v[1] << endl;
+          }
+        N++; } */
+        cout << IM(4) << "Distance warning triggered, dist = " << L2Norm(ip_x0->Point() - ip_x00->Point()) << " its = " << its << endl;
+        cout << IM(4) << "taking a low order guess" << endl;
+        to_ip = *ip_x00;
+        if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
+        else to_ip.SetWeight(mip.GetWeight()/w00);
     }
     else
     {
