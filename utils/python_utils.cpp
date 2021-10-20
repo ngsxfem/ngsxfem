@@ -236,6 +236,7 @@ CompoundFESpaces.
           .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
           .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
           .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+          .def_readwrite("fixed_point_maxiter_shifted_eval", &GlobalNgsxfemVariables::FIXED_POINT_ITER_TRESHOLD)
           .def_readwrite("do_naive_timeint", &GlobalNgsxfemVariables::DO_NAIVE_TIMEINT)
           .def_readwrite("naive_timeint_order", &GlobalNgsxfemVariables::NAIVE_TIMEINT_ORDER)
           .def_readwrite("naive_timeint_subdivs", &GlobalNgsxfemVariables::NAIVE_TIMEINT_SUBDIVS)

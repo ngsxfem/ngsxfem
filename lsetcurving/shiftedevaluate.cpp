@@ -76,7 +76,7 @@ namespace ngfem
       // static atomic<int> cnt_calls(0);
       
       // Fixed point iteration
-      while (its < globxvar.NEWTON_ITER_TRESHOLD)
+      while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
       {
         scafe_back.CalcShape(ipx,shape_back);
         dvec_back = Trans(vector_back)*shape_back;
@@ -93,7 +93,7 @@ namespace ngfem
         // cnt_its++;
       
       }
-      if (its == globxvar.NEWTON_ITER_TRESHOLD)
+      if (its == globxvar.FIXED_POINT_ITER_TRESHOLD)
         throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
     
       // cnt_calls++;
@@ -196,7 +196,7 @@ namespace ngfem
       Vec<SpaceD> zdiff = z-mip_x0.GetPoint();
     
       // Fixed point iteration
-      while (its < globxvar.NEWTON_ITER_TRESHOLD)
+      while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
       {
         FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
         diff = zdiff - mip.GetJacobian() * fv;
@@ -204,7 +204,7 @@ namespace ngfem
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
         its++;
       }
-      if (its == globxvar.NEWTON_ITER_TRESHOLD)
+      if (its == globxvar.FIXED_POINT_ITER_TRESHOLD)
         throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
 
       scafe.CalcShape(ipx,shape);
