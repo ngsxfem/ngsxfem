@@ -76,7 +76,7 @@ namespace ngfem
       // static atomic<int> cnt_calls(0);
       
       // Fixed point iteration
-      while (its < params.NEWTON_ITER_TRESHOLD)
+      while (its < globxvar.NEWTON_ITER_TRESHOLD)
       {
         scafe_back.CalcShape(ipx,shape_back);
         dvec_back = Trans(vector_back)*shape_back;
@@ -86,14 +86,14 @@ namespace ngfem
         diff = zdiff - dvec_back - mip.GetJacobian() * fv;
         // cout << "diff = " << diff << endl;
         // cout << "its = " << its << endl;
-        if ( L2Norm(diff) < params.EPS_SHIFTED_EVAL*h ) break;
+        if ( L2Norm(diff) < globxvar.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * (zdiff - dvec_back);
 
         its++;
         // cnt_its++;
       
       }
-      if (its == params.NEWTON_ITER_TRESHOLD)
+      if (its == globxvar.NEWTON_ITER_TRESHOLD)
         throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
     
       // cnt_calls++;
@@ -196,15 +196,15 @@ namespace ngfem
       Vec<SpaceD> zdiff = z-mip_x0.GetPoint();
     
       // Fixed point iteration
-      while (its < params.NEWTON_ITER_TRESHOLD)
+      while (its < globxvar.NEWTON_ITER_TRESHOLD)
       {
         FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
         diff = zdiff - mip.GetJacobian() * fv;
-        if ( L2Norm(diff) < params.EPS_SHIFTED_EVAL*h ) break;
+        if ( L2Norm(diff) < globxvar.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
         its++;
       }
-      if (its == params.NEWTON_ITER_TRESHOLD)
+      if (its == globxvar.NEWTON_ITER_TRESHOLD)
         throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
 
       scafe.CalcShape(ipx,shape);

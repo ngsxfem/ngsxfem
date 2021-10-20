@@ -12,6 +12,8 @@
 #include "../utils/restrictedfespace.hpp"
 #include "../utils/ngsxstd.hpp"
 
+GlobalNgsxfemVariables globxvar;
+
 using namespace ngcomp;
 typedef shared_ptr<BitArray> PyBA;
 
@@ -135,7 +137,7 @@ void ExportNgsx_utils(py::module &m)
           interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("gf_ho")=NULL,py::arg("gf_p1")=NULL,
-        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1,
+        py::arg("eps_perturbation")=globxvar.EPS_INTERPOLATE_TO_P1,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a GridFunction (also possible with a CoefficentFunction) and puts them
@@ -167,7 +169,7 @@ heapsize : int
           interpol.Do(lh, eps_perturbation);
         } ,
         py::arg("coef"),py::arg("gf"),
-        py::arg("eps_perturbation")=params.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
+        py::arg("eps_perturbation")=globxvar.EPS_INTERPOLATE_TO_P1, py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Takes the vertex values of a CoefficentFunction) and puts them into a piecewise (multi-) linear
 function.
@@ -226,25 +228,22 @@ CompoundFESpaces.
 )raw_string")
     );
 
-  m.def("ExportNGSXParams", [ ] () {
-      return &params;
-  });
-
-  py::class_<ngsxfem_parameters>(m, "ngsxfem_parameters")
-          .def_readwrite("EPS_STCR_LSET_PERTUBATION", &ngsxfem_parameters::EPS_STCR_LSET_PERTUBATION)
-          .def_readwrite("EPS_STCR_ROOT_SEARCH_BISECTION", &ngsxfem_parameters::EPS_STCR_ROOT_SEARCH_BISECTION)
-          .def_readwrite("EPS_INTERPOLATE_TO_P1", &ngsxfem_parameters::EPS_INTERPOLATE_TO_P1)
-          .def_readwrite("EPS_STFES_RESTRICT_GF", &ngsxfem_parameters::EPS_STFES_RESTRICT_GF)
-          .def_readwrite("EPS_SHIFTED_EVAL", &ngsxfem_parameters::EPS_SHIFTED_EVAL)
-          .def_readwrite("EPS_FACET_PATCH_INTEGRATOR", &ngsxfem_parameters::EPS_FACET_PATCH_INTEGRATOR)
-          .def_readwrite("NEWTON_ITER_TRESHOLD", &ngsxfem_parameters::NEWTON_ITER_TRESHOLD)
-          .def_readwrite("DO_NAIVE_TIMEINT", &ngsxfem_parameters::DO_NAIVE_TIMEINT)
-          .def_readwrite("NAIVE_TIMEINT_ORDER", &ngsxfem_parameters::NAIVE_TIMEINT_ORDER)
-          .def_readwrite("NAIVE_TIMEINT_SUBDIVS", &ngsxfem_parameters::NAIVE_TIMEINT_SUBDIVS)
-          .def("MultiplyAllEps", &ngsxfem_parameters::MultiplyAllEps)
-          .def("Output", &ngsxfem_parameters::Output)
-          .def("SetDefaults", &ngsxfem_parameters::SetDefaults);
+  py::class_<GlobalNgsxfemVariables>(m, "GlobalNgsxfemVariables")
+          .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
+          .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
+          .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
+          .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
+          .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
+          .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
+          .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+          .def_readwrite("do_naive_timeint", &ngsxfem_parameters::DO_NAIVE_TIMEINT)
+          .def_readwrite("naive_timeint_order", &ngsxfem_parameters::NAIVE_TIMEINT_ORDER)
+          .def_readwrite("naive_timeint_subdivs", &ngsxfem_parameters::NAIVE_TIMEINT_SUBDIVS)
+          .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
+          .def("Output", &GlobalNgsxfemVariables::Output)
+          .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
   
+  m.attr("ngsxfemglobals") = py::cast(&globxvar);
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
   py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>

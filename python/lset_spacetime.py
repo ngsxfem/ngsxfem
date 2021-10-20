@@ -193,7 +193,7 @@ The computed deformation depends on different options:
         self.deformation = {INTERVAL : self.deform, BOTTOM : self.deform_bottom, TOP : self.deform_top}
 
         
-    def ProjectOnUpdate(self,gf):
+    def ProjectOnUpdate(self,gf,update_domain=None):
         """
 When the LevelsetMeshAdaptation class generates a new deformation (due to 
 a new level set function) all GridFunction that have been stored through
@@ -205,10 +205,10 @@ evaluation)
     GridFunction(s) to store for later deformation updates.
         """      
         if isinstance(gf,list):
-            self.gf_to_project.extend(gf)
+            self.gf_to_project.extend((gf, update_domain))
             self.gf_to_project_tmp.extend(GridFunction(gf.space))
         else:
-            self.gf_to_project.append(gf)
+            self.gf_to_project.append((gf, update_domain))
             self.gf_to_project_tmp.append(GridFunction(gf.space))
 
     @TimeFunction
@@ -219,9 +219,12 @@ This function is typically only called in the `CalcDeformation` unless
 `CalcDeformation` is called with the argument `dont_project_gfs = True`.
         """      
 
-        for gf, gftmp in zip(self.gf_to_project,self.gf_to_project_tmp):
+        for (gf, update_domain),gftmp in zip(self.gf_to_project, self.gf_to_project_tmp):
             gftmp.vec.data = gf.vec
-            gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom))
+            if update_domain is None:
+                gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom))
+            else:
+                gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom), definedonelements=update_domain)
             #print("updated ", gf.name)
 
     @TimeFunction

@@ -25,5 +25,6 @@ doc/betterbib_cache.sqlite
 demos/local
 doc/feature-details.pdf
 doc/literature.pdf
+**/*.orig
 **.orig
 **~
