@@ -114,7 +114,7 @@ namespace xintegration
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
 
         vector<double> cut_points{0,1};
-        if (params.DO_NAIVE_TIMEINT){
+        if (globxvar.DO_NAIVE_TIMEINT){
             bool haspos = false;
             bool hasneg = false;
             for(auto d : cf_lset_at_element){
@@ -122,10 +122,10 @@ namespace xintegration
                 if (d > 0) haspos = true;
             }
 
-            if(params.NAIVE_TIMEINT_SUBDIVS < 1) throw Exception("NAIVE_TIMEINT_SUBDIVS < 1 is not possible");
+            if(globxvar.NAIVE_TIMEINT_SUBDIVS < 1) throw Exception("NAIVE_TIMEINT_SUBDIVS < 1 is not possible");
             else {
                 if(hasneg && haspos){
-                    for(int i=1; i<params.NAIVE_TIMEINT_SUBDIVS; i++) cut_points.push_back(((double)i)/(params.NAIVE_TIMEINT_SUBDIVS));
+                    for(int i=1; i<globxvar.NAIVE_TIMEINT_SUBDIVS; i++) cut_points.push_back(((double)i)/(globxvar.NAIVE_TIMEINT_SUBDIVS));
                 }
             }
         }
@@ -138,7 +138,7 @@ namespace xintegration
         }
         sort(cut_points.begin(), cut_points.end());
 
-        const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, params.DO_NAIVE_TIMEINT ? params.NAIVE_TIMEINT_ORDER : order_time);
+        const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, globxvar.DO_NAIVE_TIMEINT ? globxvar.NAIVE_TIMEINT_ORDER : order_time);
         //const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         const IntegrationRule & stdir = SelectIntegrationRule (et_space, order_space);
         const int MAXSIZE_PER = 5 * stdir.Size();
