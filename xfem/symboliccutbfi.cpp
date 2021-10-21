@@ -1182,7 +1182,7 @@ namespace ngfem
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
     }
-    else if(L2Norm(ip_x0->Point() - ip_x00->Point()) > 1) {
+    else if(L2Norm(ip_x0->Point() - ip_x00->Point()) > globxvar.MAX_DIST_NEWTON) {
         /*{
         IntegrationPoint * ip_xE = new(lh) IntegrationPoint(0,0,0);
 
