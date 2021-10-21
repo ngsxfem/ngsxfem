@@ -70,12 +70,12 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     EPS_STFES_RESTRICT_GF = 1e-9;
     EPS_SHIFTED_EVAL = 1e-8;
     EPS_FACET_PATCH_INTEGRATOR = 1e-12;
-    NEWTON_ITER_TRESHOLD = 20;
+    NEWTON_ITER_TRESHOLD = 15;
+    MAX_DIST_NEWTON = 10;
     FIXED_POINT_ITER_TRESHOLD = 100;
     DO_NAIVE_TIMEINT = false;
     NAIVE_TIMEINT_ORDER = 3;
     NAIVE_TIMEINT_SUBDIVS = 10;
-    MAX_DIST_NEWTON = 1;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
@@ -97,6 +97,8 @@ void GlobalNgsxfemVariables::Output(){
     cout << "EPS_SHIFTED_EVAL = " << EPS_SHIFTED_EVAL << endl;
     cout << "EPS_FACET_PATCH_INTEGRATOR = " << EPS_FACET_PATCH_INTEGRATOR << endl;
     cout << "NEWTON_ITER_TRESHOLD = " << NEWTON_ITER_TRESHOLD << endl;
+    cout << "MAX_DIST_NEWTON = " << MAX_DIST_NEWTON << endl;
+    cout << "FIXED_POINT_ITER_TRESHOLD = " << FIXED_POINT_ITER_TRESHOLD << endl;
     cout << "DO_NAIVE_TIMEINT = " << DO_NAIVE_TIMEINT << endl;
     cout << "NAIVE_TIMEINT_ORDER = " << NAIVE_TIMEINT_ORDER << endl;
     cout << "NAIVE_TIMEINT_SUBDIVS = " << NAIVE_TIMEINT_SUBDIVS << endl;
