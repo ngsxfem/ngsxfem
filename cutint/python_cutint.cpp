@@ -49,7 +49,7 @@ void ExportNgsx_cutint(py::module &m)
             throw Exception("element_wise only implemented for 1 dimensional coefficientfunctions");
 
           MyMutex mutex_ip_cont;
-          MyLock lock_ip_cont(mutex_ip_cont);
+          //MyLock lock_ip_cont(mutex_ip_cont);
 
           ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
