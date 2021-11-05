@@ -100,6 +100,8 @@ namespace ngfem
       if (its == globxvar.FIXED_POINT_ITER_TRESHOLD){
           if(diff_after5_its < 1e0) ipx.Point() = ipx_after5_its;
           else
+              cout << "Last diff: " << diff << endl;
+              cout << "5th diff: " << diff_after5_its << endl;
               throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! In addition, the 5th interation step is no good fallback candidate.");
       }
     
