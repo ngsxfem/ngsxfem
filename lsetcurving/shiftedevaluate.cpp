@@ -75,6 +75,9 @@ namespace ngfem
       // static atomic<int> cnt_its(0);
       // static atomic<int> cnt_calls(0);
       
+      Vec<SpaceD> ipx_after5_its;
+      double diff_after5_its;
+
       // Fixed point iteration
       while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
       {
@@ -86,6 +89,7 @@ namespace ngfem
         diff = zdiff - dvec_back - mip.GetJacobian() * fv;
         // cout << "diff = " << diff << endl;
         // cout << "its = " << its << endl;
+        if(its == 5) { ipx_after5_its = ipx.Point(); diff_after5_its = L2Norm(diff); }
         if ( L2Norm(diff) < globxvar.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * (zdiff - dvec_back);
 
@@ -93,8 +97,11 @@ namespace ngfem
         // cnt_its++;
       
       }
-      if (its == globxvar.FIXED_POINT_ITER_TRESHOLD)
-        throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
+      if (its == globxvar.FIXED_POINT_ITER_TRESHOLD){
+          if(diff_after5_its < 1e0) ipx.Point() = ipx_after5_its;
+          else
+              throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! In addition, the 5th interation step is no good fallback candidate.");
+      }
     
       // cnt_calls++;
       // cout << "cnt/calls = " << cnt_its/cnt_calls << endl;
