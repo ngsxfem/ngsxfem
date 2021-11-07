@@ -40,6 +40,13 @@ namespace ngcomp
       dom_of_node[NT_ELEMENT] = dom_of_node[NT_CELL];
       dom_of_node[NT_FACET] = dom_of_node[NT_FACE];
     }
+    else if(ma->GetDimension() == 1)
+    {
+      cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_EDGE];
+      cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_VERTEX];
+      dom_of_node[NT_ELEMENT] = dom_of_node[NT_EDGE];
+      dom_of_node[NT_FACET] = dom_of_node[NT_VERTEX];
+    }
     else
     {
       cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_FACE];
