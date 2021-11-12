@@ -33,26 +33,23 @@ namespace ngcomp
       (*dom_of_node[nt]) = NEG;
     }
 
-    if (ma->GetDimension() == 3)
-    {
-      cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_CELL];
-      cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_FACE];
-      dom_of_node[NT_ELEMENT] = dom_of_node[NT_CELL];
-      dom_of_node[NT_FACET] = dom_of_node[NT_FACE];
-    }
-    else if(ma->GetDimension() == 1)
-    {
+    if( ma->GetDimension() == 1) {
       cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_EDGE];
       cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_VERTEX];
       dom_of_node[NT_ELEMENT] = dom_of_node[NT_EDGE];
       dom_of_node[NT_FACET] = dom_of_node[NT_VERTEX];
     }
-    else
-    {
+    else if (ma ->GetDimension() == 2) {
       cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_FACE];
       cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_EDGE];
       dom_of_node[NT_ELEMENT] = dom_of_node[NT_FACE];
       dom_of_node[NT_FACET] = dom_of_node[NT_EDGE];
+    }
+    else if (ma->GetDimension() == 3) {
+      cut_neighboring_node[NT_ELEMENT] = cut_neighboring_node[NT_CELL];
+      cut_neighboring_node[NT_FACET] = cut_neighboring_node[NT_FACE];
+      dom_of_node[NT_ELEMENT] = dom_of_node[NT_CELL];
+      dom_of_node[NT_FACET] = dom_of_node[NT_FACE];
     }
     for (VorB vb : {VOL,BND})
     {
@@ -104,7 +101,7 @@ namespace ngcomp
             for (auto w : wei_arr) //for (auto ip : *ir_np)
               part_vol[np] += w; // ... += ip.Weight();
         }
-        (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);                 
+        (*cut_ratio_of_element[vb])(elnr) = part_vol[NEG]/(part_vol[NEG]+part_vol[POS]);
         if (vb == VOL)
         {
           if (part_vol[NEG] > 0.0)
@@ -150,10 +147,11 @@ namespace ngcomp
         for (int node : nodenums)
           cut_neighboring_node[NT_VERTEX]->SetBitAtomic(node);
 
-        nodenums = ma->GetElEdges(elid);
-        for (int node : nodenums)
-          cut_neighboring_node[NT_EDGE]->SetBitAtomic(node);
-
+        if(ma -> GetDimension() >=2){
+          nodenums = ma->GetElEdges(elid);
+          for (int node : nodenums)
+            cut_neighboring_node[NT_EDGE]->SetBitAtomic(node);
+        }
         if (ma->GetDimension() == 3)
         {
           nodenums = ma->GetElFaces(elid.Nr());
@@ -171,7 +169,8 @@ namespace ngcomp
     Array<bool> neg_edge;
     Array<bool> neg_face;
     neg_vertex.SetSize (ma->GetNV());
-    neg_edge.SetSize (ma->GetNEdges());
+    if (ma->GetDimension() >= 2)
+        neg_edge.SetSize (ma->GetNEdges());
     if (ma->GetDimension() == 3)
       neg_face.SetSize (ma->GetNFaces());
     neg_vertex = false;
@@ -183,8 +182,9 @@ namespace ngcomp
       {
         for (auto v : el.Vertices())
           neg_vertex[v] = true;
-        for (auto e : el.Edges())
-          neg_edge[e] = true;
+        if (ma->GetDimension() >= 2)
+          for (auto e : el.Edges())
+            neg_edge[e] = true;
         if (ma->GetDimension() == 3)
           for (auto f : el.Faces())
             neg_face[f] = true;
@@ -198,21 +198,30 @@ namespace ngcomp
       ma->AllReduceNodalData (NT_FACE, neg_face, MPI_LOR);
     }
     
-    for (int i = 0; i < ma->GetNV(); i++)
-      (*dom_of_node[NT_VERTEX])[i] = neg_vertex[i] ? NEG : POS;
-    for (int i = 0; i < ma->GetNEdges(); i++)
-      (*dom_of_node[NT_EDGE])[i] = neg_edge[i] ? NEG : POS;
-    if (ma->GetDimension() == 3)
-    {
+    if (ma->GetDimension() == 3) {
+      for (int i = 0; i < ma->GetNV(); i++)
+        (*dom_of_node[NT_VERTEX])[i] = neg_vertex[i] ? NEG : POS;
+      for (int i = 0; i < ma->GetNEdges(); i++)
+        (*dom_of_node[NT_EDGE])[i] = neg_edge[i] ? NEG : POS;
       for (int i = 0; i < ma->GetNFaces(); i++)
         (*dom_of_node[NT_FACE])[i] = neg_face[i] ? NEG : POS;
       for (int i = 0; i < ma->GetNE(); i++)
         (*dom_of_node[NT_CELL])[i] = (*cut_ratio_of_element[VOL])(i) > 0.5 ? NEG : POS;
     }
-    else
+    else if(ma -> GetDimension() == 2){
+      for (int i = 0; i < ma->GetNV(); i++)
+        (*dom_of_node[NT_VERTEX])[i] = neg_vertex[i] ? NEG : POS;
+      for (int i = 0; i < ma->GetNEdges(); i++)
+        (*dom_of_node[NT_EDGE])[i] = neg_edge[i] ? NEG : POS;
       for (int i = 0; i < ma->GetNE(); i++)
         (*dom_of_node[NT_FACE])[i] = (*cut_ratio_of_element[VOL])(i) > 0.5 ? NEG : POS;
-        
+    }
+    else if(ma -> GetDimension() == 1){
+      for (int i = 0; i < ma->GetNV(); i++)
+        (*dom_of_node[NT_VERTEX])[i] = neg_vertex[i] ? NEG : POS;
+      for (int i = 0; i < ma->GetNEdges(); i++)
+        (*dom_of_node[NT_EDGE])[i] = (*cut_ratio_of_element[VOL])(i) > 0.5 ? NEG : POS;
+    }
     /* old        
     IterateRange
       (ne, lh,
