@@ -1153,8 +1153,8 @@ namespace ngfem
       ip_x0->Point().Range(0,D) = ip_x00->Point();
     }
 
-    Array<Vec<D>> newtonlog;
-    newtonlog.Append(ip_x0->Point());
+    //Array<Vec<D>> newtonlog;
+    //newtonlog.Append(ip_x0->Point());
     int its = 0;
     double w = 0;
     while (its==0 || (L2Norm(diff) > globxvar.EPS_FACET_PATCH_INTEGRATOR*h && its < globxvar.NEWTON_ITER_TRESHOLD))
@@ -1165,7 +1165,7 @@ namespace ngfem
       if (its==0)
         first_diffnorm = L2Norm(diff);
       update = mip_x0.GetJacobianInverse() * diff;
-      ip_x0->Point().Range(0,D) += update; newtonlog.Append(ip_x0->Point());
+      ip_x0->Point().Range(0,D) += update; //newtonlog.Append(ip_x0->Point());
       its++;
       w = mip_x0.GetMeasure();
     }
