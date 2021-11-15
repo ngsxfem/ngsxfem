@@ -64,7 +64,7 @@ namespace ngfem
     
 
       int its = 0;
-      const double h = sqrt(mip.GetJacobiDet());
+      const double h = pow(abs(mip.GetJacobiDet()), 1./SpaceD);
       Vec<SpaceD> diff;
       IntegrationPoint ipx(ip);
 
@@ -188,7 +188,7 @@ namespace ngfem
     else
     {
       int its = 0;
-      const double h = sqrt(mip.GetJacobiDet());
+      const double h = pow(abs(mip.GetJacobiDet()), 1./SpaceD);
       Vec<SpaceD> diff;
       IntegrationPoint ipx(ip);
       IntegrationPoint ipx0(0,0,0);
