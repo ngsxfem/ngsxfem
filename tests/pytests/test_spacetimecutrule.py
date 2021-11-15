@@ -507,6 +507,94 @@ def test_spacetime_spaceP1_timeDGP1():
         print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
         assert(l2error < 0.085)
 
+@pytest.mark.parametrize("i", [3,4,5])
+def length_1D_Int_test():
+    length = 1
+    mesh = Make1DMesh(n=2**(i), mapping= lambda x : 2*length*x-length)
+    
+    r0 = 0.4
+    r = sqrt(x**2)
+    
+    # level set
+    levelset= r - r0
+    
+    fes1 = H1(mesh, order=1)
+
+    lset_p1 = GridFunction(fes1)
+    
+    InterpolateToP1(levelset,lset_p1)
+    val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh)
+    print("Numerical value: ", val_vol)
+    print("Error: ", abs(val_vol - 2*r0))
+    assert( abs(val_vol - 2*r0) < 1e-10)
+
+def area_of_a_circle_ST_error(n_steps = 8, i=1):
+    length = 1
+    mesh = Make1DMesh(n=2**(i), mapping= lambda x : 2*length*x-length)
+
+    coef_told = Parameter(0)
+    coef_delta_t = Parameter(0)
+    tref = ReferenceTimeVariable()
+    t = coef_told + coef_delta_t*tref
+    
+    r0 = 0.9
+    r = sqrt(x**2+t**2)
+    
+    # level set
+    levelset= r - r0
+    
+    time_order = 1
+    fes1 = H1(mesh, order=1)
+    tfe = ScalarTimeFE(time_order)
+    st_fes = SpaceTimeFESpace(fes1,tfe)
+    
+    tend = 1
+    delta_t = tend/n_steps
+    coef_delta_t.Set(delta_t)
+    told = 0
+
+    lset_p1 = GridFunction(st_fes)
+    
+    sum_vol = 0
+    sum_int = 0
+    for i in range(n_steps):
+        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
+    
+        val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
+        #print(val_vol, val_int)
+        sum_vol += val_vol*delta_t
+        sum_int += val_int*delta_t
+        
+        told = told + delta_t
+        coef_told.Set(told)
+
+    print("SUM VOL: ", sum_vol)
+    print("VOL: ", pi*r0**2/2)
+    vol_err = abs(sum_vol - pi*r0**2/2)
+    print("\t\tDIFF: ", vol_err)
+    
+    print("SUM INT: ", sum_int)
+    print("AREA: ", 2*r0)
+    int_err = abs(sum_int - 2*r0)
+    print("\t\tDIFF: ",int_err)
+    return (vol_err, int_err)
+
+def test_spacetime_area_of_a_circle():
+    l2errors_vol = []
+    for i in range(6):
+        (n_steps,i) =  (2**(i+2), i+1)
+        (vol_err, int_err) = area_of_a_circle_ST_error(n_steps, i)
+        l2errors_vol.append(vol_err)
+        assert int_err < 1e-10
+    
+    print("L2 (VOL): ", l2errors_vol)
+    eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
+    print("EOCS (VOL): ", eocs_vol)
+    avg = sum(eocs_vol)/len(eocs_vol)
+    print("Average: ", avg)
+    assert avg > 1.9
+    
 def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     if structured_mesh:
         length = 1
