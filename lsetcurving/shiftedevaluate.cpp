@@ -98,11 +98,14 @@ namespace ngfem
       
       }
       if (its == globxvar.FIXED_POINT_ITER_TRESHOLD){
-          if(diff_after5_its < 1e0) ipx.Point() = ipx_after5_its;
+          if(diff_after5_its < 1e0) {
+              cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "In Shifted_eval: Not converged, but the 5th iteration seems a reasonable candidate" << endl;
+              ipx.Point() = ipx_after5_its;
+          }
           else {
               cout << "Last diff: " << diff << endl;
               cout << "5th diff: " << diff_after5_its << endl;
-              throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! In addition, the 5th interation step is no good fallback candidate.");
+              throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD iterations and didn't (yet?) converge! In addition, the 5th interation step is no good fallback candidate.");
           }
       }
     
@@ -215,7 +218,7 @@ namespace ngfem
         its++;
       }
       if (its == globxvar.FIXED_POINT_ITER_TRESHOLD)
-        throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
+        throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
 
       scafe.CalcShape(ipx,shape);
       mat = 0.0;

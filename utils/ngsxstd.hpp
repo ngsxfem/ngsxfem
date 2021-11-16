@@ -124,6 +124,8 @@ public:
     int NAIVE_TIMEINT_SUBDIVS;
     int NAIVE_TIMEINT_ORDER;
 
+    int NON_CONV_WARN_MSG_LVL;
+
     GlobalNgsxfemVariables();
     
     void SetDefaults();

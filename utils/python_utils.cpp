@@ -275,6 +275,7 @@ eps_spacetime_fes_node : double
           .def_readwrite("do_naive_timeint", &GlobalNgsxfemVariables::DO_NAIVE_TIMEINT)
           .def_readwrite("naive_timeint_order", &GlobalNgsxfemVariables::NAIVE_TIMEINT_ORDER)
           .def_readwrite("naive_timeint_subdivs", &GlobalNgsxfemVariables::NAIVE_TIMEINT_SUBDIVS)
+          .def_readwrite("non_conv_warn_msg_lvl", &GlobalNgsxfemVariables::NON_CONV_WARN_MSG_LVL)
           .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
           .def("Output", &GlobalNgsxfemVariables::Output)
           .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);

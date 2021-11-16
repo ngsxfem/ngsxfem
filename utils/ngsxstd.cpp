@@ -76,6 +76,7 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     DO_NAIVE_TIMEINT = false;
     NAIVE_TIMEINT_ORDER = 3;
     NAIVE_TIMEINT_SUBDIVS = 10;
+    NON_CONV_WARN_MSG_LVL = 3;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
@@ -102,4 +103,5 @@ void GlobalNgsxfemVariables::Output(){
     cout << "DO_NAIVE_TIMEINT = " << DO_NAIVE_TIMEINT << endl;
     cout << "NAIVE_TIMEINT_ORDER = " << NAIVE_TIMEINT_ORDER << endl;
     cout << "NAIVE_TIMEINT_SUBDIVS = " << NAIVE_TIMEINT_SUBDIVS << endl;
+    cout << "NON_CONV_WARN_MSG_LVL = " << NON_CONV_WARN_MSG_LVL << endl;
 }
