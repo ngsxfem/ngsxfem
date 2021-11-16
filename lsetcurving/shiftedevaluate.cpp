@@ -75,8 +75,9 @@ namespace ngfem
       // static atomic<int> cnt_its(0);
       // static atomic<int> cnt_calls(0);
       
-      Vec<SpaceD> ipx_after5_its;
-      double diff_after5_its;
+      Vec<SpaceD> ipx_best_so_far;
+      double diff_best_so_far;
+      bool first = true; int idx_best;
 
       // Fixed point iteration
       while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
@@ -87,9 +88,21 @@ namespace ngfem
         FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
 
         diff = zdiff - dvec_back - mip.GetJacobian() * fv;
-        // cout << "diff = " << diff << endl;
-        // cout << "its = " << its << endl;
-        if(its == 5) { ipx_after5_its = ipx.Point(); diff_after5_its = L2Norm(diff); }
+        //cout << "diff = " << diff << endl;
+        //cout << "its = " << its << endl;
+        if(first) {
+            diff_best_so_far = L2Norm(diff);
+            ipx_best_so_far = ipx.Point();
+            idx_best = its;
+            first = false;
+        }
+        else {
+            if (L2Norm(diff) < diff_best_so_far){
+                diff_best_so_far = L2Norm(diff);
+                ipx_best_so_far = ipx.Point();
+                idx_best = its;
+            }
+        }
         if ( L2Norm(diff) < globxvar.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * (zdiff - dvec_back);
 
@@ -98,14 +111,14 @@ namespace ngfem
       
       }
       if (its == globxvar.FIXED_POINT_ITER_TRESHOLD){
-          if(diff_after5_its < 1e0) {
-              cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "In Shifted_eval: Not converged, but the 5th iteration seems a reasonable candidate" << endl;
-              ipx.Point() = ipx_after5_its;
+          if(diff_best_so_far < 1e0) {
+              cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "In Shifted_eval: Not converged, but the "+to_string(idx_best)+"th iteration seems a reasonable candidate" << endl;
+              ipx.Point() = ipx_best_so_far;
           }
           else {
               cout << "Last diff: " << diff << endl;
-              cout << "5th diff: " << diff_after5_its << endl;
-              throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD iterations and didn't (yet?) converge! In addition, the 5th interation step is no good fallback candidate.");
+              cout << "Best diff: " << diff_best_so_far << endl;
+              throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD = "+to_string(globxvar.FIXED_POINT_ITER_TRESHOLD)+" iterations and didn't (yet?) converge! In addition, the best interation step is no good fallback candidate.");
           }
       }
     
