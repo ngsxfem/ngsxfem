@@ -177,7 +177,8 @@ Parameters
 order : int
 The polynomial order of the discretisation. That controlls the number of
 points in the time interval. See Gauss-Lobatto points for further details.
-Currently, orders up to 5 are available.
+Orders up to 5 are given by explicit closed formulas, beyond that an
+iterative construction is applied.
 
 skip_first_nodes : bool
 This will create the time finite element without the first node at t=0.

@@ -157,6 +157,35 @@ namespace ngfem
           }
       }
 
+      Vector<double> CalcLobattoPointsRec(int order) {
+          int N = order;
+          Vector<double> x(N+1); Vector<double> x_old(N+1);
+          for(int j=0; j<N+1; j++) {
+              x[j] = cos(M_PI*((double)j)/N);
+              x_old[j] = 0.0;
+          }
+
+          Matrix<double> P(N+1, N+1);
+          int its = 0;
+          while( (its < 100) && (L2Norm (x -x_old) > 1e-15) ) {
+              x_old = x;
+              for(int j=0; j<N+1; j++){
+                  P(j, 0) = 1; P(j,1) = x[j];
+              }
+              for(int k=1; k<N; k++){
+                  for(int j=0; j<N+1; j++) P(j,k+1)=( (2.*k+1)*(x[j] * P(j,k)) -((double)k)*P(j,k-1) )/((double)k+1.);
+              }
+              for(int j=0;j<N+1; j++) x[j]=x_old[j] -( x[j] * P(j,N) - P(j,N-1) )/( N*P(j,N) );
+              its ++;
+          }
+          for(int j=0; j<N+1; j++) x[j] = 0.5*(1-x[j]);
+
+          //This can be used for comparison with the hard-coded values for orders up to 5
+          //NodalTimeFE fe(order, false, false, 1);
+          //for(int j=0; j<N+1; j++) cout << x[j] - fe.GetNodes()[j] << endl;
+          return x;
+      }
+
       void NodalTimeFE :: CalcInterpolationPoints ()
       {
          nodes.SetSize(order+1);
@@ -178,7 +207,9 @@ namespace ngfem
                    nodes[3] = 0.5*(1.0 + sqrt(1.0/3.0 - 2.0*sqrt(7.0)/21.0));
                    nodes[4] = 0.5*(1.0 + sqrt(1.0/3.0 + 2.0*sqrt(7.0)/21.0));
                    nodes[5] = 1.0;  break;
-          default : throw Exception("Requested TimeFE not implemented yet.");
+          default :
+                  auto nds = CalcLobattoPointsRec(order);
+                  for(int j=0;j<order+1;j++) nodes[j] = nds[j];
          }
       }
 
