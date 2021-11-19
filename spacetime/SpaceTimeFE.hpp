@@ -56,6 +56,11 @@ namespace ngfem
         bool only_first_nodes = false;
         Array<double> nodes;
 
+        bool do_horner_eval = false;
+
+        void CalcNewtonBasisCoeffs();
+        Matrix<double> NewtonBasisCoeffs;
+
       public:
         NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node = 1);
         virtual ELEMENT_TYPE ElementType() const { return ET_SEGM; }
@@ -82,6 +87,8 @@ namespace ngfem
         virtual void CalcInterpolationPoints ();
         virtual Array<double> & GetNodes() { return nodes; }
         virtual int order_time() const { return k_t; }
+
+        double Lagrange_Pol_Horner (double x, int i) const;
 
         template <class T>
         T Lagrange_Pol (T x, int i) const

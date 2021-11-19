@@ -129,8 +129,42 @@ namespace ngfem
       {
          k_t = order;
          CalcInterpolationPoints ();
+
+         if(order >= 5) do_horner_eval = true;
+         do_horner_eval = false; //Comment this out in order to test Horner
+
+         if(do_horner_eval){
+             CalcNewtonBasisCoeffs();
+         }
       }
 
+    void NodalTimeFE::CalcNewtonBasisCoeffs(){
+        NewtonBasisCoeffs.SetSize(nodes.Size(), nodes.Size());
+        for(int i=0; i<nodes.Size(); i++){
+            Matrix<double> p(nodes.Size(),nodes.Size());
+            for(int j=0; j<nodes.Size(); j++) p(j,0) = 0.;
+            p(i,0) = 1;
+            for(int k=1; k<nodes.Size(); k++){
+                for(int ii=0; ii<nodes.Size()-k; ii++){
+                    p(k+ii,k) = ((p(k+ii,k-1) - p(k+ii-1,k-1))/(nodes[k+ii] - nodes[ii]));
+                }
+            }
+            for(int j=0; j<nodes.Size(); j++) NewtonBasisCoeffs(j,i) = p(j,j);
+        }
+    }
+
+    double NodalTimeFE::Lagrange_Pol_Horner(const double x, int i) const {
+        Array<double> b (nodes.Size());
+        b[nodes.Size()-1] = NewtonBasisCoeffs(nodes.Size()-1,i);
+        for(int j=nodes.Size()-2; j>=0; j--) b[j] = b[j+1]*(x - nodes[j]) + NewtonBasisCoeffs(j,i);
+
+        //cout << "Horner res: " << b[0] << endl;
+        //AutoDiff<1> adx (x, 0);
+        //cout << "Explicit res: " << (Lagrange_Pol(adx, i)).Value() << endl;
+        //cout << "DIFF: " << abs( b[0] - (Lagrange_Pol(adx, i)).Value() ) << endl;
+
+        return b[0];
+    }
 
       void NodalTimeFE :: CalcShape (const IntegrationPoint & ip,
                                      BareSliceVector<> shape) const
@@ -140,7 +174,7 @@ namespace ngfem
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          for(int i = begin; i < end; i++) {
-             shape(cnt++) = Lagrange_Pol (adx, i).Value() ;
+             shape(cnt++) = (do_horner_eval ? Lagrange_Pol_Horner(ip(0),i) : Lagrange_Pol (adx, i).Value()) ;
          }
       }
 
