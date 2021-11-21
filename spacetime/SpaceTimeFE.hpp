@@ -46,6 +46,23 @@ namespace ngfem
       //using ScalarFiniteElement<2>::CalcDShape;
     };
 
+    class LagrangePolyHornerCalc {
+     protected:
+        Array<double> nodes;
+
+        Matrix<double> NewtonBasisCoeffs;
+        Array<LagrangePolyHornerCalc> my_childs;
+        void SetUpChilds();
+
+     public:
+        LagrangePolyHornerCalc() { }
+
+        LagrangePolyHornerCalc(Array<double> & nodes2, bool deriv_calc_needed) : nodes(nodes2) { CalcNewtonBasisCoeffs(); if(deriv_calc_needed) SetUpChilds(); }
+
+        void CalcNewtonBasisCoeffs();
+        double Lagrange_Pol_Horner (double x, int i) const;
+        double Lagrange_Pol_D_Horner (double x, int i) const;
+    };
 
     class NodalTimeFE : public ScalarFiniteElement<1>
       {
@@ -57,9 +74,8 @@ namespace ngfem
         Array<double> nodes;
 
         bool do_horner_eval = false;
+        LagrangePolyHornerCalc HornerLP;
 
-        void CalcNewtonBasisCoeffs();
-        Matrix<double> NewtonBasisCoeffs;
 
       public:
         NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node = 1);
@@ -87,8 +103,6 @@ namespace ngfem
         virtual void CalcInterpolationPoints ();
         virtual Array<double> & GetNodes() { return nodes; }
         virtual int order_time() const { return k_t; }
-
-        double Lagrange_Pol_Horner (double x, int i) const;
 
         template <class T>
         T Lagrange_Pol (T x, int i) const

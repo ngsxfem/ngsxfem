@@ -119,26 +119,7 @@ namespace ngfem
 
     }
 
-
-    NodalTimeFE :: NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node)
-        : ScalarFiniteElement<1> (askip_first_nodes ? order + 1 - ndof_first_node          // skip_first_nodes
-                                                    : (aonly_first_nodes ? ndof_first_node // only_first_nodes
-                                                                         : order + 1),     // neither
-                                  order), 
-        skip_first_nodes(askip_first_nodes), only_first_nodes(aonly_first_nodes)
-      {
-         k_t = order;
-         CalcInterpolationPoints ();
-
-         if(order >= 5) do_horner_eval = true;
-         do_horner_eval = false; //Comment this out in order to test Horner
-
-         if(do_horner_eval){
-             CalcNewtonBasisCoeffs();
-         }
-      }
-
-    void NodalTimeFE::CalcNewtonBasisCoeffs(){
+   void LagrangePolyHornerCalc::CalcNewtonBasisCoeffs() {
         NewtonBasisCoeffs.SetSize(nodes.Size(), nodes.Size());
         for(int i=0; i<nodes.Size(); i++){
             Matrix<double> p(nodes.Size(),nodes.Size());
@@ -151,9 +132,18 @@ namespace ngfem
             }
             for(int j=0; j<nodes.Size(); j++) NewtonBasisCoeffs(j,i) = p(j,j);
         }
+   }
+
+   void LagrangePolyHornerCalc::SetUpChilds(){
+        for(int k=0; k<nodes.Size(); k++){
+            Array<double> nodes_minus(nodes);
+            nodes_minus.RemoveElement(k);
+            LagrangePolyHornerCalc child(nodes_minus, false);
+            my_childs.Append(child);
+        }
     }
 
-    double NodalTimeFE::Lagrange_Pol_Horner(const double x, int i) const {
+    double LagrangePolyHornerCalc::Lagrange_Pol_Horner (double x, int i) const {
         Array<double> b (nodes.Size());
         b[nodes.Size()-1] = NewtonBasisCoeffs(nodes.Size()-1,i);
         for(int j=nodes.Size()-2; j>=0; j--) b[j] = b[j+1]*(x - nodes[j]) + NewtonBasisCoeffs(j,i);
@@ -165,6 +155,35 @@ namespace ngfem
 
         return b[0];
     }
+    double LagrangePolyHornerCalc::Lagrange_Pol_D_Horner(double x, int i) const {
+        if(my_childs.Size() == 0) throw Exception("LagrangePolyHornerCalc::Lagrange_Pol_D_Horner was called although instance was created in non-deriv mode");
+        double sum = 0;
+        for(int k=0; k<nodes.Size(); k++){
+            if(k != i){
+                sum += 1./(nodes[i] - nodes[k])*my_childs[k].Lagrange_Pol_Horner(x, (i > k ? i-1 : i));
+            }
+        }
+        return sum;
+    }
+
+    NodalTimeFE :: NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node)
+        : ScalarFiniteElement<1> (askip_first_nodes ? order + 1 - ndof_first_node          // skip_first_nodes
+                                                    : (aonly_first_nodes ? ndof_first_node // only_first_nodes
+                                                                         : order + 1),     // neither
+                                  order), 
+        skip_first_nodes(askip_first_nodes), only_first_nodes(aonly_first_nodes)
+      {
+         k_t = order;
+         CalcInterpolationPoints ();
+
+         if(order >= 5) do_horner_eval = true;
+         //do_horner_eval = false; //Comment this out in order to test Horner
+
+         if(do_horner_eval){
+             LagrangePolyHornerCalc HornerLP2(nodes, true);
+             HornerLP = HornerLP2;
+         }
+      }
 
       void NodalTimeFE :: CalcShape (const IntegrationPoint & ip,
                                      BareSliceVector<> shape) const
@@ -174,7 +193,7 @@ namespace ngfem
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          for(int i = begin; i < end; i++) {
-             shape(cnt++) = (do_horner_eval ? Lagrange_Pol_Horner(ip(0),i) : Lagrange_Pol (adx, i).Value()) ;
+             shape(cnt++) = (do_horner_eval ? HornerLP.Lagrange_Pol_Horner(ip(0),i) : Lagrange_Pol (adx, i).Value()) ;
          }
       }
 
@@ -187,7 +206,7 @@ namespace ngfem
          int end = only_first_nodes ? 1 : ndof+begin;
          int cnt = 0;
          for(int i = begin; i < end; i++) {
-             dshape(cnt++,0) = Lagrange_Pol(adx, i).DValue(0);
+             dshape(cnt++,0) = (do_horner_eval ? HornerLP.Lagrange_Pol_D_Horner(ip(0),i) : Lagrange_Pol(adx, i).DValue(0));
           }
       }
 
