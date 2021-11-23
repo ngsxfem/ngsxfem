@@ -4,6 +4,13 @@
 
 namespace xintegration
 {
+
+    bool sign_changed(double a, double b){
+        if((a >= 0)&&(b <= 0)) return true;
+        else if((a <= 0)&&(b >= 0)) return true;
+        else return false;
+    }
+
     vector<double> root_finding(SliceVector<> li, ScalarFiniteElement<1>* fe_time, LocalHeap& lh, int subdivs=50, int bisection_iterations = 70){
         // if(li.Size() == 2){
        if(fe_time->Order() == 0)
@@ -57,10 +64,16 @@ namespace xintegration
             for(int i=0; i<subdivs+1; i++){
                 double xi = delta_x*i;
                 vals[i] = eval(xi);
-                if(vals[i] == 0)
-                  roots.push_back(xi);
-                if(i >= 1) if(vals[i-1] * vals[i] < 0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
+                //if( 2*abs(vals[i]) < globxvar.EPS_STCR_ROOT_SEARCH_BISECTION ) roots.push_back(xi);
+                if(vals[i] == 0) roots.push_back(xi);
+                //if(i >= 1) if(sign_changed(vals[i-1], vals[i])) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
+                if(i >= 1) if(vals[i-1]*vals[i]<0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
             }
+            //cout << "vals: " << endl;
+            //for(auto &v: vals) cout << v << endl;
+            //cout << "sign_change_intervals: " << endl;
+            //for(auto &tp : sign_change_intervals) cout << get<0>(tp) << ", " << get<1>(tp) << endl;
+
             for(auto interval : sign_change_intervals){
                 double a = get<0>(interval), b = get<1>(interval); double x_mid;
                 double aval = eval(a), bval = eval(b);
@@ -79,9 +92,11 @@ namespace xintegration
                   x_mid = 0.5*(a+b);
                   val = eval(x_mid);
                     if(val == 0) break;
-                    if(val * aval < 0) {
+                    //if(sign_changed( val,  aval)) {
+                    if(val * aval < 0){
                         b = x_mid; bval = val;
                     }
+                    //else if(sign_changed(val, bval)){
                     else if(val * bval < 0){
                         a = x_mid; aval = val;
                     }
@@ -91,6 +106,8 @@ namespace xintegration
                     cout << IM(2) << "WARNING: Bisection search did not converge. Residual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
+            //cout << "Final roots: " << endl;
+            //for(auto r : roots) cout << r << endl;
             return roots;
         }
     }
@@ -151,6 +168,9 @@ namespace xintegration
 
         for(int i=0; i<cut_points.size() -1; i++){
             double t0 = cut_points[i], t1 = cut_points[i+1];
+            //if(t1 == t0){
+            //    break;
+            //}
             for(auto ip:ir_time){
                 double t = t0 + ip.Point()[0]*(t1 - t0);
                 FlatVector<> cf_lset_at_t(space_nfreedofs,lh);
