@@ -220,7 +220,7 @@ namespace ngfem
 
           Matrix<double> P(N+1, N+1);
           int its = 0;
-          while( (its < 100) && (L2Norm (x -x_old) > 1e-15) ) {
+          while( (its < 100) && (L2Norm (x -x_old) > 1e-20) ) {
               x_old = x;
               for(int j=0; j<N+1; j++){
                   P(j, 0) = 1; P(j,1) = x[j];
