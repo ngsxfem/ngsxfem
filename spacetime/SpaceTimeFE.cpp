@@ -177,7 +177,7 @@ namespace ngfem
          CalcInterpolationPoints ();
 
          if(order >= 5) do_horner_eval = true;
-         //do_horner_eval = false; //Comment this out in order to test Horner
+         do_horner_eval = false; //Comment this out in order to test Horner
 
          if(do_horner_eval){
              LagrangePolyHornerCalc HornerLP2(nodes, true);
