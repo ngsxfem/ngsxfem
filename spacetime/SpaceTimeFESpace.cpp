@@ -120,7 +120,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
         for (auto v : Vh_dofs)
             dnums.Append (v+i*Vh->GetNDof());
      }
-
   }
 
 

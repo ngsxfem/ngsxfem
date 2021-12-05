@@ -66,7 +66,6 @@ void ExportNgsx_cutint(py::module &m)
                  FlatMatrix<> val(mir.Size(), 1, lh);
 
                  cf -> Evaluate (mir, val);
-                 cout << "cf vals: " << val << endl;
 
                  double lsum = 0.0;
                  for (int i = 0; i < mir.Size(); i++)

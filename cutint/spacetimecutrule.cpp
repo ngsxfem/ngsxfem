@@ -108,12 +108,7 @@ namespace xintegration
                     cout << IM(2) << "WARNING: Bisection search did not converge. Residual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
-            //vector<double> roots_filtered;
-            for(auto r : roots) if((r < 1e-12) || (r>1.-1e-12)) cout << "corner case " << r << " detected." << endl;
-            //cout << "Final roots: " << endl;
-            //for(auto r : roots) cout << r << "\t, val: " << eval(r) << endl;
-
-
+            //for(auto r : roots) if((r < 1e-12) || (r>1.-1e-12)) cout << "corner case " << r << " detected." << endl;
             return roots;
         }
     }
@@ -128,7 +123,7 @@ namespace xintegration
                                                         LocalHeap & lh){
         static Timer timer("SpaceTimeCutIntegrationRule");
         RegionTimer rt(timer);
-        cout << "This is SpaceTimeCutIntegrationRule " << endl;
+        //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
         
         int lset_nfreedofs = cf_lset_at_element.Size();
@@ -199,7 +194,7 @@ namespace xintegration
         //const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         if(order_space == -1) order_space = 20;
         const IntegrationRule & stdir = SelectIntegrationRule (et_space, order_space);
-        cout << "Order space: " << order_space << ", len stdir = " << stdir.Size() << endl;
+        //cout << "Order space: " << order_space << ", len stdir = " << stdir.Size() << endl;
         const int MAXSIZE_PER = 5 * stdir.Size();
         const int MAXSIZE = MAXSIZE_PER * (cut_points.size()-1) * ir_time.Size();
         // MAXSIZE is an estimated maximum size for the IntegrationRule 

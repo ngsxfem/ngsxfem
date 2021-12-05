@@ -143,7 +143,6 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
       FlatMatrix<TSCAL> val(mir.Size(), 1, lh);
 
       cf -> Evaluate (mir, val);
-      cout << "Second eval!! We have \n" << val << endl;
 
       TSCAL lsum(0.0);
       for (int i = 0; i < mir.Size(); i++)
