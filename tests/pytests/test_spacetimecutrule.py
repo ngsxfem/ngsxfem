@@ -757,14 +757,14 @@ def test_spacetime_area_of_a_sphere_ho(structured, k):
     print("EOCS (VOL): ", eocs_vol)
     avg = sum(eocs_vol)/len(eocs_vol)
     print("Average: ", avg)
-    assert avg > k+1
+    assert avg > k+0.8
     
     print("L2 (INT): ", l2errors_int)
     eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
     print("EOCS (INT): ", eocs_int)
     avg = sum(eocs_int)/len(eocs_int)
     print("Average: ", avg)
-    assert avg > k+1
+    assert avg > k+0.8
 
 #ngsxfemglobals.do_naive_timeint = True
 #ngsxfemglobals.naive_timeint_order = 2
