@@ -668,7 +668,7 @@ def area_of_a_sphere_ST_error_ho(n_steps = 8, i=3, structured_mesh=False, k = 3)
     tref = ReferenceTimeVariable()
     t = coef_told + coef_delta_t*tref
     
-    r0 = 1.
+    r0 = 0.9
     r = sqrt(x**2+y**2+t**2)
     
     # level set
@@ -678,14 +678,14 @@ def area_of_a_sphere_ST_error_ho(n_steps = 8, i=3, structured_mesh=False, k = 3)
     
     time_order = k
     
-    tend = 1
+    tend = r0/2
     delta_t = tend/n_steps
     coef_delta_t.Set(delta_t)
     told = 0
     
-    dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=2*time_order+2, order = 2*k+2,
+    dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order, order = k,
                         deformation=lsetadap.deformation[INTERVAL])
-    dG = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], IF, time_order=2*time_order+2, order = 2*k+2,
+    dG = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], IF, time_order=time_order, order = k,
                         deformation=lsetadap.deformation[INTERVAL])
     
     sum_vol = 0
@@ -703,13 +703,13 @@ def area_of_a_sphere_ST_error_ho(n_steps = 8, i=3, structured_mesh=False, k = 3)
         coef_told.Set(told)
 
     print("SUM VOL: ", sum_vol)
-    print("VOL: ", 2/3*pi*r0**3)
-    vol_err = abs(sum_vol - 2/3*pi*r0**3)
+    print("VOL: ", 11/24*pi*r0**3)
+    vol_err = abs(sum_vol - 11/24*pi*r0**3)
     print("\t\tDIFF: ", vol_err)
     
     print("SUM INT: ", sum_int)
-    print("AREA: ", 0.5*pi**2*r0**2)
-    int_err = abs(sum_int - 0.5*pi**2*r0**2)
+    print("AREA: ", pi/12*r0**2*(3*sqrt(3) + 2*pi))
+    int_err = abs(sum_int - pi/12*r0**2*(3*sqrt(3) + 2*pi))
     print("\t\tDIFF: ",int_err)
     return (vol_err, int_err)
 
@@ -738,32 +738,38 @@ def test_spacetime_area_of_a_sphere(structured):
     print("Average: ", avg)
     assert avg > 1.9
 
-@pytest.mark.parametrize("structured", [True])
-@pytest.mark.parametrize("structured", [2,3,4,5,6])
+@pytest.mark.parametrize("structured", [True, False])
+@pytest.mark.parametrize("structured", [2,3,4,5,6,7,8])
 def test_spacetime_area_of_a_sphere_ho(structured, k):
     
     l2errors_vol = []
     l2errors_int = []
-    for i in range(3):
-        (n_steps,i) =  (2**(i+2), i+2)
+    for i in range(6):
+        (n_steps,i) =  (2**(i+1), i+1)
         (vol_err, int_err) = area_of_a_sphere_ST_error_ho(n_steps, i, structured, k)
         l2errors_vol.append(vol_err)
         l2errors_int.append(int_err)
+        if vol_err < 1e-9 or int_err < 1e-9:
+            break
     
     print("L2 (VOL): ", l2errors_vol)
     eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
     print("EOCS (VOL): ", eocs_vol)
     avg = sum(eocs_vol)/len(eocs_vol)
     print("Average: ", avg)
-    assert avg > k+0.5
+    assert avg > k+1
     
     print("L2 (INT): ", l2errors_int)
     eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
     print("EOCS (INT): ", eocs_int)
     avg = sum(eocs_int)/len(eocs_int)
     print("Average: ", avg)
-    assert avg > k-0.5
-#test_spacetime_area_of_a_sphere_ho(True, 4)
+    assert avg > k+1
+
+#ngsxfemglobals.do_naive_timeint = True
+#ngsxfemglobals.naive_timeint_order = 2
+#ngsxfemglobals.naive_timeint_subdivs = 1
+#test_spacetime_area_of_a_sphere_ho(False, 2)
 
 def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     if structured_mesh:
