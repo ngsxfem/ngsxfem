@@ -739,7 +739,7 @@ def test_spacetime_area_of_a_sphere(structured):
     assert avg > 1.9
 
 @pytest.mark.parametrize("structured", [True, False])
-@pytest.mark.parametrize("structured", [2,3,4,5,6,7,8])
+@pytest.mark.parametrize("k", [2,3,4,5,6,7,8])
 def test_spacetime_area_of_a_sphere_ho(structured, k):
     
     l2errors_vol = []
