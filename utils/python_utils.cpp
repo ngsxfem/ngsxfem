@@ -229,17 +229,20 @@ CompoundFESpaces.
     );
 
   py::class_<GlobalNgsxfemVariables>(m, "GlobalNgsxfemVariables")
-          .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
-          .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
-          .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
-          .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
-          .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
-          .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
-          .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
-          .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
-          .def("Output", &GlobalNgsxfemVariables::Output)
-          .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
-  
+      .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
+      .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
+      .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
+      .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
+      .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
+      .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
+      .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+      .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+      .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+      .def_readwrite("simd_eval", &GlobalNgsxfemVariables::SIMD_EVAL)
+      .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
+      .def("Output", &GlobalNgsxfemVariables::Output)
+      .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
+
   m.attr("ngsxfemglobals") = py::cast(&globxvar);
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
