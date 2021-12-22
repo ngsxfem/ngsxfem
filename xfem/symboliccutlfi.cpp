@@ -99,12 +99,24 @@ namespace ngfem
         Array<double> ns_wei_arr;
         tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
         SIMD_IntegrationRule ir(*ns_ir, lh);
-        Array<SIMD<SCAL>> wei_arr;
+        Array<SIMD<double>> wei_arr;
+        for (int i = 0; i < (ir.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
+        {
+          wei_arr[i] = [&](int j)
+          {
+            int nr = i * SIMD<IntegrationPoint>::Size() + j;
+            bool regularip = nr < ir.Size();
+            SIMD<double> weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
+            if (!regularip)
+              weight=0;
+            return weight;
+          };
+        }
         if (ns_ir == nullptr)
           return;
 
+        auto &mir2 = trafo(ir, lh);
         auto &mir = trafo(*ns_ir, lh);
-
         FlatVector<SCAL> elvec1(elvec.Size(), lh);
 
         FlatMatrix<SCAL> values(ns_ir->Size(), 1, lh);
