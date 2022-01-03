@@ -77,9 +77,10 @@ namespace ngfem
         // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
       }
     }
-
+    std::cout << globxvar.SIMD_EVAL;
     if (globxvar.SIMD_EVAL)
     {
+
       try
       {
         auto et = trafo.GetElementType();
@@ -99,16 +100,16 @@ namespace ngfem
         Array<double> ns_wei_arr;
         tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
         SIMD_IntegrationRule ir(*ns_ir, lh);
-        Array<SIMD<double>> wei_arr;
+        SIMD<double> *wei_arr = new SIMD<double>[(ir.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
         for (int i = 0; i < (ir.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
         {
           wei_arr[i] = [&](int j)
           {
             int nr = i * SIMD<IntegrationPoint>::Size() + j;
             bool regularip = nr < ir.Size();
-            SIMD<double> weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
+            double weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
             if (!regularip)
-              weight=0;
+              weight = 0;
             return weight;
           };
         }
@@ -117,12 +118,32 @@ namespace ngfem
 
         auto &mir2 = trafo(ir, lh);
         auto &mir = trafo(*ns_ir, lh);
-        FlatVector<SCAL> elvec1(elvec.Size(), lh);
+        for (CoefficientFunction *cf : gridfunction_cfs)
+          ud.AssignMemory(cf, ir.GetNIP(), cf->Dimension(), lh);
 
-        FlatMatrix<SCAL> values(ns_ir->Size(), 1, lh);
+        PrecomputeCacheCF(cache_cfs, mir2, lh);
 
+        elvec = 0;
+
+        for (auto proxy : proxies)
+        {
+          // NgProfiler::StartThreadTimer(telvec_dvec, tid);
+          FlatMatrix<SIMD<SCAL>> proxyvalues(proxy->Dimension(), ir.Size(), lh);
+          for (size_t k = 0; k < proxy->Dimension(); k++)
+          {
+            ud.testfunction = proxy;
+            ud.test_comp = k;
+
+            cf->Evaluate(mir2, proxyvalues.Rows(k, k + 1));
+            for (size_t i = 0; i < mir2.Size(); i++)
+              proxyvalues(k, i) *= mir2[i].GetMeasure() * wei_arr[i];
+          }
+
+          proxy->Evaluator()->AddTrans(fel, mir2, proxyvalues, elvec);
+        }
+        delete[] wei_arr;
         /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
-
+        /*
         for (auto proxy : proxies)
         {
           // td.Start();
@@ -144,6 +165,7 @@ namespace ngfem
           // tb.Stop();
           elvec += elvec1;
         }
+      }*/
       }
       catch (ExceptionNOSIMD e)
       {
