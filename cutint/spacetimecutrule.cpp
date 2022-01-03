@@ -33,18 +33,24 @@ namespace xintegration
            //  sum_i c_i phi_i(x) = c + b*x + a*x*x,
            double c = li[0], a = 2*li[0]+2*li[2]-4.*li[1], b = li[2] - a - c;
            vector<double> roots;
-           const double w = b*b - 4*a*c;
-           if(abs(w) < 1e-12){
-               double x_ast = -b/(2*a);
+           if(abs(a) < 1e-12) {
+               double x_ast = -c/b;
                if(x_ast < 1 && x_ast > 0) roots.push_back(x_ast);
            }
            else {
-               // if w<0 x_ast_i is nan (not in (0,1))
-               double x_ast1 = (b + sqrt(w))/(-2.0*a);
-               double x_ast2 = (b - sqrt(w))/(-2.0*a);
+                const double w = b*b - 4*a*c;
+                if(abs(w) < 1e-12){
+                    double x_ast = -b/(2*a);
+                    if(x_ast < 1 && x_ast > 0) roots.push_back(x_ast);
+                }
+                else {
+                    // if w<0 x_ast_i is nan (not in (0,1))
+                    double x_ast1 = (b + sqrt(w))/(-2.0*a);
+                    double x_ast2 = (b - sqrt(w))/(-2.0*a);
 
-               if(x_ast1 < 1 && x_ast1 > 0) roots.push_back(x_ast1);
-               if(x_ast2 < 1 && x_ast2 > 0) roots.push_back(x_ast2);
+                    if(x_ast1 < 1 && x_ast1 > 0) roots.push_back(x_ast1);
+                    if(x_ast2 < 1 && x_ast2 > 0) roots.push_back(x_ast2);
+                }
            }
            return roots;
        }
