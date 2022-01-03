@@ -71,7 +71,7 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     EPS_SHIFTED_EVAL = 1e-8;
     EPS_FACET_PATCH_INTEGRATOR = 1e-12;
     NEWTON_ITER_TRESHOLD = 200;
-    SIMD_EVAL = false;
+    SIMD_EVAL = true;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
@@ -93,4 +93,7 @@ void GlobalNgsxfemVariables::Output(){
     cout << "EPS_SHIFTED_EVAL = " << EPS_SHIFTED_EVAL << endl;
     cout << "EPS_FACET_PATCH_INTEGRATOR = " << EPS_FACET_PATCH_INTEGRATOR << endl;
     cout << "NEWTON_ITER_TRESHOLD = " << NEWTON_ITER_TRESHOLD << endl;
+}
+void GlobalNgsxfemVariables::SwitchSIMD(bool simd){
+  SIMD_EVAL=simd;
 }

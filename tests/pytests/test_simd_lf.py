@@ -74,6 +74,9 @@ dx = tuple([dCut(lsetp1, dt, deformation=lsetadap.deform,
 # R.h.s.:
 f = LinearForm(VhG)
 f += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
+g = LinearForm(VhG)
+g += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
+
 start =timer()
 
 f.Assemble()
@@ -82,13 +85,16 @@ vals1 = f.vec.FV().NumPy()
 print(vals1)
 print("Elapsed time: ")
 print(end-start)
-ngsxfemglobals.simd_eval = True
+ngsxfemglobals.SwitchSIMD(True)
 start =timer()
 
-f.Assemble()
+g.Assemble()
 end = timer()
-vals2 = f.vec.FV().NumPy()
+vals2 = g.vec.FV().NumPy()
 print("Elapsed time: ")
 print(end-start)
 assert(np.linalg.norm(vals1-vals2)<1e-8)
+print(np.linalg.norm(vals1-vals2)<1e-8)
+print(vals1)
+print(vals2)
 #print(f.vec.data)

@@ -241,7 +241,8 @@ CompoundFESpaces.
       .def_readwrite("simd_eval", &GlobalNgsxfemVariables::SIMD_EVAL)
       .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
       .def("Output", &GlobalNgsxfemVariables::Output)
-      .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
+      .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults)
+      .def("SwitchSIMD", &GlobalNgsxfemVariables::SwitchSIMD);
 
   m.attr("ngsxfemglobals") = py::cast(&globxvar);
 

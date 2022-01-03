@@ -134,6 +134,7 @@ public:
   void SetDefaults();
   void MultiplyAllEps(double fac);
   void Output();
+  void SwitchSIMD(bool simd);
 };
 
 extern GlobalNgsxfemVariables globxvar;
