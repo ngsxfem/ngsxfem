@@ -71,7 +71,7 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     EPS_SHIFTED_EVAL = 1e-8;
     EPS_FACET_PATCH_INTEGRATOR = 1e-12;
     NEWTON_ITER_TRESHOLD = 200;
-    SIMD_EVAL = true;
+    SIMD_EVAL = false;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
