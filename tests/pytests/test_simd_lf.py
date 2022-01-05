@@ -1,100 +1,85 @@
 from netgen.geom2d import SplineGeometry
-from ngsolve import *
-from xfem import *
 from xfem import ngsxfemglobals
-from xfem.lsetcurv import LevelSetMeshAdaptation
 import numpy as np
 from math import pi
 from timeit import default_timer as timer
-
-# -------------------------------- PARAMETERS ---------------------------------
-# Domain corners
-ll, ur = (-1.5, -1.5), (1.5, 1.5)
-# Mesh size
-maxh = 0.2
-# Finite element space order
-order = 2
-
-# Diffusion coefficients for the sub-domains (NEG/POS):
-alpha = [1.0, 2.0]
-# Nitsche penalty parameter
-lambda_nitsche = 20
-
-formulation = "XFEM"  # or "CUTFEM"
-
-# ----------------------------------- MAIN ------------------------------------
-# We generate the background mesh of the domain and use a simplicity
-# triangulation to obtain a mesh with quadrilaterals use
-# 'quad_dominated=True'
-square = SplineGeometry()
-square.AddRectangle(ll, ur, bc=1)
-mesh = Mesh(square.GenerateMesh(maxh=maxh, quad_dominated=False))
-
-r44 = x**4 + y**4
-
-r41 = sqrt(sqrt(r44))
-solution = [1 + pi / 2 - sqrt(2.0) * cos(pi / 4 * r44), pi / 2 * r41]
-coef_f = [-alpha[i] * (solution[i].Diff(x).Diff(x)
-                    + solution[i].Diff(y).Diff(y)) for i in range(2)]
-
-# Level set function of the domain (phi = ||x||_4 - 1) and its interpolation:
-levelset = r41 - 1.0
+import pytest
+from ngsolve import *
+from xfem import *
+from xfem.mlset import *
 
 
-lsetadap = NoDeformation(mesh, levelset)
-lsetp1 = lsetadap.lset_p1
-
-# Background FESpaces (used as CutFESpaces later-on):
-Vh = H1(mesh, order=order, dirichlet=".*")
-
-# Gathering information on cut elements:
-ci = CutInfo(mesh, lsetp1)
-
-Vhx = XFESpace(Vh, lsetp1)
-VhG = Vh * Vhx
+def level_sets():
+    return [-y, x - 1, y - 1, -x]
 
 
-(u_std, u_x), (v_std, v_x) = VhG.TnT()
-
-u = [u_std + op(u_x) for op in [neg, pos]]
-v = [v_std + op(v_x) for op in [neg, pos]]
+rhs = 32 * (y * (1 - y) + x * (1 - x))
 
 
-# Integration domains for integration on negative/positive sub-domains
-# and on the interface: Here, the integration is (geometrically) exact
-# if the "levelset"-argument is a piecewise (multi-)linear function.
-# We further provide a mesh deformation that is applied in the higher order
-# case:
+h0 = 0.05
+k = 3
+levelsets = level_sets()
+nr_ls = len(levelsets)
+geo = SplineGeometry()
+geo.AddRectangle((-0.2, -0.2), (1.2, 1.2),
+                 bcs=("bottom", "right", "top", "left"))
+
+mesh = Mesh(geo.GenerateMesh(maxh=0.5))
+# ------------------------- Finite Element Space --------------------------
+V = H1(mesh, order=k, dgjumps=True)
+
+gfu = GridFunction(V)
+freedofs = BitArray(V.ndof)
+
+# -------------------------- Levelset & Cut-Info --------------------------
+level_sets_p1 = tuple(GridFunction(H1(mesh, order=1))
+                      for i in range(nr_ls))
+for i, lsetp1 in enumerate(level_sets_p1):
+    InterpolateToP1(levelsets[i], lsetp1)
+
+square = DomainTypeArray([(NEG, NEG, NEG, NEG)])
+square.Compress(level_sets_p1)
+lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
+
+boundary = square.Boundary()
+lsets_bnd = {}
+for dtt in boundary:
+    lsets_bnd[dtt] = {"levelset": level_sets_p1, "domain_type": dtt}
+
+
+# --------------------------- (Bi)Linear Forms ----------------------------
+u, v = V.TnT()
+
+
+forcing = rhs * v
+
 ngsxfemglobals.SetDefaults()
 
-dx = tuple([dCut(lsetp1, dt, deformation=lsetadap.deform,
-                definedonelements=ci.GetElementsOfType(HAS(dt)))
-            for dt in [NEG, POS]])
+f = LinearForm(V)
+f += SymbolicLFI(lset_dom_inner, form=forcing)
 
-# R.h.s.:
-f = LinearForm(VhG)
-f += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
-g = LinearForm(VhG)
-g += sum(coef_f[i] * v[i] * dx[i] for i in [0, 1])
+g = LinearForm(V)
+g += SymbolicLFI(lset_dom_inner, form=forcing)
 
-start =timer()
+
+start = timer()
 
 f.Assemble()
 end = timer()
 vals1 = f.vec.FV().NumPy()
-print(vals1)
+
 print("Elapsed time: ")
 print(end-start)
 ngsxfemglobals.SwitchSIMD(True)
-start =timer()
+start = timer()
 
 g.Assemble()
 end = timer()
 vals2 = g.vec.FV().NumPy()
 print("Elapsed time: ")
 print(end-start)
-assert(np.linalg.norm(vals1-vals2)<1e-8)
-print(np.linalg.norm(vals1-vals2)<1e-8)
-print(vals1)
-print(vals2)
-#print(f.vec.data)
+#assert(np.linalg.norm(vals1-vals2) < 1e-8)
+print(np.linalg.norm(vals1-vals2))
+print(vals2-vals1)
+# print(f.vec.data)
+# ----------------------------- Solve Problem -----------------------------
