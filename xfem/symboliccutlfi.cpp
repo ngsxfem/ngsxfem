@@ -77,8 +77,7 @@ namespace ngfem
         // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
       }
     }
-    std::cout << globxvar.SIMD_EVAL;
-    if (globxvar.SIMD_EVAL)
+  if (globxvar.SIMD_EVAL)
     {
 
       try
