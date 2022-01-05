@@ -77,6 +77,7 @@ namespace ngfem
         // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
       }
     }
+
   if (globxvar.SIMD_EVAL)
     {
 
@@ -99,13 +100,13 @@ namespace ngfem
         Array<double> ns_wei_arr;
         tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
         SIMD_IntegrationRule ir(*ns_ir, lh);
-        SIMD<double> *wei_arr = new SIMD<double>[(ir.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
-        for (int i = 0; i < (ir.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
+        SIMD<double> *wei_arr = new SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
+        for (int i = 0; i < (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
         {
           wei_arr[i] = [&](int j)
           {
             int nr = i * SIMD<IntegrationPoint>::Size() + j;
-            bool regularip = nr < ir.Size();
+            bool regularip = nr < ns_ir->Size();
             double weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
             if (!regularip)
               weight = 0;

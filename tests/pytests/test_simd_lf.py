@@ -1,65 +1,71 @@
-from netgen.geom2d import SplineGeometry
+
 from xfem import ngsxfemglobals
-import numpy as np
-from math import pi
 from timeit import default_timer as timer
 import pytest
-from ngsolve import *
 from xfem import *
-from xfem.mlset import *
+
+from netgen.geom2d import SplineGeometry
+from ngsolve import *
+from ngsolve.internal import *
+from xfem import *
+from xfem.lsetcurv import *
+
+import numpy as np
+# -------------------------------- PARAMETERS ---------------------------------
+# Quadrilateral (or simplicial mesh)
+quad_mesh = False
+# Mesh diameter
+maxh = 0.01
+# Finite element space order
+order = 3
 
 
-def level_sets():
-    return [-y, x - 1, y - 1, -x]
+square = SplineGeometry()
+square.AddRectangle((-1, -1), (1, 1), bc=1)
+ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=quad_mesh)
+mesh = Mesh(ngmesh)
 
 
-rhs = 32 * (y * (1 - y) + x * (1 - x))
+# Manufactured exact solution for monitoring the error
+r2 = 3 / 4  # outer radius
+r1 = 1 / 4  # inner radius
+rc = (r1 + r2) / 2.0
+rr = (r2 - r1) / 2.0
+r = sqrt(x**2 + y**2)
+levelset = IfPos(r - rc, r - rc - rr, rc - r - rr)
+
+exact = (20 * (r2 - sqrt(x**2 + y**2)) * (sqrt(x**2 + y**2) - r1)).Compile()
+coeff_f = - (exact.Diff(x).Diff(x) + exact.Diff(y).Diff(y)).Compile()
+
+# Higher order level set approximation
+lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=0.1,
+                                      discontinuous_qn=True)
+deformation = lsetmeshadap.CalcDeformation(levelset)
+lsetp1 = lsetmeshadap.lset_p1
 
 
-h0 = 0.05
-k = 3
-levelsets = level_sets()
-nr_ls = len(levelsets)
-geo = SplineGeometry()
-geo.AddRectangle((-0.2, -0.2), (1.2, 1.2),
-                 bcs=("bottom", "right", "top", "left"))
+# Element, facet and dof marking w.r.t. boundary approximation with lsetp1:
+ci = CutInfo(mesh, lsetp1)
+hasneg = ci.GetElementsOfType(HASNEG)
+hasif = ci.GetElementsOfType(IF)
 
-mesh = Mesh(geo.GenerateMesh(maxh=0.5))
-# ------------------------- Finite Element Space --------------------------
-V = H1(mesh, order=k, dgjumps=True)
+# facets used for stabilization:
+ba_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasif)
 
-gfu = GridFunction(V)
-freedofs = BitArray(V.ndof)
-
-# -------------------------- Levelset & Cut-Info --------------------------
-level_sets_p1 = tuple(GridFunction(H1(mesh, order=1))
-                      for i in range(nr_ls))
-for i, lsetp1 in enumerate(level_sets_p1):
-    InterpolateToP1(levelsets[i], lsetp1)
-
-square = DomainTypeArray([(NEG, NEG, NEG, NEG)])
-square.Compress(level_sets_p1)
-lset_dom_inner = {"levelset": level_sets_p1, "domain_type": square}
-
-boundary = square.Boundary()
-lsets_bnd = {}
-for dtt in boundary:
-    lsets_bnd[dtt] = {"levelset": level_sets_p1, "domain_type": dtt}
+Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
+Vh = Restrict(Vhbase, hasneg)
 
 
-# --------------------------- (Bi)Linear Forms ----------------------------
-u, v = V.TnT()
+u, v = Vh.TrialFunction(), Vh.TestFunction()
 
+# integration domains:
+dx = dCut(lsetp1, NEG, definedonelements=hasneg, deformation=deformation)
 
-forcing = rhs * v
-
-ngsxfemglobals.SetDefaults()
-
-f = LinearForm(V)
-f += SymbolicLFI(lset_dom_inner, form=forcing)
-
-g = LinearForm(V)
-g += SymbolicLFI(lset_dom_inner, form=forcing)
+# R.h.s. term:
+f = LinearForm(Vh)
+f += coeff_f * v * dx
+g = LinearForm(Vh)
+g += coeff_f * v * dx
 
 
 start = timer()
@@ -82,4 +88,3 @@ print(end-start)
 print(np.linalg.norm(vals1-vals2))
 print(vals2-vals1)
 # print(f.vec.data)
-# ----------------------------- Solve Problem -----------------------------
