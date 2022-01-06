@@ -125,6 +125,7 @@ public:
     int NAIVE_TIMEINT_ORDER;
 
     int NON_CONV_WARN_MSG_LVL;
+    bool ST_LSETDEF_USE_EXT_CUT_DOM;
 
     GlobalNgsxfemVariables();
     
