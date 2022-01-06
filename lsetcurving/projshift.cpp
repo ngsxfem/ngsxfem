@@ -19,7 +19,9 @@ namespace ngcomp
     int D =ma->GetDimension();
 
     shared_ptr<BilinearFormIntegrator> mass;
-    if (D==2)
+    if (D==1)
+      mass = make_shared<MassIntegrator<1>>(make_shared<ConstantCoefficientFunction>(1.0));
+    else if (D==2)
       mass = make_shared<MassIntegrator<2>>(make_shared<ConstantCoefficientFunction>(1.0));
     else
       mass = make_shared<MassIntegrator<3>>(make_shared<ConstantCoefficientFunction>(1.0));
@@ -34,9 +36,12 @@ namespace ngcomp
     shift_array.Append(qn);
     shift_array.Append(blending);
     
+    shared_ptr<ShiftIntegrator<1>> shift1D;
     shared_ptr<ShiftIntegrator<2>> shift2D;
     shared_ptr<ShiftIntegrator<3>> shift3D;
-    if (D==2)
+    if (D==1)
+      shift1D = make_shared<ShiftIntegrator<1>>(shift_array);
+    else if (D==2)
       shift2D = make_shared<ShiftIntegrator<2>>(shift_array);
     else
       shift3D = make_shared<ShiftIntegrator<3>>(shift_array);
@@ -82,7 +87,21 @@ namespace ngcomp
          lset_ho->GetVector().GetIndirect(lset_ho_dofs,lset_ho_vals);
          const FiniteElement & fel_lset_ho = lset_ho->GetFESpace()->GetFE(el,lh);
       
-         if (D==2)
+         if (D==1)
+         {
+           const ScalarFiniteElement<1> & scafe_lset_ho = dynamic_cast< const ScalarFiniteElement<1> &>(fel_lset_ho);
+           shared_ptr<LsetEvaluator<1>> lseteval = make_shared<LsetEvaluator<1>>(scafe_lset_ho,lset_ho_vals);
+           shift1D->CalcElementVector(fel_deform, eltrans, elvec, lh, lseteval);
+        
+           FlatMatrixFixWidth<1> elvec_vec(ndofs,&elvec(0));
+           FlatMatrixFixWidth<1> shift_vec(ndofs,&elres(0));
+           for (int d = 0; d < D; ++d)
+             shift_vec.Col(d) = massmat * elvec_vec.Col(d);
+           // vertex values to zero
+           for (int l = 0; l < D+1; ++l)
+             shift_vec.Row(l) = 0.0;
+         }
+         else if (D==2)
          {
            const ScalarFiniteElement<2> & scafe_lset_ho = dynamic_cast< const ScalarFiniteElement<2> &>(fel_lset_ho);
            shared_ptr<LsetEvaluator<2>> lseteval = make_shared<LsetEvaluator<2>>(scafe_lset_ho,lset_ho_vals);
