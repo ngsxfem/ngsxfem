@@ -306,7 +306,7 @@ dont_project_gfs : bool
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
         
-        if ngsxfemglobals.st_lsetdef_use_ext_cut_dom:
+        if ngsxfemglobals.st_lsetdef_use_spec_cut_dom:
           if self.firstCD:
               starti = 0
               self.firstCD = False

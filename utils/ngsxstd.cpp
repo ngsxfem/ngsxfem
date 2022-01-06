@@ -77,7 +77,7 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     NAIVE_TIMEINT_ORDER = 3;
     NAIVE_TIMEINT_SUBDIVS = 10;
     NON_CONV_WARN_MSG_LVL = 3;
-    ST_LSETDEF_USE_EXT_CUT_DOM = true;
+    ST_LSETDEF_USE_SPEC_CUT_DOM = false;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
