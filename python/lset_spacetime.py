@@ -306,22 +306,7 @@ dont_project_gfs : bool
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
         
-        if ngsxfemglobals.st_lsetdef_use_spec_cut_dom:
-          if self.firstCD:
-              starti = 0
-              self.firstCD = False
-          else:
-              starti = 1
-              self.deform.vec[0 : self.ndof_node].data = self.deform_top.vec[:]
-          for i in range(starti,self.order_time + 1):
-            self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
-            self.qn.Set(self.lset_ho_node.Deriv())
-            self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, None, None, self.lset_lower_bound, 
-                         self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
-            self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
-        else:
-          for i in range(self.order_time + 1):
+        for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
