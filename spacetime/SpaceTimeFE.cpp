@@ -148,11 +148,6 @@ namespace ngfem
         b[nodes.Size()-1] = NewtonBasisCoeffs(nodes.Size()-1,i);
         for(int j=nodes.Size()-2; j>=0; j--) b[j] = b[j+1]*(x - nodes[j]) + NewtonBasisCoeffs(j,i);
 
-        //cout << "Horner res: " << b[0] << endl;
-        //AutoDiff<1> adx (x, 0);
-        //cout << "Explicit res: " << (Lagrange_Pol(adx, i)).Value() << endl;
-        //cout << "DIFF: " << abs( b[0] - (Lagrange_Pol(adx, i)).Value() ) << endl;
-
         return b[0];
     }
     double LagrangePolyHornerCalc::Lagrange_Pol_D_Horner(double x, int i) const {
@@ -177,7 +172,6 @@ namespace ngfem
          CalcInterpolationPoints ();
 
          if(order >= 5) do_horner_eval = true;
-         //do_horner_eval = false; //Comment this out in order to test Horner
 
          if(do_horner_eval){
              LagrangePolyHornerCalc HornerLP2(nodes, true);
