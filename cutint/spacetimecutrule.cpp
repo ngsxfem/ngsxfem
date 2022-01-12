@@ -118,31 +118,6 @@ namespace xintegration
         int time_nfreedofs = lset_nfreedofs / space_nfreedofs;
         FlatMatrix<> lset_st(time_nfreedofs, space_nfreedofs, &cf_lset_at_element(0,0));
 
-        static int N = 0;
-        if(globxvar.NON_CONV_WARN_MSG_LVL == 0){
-            cout << "Special case with N = " << N << endl;
-            cout << "space_nfreedofs: " << space_nfreedofs << endl;
-            cout << "lset_st " << lset_st << endl;
-            HeapReset hr(lh);
-            FlatVector<> shape(time_nfreedofs, lh);
-            auto eval = [&fe_time, &shape](auto& li, double xi) -> double {
-                fe_time->CalcShape(IntegrationPoint(Vec<3>{xi,0,0}, 0.), shape);
-                return InnerProduct(li,shape);
-            };
-            ofstream interf_out("interf_out_"+to_string(N)+".dat");
-            for(double d=0; d<=1.0000001; d += 1./200){
-                auto ll = lset_st.Col(1);
-                auto lr = lset_st.Col(0);
-
-                double lval = eval(ll, d);
-                double rval = eval(lr, d);
-                double x_int = -lval/(rval - lval);
-                if( (-0.5 < x_int) && (x_int < 1.5)) interf_out << x_int << "\t" << d << endl;
-                //if (N == 10) cout << d << "\t" << x_int << endl;
-            }
-            //N++;
-        }
-
         vector<double> cut_points{0,1};
         if (globxvar.DO_NAIVE_TIMEINT){
             bool haspos = false;
@@ -261,16 +236,6 @@ namespace xintegration
         wei_arr.SetSize(ir->Size());
         if (ip_counter > MAXSIZE)
             throw Exception("memory allocation for integration rule was insufficient");
-
-        if(globxvar.NON_CONV_WARN_MSG_LVL == 0){
-            ofstream rule_out("rule_out_"+to_string(N)+".dat");
-            for(int i=0; i<ir->Size(); i++) rule_out << (*ir)[i].Point()[0] << "\t" << (*ir)[i].Weight() << endl;
-
-            double sum = 0;
-            for(auto w : wei_arr) sum += w;
-            cout << "sum weights: " << sum << endl;
-            N++;
-        }
 
         if (ir->Size() == 0)
             return make_tuple(nullptr, wei_arr);
