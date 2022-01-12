@@ -167,7 +167,6 @@ The computed deformation depends on different options:
         self.kappa = GridFunction(self.v_kappa, "kappa")        
 
         self.deform_last_top = CreateTimeRestrictedGF(self.deform,1.0)
-        self.firstCD = True
 
         class MeshDeformationContext:
             def __init__(self,lsetadap_st,type="std"):
