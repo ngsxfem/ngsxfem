@@ -5,15 +5,7 @@
 namespace xintegration
 {
 
-    bool sign_changed(double a, double b){
-        if((a >= 0)&&(b <= 0)) return true;
-        else if((a <= 0)&&(b >= 0)) return true;
-        else return false;
-    }
-
     vector<double> root_finding(SliceVector<> li, ScalarFiniteElement<1>* fe_time, LocalHeap& lh, int subdivs=50, int bisection_iterations = 70){
-        //cout << "Root finding called with subdivs = subdivs " << ", li vec = " << li << endl;
-        // if(li.Size() == 2){
        if(fe_time->Order() == 0)
          return {};
        else if(fe_time->Order() == 1){
