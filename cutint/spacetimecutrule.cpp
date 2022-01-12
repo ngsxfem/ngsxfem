@@ -71,16 +71,9 @@ namespace xintegration
             for(int i=0; i<subdivs+1; i++){
                 double xi = delta_x*i;
                 vals[i] = eval(xi);
-                //if( 2*abs(vals[i]) < globxvar.EPS_STCR_ROOT_SEARCH_BISECTION ) roots.push_back(xi);
                 if(vals[i] == 0) vals[i] = globxvar.EPS_STCR_ROOT_SEARCH_BISECTION; //roots.push_back(xi);
-                //if(i >= 1) if(sign_changed(vals[i-1], vals[i])) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
-                //if(i >= 1) if(vals[i-1]*vals[i]<0) sign_change_intervals.push_back(make_tuple( xi-1.05*delta_x, xi+0.05*delta_x));
                 if(i >= 1) if(vals[i-1]*vals[i]<0) sign_change_intervals.push_back(make_tuple( xi-delta_x, xi));
             }
-            //cout << "vals: " << endl;
-            //for(auto &v: vals) cout << v << endl;
-            //cout << "sign_change_intervals: " << endl;
-            //for(auto &tp : sign_change_intervals) cout << get<0>(tp) << ", " << get<1>(tp) << endl;
 
             for(auto interval : sign_change_intervals){
                 double a = get<0>(interval), b = get<1>(interval); double x_mid;
@@ -100,11 +93,9 @@ namespace xintegration
                   x_mid = 0.5*(a+b);
                   val = eval(x_mid);
                     if(val == 0) break;
-                    //if(sign_changed( val,  aval)) {
                     if(val * aval < 0){
                         b = x_mid; bval = val;
                     }
-                    //else if(sign_changed(val, bval)){
                     else if(val * bval < 0){
                         a = x_mid; aval = val;
                     }
@@ -114,7 +105,6 @@ namespace xintegration
                     cout << IM(2) << "WARNING: Bisection search did not converge. Residual: " << eval(0.5*(a+b)) << endl;
                 roots.push_back(0.5*(a+b));
             }
-            //for(auto r : roots) if((r < 1e-12) || (r>1.-1e-12)) cout << "corner case " << r << " detected." << endl;
             return roots;
         }
     }
@@ -129,7 +119,6 @@ namespace xintegration
                                                         LocalHeap & lh){
         static Timer timer("SpaceTimeCutIntegrationRule");
         RegionTimer rt(timer);
-        //cout << "This is SpaceTimeCutIntegrationRule " << endl;
         ELEMENT_TYPE et_space = trafo.GetElementType();
         
         int lset_nfreedofs = cf_lset_at_element.Size();
@@ -182,13 +171,6 @@ namespace xintegration
             for(int i=0; i<space_nfreedofs; i++){
                 auto li = lset_st.Col(i);
                 auto cp = root_finding(li, fe_time, lh);
-                //auto cp2 = root_finding(li, fe_time, lh, 500);
-                /*if( cp.size() != cp2.size() ) cout << "Different sizes in cp / cp2" << endl;
-                else {
-                    for(int j=0; j<cp.size(); j++){
-                        if(cp[j] != cp2[j]) cout << "Different values Nr. " << j << " , " << cp[j] << " , " << cp2[j] << " , " << abs(cp[j] - cp2[j]) << endl;
-                    }
-                }*/
 
                 if(cp.size() > 0) cut_points.insert(cut_points.begin(), cp.begin(), cp.end());
             }
@@ -196,11 +178,8 @@ namespace xintegration
         sort(cut_points.begin(), cut_points.end());
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, globxvar.DO_NAIVE_TIMEINT ? globxvar.NAIVE_TIMEINT_ORDER : order_time);
-        //cout << ir_time << endl;
-        //const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, order_time);
         if(order_space == -1) order_space = 20;
         const IntegrationRule & stdir = SelectIntegrationRule (et_space, order_space);
-        //cout << "Order space: " << order_space << ", len stdir = " << stdir.Size() << endl;
         const int MAXSIZE_PER = 5 * stdir.Size();
         const int MAXSIZE = MAXSIZE_PER * (cut_points.size()-1) * ir_time.Size();
         // MAXSIZE is an estimated maximum size for the IntegrationRule 
@@ -211,9 +190,6 @@ namespace xintegration
 
         for(int i=0; i<cut_points.size() -1; i++){
             double t0 = cut_points[i], t1 = cut_points[i+1];
-            //if(t1 == t0){
-            //    break;
-            //}
             for(auto ip:ir_time){
                 double t = t0 + ip.Point()[0]*(t1 - t0);
                 FlatVector<> cf_lset_at_t(space_nfreedofs,lh);
