@@ -1169,15 +1169,23 @@ namespace ngfem
     }
 
     if(its >= globxvar.NEWTON_ITER_TRESHOLD || L2Norm(diff) > globxvar.EPS_FACET_PATCH_INTEGRATOR*h){
-      cout << IM(4) << "MapPatchIntegrationPoint: Newton did not converge after "
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL ) << "MapPatchIntegrationPoint: Newton did not converge after "
            << its <<" iterations! (" << D <<"D)" << endl;
-      cout << IM(4) << "taking a low order guess" << endl;
-      cout << IM(4) << "diff = " << first_diffnorm << endl;
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "taking a low order guess" << endl;
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "diff = " << first_diffnorm << endl;
       //globxvar.Output();
-      cout << IM(4) << "eps_treshold: " << globxvar.EPS_FACET_PATCH_INTEGRATOR << endl;
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "eps_treshold: " << globxvar.EPS_FACET_PATCH_INTEGRATOR << endl;
+
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
+    }
+    else if(L2Norm(ip_x0->Point() - ip_x00->Point()) > globxvar.MAX_DIST_NEWTON) {
+        cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "Distance warning triggered, dist = " << L2Norm(ip_x0->Point() - ip_x00->Point()) << " its = " << its << endl;
+        cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "taking a low order guess" << endl;
+        to_ip = *ip_x00;
+        if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
+        else to_ip.SetWeight(mip.GetWeight()/w00);
     }
     else
     {

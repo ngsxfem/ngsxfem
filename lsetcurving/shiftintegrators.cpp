@@ -121,6 +121,7 @@ namespace ngfem
   }
 
 
+  template class ShiftIntegrator<1>;
   template class ShiftIntegrator<2>;
   template class ShiftIntegrator<3>;
 

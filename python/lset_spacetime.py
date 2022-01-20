@@ -305,7 +305,6 @@ dont_project_gfs : bool
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
         
-        
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
