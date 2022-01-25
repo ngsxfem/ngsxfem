@@ -99,7 +99,7 @@ template <typename TSCAL>
 TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
                                   FlatVector<TSCAL> element_wise)
 {
-  LocalHeap glh(10000000, "lh-T_CutIntegrate");
+  LocalHeap glh(1000000000, "lh-T_CutIntegrate");
   bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
     throw Exception("CutIntegrate can only deal with VOL a.t.m..");
