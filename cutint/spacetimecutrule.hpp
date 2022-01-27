@@ -17,5 +17,6 @@ namespace xintegration
                                                      int order_time,
                                                      int order_space,
                                                      SWAP_DIMENSIONS_POLICY quad_dir_policy,
-                                                     LocalHeap & lh);
+                                                     LocalHeap & lh,
+                                                     bool use_transformed_scr = true);
 }

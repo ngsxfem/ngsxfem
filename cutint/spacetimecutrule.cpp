@@ -108,7 +108,8 @@ namespace xintegration
                                                         int order_time,
                                                         int order_space,
                                                         SWAP_DIMENSIONS_POLICY quad_dir_policy,
-                                                        LocalHeap & lh){
+                                                        LocalHeap & lh,
+                                                        bool use_transformed_scr){
         static Timer timer("SpaceTimeCutIntegrationRule");
         RegionTimer rt(timer);
         ELEMENT_TYPE et_space = trafo.GetElementType();
@@ -179,7 +180,8 @@ namespace xintegration
                 const int offset = ir->Size();
                 if (element_domain == IF)
                 {
-                    auto spir = StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh, true, t);
+                    auto spir = (use_transformed_scr ? StraightCutIntegrationRule(cf_lset_at_t, trafo, dt, order_space, quad_dir_policy, lh, true, t) :
+                                                       StraightCutIntegrationRuleUntransformed(cf_lset_at_t, trafo.GetElementType(), dt, order_space, quad_dir_policy, lh));
                     ir->Append(*spir);
                     ip_counter += spir->Size();
                 }
