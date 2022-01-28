@@ -145,7 +145,7 @@ namespace xintegration
         sort(cut_points.begin(), cut_points.end());
 
         const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, globxvar.DO_NAIVE_TIMEINT ? globxvar.NAIVE_TIMEINT_ORDER : order_time);
-        if(order_space == -1) order_space = 20;
+        if(order_space == -1) order_space = 5;
         const IntegrationRule & stdir = SelectIntegrationRule (et_space, order_space);
         const int MAXSIZE_PER = 5 * stdir.Size();
         const int MAXSIZE = MAXSIZE_PER * (cut_points.size()-1) * ir_time.Size();
