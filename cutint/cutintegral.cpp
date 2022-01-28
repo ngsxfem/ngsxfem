@@ -99,6 +99,8 @@ template <typename TSCAL>
 TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
                                   FlatVector<TSCAL> element_wise)
 {
+  static Timer timer("CutIntegral::T_CutIntegrate");
+  RegionTimer reg (timer);
   LocalHeap glh(1000000000, "lh-T_CutIntegrate");
   bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
