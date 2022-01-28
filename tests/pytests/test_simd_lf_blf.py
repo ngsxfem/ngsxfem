@@ -9,13 +9,14 @@ from ngsolve import *
 from ngsolve.internal import *
 from xfem import *
 from xfem.lsetcurv import *
+import scipy.sparse as sp
 
 import numpy as np
 
 
-@pytest.mark.parametrize("maxh", [2**(-k) for k in range(8)])
-@pytest.mark.parametrize("order", [2])
-def test_lf(maxh, order):
+@pytest.mark.parametrize("maxh", [2**(-k) for k in range(5)])
+@pytest.mark.parametrize("order", [4])
+def test_lf_blf(maxh, order):
 
     square = SplineGeometry()
     square.AddRectangle((-1, -1), (1, 1), bc=1)
@@ -57,15 +58,33 @@ def test_lf(maxh, order):
     f += coeff_f * v * dx
     g = LinearForm(Vh)
     g += coeff_f * v * dx
-
+    a = BilinearForm(Vh)
+    a += (u) * (v) * dx
+    b = BilinearForm(Vh)
+    b += (u) * (v) * dx
+    ########################
+    # Time Linear Form, no simd
     start = timer()
 
     f.Assemble()
     end = timer()
     vals1 = f.vec.FV().NumPy()
-
     t_normal = end-start
+    #########################
+    # time BLF, no simd
+    start = timer()
+
+    a.Assemble()
+    end = timer()
+    rows, cols, vals = a.mat.COO()
+    A = sp.csr_matrix((vals, (rows, cols)))
+    A_dense = A.todense()
+    t_blf_normal = end-start
+
     ngsxfemglobals.SwitchSIMD(True)
+    #########################
+    # time linear form, simd
+
     start = timer()
 
     g.Assemble()
@@ -73,6 +92,24 @@ def test_lf(maxh, order):
     vals2 = g.vec.FV().NumPy()
 
     t_simd = end-start
+    #########################
+    # time BLF form, simd
+    start = timer()
+
+    b.Assemble()
+    end = timer()
+    rows, cols, vals = b.mat.COO()
+    B = sp.csr_matrix((vals, (rows, cols)))
+    B_dense = B.todense()
+    t_blf_simd = end-start
+    assert(np.linalg.norm(B_dense-A_dense) < 1e-8)
     assert(np.linalg.norm(vals1-vals2) < 1e-8)
     # We cannot guarantee, that SIMD operations are faster then non-SIMD..
-  #  assert(t_normal > t_simd)
+#    assert(t_normal > t_simd)
+    print(t_normal/t_simd)
+    print(np.linalg.norm(A_dense-B_dense))
+    print(np.linalg.norm(vals1-vals2))
+    print(t_blf_normal/t_blf_simd)
+
+
+test_lf_blf(0.1, 4)

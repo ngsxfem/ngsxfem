@@ -22,7 +22,10 @@ namespace ngfem
       : SymbolicLinearFormIntegrator(acf, vb, VOL),
         lsetintdom(lsetintdom_in)
   {
-    ;
+    if(!globxvar.SIMD_EVAL)
+        simd_evaluate = false;
+
+    
   }
 
   void
@@ -78,7 +81,7 @@ namespace ngfem
       }
     }
 
-  if (globxvar.SIMD_EVAL)
+  if (simd_evaluate)
     {
 
       try
@@ -171,7 +174,7 @@ namespace ngfem
       {
         cout << IM(6) << e.What() << endl
              << "switching back to standard evaluation" << endl;
-        globxvar.SIMD_EVAL = false;
+        simd_evaluate = false;
         T_CalcElementVector(fel, trafo, elvec, lh);
       }
     }
