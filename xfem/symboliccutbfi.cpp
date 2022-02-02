@@ -14,6 +14,9 @@
 #include "../cutint/xintegration.hpp"
 #include "../cutint/straightcutrule.hpp"
 #include "../utils/ngsxstd.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
+#include "../cutint/spacetimecutrule.hpp"
 
 namespace ngfem
 {
@@ -706,6 +709,8 @@ namespace ngfem
     IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
 
+    Array<double> wei_arr;
+
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
       static Timer t("symbolicCutBFI - CoDim2-hack", NoTracing);
@@ -774,21 +779,42 @@ namespace ngfem
     }
     else //Codim1 or 2D->0D
     {
-      IntegrationPoint ipl(0,0,0,0);
-      IntegrationPoint ipr(1,0,0,0);
-      const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
-      const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
-      MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
-      MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
-      double lset_l = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
-      double lset_r = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
+        if(time_order == 0) {
+            IntegrationPoint ipl(0,0,0,0);
+            IntegrationPoint ipr(1,0,0,0);
+            const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
+            const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
+            MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
+            MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
+            double lset_l = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
+            double lset_r = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
 
-      
-      if ((lset_l > 0 && lset_r > 0) && lsetintdom->GetDomainType() != POS) return;
-      if ((lset_l < 0 && lset_r < 0) && lsetintdom->GetDomainType() != NEG) return;
 
-      ir_scr = StraightCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-      if (ir_scr == nullptr) return;
+            if ((lset_l > 0 && lset_r > 0) && lsetintdom->GetDomainType() != POS) return;
+            if ((lset_l < 0 && lset_r < 0) && lsetintdom->GetDomainType() != NEG) return;
+
+            ir_scr = StraightCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+            if (ir_scr == nullptr) return;
+        }
+        else {
+            SpaceTimeFESpace & stfe = dynamic_cast< SpaceTimeFESpace & >(*lsetintdom->GetLevelsetGF()->GetFESpace());
+            NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(stfe.GetTimeFE());
+            if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+            FlatVector<> cf_lset_at_element(2*time_FE->GetNDof(), lh);
+            for(int i=0; i<time_FE->GetNDof(); i++){
+                IntegrationPoint ipl(0,0,0,time_FE->GetNodes()[i]);
+                IntegrationPoint ipr(1,0,0,time_FE->GetNodes()[i]);
+                const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
+                const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
+                MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
+                MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
+                cf_lset_at_element[2*i+1] = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
+                cf_lset_at_element[2*i] = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
+            }
+            cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl;
+
+            make_tuple( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, time_FE, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+        }
     }
 
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_scr), lh);
@@ -885,7 +911,8 @@ namespace ngfem
              for (int i = 0; i < mir1.Size(); i++){
                  //proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
                  // proxyvalues(i,STAR,STAR) *= measure(i) * ir_scr[i].Weight();
-                 proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
+                 if(time_order == 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
+                 else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * wei_arr[i];
              }
           }
 
