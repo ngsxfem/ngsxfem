@@ -805,19 +805,19 @@ namespace ngfem
             auto gflset = lsetintdom->GetLevelsetGF();
             if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
             cout << "Found glset" << endl;
-            FESpace* raw_FE = (gflset->GetFESpace()).get();
+            shared_ptr<FESpace> raw_FE = (gflset->GetFESpace());
             if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
             cout << "Found raw_FE" << endl;
-            SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+            shared_ptr<SpaceTimeFESpace> st_FE = dynamic_pointer_cast<SpaceTimeFESpace>(raw_FE);
             if(st_FE == nullptr) throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
             cout << "Found stfe" << endl;
             cout << "Classname: " << st_FE->GetClassName() << endl;
-            ScalarFiniteElement<1>* fe_time = nullptr;
-            fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
-            //NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(stfe->GetTimeFE());
-            if(fe_time == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+            cout << "Order Time: " << st_FE->order_time() << endl;
+            FiniteElement* fe_time = st_FE->GetTimeFE();
+            NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(fe_time);
+            if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
             cout << "Found time_FE" << endl;
-            cout << "All casts are done. fe_time->GetNDof(): " << fe_time->GetNDof() << endl;
+            cout << "All casts are done. fe_time->GetNDof(): " << time_FE->GetNDof() << endl;
 
             FlatVector<> cf_lset_at_element(2*fe_time->GetNDof(), lh);
             for(int i=0; i<fe_time->GetNDof(); i++){
@@ -832,7 +832,7 @@ namespace ngfem
             }
             cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl;
 
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, fe_time, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            //tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, fe_time, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
         }
     }
 
