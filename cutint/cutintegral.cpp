@@ -8,6 +8,7 @@ CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, shared_ptr<CutD
 
 shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
 {
+    cout << "Welcome to CutIntegral :: MakeBilinearFormIntegrator " << endl;
   // check for DG terms
   bool has_other = false;
   cf->TraverseTree ([&has_other] (CoefficientFunction & cf)
@@ -51,6 +52,7 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
   // for (auto both : dx.userdefined_intrules)
   //   bfi->SetIntegrationRule(both.first, *both.second);
 
+  cout << "Goodbye from CutIntegral :: MakeBilinearFormIntegrator " << endl;
   return bfi;
 }
 

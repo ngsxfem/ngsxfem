@@ -845,7 +845,12 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
     ------
         CutDifferentialSymbol(VOL)
     """
-    gflset = GridFunction(H1(mesh))
+    if time_order > -1:
+        print("Create gflset")
+        gflset = GridFunction(ScalarTimeFE(1) * H1(mesh))
+        print("Create gflset done")
+    else:
+        gflset = GridFunction(H1(mesh))
     gflset.vec[:] = 1
 
     lsetdom = {"levelset": gflset, "domain_type": POS}

@@ -672,6 +672,8 @@ namespace ngfem
   {
     lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
     simd_evaluate=false;
+    time_order = lsetintdom_in.GetTimeIntegrationOrder();
+    cout << "The SymbolicCutFacetBilinearFormIntegrator constructor has been called. time_order = " << time_order << endl;
   }
 
   template <typename SCAL, typename SCAL_SHAPES>
@@ -683,6 +685,7 @@ namespace ngfem
     FlatMatrix<SCAL> elmat,
     LocalHeap & lh) const
   {
+      cout << "The function SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix starts" << endl;
     static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
     NgProfiler::RegionTimer reg(timer);
     elmat = SCAL(0.0);
@@ -713,6 +716,7 @@ namespace ngfem
 
     if (etfacet != ET_SEGM && lsetintdom->GetDomainType() == IF) // Codim 2 special case (3D -> 1D)
     {
+      if(time_order >= 1) throw Exception("This is not possible for space_time");
       static Timer t("symbolicCutBFI - CoDim2-hack", NoTracing);
       RegionTimer reg (t);
       static bool first = true;
@@ -797,18 +801,28 @@ namespace ngfem
             if (ir_scr == nullptr) return;
         }
         else {
+            cout << "Hello! Welcome to the special version of cutfacetint" << endl;
             auto gflset = lsetintdom->GetLevelsetGF();
             if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
+            cout << "Found glset" << endl;
             FESpace* raw_FE = (gflset->GetFESpace()).get();
-            if(gflset == nullptr) throw Exception("Rawfe is nullptr");
-            SpaceTimeFESpace * stfe = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
-            if(stfe == nullptr) throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-            NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(stfe->GetTimeFE());
-            if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-            FlatVector<> cf_lset_at_element(2*time_FE->GetNDof(), lh);
-            for(int i=0; i<time_FE->GetNDof(); i++){
-                IntegrationPoint ipl(0,0,0,time_FE->GetNodes()[i]);
-                IntegrationPoint ipr(1,0,0,time_FE->GetNodes()[i]);
+            if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
+            cout << "Found raw_FE" << endl;
+            SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+            if(st_FE == nullptr) throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+            cout << "Found stfe" << endl;
+            cout << "Classname: " << st_FE->GetClassName() << endl;
+            ScalarFiniteElement<1>* fe_time = nullptr;
+            fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
+            //NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(stfe->GetTimeFE());
+            if(fe_time == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+            cout << "Found time_FE" << endl;
+            cout << "All casts are done. fe_time->GetNDof(): " << fe_time->GetNDof() << endl;
+
+            FlatVector<> cf_lset_at_element(2*fe_time->GetNDof(), lh);
+            for(int i=0; i<fe_time->GetNDof(); i++){
+                IntegrationPoint ipl(0,0,0,0); //time_FE->GetNodes()[i]);
+                IntegrationPoint ipr(1,0,0,0); //time_FE->GetNodes()[i]);
                 const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
                 const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
                 MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
@@ -818,7 +832,7 @@ namespace ngfem
             }
             cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl;
 
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, time_FE, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, fe_time, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
         }
     }
 
