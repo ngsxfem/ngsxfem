@@ -243,7 +243,7 @@ namespace xintegration
             return make_tuple(ir, wei_arr);
     }
 
-    tuple<const IntegrationRule *, Array<double>> SpaceTimeCutIntegrationRule(FlatVector<> cf_lset_at_element,
+    tuple<const IntegrationRule *, Array<double>> SpaceTimeCutIntegrationRuleUntransformed(FlatVector<> cf_lset_at_element,
                                                         ELEMENT_TYPE et_space,
                                                         ScalarFiniteElement<1>* fe_time,
                                                         DOMAIN_TYPE dt,

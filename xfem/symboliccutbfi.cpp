@@ -813,7 +813,7 @@ namespace ngfem
             }
             cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl;
 
-            make_tuple( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, time_FE, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, time_FE, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
         }
     }
 
