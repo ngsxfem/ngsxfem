@@ -779,7 +779,7 @@ namespace ngfem
     }
     else //Codim1 or 2D->0D
     {
-        if(time_order == 0) {
+        if(time_order <= 0) {
             IntegrationPoint ipl(0,0,0,0);
             IntegrationPoint ipr(1,0,0,0);
             const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
@@ -797,8 +797,13 @@ namespace ngfem
             if (ir_scr == nullptr) return;
         }
         else {
-            SpaceTimeFESpace & stfe = dynamic_cast< SpaceTimeFESpace & >(*lsetintdom->GetLevelsetGF()->GetFESpace());
-            NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(stfe.GetTimeFE());
+            auto gflset = lsetintdom->GetLevelsetGF();
+            if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
+            FESpace* raw_FE = (gflset->GetFESpace()).get();
+            if(gflset == nullptr) throw Exception("Rawfe is nullptr");
+            SpaceTimeFESpace * stfe = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+            if(stfe == nullptr) throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+            NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(stfe->GetTimeFE());
             if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
             FlatVector<> cf_lset_at_element(2*time_FE->GetNDof(), lh);
             for(int i=0; i<time_FE->GetNDof(); i++){
@@ -911,7 +916,7 @@ namespace ngfem
              for (int i = 0; i < mir1.Size(); i++){
                  //proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
                  // proxyvalues(i,STAR,STAR) *= measure(i) * ir_scr[i].Weight();
-                 if(time_order == 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
+                 if(time_order <= 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
                  else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * wei_arr[i];
              }
           }
