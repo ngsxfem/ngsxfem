@@ -828,7 +828,6 @@ namespace ngfem
         else {
             cout << "Hello! Welcome to the special version of cutfacetint" << endl;
 
-            /*
             auto gflset = lsetintdom->GetLevelsetGF();
             if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
             cout << "Found glset" << endl;
@@ -838,13 +837,38 @@ namespace ngfem
             FlatVector<> elvec(dnums.Size(),lh);
             gflset->GetVector().GetIndirect(dnums,elvec);
 
-            cout << "st elvec: " << elvec << endl; */
+            cout << "st elvec: " << elvec << endl;
+
+            auto int_tuple = ET_trait<ET_TRIG>::GetEdge(LocalFacetNr1);
+
+            double lset_l, lset_r;
+            if(ElVertices1[int_tuple[0]] < ElVertices1[int_tuple[1]]){
+                 lset_l = elvec[int_tuple[1]]; lset_r = elvec[int_tuple[0]];
+            }
+            else {
+                 lset_l = elvec[int_tuple[0]]; lset_r = elvec[int_tuple[1]];
+            }
 
             /*
-            shared_ptr<FESpace> raw_FE = (gflset->GetFESpace());
+            IntegrationPoint ipl(0,0,0,0);
+            IntegrationPoint ipr(1,0,0,0);
+            const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
+            const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
+            //cout << "facet_ip_l" << facet_ip_l.Point() << endl;
+            //cout << "facet_ip_r" << facet_ip_r.Point() << endl;
+            MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
+            MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
+            double lset_l = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
+            double lset_r = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
+
+            cout << lset_l << "\t" << lset_r << endl;*/
+
+            //ir_scr = StraightCutIntegrationRuleUntransformed(, ET_SEGM, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+
+            FESpace* raw_FE = (gflset->GetFESpace()).get();
             if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
             cout << "Found raw_FE" << endl;
-            shared_ptr<SpaceTimeFESpace> st_FE = dynamic_pointer_cast<SpaceTimeFESpace>(raw_FE);
+            SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
             if(st_FE == nullptr) throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
             cout << "Found stfe" << endl;
             cout << "Classname: " << st_FE->GetClassName() << endl;
@@ -854,6 +878,7 @@ namespace ngfem
             if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
             cout << "Found time_FE" << endl;
             cout << "All casts are done. fe_time->GetNDof(): " << time_FE->GetNDof() << endl;
+            /*
 
             FlatVector<> cf_lset_at_element(2*fe_time->GetNDof(), lh);
             for(int i=0; i<fe_time->GetNDof(); i++){
@@ -868,7 +893,8 @@ namespace ngfem
             }
             cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl; */
 
-            //tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, fe_time, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, time_FE, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            if (ir_scr == nullptr) return;
         }
     }
 
