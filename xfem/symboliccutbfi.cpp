@@ -873,8 +873,8 @@ namespace ngfem
             cout << "Found stfe" << endl;
             cout << "Classname: " << st_FE->GetClassName() << endl;
             cout << "Order Time: " << st_FE->order_time() << endl;
-            FiniteElement* fe_time = st_FE->GetTimeFE();
-            NodalTimeFE * time_FE = dynamic_cast< NodalTimeFE *>(fe_time);
+            shared_ptr<FiniteElement> fe_time = st_FE->GetTimeFE();
+            shared_ptr<NodalTimeFE> time_FE = dynamic_pointer_cast< NodalTimeFE>(fe_time);
             if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
             cout << "Found time_FE" << endl;
             cout << "All casts are done. fe_time->GetNDof(): " << time_FE->GetNDof() << endl;
@@ -893,7 +893,7 @@ namespace ngfem
             }
             cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl; */
 
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, time_FE, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
             if (ir_scr == nullptr) return;
         }
     }
