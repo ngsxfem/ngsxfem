@@ -81,7 +81,7 @@ namespace ngfem
       }
     }
 
-  if (simd_evaluate)
+  if (globxvar.SIMD_EVAL)
     {
 
       try

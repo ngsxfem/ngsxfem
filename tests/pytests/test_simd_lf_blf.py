@@ -62,54 +62,61 @@ def test_lf_blf(maxh, order):
     a += (u) * (v) * dx
     b = BilinearForm(Vh)
     b += (u) * (v) * dx
-    ########################
-    # Time Linear Form, no simd
-    start = timer()
+    t_normal = 0
+    t_blf_normal = 0
+    t_simd = 0
+    t_blf_simd = 0
+    n=20
+    for k in range(n):
+        ngsxfemglobals.SwitchSIMD(False)
+        ########################
+        # Time Linear Form, no simd
+        start = timer()
 
-    f.Assemble()
-    end = timer()
-    vals1 = f.vec.FV().NumPy()
-    t_normal = end-start
-    #########################
-    # time BLF, no simd
-    start = timer()
+        f.Assemble()
+        end = timer()
+        vals1 = f.vec.FV().NumPy()
+        t_normal += end-start
+        #########################
+        # time BLF, no simd
+        start = timer()
 
-    a.Assemble()
-    end = timer()
-    rows, cols, vals = a.mat.COO()
-    A = sp.csr_matrix((vals, (rows, cols)))
-    A_dense = A.todense()
-    t_blf_normal = end-start
+        a.Assemble()
+        end = timer()
+        rows, cols, vals = a.mat.COO()
+        A = sp.csr_matrix((vals, (rows, cols)))
+        A_dense = A.todense()
+        t_blf_normal += end-start
 
-    ngsxfemglobals.SwitchSIMD(True)
-    #########################
-    # time linear form, simd
+        ngsxfemglobals.SwitchSIMD(True)
+        #########################
+        # time linear form, simd
 
-    start = timer()
+        start = timer()
 
-    g.Assemble()
-    end = timer()
-    vals2 = g.vec.FV().NumPy()
+        g.Assemble()
+        end = timer()
+        vals2 = g.vec.FV().NumPy()
 
-    t_simd = end-start
-    #########################
-    # time BLF form, simd
-    start = timer()
+        t_simd += end-start
+        #########################
+        # time BLF form, simd
+        start = timer()
 
-    b.Assemble()
-    end = timer()
-    rows, cols, vals = b.mat.COO()
-    B = sp.csr_matrix((vals, (rows, cols)))
-    B_dense = B.todense()
-    t_blf_simd = end-start
+        b.Assemble()
+        end = timer()
+        rows, cols, vals = b.mat.COO()
+        B = sp.csr_matrix((vals, (rows, cols)))
+        B_dense = B.todense()
+        t_blf_simd += end-start
+    t_normal /= n
+    t_blf_normal /= n
+    t_simd /= n
+    t_blf_simd /= n
     assert(np.linalg.norm(B_dense-A_dense) < 1e-8)
     assert(np.linalg.norm(vals1-vals2) < 1e-8)
     # We cannot guarantee, that SIMD operations are faster then non-SIMD..
 #    assert(t_normal > t_simd)
-    print(t_normal/t_simd)
-    print(np.linalg.norm(A_dense-B_dense))
-    print(np.linalg.norm(vals1-vals2))
-    print(t_blf_normal/t_blf_simd)
-
+ 
 
 test_lf_blf(0.1, 4)

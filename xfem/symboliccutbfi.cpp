@@ -114,9 +114,10 @@ namespace ngfem
     LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
     if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
       lsetintdom_local.SetIntegrationOrder(intorder);
+     bool symmetric_so_far = false; //we don't check for symmetry in the formulatin so far (TODO)!
     
 
-    if (simd_evaluate)
+    if (globxvar.SIMD_EVAL)
       try
       {
         // static Timer tsimd(string("SymbolicBFI::CalcElementMatrixAddSIMD")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), NoTracing);
@@ -129,7 +130,19 @@ namespace ngfem
           return;
         SIMD_IntegrationRule ir(*ns_ir, lh);
         SIMD_BaseMappedIntegrationRule &mir = trafo(ir, lh);
-
+        SIMD<double> *wei_arr = new SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
+        for (int i = 0; i < (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
+        {
+          wei_arr[i] = [&](int j)
+          {
+            int nr = i * SIMD<IntegrationPoint>::Size() + j;
+            bool regularip = nr < ns_ir->Size();
+            double weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
+            if (!regularip)
+              weight = 0;
+            return weight;
+          };
+        }
         // NgProfiler::StopThreadTimer (timer_SymbBFIstart, TaskManager::GetThreadId());
 
         ProxyUserData ud;
@@ -196,13 +209,13 @@ namespace ngfem
               }
               // NgProfiler::StartThreadTimer (timer_SymbBFIscale, TaskManager::GetThreadId());
               FlatVector<SIMD<double>> weights(ir.Size(), lh);
-              if (!is_diagonal)
+/*              if (!is_diagonal)
                 for (size_t i = 0; i < ir.Size(); i++)
                   // proxyvalues.Col(i) *= mir[i].GetWeight();
-                  weights(i) = mir[i].GetWeight();
+                  weights(i) = ns_wei_arr[i]*mir[i].GetMeasure();
               else
                 for (size_t i = 0; i < ir.Size(); i++)
-                  diagproxyvalues.Col(i) *= mir[i].GetWeight();
+                  diagproxyvalues.Col(i) *= ns_wei_arr[i]*mir[i].GetMeasure();*/
 
               IntRange r1 = proxy1->Evaluator()->UsedDofs(fel_trial);
               IntRange r2 = proxy2->Evaluator()->UsedDofs(fel_test);
@@ -232,7 +245,7 @@ namespace ngfem
                   auto hbdbmat1 = bdbmat1.RowSlice(j, dim_proxy1).Rows(r1);
 
                   for (size_t k = 0; k < bdbmat1.Width(); k++)
-                    hbdbmat1.Col(k).Range(0, r1.Size()) = diagproxyvalues(j, k) * hbbmat1.Col(k);
+                    hbdbmat1.Col(k).Range(0, r1.Size()) = diagproxyvalues(j, k)*wei_arr[k]*mir[k].GetMeasure() * hbbmat1.Col(k);
                 }
               }
               else
@@ -252,9 +265,43 @@ namespace ngfem
                       auto bdbmat1_j = bdbmat1.RowSlice(j, dim_proxy2).Rows(r1);
 
                       for (size_t i = 0; i < ir.Size(); i++)
-                        bdbmat1_j.Col(i).Range(0, r1.Size()) += proxyvalues_jk(i) * weights(i) * bbmat1_k.Col(i);
+                        bdbmat1_j.Col(i).Range(0, r1.Size()) += proxyvalues_jk(i) *wei_arr[k]*mir[k].GetMeasure() * bbmat1_k.Col(i);
                     }
               }
+                  symmetric_so_far &= samediffop && is_diagonal;
+                      /*
+                      if (symmetric_so_far)
+                        AddABtSym (AFlatMatrix<double>(hbbmat2.Rows(r2)),
+                                   AFlatMatrix<double> (hbdbmat1.Rows(r1)), part_elmat);
+                      else
+                        AddABt (AFlatMatrix<double> (hbbmat2.Rows(r2)),
+                                AFlatMatrix<double> (hbdbmat1.Rows(r1)), part_elmat);
+                      */
+
+                      {
+                        // static Timer t("AddABt", NoTracing);
+                        // RegionTracer reg(TaskManager::GetThreadId(), t);
+                        
+                        if (symmetric_so_far)
+                        {
+                          /*
+                            RegionTimer regdmult(timer_SymbBFImultsym);
+                            NgProfiler::AddThreadFlops(timer_SymbBFImultsym, TaskManager::GetThreadId(),
+                            SIMD<double>::Size()*2*r2.Size()*(r1.Size()+1)*hbbmat2.Width() / 2);
+                          */
+                          AddABtSym (hbbmat2.Rows(r2), hbdbmat1.Rows(r1), part_elmat);
+                        }
+                      else
+                        {
+                          /*
+                          RegionTimer regdmult(timer_SymbBFImult);
+                          NgProfiler::AddThreadFlops(timer_SymbBFImult, TaskManager::GetThreadId(),
+                                                     SIMD<double>::Size()*2*r2.Size()*r1.Size()*hbbmat2.Width());
+                          */
+                          AddABt (hbbmat2.Rows(r2), hbdbmat1.Rows(r1), part_elmat);
+                        }
+                      }
+                
 
               // elmat.Rows(r2).Cols(r1) += bbmat2.Rows(r2) * Trans(bdbmat1.Rows(r1));
               // AddABt (bbmat2.Rows(r2), bdbmat1.Rows(r1), elmat.Rows(r2).Cols(r1));
@@ -282,7 +329,6 @@ namespace ngfem
     const IntegrationRule * ir;
     Array<double> wei_arr;
     tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
-
     if (ir == nullptr)
       return;
     ///
@@ -292,7 +338,6 @@ namespace ngfem
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
     
     // tstart.Stop();
-    bool symmetric_so_far = false; //we don't check for symmetry in the formulatin so far (TODO)!
     int k1 = 0;
     int k1nr = 0;
     for (auto proxy1 : trial_proxies)
