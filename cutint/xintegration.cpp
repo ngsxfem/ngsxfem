@@ -44,7 +44,7 @@ namespace xintegration
             throw Exception("space-time quadrature rule shall not have a fixed reference time.");
           FESpace* raw_FE = (gflset->GetFESpace()).get();
           SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
-          ScalarFiniteElement<1>* fe_time = nullptr;
+          shared_ptr<ScalarFiniteElement<1>> fe_time = nullptr;
           if (!st_FE)
           {
             static bool warned = false;
@@ -53,11 +53,11 @@ namespace xintegration
               warned = true;
               cout << IM(2) << "WARNING: You are using a space-time integration rule with an only spatial gridfunction (not a space time FE). This gridfunction will be treated as a constant-in-time function.\n" << endl;
             }
-            fe_time = new (lh) L2HighOrderFE<ET_SEGM>(0);
+            fe_time = make_shared<L2HighOrderFE<ET_SEGM>>(0);
           }
           else
-            fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
-          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
+            fe_time = dynamic_pointer_cast<ScalarFiniteElement<1>>(st_FE->GetTimeFE());
+          return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time.get(), dt, time_intorder, intorder, quad_dir_policy, lh);
         } else {
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);
           if (ir != nullptr) 
