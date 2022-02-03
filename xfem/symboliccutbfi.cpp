@@ -783,16 +783,41 @@ namespace ngfem
     }
     else //Codim1 or 2D->0D
     {
-        if(time_order <= 0) {
+        if(time_order < 0) {
+            auto gflset = lsetintdom->GetLevelsetGF();
+
+            Array<DofId> dnums(0,lh);
+            gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
+            FlatVector<> elvec(dnums.Size(),lh);
+            gflset->GetVector().GetIndirect(dnums,elvec);
+
+            //cout << elvec << endl;
+            //cout << LocalFacetNr1 << "\t" << LocalFacetNr2 << endl;
+            //cout << ElVertices1 << "\t" << ElVertices2 << endl;
+
+            auto int_tuple = ET_trait<ET_TRIG>::GetEdge(LocalFacetNr1);
+
+            double lset_l, lset_r;
+            if(ElVertices1[int_tuple[0]] < ElVertices1[int_tuple[1]]){
+                 lset_l = elvec[int_tuple[1]]; lset_r = elvec[int_tuple[0]];
+            }
+            else {
+                 lset_l = elvec[int_tuple[0]]; lset_r = elvec[int_tuple[1]];
+            }
+
+            /*
             IntegrationPoint ipl(0,0,0,0);
             IntegrationPoint ipr(1,0,0,0);
             const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
             const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
+            //cout << "facet_ip_l" << facet_ip_l.Point() << endl;
+            //cout << "facet_ip_r" << facet_ip_r.Point() << endl;
             MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
             MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
             double lset_l = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
             double lset_r = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
 
+            cout << lset_l << "\t" << lset_r << endl;*/
 
             if ((lset_l > 0 && lset_r > 0) && lsetintdom->GetDomainType() != POS) return;
             if ((lset_l < 0 && lset_r < 0) && lsetintdom->GetDomainType() != NEG) return;
@@ -802,9 +827,11 @@ namespace ngfem
         }
         else {
             cout << "Hello! Welcome to the special version of cutfacetint" << endl;
+
             auto gflset = lsetintdom->GetLevelsetGF();
             if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
             cout << "Found glset" << endl;
+
             shared_ptr<FESpace> raw_FE = (gflset->GetFESpace());
             if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
             cout << "Found raw_FE" << endl;
@@ -930,7 +957,7 @@ namespace ngfem
              for (int i = 0; i < mir1.Size(); i++){
                  //proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
                  // proxyvalues(i,STAR,STAR) *= measure(i) * ir_scr[i].Weight();
-                 if(time_order <= 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
+                 if(time_order < 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
                  else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * wei_arr[i];
              }
           }
