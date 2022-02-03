@@ -828,10 +828,19 @@ namespace ngfem
         else {
             cout << "Hello! Welcome to the special version of cutfacetint" << endl;
 
+            /*
             auto gflset = lsetintdom->GetLevelsetGF();
             if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
             cout << "Found glset" << endl;
 
+            Array<DofId> dnums(0,lh);
+            gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
+            FlatVector<> elvec(dnums.Size(),lh);
+            gflset->GetVector().GetIndirect(dnums,elvec);
+
+            cout << "st elvec: " << elvec << endl; */
+
+            /*
             shared_ptr<FESpace> raw_FE = (gflset->GetFESpace());
             if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
             cout << "Found raw_FE" << endl;
@@ -857,7 +866,7 @@ namespace ngfem
                 cf_lset_at_element[2*i+1] = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
                 cf_lset_at_element[2*i] = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
             }
-            cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl;
+            cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl; */
 
             //tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, fe_time, lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
         }

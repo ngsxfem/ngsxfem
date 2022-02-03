@@ -40,6 +40,7 @@ namespace xintegration
         FlatVector<> elvec(dnums.Size(),lh);
         gflset->GetVector().GetIndirect(dnums,elvec);
         if (time_intorder >= 0) {
+            //cout << "Got the elvec " << elvec << endl;
           if (lsetintdom.HasReferenceTime())
             throw Exception("space-time quadrature rule shall not have a fixed reference time.");
           FESpace* raw_FE = (gflset->GetFESpace()).get();
