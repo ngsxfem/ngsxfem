@@ -6,7 +6,7 @@
 CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, shared_ptr<CutDifferentialSymbol> _dx)
   : Integral(_cf, *_dx), lsetintdom(_dx->lsetintdom) { ; }
 
-shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
+shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;
@@ -56,7 +56,7 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
 
 
 
-shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator()
+shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;
@@ -175,7 +175,7 @@ FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
       : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref) { ; }
 
 
-shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator()
+shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;
