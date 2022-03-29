@@ -23,7 +23,7 @@ def test_cut_symbols_straightcut(order, DOM, subdivlvl):
         lset_h = lsetmeshadap.lset_p1
     elif subdivlvl > 0:
         lsetmeshadap = NoDeformation(mesh, levelset)
-        lset_h = GridFunction(H1(mesh, order))
+        lset_h = GridFunction(H1(mesh, order=order))
         lset_h.Set(levelset)
 
     deform = lsetmeshadap.deform
