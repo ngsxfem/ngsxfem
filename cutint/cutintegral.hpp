@@ -37,8 +37,8 @@ namespace ngfem
                                FlatVector<Complex> element_wise);
 
 
-    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator();
-    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator();
+    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator() const;
+    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator() const;
   };
 
 
@@ -94,8 +94,8 @@ namespace ngfem
       throw Exception("Integrate not Implemented for FacetPatchIntegral");
     }
 
-    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator();
-    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator()
+    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator() const;
+    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator() const
     {
       throw Exception("MakeLinearFormIntegrator not Implemented for FacetPatchIntegral");
     }

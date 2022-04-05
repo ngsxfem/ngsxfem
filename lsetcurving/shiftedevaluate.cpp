@@ -75,8 +75,12 @@ namespace ngfem
       // static atomic<int> cnt_its(0);
       // static atomic<int> cnt_calls(0);
       
+      Vec<SpaceD> ipx_best_so_far;
+      double diff_best_so_far;
+      bool first = true; int idx_best;
+
       // Fixed point iteration
-      while (its < globxvar.NEWTON_ITER_TRESHOLD)
+      while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
       {
         scafe_back.CalcShape(ipx,shape_back);
         dvec_back = Trans(vector_back)*shape_back;
@@ -84,8 +88,21 @@ namespace ngfem
         FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
 
         diff = zdiff - dvec_back - mip.GetJacobian() * fv;
-        // cout << "diff = " << diff << endl;
-        // cout << "its = " << its << endl;
+        //cout << "diff = " << diff << endl;
+        //cout << "its = " << its << endl;
+        if(first) {
+            diff_best_so_far = L2Norm(diff);
+            ipx_best_so_far = ipx.Point();
+            idx_best = its;
+            first = false;
+        }
+        else {
+            if (L2Norm(diff) < diff_best_so_far){
+                diff_best_so_far = L2Norm(diff);
+                ipx_best_so_far = ipx.Point();
+                idx_best = its;
+            }
+        }
         if ( L2Norm(diff) < globxvar.EPS_SHIFTED_EVAL*h ) break;
         ipx.Point() = mip.GetJacobianInverse() * (zdiff - dvec_back);
 
@@ -93,8 +110,17 @@ namespace ngfem
         // cnt_its++;
       
       }
-      if (its == globxvar.NEWTON_ITER_TRESHOLD)
-        throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
+      if (its == globxvar.FIXED_POINT_ITER_TRESHOLD){
+          if(diff_best_so_far < 1e0) {
+              cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "In Shifted_eval: Not converged, but the "+to_string(idx_best)+"th iteration seems a reasonable candidate" << endl;
+              ipx.Point() = ipx_best_so_far;
+          }
+          else {
+              cout << "Last diff: " << diff << endl;
+              cout << "Best diff: " << diff_best_so_far << endl;
+              throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD = "+to_string(globxvar.FIXED_POINT_ITER_TRESHOLD)+" iterations and didn't (yet?) converge! In addition, the best interation step is no good fallback candidate.");
+          }
+      }
     
       // cnt_calls++;
       // cout << "cnt/calls = " << cnt_its/cnt_calls << endl;
@@ -196,7 +222,7 @@ namespace ngfem
       Vec<SpaceD> zdiff = z-mip_x0.GetPoint();
     
       // Fixed point iteration
-      while (its < globxvar.NEWTON_ITER_TRESHOLD)
+      while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
       {
         FlatVector<double> fv(SpaceD,&(ipx.Point())(0));
         diff = zdiff - mip.GetJacobian() * fv;
@@ -204,8 +230,8 @@ namespace ngfem
         ipx.Point() = mip.GetJacobianInverse() * zdiff;
         its++;
       }
-      if (its == globxvar.NEWTON_ITER_TRESHOLD)
-        throw Exception(" shifted eval took NEWTON_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
+      if (its == globxvar.FIXED_POINT_ITER_TRESHOLD)
+        throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
 
       scafe.CalcShape(ipx,shape);
       mat = 0.0;

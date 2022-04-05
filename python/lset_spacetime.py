@@ -58,8 +58,6 @@ This class holds its own members for the higher order and lower order
     order_qn = 2
     order_lset = 2
 
-    gf_to_project = []
-    gf_to_project_tmp = [] # list for temporary copies
 
     @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
@@ -104,6 +102,10 @@ The computed deformation depends on different options:
     If a level set function is prescribed the deformation is computed right away. Otherwise the 
     computation is triggered only at calls for `CalcDeformation`.
         """
+
+        self.gf_to_project = []
+        self.gf_to_project_tmp = [] # list for temporary copies
+        
         self.order_deform = order_space
         self.order_qn = order_space
         self.order_lset = order_space
@@ -205,8 +207,8 @@ evaluation)
     GridFunction(s) to store for later deformation updates.
         """      
         if isinstance(gf,list):
-            self.gf_to_project.extend((gf, update_domain))
-            self.gf_to_project_tmp.extend(GridFunction(gf.space))
+            self.gf_to_project.extend([(gfa, update_domain) for gfa in gf])
+            self.gf_to_project_tmp.extend([GridFunction(gfa.space) for gfa in gf])
         else:
             self.gf_to_project.append((gf, update_domain))
             self.gf_to_project_tmp.append(GridFunction(gf.space))
@@ -222,6 +224,8 @@ This function is typically only called in the `CalcDeformation` unless
         for (gf, update_domain),gftmp in zip(self.gf_to_project, self.gf_to_project_tmp):
             gftmp.vec.data = gf.vec
             if update_domain is None:
+                if (gf.space.mesh.ne != self.deform_bottom.space.mesh.ne):
+                    raise Exception("different meshes...")
                 gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom))
             else:
                 gf.Set(shifted_eval(gftmp, back = self.deform_last_top, forth = self.deform_bottom), definedonelements=update_domain)
@@ -304,7 +308,6 @@ dont_project_gfs : bool
         self.haspos_spacetime |= self.ci.GetElementsOfType(POS)
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
-        
         
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]

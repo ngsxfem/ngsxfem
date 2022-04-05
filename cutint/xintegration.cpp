@@ -56,7 +56,7 @@ namespace xintegration
             fe_time = new (lh) L2HighOrderFE<ET_SEGM>(0);
           }
           else
-            fe_time = dynamic_cast<ScalarFiniteElement<1>*>(st_FE->GetTimeFE());
+            fe_time = dynamic_pointer_cast<ScalarFiniteElement<1>>(st_FE->GetTimeFE()).get();
           return SpaceTimeCutIntegrationRule(elvec, trafo, fe_time, dt, time_intorder, intorder, quad_dir_policy, lh);
         } else {
           const IntegrationRule * ir = StraightCutIntegrationRule(elvec, trafo, dt, intorder, quad_dir_policy, lh);

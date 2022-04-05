@@ -26,7 +26,7 @@ namespace ngcomp
 {
 
 SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags)
-  : FESpace (ama, flags), Vh(aVh)
+  : FESpace (ama, flags), Vh(aVh), tfe(atfe)
   {
     *testout << "AMA DIM: " << ama->GetDimension() << endl;
     *testout << "Constructor of SpaceTimeFESpace" << endl;
@@ -37,8 +37,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     int order_s = Vh->GetOrder();
     int order_t = atfe->Order();
     bool linear_time = order_t == 1;
-
-    tfe = atfe.get();
 
     *testout <<"Hello from SpaceTimeFESpace.cpp" << endl;
     *testout <<"Order Space: " << order_s << endl;
@@ -65,6 +63,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
         Switch<3> (dimension-1, [&] (auto DIM) {
           additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM+2,DIM+1>>>());
+          additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
         });
       });
     }
@@ -73,8 +72,12 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
         additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1>>>());
         additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
         additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
+        additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
       });
     
+        
+
+
 
     time=0;
   }
@@ -120,13 +123,12 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
         for (auto v : Vh_dofs)
             dnums.Append (v+i*Vh->GetNDof());
      }
-
   }
 
 
   FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
-     ScalarFiniteElement<1>* t_FE = tfe;
+     ScalarFiniteElement<1>* t_FE = tfe.get();
      if(ma->GetDimension() == 2){
        ScalarFiniteElement<2>* s_FE2 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
        //cout << "SpaceTimeFESpace :: GetFE for 2D called" << endl;
@@ -185,7 +187,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
      *testout <<"General case" << endl;
      // General case
      //*testout <<"time fe:" << GetTimeFE() << endl;
-     NodalTimeFE * time_FE = dynamic_cast<NodalTimeFE*>(tfe);
+     shared_ptr<NodalTimeFE> time_FE = dynamic_pointer_cast<NodalTimeFE>(tfe);
 
      const int dim = Vh->GetDimension();
      for(int j=0; j< Vh->GetNDof(); j++) restricted_vec[j] = 0.;

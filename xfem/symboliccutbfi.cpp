@@ -1178,11 +1178,13 @@ namespace ngfem
     IntegrationRule * ir_facet_vol1 = nullptr;
     IntegrationRule * ir_facet_vol2 = nullptr;
 
-    
+    Array<double> ir_st1_wei_arr;
+
     if (time_order >= 0)
     {
       FlatVector<> st_point(3,lh);
       const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_order);
+      ir_st1_wei_arr.SetSize(ir_facet_vol1_tmp.Size()*ir_time.Size());
 
       auto ir_spacetime1 = new (lh) IntegrationRule (ir_facet_vol1_tmp.Size()*ir_time.Size(),lh);
       for (int i = 0; i < ir_time.Size(); i++)
@@ -1190,7 +1192,8 @@ namespace ngfem
         for (int j = 0; j < ir_facet_vol1_tmp.Size(); j++)
         {
           const int ij = i*ir_facet_vol1_tmp.Size()+j;
-          (*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol1_tmp[j].Weight() );
+          ir_st1_wei_arr[ij] = ir_time[i].Weight() * ir_facet_vol1_tmp[j].Weight() ;
+          //(*ir_spacetime1)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol1_tmp[j].Weight() );
           st_point = ir_facet_vol1_tmp[j].Point();
           (*ir_spacetime1)[ij].Point() = st_point;
           (*ir_spacetime1)[ij].SetWeight(ir_time[i](0));
@@ -1203,7 +1206,7 @@ namespace ngfem
         for (int j = 0; j < ir_facet_vol2_tmp.Size(); j++)
         {
           const int ij = i*ir_facet_vol2_tmp.Size()+j;
-          (*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol2_tmp[j].Weight() );
+          //(*ir_spacetime2)[ij].SetWeight( ir_time[i].Weight() * ir_facet_vol2_tmp[j].Weight() );
           st_point = ir_facet_vol2_tmp[j].Point();
           (*ir_spacetime2)[ij].Point() = st_point;
           (*ir_spacetime2)[ij].SetWeight(ir_time[i](0));
@@ -1251,9 +1254,11 @@ namespace ngfem
                 proxyvalues(STAR,l,k) = val.Col(0);
               }
 
-          for (int i = 0; i < mir1.Size(); i++)
+          for (int i = 0; i < mir1.Size(); i++){
             // proxyvalues(i,STAR,STAR) *= measure(i) * ir_facet[i].Weight();
-            proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
+              if(time_order == 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
+              else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_st1_wei_arr[i];
+          }
 
           IntRange trial_range  = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());
@@ -1380,15 +1385,23 @@ namespace ngfem
     }
 
     if(its >= globxvar.NEWTON_ITER_TRESHOLD || L2Norm(diff) > globxvar.EPS_FACET_PATCH_INTEGRATOR*h){
-      cout << IM(4) << "MapPatchIntegrationPoint: Newton did not converge after "
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL ) << "MapPatchIntegrationPoint: Newton did not converge after "
            << its <<" iterations! (" << D <<"D)" << endl;
-      cout << IM(4) << "taking a low order guess" << endl;
-      cout << IM(4) << "diff = " << first_diffnorm << endl;
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "taking a low order guess" << endl;
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "diff = " << first_diffnorm << endl;
       //globxvar.Output();
-      cout << IM(4) << "eps_treshold: " << globxvar.EPS_FACET_PATCH_INTEGRATOR << endl;
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "eps_treshold: " << globxvar.EPS_FACET_PATCH_INTEGRATOR << endl;
+
       to_ip = *ip_x00;
       if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
       else to_ip.SetWeight(mip.GetWeight()/w00);
+    }
+    else if(L2Norm(ip_x0->Point() - ip_x00->Point()) > globxvar.MAX_DIST_NEWTON) {
+        cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "Distance warning triggered, dist = " << L2Norm(ip_x0->Point() - ip_x00->Point()) << " its = " << its << endl;
+        cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "taking a low order guess" << endl;
+        to_ip = *ip_x00;
+        if(spacetime_mode) to_ip.SetWeight(mip.GetMeasure() * from_ip_weight /w00);
+        else to_ip.SetWeight(mip.GetWeight()/w00);
     }
     else
     {

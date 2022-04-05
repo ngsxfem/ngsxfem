@@ -228,22 +228,61 @@ CompoundFESpaces.
 )raw_string")
     );
 
-  py::class_<GlobalNgsxfemVariables>(m, "GlobalNgsxfemVariables")
-      .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
-      .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
-      .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
-      .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
-      .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
-      .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
-      .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
-      .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
-      .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
-      .def_readwrite("simd_eval", &GlobalNgsxfemVariables::SIMD_EVAL)
-      .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
-      .def("Output", &GlobalNgsxfemVariables::Output)
-      .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults)
-      .def("SwitchSIMD", &GlobalNgsxfemVariables::SwitchSIMD);
+  py::class_<GlobalNgsxfemVariables>(m, "GlobalNgsxfemVariables",
+              docu_string(R"raw_string(
+The class GlobalNgsxfemVariables provides Python-access to several internal
+parameters and options used by different subprocedures of ngsxfem. For "mainstream"
+application cases, it should not be required to change parameters here. Most cases
+where this class is practically relevant will be debugging or special applications,
+like investigations in a regime of total error below ~1e-8.
 
+Properties:
+
+eps_spacetime_lset_perturbation : double
+    When handling cut topologies, it is sometimes cumbersome to include the case
+    of a lset value of exactly 0. Hence, the value will be set to eps_spacetime_lset_perturbation
+    in the routine for generating space-time quadrature rules in case its absolute value is smaller.
+    Default: 1e-14
+
+eps_spacetime_cutrule_bisection : double
+    For high temporal orders, the space-time quadrature rule will apply a bisection
+    method to find those time points with topology changes. This parameters controls
+    how small 2 times the value must be in order to be counted as a root.
+    Default: 1e-15
+
+eps_P1_perturbation : double
+    Similar to eps_spacetime_lset_perturbation, but for the P1 interpolation routine.
+    Default: 1e-14
+
+eps_spacetime_fes_node : double
+    When a Gridfunction is restricted, the given time point is compared to the nodes
+    of the finite element, such that those node values can be extracted directly in
+    a matching case. This parameters controlls how far a deviation will still be counted
+    as coincidence.
+    Default: 1e-9
+
+
+ )raw_string"))
+          .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
+          .def_readwrite("eps_spacetime_cutrule_bisection", &GlobalNgsxfemVariables::EPS_STCR_ROOT_SEARCH_BISECTION)
+          .def_readwrite("eps_P1_perturbation", &GlobalNgsxfemVariables::EPS_INTERPOLATE_TO_P1)
+          .def_readwrite("eps_spacetime_fes_node", &GlobalNgsxfemVariables::EPS_STFES_RESTRICT_GF)
+          .def_readwrite("eps_shifted_eval", &GlobalNgsxfemVariables::EPS_SHIFTED_EVAL)
+          .def_readwrite("eps_facetpatch_ips", &GlobalNgsxfemVariables::EPS_FACET_PATCH_INTEGRATOR)
+          .def_readwrite("newton_maxiter", &GlobalNgsxfemVariables::NEWTON_ITER_TRESHOLD)
+          .def_readwrite("max_dist_newton", &GlobalNgsxfemVariables::MAX_DIST_NEWTON)
+          .def_readwrite("fixed_point_maxiter_shifted_eval", &GlobalNgsxfemVariables::FIXED_POINT_ITER_TRESHOLD)
+          .def_readwrite("do_naive_timeint", &GlobalNgsxfemVariables::DO_NAIVE_TIMEINT)
+          .def_readwrite("naive_timeint_order", &GlobalNgsxfemVariables::NAIVE_TIMEINT_ORDER)
+          .def_readwrite("naive_timeint_subdivs", &GlobalNgsxfemVariables::NAIVE_TIMEINT_SUBDIVS)
+          .def_readwrite("non_conv_warn_msg_lvl", &GlobalNgsxfemVariables::NON_CONV_WARN_MSG_LVL)
+          .def_readwrite("simd_eval", &GlobalNgsxfemVariables::SIMD_EVAL)
+          .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
+          .def("Output", &GlobalNgsxfemVariables::Output)
+          .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults);
+          .def("SwitchSIMD", &GlobalNgsxfemVariables::SwitchSIMD);
+
+  
   m.attr("ngsxfemglobals") = py::cast(&globxvar);
 
   typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;

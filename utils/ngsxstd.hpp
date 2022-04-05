@@ -120,21 +120,32 @@ ostream &operator<<(ostream &ost, COMBINED_DOMAIN_TYPE cdt);
 class GlobalNgsxfemVariables
 {
 public:
-  double EPS_STCR_LSET_PERTUBATION;
-  double EPS_STCR_ROOT_SEARCH_BISECTION;
-  double EPS_INTERPOLATE_TO_P1;
-  double EPS_STFES_RESTRICT_GF;
-  double EPS_SHIFTED_EVAL;
-  double EPS_FACET_PATCH_INTEGRATOR;
+    double EPS_STCR_LSET_PERTUBATION;
+    double EPS_STCR_ROOT_SEARCH_BISECTION;
+    double EPS_INTERPOLATE_TO_P1;
+    double EPS_STFES_RESTRICT_GF;
+    double EPS_SHIFTED_EVAL;
+    double EPS_FACET_PATCH_INTEGRATOR;
+    double MAX_DIST_NEWTON;
 
-  int NEWTON_ITER_TRESHOLD;
-  bool SIMD_EVAL;
-  GlobalNgsxfemVariables();
+    int NEWTON_ITER_TRESHOLD;
+    int FIXED_POINT_ITER_TRESHOLD;
 
-  void SetDefaults();
-  void MultiplyAllEps(double fac);
-  void Output();
-  void SwitchSIMD(bool simd);
+    bool DO_NAIVE_TIMEINT;
+    int NAIVE_TIMEINT_SUBDIVS;
+    int NAIVE_TIMEINT_ORDER;
+
+    bool SIMD_EVAL;
+
+    int NON_CONV_WARN_MSG_LVL;
+
+    GlobalNgsxfemVariables();
+    
+    void SetDefaults();
+    void MultiplyAllEps(double fac);
+    void Output();
+    void SwitchSIMD(bool simd);
+      
 };
 
 extern GlobalNgsxfemVariables globxvar;
