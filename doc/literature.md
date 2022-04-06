@@ -53,6 +53,8 @@ title: 'Scientific literature using `ngsxfem`'
 
 ##  Surface PDEs
 
+* P. Brandner, T. Janhkuhn, S. Praetorius, A. Reusken, A. Voigt, “Finite element discretization methods for velocity-pressure and stream function formulations of surface Stokes equations”. 5th March 2021, arXiv: [2103.03843](https://arxiv.org/abs/2103.03843) [math.NA].
+
 * J. Grande, C. Lehrenfeld and A. Reusken. “Analysis of a High-Order Trace Finite Element Method for PDEs on Level Set Surfaces”. In: SIAM J. Numer. Anal. 56.1 (18th Jan. 2018), pp. 228–255. doi: [10.1137/16m1102203](https://doi.org/10.1137/16m1102203).
 
  * F. Heimann. “Higher order Discontinuous Galerkin methods for the LaplaceBeltrami problem on unfitted smooth surfaces”. Bachelor’s thesis. GeorgAugust Universität Göttingen, Sept. 2018. url: http://cpde.math.unigoettingen.de/data/Hei18_Ba.pdf.
