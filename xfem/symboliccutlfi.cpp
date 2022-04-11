@@ -24,6 +24,7 @@ namespace ngfem
       lsetintdom(lsetintdom_in)
   {
     ;
+
   }
 
   
@@ -79,9 +80,10 @@ namespace ngfem
             // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
           }
       }
-  }
-
-  if (globxvar.SIMD_EVAL)
+  
+  cout << "local evaluate: " << simd_evaluate << endl;
+  cout << "global evaluate: " << globxvar.SIMD_EVAL << endl;
+  if (simd_evaluate && globxvar.SIMD_EVAL)
     {
 
       try
@@ -232,5 +234,5 @@ namespace ngfem
       }
 
   }
-  
+  }
 }

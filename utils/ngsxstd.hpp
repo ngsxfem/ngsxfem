@@ -132,7 +132,7 @@ public:
     
     void SetDefaults();
     void MultiplyAllEps(double fac);
-    void GlobalNgsxfemVariables::SwitchSIMD(bool simd){}
+    void SwitchSIMD(bool simd);
     void Output();
 };
 

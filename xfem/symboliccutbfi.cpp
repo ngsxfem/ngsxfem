@@ -27,8 +27,7 @@ namespace ngfem
     : SymbolicBilinearFormIntegrator(acf,avb,aelement_vb)
   {
     lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
-        if(!globxvar.SIMD_EVAL)
-        simd_evaluate = false;
+
   }
   
 
@@ -117,7 +116,7 @@ namespace ngfem
      bool symmetric_so_far = false; //we don't check for symmetry in the formulatin so far (TODO)!
     
 
-    if (globxvar.SIMD_EVAL)
+    if (simd_evaluate && globxvar.SIMD_EVAL)
       try
       {
         // static Timer tsimd(string("SymbolicBFI::CalcElementMatrixAddSIMD")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), NoTracing);
