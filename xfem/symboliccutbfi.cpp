@@ -826,8 +826,6 @@ namespace ngfem
             if (ir_scr == nullptr) return;
         }
         else {
-            cout << "Hello! Welcome to the special version of cutfacetint" << endl;
-
             auto gflset = lsetintdom->GetLevelsetGF();
             if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
             cout << "Found glset" << endl;
@@ -837,17 +835,14 @@ namespace ngfem
             FlatVector<> elvec(dnums.Size(),lh);
             gflset->GetVector().GetIndirect(dnums,elvec);
 
-            cout << "st elvec: " << elvec << endl;
+            // double lset_l, lset_r;
+            // if(ElVertices1[int_tuple[0]] < ElVertices1[int_tuple[1]]){
+            //      lset_l = elvec[int_tuple[1]]; lset_r = elvec[int_tuple[0]];
+            // }
+            // else {
+            //      lset_l = elvec[int_tuple[0]]; lset_r = elvec[int_tuple[1]];
+            // }
 
-            auto int_tuple = ET_trait<ET_TRIG>::GetEdge(LocalFacetNr1);
-
-            double lset_l, lset_r;
-            if(ElVertices1[int_tuple[0]] < ElVertices1[int_tuple[1]]){
-                 lset_l = elvec[int_tuple[1]]; lset_r = elvec[int_tuple[0]];
-            }
-            else {
-                 lset_l = elvec[int_tuple[0]]; lset_r = elvec[int_tuple[1]];
-            }
 
             /*
             IntegrationPoint ipl(0,0,0,0);
@@ -866,34 +861,55 @@ namespace ngfem
             //ir_scr = StraightCutIntegrationRuleUntransformed(, ET_SEGM, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
 
             FESpace* raw_FE = (gflset->GetFESpace()).get();
-            if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
-            cout << "Found raw_FE" << endl;
+            //if(raw_FE == nullptr) throw Exception("Rawfe is nullptr");
+            //cout << "Found raw_FE: " << raw_FE->GetClassName() << endl;
+            //cout << "Ndofs: " << raw_FE->GetNDof() << endl;
             SpaceTimeFESpace * st_FE = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
             if(st_FE == nullptr) throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-            cout << "Found stfe" << endl;
-            cout << "Classname: " << st_FE->GetClassName() << endl;
-            cout << "Order Time: " << st_FE->order_time() << endl;
+            //cout << "Found stfe" << endl;
+            //cout << "Classname: " << st_FE->GetClassName() << endl;
+            //cout << "Order Time: " << st_FE->order_time() << endl;
             shared_ptr<FiniteElement> fe_time = st_FE->GetTimeFE();
             shared_ptr<NodalTimeFE> time_FE = dynamic_pointer_cast< NodalTimeFE>(fe_time);
             if(time_FE == nullptr) throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-            cout << "Found time_FE" << endl;
-            cout << "All casts are done. fe_time->GetNDof(): " << time_FE->GetNDof() << endl;
-            /*
+            //cout << "Found time_FE" << endl;
+            //cout << "All casts are done. fe_time->GetNDof(): " << time_FE->GetNDof() << endl;
+            //cout << "st elvec: " << elvec << endl;
+
+            auto int_tuple = ET_trait<ET_TRIG>::GetEdge(LocalFacetNr1);
+            if(ElVertices1[int_tuple[0]] > ElVertices1[int_tuple[1]])
+              swap(int_tuple[0],int_tuple[1]);
+
+            int M = fe_time->GetNDof(); //time nodes
+            int L = dnums.Size()/M; // dofs/verts per vol element 
 
             FlatVector<> cf_lset_at_element(2*fe_time->GetNDof(), lh);
-            for(int i=0; i<fe_time->GetNDof(); i++){
-                IntegrationPoint ipl(0,0,0,0); //time_FE->GetNodes()[i]);
-                IntegrationPoint ipr(1,0,0,0); //time_FE->GetNodes()[i]);
+            FlatMatrixFixWidth<2> cf_lset_at_element_as_mat(M,&cf_lset_at_element(0));
+
+            for (int i = 0; i < M ; i++)
+            {
+              cf_lset_at_element_as_mat(i,0) = elvec[int_tuple[0]+i*L];
+              cf_lset_at_element_as_mat(i,1) = elvec[int_tuple[1]+i*L];
+            }
+
+            //cout << "cf_lset_at_element_as_mat before" << cf_lset_at_element_as_mat << endl;
+            cout << "cf_lset_at_element before" << cf_lset_at_element << endl;
+            for(int i=0; i<M; i++){
+                IntegrationPoint ipl(0,0,0,time_FE->GetNodes()[i]);
+                IntegrationPoint ipr(1,0,0,time_FE->GetNodes()[i]);
                 const IntegrationPoint & facet_ip_l = transform1( LocalFacetNr1, ipl);
                 const IntegrationPoint & facet_ip_r = transform1( LocalFacetNr1, ipr);
+                MarkAsSpaceTimeIntegrationPoint(const_cast<IntegrationPoint &>(facet_ip_l));
+                MarkAsSpaceTimeIntegrationPoint(const_cast<IntegrationPoint &>(facet_ip_r));
                 MappedIntegrationPoint<2,2> mipl(facet_ip_l,trafo1);
                 MappedIntegrationPoint<2,2> mipr(facet_ip_r,trafo1);
+
                 cf_lset_at_element[2*i+1] = lsetintdom->GetLevelsetGF()->Evaluate(mipl);
                 cf_lset_at_element[2*i] = lsetintdom->GetLevelsetGF()->Evaluate(mipr);
             }
-            cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl; */
+            cout << "Restoring the lset function lead to the FlatArray" << cf_lset_at_element << endl;
 
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(Vec<2>{lset_r, lset_l}, ET_SEGM, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, ET_SEGM, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
             if (ir_scr == nullptr) return;
         }
     }
@@ -902,7 +918,8 @@ namespace ngfem
 
     Facet2ElementTrafo transform2(eltype2, ElVertices2); 
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_scr), lh);
-
+    MarkAsSpaceTimeIntegrationRule(ir_facet_vol1);
+    MarkAsSpaceTimeIntegrationRule(ir_facet_vol2);
     BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
 
