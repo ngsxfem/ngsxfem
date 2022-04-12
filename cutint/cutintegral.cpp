@@ -6,7 +6,7 @@
 CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, shared_ptr<CutDifferentialSymbol> _dx)
   : Integral(_cf, *_dx), lsetintdom(_dx->lsetintdom) { ; }
 
-shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
+shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() const
 {
     cout << "Welcome to CutIntegral :: MakeBilinearFormIntegrator " << endl;
   // check for DG terms
@@ -58,7 +58,7 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
 
 
 
-shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator()
+shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;
@@ -101,6 +101,8 @@ template <typename TSCAL>
 TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
                                   FlatVector<TSCAL> element_wise)
 {
+  static Timer timer("CutIntegral::T_CutIntegrate");
+  RegionTimer reg (timer);
   LocalHeap glh(1000000000, "lh-T_CutIntegrate");
   bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
@@ -175,7 +177,7 @@ FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
       : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref) { ; }
 
 
-shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator()
+shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;

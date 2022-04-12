@@ -41,6 +41,9 @@ namespace ngfem
       virtual void CalcDShape (const IntegrationPoint & ip,
                                BareSliceMatrix<> dshape) const;
 
+      virtual void CalcMappedDDShape (const BaseMappedIntegrationPoint & mip, 
+                                      BareSliceMatrix<> ddshape) const;
+
       // there are some more functions to bring in ...
       //using ScalarFiniteElement<2>::CalcShape;
       //using ScalarFiniteElement<2>::CalcDShape;
