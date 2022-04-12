@@ -118,9 +118,9 @@ namespace ngfem
           {
             ud.testfunction = proxy;
             ud.test_comp = k;
-            // cf -> Evaluate (mir, values);
-            for (int i=0; i < mir.Size(); i++)
-              values(i,0) = cf->Evaluate(mir[i]);
+            cf -> Evaluate (mir, values);
+            // for (int i=0; i < mir.Size(); i++)
+            //   values(i,0) = cf->Evaluate(mir[i]);
 
             for (int i = 0; i < mir.Size(); i++)
               proxyvalues(i,k) = mir[i].GetMeasure() * wei_arr[i] * values(i,0);
