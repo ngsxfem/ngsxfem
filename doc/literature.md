@@ -5,6 +5,8 @@ title: 'Scientific literature using `ngsxfem`'
 ## Scalar fictitious domain problems
 * A higher order isoparametric fictitious domain method for level set domains. In S. Bordas, E. Burman, M. Larson, & M. Olshanskii (Eds.), Lecture notes in computational science and engineering (Vol. 121, pp. 65–92). Springer, Cham. doi: [10.1007/978-3-319-71431-8_3](https://doi.org/10.1007/978-3-319-71431-8_3).
 
+* Equal Higher Order Analysis of an Unfitted Discontinuous Galerkin Method for Stokes Flow Systems. In: Journal of Scientific Computing 91.48 (first online 01 April 2022). doi: [10.1007/s10915-022-01823-w](https://doi.org/10.1007/s10915-022-01823-w)
+
 ## Scalar and Stokes interface problems, such as two-phase flow problems
 
 * C. Lehrenfeld and A. Reusken. “Optimal preconditioners for Nitsche-XFEM discretizations of interface problems”. In: Numer. Math. 135.2 (26th Mar. 2016), pp. 313–332. doi: [10.1007/s00211-016-0801-6](https://doi.org/10.1007/s00211-016-0801-6).
@@ -24,10 +26,15 @@ title: 'Scientific literature using `ngsxfem`'
 * T. Ludescher. “Multilevel preconditioning of stabilized unfitted finite element discretizations”. PhD thesis. RWTH Aachen University, 27th May 2020. doi: [10.18154/RWTH-2020-07305](https://doi.org/10.18154/RWTH-2020-07305.)
 
 ## PDEs on moving domains: Space-time methods
+* F. Heimann, C. Lehrenfeld and J. Preuß. "Geometrically higher order unfitted space-time methods for PDEs on moving domains". Feb. 2022, arXiv: [2202.02216](https://arxiv.org/abs/2202.02216)
 
-* J. Preuß. “Higher order unfitted isoparametric space-time FEM on moving domains”. MA thesis. Georg-August Universität Göttingen, 31st Jan. 2018. url: http://cpde.math.uni-goettingen.de/data/Pre18_Ma.pdf.
+* A. C. Wendler. "Monolithic Unfitted Space-Time FEM for an Osmotic Cell Swelling Problem". MA thesis. Georg-August Universität Göttingen, Feb. 2022. doi: [10.25625/0KPEON](http://dx.doi.org/10.25625/0KPEON)
 
-* F. Heimann. “On Discontinuous- and Continuous-In-Time Unfitted Space-Time Methods for PDEs on Moving Domains”. MA thesis. Georg-August Universität Göttingen, Oct. 2020. url: http://cpde.math.uni-goettingen.de/data/Hei20_Ma.pdf.
+* Y. Lou and C. Lehrenfeld. "Isoparametric unfitted BDF -- finite element method for PDEs on evolving domains.", May 2021. arXiv: [2105.09162](https://arxiv.org/abs/2105.09162)
+
+* J. Preuß. “Higher order unfitted isoparametric space-time FEM on moving domains”. MA thesis. Georg-August Universität Göttingen, 31st Jan. 2018. doi: [10.25625/UACWXS](http://dx.doi.org/10.25625/UACWXS)
+
+* F. Heimann. “On Discontinuous- and Continuous-In-Time Unfitted Space-Time Methods for PDEs on Moving Domains”. MA thesis. Georg-August Universität Göttingen, Oct. 2020. doi: [10.25625/OIBRT4](http://dx.doi.org/10.25625/OIBRT4).
 
 ## PDEs on moving domains: Eulerian time-stepping
 * C. Lehrenfeld and M. A. Olshanskii. “An Eulerian finite element method for PDEs in time-dependent domains”. In: ESAIM Math. Model. Numer. Anal. 53.2 (24th Apr. 2019), pp. 585–614. doi: [10.1051/m2an/2018068](https://doi.org/10.1051/m2an/2018068).
@@ -37,6 +44,7 @@ title: 'Scientific literature using `ngsxfem`'
 * Y. Lou and C. Lehrenfeld. “Isoparametric unfitted BDF -- finite element method for PDEs on evolving domains”. 19th May 2021. arxiv: [2105.09162](http://arxiv.org/abs/2105.09162) [math.NA]
 
 ## Fluid structure interaction
+* M. Kemper. “Pure Eulerian unfitted FEM for Biological Fluid-Structure Interaction Problems”. MA thesis. Georg-August Universität Göttingen, 1st Feb. 2022. doi: [10.25625/DYUGCA](http://dx.doi.org/10.25625/DYUGCA)
 
 * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. “Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data”. In: Phys. Fluids 33.3, 033304 (2nd Mar. 2021). doi: [10.1063/5.0037971](https://doi.org/10.1063/5.0037971).
 
@@ -44,6 +52,8 @@ title: 'Scientific literature using `ngsxfem`'
 
 
 ##  Surface PDEs
+
+* P. Brandner, T. Janhkuhn, S. Praetorius, A. Reusken, A. Voigt, “Finite element discretization methods for velocity-pressure and stream function formulations of surface Stokes equations”. 5th March 2021, arXiv: [2103.03843](https://arxiv.org/abs/2103.03843) [math.NA].
 
 * J. Grande, C. Lehrenfeld and A. Reusken. “Analysis of a High-Order Trace Finite Element Method for PDEs on Level Set Surfaces”. In: SIAM J. Numer. Anal. 56.1 (18th Jan. 2018), pp. 228–255. doi: [10.1137/16m1102203](https://doi.org/10.1137/16m1102203).
 

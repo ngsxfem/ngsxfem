@@ -97,19 +97,20 @@ It is suggested to do the following instead:\n\
     IntegrationPoint ip(mip.IP());
     MarkAsSpaceTimeIntegrationPoint(ip);
     ip.SetWeight(time->GetValue());
+    double ret = 0;
     Switch<3> (mip.DimSpace()-1, [&] (auto DIM1) {
       if (mip.GetTransformation().VB())
       {
         MappedIntegrationPoint<DIM1.value,DIM1.value+1,double> newmip(ip, mip.GetTransformation());
-        return coef->Evaluate(newmip);
+        ret = coef->Evaluate(newmip);
       }
       else
       {
         MappedIntegrationPoint<DIM1.value+1,DIM1.value+1,double> newmip(ip, mip.GetTransformation());
-        return coef->Evaluate(newmip);
+        ret = coef->Evaluate(newmip);
       }
     });
-    return 0.0;
+    return ret;
   }
 
   void FixTimeCoefficientFunction::Evaluate(const BaseMappedIntegrationPoint & mip,
