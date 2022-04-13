@@ -189,6 +189,9 @@ namespace ngfem
   };
   class SymbolicFacetBilinearFormIntegrator2 : public SymbolicFacetBilinearFormIntegrator
   {
+  // uncut integrator for facets with space-time capabilities 
+  // (may become redundant if SymbolicCutFacetBLFI is fully implemented)
+  // use case: "traditional" ghost penalty (higher order derivatives) 
   protected:
     int time_order = -1;
   public:
