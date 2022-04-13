@@ -705,7 +705,7 @@ namespace ngfem
 
     if (etfacet != ET_SEGM){
         if (time_order > -1) throw Exception("Time order > -1 not allowed in 3D.");
-        if (lsetintdom->GetDomainType() != IF) throw Exception("cut facet bilinear form can only do volume ints on ET_SEGM");
+        //if (lsetintdom->GetDomainType() != IF) throw Exception("cut facet bilinear form can only do volume ints on ET_SEGM");
         //if (etfacet != ET_TRIG && etfacet != ET_QUAD) throw Exception("cut facet bilinear form can do IF ints only on ET_SEGM, ET_TRIG and ET_QUAD");
     }
     if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
