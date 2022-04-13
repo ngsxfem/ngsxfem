@@ -876,9 +876,10 @@ namespace ngfem
             //cout << "All casts are done. fe_time->GetNDof(): " << time_FE->GetNDof() << endl;
             //cout << "st elvec: " << elvec << endl;
 
-            auto int_tuple = ET_trait<ET_TRIG>::GetEdge(LocalFacetNr1);
-            if(ElVertices1[int_tuple[0]] > ElVertices1[int_tuple[1]])
-              swap(int_tuple[0],int_tuple[1]);
+            auto int_tuple = ET_trait<ET_TRIG>::GetEdgeSort(LocalFacetNr1,ElVertices1);
+            //auto int_tuple = ET_trait<ET_TRIG>::GetEdge(LocalFacetNr1);
+            //if(ElVertices1[int_tuple[0]] > ElVertices1[int_tuple[1]])
+            //  swap(int_tuple[0],int_tuple[1]);
 
             int M = fe_time->GetNDof(); //time nodes
             int L = dnums.Size()/M; // dofs/verts per vol element 
