@@ -59,7 +59,7 @@ ngsglobals.msg_level = 1
 # DISCRETIZATION PARAMETERS:
 
 # Parameter for refinement study:
-i = 4
+i = 2
 n_steps = 2**i
 space_refs = i
 
@@ -138,6 +138,7 @@ u, v = st_fes.TnT()
 h = specialcf.mesh_size
 
 ba_facets = BitArray(mesh.nfacet)
+ba_facets_inner = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=0)
 
 dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
@@ -145,7 +146,7 @@ dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
                     definedonelements=ci.GetElementsOfType(HASNEG))
 dQ_f = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
                     deformation=lsetadap.deformation[INTERVAL],
-                    definedonelements=None, skeleton=True)
+                    definedonelements=ba_facets_inner, skeleton=True)
 dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
               deformation=lsetadap.deformation[BOTTOM],
               definedonelements=ci.GetElementsOfType(HASNEG), tref=0)
@@ -165,7 +166,8 @@ mean_dudn = 0.5*n * (grad(u)+grad(u).Other())
 mean_dvdn = 0.5*n * (grad(v)+grad(v).Other())
 
 a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
-                           element_restriction=ci.GetElementsOfType(HASNEG))
+                           element_restriction=ci.GetElementsOfType(HASNEG),
+                           facet_restriction=ba_facets_inner)
 a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
 a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
 a += (v * InnerProduct(w, grad(u))) * dQ
@@ -195,6 +197,9 @@ while tend - told.Get() > delta_t / 2:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh,
                                               a=ci.GetElementsOfType(HASNEG),
                                               b=ci.GetElementsOfType(IF))
+    ba_facets_inner[:] = GetFacetsWithNeighborTypes(mesh,
+                                              a=ci.GetElementsOfType(HASNEG),
+                                              b=ci.GetElementsOfType(HASNEG))
     active_dofs = GetDofsOfElements(st_fes, ci.GetElementsOfType(HASNEG))
 
     a.Assemble(reallocate=True)
