@@ -764,6 +764,10 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         and no isoparametric mapping is used.
     definedon : Region
         Domain description on where the integrator is defined.
+    vb : {VOL, BND, BBND}
+        Integration on mesh volume or its (B)boundary. Default: VOL
+        (if combined with skeleton=True VOL refers to interior facets
+                                        BND refers to boundary facets)
     element_boundary : bool
         Integration on each element boundary. Default: False
     element_vb : {VOL, BND, BBND}
@@ -823,6 +827,10 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
         Modify the order of the integration rule used.
     definedon : Region
         Domain description on where the integrator is defined.
+    vb : {VOL, BND, BBND}
+        Integration on domains volume or boundary. Default: VOL
+        (if combined with skeleton VOL means interior facets,
+                                   BND means boundary facets)
     element_boundary : bool
         Integration on each element boundary. Default: False
     element_vb : {VOL, BND, BBND}
@@ -852,9 +860,14 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
     for i in range(gflset.space.ndof):
         gflset.vec[i] = i+1
 
+
     lsetdom = {"levelset": gflset, "domain_type": POS}
     if order is not None:
+        if type(order) != int:
+            raise Exception("dxtref: order is not an integer! use keyword arguments for vb=VOL/BND.")
         lsetdom["order"] = order
+    if type(time_order) != int:
+        raise Exception("dxtref: time_order is not an integer! use keyword arguments for vb=VOL/BND.")
     if time_order > -1:
         lsetdom["time_order"] = time_order
 
