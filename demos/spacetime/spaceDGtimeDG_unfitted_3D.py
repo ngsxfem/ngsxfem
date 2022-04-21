@@ -84,7 +84,7 @@ t = told + delta_t * tref
 
 # PROBLEM SETUP:
 geometry = CSGeometry()
-geometry.Add (OrthoBrick(Pnt(-0.6,-1,-0.6), Pnt(0.6,1,0.6)))
+geometry.Add(OrthoBrick(Pnt(-0.6, -1, -0.6), Pnt(0.6, 1, 0.6)))
 
 D = 3
 
@@ -111,8 +111,10 @@ alpha = 1
 u_exact = cos(pi * r / R) * sin(pi * t)
 # R.h.s.
 coeff_f = (u_exact.Diff(t)
-        - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y) + u_exact.Diff(z).Diff(z))
-        + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y) + w[2] * u_exact.Diff(z)).Compile()
+           - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y)
+                      + u_exact.Diff(z).Diff(z))
+           + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)
+           + w[2] * u_exact.Diff(z)).Compile()
 
 # ----------------------------------- MAIN ------------------------------------
 ngmesh = geometry.GenerateMesh(maxh=maxh, quad_dominated=False)
@@ -144,14 +146,16 @@ u, v = st_fes.TnT()
 h = specialcf.mesh_size
 
 ba_facets = BitArray(mesh.nfacet)
+ba_facets_inner = BitArray(mesh.nfacet)
 ci = CutInfo(mesh, time_order=0)
 
 dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
                     deformation=lsetadap.deformation[INTERVAL],
                     definedonelements=ci.GetElementsOfType(HASNEG))
-dQ_f = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
-                    deformation=lsetadap.deformation[INTERVAL],
-                    definedonelements=None, skeleton=True)
+dQ_f = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG,
+                      time_order=time_order,
+                      deformation=lsetadap.deformation[INTERVAL],
+                      definedonelements=ba_facets_inner, skeleton=True)
 dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
               deformation=lsetadap.deformation[BOTTOM],
               definedonelements=ci.GetElementsOfType(HASNEG), tref=0)
@@ -161,8 +165,10 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
 dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
 
+
 def dt(u):
     return 1.0 / delta_t * dtref(u)
+
 
 jump_u = u-u.Other()
 jump_v = v-v.Other()
@@ -171,7 +177,8 @@ mean_dudn = 0.5*n * (grad(u)+grad(u).Other())
 mean_dvdn = 0.5*n * (grad(v)+grad(v).Other())
 
 a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
-                           element_restriction=ci.GetElementsOfType(HASNEG))
+                           element_restriction=ci.GetElementsOfType(HASNEG),
+                           facet_restriction=ba_facets_inner)
 a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
 a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
 a += (v * InnerProduct(w, grad(u))) * dQ
@@ -201,6 +208,10 @@ while tend - told.Get() > delta_t / 2:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh,
                                               a=ci.GetElementsOfType(HASNEG),
                                               b=ci.GetElementsOfType(IF))
+    ba_facets_inner[:] = GetFacetsWithNeighborTypes(
+                                        mesh,
+                                        a=ci.GetElementsOfType(HASNEG),
+                                        b=ci.GetElementsOfType(HASNEG))
     active_dofs = GetDofsOfElements(st_fes, ci.GetElementsOfType(HASNEG))
 
     a.Assemble(reallocate=True)

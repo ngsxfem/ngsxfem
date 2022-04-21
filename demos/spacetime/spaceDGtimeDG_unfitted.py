@@ -144,9 +144,10 @@ ci = CutInfo(mesh, time_order=0)
 dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
                     deformation=lsetadap.deformation[INTERVAL],
                     definedonelements=ci.GetElementsOfType(HASNEG))
-dQ_f = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
-                    deformation=lsetadap.deformation[INTERVAL],
-                    definedonelements=ba_facets_inner, skeleton=True)
+dQ_f = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG,
+                      time_order=time_order,
+                      deformation=lsetadap.deformation[INTERVAL],
+                      definedonelements=ba_facets_inner, skeleton=True)
 dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
               deformation=lsetadap.deformation[BOTTOM],
               definedonelements=ci.GetElementsOfType(HASNEG), tref=0)
@@ -156,8 +157,10 @@ dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
 dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
                            deformation=lsetadap.deformation[INTERVAL])
 
+
 def dt(u):
     return 1.0 / delta_t * dtref(u)
+
 
 jump_u = u-u.Other()
 jump_v = v-v.Other()
@@ -197,9 +200,10 @@ while tend - told.Get() > delta_t / 2:
     ba_facets[:] = GetFacetsWithNeighborTypes(mesh,
                                               a=ci.GetElementsOfType(HASNEG),
                                               b=ci.GetElementsOfType(IF))
-    ba_facets_inner[:] = GetFacetsWithNeighborTypes(mesh,
-                                              a=ci.GetElementsOfType(HASNEG),
-                                              b=ci.GetElementsOfType(HASNEG))
+    ba_facets_inner[:] = GetFacetsWithNeighborTypes(
+                                            mesh,
+                                            a=ci.GetElementsOfType(HASNEG),
+                                            b=ci.GetElementsOfType(HASNEG))
     active_dofs = GetDofsOfElements(st_fes, ci.GetElementsOfType(HASNEG))
 
     a.Assemble(reallocate=True)
