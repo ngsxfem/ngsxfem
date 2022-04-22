@@ -24,8 +24,8 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() c
     bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, dx.vb, dx.element_vb);
   else
   {
-    if (lsetintdom->GetTimeIntegrationOrder() >= 0)
-      throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
+    //if (lsetintdom->GetTimeIntegrationOrder() >= 0)
+    //  throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
     if (dx.vb == BND)
       throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
     bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);

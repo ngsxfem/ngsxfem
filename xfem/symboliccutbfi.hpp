@@ -104,6 +104,7 @@ namespace ngfem
   class SymbolicCutFacetBilinearFormIntegrator : public SymbolicFacetBilinearFormIntegrator
   {
   protected:
+    int time_order = -1;
     shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;    
     
   public:
@@ -116,6 +117,7 @@ namespace ngfem
 
     virtual VorB VB () const { return vb; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
+    void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
                                                                           element_boundary); }
@@ -187,6 +189,9 @@ namespace ngfem
   };
   class SymbolicFacetBilinearFormIntegrator2 : public SymbolicFacetBilinearFormIntegrator
   {
+  // uncut integrator for facets with space-time capabilities 
+  // (may become redundant if SymbolicCutFacetBLFI is fully implemented)
+  // use case: "traditional" ghost penalty (higher order derivatives) 
   protected:
     int time_order = -1;
   public:

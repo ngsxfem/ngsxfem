@@ -56,7 +56,7 @@ metrics:
   artifacts:
     reports:
       metrics: metrics.txt
-  when: always
+  when: manual
   allow_failure: true
 
 codestyle-demos:
