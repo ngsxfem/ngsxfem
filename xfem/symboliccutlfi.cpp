@@ -81,8 +81,7 @@ namespace ngfem
           }
       }
   
-  cout << "local evaluate: " << simd_evaluate << endl;
-  cout << "global evaluate: " << globxvar.SIMD_EVAL << endl;
+
   if (simd_evaluate && globxvar.SIMD_EVAL)
     {
 

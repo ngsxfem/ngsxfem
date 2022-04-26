@@ -83,9 +83,7 @@ def test_lf_blf(maxh, order):
 
         a.Assemble()
         end = timer()
-        rows, cols, vals = a.mat.COO()
-        A = sp.csr_matrix((vals, (rows, cols)))
-        A_dense = A.todense()
+        A_dense = a.mat.asVector()
         t_blf_normal += end-start
 
         ngsxfemglobals.SwitchSIMD(True)
@@ -105,9 +103,7 @@ def test_lf_blf(maxh, order):
 
         b.Assemble()
         end = timer()
-        rows, cols, vals = b.mat.COO()
-        B = sp.csr_matrix((vals, (rows, cols)))
-        B_dense = B.todense()
+        B_dense = b.mat.asVector()
         t_blf_simd += end-start
     t_normal /= n
     t_blf_normal /= n
