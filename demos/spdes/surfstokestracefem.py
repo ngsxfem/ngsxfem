@@ -1,9 +1,6 @@
 """
-In this example we solve a scalar Laplace-Beltrami problem with a
-similar discretisation method to the one used in tracefem.py. However,
-we use a 3D (background mesh dimension) problem and higher order method
-this time. To be robust w.r.t. the interface position also in the
-condition number we use the normal diffusion stabilization, cf.[1,2].
+In this example we solve a surface stokes problem with a
+consistent penalty method following [1]
 
 Used features:
 --------------
@@ -17,9 +14,8 @@ Used features:
 
 Literature:
 -----------
-[1] J. Grande, C. Lehrenfeld, A. Reusken, Analysis of a high-order trace
-    finite element method for PDEs on level set surfaces.
-    SIAM Journal on Numerical Analysis, 56(1):228-255, 2018.
+[1] T. Jankuhn, A. Reusken, Higher order Trace Finite Element Methods for the Surface Stokes Equation.
+    arXiv preprint arXiv:1909.08327, 2019.
 
 """
 
