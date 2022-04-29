@@ -117,14 +117,20 @@ h = specialcf.mesh_size
 eta = 100.0 / (h * h)
 rhou = 1.0 / h
 rhop = h
+
+# Measure on surface
+ds = dCut(lset_approx, IF, definedonelements=ba_IF, deformation=deformation)
+# Measure on the bulk around the surface
+dx = dx(definedonelements=ba_IF, deformation=deformation)
+
 # Exact tangential projection
 Ps = Pmats(Normalize(grad(phi)))
 # define solution and right-hand side
-tmp2 = GridFunction(L2(mesh, order=4, dim=9))
+tmp2 = GridFunction(L2(mesh, order=order+3, dim=9))
 tmp2.Set(Ps)
 tmp2_as_matrix = CF(tmp2, dims=(3, 3))
-print("Interpolation Error in Ps:")
-print(Integrate(InnerProduct(tmp2_as_matrix-Ps, tmp2_as_matrix-Ps), mesh))
+print("Interpolation Error (L2Norm) in Ps:")
+print(sqrt(Integrate(InnerProduct(tmp2_as_matrix-Ps, tmp2_as_matrix-Ps)*ds, mesh=mesh)))
 #Ps=tmp2_as_matrix
 if geom == "circle":
     functions = {
@@ -150,10 +156,6 @@ elif geom == "decocube":
 
 u, p = X.TrialFunction()
 v, q = X.TestFunction()
-# Measure on surface
-ds = dCut(lset_approx, IF, definedonelements=ba_IF, deformation=deformation)
-# Measure on the bulk around the surface
-dx = dx(definedonelements=ba_IF, deformation=deformation)
 
 
 # Helper Functions for rate-of-strain-tensor
@@ -165,9 +167,18 @@ def divG(u):
     if u.dim == 3:
         return Trace(grad(u) * Ps)
     if u.dim == 9:
-        N = 3
-        divGi = [divG(u[i, :]) for i in range(N)]
-        return CF(tuple([divGi[i] for i in range(N)]))
+        if u.dims[0] == 3:
+            N = 3
+            divGi = [divG(u[i, :]) for i in range(N)]
+            return CF(tuple([divGi[i] for i in range(N)]))
+        else:
+            N = 3
+            r = Grad(u) * Ps
+            return CF(tuple([Trace(r[N*i:N*(i+1),0:N]) for i in range(N)]))
+
+            #divGi = [divG(u[i, :]) for i in range(N)]
+            #return CF(tuple([divGi[i] for i in range(N)]))
+
 
 
 # Weingarten mappings
@@ -176,30 +187,37 @@ def divG(u):
 weing = grad(n)
 weingex = grad(Normalize(grad(phi)))
 with TaskManager():
-    print("rhs1..")
-    tmp = GridFunction(L2(mesh, order=3, dim=9))
+    #print("rhs1..")
+    tmp = GridFunction(L2(mesh, order=order+3, dim=9))
     tmp.Set(eps(uSol) )
     tmp_as_matrix = CF(tmp, dims=(3, 3))
-    print("Interpolation Error for eps:")
-    print(Integrate(InnerProduct(tmp_as_matrix-eps(uSol), tmp_as_matrix-eps(uSol)), mesh))
-    print("Interpolation Error for div(eps):")
-    print(Integrate(InnerProduct(divG(tmp_as_matrix)-divG(eps(uSol)),divG(tmp_as_matrix)-divG(eps(uSol))), mesh))
+    print("Interpolation Error (L2Norm) for eps:")
+    print(sqrt(Integrate(InnerProduct(tmp_as_matrix-eps(uSol), tmp_as_matrix-eps(uSol))*ds, mesh=mesh)))
+    print("Interpolation Error (L2Norm) for div(eps):")
+    print(sqrt(Integrate(InnerProduct(divG(tmp)-divG(eps(uSol)),divG(tmp)-divG(eps(uSol)))*ds, mesh=mesh)))
+    #print(Integrate(InnerProduct(divG(tmp_as_matrix)-divG(eps(uSol)),divG(tmp_as_matrix)-divG(eps(uSol))), mesh))
     rhs1ex = Ps * (-divG(eps(uSol))) + uSol +Ps* grad(extpsol).Compile()
-    rhs1 = Ps*-divG(tmp_as_matrix)+uSol+Ps*grad(extpsol)
-    print("Interpolation Error for rhs: ")
-    print(Integrate(InnerProduct(rhs1ex-rhs1, rhs1ex-rhs1), mesh))
+    rhs1 = Ps*-divG(tmp)+uSol+Ps*grad(extpsol)
+
+    print("Interpolation Error (L2Norm) for rhs: ")
+    print(sqrt(Integrate(InnerProduct(rhs1ex-rhs1, rhs1ex-rhs1)*ds, mesh=mesh)))
 #    print(rhs1)
 
-    start = time.time()
+    #start = time.time()
     #rhs1 = rhs1temp.Compile(realcompile=True, wait=True)
-    print(time.time()-start)
-    print("rhs2..")
+    #print(time.time()-start)
+    #print("rhs2..")
     rhs2 = Trace(Ps * grad(uSol))
-    start = time.time()
+    #start = time.time()
     #rhs2 = rhs2temp.Compile(True)
-    print(time.time()-start)
+    #print(time.time()-start)
     # bilinear forms:
     Pmat = Pmats(n)
+
+    tmp_rhs1 = GridFunction(L2(mesh, order=order+3, dim=3))
+    tmp_rhs1.Set(rhs1)
+    tmp_rhs2 = GridFunction(L2(mesh, order=order+3))
+    tmp_rhs2.Set(Trace(Ps * grad(uSol)))
 
 
     def E(u):
@@ -218,20 +236,30 @@ with TaskManager():
 #    a.Assemble()
 
     # R.h.s. linear form
-    print("Assemble with compile:")
+    print("Time for assembly with complicated evaluation tree (no compile):")
     f = LinearForm(X)
     f += rhs1 * v * ds
     f += -rhs2 * q * ds
     start = time.time()
-#    f.Assemble()
+    f.Assemble()
     print(time.time()-start)
-#    g = LinearForm(X)
-#    g += rhs1temp * v * ds
-#    g += -rhs2temp * q * ds
-    print("Assemble without compile:")
+
+    f2 = LinearForm(X)
+    f2 += tmp_rhs1 * v * ds
+    f2 += -tmp_rhs2 * q * ds
+    print("Time for assembly with interpolated coeffs:")
     start=time.time()
-#    g.Assemble()
+    f2.Assemble()
     print(time.time()-start)
+
+
+    # g = LinearForm(X)
+    # g += rhs1temp * v * ds
+    # g += -rhs2temp * q * ds
+    # print("Assemble without compile:")
+    # start=time.time()
+    # g.Assemble()
+    # print(time.time()-start)
 #    gfu.vec.data = a.mat.Inverse(freedofs=X.FreeDofs()) * f.vec
 
 #    print("l2error : ", sqrt(Integrate((gfu.components[0] - uSol) ** 2 * ds, mesh=mesh)))
