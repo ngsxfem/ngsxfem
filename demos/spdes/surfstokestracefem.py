@@ -30,10 +30,13 @@ from xfem.lsetcurv import *
 from math import pi
 import time
 # -------------------------------- PARAMETERS ---------------------------------
+# Interpolation for the rate-of-strain tensor when computing the r.h.s.
+# Introduces an interpolation error, but significantly improves performance
+interpol = True
 # Mesh diameter
 maxh = 0.6
 # Geometry
-geom = "circle"
+geom = "ellpsoid"
 # Polynomial order of FE space
 order = 2
 
@@ -43,181 +46,154 @@ diff_cf = 1
 # Ellipsoid parameter
 c = 1.4
 # Geometry
-cube = CSGeometry()
-if geom == "circle":
-    phi = Norm(CoefficientFunction((x / c, y, z))) - 1
+with TaskManager():
+    cube = CSGeometry()
+    if geom == "ellpsoid":
+        phi = Norm(CoefficientFunction((x / c, y, z))) - 1
 
-    cube.Add(OrthoBrick(Pnt(-2, -2, -2), Pnt(2, 2, 2)))
-    mesh = Mesh(cube.GenerateMesh(maxh=maxh, quad_dominated=False))
-elif geom == "decocube":
-    phi = (x ** 2 + y ** 2 - 4) ** 2 + (y ** 2 - 1) ** 2 + (y ** 2 + z ** 2 - 4) ** 2 + (x ** 2 - 1) ** 2 + (
-                x ** 2 + z ** 2 - 4) ** 2 + (z ** 2 - 1) ** 2 - 13
-    cube.Add(OrthoBrick(Pnt(-3, -3, -3), Pnt(3, 3, 3)))
-    mesh = Mesh(cube.GenerateMesh(maxh=maxh, quad_dominated=False))
+        cube.Add(OrthoBrick(Pnt(-2, -2, -2), Pnt(2, 2, 2)))
+        mesh = Mesh(cube.GenerateMesh(maxh=maxh, quad_dominated=False))
+    elif geom == "decocube":
+        phi = (x ** 2 + y ** 2 - 4) ** 2 + (y ** 2 - 1) ** 2 + (y ** 2 + z ** 2 - 4) ** 2 + (x ** 2 - 1) ** 2 + (
+                    x ** 2 + z ** 2 - 4) ** 2 + (z ** 2 - 1) ** 2 - 13
+        cube.Add(OrthoBrick(Pnt(-3, -3, -3), Pnt(3, 3, 3)))
+        mesh = Mesh(cube.GenerateMesh(maxh=maxh, quad_dominated=False))
 
-# Preliminary refinements. Keep it small as assembling the linear form is costly if the exact solution is not tangential
-n_cut_ref = 0
-for i in range(n_cut_ref):
-    lsetp1 = GridFunction(H1(mesh, order=2))
-    InterpolateToP1(phi, lsetp1)
-    RefineAtLevelSet(lsetp1)
-    mesh.Refine()
-# Class to compute the mesh transformation needed for higher order accuracy
-#  * order: order of the mesh deformation function
-#  * threshold: barrier for maximum deformation (to ensure shape regularity)
+    # Preliminary refinements. As assembling the r.h.s. is very expensive without interpolation, keep it small in that case.
+    # When interpolating, getting good results requires more refinements with complex geometries, e.g. the decocube
+    n_cut_ref = 2
 
-lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
-deformation = lsetmeshadap.CalcDeformation(phi)
-lset_approx = lsetmeshadap.lset_p1
+    for i in range(n_cut_ref):
+        lsetp1 = GridFunction(H1(mesh, order=2))
+        InterpolateToP1(phi, lsetp1)
+        RefineAtLevelSet(lsetp1)
+        mesh.Refine()
+    # Class to compute the mesh transformation needed for higher order accuracy
+    #  * order: order of the mesh deformation function
+    #  * threshold: barrier for maximum deformation (to ensure shape regularity)
 
-mesh.SetDeformation(deformation)
-# Class to compute the mesh transformation needed for higher order accuracy
-#  * order: order of the mesh deformation function
-#  * threshold: barrier for maximum deformation (to ensure shape regularity)
+    lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, threshold=1000, discontinuous_qn=True)
+    deformation = lsetmeshadap.CalcDeformation(phi)
+    lset_approx = lsetmeshadap.lset_p1
+
+    mesh.SetDeformation(deformation)
 
 # Background FESpaces
-Vh = VectorH1(mesh, order=order, dirichlet=[])
-Qh = H1(mesh, order=order - 1, dirichlet=[])
-ci = CutInfo(mesh, lset_approx)
-ba_IF = ci.GetElementsOfType(IF)
-VhG = Restrict(Vh, ba_IF)
-L2G = Restrict(Qh, ba_IF)
+    Vh = VectorH1(mesh, order=order, dirichlet=[])
+    Qh = H1(mesh, order=order - 1, dirichlet=[])
+    ci = CutInfo(mesh, lset_approx)
+    ba_IF = ci.GetElementsOfType(IF)
+    VhG = Restrict(Vh, ba_IF)
+    L2G = Restrict(Qh, ba_IF)
 
-X = VhG * L2G
-gfu = GridFunction(X)
-
-
-# Helper Functions for tangential projection and gradients of the exact solution
-def coef_grad(u):
-    dirs = {1: [x], 2: [x, y], 3: [x, y, z]}
-    if u.dim == 1:
-        return CF(tuple([u.Diff(r) for r in dirs[mesh.dim]]))
-    else:
-        return CF(tuple([u[i].Diff(r) for i in range(u.dim) for r in dirs[mesh.dim]]), dims=(u.dim, mesh.dim))
+    X = VhG * L2G
+    gfu = GridFunction(X)
 
 
-def grad(u):
-    if type(u) in [ProxyFunction, GridFunction]:
-        return ngsolve.grad(u)
-    else:
-        return coef_grad(u)
-
-
-def Pmats(n):
-    return Id(3) - OuterProduct(n, n)
-
-
-# Coefficients / parameters:
-
-n = Normalize(grad(lset_approx))
-ntilde = Interpolate(grad(phi), VhG)
-
-h = specialcf.mesh_size
-
-eta = 100.0 / (h * h)
-rhou = 1.0 / h
-rhop = h
-
-# Measure on surface
-ds = dCut(lset_approx, IF, definedonelements=ba_IF, deformation=deformation)
-# Measure on the bulk around the surface
-dx = dx(definedonelements=ba_IF, deformation=deformation)
-
-# Exact tangential projection
-Ps = Pmats(Normalize(grad(phi)))
-# define solution and right-hand side
-tmp2 = GridFunction(L2(mesh, order=order+3, dim=9))
-tmp2.Set(Ps)
-tmp2_as_matrix = CF(tmp2, dims=(3, 3))
-print("Interpolation Error (L2Norm) in Ps:")
-print(sqrt(Integrate(InnerProduct(tmp2_as_matrix-Ps, tmp2_as_matrix-Ps)*ds, mesh=mesh)))
-#Ps=tmp2_as_matrix
-if geom == "circle":
-    functions = {
-        "extvsol1": ((-y - z) * x + y * y + z * z),
-        "extvsol2": ((-x - z) * y + x * x + z * z),
-        "extvsol3": ((-x - y) * z + x * x + y * y),
-        "rhs1": -((y + z) * x - y * y - z * z) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
-        "rhs2": ((-x - z) * y + x * x + z * z) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
-        "rhs3": ((-x - y) * z + x * x + y * y) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
-    }
-    extpsol = (x * y ** 3 + z * (x ** 2 + y ** 2 + z ** 2) ** (3 / 2)) / ((x ** 2 + y ** 2 + z ** 2) ** 2)
-    uSol = Ps* CoefficientFunction((functions["extvsol1"], functions["extvsol2"], functions["extvsol3"]))
-    pSol = CoefficientFunction((functions["extvsol1"], functions["extvsol2"], functions["extvsol3"]))
-
-elif geom == "decocube":
-    uSol = Ps*CoefficientFunction((-z ** 2, y, x))
-    pSol = CoefficientFunction(
-        x * y ** 3 + z - 1 / Integrate({"levelset": lset_approx, "domain_type": IF}, cf=CoefficientFunction(1),
-                                       mesh=mesh) * Integrate({"levelset": lset_approx, "domain_type": IF},
-                                                              cf=x * y ** 3 + z, mesh=mesh))
-    extpsol = pSol
-
-
-u, p = X.TrialFunction()
-v, q = X.TestFunction()
-
-
-# Helper Functions for rate-of-strain-tensor
-def eps(u):
-    return Ps * Sym(grad(u)) * Ps
-
-
-def divG(u):
-    if u.dim == 3:
-        return Trace(grad(u) * Ps)
-    if u.dim == 9:
-        if u.dims[0] == 3:
-            N = 3
-            divGi = [divG(u[i, :]) for i in range(N)]
-            return CF(tuple([divGi[i] for i in range(N)]))
+    # Helper Functions for tangential projection and gradients of the exact solution
+    def coef_grad(u):
+        dirs = {1: [x], 2: [x, y], 3: [x, y, z]}
+        if u.dim == 1:
+            return CF(tuple([u.Diff(r) for r in dirs[mesh.dim]]))
         else:
-            N = 3
-            r = Grad(u) * Ps
-            return CF(tuple([Trace(r[N*i:N*(i+1),0:N]) for i in range(N)]))
-
-            #divGi = [divG(u[i, :]) for i in range(N)]
-            #return CF(tuple([divGi[i] for i in range(N)]))
+            return CF(tuple([u[i].Diff(r) for i in range(u.dim) for r in dirs[mesh.dim]]), dims=(u.dim, mesh.dim))
 
 
+    def grad(u):
+        if type(u) in [ProxyFunction, GridFunction]:
+            return ngsolve.grad(u)
+        else:
+            return coef_grad(u)
 
-# Weingarten mappings
+
+    def Pmats(n):
+        return Id(3) - OuterProduct(n, n)
 
 
-weing = grad(n)
-weingex = grad(Normalize(grad(phi)))
-with TaskManager():
-    #print("rhs1..")
-    tmp = GridFunction(L2(mesh, order=order+3, dim=9))
-    tmp.Set(eps(uSol) )
-    tmp_as_matrix = CF(tmp, dims=(3, 3))
-    print("Interpolation Error (L2Norm) for eps:")
-    print(sqrt(Integrate(InnerProduct(tmp_as_matrix-eps(uSol), tmp_as_matrix-eps(uSol))*ds, mesh=mesh)))
-    print("Interpolation Error (L2Norm) for div(eps):")
-    print(sqrt(Integrate(InnerProduct(divG(tmp)-divG(eps(uSol)),divG(tmp)-divG(eps(uSol)))*ds, mesh=mesh)))
-    #print(Integrate(InnerProduct(divG(tmp_as_matrix)-divG(eps(uSol)),divG(tmp_as_matrix)-divG(eps(uSol))), mesh))
-    rhs1ex = Ps * (-divG(eps(uSol))) + uSol +Ps* grad(extpsol).Compile()
-    rhs1 = Ps*-divG(tmp)+uSol+Ps*grad(extpsol)
+    # Coefficients / parameters:
 
-    print("Interpolation Error (L2Norm) for rhs: ")
-    print(sqrt(Integrate(InnerProduct(rhs1ex-rhs1, rhs1ex-rhs1)*ds, mesh=mesh)))
-#    print(rhs1)
+    n = Normalize(grad(lset_approx))
+    ntilde = Interpolate(grad(phi), VhG)
 
-    #start = time.time()
-    #rhs1 = rhs1temp.Compile(realcompile=True, wait=True)
-    #print(time.time()-start)
-    #print("rhs2..")
+    h = specialcf.mesh_size
+
+    eta = 100.0 / (h * h)
+    rhou = 1.0 / h
+    rhop = h
+
+    # Measure on surface
+    ds = dCut(lset_approx, IF, definedonelements=ba_IF, deformation=deformation)
+    # Measure on the bulk around the surface
+    dx = dx(definedonelements=ba_IF, deformation=deformation)
+
+    # Exact tangential projection
+    Ps = Pmats(Normalize(grad(phi)))
+    # define solution and right-hand side
+
+    if geom == "ellpsoid":
+        functions = {
+            "extvsol1": ((-y - z) * x + y * y + z * z),
+            "extvsol2": ((-x - z) * y + x * x + z * z),
+            "extvsol3": ((-x - y) * z + x * x + y * y),
+            "rhs1": -((y + z) * x - y * y - z * z) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
+            "rhs2": ((-x - z) * y + x * x + z * z) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
+            "rhs3": ((-x - y) * z + x * x + y * y) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
+        }
+        pSol = (x * y ** 3 + z * (x ** 2 + y ** 2 + z ** 2) ** (3 / 2)) / ((x ** 2 + y ** 2 + z ** 2) ** 2)
+        uSol = Ps* CoefficientFunction((functions["extvsol1"], functions["extvsol2"], functions["extvsol3"]))
+
+    elif geom == "decocube":
+        uSol = Ps*CoefficientFunction((-z ** 2, y, x))
+        pSol = CoefficientFunction(
+            x * y ** 3 + z - 1 / Integrate({"levelset": lset_approx, "domain_type": IF}, cf=CoefficientFunction(1),
+                                        mesh=mesh) * Integrate({"levelset": lset_approx, "domain_type": IF},
+                                                                cf=x * y ** 3 + z, mesh=mesh))
+
+
+
+    u, p = X.TrialFunction()
+    v, q = X.TestFunction()
+
+
+    # Helper Functions for rate-of-strain-tensor
+    def eps(u):
+        return Ps * Sym(grad(u)) * Ps
+
+
+    def divG(u):
+        if u.dim == 3:
+            return Trace(grad(u) * Ps)
+        if u.dim == 9:
+            if u.dims[0] == 3:
+                N = 3
+                divGi = [divG(u[i, :]) for i in range(N)]
+                return CF(tuple([divGi[i] for i in range(N)]))
+            else:
+                N = 3
+                r = Grad(u) * Ps
+                return CF(tuple([Trace(r[N*i:N*(i+1),0:N]) for i in range(N)]))
+
+                #divGi = [divG(u[i, :]) for i in range(N)]
+                #return CF(tuple([divGi[i] for i in range(N)]))
+    # set the r.h.s. either with interpolation or exactly
+    def rhsfromsol(uSol, pSol, interpol=True):
+        if interpol:
+            tmp = GridFunction(L2(mesh, order=order+3, dim=9))
+            tmp.Set(eps(uSol) )
+            return Ps*-divG(tmp)+uSol+Ps*grad(pSol)
+        else:
+            
+            return Ps * (-divG(eps(uSol).Compile())) + uSol +Ps* grad(pSol).Compile()
+
+    # Weingarten mappings
+
+
+    weing = grad(n)
+    weingex = grad(Normalize(grad(phi)))
+
+    rhs1 = rhsfromsol(uSol, pSol, interpol)
     rhs2 = Trace(Ps * grad(uSol))
-    #start = time.time()
-    #rhs2 = rhs2temp.Compile(True)
-    #print(time.time()-start)
-    # bilinear forms:
     Pmat = Pmats(n)
-
-    tmp_rhs1 = GridFunction(L2(mesh, order=order+3, dim=3))
-    tmp_rhs1.Set(rhs1)
-    tmp_rhs2 = GridFunction(L2(mesh, order=order+3))
-    tmp_rhs2.Set(Trace(Ps * grad(uSol)))
 
 
     def E(u):
@@ -233,36 +209,19 @@ with TaskManager():
     a += InnerProduct(v, Pmat * grad(p)) * ds
     a += -rhop * InnerProduct(n * grad(p), n * grad(q)) * dx
 
-#    a.Assemble()
+    a.Assemble()
 
     # R.h.s. linear form
-    print("Time for assembly with complicated evaluation tree (no compile):")
+
     f = LinearForm(X)
     f += rhs1 * v * ds
     f += -rhs2 * q * ds
-    start = time.time()
-    f.Assemble()
-    print(time.time()-start)
-
-    f2 = LinearForm(X)
-    f2 += tmp_rhs1 * v * ds
-    f2 += -tmp_rhs2 * q * ds
-    print("Time for assembly with interpolated coeffs:")
     start=time.time()
-    f2.Assemble()
-    print(time.time()-start)
+    f.Assemble()
+    
+    gfu.vec.data = a.mat.Inverse(freedofs=X.FreeDofs()) * f.vec
 
-
-    # g = LinearForm(X)
-    # g += rhs1temp * v * ds
-    # g += -rhs2temp * q * ds
-    # print("Assemble without compile:")
-    # start=time.time()
-    # g.Assemble()
-    # print(time.time()-start)
-#    gfu.vec.data = a.mat.Inverse(freedofs=X.FreeDofs()) * f.vec
-
-#    print("l2error : ", sqrt(Integrate((gfu.components[0] - uSol) ** 2 * ds, mesh=mesh)))
+    print("l2error : ", sqrt(Integrate((gfu.components[0] - uSol) ** 2 * ds, mesh=mesh)))
 uerr = (gfu.components[0] - uSol)
 
 Draw(deformation, mesh, "deformation")
