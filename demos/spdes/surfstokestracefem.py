@@ -28,7 +28,7 @@ from ngsolve.internal import *
 from xfem import *
 from xfem.lsetcurv import *
 from math import pi
-
+import time
 # -------------------------------- PARAMETERS ---------------------------------
 # Mesh diameter
 maxh = 0.6
@@ -41,7 +41,7 @@ order = 2
 reac_cf = 1
 diff_cf = 1
 # Ellipsoid parameter
-c = 1
+c = 1.4
 # Geometry
 cube = CSGeometry()
 if geom == "circle":
@@ -112,8 +112,6 @@ def Pmats(n):
 n = Normalize(grad(lset_approx))
 ntilde = Interpolate(grad(phi), VhG)
 
-n.Compile()
-ntilde.Compile()
 h = specialcf.mesh_size
 
 eta = 100.0 / (h * h)
@@ -122,8 +120,12 @@ rhop = h
 # Exact tangential projection
 Ps = Pmats(Normalize(grad(phi)))
 # define solution and right-hand side
-
-
+tmp2 = GridFunction(L2(mesh, order=4, dim=9))
+tmp2.Set(Ps)
+tmp2_as_matrix = CF(tmp2, dims=(3, 3))
+print("Interpolation Error in Ps:")
+print(Integrate(InnerProduct(tmp2_as_matrix-Ps, tmp2_as_matrix-Ps), mesh))
+#Ps=tmp2_as_matrix
 if geom == "circle":
     functions = {
         "extvsol1": ((-y - z) * x + y * y + z * z),
@@ -134,17 +136,17 @@ if geom == "circle":
         "rhs3": ((-x - y) * z + x * x + y * y) * (x * x + y * y + z * z + 1) / (x * x + y * y + z * z),
     }
     extpsol = (x * y ** 3 + z * (x ** 2 + y ** 2 + z ** 2) ** (3 / 2)) / ((x ** 2 + y ** 2 + z ** 2) ** 2)
-    uSol = Ps * CoefficientFunction((functions["extvsol1"], functions["extvsol2"], functions["extvsol3"]))
+    uSol = Ps* CoefficientFunction((functions["extvsol1"], functions["extvsol2"], functions["extvsol3"]))
     pSol = CoefficientFunction((functions["extvsol1"], functions["extvsol2"], functions["extvsol3"]))
 
 elif geom == "decocube":
-    uSol = Ps * CoefficientFunction((-z ** 2, y, x))
+    uSol = Ps*CoefficientFunction((-z ** 2, y, x))
     pSol = CoefficientFunction(
         x * y ** 3 + z - 1 / Integrate({"levelset": lset_approx, "domain_type": IF}, cf=CoefficientFunction(1),
                                        mesh=mesh) * Integrate({"levelset": lset_approx, "domain_type": IF},
                                                               cf=x * y ** 3 + z, mesh=mesh))
     extpsol = pSol
-    extpsol.Compile()
+
 
 u, p = X.TrialFunction()
 v, q = X.TestFunction()
@@ -169,20 +171,39 @@ def divG(u):
 
 
 # Weingarten mappings
+
+
 weing = grad(n)
 weingex = grad(Normalize(grad(phi)))
-
 with TaskManager():
-    rhs1 = Ps * -divG(eps(uSol) - (uSol * Normalize(grad(phi))) * weingex) + uSol + grad(extpsol)
+    print("rhs1..")
+    tmp = GridFunction(L2(mesh, order=3, dim=9))
+    tmp.Set(eps(uSol) )
+    tmp_as_matrix = CF(tmp, dims=(3, 3))
+    print("Interpolation Error for eps:")
+    print(Integrate(InnerProduct(tmp_as_matrix-eps(uSol), tmp_as_matrix-eps(uSol)), mesh))
+    print("Interpolation Error for div(eps):")
+    print(Integrate(InnerProduct(divG(tmp_as_matrix)-divG(eps(uSol)),divG(tmp_as_matrix)-divG(eps(uSol))), mesh))
+    rhs1ex = Ps * (-divG(eps(uSol))) + uSol +Ps* grad(extpsol).Compile()
+    rhs1 = Ps*-divG(tmp_as_matrix)+uSol+Ps*grad(extpsol)
+    print("Interpolation Error for rhs: ")
+    print(Integrate(InnerProduct(rhs1ex-rhs1, rhs1ex-rhs1), mesh))
+#    print(rhs1)
 
+    start = time.time()
+    #rhs1 = rhs1temp.Compile(realcompile=True, wait=True)
+    print(time.time()-start)
+    print("rhs2..")
     rhs2 = Trace(Ps * grad(uSol))
-
+    start = time.time()
+    #rhs2 = rhs2temp.Compile(True)
+    print(time.time()-start)
     # bilinear forms:
     Pmat = Pmats(n)
 
 
     def E(u):
-        return Pmat * Sym(grad(u)) * Pmat - (u * n) * weing
+        return Pmat * Sym(grad(u)) * Pmat# - (u * n) * weing
 
 
     a = BilinearForm(X, symmetric=True)
@@ -194,17 +215,26 @@ with TaskManager():
     a += InnerProduct(v, Pmat * grad(p)) * ds
     a += -rhop * InnerProduct(n * grad(p), n * grad(q)) * dx
 
-    a.Assemble()
+#    a.Assemble()
 
     # R.h.s. linear form
+    print("Assemble with compile:")
     f = LinearForm(X)
     f += rhs1 * v * ds
     f += -rhs2 * q * ds
-    f.Assemble()
+    start = time.time()
+#    f.Assemble()
+    print(time.time()-start)
+#    g = LinearForm(X)
+#    g += rhs1temp * v * ds
+#    g += -rhs2temp * q * ds
+    print("Assemble without compile:")
+    start=time.time()
+#    g.Assemble()
+    print(time.time()-start)
+#    gfu.vec.data = a.mat.Inverse(freedofs=X.FreeDofs()) * f.vec
 
-    gfu.vec.data = a.mat.Inverse(freedofs=X.FreeDofs()) * f.vec
-
-    print("l2error : ", sqrt(Integrate((gfu.components[0] - uSol) ** 2 * ds, mesh=mesh)))
+#    print("l2error : ", sqrt(Integrate((gfu.components[0] - uSol) ** 2 * ds, mesh=mesh)))
 uerr = (gfu.components[0] - uSol)
 
 Draw(deformation, mesh, "deformation")
