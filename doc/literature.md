@@ -43,6 +43,8 @@ title: 'Scientific literature using `ngsxfem`'
 
 * Y. Lou and C. Lehrenfeld. “Isoparametric unfitted BDF -- finite element method for PDEs on evolving domains”. 19th May 2021. arxiv: [2105.09162](http://arxiv.org/abs/2105.09162) [math.NA]
 
+* H. von Wahl and T. Richter. “Error analysis for a parabolic PDE model problem on a coupled moving domain in a fully Eulerian framework”. 10rd Nov. 2021. arXiv: [2111.05607](https://arxiv.org/abs/2111.05607) [math.NA].
+
 ## Fluid structure interaction
 * M. Kemper. “Pure Eulerian unfitted FEM for Biological Fluid-Structure Interaction Problems”. MA thesis. Georg-August Universität Göttingen, 1st Feb. 2022. doi: [10.25625/DYUGCA](http://dx.doi.org/10.25625/DYUGCA)
 
@@ -50,6 +52,7 @@ title: 'Scientific literature using `ngsxfem`'
 
 * H. von Wahl and T. Richter. “Using a deep neural network to predict the motion of under-resolved triangular rigid bodies in an incompressible flow”. 23rd Feb. 2021. arXiv: [2102.11636](https://arxiv.org/abs/2102.11636) [physics.flu-dyn].
 
+* H. von Wahl. "Unfitted finite elements for fluid-rigid body interaction problems". PhD Thesis. Otto-von-Guericke-Universität Magdeburg. Oct. 2021, doi: [10.25673/40013](https://doi.org/10.25673/40013).
 
 ##  Surface PDEs
 
@@ -57,7 +60,7 @@ title: 'Scientific literature using `ngsxfem`'
 
 * J. Grande, C. Lehrenfeld and A. Reusken. “Analysis of a High-Order Trace Finite Element Method for PDEs on Level Set Surfaces”. In: SIAM J. Numer. Anal. 56.1 (18th Jan. 2018), pp. 228–255. doi: [10.1137/16m1102203](https://doi.org/10.1137/16m1102203).
 
- * F. Heimann. “Higher order Discontinuous Galerkin methods for the LaplaceBeltrami problem on unfitted smooth surfaces”. Bachelor’s thesis. GeorgAugust Universität Göttingen, Sept. 2018. url: http://cpde.math.unigoettingen.de/data/Hei18_Ba.pdf.
+ * F. Heimann. “Higher order Discontinuous Galerkin methods for the Laplace-Beltrami problem on unfitted smooth surfaces”. Bachelor’s thesis. GeorgAugust Universität Göttingen, Sept. 2018. doi: [10.25625/OIBRT4](https://doi.org/10.25625/OIBRT4).
 
  * T. Jankuhn and A. Reusken. “Trace finite element methods for surface vector-Laplace equations”. In: IMA J. Numer. Anal. 41.1 (29th Apr. 2019), pp. 48–83. doi: [10.1093/imanum/drz062](https://doi.org/10.1093/imanum/drz062).
 
@@ -83,3 +86,5 @@ title: 'Scientific literature using `ngsxfem`'
 * H. von Wahl, T. Richter and C. Lehrenfeld. An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains. Zenodo repository: Zenodo, 5th Feb. 2020. doi: [10.5281/zenodo.3647571](https://doi.org/10.5281/zenodo.3647571).
 
 * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data. Zenodo repository, 17th Nov. 2020. doi: [10.5281/zenodo.3989604](https://doi.org/10.5281/zenodo.3989604).
+
+* H. von Wahl and T. Richter. Error analysis for a parabolic PDE model problem on a coupled moving domain in a fully Eulerian framework - Reproduction Scripts. Zenodo repository: Zenodo, 29th Apr 2022. doi: [10.5281/zenodo.6505243](https://doi.org/10.5281/zenodo.6505243).
