@@ -178,9 +178,11 @@ with TaskManager():
     # set the r.h.s. either with interpolation or exactly
     def rhsfromsol(uSol, pSol, interpol=True):
         if interpol:
-            tmp = GridFunction(L2(mesh, order=order+3, dim=9))
-            tmp.Set(eps(uSol) )
-            return Ps*-divG(tmp)+uSol+Ps*grad(pSol)
+            tmp = GridFunction(Restrict(L2(mesh, order=order+2, dim=9), ba_IF))
+            tmp.Set(eps(uSol) ,definedonelements=ba_IF)
+            tmp2 = GridFunction(Restrict(VectorL2(mesh, order=order+1), ba_IF))
+            tmp2.Set(Ps*-divG(tmp)+uSol+Ps*grad(pSol), definedonelements=ba_IF)
+            return tmp2
         else:
             
             return Ps * (-divG(eps(uSol).Compile())) + uSol +Ps* grad(pSol).Compile()
@@ -188,7 +190,9 @@ with TaskManager():
     # Weingarten mappings
 
 
-    weing = grad(n)
+    ninter = GridFunction(VhG)
+    ninter.Set(n, definedonelements=ba_IF)
+    weing = grad(ninter)
     weingex = grad(Normalize(grad(phi)))
 
     rhs1 = rhsfromsol(uSol, pSol, interpol)
