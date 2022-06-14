@@ -105,7 +105,7 @@ namespace ngfem
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
     FlatVector<SCAL> elvec1(elvec.Size(), lh);
-
+    elvec1 = 0.0;
     FlatMatrix<SCAL> values(ir->Size(), 1, lh);
 
     /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
