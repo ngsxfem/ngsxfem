@@ -143,6 +143,14 @@ If you have problems compiling problems or at run time some `NGSolve` symbols ar
 
 to the cmake configuration.
 
+If you have also build `netgen/NGSolve` from sources and there are multiple `netgen/NGSolve` installations on the machine, it may also happen that `ngsxfem` is build against a different version than is loaded at run-time. In this case it can also happen that some symbols are not found. You can identify this issue by looking at the configuration output, which includes a line `-- Found Netgen: PATH_TO_NETGEN`. If this does not match the path of the netgen loaded at run-time, you may want to explicit pass the correct `netgen/NGSolve` to the configuration via the `NGSolve_DIR` and `Netgen_DIR`, e.g., add
+
+``` {.shell}
+-DNGSolve_DIR=${BASEDIR}/inst/lib/cmake/ngsolve -DNetgen_DIR=${BASEDIR}/inst/lib/cmake/netgen
+```
+
+to the cmake configuration.
+
 #### 3. Updating `ngsxfem`
 
 To update `ngsxfem`, update the source files and build everything
