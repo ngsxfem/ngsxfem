@@ -9,6 +9,7 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+from distutils.sysconfig import get_python_lib
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
@@ -57,10 +58,12 @@ class CMakeBuild(build_ext):
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
                                                               self.distribution.get_version())
 
-        if env.get('NGSolve_DIR', '') != '':
-            #print("env.get('NGSolve_DIR', '')", env.get('NGSolve_DIR', ''))
-            cmake_args.append(' -DNGSolve_DIR={}'.format(env.get('NGSolve_DIR', '')))
-        
+        if 'PYDIR' in os.environ:
+            cmake_args += [f'-DCMAKE_PREFIX_PATH={os.environ["PYDIR"]}/..']
+            cmake_args += [f'-DPYTHON_EXECUTABLE={os.environ["PYDIR"]}/python3']
+            cmake_args += [f'-DPYTHON_LIBRARY={os.environ["PYDIR"]}/../lib']
+            cmake_args += [f'-DPYTHON_INCLUDE_DIR={os.environ["PYDIR"]}/../include']
+
         
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
