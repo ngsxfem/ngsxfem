@@ -103,10 +103,6 @@ paper-appendix:
 pip_linux:
   image: quay.io/pypa/manylinux2014_x86_64
   stage: build
-  tags:
-    - pip
-    - linux
-    - docker
   script:
     - ./.ci/build_pip.sh
   when: manual
