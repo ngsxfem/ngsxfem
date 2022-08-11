@@ -38,6 +38,7 @@ class CMakeBuild(build_ext):
                       '-DCMAKE_LINKER=ngsld',
                       '-DBUILD_STUB_FILES=ON',
                       '-DBUILD_NGSOLVE=OFF']
+
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
         if platform.system() == "Windows":
@@ -49,9 +50,18 @@ class CMakeBuild(build_ext):
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             build_args += ['--', '-j2']
+
+
+           
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
                                                               self.distribution.get_version())
+
+        if env.get('NGSolve_DIR', '') != '':
+            #print("env.get('NGSolve_DIR', '')", env.get('NGSolve_DIR', ''))
+            cmake_args.append(' -DNGSolve_DIR={}'.format(env.get('NGSolve_DIR', '')))
+        
+        
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
