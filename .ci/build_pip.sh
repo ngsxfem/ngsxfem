@@ -9,11 +9,11 @@ do
     $PYDIR/pip install ngsolve
     #RUN $PYDIR/pip install -vvv .
     $PYDIR/pip wheel -vvv .
-
     rm -rf _skbuild
+    
 done
-$PYDIR/python fix_auditwheel_policy.py
+$PYDIR/python .ci/fix_auditwheel_policy.py
 auditwheel repair *.whl
 
 $PYDIR/pip install -U twine
-$PYDIR/twine upload wheelhouse/*manylinux*.whl
+#$PYDIR/twine upload wheelhouse/*manylinux*.whl

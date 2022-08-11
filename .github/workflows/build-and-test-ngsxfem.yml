@@ -114,6 +114,24 @@ jobs:
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
+  publish:
+    needs: [ctest-pytests, ctest-tutorials, ctest-mayfail]
+    runs-on: quay.io/pypa/manylinux2014_x86_64:latest
+    if: github.ref == 'refs/heads/pip'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update pip and Install setuptools
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools
+      - name: Package xfem Sources for PyPI
+        run: .ci/build_pip.sh
+      - name: Publish source distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages_dir: wheelhouse/
+          
   check-demo-codestyle:
     runs-on: ubuntu-latest  
     steps:
