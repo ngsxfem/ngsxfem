@@ -1,7 +1,8 @@
 #! /bin/bash
 set -e
 
-for pyversion in 38 39 310
+#38 39
+for pyversion in 310
 
     export pyversion=310
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
