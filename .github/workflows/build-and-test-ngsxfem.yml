@@ -115,8 +115,8 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   publish-pip-bin:
-    needs: [ctest-pytests, ctest-tutorials, ctest-mayfail]
-    runs-on: quay.io/pypa/manylinux2014_x86_64:latest
+    needs: []
+    runs-on: quay.io/pypa/manylinux2014_x86_64-latest
     if: github.ref == 'refs/heads/pip'
     steps:
       - uses: actions/checkout@v2
