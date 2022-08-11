@@ -6,6 +6,7 @@ for pyversion in 310
 do
     export pyversion=310
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
+    export PATH="$PATH:$PYDIR"
     $PYDIR/pip install ngsolve
     #RUN $PYDIR/pip install -vvv .
     $PYDIR/pip wheel -vvv .
