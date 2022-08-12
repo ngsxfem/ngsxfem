@@ -17,7 +17,7 @@ jobs:
     if: github.ref == 'refs/heads/pip'
     steps:
       - name: update git
-        run: yum install git
+        run: yum -y install git
       - uses: actions/checkout@v2
       - name: safe.directory
         run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
