@@ -29,4 +29,4 @@ auditwheel repair *.whl
 rm *.whl
 
 pip install -U twine
-twine upload wheelhouse/*manylinux*.whl
+#twine upload wheelhouse/*manylinux*.whl
