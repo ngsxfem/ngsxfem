@@ -18,8 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-	    fetch-depth: 2
-	    submodules: recursive
+	  fetch-depth: 2
       - name: safe.directory
         run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
       - name: git describe --tags
