@@ -72,8 +72,12 @@ class CMakeBuild(build_ext):
         
         subprocess.check_call(['mv', 'ngsxfem_py.so', 'xfem'], cwd=self.build_lib)
 
+name = xfem
+if 'NETGEN_ARCH' in os.environ and os.environ["NETGEN_ARCH"] == "avx2":
+    name = xfem-avx2
+        
 setup(
-    name='xfem',
+    name=name,
     version='2.0.dev2',
     author='Christoph Lehrenfeld',
     author_email='lehrenfeld@math.uni-goettingen.de',
