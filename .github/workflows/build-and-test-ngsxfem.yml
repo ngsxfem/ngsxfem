@@ -18,6 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: pull submodules
+        run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
+      - name: pull submodules
         run: git submodule update --init --recursive
       - name: Build and package xfem binaries for PyPI
         run: .ci/build_pip.sh
