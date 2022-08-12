@@ -17,7 +17,7 @@ jobs:
     if: github.ref == 'refs/heads/pip'
     steps:
       - uses: actions/checkout@v2
-      - name: pull submodules
+      - name: safe.directory
         run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
       - name: pull submodules
         run: git submodule update --init --recursive

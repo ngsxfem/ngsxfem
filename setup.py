@@ -11,19 +11,17 @@ from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 from distutils.sysconfig import get_python_lib
 
-from subprocess import check_output
-def path_to_version(path):
-    git_version = check_output(['git', 'describe', '--tags'], cwd=path).decode('utf-8').strip()
-    version = git_version[1:].split('-')
-    if len(version)>2:
-        version = version[:2]
-    if len(version)>1:
-        version = '.post'.join(version) + '.dev'
-    else:
-        version = version[0]
-    return version
-version = path_to_version(".")
-ngsolve_version = path_to_version("external_dependencies/ngsolve")
+try:
+    f = open("ngsxfem.version", "r")
+    version = f.read()
+except:
+    version = "2.0.dev2"
+
+try:
+    f = open("ngsolve.version", "r")
+    ngsolve_version = f.read()
+except:
+    ngsolve_version = None
 
 print("ngsxfem_version =", version)
 print("ngsolve_version =", ngsolve_version)
@@ -96,7 +94,11 @@ if 'NETGEN_ARCH' in os.environ and os.environ["NETGEN_ARCH"] == "avx2":
     name = "xfem-avx2"
     ngsolve_name = "ngsolve-avx2"
 
-print("require", ngsolve_name+">="+ngsolve_version)
+if ngsolve_version:    
+    print("require", ngsolve_name+">="+ngsolve_version)
+    install_requires = [ngsolve_name+">="+ngsolve_version]
+else:
+    install_requires = []
     
 setup(
     name=name,
@@ -106,7 +108,7 @@ setup(
     description='(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM.',
     long_description='(ngs)xfem is an Add-on library to Netgen/NGSolve which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . ngsxfem is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods.',
     url="https://github.com/ngsxfem/ngsxfem",
-    install_requires=[ngsolve_name+">="+ngsolve_version],
+    install_requires=install_requires,
     ext_modules=[CMakeExtension('ngsxfem_py')],
     cmdclass=dict(build_ext=CMakeBuild),
     packages=["xfem"],
