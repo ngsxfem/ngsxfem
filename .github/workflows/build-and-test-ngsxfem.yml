@@ -19,7 +19,6 @@ jobs:
       - name: Build and package xfem binaries for PyPI
         uses: actions/checkout@v2
         with:
-	  fetch-depth: 0
 	  submodules: recursive
         run: .ci/build_pip.sh
       - name: Publish binary distributions to PyPI
