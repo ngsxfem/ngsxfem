@@ -17,6 +17,8 @@ jobs:
     if: github.ref == 'refs/heads/pip'
     steps:
       - uses: actions/checkout@v2
+      - name: update git
+        run: yum install git
       - name: safe.directory
         run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
       - name: pull submodules
