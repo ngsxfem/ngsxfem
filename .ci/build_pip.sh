@@ -10,7 +10,7 @@ do
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
     $PYDIR/python .ci/versions_to_files.py
     export NGSOLVE_VERSION=`cat ngsolve.version`
-    export PATH="ORIGINAL_$PATH:$PYDIR"
+    export PATH="$ORIGINAL_PATH:$PYDIR"
     pip install ngsolve
     #RUN $PYDIR/pip install -vvv .
     pip wheel -vvv .
