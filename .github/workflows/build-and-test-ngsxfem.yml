@@ -16,14 +16,11 @@ jobs:
       image: quay.io/pypa/manylinux2014_x86_64:latest
     if: github.ref == 'refs/heads/pip'
     steps:
-      - uses: actions/checkout@v2
-        with:
-	  fetch-depth: 2
-      - name: safe.directory
-        run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
-      - name: git describe --tags
-        run: git describe --tags
       - name: Build and package xfem binaries for PyPI
+        uses: actions/checkout@v2
+        with:
+	  fetch-depth: 0
+	  submodules: recursive
         run: .ci/build_pip.sh
       - name: Publish binary distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
