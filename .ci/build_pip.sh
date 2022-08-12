@@ -7,7 +7,7 @@ set -e
 # 38 39
 
 export ORIGINAL_PATH="$PATH"
-for pyversion in 310
+for pyversion in 38 39 310
 do
     #export pyversion=310
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
@@ -19,11 +19,11 @@ do
     rm -rf _skbuild
 
     # avx2 build:
-    pip uninstall -y ngsolve
-    pip uninstall -y netgen-mesher
+    #pip uninstall -y ngsolve
+    #pip uninstall -y netgen-mesher
     
-    pip install ngsolve-avx2>=$NGSOLVE_VERSION
-    NETGEN_ARCH=avx2 pip wheel -vvv .
+    #pip install ngsolve-avx2>=$NGSOLVE_VERSION
+    #NETGEN_ARCH=avx2 pip wheel -vvv .
     
 done
 
