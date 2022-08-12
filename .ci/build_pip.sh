@@ -7,7 +7,7 @@ set -e
 # 38 39
 
 export ORIGINAL_PATH="$PATH"
-for pyversion in 38 39 310
+for pyversion in 310
 do
     #export pyversion=310
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
