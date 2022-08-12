@@ -21,6 +21,8 @@ jobs:
         run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
       - name: pull submodules
         run: git submodule update --init --recursive
+      - name: git describe --tags
+        run: git describe --tags
       - name: Build and package xfem binaries for PyPI
         run: .ci/build_pip.sh
       - name: Publish binary distributions to PyPI
