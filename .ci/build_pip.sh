@@ -5,9 +5,9 @@ set -e
 
 for pyversion in 310
 do
-    export NGSOLVE_VERSION=`$PYDIR/python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
     #export pyversion=310
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
+    export NGSOLVE_VERSION=`$PYDIR/python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
     export PATH="$PATH:$PYDIR"
     $PYDIR/pip install ngsolve
     #RUN $PYDIR/pip install -vvv .
