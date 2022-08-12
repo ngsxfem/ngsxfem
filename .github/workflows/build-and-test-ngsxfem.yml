@@ -17,10 +17,6 @@ jobs:
     if: github.ref == 'refs/heads/pip'
     steps:
       - uses: actions/checkout@v2
-      - name: Update pip and Install setuptools
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools
       - name: Package xfem Sources for PyPI
         run: .ci/build_pip.sh
       - name: Publish source distribution to PyPI
