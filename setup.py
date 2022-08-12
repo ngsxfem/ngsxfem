@@ -11,15 +11,26 @@ from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 from distutils.sysconfig import get_python_lib
 
+
+from subprocess import check_output
+def path_to_version(path):
+    git_version = check_output(['git', 'describe', '--tags'], cwd=path).decode('utf-8').strip()
+    version = git_version[1:].split('-')
+    if len(version)>2:
+        version = version[:2]
+    if len(version)>1:
+        version = '.post'.join(version) + '.dev'
+    else:
+        version = version[0]
+    return version
+
 try:
-    f = open("ngsxfem.version", "r")
-    version = f.read()
+    version = path_to_version(".")
 except:
     version = "2.0.dev2"
 
 try:
-    f = open("ngsolve.version", "r")
-    ngsolve_version = f.read()
+    ngsolve_version = path_to_version("external_dependencies/ngsolve")
 except:
     ngsolve_version = None
 

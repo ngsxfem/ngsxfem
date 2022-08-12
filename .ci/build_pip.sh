@@ -1,6 +1,9 @@
 #! /bin/bash
 set -e
 
+
+/opt/python/cp39-cp39/bin/python .ci/fix_auditwheel_policy.py
+
 # 38 39
 
 export ORIGINAL_PATH="$PATH"
@@ -17,15 +20,15 @@ do
     rm -rf _skbuild
 
     # avx2 build:
-    pip uninstall -y netgen-mesher
-    pip uninstall -y ngsolve
+    #pip uninstall -y netgen-mesher
+    #pip uninstall -y ngsolve
     
-    pip install ngsolve-avx2==$NGSOLVE_VERSION
-    NETGEN_ARCH=avx2 pip wheel -vvv .
+    #pip install ngsolve-avx2==$NGSOLVE_VERSION
+    #NETGEN_ARCH=avx2 pip wheel -vvv .
     
 done
-python .ci/fix_auditwheel_policy.py
-auditwheel repair *.whl
+
+auditwheel repair xfem*.whl
 rm *.whl
 
 pip install -U twine
