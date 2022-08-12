@@ -16,9 +16,9 @@ jobs:
       image: quay.io/pypa/manylinux2014_x86_64:latest
     if: github.ref == 'refs/heads/pip'
     steps:
-      - uses: actions/checkout@v2
       - name: update git
         run: yum install git
+      - uses: actions/checkout@v2
       - name: safe.directory
         run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
       - name: pull submodules
