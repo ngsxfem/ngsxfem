@@ -11,6 +11,7 @@ jobs:
   
   publish-pip-bin:
     needs: []
+    runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64:latest
     if: github.ref == 'refs/heads/pip'
