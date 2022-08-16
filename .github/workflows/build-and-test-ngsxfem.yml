@@ -8,27 +8,6 @@ jobs:
     steps:
       - id: get-user
         run: echo "::set-output name=uid_gid::$(id -u):$(id -g)"
-	
-  build:
-    needs: configure
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: recursive
-      - name: Build ngsxfem
-        run: |
-	  export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
-	  pip install ngsolve>=$NGSOLVE_VERSION
-	  pip install .
-      - name: Cache build results
-        uses: actions/cache@v2
-        with:
-          path: |
-            build
-            install
-          key: ${{ runner.os }}-${{ github.sha }}-build-results
   
   publish-pip-bin:
     needs: []
