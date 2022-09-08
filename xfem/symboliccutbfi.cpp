@@ -702,12 +702,12 @@ namespace ngfem
 
     Facet2ElementTrafo transform1(eltype1, ElVertices1); 
 
-    if (etfacet != ET_SEGM){
+    //if (etfacet != ET_SEGM){
         //if (time_order > -1) throw Exception("Time order > -1 not allowed in 3D.");
         //if (lsetintdom->GetDomainType() != IF) throw Exception("cut facet bilinear form can only do volume ints on ET_SEGM");
         //if (etfacet != ET_TRIG && etfacet != ET_QUAD) throw Exception("cut facet bilinear form can do IF ints only on ET_SEGM, ET_TRIG and ET_QUAD");
-    }
-    if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
+    //}
+    //if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
 
     IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
@@ -820,6 +820,21 @@ namespace ngfem
         }
         if (ir_scr == nullptr) return;
     }
+    else if (Dim(etfacet) == 0) {
+        cout << "Hello from the 0D facet" << endl;
+        if(time_order < 0) {
+            ir_scr = StraightCutIntegrationRuleUntransformed(elvec, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+        }
+        else {
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(elvec, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+            cout << "dt: " << lsetintdom->GetDomainType() << endl;
+            cout << "ir_scr: " << *ir_scr << endl;
+            cout << "wei_arr: " << wei_arr << endl;
+        }
+        if (ir_scr == nullptr) return;
+
+        //throw Exception("no 1D cut facet integration provided yet");
+    }
     else
       throw Exception("no 1D cut facet integration provided yet");
 
@@ -831,6 +846,9 @@ namespace ngfem
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol2);
     BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
+
+    cout << "ir_facet_vol1: " << ir_facet_vol1 << endl;
+    cout << "ir_facet_vol2: " << ir_facet_vol2 << endl;
 
     mir1.SetOtherMIR (&mir2);
     mir2.SetOtherMIR (&mir1);
@@ -924,6 +942,7 @@ namespace ngfem
                 //  else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * wei_arr[i];
              }
           }
+          cout << "proxyvalues: " << proxyvalues << endl;
 
           IntRange trial_range = proxy1->IsOther() ? IntRange(fel1.GetNDof(), elmat.Width()) : IntRange(0, fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(fel1.GetNDof(), elmat.Height()) : IntRange(0, fel1.GetNDof());
@@ -1047,6 +1066,11 @@ namespace ngfem
       ir_facet_vol2 = &ir_facet_vol2_tmp;
     }
     
+    cout << "This is SymbolicFacetBilinearFormIntegrator2" << endl;
+    cout << "ir_facet_vol1: " << *ir_facet_vol1 << endl;
+    cout << "ir_facet_vol2: " << *ir_facet_vol2 << endl;
+    cout << "ir_st1_wei_arr: " << ir_st1_wei_arr << endl;
+
     BaseMappedIntegrationRule & mir1 = trafo1(*ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(*ir_facet_vol2, lh);
 
@@ -1084,6 +1108,7 @@ namespace ngfem
               if(time_order == 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_facet[i].Weight();
               else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ir_st1_wei_arr[i];
           }
+          cout << "proxyvalues: " << proxyvalues << endl;
 
           IntRange trial_range  = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
           IntRange test_range  = proxy2->IsOther() ? IntRange(proxy2->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Height()) : IntRange(0, proxy2->Evaluator()->BlockDim()*fel1.GetNDof());
