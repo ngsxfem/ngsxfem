@@ -25,6 +25,10 @@ title: 'Scientific literature using `ngsxfem`'
 
 * T. Ludescher. “Multilevel preconditioning of stabilized unfitted finite element discretizations”. PhD thesis. RWTH Aachen University, 27th May 2020. doi: [10.18154/RWTH-2020-07305](https://doi.org/10.18154/RWTH-2020-07305.)
 
+## Fracture Porous Media
+
+* G. Fu, Y. Yang. "A hybridizable discontinuous Galerkin method on unfitted meshes for single-phase Darcy flow in fractured porous media". arXiv: [2209.05445](https://arxiv.org/pdf/2209.05445.pdf) [math.NA].
+
 ## PDEs on moving domains: Space-time methods
 * F. Heimann, C. Lehrenfeld and J. Preuß. "Geometrically higher order unfitted space-time methods for PDEs on moving domains". Feb. 2022, arXiv: [2202.02216](https://arxiv.org/abs/2202.02216)
 
