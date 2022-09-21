@@ -60,7 +60,9 @@ title: 'Scientific literature using `ngsxfem`'
 
 ##  Surface PDEs
 
-* P. Brandner, T. Janhkuhn, S. Praetorius, A. Reusken, A. Voigt, “Finite element discretization methods for velocity-pressure and stream function formulations of surface Stokes equations”. 5th March 2021, arXiv: [2103.03843](https://arxiv.org/abs/2103.03843) [math.NA].
+* E. Bachini, P. Brandner, T. Jankuhn, M. Nestler, S. Praetorius, A. Reusken, A. Voigt, "Diffusion of tangential tensor fields: numerical issues and influence of geometric properties". 25 May 2022, arXiv: [2205.12581](https://arxiv.org/abs/2205.12581) [math.NA].
+
+* P. Brandner, T. Jankuhn, S. Praetorius, A. Reusken, A. Voigt, “Finite element discretization methods for velocity-pressure and stream function formulations of surface Stokes equations”. 5th March 2021, arXiv: [2103.03843](https://arxiv.org/abs/2103.03843) [math.NA].
 
 * J. Grande, C. Lehrenfeld and A. Reusken. “Analysis of a High-Order Trace Finite Element Method for PDEs on Level Set Surfaces”. In: SIAM J. Numer. Anal. 56.1 (18th Jan. 2018), pp. 228–255. doi: [10.1137/16m1102203](https://doi.org/10.1137/16m1102203).
 
