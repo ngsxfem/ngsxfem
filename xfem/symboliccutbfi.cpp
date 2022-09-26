@@ -700,6 +700,9 @@ namespace ngfem
     auto eltype2 = trafo2.GetElementType();
     auto etfacet = ElementTopology::GetFacetType (eltype1, LocalFacetNr1);
 
+    cout << "eltype1: " << eltype1 << endl;
+    cout << "ElVertices1: " << ElVertices1 << endl;
+    cout << "LocalFacetNr1: " << LocalFacetNr1 << endl;
     Facet2ElementTrafo transform1(eltype1, ElVertices1); 
 
     //if (etfacet != ET_SEGM){
@@ -838,8 +841,13 @@ namespace ngfem
     else
       throw Exception("no 1D cut facet integration provided yet");
 
+    cout << "*ir_scr.GetNIP(): " << (*ir_scr).GetNIP() << endl;
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_scr), lh);
 
+    cout << "eltype2: " << eltype2 << endl;
+    cout << "ElVertices2: " << ElVertices2 << endl;
+    cout << "LocalFacetNr2: " << LocalFacetNr2 << endl;
+    cout << "*ir_scr.GetNIP(): " << (*ir_scr).GetNIP() << endl;
     Facet2ElementTrafo transform2(eltype2, ElVertices2); 
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_scr), lh);
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol1);
