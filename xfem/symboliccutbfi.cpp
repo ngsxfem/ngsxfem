@@ -852,6 +852,20 @@ namespace ngfem
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_scr), lh);
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol1);
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol2);
+
+    //The function operator () of Facet2ElementTrafo has in relation to ET_POINT the property of just transferring the first point correct.
+    //The following lines of code repair this.
+    if(transform1.FacetType(LocalFacetNr1) == ET_POINT){
+        Vec<3> right_pnt;
+        right_pnt = ir_facet_vol1[0].Point();
+        for(int i=1; i<ir_facet_vol1.Size(); i++) ir_facet_vol1[i].Point() = right_pnt;
+    }
+    if(transform2.FacetType(LocalFacetNr2) == ET_POINT){
+        Vec<3> right_pnt;
+        right_pnt = ir_facet_vol2[0].Point();
+        for(int i=1; i<ir_facet_vol2.Size(); i++) ir_facet_vol2[i].Point() = right_pnt;
+    }
+
     BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
 
