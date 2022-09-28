@@ -911,6 +911,9 @@ def dmesh(mesh=None,*args,**kwargs):
         gflset = GridFunction(H1(mesh))
         gflset.vec[:] = 1
         lsetdom = {"levelset": gflset, "domain_type": POS, "tref" : kwargs["tref"]}
+        if "order" in kwargs:
+            lsetdom["order"] = kwargs["order"]
+            del kwargs["order"]
         del kwargs["tref"]
         return _dCut_raw(lsetdom, **kwargs)
     else:
