@@ -19,7 +19,9 @@ jobs:
         env:
           CIBW_BUILD: "cp310-*"
           CIBW_BEFORE_BUILD: >-
-            pip install ngsolve
+            pip install ngsolve pybind11-stubgen
+            export PYDIR=$VIRTUAL_ENV/lib/python3.10/site-packages/ngsolve/cmake
+            export PATH="$ORIGINAL_PATH:$PYDIR"
 
       - uses: actions/upload-artifact@v3
         with:
