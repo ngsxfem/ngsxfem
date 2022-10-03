@@ -3,7 +3,7 @@ name: Build mac wheels
 on: [push]
 
 jobs:
-  build_wheels_3.8:
+  build_wheels-3_8:
     name: Build wheel for MacOS with Python 3.8
     runs-on: macos-11
     env:
@@ -22,7 +22,7 @@ jobs:
         run: .ci/build_pip_mac.sh 3.8
         shell: bash
 
-  build_wheels_3.9:
+  build_wheels-3_9:
     name: Build wheel for MacOS with Python 3.9
     runs-on: macos-11
     env:
@@ -41,7 +41,7 @@ jobs:
         run: .ci/build_pip_mac.sh 3.9
         shell: bash
 
-  build_wheels_3.10:
+  build_wheels-3_10:
     name: Build wheel for MacOS with Python 3.10
     runs-on: macos-11
     env:
