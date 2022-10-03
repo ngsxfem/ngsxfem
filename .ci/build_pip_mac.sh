@@ -1,6 +1,8 @@
 #! /bin/bash
 set -e
 
+cd $Python3_ROOT_DIR; ls -a
+
 $Python3_ROOT_DIR/python3 --version
 $Python3_ROOT_DIR/python3 -m venv ../venv_ngs
 
