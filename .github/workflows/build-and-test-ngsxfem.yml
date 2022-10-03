@@ -1,5 +1,5 @@
 name: Build, test (and publish release) of ngsxfem
-on: [push]
+on: [release]
 jobs:
   configure:
     runs-on: ubuntu-latest
