@@ -72,7 +72,7 @@ else(BUILD_NGSOLVE)
     message(STATUS "install dir ${install_dir}")
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   find_package(NGSolve CONFIG REQUIRED
-    HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen $ENV{NETGENDIR}/../lib/cmake/ngsolve/ $ENV{NETGENDIR}/../Resources/CMake /home/jovyan/ngsuite/ngsolve-inst/lib/cmake/ngsolve
+    HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen $ENV{NETGENDIR}/../lib/cmake/ngsolve/ $ENV{NETGENDIR}/../Resources/CMake /home/jovyan/ngsuite/ngsolve-inst/lib/cmake/ngsolve $ENV{VIRTUAL_ENV}/lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/ngsolve/cmake
   )
 
 
