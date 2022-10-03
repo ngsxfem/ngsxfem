@@ -4,7 +4,10 @@ on: [push]
 
 jobs:
   build_wheels:
-    name: Build wheel for macOS with python 3.8
+    name: Build wheels for macOS
+    strategy:
+      matrix:
+        py: [3.8] #, 3.9, 3.9]
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
@@ -15,12 +18,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - name: Get Python 3.8
+      - name: Get Python ${{ mattrix.py }}
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: ${{ mattrix.py }}
       - name: Run build script
-        run: .ci/build_pip_mac.sh 3.8
+        run: .ci/build_pip_mac.sh ${{ mattrix.py }}
         shell: bash
       - name: Store the binary wheel
         uses: actions/upload-artifact@v2
@@ -31,8 +34,7 @@ jobs:
   publish:
     name: Publish to TestPyPI
     runs-on: ubuntu-latest
-    needs:
-    - build_wheels
+    needs: build_wheels
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@v2
