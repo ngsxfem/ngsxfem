@@ -1,5 +1,6 @@
 #! /bin/bash
 set -e
+mkdir dist
 
 export PYDIR=$Python3_ROOT_DIR/bin
 $PYDIR/python3 --version
@@ -12,7 +13,7 @@ export NGSolve_Dir=$PYDIR/../lib/python$1/site-packages/ngsolve/cmake
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$NGSolve_Dir:$NETGEN_Dir
 export CMAKE_OSX_ARCHITECTURES='x86_64'
 
-$PYDIR/pip wheel -vvv .
+$PYDIR/pip wheel -vvv -w dist .
 
-mkdir dist
-mv *.whl dist/
+ls 
+cd dist; ls
