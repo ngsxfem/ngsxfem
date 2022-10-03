@@ -8,7 +8,6 @@ jobs:
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
-      TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
     
     steps:
       - name: Checkout
@@ -20,41 +19,47 @@ jobs:
       - name: Run build script
         run: .ci/build_pip_mac.sh 3.8
         shell: bash
-
-  build_wheels-3_9:
-    name: Build wheel for MacOS with Python 3.9
-    runs-on: macos-11
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "10.15"
-      TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Get Python 3.9
-        uses: actions/setup-python@v4
+      - name: Publish binary distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          python-version: '3.9'
-      - name: Run build script
-        run: .ci/build_pip_mac.sh 3.9
-        shell: bash
+          password: ${{ secrets.TEST_PYPI }}
+          packages_dir: wheelhouse/
+          repository_url: https://test.pypi.org/
 
-  build_wheels-3_10:
-    name: Build wheel for MacOS with Python 3.10
-    runs-on: macos-11
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "10.15"
-      TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
+  # build_wheels-3_9:
+  #   name: Build wheel for MacOS with Python 3.9
+  #   runs-on: macos-11
+  #   env:
+  #     MACOSX_DEPLOYMENT_TARGET: "10.15"
+  #     TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
     
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Get Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Run build script
-        run: .ci/build_pip_mac.sh 3.10
-        shell: bash
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Get Python 3.9
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.9'
+  #     - name: Run build script
+  #       run: .ci/build_pip_mac.sh 3.9
+  #       shell: bash
+
+  # build_wheels-3_10:
+  #   name: Build wheel for MacOS with Python 3.10
+  #   runs-on: macos-11
+  #   env:
+  #     MACOSX_DEPLOYMENT_TARGET: "10.15"
+  #     TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
+    
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Get Python 3.10
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.10'
+  #     - name: Run build script
+  #       run: .ci/build_pip_mac.sh 3.10
+  #       shell: bash
 
 
