@@ -65,8 +65,7 @@ class CMakeBuild(build_ext):
                       '-DCMAKE_CXX_COMPILER=ngscxx',
                       '-DCMAKE_LINKER=ngsld',
                       '-DBUILD_STUB_FILES=ON',
-                      '-DBUILD_NGSOLVE=OFF',
-                      '-DCHECK_NGSOLVE_VERSION=OFF']
+                      '-DBUILD_NGSOLVE=OFF']
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
