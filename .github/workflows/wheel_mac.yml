@@ -7,7 +7,7 @@ jobs:
     name: Build wheels for macOS
     strategy:
       matrix:
-        py: [3.8] #, 3.9, 3.9]
+        py: [3.8, 3.9, 3.10]
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
@@ -42,62 +42,8 @@ jobs:
         name: python-package-distributions
         path: dist/
     - name: Publish 🐍📦 to TestPyPI
-      uses: pypa/gh-action-pypi-publish@v1
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.TEST_PYPI }}
         repository_url: https://test.pypi.org/legacy/
-
-# jobs:
-#   build_wheels-3_8:
-#     name: Build wheel for macOS with python 3.9
-#     runs-on: macos-11
-#     env:
-#       MACOSX_DEPLOYMENT_TARGET: "10.15"
-    
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v3
-#         with:
-#           fetch-depth: 0
-#           submodules: recursive
-#       - name: Get Python 3.9
-#         uses: actions/setup-python@v4
-#         with:
-#           python-version: '3.9'
-#       - name: Run build script
-#         run: .ci/build_pip_mac.sh 3.9
-#         shell: bash
-#       - name: Publish binary distributions to PyPI
-#         uses: pypa/gh-action-pypi-publish@release/v1
-#         with:
-#           password: ${{ secrets.TEST_PYPI }}
-#           packages_dir: wheelhouse/
-#           repository_url: https://test.pypi.org/
-
-# jobs:
-#   build_wheels-3_8:
-#     name: Build wheel for macOS with python 3.10
-#     runs-on: macos-11
-#     env:
-#       MACOSX_DEPLOYMENT_TARGET: "10.15"
-    
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v3
-#         with:
-#           fetch-depth: 0
-#           submodules: recursive
-#       - name: Get Python 3.10
-#         uses: actions/setup-python@v4
-#         with:
-#           python-version: '3.10'
-#       - name: Run build script
-#         run: .ci/build_pip_mac.sh 3.10
-#         shell: bash
-#       - name: Publish binary distributions to PyPI
-#         uses: pypa/gh-action-pypi-publish@release/v1
-#         with:
-#           password: ${{ secrets.TEST_PYPI }}
-#           packages_dir: wheelhouse/
-#           repository_url: https://test.pypi.org/
 
