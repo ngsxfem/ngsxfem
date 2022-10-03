@@ -3,8 +3,8 @@ name: Build mac wheels
 on: [push]
 
 jobs:
-  build_wheels-3_8:
-    name: Build wheel for MacOS with Python 3.8
+  build_wheels:
+    name: Build wheel for macOS with python 3.8
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
@@ -22,47 +22,78 @@ jobs:
       - name: Run build script
         run: .ci/build_pip_mac.sh 3.8
         shell: bash
-      - name: Publish binary distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI }}
-          packages_dir: wheelhouse/
-          repository_url: https://test.pypi.org/
+    - name: Store the binary wheel
+      uses: actions/upload-artifact@v2
+      with:
+        name: python-package-distributions
+        path: dist
 
-  # build_wheels-3_9:
-  #   name: Build wheel for MacOS with Python 3.9
-  #   runs-on: macos-11
-  #   env:
-  #     MACOSX_DEPLOYMENT_TARGET: "10.15"
-  #     TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
+  publish:
+    needs:
+    - build_wheels
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v2
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish 🐍📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.TEST_PYPI }}
+        repository_url: https://test.pypi.org/legacy/
+
+# jobs:
+#   build_wheels-3_8:
+#     name: Build wheel for macOS with python 3.9
+#     runs-on: macos-11
+#     env:
+#       MACOSX_DEPLOYMENT_TARGET: "10.15"
     
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: Get Python 3.9
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.9'
-  #     - name: Run build script
-  #       run: .ci/build_pip_mac.sh 3.9
-  #       shell: bash
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
+#           submodules: recursive
+#       - name: Get Python 3.9
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.9'
+#       - name: Run build script
+#         run: .ci/build_pip_mac.sh 3.9
+#         shell: bash
+#       - name: Publish binary distributions to PyPI
+#         uses: pypa/gh-action-pypi-publish@release/v1
+#         with:
+#           password: ${{ secrets.TEST_PYPI }}
+#           packages_dir: wheelhouse/
+#           repository_url: https://test.pypi.org/
 
-  # build_wheels-3_10:
-  #   name: Build wheel for MacOS with Python 3.10
-  #   runs-on: macos-11
-  #   env:
-  #     MACOSX_DEPLOYMENT_TARGET: "10.15"
-  #     TWINE_PASSWORD: ${{  secrets.TEST_PYPI  }}
+# jobs:
+#   build_wheels-3_8:
+#     name: Build wheel for macOS with python 3.10
+#     runs-on: macos-11
+#     env:
+#       MACOSX_DEPLOYMENT_TARGET: "10.15"
     
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: Get Python 3.10
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.10'
-  #     - name: Run build script
-  #       run: .ci/build_pip_mac.sh 3.10
-  #       shell: bash
-
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
+#           submodules: recursive
+#       - name: Get Python 3.10
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10'
+#       - name: Run build script
+#         run: .ci/build_pip_mac.sh 3.10
+#         shell: bash
+#       - name: Publish binary distributions to PyPI
+#         uses: pypa/gh-action-pypi-publish@release/v1
+#         with:
+#           password: ${{ secrets.TEST_PYPI }}
+#           packages_dir: wheelhouse/
+#           repository_url: https://test.pypi.org/
 
