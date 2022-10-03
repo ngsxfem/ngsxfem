@@ -22,6 +22,7 @@ jobs:
         env:
           CIBW_BEFORE_BUILD: >-
             pip install ngsolve pybind11-stubgen
+          CIBW_ENVIRONMENT: PATH=$PATH:$VIRTUAL_ENV/lib/python3.8/site-packages/ngsolve/cmake
 
       - uses: actions/upload-artifact@v3
         with:
