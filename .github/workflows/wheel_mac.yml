@@ -8,6 +8,7 @@ jobs:
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
+      TWINE_PASSWORD: ${{  secret.TEST_PYPI  }}
     
     steps:
       - name: Checkout
