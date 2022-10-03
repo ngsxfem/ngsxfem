@@ -11,8 +11,5 @@ export NGSolve_Dir=$PYDIR/../lib/python$1/site-packages/ngsolve/cmake
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$NGSolve_Dir:$NETGEN_Dir
 export CMAKE_OSX_ARCHITECTURES='x86_64'
 
-cd $NGSolve_Dir
-ls -lta
-
-# $PYDIR/python setup.py bdist_wheel --plat-name macosx-10.15_x86_64
-# $PYDIR/python -m twine upload --username __token__ --repository testpypi dist/*.whl
+$PYDIR/python3 setup.py bdist_wheel --plat-name macosx-10.15_x86_64
+$PYDIR/python3 -m twine upload --username __token__ --repository testpypi dist/*.whl
