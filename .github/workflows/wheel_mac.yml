@@ -7,8 +7,7 @@ jobs:
     name: Build wheel for ${{ matrix.python }}-${{ matrix.os }}
     runs-on: macos-11
     env:
-      CIBW_ARCHS_MACOS: "x86_64"
-      MACOSX_DEPLOYMENT_TARGET: "10.12"
+      MACOSX_DEPLOYMENT_TARGET: "10.15"
     
     steps:
       - name: Checkout
