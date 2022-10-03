@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build_wheels:
-    name: Build wheel for ${{ matrix.python }}-${{ matrix.os }}
+    name: Build wheel for MacOS
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.15"
