@@ -24,13 +24,36 @@ namespace ngcomp
   //cout << *cluster_root_elements << endl;
   *cluster_root_elements &= *GetElementsWithNeighborFacets(ma,initial_facets,lh);
   //cout << *cluster_root_elements << endl;
-  int counter = 0;
+  int nc = 0;
   for (int i : Range(ma->GetNE())){
     if (cluster_root_elements->Test(i)){
-      counter ++;
+      nc ++;
     }
   }
-  cout << "Counter=" << counter << endl;
+  cout << "Number of cluster: " << nc << endl;
+  Array<int>cluster_roots(nc);
+  int counter = 0;
+  for (int i: Range(ma->GetNE())){
+    if (cluster_root_elements->Test(i)){
+      cluster_roots[counter]=i;
+      counter++;
+    }
+  }
  }
-
+ /* 
+need: array front; array front_to_cluster; BitArray not_covered_yet
+need: cluster_table with suitable type / size
+loop until not_covered_yet is empty:
+  front = new_front
+  front_to_cluster = new_front_to_cluster
+  new_front, new_front_to_cluster = empty
+  loop (element_index, cluster_index) over front and front_to_cluster:
+    els = neighbors[element_index]
+    loop el in els: 
+      if el == Bad and el in not_covered_yet: 
+        new_front.add(el) 
+        new_front_to_cluster = cluster_index
+        not_covered_yet(el) = False
+        add element to cluster_table
+ */
 }
