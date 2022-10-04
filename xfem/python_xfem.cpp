@@ -1,6 +1,7 @@
 #include <python_ngstd.hpp>
 #include "../xfem/sFESpace.hpp"
 #include "../xfem/cutinfo.hpp"
+#include "../xfem/aggregates.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
@@ -172,6 +173,23 @@ corresponding combined domain type
 Returns Vector of the ratios between the measure of the NEG domain on a (boundary) element and the
 full (boundary) element
 )raw_string"))
+    ;
+
+py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
+    (m, "ElementAggregation",R"raw(
+ElementAggregation does ...)
+)raw")
+    .def("__init__",  [] (ElementAggregation *instance,
+                          shared_ptr<MeshAccess> ma
+                          )
+         {
+           new (instance) ElementAggregation (ma);
+         },
+         py::arg("mesh"),
+         docu_string(R"raw_string(
+Creates a ElementAggregation based on ...
+)raw_string")
+      )
     ;
 
 
