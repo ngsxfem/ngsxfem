@@ -190,6 +190,20 @@ ElementAggregation does ...)
 Creates a ElementAggregation based on ...
 )raw_string")
       )
+        .def("Update", [](ElementAggregation & self,
+                      PyBA root, 
+                      PyBA bad,
+                      int heapsize)
+         {
+           LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
+           self.Update(root,bad,lh);
+         },
+         py::arg("root_elements"),
+         py::arg("bad_elements"),
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Updates a Element Aggregation based ...
+)raw_string")
+      )
     ;
 
 

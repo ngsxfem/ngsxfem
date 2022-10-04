@@ -23,6 +23,8 @@ namespace ngcomp
     ElementAggregation (shared_ptr<MeshAccess> ama);
     
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
+
+    void Update(shared_ptr<BitArray> & root_els, shared_ptr<BitArray> & bad_els, LocalHeap & lh);
   
     
   

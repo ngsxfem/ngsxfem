@@ -10,8 +10,25 @@ from math import pi
 def test_aggregates():
     square = SplineGeometry()
     square.AddRectangle([0,0],[1,1],bc=1)
-    mesh = Mesh (square.GenerateMesh(maxh=100, quad_dominated=False))
+    mesh = Mesh (square.GenerateMesh(maxh=0.1, quad_dominated=False))
     EA = ElementAggregation(mesh)
 
+    gfu = GridFunction(H1(mesh))
+
+
+    levelset = (x-0.77654)
+
+    gfu.Set(levelset) 
+    ci = CutInfo(mesh, gfu)
+    roots = ci.GetElementsOfType(NEG)   
+    bads = ci.GetElementsOfType(IF)
+
+    EA.Update(roots,bads)
+    #Draw(gfu)
+    
+
+
     return True
-   
+
+if __name__ == "__main__":
+    test_aggregates()
