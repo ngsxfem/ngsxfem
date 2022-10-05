@@ -19,6 +19,9 @@ namespace ngcomp
   protected:
     shared_ptr<MeshAccess> ma;
     shared_ptr<BitArray> inner_patch_facets;
+    Array<size_t> cluster_roots;
+    Table<size_t> cluster_leafs;
+    Table<size_t> cluster_facets;
   public:
     ElementAggregation (shared_ptr<MeshAccess> ama);
     

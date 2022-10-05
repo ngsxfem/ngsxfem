@@ -204,6 +204,13 @@ Creates a ElementAggregation based on ...
 Updates a Element Aggregation based ...
 )raw_string")
       )
+      .def("GetInnerPatchFacets", [](ElementAggregation & self)
+      {
+        return self.GetInnerPatchFacets();
+      },
+        docu_string(R"raw_string(
+Returns BitArray that is true for every facet that is *inside* an aggregation cluster))raw_string")
+       )
     ;
 
 

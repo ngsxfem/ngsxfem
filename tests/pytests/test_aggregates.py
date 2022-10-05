@@ -25,10 +25,13 @@ def test_aggregates():
 
     EA.Update(roots,bads)
     #Draw(gfu)
+
+    print("EA.GetInnerPatchFacets()", EA.GetInnerPatchFacets())
     
 
 
     return True
 
 if __name__ == "__main__":
+    SetTestoutFile("out.out")
     test_aggregates()
