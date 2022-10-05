@@ -702,12 +702,12 @@ namespace ngfem
 
     Facet2ElementTrafo transform1(eltype1, ElVertices1); 
 
-    if (etfacet != ET_SEGM){
+    //if (etfacet != ET_SEGM){
         //if (time_order > -1) throw Exception("Time order > -1 not allowed in 3D.");
         //if (lsetintdom->GetDomainType() != IF) throw Exception("cut facet bilinear form can only do volume ints on ET_SEGM");
         //if (etfacet != ET_TRIG && etfacet != ET_QUAD) throw Exception("cut facet bilinear form can do IF ints only on ET_SEGM, ET_TRIG and ET_QUAD");
-    }
-    if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
+    //}
+    //if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
 
     IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
@@ -820,15 +820,43 @@ namespace ngfem
         }
         if (ir_scr == nullptr) return;
     }
+    else if (Dim(etfacet) == 0) {
+      FlatVector <> lset_on_facet(elvec.Size()/2,lh);
+      lset_on_facet = elvec.Slice(LocalFacetNr1,2);
+      //LocalFacetNr1
+        if(time_order < 0) {
+            ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+        }
+        else {
+          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+        }
+        if (ir_scr == nullptr) return;
+
+        //throw Exception("no 1D cut facet integration provided yet");
+    }
     else
       throw Exception("no 1D cut facet integration provided yet");
 
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_scr), lh);
 
-    Facet2ElementTrafo transform2(eltype2, ElVertices2); 
+    Facet2ElementTrafo transform2(eltype2, ElVertices2);
     IntegrationRule & ir_facet_vol2 = transform2(LocalFacetNr2, (*ir_scr), lh);
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol1);
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol2);
+
+    //The function operator () of Facet2ElementTrafo has in relation to ET_POINT the property of just transferring the first point correct.
+    //The following lines of code repair this.
+    if(transform1.FacetType(LocalFacetNr1) == ET_POINT){
+        Vec<3> right_pnt;
+        right_pnt = ir_facet_vol1[0].Point();
+        for(int i=1; i<ir_facet_vol1.Size(); i++) ir_facet_vol1[i].Point() = right_pnt;
+    }
+    if(transform2.FacetType(LocalFacetNr2) == ET_POINT){
+        Vec<3> right_pnt;
+        right_pnt = ir_facet_vol2[0].Point();
+        for(int i=1; i<ir_facet_vol2.Size(); i++) ir_facet_vol2[i].Point() = right_pnt;
+    }
+
     BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
 
