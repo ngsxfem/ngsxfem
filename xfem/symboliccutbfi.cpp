@@ -821,11 +821,14 @@ namespace ngfem
         if (ir_scr == nullptr) return;
     }
     else if (Dim(etfacet) == 0) {
+      FlatVector <> lset_on_facet(elvec.Size()/2,lh);
+      lset_on_facet = elvec.Slice(LocalFacetNr1,2);
+      //LocalFacetNr1
         if(time_order < 0) {
-            ir_scr = StraightCutIntegrationRuleUntransformed(elvec, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+            ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
         }
         else {
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(elvec, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
         }
         if (ir_scr == nullptr) return;
 
