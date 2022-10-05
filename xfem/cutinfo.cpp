@@ -519,7 +519,7 @@ namespace ngcomp
                                                      LocalHeap & lh)
   {
     if (ma->GetCommunicator().Size() > 1)
-      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
+      throw Exception("GetElementsWithNeighborFacets:: No Ghost-Markers for MPI yet");
 
     int nf = ma->GetNFacets();
     int ne = ma->GetNE();

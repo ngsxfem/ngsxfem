@@ -18,14 +18,16 @@ namespace ngcomp
     
   protected:
     shared_ptr<MeshAccess> ma;
-    
+    shared_ptr<BitArray> inner_patch_facets;
   public:
     ElementAggregation (shared_ptr<MeshAccess> ama);
     
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
 
+
     void Update(shared_ptr<BitArray> & root_els, shared_ptr<BitArray> & bad_els, LocalHeap & lh);
   
+    shared_ptr<BitArray> & GetInnerPatchFacets(){ return inner_patch_facets; }
     
   
   };
