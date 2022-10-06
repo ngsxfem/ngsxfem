@@ -85,6 +85,8 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
 sphinxemoji==0.2.0
+sphinx_rtd_theme
+sphinx_mdinclude
 stack-data==0.5.0
 tbb==2021.6.0
 terminado==0.15.0

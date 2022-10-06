@@ -180,6 +180,8 @@ html_static_path = ['_static']
 
 master_doc = "contents"
 
+# m2r_parse_relative_links = True
+
 html_sidebars = {
    'index': [
         'about.html',
