@@ -205,7 +205,6 @@ namespace ngfem
       */
       MappedIntegrationPoint<SpaceD, SpaceD> mipx(ipx, mip.GetTransformation());
       evaluator->CalcMatrix(bfel, mipx, mat, lh);
-      cout << "Case 1: " << mat << endl;
       //scafe.CalcShape(ipx,shape);
       //mat = 0.0;
       //mat.Row(0) = shape;
@@ -237,7 +236,6 @@ namespace ngfem
 
       MappedIntegrationPoint<SpaceD, SpaceD> mipx(ipx, mip.GetTransformation());
       evaluator->CalcMatrix(bfel, mipx, mat, lh);
-      cout << "Case 2: " << mat << endl;
 
       //scafe.CalcShape(ipx,shape);
       //mat = 0.0;
@@ -262,7 +260,7 @@ namespace ngfem
          LocalHeap & lh) const
   {
     HeapReset hr(lh);
-    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof(), lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof()*BlockDim(), lh);
     CalcMatrix (fel, mip, mat, lh);
     flux = mat * x;
   }
@@ -276,7 +274,7 @@ namespace ngfem
               LocalHeap & lh) const
   {
     HeapReset hr(lh);
-    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof(), lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof()*BlockDim(), lh);
     CalcMatrix (fel, mip, mat, lh);
     x.Range(0,fel.GetNDof()) = Trans(mat) * flux;
   }
