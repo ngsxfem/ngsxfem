@@ -23,5 +23,5 @@
     .. role:: raw-html(raw)
         :format: html
 
-.. mdinclude:: ../../../INSTALLATION
+.. mdinclude:: ../../../INSTALLATION.md
 
