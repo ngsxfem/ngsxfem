@@ -154,17 +154,31 @@ heapsize : int
           shared_ptr<DifferentialOperator> diffop  = nullptr;
 
           if (self->GetFESpace()->GetSpatialDimension() == 1)
-            diffop = make_shared<DiffOpShiftedEval<1>> (back,forth);
+            diffop = make_shared<DiffOpShiftedEval<1>> (back,forth, self->GetFESpace()->GetEvaluator(VOL));
           else if (self->GetFESpace()->GetSpatialDimension() == 2)
-            diffop = make_shared<DiffOpShiftedEval<2>> (back,forth);
+            diffop = make_shared<DiffOpShiftedEval<2>> (back,forth, self->GetFESpace()->GetEvaluator(VOL));
           else if (self->GetFESpace()->GetSpatialDimension() == 3)
-            diffop = make_shared<DiffOpShiftedEval<3>> (back,forth);
+            diffop = make_shared<DiffOpShiftedEval<3>> (back,forth, self->GetFESpace()->GetEvaluator(VOL));
           else throw Exception("shifted_eval only for space dim = 1,2,3 so far");
 
+          auto bla = dynamic_pointer_cast<BlockDifferentialOperator>(self->GetFESpace()->GetEvaluator(VOL));
+          if( bla){
+              cout << "We have a BlockDiffOp" << endl;
+              cout << "my blockdim: " << bla->BlockDim() << endl;
+          }
+
+          cout << "Type of eval: " << typeid(self->GetFESpace()->GetEvaluator(VOL)).name() << endl;
+
+          /*
+          cout << "self->GetFESpace()->GetDimension(): " << self->GetFESpace()->GetDimension() << endl;
+          cout << "self->GetFESpace()->GetName(): " << self->GetFESpace()->GetName() << endl;
           if (self->GetFESpace()->GetDimension() > 1)
           {
+              cout << "Hello. Dimension case " << self->GetFESpace()->GetDimension() << endl;
             diffop = make_shared<BlockDifferentialOperator>(diffop,self->GetFESpace()->GetDimension());
+            cout << "End up with " << diffop->Dim() << endl;
           }
+          cout << "Other dim: " << self->GetFESpace()->GetEvaluator(VOL)->Dim() << endl; */
 
           return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
         },
