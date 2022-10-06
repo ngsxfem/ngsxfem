@@ -857,8 +857,8 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
     STFES = tFE*H1(mesh)
     gflset = GridFunction(STFES)  
     gflset.vec[:] = 1
-    for i in range(gflset.space.ndof):
-        gflset.vec[i] = i+1
+    #for i in range(gflset.space.ndof):
+    #    gflset.vec[i] = i+1
 
 
     lsetdom = {"levelset": gflset, "domain_type": POS}
@@ -911,6 +911,9 @@ def dmesh(mesh=None,*args,**kwargs):
         gflset = GridFunction(H1(mesh))
         gflset.vec[:] = 1
         lsetdom = {"levelset": gflset, "domain_type": POS, "tref" : kwargs["tref"]}
+        if "order" in kwargs:
+            lsetdom["order"] = kwargs["order"]
+            del kwargs["order"]
         del kwargs["tref"]
         return _dCut_raw(lsetdom, **kwargs)
     else:

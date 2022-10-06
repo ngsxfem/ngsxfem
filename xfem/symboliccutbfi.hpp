@@ -24,7 +24,7 @@ namespace ngfem
                                        VorB vb = VOL,
                                        VorB element_vb = VOL);
     
-    virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
+    virtual xbool IsSymmetric() const { return maybe; }
     virtual string Name () const { return string ("Symbolic Cut BFI"); }
 
 
@@ -116,7 +116,7 @@ namespace ngfem
                                             shared_ptr<CoefficientFunction> acf);
 
     virtual VorB VB () const { return vb; }
-    virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know
+    virtual xbool IsSymmetric() const { return maybe; }
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
