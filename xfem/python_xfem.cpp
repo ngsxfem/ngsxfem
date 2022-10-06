@@ -73,7 +73,7 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
            }
          },
          py::arg("mesh"),
-         py::arg("levelset") = DummyArgument(),
+         py::arg_v("levelset", DummyArgument(), "None"),
          py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
@@ -197,7 +197,7 @@ full (boundary) element
         py::arg("bnd_val_a") = true,
         py::arg("bnd_val_b") = true,
         py::arg("use_and") = true,
-        py::arg("b") = DummyArgument(),
+        py::arg_v("b", DummyArgument(), "None"),
         py::arg("heapsize") = 1000000, docu_string(R"raw_string(
 Given a mesh and two BitArrays (if only one is provided these are set to be equal) facets will be
 marked (in terms of BitArrays) depending on the BitArray-values on the neighboring elements. The
@@ -589,8 +589,8 @@ heapsize : int = 1000000
           return ret;
         },
         py::arg("basefes"),
-        py::arg("cutinfo") = DummyArgument(),
-        py::arg("lset") = DummyArgument(),
+        py::arg_v("cutinfo", DummyArgument(), "None"),
+        py::arg_v("lset", DummyArgument(), "None"),
         py::arg("flags") = py::dict(),
         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Constructor for XFESpace [For documentation of XFESpace-class see help(CXFESpace)]:
@@ -742,9 +742,9 @@ elnr : int
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
         py::arg("skeleton")=false,
-        py::arg("definedon")=DummyArgument(),
-        py::arg("definedonelements")=DummyArgument(),
-        py::arg("deformation")=DummyArgument(),
+        py::arg_v("definedon", DummyArgument(), "None"),
+        py::arg_v("definedonelements", DummyArgument(), "None"),
+        py::arg_v("deformation", DummyArgument(), "None"),
         docu_string(R"raw_string(
 see documentation of SymbolicBFI (which is a wrapper))raw_string")
     );
@@ -796,8 +796,8 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
         py::arg("force_intorder")=-1,
         py::arg("time_order")=-1,
         py::arg("skeleton") = true,
-        py::arg("definedonelements")=DummyArgument(),
-        py::arg("deformation")=DummyArgument(),
+        py::arg_v("definedonelements", DummyArgument(), "None"),
+        py::arg_v("deformation", DummyArgument(), "None"),
         docu_string(R"raw_string(
 Integrator on facet patches. Two versions are possible:
 * Either (skeleton=False) an integration on the element patch consisting of two neighboring elements is applied, 
@@ -870,9 +870,9 @@ time_order : int
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),
         py::arg("skeleton")=py::bool_(false),
-        py::arg("definedon")=DummyArgument(),
-        py::arg("definedonelements")=DummyArgument(),
-        py::arg("deformation")=DummyArgument(),
+        py::arg_v("definedon", DummyArgument(), "None"),
+        py::arg_v("definedonelements", DummyArgument(), "None"),
+        py::arg_v("deformation", DummyArgument(), "None"),
         docu_string(R"raw_string(
 see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );
