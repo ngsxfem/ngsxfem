@@ -1,4 +1,4 @@
-# Installation
+# Installation instructions
 ## Installation of `ngsxfem`
 We provide two (and a half) ways to setup `ngsxfem` on your machine:
 * [Building/Installing through pip](#installation-through-pip-pip3)

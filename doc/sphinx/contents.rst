@@ -23,7 +23,16 @@
     .. role:: raw-html(raw)
         :format: html
 
+
 .. toctree::
+   :caption: Introduction
+
+   index
+
+   xfem_misc/feature_details
+
+.. toctree::
+   :caption: Installation
 
    xfem_misc/installation
 

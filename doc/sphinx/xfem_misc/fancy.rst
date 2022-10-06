@@ -83,13 +83,6 @@ Results in
     Draw(mesh)
 
 
-More
-----------------------------------------
-
-.. _notebooks: external_dependencies/jupyter/cutfem.html
-
-
-.. _documentation: 
 Documentation
 ========================================
 
