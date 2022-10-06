@@ -98,4 +98,4 @@ You can run them online ...
 .. toctree::
    :maxdepth: 1
 
-   external_dependencies/jupyter/cutfem.ipynb
+   ../../external_dependencies/jupyter/cutfem.ipynb

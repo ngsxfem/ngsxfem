@@ -41,7 +41,19 @@
 
    xfem_misc/demos
 
-   xfem_misc/jupyter-tutorials
+.. toctree::
+   :caption: jupyter-tutorials
+   :maxdepth: 1
+
+   xfem_misc/jupyter_tutorials
+
+.. toctree::
+   :caption: jupyter-tutorials 2
+   :maxdepth: 1
+
+   ../../external_dependencies/jupyter/basics.ipynb
+   ../../external_dependencies/jupyter/intlset.ipynb
+   ../../external_dependencies/jupyter/cutfem.ipynb
 
 .. toctree::
    :caption: API
