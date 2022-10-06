@@ -32,7 +32,7 @@
 
    xfem_misc/demos
 
-   xfem_misc/fancy
+   xfem_misc/jupyter-tutorials
 
 .. toctree::
    :caption: API
@@ -48,3 +48,8 @@
 
 .. toctree::
    :caption: Indices
+
+.. toctree::
+   :caption: Bonus (for Sphinx trying)
+
+   xfem_misc/fancy

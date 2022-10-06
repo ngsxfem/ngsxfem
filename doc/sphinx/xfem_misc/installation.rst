@@ -24,4 +24,3 @@
         :format: html
 
 .. mdinclude:: ../../../INSTALLATION.md
-
