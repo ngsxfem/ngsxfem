@@ -34,6 +34,7 @@ pages:
     - apt-get update -y
     - apt-get install python3 python3-pip git -y
     - DEBIAN_FRONTEND="noninteractive" apt-get install python3-sphinx -y
+    - pip3 install ngsolve
     - pip3 install -r ./doc/sphinx/requirements.txt
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
