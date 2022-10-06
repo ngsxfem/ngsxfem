@@ -1,13 +1,13 @@
 ---
-title: 'Scientific literature using `ngsxfem`'
+Scientific literature using `ngsxfem`
 ---
 
-## Scalar fictitious domain problems
+### Scalar fictitious domain problems
 * A higher order isoparametric fictitious domain method for level set domains. In S. Bordas, E. Burman, M. Larson, & M. Olshanskii (Eds.), Lecture notes in computational science and engineering (Vol. 121, pp. 65–92). Springer, Cham. doi: [10.1007/978-3-319-71431-8_3](https://doi.org/10.1007/978-3-319-71431-8_3).
 
 * Equal Higher Order Analysis of an Unfitted Discontinuous Galerkin Method for Stokes Flow Systems. In: Journal of Scientific Computing 91.48 (first online 01 April 2022). doi: [10.1007/s10915-022-01823-w](https://doi.org/10.1007/s10915-022-01823-w)
 
-## Scalar and Stokes interface problems, such as two-phase flow problems
+### Scalar and Stokes interface problems, such as two-phase flow problems
 
 * C. Lehrenfeld and A. Reusken. “Optimal preconditioners for Nitsche-XFEM discretizations of interface problems”. In: Numer. Math. 135.2 (26th Mar. 2016), pp. 313–332. doi: [10.1007/s00211-016-0801-6](https://doi.org/10.1007/s00211-016-0801-6).
 
@@ -25,11 +25,11 @@ title: 'Scientific literature using `ngsxfem`'
 
 * T. Ludescher. “Multilevel preconditioning of stabilized unfitted finite element discretizations”. PhD thesis. RWTH Aachen University, 27th May 2020. doi: [10.18154/RWTH-2020-07305](https://doi.org/10.18154/RWTH-2020-07305.)
 
-## Fracture Porous Media
+### Fracture Porous Media
 
 * G. Fu, Y. Yang. "A hybridizable discontinuous Galerkin method on unfitted meshes for single-phase Darcy flow in fractured porous media". arXiv: [2209.05445](https://arxiv.org/pdf/2209.05445.pdf) [math.NA].
 
-## PDEs on moving domains: Space-time methods
+### PDEs on moving domains: Space-time methods
 * F. Heimann, C. Lehrenfeld and J. Preuß. "Geometrically higher order unfitted space-time methods for PDEs on moving domains". Feb. 2022, arXiv: [2202.02216](https://arxiv.org/abs/2202.02216)
 
 * A. C. Wendler. "Monolithic Unfitted Space-Time FEM for an Osmotic Cell Swelling Problem". MA thesis. Georg-August Universität Göttingen, Feb. 2022. doi: [10.25625/0KPEON](http://dx.doi.org/10.25625/0KPEON)
@@ -40,7 +40,7 @@ title: 'Scientific literature using `ngsxfem`'
 
 * F. Heimann. “On Discontinuous- and Continuous-In-Time Unfitted Space-Time Methods for PDEs on Moving Domains”. MA thesis. Georg-August Universität Göttingen, Oct. 2020. doi: [10.25625/OIBRT4](http://dx.doi.org/10.25625/OIBRT4).
 
-## PDEs on moving domains: Eulerian time-stepping
+### PDEs on moving domains: Eulerian time-stepping
 * C. Lehrenfeld and M. A. Olshanskii. “An Eulerian finite element method for PDEs in time-dependent domains”. In: ESAIM Math. Model. Numer. Anal. 53.2 (24th Apr. 2019), pp. 585–614. doi: [10.1051/m2an/2018068](https://doi.org/10.1051/m2an/2018068).
 
 * H. von Wahl, T. Richter and C. Lehrenfeld. “An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains”. In: IMA J. Numer. Anal. (2021). doi: [10.1093/imanum/drab044](https://doi.org/10.1093/imanum/drab044). arXiv: [2002.02352](https://arxiv.org/abs/2002.02352) [math.NA].
@@ -49,7 +49,7 @@ title: 'Scientific literature using `ngsxfem`'
 
 * H. von Wahl and T. Richter. “Error analysis for a parabolic PDE model problem on a coupled moving domain in a fully Eulerian framework”. 10rd Nov. 2021. arXiv: [2111.05607](https://arxiv.org/abs/2111.05607) [math.NA].
 
-## Fluid structure interaction
+### Fluid structure interaction
 * M. Kemper. “Pure Eulerian unfitted FEM for Biological Fluid-Structure Interaction Problems”. MA thesis. Georg-August Universität Göttingen, 1st Feb. 2022. doi: [10.25625/DYUGCA](http://dx.doi.org/10.25625/DYUGCA)
 
 * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. “Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data”. In: Phys. Fluids 33.3, 033304 (2nd Mar. 2021). doi: [10.1063/5.0037971](https://doi.org/10.1063/5.0037971).
@@ -58,7 +58,7 @@ title: 'Scientific literature using `ngsxfem`'
 
 * H. von Wahl. "Unfitted finite elements for fluid-rigid body interaction problems". PhD Thesis. Otto-von-Guericke-Universität Magdeburg. Oct. 2021, doi: [10.25673/40013](https://doi.org/10.25673/40013).
 
-##  Surface PDEs
+###  Surface PDEs
 
 * E. Bachini, P. Brandner, T. Jankuhn, M. Nestler, S. Praetorius, A. Reusken, A. Voigt, "Diffusion of tangential tensor fields: numerical issues and influence of geometric properties". 25 May 2022, arXiv: [2205.12581](https://arxiv.org/abs/2205.12581) [math.NA].
 
@@ -76,18 +76,18 @@ title: 'Scientific literature using `ngsxfem`'
 
 * P. Brandner and A. Reusken. “Finite element error analysis of surface Stokes equations in stream function formulation”. In: ESAIM Math. Model. Numer. Anal. 54.6 (12th Oct. 2020), pp. 2069–2097. doi: [10.1051/m2an/2020044](https://doi.org/10.1051/m2an/2020044).
 
-## Shape optimization
+### Shape optimization
 * H.-G. Raumer. “Shape Optimization for Interface Problems using unfitted Finite Elements”. MA thesis. Georg-August Universität Göttingen, 28th Mar. 2018. url: http://cpde.math.uni-goettingen.de/data/Rau18_Ma.pdf.
 
-## Model order reduction and optimal control
+### Model order reduction and optimal control
 * A. Aretaki and E. N. Karatzas. Random geometries for optimal control PDE problems based on fictitious domain FEMs and cut elements. 29th Feb. 2020. arXiv: [2003.00352](https://arxiv.org/abs/2003.00352) [math.NA].
 
 * E. N. Karatzas, M. Nonino, F. Ballarin and G. Rozza. A Reduced Order Cut Finite Element method for geometrically parameterized steady and unsteady Navier-Stokes problems. 10th Oct. 2020. arXiv: [2010.04953](https://arxiv.org/abs/2010.04953) [math.NA].
 
-## Space-time discretisations (fitted FEM in space)
+### Space-time discretisations (fitted FEM in space)
 * G. Fu and Z. Xu. High-order space-time finite element methods for the Poisson-Nernst-Planck equations: Positivity and unconditional energy stability. 3rd May 2021. arXiv: [2105.01163](https://arxiv.org/abs/2105.01163) [math.NA]
 
-## Reproduction Datasets
+### Reproduction Datasets
 
 * H. von Wahl, T. Richter and C. Lehrenfeld. An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains. Zenodo repository: Zenodo, 5th Feb. 2020. doi: [10.5281/zenodo.3647571](https://doi.org/10.5281/zenodo.3647571).
 

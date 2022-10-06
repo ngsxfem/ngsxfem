@@ -23,43 +23,5 @@
     .. role:: raw-html(raw)
         :format: html
 
-.. toctree::
+.. mdinclude:: ../../literature.md
 
-   xfem_misc/installation
-
-.. toctree::
-   :caption: Demos
-
-   xfem_misc/demos
-
-   xfem_misc/fancy
-
-.. toctree::
-   :caption: API
-
-   xfem_doc/xfem
-
-   xfem_doc/modules
-
-.. toctree::
-   :caption: Literature
-
-   xfem_misc/paper
-
-   xfem_misc/literature
-
-.. toctree::
-   :caption: Indices
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-            
-
-Welcome to ngsxfem's documentation!
-========================================
-asdf
-
-
-
-.. mdinclude:: ../../README.md
