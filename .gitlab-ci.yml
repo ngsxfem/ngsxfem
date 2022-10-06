@@ -22,89 +22,14 @@ build:
     paths:
       - build
       - install
-
-ctests-demos:
-  stage: test
-  image: ngsxfem/ngsolve:latest
-  script:
-    - bash .ci/ci_ctests.sh demos
-  when: always
-  allow_failure: false
-
-ctests-mayfail:
-  stage: test
-  image: ngsxfem/ngsolve:latest
-  script:
-    - bash .ci/ci_ctests.sh mayfail
-  when: always
-  allow_failure: true
-
-ctests-pytests:
-  stage: test
-  image: ngsxfem/ngsolve:latest
-  script:
-    -  bash .ci/ci_ctests.sh pytests
-  when: always
-  allow_failure: false
-
-metrics:
-  tags:
-    - c5
-  stage: test
-  image: ngsxfem/ngsolve:latest
-  script:
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - python3 tests/ngsxfem_report.py 2> metrics.txt
-  artifacts:
-    reports:
-      metrics: metrics.txt
-  when: manual
-  allow_failure: true
-
-codestyle-demos:
-  stage: test
-  image: ngsxfem/ngsolve:latest
-  script:
-    - pip3 install --user pycodestyle
-    - export PATH="${PATH}:/home/jovyan/.local/bin"
-    - pycodestyle demos/{*,spacetime/*,mpi/*}.py
-  when: always
-  allow_failure: true
-        
-paper:
-  stage: build
-  image:
-    name: openjournals/paperdraft
-    entrypoint: [""] 
-  script:
-    - cd doc
-    - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md
-    - cp *.pdf ../
-  artifacts:
-    paths:
-      - paper.pdf
-
-paper-appendix:
-  stage: build
-  image:
-    name: schruste/latex
-    entrypoint: [""] 
-  script:
-    - cd doc
-    - pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
-    - pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
-    - cp *.pdf ../
-  artifacts:
-    paths:
-      - literature.pdf
-      - feature-details.pdf
         
 pages:
   stage: deploy
-  image: ubuntu/latest
+  image: ngsxfem/ngsolve:latest
   script:
     - pip install -r ./doc/sphinx/requirements.txt
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
     - sphinx-build doc/sphinx html
     - mv html public
   artifacts:
