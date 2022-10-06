@@ -27,9 +27,10 @@ pages:
   stage: deploy
   image: ngsxfem/ngsolve:latest
   script:
-    - pip install -r ./doc/sphinx/requirements.txt
+    - python3 -m pip install -r ./doc/sphinx/requirements.txt
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc /code/ngs/install/lib/python3.10/site-packages/xfem/
     - sphinx-build doc/sphinx html
     - mv html public
   artifacts:

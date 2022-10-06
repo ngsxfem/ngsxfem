@@ -23,24 +23,5 @@
     .. role:: raw-html(raw)
         :format: html
 
-Welcome to ngsxfem's documentation!
-========================================
-
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
-
-   xfem_misc/installation
-   xfem_misc/demos
-   xfem_misc/fancy
-   xfem_doc/xfem
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. mdinclude:: ../../README.md
+.. mdinclude:: ../../../demos/README.md
+#
