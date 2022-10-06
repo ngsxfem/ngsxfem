@@ -178,6 +178,8 @@ html_static_path = ['_static']
 #     # 'analytics_anonymize_ip': False,
 # }
 
+master_doc = "contents"
+
 html_sidebars = {
    'index': [
         'about.html',

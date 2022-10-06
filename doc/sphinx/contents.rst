@@ -22,5 +22,29 @@
 .. only:: html
     .. role:: raw-html(raw)
         :format: html
-            
-.. mdinclude:: ../../README.md
+
+.. toctree::
+
+   xfem_misc/installation
+
+.. toctree::
+   :caption: Demos
+
+   xfem_misc/demos
+
+   xfem_misc/fancy
+
+.. toctree::
+   :caption: API
+
+   xfem_doc/xfem
+
+.. toctree::
+   :caption: Literature
+
+   xfem_misc/paper
+
+   xfem_misc/literature
+
+.. toctree::
+   :caption: Indices
