@@ -103,6 +103,8 @@ namespace ngcomp
             ma->GetFacetElements (facnr, elnums);
             for (int nelnr : elnums)
             {
+              if (nelnr == elnr)
+                continue; // only consider the neighbor elements
               if (not_covered_yet.Test(nelnr) && (!newly_covered.Test(nelnr)))
               {
                 inner_patch_facets->SetBitAtomic(facnr);
