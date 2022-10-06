@@ -25,6 +25,7 @@
 
 
 .. mdinclude:: ../../README.md
+.. mdinclude:: ../../demos/README.md
 
 
 Introduction to ngsxfem
@@ -83,7 +84,7 @@ More
 ----------------------------------------
 
 ..
-  .. _notebooks: notebooks/index.html
+  .. _notebooks: external_dependencies/jupyter/cutfem.html
 
 
 .. _documentation: 
