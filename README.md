@@ -14,7 +14,7 @@
 
 # About `ngsxfem`
 
-`ngsxfem` is an add-on library to the finite element package [`Netgen`/`NGSolve`](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods for partial differential equations.
+`ngsxfem` is an add-on library to the finite element package [Netgen/NGSolve](https://ngsolve.org) which enables the use of unfitted finite element technologies known as XFEM, CutFEM, TraceFEM, Finite Cell, ... . `ngsxfem` is an academic software. Its primary intention is to facilitate the development and validation of new numerical methods for partial differential equations.
 
 # The features of `ngsxfem`
 
@@ -30,7 +30,7 @@ The main features of `ngsxfem` are:
 
 * All these features combined with the usual flexibility and power of [NGSolve](https://ngsolve.org).
 
-`ngsxfem` has been used in a variety of applications. In the document [doc/feature-details.md](doc/feature-details.md) (see also [`compiled pdf`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) ) more details on the features is given and in [doc/literature.md](doc/literature.md) (see also [`literature`](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) ) an overview of the scientific literature where `ngsxfem` is used is provided.
+`ngsxfem` has been used in a variety of applications. In the document [doc/feature-details.md](doc/feature-details.md) (see also [compiled pdf](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) ) more details on the features is given and in [doc/literature.md](doc/literature.md) (see also [literature](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) ) an overview of the scientific literature where `ngsxfem` is used is provided.
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
@@ -61,15 +61,15 @@ We provide two main sources with which to learn how to use `ngsxfem`:
 
 -   Christoph Lehrenfeld (main author)
 -   Fabian Heimann (cut integration, space-time)
--   Thomas Ludescher (multigrid)
+-   Henry von Wahl (multiple levelsets, mac support)
 -   Janosch Preuss (space-time)
--   Henry von Wahl (multiple levelsets)
+-   Thomas Ludescher (multigrid)
+-   Paul Stocker (CI, docu, builds)
 
 # Community guidelines
 If you observe any problems with the software / examples / documentation / installation or want to contribute, you can get in touch with us through either:
  * the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
  * the [`NGSolve` user forum](https://ngsolve.org/forum/index).
-
 
 # Citing
 

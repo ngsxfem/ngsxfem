@@ -100,3 +100,16 @@ paper-appendix:
       - literature.pdf
       - feature-details.pdf
         
+pages:
+  stage: deploy
+  image: ubuntu/latest
+  script:
+    - pip install -r ./doc/sphinx/requirements.txt
+    - sphinx-build doc/sphinx html
+    - mv html public
+  artifacts:
+    paths:
+      - public
+  only:
+    - sphinx # this job will affect only the 'master' branch
+
