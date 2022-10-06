@@ -5,14 +5,18 @@ stages:
         
 build:
   stage: build
-  image: ngsxfem/ngsolve:latest
+  image: ubuntu:latest
   script:
+    - apt-get update -y
+    - apt-get install python3 python3-pip git cmake -y
+    - pip3 install ngsolve
+    - export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3.10/site-packages"
     - python3 -c "import ngsolve"
     - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
     - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
     - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
     - git submodule
-    - git submodule update --init --recursive
+    - git submodule update --init
     - mkdir build
     - mkdir install    
     - cd build
@@ -25,9 +29,11 @@ build:
         
 pages:
   stage: deploy
-  image: ngsxfem/ngsolve:latest
+  image: ubuntu:latest
   script:
-    - python3 -m pip install -r ./doc/sphinx/requirements.txt
+    - apt-get update -y
+    - apt-get install python3-sphinx -y
+    - pip3 install -r ./doc/sphinx/requirements.txt
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
     - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc /code/ngs/install/lib/python3.10/site-packages/xfem/
