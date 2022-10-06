@@ -36,8 +36,8 @@ pages:
     - DEBIAN_FRONTEND="noninteractive" apt-get install python3-sphinx -y
     - pip3 install ngsolve
     - pip3 install -r ./doc/sphinx/requirements.txt
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/site-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/site-packages:/usr/local/lib/python3.10/site-packages"
     - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/site-packages/xfem/
     - sphinx-build doc/sphinx html
     - mv html public
