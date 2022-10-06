@@ -20,7 +20,7 @@ build:
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DCMAKE_INSTALL_PREFIX=../install ..
     - make install
   artifacts:
     paths:

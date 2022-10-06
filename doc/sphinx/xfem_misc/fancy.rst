@@ -56,14 +56,14 @@ Blablablubb
     :hide-code:
 
     from ngsolve import *
-    from ngsxfem import *
+    from xfem import *
 
 
 .. jupyter-execute::
     :hide-output:
 
     from ngsolve import *
-    from ngsxfem import *
+    from xfem import *
     print("asdf")
 
 Results in
@@ -72,7 +72,7 @@ Results in
     :hide-code:
 
     from ngsolve import *
-    from ngsxfem import *
+    from xfem import *
     print("asdf")
 
 
