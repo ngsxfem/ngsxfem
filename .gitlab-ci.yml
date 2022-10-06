@@ -29,7 +29,7 @@ pages:
   script:
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/site-packages/xfem/
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - sphinx-build doc/sphinx html
     - mv html public
