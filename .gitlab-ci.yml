@@ -32,6 +32,7 @@ pages:
   image: ubuntu:latest
   script:
     - apt-get update -y
+    - apt-get install python3 python3-pip -y
     - DEBIAN_FRONTEND="noninteractive" apt-get install python3-sphinx -y
     - pip3 install -r ./doc/sphinx/requirements.txt
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
@@ -43,5 +44,5 @@ pages:
     paths:
       - public
   only:
-    - sphinx # this job will affect only the 'master' branch
+    - sphinx # this job will affect only the 'sphinx' branch
 
