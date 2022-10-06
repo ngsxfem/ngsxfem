@@ -153,18 +153,9 @@ heapsize : int
 
           shared_ptr<DifferentialOperator> diffop  = nullptr;
 
-          if (self->GetFESpace()->GetSpatialDimension() == 1)
-            diffop = make_shared<DiffOpShiftedEval<1>> (back,forth);
-          else if (self->GetFESpace()->GetSpatialDimension() == 2)
-            diffop = make_shared<DiffOpShiftedEval<2>> (back,forth);
-          else if (self->GetFESpace()->GetSpatialDimension() == 3)
-            diffop = make_shared<DiffOpShiftedEval<3>> (back,forth);
-          else throw Exception("shifted_eval only for space dim = 1,2,3 so far");
-
-          if (self->GetFESpace()->GetDimension() > 1)
-          {
-            diffop = make_shared<BlockDifferentialOperator>(diffop,self->GetFESpace()->GetDimension());
-          }
+          Switch<3> (self->GetFESpace()->GetSpatialDimension()-1, [&] (auto SDIM) {
+              diffop = make_shared<DiffOpShiftedEval<SDIM+1>> (back,forth, self->GetFESpace()->GetEvaluator(VOL));
+          });
 
           return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
         },
