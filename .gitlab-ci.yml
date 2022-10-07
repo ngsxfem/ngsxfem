@@ -117,6 +117,8 @@ pages:
     - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
     - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
     - sphinx-build doc/sphinx html
+    - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
+    - rm -f html/jupyter/*.ipynb
     - mv html public
   artifacts:
     paths:
