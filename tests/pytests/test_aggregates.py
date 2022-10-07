@@ -2,14 +2,17 @@ import pytest
 from ngsolve import *
 from xfem import *
 from netgen.geom2d import unit_square
+from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from ngsolve.meshes import MakeStructured2DMesh, MakeStructured3DMesh
 
 
-# @pytest.mark.parametrize("dim", [2, 3])
-# @pytest.mark.parametrize("struc_mesh", [True, False])
-# @pytest.mark.parametrize("quad", [True, False])
-# @pytest.mark.parametrize("ROOTS", [POS, NEG])
-# @pytest.mark.parametrize("levelset" [x - 0.77654, (x - 0.5)**2 + (y-0.5)**4 - 0.3**3])
+@pytest.mark.parametrize("struc_mesh", [True, False])
+@pytest.mark.parametrize("quad", [True, False])
+@pytest.mark.parametrize("ROOTS", [POS, NEG])
+@pytest.mark.parametrize("dim, levelset", [(2, x - 0.77654),
+                                           (2, (x - 0.5)**2 + (y - 0.5)**2 - 0.3**2),
+                                           (3, (x - 0.5)**2 + (y - 0.5)**2 + (z - 0.5)**2 - 0.3**2)
+                                           ])
 def test_aggregates(dim, struc_mesh, quad, ROOTS, levelset):
     if dim == 2:
         if struc_mesh:
@@ -19,9 +22,13 @@ def test_aggregates(dim, struc_mesh, quad, ROOTS, levelset):
                                                  quad_dominated=quad))
     if dim == 3:
         if struc_mesh:
-            mesh = MakeStructured2DMesh(nx=20, )
+            mesh = MakeStructured3DMesh(hexes=quad, nx=10)
         else:
-            mesh = 
+            if quad:
+                return None
+            cube = CSGeometry()
+            cube.Add(OrthoBrick(Pnt(-1, -1, -1), Pnt(1, 1, 1)))
+            mesh = Mesh(cube.GenerateMesh(maxh=0.1, quad_dominated=quad))
     EA = ElementAggregation(mesh)
 
     gfu = GridFunction(H1(mesh))
@@ -52,6 +59,9 @@ def test_aggregates(dim, struc_mesh, quad, ROOTS, levelset):
     assert sum(els_surround_patch & ~els_surround_gp) == 0
     assert sum(els_surround_patch & ~ci.GetElementsOfType(HAS(ROOTS))) == 0
 
+    return None
+
 if __name__ == "__main__":
     test_aggregates(2, False, False, NEG, (x - 0.5)**2 + (y-0.5)**2 - 0.3**2)
+    test_aggregates(3, False, False, NEG, (3, x - 0.77653))
 
