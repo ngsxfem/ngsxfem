@@ -35,4 +35,8 @@ To work through the i-tutorials we refer to the repository https://github.com/ng
   basics.ipynb
   intlset.ipynb
   cutfem.ipynb
+  spacetime_fitted.ipynb
+  spacetime_unfitted.ipynb
+  mlset_basic.ipynb
+  mlset_pde.ipynb
 
