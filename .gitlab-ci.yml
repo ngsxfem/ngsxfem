@@ -29,6 +29,7 @@ pages:
   script:
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
+    - export PYTHONPATH="$PYTHONPATH:$PWD/install/lib/python3/dist-packages/"
     - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
     - cp external_dependencies/jupyter/{basics,intlset,cutfem}.ipynb doc/sphinx/jupyter
     - cp -r doc/graphics doc/sphinx/xfem_misc/
