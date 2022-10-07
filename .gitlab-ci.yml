@@ -110,7 +110,7 @@ pages:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
     - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
-    - cp external_dependencies/jupyter/{basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde}.ipynb doc/sphinx/jupyter
+    - cp external_dependencies/jupyter/{basics,intlset,cutfem}.ipynb doc/sphinx/jupyter
     - cp demos/{,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
