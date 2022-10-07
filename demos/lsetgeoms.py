@@ -50,7 +50,7 @@ for lsetgeom in ["cheese", "torus", "dziukelliott", "dziuk88", "sphere"]:
     distances = []
     for reflevel in range(maxreflvl):
 
-        if(reflevel > 0):
+        if (reflevel > 0):
             mesh.Refine()
 
         deformation = lsetmeshadap.CalcDeformation(levelset)
