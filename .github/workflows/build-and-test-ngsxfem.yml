@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64:latest
-    if: github.ref == 'refs/heads/pip'
+    #if: github.ref == 'refs/heads/release/master'
     steps:
       - uses: actions/checkout@v3
         with:

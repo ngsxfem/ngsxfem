@@ -14,4 +14,4 @@ export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$NGSolve_Dir:$NETGEN_Dir
 export CMAKE_OSX_ARCHITECTURES='x86_64'
 
 $PYDIR/pip wheel -vvv -w dist .
-cd dist; rm netgen*.whl ngsolve*.whl
+cd dist; rm -f netgen*.whl ngsolve*.whl
