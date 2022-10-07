@@ -21,7 +21,7 @@ namespace ngcomp
   {
     int ndof;
     shared_ptr<FESpace> Vh;
-    ScalarFiniteElement<1>* tfe;
+    shared_ptr<ScalarFiniteElement<1>> tfe;
     double time;
     bool override_time = false;
 
@@ -45,7 +45,7 @@ namespace ngcomp
     
     virtual void GetDofNrs (ElementId ei, Array<DofId> & dnums) const;
     virtual FiniteElement & GetFE (ElementId ei, Allocator & alloc) const;
-    FiniteElement* GetTimeFE() { return tfe; }
+    shared_ptr<FiniteElement> GetTimeFE() { return tfe; }
 
     // For debugging
     void SetTime(double a) {time = a; override_time = true;}
@@ -53,7 +53,7 @@ namespace ngcomp
     // Provide Info for Python
     int order_time() const
     {    
-      NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      shared_ptr<NodalTimeFE> time_FE = dynamic_pointer_cast< NodalTimeFE>(tfe);
       if (time_FE == nullptr)
         throw Exception("not a NodalTimeFE");
       return time_FE->order_time();
@@ -61,7 +61,7 @@ namespace ngcomp
 
     Array<double>& TimeFE_nodes() const
     { 
-      NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      shared_ptr<NodalTimeFE> time_FE = dynamic_pointer_cast< NodalTimeFE>(tfe);
       if (time_FE == nullptr)
         throw Exception("not a NodalTimeFE");
       return time_FE->GetNodes();
@@ -69,7 +69,7 @@ namespace ngcomp
 
     bool IsTimeNodeActive(int i) const
     {
-      NodalTimeFE* time_FE = dynamic_cast< NodalTimeFE*>(tfe);
+      shared_ptr<NodalTimeFE> time_FE = dynamic_pointer_cast< NodalTimeFE>(tfe);
       if (time_FE == nullptr)
         throw Exception("not a NodalTimeFE");
       return time_FE->IsNodeActive(i);

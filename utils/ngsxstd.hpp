@@ -95,6 +95,14 @@ INLINE void MarkAsSpaceTimeIntegrationPoint(ngcomp::IntegrationPoint & ip)
 #endif  
 }
 
+INLINE void MarkAsSpaceTimeIntegrationRule(ngcomp::IntegrationRule & ir)
+{
+#ifdef SPACETIME_SANITY_CHECKS                    
+  for (auto & ip : ir)
+    ip.SetNr(SPACETIME_SANITY_CHECK_NR);
+#endif  
+}
+
 INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
 {
 #ifdef SPACETIME_SANITY_CHECKS                    
@@ -115,9 +123,17 @@ public:
     double EPS_STFES_RESTRICT_GF;
     double EPS_SHIFTED_EVAL;
     double EPS_FACET_PATCH_INTEGRATOR;
+    double MAX_DIST_NEWTON;
 
     int NEWTON_ITER_TRESHOLD;
-    
+    int FIXED_POINT_ITER_TRESHOLD;
+
+    bool DO_NAIVE_TIMEINT;
+    int NAIVE_TIMEINT_SUBDIVS;
+    int NAIVE_TIMEINT_ORDER;
+
+    int NON_CONV_WARN_MSG_LVL;
+
     GlobalNgsxfemVariables();
     
     void SetDefaults();
@@ -125,4 +141,4 @@ public:
     void Output();
 };
 
-extern GlobalNgsxfemVariables params;
+extern GlobalNgsxfemVariables globxvar;

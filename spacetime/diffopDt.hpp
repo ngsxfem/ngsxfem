@@ -105,14 +105,19 @@ template<int SpaceD>
 
 
 #ifndef FILE_DIFFOPDT_CPP
+  extern template class T_DifferentialOperator<DiffOpDt<1>>;
   extern template class T_DifferentialOperator<DiffOpDt<2>>;
   extern template class T_DifferentialOperator<DiffOpDt<3>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<1, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<1, 2>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<2, 1>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<2, 2>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<2, 3>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<3, 1>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<3, 2>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<3, 3>>;
+  extern template class T_DifferentialOperator<DiffOpFixt<1, 0>>;
+  extern template class T_DifferentialOperator<DiffOpFixt<1, 1>>;
   extern template class T_DifferentialOperator<DiffOpFixt<2, 0>>;
   extern template class T_DifferentialOperator<DiffOpFixt<2, 1>>;
   extern template class T_DifferentialOperator<DiffOpFixt<3, 0>>;

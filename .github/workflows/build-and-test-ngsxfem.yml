@@ -13,7 +13,7 @@ jobs:
     needs: configure
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:v6.2.2105
+      image: ngsxfem/ngsolve:latest
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
     needs: [configure, build]
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:v6.2.2105
+      image: ngsxfem/ngsolve:latest
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
     needs: [configure, build]
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:v6.2.2105
+      image: ngsxfem/ngsolve:latest
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -78,7 +78,7 @@ jobs:
     needs: [configure, build]
     runs-on: ubuntu-latest
     container: 
-      image: ngsxfem/ngsolve:v6.2.2105
+      image: ngsxfem/ngsolve:latest
       options: --user ${{ needs.configure.outputs.uid_gid }}
     steps:
       - uses: actions/checkout@v2
@@ -125,3 +125,27 @@ jobs:
       - name: Check PEP8 conformity
         run: python3 -m pycodestyle demos/{*,spacetime/*,mpi/*}.py
         continue-on-error: true
+
+  
+  publish-pip-bin:
+    needs: []
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64:latest
+    if: github.ref == 'refs/heads/pip'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: safe dir
+        run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
+      - name: git describe
+        run: git describe --tags
+      - name: Build and package xfem binaries for PyPI
+        run: .ci/build_pip.sh
+      - name: Publish binary distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN_2 }}
+          packages_dir: wheelhouse/

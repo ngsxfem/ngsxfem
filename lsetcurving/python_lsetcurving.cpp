@@ -37,7 +37,7 @@ void ExportNgsx_lsetcurving(py::module &m)
         py::arg("lset_p1")=NULL,
         py::arg("deform")=NULL,
         py::arg("qn")=NULL,
-        py::arg("active_elements")=DummyArgument(),
+        py::arg_v("active_elements", DummyArgument(), "None"),
         py::arg("blending")=NULL,
         py::arg("lower")=0.0,
         py::arg("upper")=0.0,
@@ -153,24 +153,15 @@ heapsize : int
 
           shared_ptr<DifferentialOperator> diffop  = nullptr;
 
-          if (self->GetFESpace()->GetSpatialDimension() == 1)
-            diffop = make_shared<DiffOpShiftedEval<1>> (back,forth);
-          else if (self->GetFESpace()->GetSpatialDimension() == 2)
-            diffop = make_shared<DiffOpShiftedEval<2>> (back,forth);
-          else if (self->GetFESpace()->GetSpatialDimension() == 3)
-            diffop = make_shared<DiffOpShiftedEval<3>> (back,forth);
-          else throw Exception("shifted_eval only for space dim = 1,2,3 so far");
-
-          if (self->GetFESpace()->GetDimension() > 1)
-          {
-            diffop = make_shared<BlockDifferentialOperator>(diffop,self->GetFESpace()->GetDimension());
-          }
+          Switch<3> (self->GetFESpace()->GetSpatialDimension()-1, [&] (auto SDIM) {
+              diffop = make_shared<DiffOpShiftedEval<SDIM+1>> (back,forth, self->GetFESpace()->GetEvaluator(VOL));
+          });
 
           return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
         },
         py::arg("gf"),
-        py::arg("back") = DummyArgument(),
-        py::arg("forth") = DummyArgument(),
+        py::arg_v("back", DummyArgument(), "None"),
+        py::arg_v("forth", DummyArgument(), "None"),
         docu_string(R"raw_string(
 Returns a CoefficientFunction that evaluates Gridfunction gf at a shifted location, s.t. the
 original function to gf, gf: x -> f(x) is changed to cf: x -> f(s(x)) where z = s(x) is the shifted

@@ -206,14 +206,18 @@ namespace ngfem
   }
 
 
+  template void CalcGradientOfCoeff<1>
+  (shared_ptr<CoefficientFunction>, const MappedIntegrationPoint<1,1>&, Vec<1>&, LocalHeap&);
   template void CalcGradientOfCoeff<2>
   (shared_ptr<CoefficientFunction>, const MappedIntegrationPoint<2,2>&, Vec<2>&, LocalHeap&);
   template void CalcGradientOfCoeff<3>
   (shared_ptr<CoefficientFunction>, const MappedIntegrationPoint<3,3>&, Vec<3>&, LocalHeap&);
 
+  template class LsetEvaluator<1>;
   template class LsetEvaluator<2>;
   template class LsetEvaluator<3>;
   
+  template void SearchCorrespondingPoint<1> (const LsetEvaluator<1> &, const Vec<1> &, double, const Mat<1> &, const Vec<1> &, bool, Vec<1> &, LocalHeap &, double *, double *);
   template void SearchCorrespondingPoint<2> (const LsetEvaluator<2> &, const Vec<2> &, double, const Mat<2> &, const Vec<2> &, bool, Vec<2> &, LocalHeap &, double *, double *);
   template void SearchCorrespondingPoint<3> (const LsetEvaluator<3> &, const Vec<3> &, double, const Mat<3> &, const Vec<3> &, bool, Vec<3> &, LocalHeap &, double *, double *);
   

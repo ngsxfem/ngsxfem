@@ -46,6 +46,10 @@ namespace ngfem
             mat(j,k*D+j) = dtshape(k);
     }
 
+  template class T_DifferentialOperator<DiffOpDtVec<1, 1>>;
+  template class T_DifferentialOperator<DiffOpDtVec<1, 2>>;
+  template class T_DifferentialOperator<DiffOpDtVec<1, 3>>;
+
   template class T_DifferentialOperator<DiffOpDtVec<2, 1>>;
   template class T_DifferentialOperator<DiffOpDtVec<2, 2>>;
   template class T_DifferentialOperator<DiffOpDtVec<2, 3>>;

@@ -5,13 +5,18 @@ stages:
         
 build:
   stage: build
-  image: ngsxfem/ngsolve:v6.2.2104
+  image: ngsxfem/ngsolve:latest
   script:
-    - git submodule update --init --recursive
+    - python3 -c "import ngsolve"
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - git submodule
+    - git submodule update --init
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DCMAKE_INSTALL_PREFIX=../install ..
     - make install
   artifacts:
     paths:
@@ -20,7 +25,7 @@ build:
 
 ctests-demos:
   stage: test
-  image: ngsxfem/ngsolve:v6.2.2104
+  image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh demos
   when: always
@@ -28,7 +33,7 @@ ctests-demos:
 
 ctests-mayfail:
   stage: test
-  image: ngsxfem/ngsolve:v6.2.2104
+  image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh mayfail
   when: always
@@ -36,7 +41,7 @@ ctests-mayfail:
 
 ctests-pytests:
   stage: test
-  image: ngsxfem/ngsolve:v6.2.2104
+  image: ngsxfem/ngsolve:latest
   script:
     -  bash .ci/ci_ctests.sh pytests
   when: always
@@ -46,7 +51,7 @@ metrics:
   tags:
     - c5
   stage: test
-  image: ngsxfem/ngsolve:v6.2.2104
+  image: ngsxfem/ngsolve:latest
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
@@ -54,12 +59,12 @@ metrics:
   artifacts:
     reports:
       metrics: metrics.txt
-  when: always
+  when: manual
   allow_failure: true
 
 codestyle-demos:
   stage: test
-  image: ngsxfem/ngsolve:v6.2.2104
+  image: ngsxfem/ngsolve:latest
   script:
     - pip3 install --user pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
@@ -95,3 +100,33 @@ paper-appendix:
       - literature.pdf
       - feature-details.pdf
         
+        
+pages:
+  stage: deploy
+  image: ngsxfem/ngsolve:latest
+  script:
+    - pip3 install --user -r ./doc/sphinx/requirements.txt
+    - export PATH="$PATH:/home/jovyan/.local/bin"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
+    - cp external_dependencies/jupyter/{basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde}.ipynb doc/sphinx/jupyter
+    - cp demos/{,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
+    - cp -r doc/graphics doc/sphinx/xfem_misc/
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - sphinx-build doc/sphinx html
+    - mv html public
+  artifacts:
+    paths:
+      - public
+  #only:
+  #  - release # this job will affect only the 'sphinx' branch
+
+pip_linux:
+  image: quay.io/pypa/manylinux2014_x86_64
+  stage: build
+  script:
+    - ./.ci/build_pip.sh
+  when: manual

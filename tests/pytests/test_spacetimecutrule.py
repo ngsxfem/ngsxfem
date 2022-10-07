@@ -6,6 +6,7 @@ from xfem import *
 from math import pi
 import netgen.meshing as ngm
 from netgen.geom2d import SplineGeometry
+from xfem.lset_spacetime import *
 
 tref = ReferenceTimeVariable()
 
@@ -329,6 +330,94 @@ def test_spacetime_spaceP1_timeDGP1():
         print("t = {0:10}, l2error = {1:20}".format(told,l2error),end="\n")
         assert(l2error < 0.085)
 
+@pytest.mark.parametrize("i", [3,4,5])
+def length_1D_Int_test():
+    length = 1
+    mesh = Make1DMesh(n=2**(i), mapping= lambda x : 2*length*x-length)
+    
+    r0 = 0.4
+    r = sqrt(x**2)
+    
+    # level set
+    levelset= r - r0
+    
+    fes1 = H1(mesh, order=1)
+
+    lset_p1 = GridFunction(fes1)
+    
+    InterpolateToP1(levelset,lset_p1)
+    val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh)
+    print("Numerical value: ", val_vol)
+    print("Error: ", abs(val_vol - 2*r0))
+    assert( abs(val_vol - 2*r0) < 1e-10)
+
+def area_of_a_circle_ST_error(n_steps = 8, i=1):
+    length = 1
+    mesh = Make1DMesh(n=2**(i), mapping= lambda x : 2*length*x-length)
+
+    coef_told = Parameter(0)
+    coef_delta_t = Parameter(0)
+    tref = ReferenceTimeVariable()
+    t = coef_told + coef_delta_t*tref
+    
+    r0 = 0.9
+    r = sqrt(x**2+t**2)
+    
+    # level set
+    levelset= r - r0
+    
+    time_order = 1
+    fes1 = H1(mesh, order=1)
+    tfe = ScalarTimeFE(time_order)
+    st_fes = SpaceTimeFESpace(fes1,tfe)
+    
+    tend = 1
+    delta_t = tend/n_steps
+    coef_delta_t.Set(delta_t)
+    told = 0
+
+    lset_p1 = GridFunction(st_fes)
+    
+    sum_vol = 0
+    sum_int = 0
+    for i in range(n_steps):
+        SpaceTimeInterpolateToP1(levelset,tref,lset_p1)
+    
+        val_vol = Integrate({ "levelset" : lset_p1, "domain_type" : NEG}, CoefficientFunction(1.0), mesh, time_order = time_order)
+        val_int = Integrate({ "levelset" : lset_p1, "domain_type" : IF}, CoefficientFunction(1.0), mesh, time_order = time_order)
+        #print(val_vol, val_int)
+        sum_vol += val_vol*delta_t
+        sum_int += val_int*delta_t
+        
+        told = told + delta_t
+        coef_told.Set(told)
+
+    print("SUM VOL: ", sum_vol)
+    print("VOL: ", pi*r0**2/2)
+    vol_err = abs(sum_vol - pi*r0**2/2)
+    print("\t\tDIFF: ", vol_err)
+    
+    print("SUM INT: ", sum_int)
+    print("AREA: ", 2*r0)
+    int_err = abs(sum_int - 2*r0)
+    print("\t\tDIFF: ",int_err)
+    return (vol_err, int_err)
+
+def test_spacetime_area_of_a_circle():
+    l2errors_vol = []
+    for i in range(6):
+        (n_steps,i) =  (2**(i+2), i+1)
+        (vol_err, int_err) = area_of_a_circle_ST_error(n_steps, i)
+        l2errors_vol.append(vol_err)
+        assert int_err < 1e-10
+    
+    print("L2 (VOL): ", l2errors_vol)
+    eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
+    print("EOCS (VOL): ", eocs_vol)
+    avg = sum(eocs_vol)/len(eocs_vol)
+    print("Average: ", avg)
+    assert avg > 1.9
+    
 def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     if structured_mesh:
         length = 1
@@ -387,6 +476,66 @@ def area_of_a_sphere_ST_error(n_steps = 8, i=1, structured_mesh=False):
     print("\t\tDIFF: ",int_err)
     return (vol_err, int_err)
 
+def area_of_a_sphere_ST_error_ho(n_steps = 8, i=3, structured_mesh=False, k = 3):
+    if structured_mesh:
+        length = 1
+        mesh = MakeStructured2DMesh(quads=False,nx=2**(i),ny=2**(i),mapping= lambda x,y : (2*length*x-length,2*length*y-length))
+    else:
+        square = SplineGeometry()
+        square.AddRectangle([-1,-1],[1,1])
+        ngmesh = square.GenerateMesh(maxh=(1/2)**(i-1), quad_dominated=False)
+        mesh = Mesh (ngmesh)
+
+    coef_told = Parameter(0)
+    coef_delta_t = Parameter(0)
+    tref = ReferenceTimeVariable()
+    t = coef_told + coef_delta_t*tref
+    
+    r0 = 0.9
+    r = sqrt(x**2+y**2+t**2)
+    
+    # level set
+    levelset= r - r0
+    
+    lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k, order_time=k, threshold=0.5, discontinuous_qn=True)
+    
+    time_order = k
+    
+    tend = r0/2
+    delta_t = tend/n_steps
+    coef_delta_t.Set(delta_t)
+    told = 0
+    
+    dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order, order = k,
+                        deformation=lsetadap.deformation[INTERVAL])
+    dG = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], IF, time_order=time_order, order = k,
+                        deformation=lsetadap.deformation[INTERVAL])
+    
+    sum_vol = 0
+    sum_int = 0
+    for i in range(n_steps):
+        lsetadap.CalcDeformation(levelset)
+    
+        val_vol = Integrate( CF(1.)*dQ, mesh)
+        val_int = Integrate( CF(1.)*dG, mesh)
+        #print(val_vol, val_int)
+        sum_vol += val_vol
+        sum_int += val_int
+        
+        told = told + delta_t
+        coef_told.Set(told)
+
+    print("SUM VOL: ", sum_vol)
+    print("VOL: ", 11/24*pi*r0**3)
+    vol_err = abs(sum_vol - 11/24*pi*r0**3)
+    print("\t\tDIFF: ", vol_err)
+    
+    print("SUM INT: ", sum_int)
+    print("AREA: ", pi/12*r0**2*(3*sqrt(3) + 2*pi))
+    int_err = abs(sum_int - pi/12*r0**2*(3*sqrt(3) + 2*pi))
+    print("\t\tDIFF: ",int_err)
+    return (vol_err, int_err)
+
 @pytest.mark.parametrize("structured", [True, False])
 def test_spacetime_area_of_a_sphere(structured):
     
@@ -411,6 +560,39 @@ def test_spacetime_area_of_a_sphere(structured):
     avg = sum(eocs_int)/len(eocs_int)
     print("Average: ", avg)
     assert avg > 1.9
+
+@pytest.mark.parametrize("structured", [True, False])
+@pytest.mark.parametrize("k", [2,3,4,5,6,7,8])
+def test_spacetime_area_of_a_sphere_ho(structured, k):
+    
+    l2errors_vol = []
+    l2errors_int = []
+    for i in range(6):
+        (n_steps,i) =  (2**(i+1), i+1)
+        (vol_err, int_err) = area_of_a_sphere_ST_error_ho(n_steps, i, structured, k)
+        l2errors_vol.append(vol_err)
+        l2errors_int.append(int_err)
+        if vol_err < 1e-9 or int_err < 1e-9:
+            break
+    
+    print("L2 (VOL): ", l2errors_vol)
+    eocs_vol = [log(l2errors_vol[i-1]/l2errors_vol[i])/log(2) for i in range(1,len(l2errors_vol))]
+    print("EOCS (VOL): ", eocs_vol)
+    avg = sum(eocs_vol)/len(eocs_vol)
+    print("Average: ", avg)
+    assert avg > k+0.8
+    
+    print("L2 (INT): ", l2errors_int)
+    eocs_int = [log(l2errors_int[i-1]/l2errors_int[i])/log(2) for i in range(1,len(l2errors_int))]
+    print("EOCS (INT): ", eocs_int)
+    avg = sum(eocs_int)/len(eocs_int)
+    print("Average: ", avg)
+    assert avg > k+0.8
+
+#ngsxfemglobals.do_naive_timeint = True
+#ngsxfemglobals.naive_timeint_order = 2
+#ngsxfemglobals.naive_timeint_subdivs = 1
+#test_spacetime_area_of_a_sphere_ho(False, 2)
 
 def area_of_a_hypersphere_ST_error(n_steps = 64, i=1, structured_mesh= True):
     if structured_mesh:
@@ -493,3 +675,160 @@ def test_spacetime_area_of_a_hypersphere(structured):
     avg = sum(eocs_int)/len(eocs_int)
     print("Average: ", avg)
     assert avg > 1.9
+
+def test_spacetime_spaceP4_timeDGP4():
+    ngsglobals.msg_level = 1
+
+    # -------------------------------- PARAMETERS ---------------------------------
+    # DISCRETIZATION PARAMETERS:
+
+    # Parameter for refinement study:
+    i = 2
+    n_steps = 2**i
+    space_refs = i
+
+    # Polynomial order in time
+    k_t = 4
+    # Polynomial order in space
+    k_s = k_t
+    # Polynomial order in time for level set approximation
+    lset_order_time = k_t
+    # Integration order in time
+    time_order = 2 * k_t
+    # Time stepping parameters
+    tstart = 0
+    tend = 0.5
+    delta_t = (tend - tstart) / n_steps
+    maxh = 0.5
+    # Ghost-penalty parameter
+    gamma = 0.05
+    # Map from reference time to physical time
+    told = Parameter(tstart)
+    t = told + delta_t * tref
+
+    # PROBLEM SETUP:
+
+    # Outer domain:
+    rect = SplineGeometry()
+    rect.AddRectangle([-0.6, -1], [0.6, 1])
+
+    # Level set geometry
+    # Radius of disk (the geometry)
+    R = 0.5
+    # Position shift of the geometry in time
+    rho = (1 / (pi)) * sin(2 * pi * t)
+    # Convection velocity:
+    w = CoefficientFunction((0, rho.Diff(t)))
+    # Level set
+    r = sqrt(x**2 + (y - rho)**2)
+    levelset = r - R
+
+    # Diffusion coefficient
+    alpha = 1
+    # Solution
+    u_exact = cos(pi * r / R) * sin(pi * t)
+    # R.h.s.
+    coeff_f = (u_exact.Diff(t)
+            - alpha * (u_exact.Diff(x).Diff(x) + u_exact.Diff(y).Diff(y))
+            + w[0] * u_exact.Diff(x) + w[1] * u_exact.Diff(y)).Compile()
+
+    # ----------------------------------- MAIN ------------------------------------
+    ngmesh = rect.GenerateMesh(maxh=maxh, quad_dominated=False)
+    for j in range(space_refs):
+        ngmesh.Refine()
+    mesh = Mesh(ngmesh)
+
+    # Spatial FESpace for solution
+    fes1 = H1(mesh, order=k_s, dgjumps=True)
+    # Time finite element (nodal!)
+    tfe = ScalarTimeFE(k_t)
+    # (Tensor product) space-time finite element space
+    st_fes = tfe * fes1
+
+    # Space time version of Levelset Mesh Adapation object. Also offers integrator
+    # helper functions that involve the correct mesh deformation
+    lsetadap = LevelSetMeshAdaptation_Spacetime(mesh, order_space=k_s,
+                                                order_time=lset_order_time,
+                                                threshold=0.5,
+                                                discontinuous_qn=True)
+
+    gfu = GridFunction(st_fes)
+    u_last = CreateTimeRestrictedGF(gfu, 1)
+
+    scene = DrawDC(lsetadap.levelsetp1[TOP], u_last, 0, mesh, "u_last",
+                deformation=lsetadap.deformation[TOP])
+
+    u, v = st_fes.TnT()
+    h = specialcf.mesh_size
+
+    ba_facets = BitArray(mesh.nfacet)
+    ci = CutInfo(mesh, time_order=0)
+
+    dQ = delta_t * dCut(lsetadap.levelsetp1[INTERVAL], NEG, time_order=time_order,
+                        deformation=lsetadap.deformation[INTERVAL],
+                        definedonelements=ci.GetElementsOfType(HASNEG))
+    dOmold = dCut(lsetadap.levelsetp1[BOTTOM], NEG,
+                deformation=lsetadap.deformation[BOTTOM],
+                definedonelements=ci.GetElementsOfType(HASNEG), tref=0)
+    dOmnew = dCut(lsetadap.levelsetp1[TOP], NEG,
+                deformation=lsetadap.deformation[TOP],
+                definedonelements=ci.GetElementsOfType(HASNEG), tref=1)
+    dw = delta_t * dFacetPatch(definedonelements=ba_facets, time_order=time_order,
+                            deformation=lsetadap.deformation[INTERVAL])
+
+
+    def dt(u):
+        return 1.0 / delta_t * dtref(u)
+
+
+    a = RestrictedBilinearForm(st_fes, "a", check_unused=False,
+                            element_restriction=ci.GetElementsOfType(HASNEG),
+                            facet_restriction=ba_facets)
+    a += v * (dt(u) - dt(lsetadap.deform) * grad(u)) * dQ
+    a += (alpha * InnerProduct(grad(u), grad(v))) * dQ
+    a += (v * InnerProduct(w, grad(u))) * dQ
+    a += u * v * dOmold
+    a += h**(-2) * (1 + delta_t / h) * gamma * \
+        (u - u.Other()) * (v - v.Other()) * dw
+
+    f = LinearForm(st_fes)
+    f += coeff_f * v * dQ
+    f += u_last * v * dOmold
+
+    # Set initial values
+    u_last.Set(fix_tref(u_exact, 0))
+    # Project u_last at the beginning of each time step
+    lsetadap.ProjectOnUpdate(u_last)
+
+    while tend - told.Get() > delta_t / 2:
+        lsetadap.CalcDeformation(levelset)
+
+        # Update markers in (space-time) mesh
+        ci.Update(lsetadap.levelsetp1[INTERVAL], time_order=0)
+
+        # re-compute the facets for stabilization:
+        ba_facets[:] = GetFacetsWithNeighborTypes(mesh,
+                                                a=ci.GetElementsOfType(HASNEG),
+                                                b=ci.GetElementsOfType(IF))
+        active_dofs = GetDofsOfElements(st_fes, ci.GetElementsOfType(HASNEG))
+
+        a.Assemble(reallocate=True)
+        f.Assemble()
+
+        # Solve linear system
+        inv = a.mat.Inverse(active_dofs, inverse="umfpack")
+        gfu.vec.data = inv * f.vec.data
+
+        # Evaluate upper trace of solution for
+        #  * for error evaluation
+        #  * upwind-coupling to next time slab
+        RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
+
+        # Compute error at final time
+        l2error = sqrt(Integrate((u_exact - u_last)**2 * dOmnew, mesh))
+
+        # Update time variable (ParameterCL)
+        told.Set(told.Get() + delta_t)
+        print("\rt = {0:12.9f}, L2 error = {1:12.9e}".format(told.Get(), l2error))
+    assert(l2error < 1e-2)
+    return l2error

@@ -6,7 +6,7 @@
 CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, shared_ptr<CutDifferentialSymbol> _dx)
   : Integral(_cf, *_dx), lsetintdom(_dx->lsetintdom) { ; }
 
-shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
+shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;
@@ -24,8 +24,8 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
     bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, dx.vb, dx.element_vb);
   else
   {
-    if (lsetintdom->GetTimeIntegrationOrder() >= 0)
-      throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
+    //if (lsetintdom->GetTimeIntegrationOrder() >= 0)
+    //  throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
     if (dx.vb == BND)
       throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
     bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
@@ -56,7 +56,7 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator()
 
 
 
-shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator()
+shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;
@@ -99,7 +99,9 @@ template <typename TSCAL>
 TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
                                   FlatVector<TSCAL> element_wise)
 {
-  LocalHeap glh(10000000, "lh-T_CutIntegrate");
+  static Timer timer("CutIntegral::T_CutIntegrate");
+  RegionTimer reg (timer);
+  LocalHeap glh(1000000000, "lh-T_CutIntegrate");
   bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
     throw Exception("CutIntegrate can only deal with VOL a.t.m..");
@@ -173,7 +175,7 @@ FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
       : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref) { ; }
 
 
-shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator()
+shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator() const
 {
   // check for DG terms
   bool has_other = false;

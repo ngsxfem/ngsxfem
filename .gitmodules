@@ -1,6 +1,6 @@
 [submodule "external_dependencies/ngsolve"]
 	path = external_dependencies/ngsolve
-	url = git://github.com/NGSolve/ngsolve.git
+	url = https://github.com/NGSolve/ngsolve.git
 
 [submodule "external_dependencies/jupyter"]
 	path = external_dependencies/jupyter

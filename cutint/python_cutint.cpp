@@ -49,7 +49,7 @@ void ExportNgsx_cutint(py::module &m)
             throw Exception("element_wise only implemented for 1 dimensional coefficientfunctions");
 
           MyMutex mutex_ip_cont;
-          MyLock lock_ip_cont(mutex_ip_cont);
+          //MyLock lock_ip_cont(mutex_ip_cont);
 
           ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
@@ -277,6 +277,11 @@ Note that the most important options are set in the second line when the basic
 CutDifferentialSymbol is further specified.
 )raw_string")  
   )
+    .def(py::init<>(), docu_string(R"raw_string(
+Constructor of CutDifferentialSymbol.
+
+  Argument: none
+)raw_string"))
     .def(py::init<VorB>(), docu_string(R"raw_string(
 Constructor of CutDifferentialSymbol.
 
@@ -285,6 +290,7 @@ Constructor of CutDifferentialSymbol.
     .def("__call__", [](CutDifferentialSymbol & self,
                         py::dict lsetdom,
                         optional<variant<Region,string>> definedon,
+                        VorB vb, 
                         bool element_boundary,
                         VorB element_vb, bool skeleton,
                         shared_ptr<GridFunction> deformation,
@@ -292,7 +298,7 @@ Constructor of CutDifferentialSymbol.
          {
            if (element_boundary) element_vb = BND;
            auto dx = CutDifferentialSymbol(PyDict2LevelsetIntegrationDomain(lsetdom), 
-                                           self.vb, element_vb, skeleton);
+                                           vb, element_vb, skeleton);
            if (definedon)
              {
                if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
@@ -309,6 +315,7 @@ Constructor of CutDifferentialSymbol.
          },
          py::arg("levelset_domain"),
          py::arg("definedon")=nullptr,
+         py::arg("vb")=VOL,
          py::arg("element_boundary")=false,
          py::arg("element_vb")=VOL,
          py::arg("skeleton")=false,
@@ -323,6 +330,8 @@ Parameters:
 levelset_domain (dict) : specifies the level set domain.
 definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
   the current form shall be defined.
+vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view 
+  of the mesh.
 element_boundary (bool) : Does the integral take place on the boundary of an element-
 element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
   of an element.
@@ -335,6 +344,7 @@ definedonelements (BitArray) : Set of elements or facets where the integral shal
     {
       return CutDifferentialSymbol(self, x );
     })
+
     .def("order", [](CutDifferentialSymbol & self, int order)
     {
       auto _cds = CutDifferentialSymbol(self);
@@ -342,6 +352,10 @@ definedonelements (BitArray) : Set of elements or facets where the integral shal
       return _cds;
     },
     py::arg("order"))
+    .def_property("vb",
+                  [](CutDifferentialSymbol & self) { return self.vb; },
+                  [](CutDifferentialSymbol & self, VorB vb) { self.vb = vb; return self.vb;},
+                  "Volume of boundary?")
     ;
     
   py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol",

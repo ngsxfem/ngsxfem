@@ -598,11 +598,12 @@ namespace xintegration
 
     auto et = trafo.GetElementType();
 
-    if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
+    if ((et != ET_POINT)&&(et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
       cout << IM(1) << "Element Type: " << et << endl;
       throw Exception("only trigs, tets, quads for now");
     }
-
+    if ( (et == ET_POINT) && (dt == IF) )
+        throw Exception("ET_POINT is only available for volume type ints.");
     bool is_quad = (et == ET_QUAD) || (et == ET_HEX);
 
     //timercutgeom.Start();
@@ -808,10 +809,12 @@ namespace xintegration
       //   static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule");
 
 
-      if ((et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
+      if ((et != ET_POINT)&&(et != ET_TRIG)&&(et != ET_TET)&&(et != ET_SEGM)&&(et != ET_QUAD)&&(et != ET_HEX)){
         cout << IM(1) <<  "Element Type: " << et << endl;
         throw Exception("only trigs, tets, quads for now");
       }
+      if ( (et == ET_POINT) && (dt == IF) )
+          throw Exception("ET_POINT is only available for volume type ints.");
       bool is_quad = (et == ET_QUAD) || (et == ET_HEX);
 
       //timercutgeom.Start();

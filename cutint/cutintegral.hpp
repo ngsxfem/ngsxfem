@@ -37,8 +37,8 @@ namespace ngfem
                                FlatVector<Complex> element_wise);
 
 
-    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator();
-    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator();
+    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator() const;
+    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator() const;
   };
 
 
@@ -49,6 +49,7 @@ namespace ngfem
     shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;
     double scale = 1;
     
+    CutDifferentialSymbol () : DifferentialSymbol(VOL) { ; }
     CutDifferentialSymbol (VorB _vb) : DifferentialSymbol(_vb) { ; }
     CutDifferentialSymbol (shared_ptr<LevelsetIntegrationDomain> _lsetdom, VorB _vb, VorB _element_vb, bool _skeleton)
       : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), lsetintdom(_lsetdom) { ; }
@@ -94,8 +95,8 @@ namespace ngfem
       throw Exception("Integrate not Implemented for FacetPatchIntegral");
     }
 
-    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator();
-    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator()
+    virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator() const;
+    virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator() const
     {
       throw Exception("MakeLinearFormIntegrator not Implemented for FacetPatchIntegral");
     }

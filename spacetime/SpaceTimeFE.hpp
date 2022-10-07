@@ -41,11 +41,31 @@ namespace ngfem
       virtual void CalcDShape (const IntegrationPoint & ip,
                                BareSliceMatrix<> dshape) const;
 
+      virtual void CalcMappedDDShape (const BaseMappedIntegrationPoint & mip, 
+                                      BareSliceMatrix<> ddshape) const;
+
       // there are some more functions to bring in ...
       //using ScalarFiniteElement<2>::CalcShape;
       //using ScalarFiniteElement<2>::CalcDShape;
     };
 
+    class LagrangePolyHornerCalc {
+     protected:
+        Array<double> nodes;
+
+        Matrix<double> NewtonBasisCoeffs;
+        Array<LagrangePolyHornerCalc> my_childs;
+        void SetUpChilds();
+
+     public:
+        LagrangePolyHornerCalc() { }
+
+        LagrangePolyHornerCalc(Array<double> & nodes2, bool deriv_calc_needed) : nodes(nodes2) { CalcNewtonBasisCoeffs(); if(deriv_calc_needed) SetUpChilds(); }
+
+        void CalcNewtonBasisCoeffs();
+        double Lagrange_Pol_Horner (double x, int i) const;
+        double Lagrange_Pol_D_Horner (double x, int i) const;
+    };
 
     class NodalTimeFE : public ScalarFiniteElement<1>
       {
@@ -55,6 +75,10 @@ namespace ngfem
         bool skip_first_nodes = false;
         bool only_first_nodes = false;
         Array<double> nodes;
+
+        bool do_horner_eval = false;
+        LagrangePolyHornerCalc HornerLP;
+
 
       public:
         NodalTimeFE (int order, bool askip_first_nodes, bool aonly_first_nodes, int ndof_first_node = 1);

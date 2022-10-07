@@ -90,6 +90,9 @@ add_test(NAME pytests_mlset_integrate COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pyt
 add_test(NAME pytests_mlset_pde COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_mlset_poisson.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_utils COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_utils.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 add_test(NAME pytests_memory COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_memory_usage.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 

@@ -29,6 +29,10 @@ namespace ngfem
   };
 
 #ifndef FILE_XFEMDIFFOPS_CPP
+  extern template class T_DifferentialOperator<DiffOpX<1,DIFFOPX::EXTEND>>;
+  extern template class T_DifferentialOperator<DiffOpX<1,DIFFOPX::RNEG>>;
+  extern template class T_DifferentialOperator<DiffOpX<1,DIFFOPX::RPOS>>;
+
   extern template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::EXTEND>>;
   extern template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RNEG>>;
   extern template class T_DifferentialOperator<DiffOpX<2,DIFFOPX::RPOS>>;
