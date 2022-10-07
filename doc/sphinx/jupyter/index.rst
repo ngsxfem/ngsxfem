@@ -23,11 +23,16 @@
     .. role:: raw-html(raw)
         :format: html
 
+Jupyter tutorials
+~~~~~~~~~~~~~~~~~
+
+To work through the i-tutorials we refer to the repository https://github.com/ngsxfem/ngsxfem-jupyter with instructions and **more material**. Here, we give a selection of notebooks. You can run it through binder here: https://mybinder.org/v2/gh/ngsxfem/ngsxfem-jupyter/master?filepath=tutorials.ipynb .
+
 .. toctree::
+   :numbered:
    :maxdepth: 1
 
-test test
+  basics.ipynb
+  intlset.ipynb
+  cutfem.ipynb
 
-..  ../../external_dependencies/jupyter/basics.ipynb
-..  ../../external_dependencies/jupyter/intlset.ipynb
-..  ../../external_dependencies/jupyter/cutfem.ipynb
