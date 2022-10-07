@@ -1,0 +1,10 @@
+sphinx
+sphinx_rtd_theme
+sphinx_mdinclude
+notebook
+numpy
+m2r2
+jupyter_sphinx
+nbsphinx
+sphinxemoji
+pandocfilters
