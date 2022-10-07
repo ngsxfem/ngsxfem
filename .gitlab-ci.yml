@@ -100,3 +100,9 @@ paper-appendix:
       - literature.pdf
       - feature-details.pdf
         
+pip_linux:
+  image: quay.io/pypa/manylinux2014_x86_64
+  stage: build
+  script:
+    - ./.ci/build_pip.sh
+  when: manual
