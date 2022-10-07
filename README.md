@@ -38,12 +38,12 @@ Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes |
 | `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | yes | yes | yes |
-| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | no | yes | no | yes | no |
+| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | yes| yes | yes| yes | no |
 | `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes | yes | yes |
 | `MLS`: multiple level set | yes | no | no | no | / | no | yes | no | yes | yes |
-| `STF`: space-time FEM | yes | no | no | yes | no | / | yes | yes | yes | yes |
+| `STF`: space-time FEM | yes | no | yes | yes | no | / | yes | yes | yes | yes |
 | `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | yes | yes | no |
-| `Hex`: quads / hexes | yes | yes | no | yes | no | yes | yes | / | / | yes |
+| `Hex`: quads / hexes | yes | yes | yes | yes | no | yes | yes | / | / | yes |
 | `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
 | `MPI`: MPI | yes | yes | no | yes | yes | yes | no | yes | yes | / |
 
