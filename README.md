@@ -21,13 +21,9 @@
 The main features of `ngsxfem` are:
 
 * Tools to work on an a subset of the triangulation, the \"active mesh\" only
-
 * Numerical integration on geometries that are (implicitly) described through level set functions.
-
 * Higher order representation of level set geometries
-
 * Space-Time Finite Elements for the treatment of moving domain problems
-
 * All these features combined with the usual flexibility and power of [NGSolve](https://ngsolve.org).
 
 `ngsxfem` has been used in a variety of applications. In the document [doc/feature-details.md](doc/feature-details.md) (see also [compiled pdf](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) ) more details on the features is given and in [doc/literature.md](doc/literature.md) (see also [literature](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) ) an overview of the scientific literature where `ngsxfem` is used is provided.
@@ -62,21 +58,21 @@ We provide two main sources with which to learn how to use `ngsxfem`:
 
 Major contributions:
 
--   Christoph Lehrenfeld (main author)
--   Fabian Heimann (cut integration, space-time)
--   Henry von Wahl (multiple levelsets, mac support)
--   Janosch Preuss (space-time)
--   Thomas Ludescher (multigrid)
+* Christoph Lehrenfeld (main author)
+* Fabian Heimann (cut integration, space-time)
+* Henry von Wahl (multiple levelsets, mac support)
+* Janosch Preuss (space-time)
+* Thomas Ludescher (multigrid)
 
 Additional contributions:
 
--   Paul Stocker (CI, docu, builds)
--   Pedro Costa Klein (CI, docu)
+* Paul Stocker (CI, docu, builds)
+* Pedro Costa Klein (CI, docu)
 
 # Community guidelines
 If you observe any problems with the software / examples / documentation / installation or want to contribute, you can get in touch with us through either:
- * the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
- * the [NGSolve user forum](https://ngsolve.org/forum/index).
+* the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
+* the [NGSolve user forum](https://ngsolve.org/forum/index).
 
 # Citing
 
