@@ -86,8 +86,8 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
   }),
   py::arg("space"),
   py::arg("name") = "bfa",
-  py::arg("element_restriction") = DummyArgument(),
-  py::arg("facet_restriction") = DummyArgument(),
+  py::arg_v("element_restriction", DummyArgument(), "None"),
+  py::arg_v("facet_restriction", DummyArgument(), "None"),
   rblf_string_T)
 .def(py::init([](shared_ptr<FESpace> fes1,
    shared_ptr<FESpace> fes2,
@@ -111,8 +111,8 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
 py::arg("trialspace"),
 py::arg("testspace"),
 py::arg("name") = "bfa",
-py::arg("element_restriction") = DummyArgument(),
-py::arg("facet_restriction") = DummyArgument(),
+py::arg_v("element_restriction", DummyArgument(), "None"),
+py::arg_v("facet_restriction", DummyArgument(), "None"),
 rblf_string_T)        
 .def_property("element_restriction", 
 	  &Rbfi_TT::GetElementRestriction,
@@ -325,7 +325,7 @@ active_els : BitArray or None
                     ret->Update();
                     ret->FinalizeUpdate();
                     return ret;                    
-                  }), py::arg("fespace"), py::arg("active_elements")=DummyArgument())
+                  }), py::arg("fespace"), py::arg_v("active_elements", DummyArgument(), "None"))
     .def("GetBaseSpace", [](RestrictedFESpace & self)
          {
            return self.GetBaseSpace();
