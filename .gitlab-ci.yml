@@ -120,5 +120,5 @@ pages:
   artifacts:
     paths:
       - public
-  only:
-    - release # this job will affect only the 'sphinx' branch
+  #only:
+  #  - release # this job will affect only the 'sphinx' branch

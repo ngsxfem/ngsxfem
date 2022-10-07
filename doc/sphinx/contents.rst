@@ -58,8 +58,3 @@
 
 .. toctree::
    :caption: Indices
-
-.. toctree::
-   :caption: Bonus (for Sphinx trying)
-
-   xfem_misc/fancy
