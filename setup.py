@@ -27,7 +27,7 @@ def path_to_version(path):
 try:
     version = path_to_version(".")
 except:
-    version = "2.0.dev3"
+    version = "2.0.dev4"
 
 try:
     ngsolve_version = path_to_version("external_dependencies/ngsolve")
@@ -36,7 +36,6 @@ except:
 
 print("ngsxfem_version =", version)
 print("ngsolve_version =", ngsolve_version)
-
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -65,6 +64,7 @@ class CMakeBuild(build_ext):
                       '-DCMAKE_CXX_COMPILER=ngscxx',
                       '-DCMAKE_LINKER=ngsld',
                       '-DBUILD_STUB_FILES=ON',
+                      '-DCHECK_NGSOLVE_VERSION=OFF', # temporary
                       '-DBUILD_NGSOLVE=OFF']
 
         cfg = 'Debug' if self.debug else 'Release'
