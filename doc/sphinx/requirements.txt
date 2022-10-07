@@ -48,8 +48,6 @@ nbconvert==6.5.3
 nbformat==5.4.0
 nbsphinx==0.8.9
 nest-asyncio==1.5.5
-netgen-mesher==6.2.2203.post46.dev0
-ngsolve==6.2.2204
 ngstrefftz==0.1.2
 notebook==6.4.12
 numpy==1.23.2
