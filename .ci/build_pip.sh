@@ -18,7 +18,7 @@ do
     pip wheel -vvv .
     rm -rf _skbuild
     auditwheel repair xfem*.whl
-    rm *.whl
+    rm -f *.whl
 
     # avx2 build:
     pip uninstall -y ngsolve
@@ -28,7 +28,7 @@ do
     NETGEN_ARCH=avx2 pip wheel -vvv .
     
     auditwheel repair xfem*.whl
-    rm *.whl
+    rm -f *.whl
     
 done
 
