@@ -1,6 +1,11 @@
-name: Build mac wheels
+name: Build pip wheel (mac) and publish
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
 
 jobs:
   build_wheels:
