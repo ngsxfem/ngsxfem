@@ -26,7 +26,6 @@ Installation of `ngsxfem` releases through `pip` is carried with the command
 pip3 install xfem
 ```
 You may add standard `pip` options such as `--user`, `--upgrade` and/or `--verbose` or specify a concrete version, e.g. by replacing `xfem` with `xfem==1.4.2104`.
-Note that the installation requires some compilations and may hence take a few minutes.
 
 ### Development version
 
@@ -36,8 +35,7 @@ pip3 install git+https://github.com/ngsxfem/ngsxfem.git@master
 ```
 
 ### Troubleshooting
-The `pip`-installation builds `ngsxfem` from source using default parameters for the build. If you meet problems with the `pip`-installation you may want to try an [installation from source](#building-from-source)
-as it gives you more fine-grained control on the installation. 
+If you meet problems with the `pip`-installation you may want to try an [installation from source](#building-from-source) as it gives you more fine-grained control on the installation. 
 
 ## Installation from source
 You can build `ngsxfem` also directly from sources. This should work for both the releases and the master branch. As `ngsxfem` is an Add-on to `NGSolve` you require a proper version of `NGSolve`, the installation of which we discuss first before we explain the further build steps.

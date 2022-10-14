@@ -1,4 +1,4 @@
-name: Build, test (and publish release) of ngsxfem
+name: Build, test ngsxfem
 on: [push]
 jobs:
   configure:
