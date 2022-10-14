@@ -13,7 +13,7 @@ do
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
     export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
     export PATH="$ORIGINAL_PATH:$PYDIR"
-    pip install ngsolve
+    pip install ngsolve pybind11-stubgen
     #RUN $PYDIR/pip install -vvv .
     pip wheel -vvv .
     rm -rf _skbuild
