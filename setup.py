@@ -14,12 +14,20 @@ from distutils.sysconfig import get_python_lib
 
 from subprocess import check_output
 def path_to_version(path):
+    suffix = None
     git_version = check_output(['git', 'describe', '--tags'], cwd=path).decode('utf-8').strip()
     version = git_version[1:].split('-')
+    main_version = version[0].split('.')
+    if (len(main_version)>3):
+        suffix = main_version[3]
+        main_version = main_version[0:3]
+        version[0] = main_version[0]+"."+main_version[1]+"."+main_version[2]
     if len(version)>2:
         version = version[:2]
     if len(version)>1:
-        version = '.post'.join(version) + '.dev'
+        version = '.post'.join(version)
+        if suffix:
+            version += "." + suffix
     else:
         version = version[0]
     return version
@@ -110,7 +118,7 @@ if ngsolve_version:
     install_requires = [ngsolve_name+">="+ngsolve_version]
 else:
     install_requires = []
-    
+
 setup(
     name=name,
     version=version, #'2.0.dev2',
