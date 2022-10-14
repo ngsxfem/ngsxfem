@@ -1,4 +1,4 @@
-name: Build, test (and publish release) of ngsxfem
+name: Build, test ngsxfem
 on: [push]
 jobs:
   configure:
@@ -125,3 +125,27 @@ jobs:
       - name: Check PEP8 conformity
         run: python3 -m pycodestyle demos/{*,spacetime/*,mpi/*}.py
         continue-on-error: true
+
+  
+  publish-pip-bin:
+    needs: []
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64:latest
+    #if: github.ref == 'refs/heads/release/master'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: safe dir
+        run: git config --global --add safe.directory /__w/ngsxfem/ngsxfem
+      - name: git describe
+        run: git describe --tags
+      - name: Build and package xfem binaries for PyPI
+        run: .ci/build_pip.sh
+      - name: Publish binary distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN_2 }}
+          packages_dir: wheelhouse/
