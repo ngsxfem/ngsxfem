@@ -260,6 +260,29 @@ namespace ngcomp
         
   }
 
+  shared_ptr<BitArray> CutInformation::GetElementsWithThresholdContribution(DOMAIN_TYPE dt,
+                                                                              double threshold,
+                                                                              VorB vb,
+                                                                              LocalHeap & lh){
+    int ne = ma->GetNE(vb);
+    shared_ptr<BitArray> elems_with_threshold = make_shared<BitArray>(ne);
+    elems_with_threshold->Clear();
+    if (dt == POS)
+        threshold = 1 - threshold;
+
+    IterateRange
+      (ne, lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+      if (dt == NEG && (*cut_ratio_of_element[vb])(elnr) >= threshold)
+        (*elems_with_threshold).SetBitAtomic(elnr);
+      else if (dt == POS && (*cut_ratio_of_element[vb])(elnr) <= threshold)
+        (*elems_with_threshold).SetBitAtomic(elnr);
+    });
+
+    return elems_with_threshold;
+  }
+
   MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
                                                             const Array<shared_ptr<GridFunction>> & lsets_in)
     : ma(ama), lsets(lsets_in)

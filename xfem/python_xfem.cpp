@@ -173,7 +173,43 @@ corresponding combined domain type
 Returns Vector of the ratios between the measure of the NEG domain on a (boundary) element and the
 full (boundary) element
 )raw_string"))
+    .def("GetElementsWithThresholdContribution", [](CutInformation & self,
+                                                    py::object dt,
+                                                    double threshold,
+                                                    VorB vb,
+                                                    int heapsize)
+         {
+           DOMAIN_TYPE _dt = NEG;
+           if (py::extract<DOMAIN_TYPE> (dt).check() && py::extract<DOMAIN_TYPE> (dt)() != IF)
+              _dt = py::extract<DOMAIN_TYPE>(dt)();
+           else
+              throw Exception("Unknown/Invalid type for dt: Only POS, NEG valid");
+           LocalHeap lh (heapsize, "GetElementsWithThresholdContribution-heap", true);
+           return self.GetElementsWithThresholdContribution(_dt, threshold, vb, lh);
+         },
+         py::arg("domain_type") = NEG,
+         py::arg("threshold") = 1,
+         py::arg("VOL_or_BND") = VOL,
+         py::arg("heapsize") = 1000000, docu_string(R"raw_string(
+Returns BitArray marking the elements where the cut ratio is greater or equal to the given 
+threshold.
+
+Parameters
+
+domain_type : ENUM
+    Mark (HAS)POS or (HAS)NEG elements.
+
+threshold : float
+    Mark elements with cut ratio greater or equal to threshold.
+
+VOL_or_BND : ngsolve.comp.VorB
+    input VOL, BND, ..
+
+heapsize : int
+  heapsize of local computations.
+)raw_string"))
     ;
+
 
 py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
     (m, "ElementAggregation",R"raw(
