@@ -262,16 +262,16 @@ namespace ngcomp
 
   shared_ptr<BitArray> CutInformation::GetElementsWithThresholdContribution(DOMAIN_TYPE dt,
                                                                               double threshold,
-                                                                              VorB vb,
-                                                                              LocalHeap & lh){
+                                                                              VorB vb){
     int ne = ma->GetNE(vb);
     shared_ptr<BitArray> elems_with_threshold = make_shared<BitArray>(ne);
     elems_with_threshold->Clear();
     if (dt == POS)
         threshold = 1 - threshold;
 
+    LocalHeap dummy_lh (1000, "GetElementsWithThresholdContribution-heap", true);
     IterateRange
-      (ne, lh,
+      (ne, dummy_lh,
       [&] (int elnr, LocalHeap & lh)
     {
       if (dt == NEG && (*cut_ratio_of_element[vb])(elnr) >= threshold)

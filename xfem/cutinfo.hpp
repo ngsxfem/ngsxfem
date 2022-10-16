@@ -87,7 +87,7 @@ namespace ngcomp
     shared_ptr<BitArray> GetFacetsOfDomainType(COMBINED_DOMAIN_TYPE dt) const { return facets_of_domain_type[dt]; }
     shared_ptr<BitArray> GetFacetsOfDomainType(DOMAIN_TYPE dt) const { return facets_of_domain_type[TO_CDT(dt)]; }
 
-    shared_ptr<BitArray> GetElementsWithThresholdContribution(DOMAIN_TYPE dt, double threshhold, VorB vb, LocalHeap & lh);
+    shared_ptr<BitArray> GetElementsWithThresholdContribution(DOMAIN_TYPE dt, double threshold, VorB vb);
   };
 
 

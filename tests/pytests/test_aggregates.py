@@ -69,7 +69,7 @@ def test_aggregates(dim, struc_mesh, quad, ROOTS, levelset):
                                            (2, (x - 0.5)**2 + (y - 0.5)**2 - 0.3**2),
                                            (3, (x - 0.5)**2 + (y - 0.5)**2 + (z - 0.5)**2 - 0.3**2)
                                            ])
-def test_elememts_with_ontribution(dim, struc_mesh, quad, nr, levelset):
+def test_elememts_with_contribution(dim, struc_mesh, quad, nr, levelset):
     if dim == 2:
         if struc_mesh:
             mesh = MakeStructured2DMesh(nx=20, ny=20, quads=quad)
