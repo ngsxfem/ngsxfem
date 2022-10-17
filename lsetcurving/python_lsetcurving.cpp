@@ -27,9 +27,8 @@ void ExportNgsx_lsetcurving(py::module &m)
                              double lower, double upper, double threshold, int heapsize)
         {
           shared_ptr<BitArray> active_elems = nullptr;
-          if (py::extract<PyBA> (active_elems_in).check())
+          if ((!active_elems_in.is_none()) && py::extract<PyBA> (active_elems_in).check())
             active_elems = py::extract<PyBA>(active_elems_in)();
-          
           LocalHeap lh (heapsize, "ProjectShift-Heap");
           ProjectShift(lset_ho, lset_p1, deform, qn, active_elems, blending, lower, upper, threshold, lh);
         } ,
@@ -37,7 +36,7 @@ void ExportNgsx_lsetcurving(py::module &m)
         py::arg("lset_p1")=NULL,
         py::arg("deform")=NULL,
         py::arg("qn")=NULL,
-        py::arg_v("active_elements", DummyArgument(), "None"),
+        py::arg("active_elements")=py::none(),
         py::arg("blending")=NULL,
         py::arg("lower")=0.0,
         py::arg("upper")=0.0,
@@ -145,10 +144,10 @@ heapsize : int
         -> PyCF
         {
           PyGF back = nullptr;
-          if (py::extract<PyGF> (back_in).check())
+          if ((!back_in.is_none()) && py::extract<PyGF> (back_in).check())
             back = py::extract<PyGF>(back_in)();
           PyGF forth = nullptr;
-          if (py::extract<PyGF> (forth_in).check())
+          if ((!forth_in.is_none()) && py::extract<PyGF> (forth_in).check())
             forth = py::extract<PyGF>(forth_in)();
 
           shared_ptr<DifferentialOperator> diffop  = nullptr;
@@ -160,8 +159,8 @@ heapsize : int
           return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
         },
         py::arg("gf"),
-        py::arg_v("back", DummyArgument(), "None"),
-        py::arg_v("forth", DummyArgument(), "None"),
+        py::arg("back")=py::none(),
+        py::arg("forth")=py::none(),
         docu_string(R"raw_string(
 Returns a CoefficientFunction that evaluates Gridfunction gf at a shifted location, s.t. the
 original function to gf, gf: x -> f(x) is changed to cf: x -> f(s(x)) where z = s(x) is the shifted

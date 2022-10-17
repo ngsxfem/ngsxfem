@@ -29,11 +29,16 @@ void ExportNgsx_cutint(py::module &m)
         {
           static Timer timer("IntegrateX");
           RegionTimer reg (timer);
-          py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
-          if (ip_cont_.check())
-            ip_cont = make_shared<py::list>(ip_cont_());
-                       
+          py::extract<py::object> ip_cont_(ip_container);
+          if (!ip_cont_().is_none())
+          {
+            py::extract<py::list> ip_cont_as_list(ip_container);
+            if (ip_cont_as_list.check())
+            {
+              ip_cont = make_shared<py::list>(ip_cont_as_list());
+            }
+          }
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrateX");
