@@ -105,6 +105,11 @@ pages:
   stage: deploy
   image: ngsxfem/ngsolve:latest
   script:
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - git submodule
+    - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
@@ -113,9 +118,6 @@ pages:
     - cp external_dependencies/jupyter/{basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde}.ipynb doc/sphinx/jupyter
     - cp demos/{,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
     - cp -r doc/graphics doc/sphinx/xfem_misc/
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
     - sphinx-build doc/sphinx html
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
     - rm -f html/jupyter/*.ipynb
