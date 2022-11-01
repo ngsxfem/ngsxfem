@@ -25,6 +25,8 @@ Scientific literature using `ngsxfem`
 
 * T. Ludescher. “Multilevel preconditioning of stabilized unfitted finite element discretizations”. PhD thesis. RWTH Aachen University, 27th May 2020. doi: [10.18154/RWTH-2020-07305](https://doi.org/10.18154/RWTH-2020-07305.)
 
+* S. Groß, A. Reusken. "Analysis of optimal Preconditioners for CutFEM". 2022. arXiv: [2202.09069](https://arxiv.org/abs/2202.09069) [math.NA].
+
 ### Fracture Porous Media
 
 * G. Fu, Y. Yang. "A hybridizable discontinuous Galerkin method on unfitted meshes for single-phase Darcy flow in fractured porous media". arXiv: [2209.05445](https://arxiv.org/pdf/2209.05445.pdf) [math.NA].
@@ -94,3 +96,5 @@ Scientific literature using `ngsxfem`
 * H. von Wahl, T. Richter, S. Frei and T. Hagemeier. Falling balls in a viscous fluid with contact: Comparing numerical simulations with experimental data. Zenodo repository, 17th Nov. 2020. doi: [10.5281/zenodo.3989604](https://doi.org/10.5281/zenodo.3989604).
 
 * H. von Wahl and T. Richter. Error analysis for a parabolic PDE model problem on a coupled moving domain in a fully Eulerian framework - Reproduction Scripts. Zenodo repository: Zenodo, 29th Apr 2022. doi: [10.5281/zenodo.6505243](https://doi.org/10.5281/zenodo.6505243).
+
+* S. Groß. Preconditioner experiments for 2D CutFEM Poisson Interface Problem, Zenodo repository: Zenodo, 25th October 2022. doi: [10.5281/zenodo.7249209](https://doi.org/10.5281/zenodo.7249209)
