@@ -133,4 +133,5 @@ pip_linux:
   stage: build
   script:
     - ./.ci/build_pip.sh
+    - twine upload wheelhouse/*manylinux*.whl
   when: manual
