@@ -1,4 +1,5 @@
 install( FILES
+  aggregates.hpp
   cutinfo.hpp
   ghostpenalty.hpp
   xFESpace.hpp

@@ -1,6 +1,7 @@
 #include <python_ngstd.hpp>
 #include "../xfem/sFESpace.hpp"
 #include "../xfem/cutinfo.hpp"
+#include "../xfem/aggregates.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
@@ -172,6 +173,75 @@ corresponding combined domain type
 Returns Vector of the ratios between the measure of the NEG domain on a (boundary) element and the
 full (boundary) element
 )raw_string"))
+    .def("GetElementsWithThresholdContribution", [](CutInformation & self,
+                                                    py::object dt,
+                                                    double threshold,
+                                                    VorB vb)
+         {
+           DOMAIN_TYPE _dt = NEG;
+           if (py::extract<DOMAIN_TYPE> (dt).check() && py::extract<DOMAIN_TYPE> (dt)() != IF)
+              _dt = py::extract<DOMAIN_TYPE>(dt)();
+           else
+              throw Exception("Unknown/Invalid type for dt: Only POS, NEG are implemented a.t.m.");
+           return self.GetElementsWithThresholdContribution(_dt, threshold, vb);
+         },
+         py::arg("domain_type") = NEG,
+         py::arg("threshold") = 1.0,
+         py::arg("VOL_or_BND") = VOL, docu_string(R"raw_string(
+Returns BitArray marking the elements where the cut ratio is greater or equal to the given 
+threshold.
+
+Parameters
+
+domain_type : ENUM
+    Check POS or NEG elements.
+
+threshold : float
+    Mark elements with cut ratio (volume of domain_type / volume background mesh) greater or equal to threshold.
+
+VOL_or_BND : ngsolve.comp.VorB
+    input VOL, BND, ..
+
+)raw_string"))
+    ;
+
+
+py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
+    (m, "ElementAggregation",R"raw(
+ElementAggregation does ...)
+)raw")
+    .def("__init__",  [] (ElementAggregation *instance,
+                          shared_ptr<MeshAccess> ma
+                          )
+         {
+           new (instance) ElementAggregation (ma);
+         },
+         py::arg("mesh"),
+         docu_string(R"raw_string(
+Creates a ElementAggregation based on ...
+)raw_string")
+      )
+        .def("Update", [](ElementAggregation & self,
+                      PyBA root, 
+                      PyBA bad,
+                      int heapsize)
+         {
+           LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
+           self.Update(root,bad,lh);
+         },
+         py::arg("root_elements"),
+         py::arg("bad_elements"),
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Updates a Element Aggregation based ...
+)raw_string")
+      )
+      .def("GetInnerPatchFacets", [](ElementAggregation & self)
+      {
+        return self.GetInnerPatchFacets();
+      },
+        docu_string(R"raw_string(
+Returns BitArray that is true for every facet that is *inside* an aggregation cluster))raw_string")
+       )
     ;
 
 

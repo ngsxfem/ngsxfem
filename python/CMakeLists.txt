@@ -34,6 +34,7 @@ if(NETGEN_USE_PYTHON)
       ../xfem/xfemdiffops.cpp
       ../xfem/xFESpace.cpp
       ../xfem/xfiniteelement.cpp
+      ../xfem/aggregates.cpp
     )
     set_target_properties(ngsxfem_py PROPERTIES INSTALL_RPATH "${NETGEN_RPATH_TOKEN}/../${NETGEN_PYTHON_RPATH}")
     install(TARGETS ngsxfem_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem COMPONENT xfem)
