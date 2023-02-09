@@ -966,8 +966,7 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
               comparr[0] = c;
             }
           }
-
-          if (py::extract<py::list> (comp).check())
+          else if (py::extract<py::list> (comp).check())
             comparr = makeCArray<int> (py::extract<py::list> (comp)());
 
           if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))
