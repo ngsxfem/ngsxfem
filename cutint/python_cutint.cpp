@@ -80,7 +80,11 @@ void ExportNgsx_cutint(py::module &m)
                    for (int i = 0; i < mir.Size(); i++)
                    {
                      MyLock lock_ip_cont(mutex_ip_cont);
-                     ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                     if (space_time)
+                         ip_cont->append(tuple ( MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                                                ma.get(), VOL, static_cast<int>(el.Nr())}, (*ir)[i].Weight()));
+                     else
+                        ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
                                                ma.get(), VOL, static_cast<int>(el.Nr())});
                    }
                  if (element_wise)
