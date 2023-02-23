@@ -257,7 +257,7 @@ to a piecewise linear-in-space approximation through interpolation
             self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = self.lset_p1_node.vec[:]
 
     @TimeFunction
-    def CalcDeformation(self, levelset, calc_kappa = False, dont_project_gfs = False):
+    def CalcDeformation(self, levelset, calc_kappa = False, dont_project_gfs = False, blending=None):
         """
 Compute the space-time mesh deformation, s.t. isolines on cut elements of lset_p1 (the piecewise 
 linear-in-space tensor product approximation) are mapped towards the corresponding isolines of 
@@ -293,6 +293,8 @@ dont_project_gfs : bool
         self.interpol_p1()
         RestrictGFInTime(spacetime_gf=self.deform,reference_time=1.0,space_gf=self.deform_last_top)   
 
+        if blending == None or blending == "none":
+            blending = CoefficientFunction(0.0)
 
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
@@ -313,7 +315,7 @@ dont_project_gfs : bool
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime, None, self.lset_lower_bound, 
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime, blending, self.lset_lower_bound,
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
 
