@@ -2,7 +2,7 @@
 set -e
 
 
-/opt/python/cp39-cp39/bin/python .ci/fix_auditwheel_policy.py
+#/opt/python/cp39-cp39/bin/python .ci/fix_auditwheel_policy.py
 
 # 38 39
 
