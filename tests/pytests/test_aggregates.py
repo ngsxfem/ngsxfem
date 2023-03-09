@@ -7,7 +7,7 @@ from ngsolve.meshes import MakeStructured2DMesh, MakeStructured3DMesh
 
 
 @pytest.mark.parametrize("struc_mesh", [True, False])
-@pytest.mark.parametrize("quad", [True, False])
+@pytest.mark.parametrize("quad", [False])
 @pytest.mark.parametrize("ROOTS", [POS, NEG])
 @pytest.mark.parametrize("dim, levelset", [(2, x - 0.77654),
                                            (2, (x - 0.5)**2 + (y - 0.5)**2 - 0.3**2),

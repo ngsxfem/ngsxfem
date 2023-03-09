@@ -240,7 +240,21 @@ Updates a Element Aggregation based ...
         return self.GetInnerPatchFacets();
       },
         docu_string(R"raw_string(
-Returns BitArray that is true for every facet that is *inside* an aggregation cluster))raw_string")
+Returns BitArray that is true for every facet that is *inside* an aggregation cluster)raw_string")
+       )
+      .def("GetElsInTrivialPatch", [](ElementAggregation & self)
+      {
+        return self.GetElsInTrivialPatch();
+      },
+        docu_string(R"raw_string(
+Returns BitArray that is true for every element that is not part of a (non-trivial) patch)raw_string")
+       )
+      .def("GetElsInNontrivialPatch", [](ElementAggregation & self)
+      {
+        return self.GetElsInNontrivialPatch();
+      },
+        docu_string(R"raw_string(
+Returns BitArray that is true for every element that is part of a (non-trivial) patch)raw_string")
        )
     ;
 

@@ -38,42 +38,42 @@ namespace ngcomp
 
 
     shared_ptr<BitArray> facets = GetFacetsWithNeighborTypes(ma,root_els,bad_els,false,false,true,lh);
-    shared_ptr<BitArray>cluster_root_elements = make_shared<BitArray>(ne);
-    cluster_root_elements->Clear();
-    //cout << *cluster_root_elements << endl;
-    *cluster_root_elements |= *root_els;
-    //cout << *cluster_root_elements << endl;
-    *cluster_root_elements &= *GetElementsWithNeighborFacets(ma,facets,lh);
-    //cout << *cluster_root_elements << endl;
+    shared_ptr<BitArray>patch_root_elements = make_shared<BitArray>(ne);
+    patch_root_elements->Clear();
+    //cout << *patch_root_elements << endl;
+    *patch_root_elements |= *root_els;
+    //cout << *patch_root_elements << endl;
+    *patch_root_elements &= *GetElementsWithNeighborFacets(ma,facets,lh);
+    //cout << *patch_root_elements << endl;
     int nc = 0;
     for (int i : Range(ne)){
-      if (cluster_root_elements->Test(i)){
+      if (patch_root_elements->Test(i)){
         nc ++;
       }
     }
-    cout << "Number of cluster: " << nc << endl;
+    cout << "Number of (nontrivial) patches: " << nc << endl;
 
-    Vector<int> element_to_cluster(ne);
-    element_to_cluster = -1;
+    Vector<int> element_to_patch(ne);
+    element_to_patch = -1;
 
-    Vector<int> facet_to_cluster(nf);
-    facet_to_cluster = -1;
+    Vector<int> facet_to_patch(nf);
+    facet_to_patch = -1;
 
-    cluster_roots.SetSize(nc);
+    patch_roots.SetSize(nc);
     int counter = 0;
     for (int i: Range(ma->GetNE())){
-      if (cluster_root_elements->Test(i)){
-        element_to_cluster(i) = counter;
-        cluster_roots[counter]=i;
+      if (patch_root_elements->Test(i)){
+        element_to_patch(i) = counter;
+        patch_roots[counter]=i;
         counter++;
       }
       else
-        element_to_cluster(i) = -1;
+        element_to_patch(i) = -1;
     }
 
     BitArray front_elements(ne);
     BitArray new_front_elements(ne);
-    new_front_elements = *cluster_root_elements;
+    new_front_elements = *patch_root_elements;
 
     BitArray not_covered_yet(ne);
     not_covered_yet.Clear();
@@ -92,7 +92,7 @@ namespace ngcomp
       //IterateRange(ne, lh, [&] (int elnr, LocalHeap & lh)
       for (int elnr = 0; elnr < ne; elnr++)
       {
-        int cluster_id = element_to_cluster[elnr];
+        int patch_id = element_to_patch[elnr];
         if (front_elements.Test(elnr))
         {
           Array<int> fanums(0,lh);
@@ -108,17 +108,17 @@ namespace ngcomp
               if (not_covered_yet.Test(nelnr) && (!newly_covered.Test(nelnr)))
               {
                 inner_patch_facets->SetBitAtomic(facnr);
-                facet_to_cluster[facnr]=cluster_id;
+                facet_to_patch[facnr]=patch_id;
                 new_front_elements.SetBitAtomic(nelnr);
-                element_to_cluster[nelnr] = cluster_id;
+                element_to_patch[nelnr] = patch_id;
                 newly_covered.SetBitAtomic(nelnr);
               }
               else
               {
-                if (element_to_cluster[elnr] == element_to_cluster[nelnr])
+                if (element_to_patch[elnr] == element_to_patch[nelnr])
                 {
                   inner_patch_facets->SetBitAtomic(facnr);
-                  facet_to_cluster[facnr]=cluster_id;
+                  facet_to_patch[facnr]=patch_id;
                 }
               }
             }
@@ -129,33 +129,79 @@ namespace ngcomp
       not_covered_yet &= ~newly_covered;
     }
 
-    (*testout) << "element_to_cluster = \n" << element_to_cluster << endl;
+    (*testout) << "element_to_patch = \n" << element_to_patch << endl;
 
     TableCreator<size_t> creator;
     for ( ; !creator.Done(); creator++)
       for (auto elnr : Range(ne))
       {
-        if (element_to_cluster[elnr] >= 0 && cluster_roots[element_to_cluster[elnr]] != elnr)
-          creator.Add (element_to_cluster[elnr], elnr);
+        if (element_to_patch[elnr] >= 0 && patch_roots[element_to_patch[elnr]] != elnr)
+          creator.Add (element_to_patch[elnr], elnr);
       }
-    cluster_leafs = creator.MoveTable();
+    patch_leafs = creator.MoveTable();
 
     TableCreator<size_t> fcreator;
     for ( ; !fcreator.Done(); fcreator++)
       for (auto facnr : Range(nf))
         {
-          if (facet_to_cluster[facnr] >= 0)
-            fcreator.Add (facet_to_cluster[facnr], facnr);
+          if (facet_to_patch[facnr] >= 0)
+            fcreator.Add (facet_to_patch[facnr], facnr);
         }
-    cluster_facets = fcreator.MoveTable();
+    patch_facets = fcreator.MoveTable();
 
-    (*testout) << "cluster id to supporting element: \n " << cluster_roots << endl;
-    (*testout) << "cluster id to supported elements: \n " << cluster_leafs << endl;
-    (*testout) << "cluster id to supported connecting facets: \n " << cluster_facets << endl;
+    (*testout) << "patch id to supporting element: \n " << patch_roots << endl;
+    (*testout) << "patch id to supported elements: \n " << patch_leafs << endl;
+    (*testout) << "patch id to supported connecting facets: \n " << patch_facets << endl;
     (*testout) << "inner patch facets: \n " << *inner_patch_facets << endl;
 
+    n_els_in_nontrivial_patches = 0;
+    n_nontrivial_patches = nc;
+
+    n_trivial_els = 0;
+    for (int i: Range(ma->GetNE())){
+      if (root_els->Test(i))
+        n_trivial_els ++;
+    }
+    n_trivial_els -= n_nontrivial_patches;
+
+    el_in_nontrivial_patch = make_shared<BitArray>(ne);
+    el_in_nontrivial_patch->Clear();
+    for (int i: Range(nc))
+    {
+      n_els_in_nontrivial_patches ++;
+      el_in_nontrivial_patch->SetBitAtomic(patch_roots[i]);
+      for (size_t j : patch_leafs[i])
+      {
+        n_els_in_nontrivial_patches ++;
+        el_in_nontrivial_patch->SetBitAtomic(j);
+      }
+    }
+
+    el_in_trivial_patch = make_shared<BitArray>(ne);
+    el_in_trivial_patch->Clear();
+
+    *el_in_trivial_patch |= *root_els;
+    *el_in_trivial_patch &= ~(*el_in_trivial_patch);
 
   }
+
+
+  // This is a dummy as a first step towards 
+  //    * solutions of patchwise problems 
+  //    * or setup of embedding matrices
+  //    * or similar things
+  void PatchDummy (shared_ptr<ElementAggregation> elagg, 
+                   shared_ptr<FESpace> fes_trial,
+                   shared_ptr<FESpace> fes_test,
+                   shared_ptr<SumOfIntegrals> bf,
+                   shared_ptr<SumOfIntegrals> lf
+                  )
+  {
+    cout << " hello from dummy " << endl;
+    //size_t npatch = 
+
+  }
+
 
 
 }
