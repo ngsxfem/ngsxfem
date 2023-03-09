@@ -1216,7 +1216,7 @@ namespace ngfem
         auto mip_ai = new (lh) MappedIntegrationPoint<D,D>(*ip_ai,to_trafo);
         A.Col(d) = mip_ai->GetPoint() - mip_a0->GetPoint();
       }
-      Ainv = Inv(A);
+      CalcInverse(A,Ainv);
       w00 = abs(Det(A));
       ip_x00->Point().Range(0,D) = Ainv * f;
       ip_x0->Point().Range(0,D) = ip_x00->Point();
