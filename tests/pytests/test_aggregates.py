@@ -41,8 +41,7 @@ def test_aggregates(dim, struc_mesh, quad, ROOTS, levelset):
     EA.Update(roots, bads)
 
     # print("EA.GetInnerPatchFacets()", EA.GetInnerPatchFacets())
-    patch_facets = EA.GetInnerPatchFacets()
-    els_surround_patch = GetElementsWithNeighborFacets(mesh, patch_facets)
+    els_surround_patch = GetElementsWithNeighborFacets(mesh, EA.patch_interior_facets)
 
     facets_gp = GetFacetsWithNeighborTypes(mesh,
                                            a=ci.GetElementsOfType(HAS(ROOTS)),
@@ -69,7 +68,7 @@ def test_aggregates(dim, struc_mesh, quad, ROOTS, levelset):
                                            (2, (x - 0.5)**2 + (y - 0.5)**2 - 0.3**2),
                                            (3, (x - 0.5)**2 + (y - 0.5)**2 + (z - 0.5)**2 - 0.3**2)
                                            ])
-def test_elememts_with_contribution(dim, struc_mesh, quad, nr, levelset):
+def test_elements_with_contribution(dim, struc_mesh, quad, nr, levelset):
     if dim == 2:
         if struc_mesh:
             mesh = MakeStructured2DMesh(nx=20, ny=20, quads=quad)

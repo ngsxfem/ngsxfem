@@ -16,8 +16,8 @@ namespace ngcomp
   }
 
   void ElementAggregation::Update(shared_ptr<BitArray> & root_els, shared_ptr<BitArray> & bad_els, LocalHeap & lh){
-    const int ne = ma->GetNE();
-    const int nf = ma->GetNFacets();
+    const size_t ne = ma->GetNE();
+    const size_t nf = ma->GetNFacets();
 
     if (ma->GetCommunicator().Size() > 1)
       throw Exception("ElementAggregation::Update:: No Aggregation implementation for MPI yet");
@@ -45,30 +45,30 @@ namespace ngcomp
     //cout << *patch_root_elements << endl;
     *patch_root_elements &= *GetElementsWithNeighborFacets(ma,facets,lh);
     //cout << *patch_root_elements << endl;
-    int nc = 0;
-    for (int i : Range(ne)){
+    size_t nc = 0;
+    for (size_t i : Range(ne)){
       if (patch_root_elements->Test(i)){
         nc ++;
       }
     }
     cout << "Number of (nontrivial) patches: " << nc << endl;
 
-    Vector<int> element_to_patch(ne);
+    element_to_patch.SetSize(ne);
     element_to_patch = -1;
 
-    Vector<int> facet_to_patch(nf);
+    facet_to_patch.SetSize(nf);
     facet_to_patch = -1;
 
     patch_roots.SetSize(nc);
-    int counter = 0;
-    for (int i: Range(ma->GetNE())){
+    size_t counter = 0;
+    for (size_t i: Range(ma->GetNE())){
       if (patch_root_elements->Test(i)){
-        element_to_patch(i) = counter;
+        element_to_patch[i] = counter;
         patch_roots[counter]=i;
         counter++;
       }
       else
-        element_to_patch(i) = -1;
+        element_to_patch[i] = -1;
     }
 
     BitArray front_elements(ne);
@@ -90,9 +90,9 @@ namespace ngcomp
       new_front_elements.Clear();
       newly_covered.Clear();
       //IterateRange(ne, lh, [&] (int elnr, LocalHeap & lh)
-      for (int elnr = 0; elnr < ne; elnr++)
+      for (size_t elnr = 0; elnr < ne; elnr++)
       {
-        int patch_id = element_to_patch[elnr];
+        size_t patch_id = element_to_patch[elnr];
         if (front_elements.Test(elnr))
         {
           Array<int> fanums(0,lh);
@@ -149,6 +149,17 @@ namespace ngcomp
         }
     patch_facets = fcreator.MoveTable();
 
+    TableCreator<size_t> pcreator;
+    for ( ; !pcreator.Done(); pcreator++)
+      for (auto pnr : Range(nc))
+        {
+          pcreator.Add(pnr, patch_roots[pnr]);
+          for ( size_t i : patch_leafs[pnr])
+            pcreator.Add(pnr, i);
+        }
+    patch = pcreator.MoveTable();
+
+    (*testout) << "patch id to included element: \n " << patch << endl;
     (*testout) << "patch id to supporting element: \n " << patch_roots << endl;
     (*testout) << "patch id to supported elements: \n " << patch_leafs << endl;
     (*testout) << "patch id to supported connecting facets: \n " << patch_facets << endl;
@@ -158,7 +169,7 @@ namespace ngcomp
     n_nontrivial_patches = nc;
 
     n_trivial_els = 0;
-    for (int i: Range(ma->GetNE())){
+    for (size_t i: Range(ma->GetNE())){
       if (root_els->Test(i))
         n_trivial_els ++;
     }
@@ -166,7 +177,7 @@ namespace ngcomp
 
     el_in_nontrivial_patch = make_shared<BitArray>(ne);
     el_in_nontrivial_patch->Clear();
-    for (int i: Range(nc))
+    for (size_t i: Range(nc))
     {
       n_els_in_nontrivial_patches ++;
       el_in_nontrivial_patch->SetBitAtomic(patch_roots[i]);
@@ -181,7 +192,7 @@ namespace ngcomp
     el_in_trivial_patch->Clear();
 
     *el_in_trivial_patch |= *root_els;
-    *el_in_trivial_patch &= ~(*el_in_trivial_patch);
+    *el_in_trivial_patch &= ~(*el_in_nontrivial_patch);
 
   }
 

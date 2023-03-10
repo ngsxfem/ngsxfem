@@ -235,27 +235,31 @@ Creates a ElementAggregation based on ...
 Updates a Element Aggregation based ...
 )raw_string")
       )
-      .def("GetInnerPatchFacets", [](ElementAggregation & self)
-      {
-        return self.GetInnerPatchFacets();
-      },
-        docu_string(R"raw_string(
-Returns BitArray that is true for every facet that is *inside* an aggregation cluster)raw_string")
-       )
-      .def("GetElsInTrivialPatch", [](ElementAggregation & self)
-      {
-        return self.GetElsInTrivialPatch();
-      },
-        docu_string(R"raw_string(
-Returns BitArray that is true for every element that is not part of a (non-trivial) patch)raw_string")
-       )
-      .def("GetElsInNontrivialPatch", [](ElementAggregation & self)
-      {
-        return self.GetElsInNontrivialPatch();
-      },
-        docu_string(R"raw_string(
-Returns BitArray that is true for every element that is part of a (non-trivial) patch)raw_string")
-       )
+      .def_property_readonly("patch_interior_facets",
+                [](ElementAggregation & self) { return self.GetInnerPatchFacets(); },
+               "BitArray that is true for every facet that is *inside* an aggregation cluster")      
+      .def_property_readonly("els_in_trivial_patch",
+                [](ElementAggregation & self) { return self.GetElsInTrivialPatch(); },
+               "BitArray that is true for every element that is not part of a (non-trivial) patch")      
+      .def_property_readonly("els_in_nontrivial_patch",
+                [](ElementAggregation & self) { return self.GetElsInNontrivialPatch(); },
+               "BitArray that is true for every element that is part of a (non-trivial) patch")      
+      .def_property_readonly("element_to_patch",
+                [](ElementAggregation & self) { 
+                  py::list ret;
+                  for (int i : self.GetElementToPatch())
+                    ret.append(i);
+                  return ret; 
+                  },
+               "vector mapping elements to (non-trivial) patches")      
+      .def_property_readonly("facet_to_patch",
+                [](ElementAggregation & self) { 
+                  py::list ret;
+                  for (int i : self.GetFacetToPatch())
+                    ret.append(i);
+                  return ret; 
+                  },
+               "vector mapping facets to (non-trivial) patches")      
     ;
 
 

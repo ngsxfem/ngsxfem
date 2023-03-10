@@ -26,9 +26,12 @@ namespace ngcomp
     size_t n_trivial_els = -1;
     size_t n_els_in_nontrivial_patches = -1;
     size_t n_nontrivial_patches = -1;
+    Vector<int> element_to_patch;
+    Vector<int> facet_to_patch;
     Array<size_t> patch_roots;
     Table<size_t> patch_leafs;
     Table<size_t> patch_facets;
+    Table<size_t> patch;
   public:
     ElementAggregation (shared_ptr<MeshAccess> ama);
     
@@ -43,6 +46,9 @@ namespace ngcomp
     const Array<size_t> & GetPatchRoots(){ return patch_roots; }
     const Table<size_t> & GetPatchLeafs(){ return patch_leafs; }
     const Table<size_t> & GetPatchFacets(){ return patch_facets; }
+    const Table<size_t> & GetPatch(){ return patch; }
+    const Vector<int> & GetElementToPatch(){ return element_to_patch; }
+    const Vector<int> & GetFacetToPatch(){ return facet_to_patch; }
     
     size_t GetNNontrivialPatches() { return n_nontrivial_patches; }
   
