@@ -47,6 +47,7 @@ namespace ngcomp
     const Array<size_t> & GetPatchRoots(){ return patch_roots; }
     const Table<size_t> & GetPatchLeafs(){ return patch_leafs; }
     const Table<size_t> & GetPatchFacets(){ return patch_facets; }
+    void GetPatchFacets(int patchnr, Array<size_t> & ret);
     const Table<size_t> & GetPatch(){ return patch; }
     void GetPatch(int patchnr, Array<size_t> & ret);
     const Vector<int> & GetElementToPatch(){ return element_to_patch; }

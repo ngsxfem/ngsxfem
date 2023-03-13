@@ -4,11 +4,12 @@ from netgen.geom2d import unit_square
 from netgen.csg import CSGeometry, OrthoBrick, Pnt
 from ngsolve.meshes import MakeStructured2DMesh, MakeStructured3DMesh
 from numpy import nan 
+SetNumThreads(1)
 
 SetTestoutFile("test.out")
 
 levelset = x - 0.77653
-mesh = MakeStructured2DMesh(nx=20, ny=20, quads=True)
+mesh = MakeStructured2DMesh(nx=5, ny=5, quads=True)
 
 EA = ElementAggregation(mesh)
 
@@ -36,10 +37,12 @@ gf_patch_index.vec.FV().NumPy()[:] = EA.element_to_patch[:]
 Draw(gf_patch_index,mesh,"patchindex") 
 
 
-fes = H1(mesh,order=3)
+#fes = H1(mesh,order=3)
+fes = L2(mesh, order=0, dgjumps=True)
 u, v = fes.TnT()
-bf = u*v*dx
+bf = (u + u.Other()) * v * dx(skeleton=True)
 lf = v*dx
 
+# with TaskManager():
 PatchDummy(EA, fes, fes, bf, lf)
 
