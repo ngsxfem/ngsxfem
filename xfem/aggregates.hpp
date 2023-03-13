@@ -32,6 +32,7 @@ namespace ngcomp
     Table<size_t> patch_leafs;
     Table<size_t> patch_facets;
     Table<size_t> patch;
+    Array<int> trivial_patch_to_element;
   public:
     ElementAggregation (shared_ptr<MeshAccess> ama);
     
@@ -47,23 +48,26 @@ namespace ngcomp
     const Table<size_t> & GetPatchLeafs(){ return patch_leafs; }
     const Table<size_t> & GetPatchFacets(){ return patch_facets; }
     const Table<size_t> & GetPatch(){ return patch; }
+    void GetPatch(int patchnr, Array<size_t> & ret);
     const Vector<int> & GetElementToPatch(){ return element_to_patch; }
     const Vector<int> & GetFacetToPatch(){ return facet_to_patch; }
     
     size_t GetNNontrivialPatches() { return n_nontrivial_patches; }
+    size_t GetNPatches(bool count_trivial) { return n_nontrivial_patches + (count_trivial?n_trivial_els:0); }
   
   };
 
 
-  // This is a dummy as a first step towards 
+  // This is a dummy as a first step towards
   //    * solutions of patchwise problems 
   //    * or setup of embedding matrices
   //    * or similar things
-  void PatchDummy (shared_ptr<ElementAggregation>, 
+  void PatchDummy (shared_ptr<ElementAggregation> elagg, 
                    shared_ptr<FESpace> fes_trial,
                    shared_ptr<FESpace> fes_test,
                    shared_ptr<SumOfIntegrals> bf,
-                   shared_ptr<SumOfIntegrals> lf
+                   shared_ptr<SumOfIntegrals> lf,
+                   LocalHeap & clh
                   );
 
 }

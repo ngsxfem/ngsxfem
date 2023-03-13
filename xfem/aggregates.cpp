@@ -1,6 +1,9 @@
 /// from ngxfem
 #include "../xfem/cutinfo.hpp"
 #include "../xfem/aggregates.hpp"
+#include <integratorcf.hpp>
+
+
 #include <unordered_map>
 
 using namespace ngsolve;
@@ -194,25 +197,163 @@ namespace ngcomp
     *el_in_trivial_patch |= *root_els;
     *el_in_trivial_patch &= ~(*el_in_nontrivial_patch);
 
+    
+    trivial_patch_to_element.SetSize(n_trivial_els);
+    int cnt = 0;
+    for (int i : Range(ne))
+      if (el_in_trivial_patch->Test(i))
+        trivial_patch_to_element[cnt++] = i;   
+
+  }
+
+  void ElementAggregation::GetPatch(int patchnr, Array<size_t> & ret){
+    const int triv_patch_idx = patchnr - GetNNontrivialPatches();
+    if (triv_patch_idx < 0)
+    {
+      ret.SetSize(patch[patchnr].Size());
+      ret = patch[patchnr];
+    }
+    else
+    {
+      ret.SetSize(1);
+      ret = trivial_patch_to_element[triv_patch_idx];
+    }
   }
 
 
   // This is a dummy as a first step towards 
-  //    * solutions of patchwise problems 
+  //    * solutions of patchwise problems ≈
   //    * or setup of embedding matrices
   //    * or similar things
   void PatchDummy (shared_ptr<ElementAggregation> elagg, 
                    shared_ptr<FESpace> fes_trial,
                    shared_ptr<FESpace> fes_test,
                    shared_ptr<SumOfIntegrals> bf,
-                   shared_ptr<SumOfIntegrals> lf
+                   shared_ptr<SumOfIntegrals> lf,
+                   LocalHeap & clh
                   )
   {
     cout << " hello from dummy " << endl;
-    //size_t npatch = 
+    shared_ptr<MeshAccess> ma = elagg->GetMesh();
+    Array<size_t> ret;
+    for (int i : Range(elagg->GetNPatches( /*count_trivial=*/true )) )
+    {
+      elagg->GetPatch(i, ret);
+      cout << i << ": " << ret << endl;
+    }
 
+    size_t npatch = elagg->GetNPatches(/*count_trivial=*/true);
+
+    const BitArray & freedofs_test = *fes_test->GetFreeDofs();
+    const BitArray & freedofs_trial = *fes_trial->GetFreeDofs();
+    ParallelFor (npatch, [&] (IntRange r)
+    {
+      Array<DofId> patchdofs_trial, patchdofs_test, 
+                   dofs, dofs_trial, dofs_test,
+                   el2patch_test, el2patch_trial;
+      Array<size_t> els_in_patch;
+      LocalHeap lh = clh.Split ();
+
+      for (auto p : r)
+      {
+        elagg->GetPatch(p, els_in_patch);
+        
+        patchdofs_test.SetSize0();
+        patchdofs_trial.SetSize0();
+        for (size_t el : els_in_patch)
+        {
+          fes_trial->GetDofNrs(ElementId(VOL, el), dofs);
+          for (auto d : dofs)
+            if (freedofs_trial.Test(d) && !patchdofs_trial.Contains(d))
+                patchdofs_trial.Append(d);
+          fes_test->GetDofNrs(ElementId(VOL, el), dofs);
+          for (auto d : dofs)
+            if (freedofs_test.Test(d) && !patchdofs_test.Contains(d))
+                patchdofs_test.Append(d);
+        }
+
+        Array<shared_ptr<BilinearFormIntegrator>> bfis[4]; // VOL, BND, ...
+        Array<shared_ptr<BilinearFormIntegrator>> bfis_facet;
+        for (auto icf : bf->icfs)
+        {
+          auto & dx = icf->dx;
+          bfis[dx.vb] += icf->MakeBilinearFormIntegrator ();
+          //if (dx.vb == VOL)
+          //  bfis += make_shared<SymbolicBilinearFormIntegrator> (icf->cf, VOL, dx.element_vb);
+
+        }        
+
+        Array<shared_ptr<LinearFormIntegrator>> lfis[4];
+        for (auto icf : lf->icfs)
+        {
+          auto &dx = icf->dx;
+          lfis[dx.vb] += icf->MakeLinearFormIntegrator ();
+        }
+
+
+        FlatMatrix<> patchmat(patchdofs_test.Size(), patchdofs_trial.Size(), lh);
+        FlatVector<> patchvec(patchdofs_test.Size(), lh);        
+        //FlatVector<> patchsol(patchdofs_trial.Size(), lh);        
+        patchmat = 0.0;
+        patchvec = 0.0;
+
+        for (size_t el : els_in_patch)
+        {
+          HeapReset hr(lh);
+          ElementId ei(VOL, el);
+          fes_trial->GetDofNrs(ei, dofs_trial);
+          fes_test->GetDofNrs(ei, dofs_test);
+          auto & trafo = ma->GetTrafo(ei, lh);
+          auto & fel_trial = fes_trial->GetFE(ei, lh);
+          auto & fel_test = fes_test->GetFE(ei, lh);
+
+          MixedFiniteElement fel(fel_trial, fel_test);
+
+          el2patch_trial.SetSize(dofs.Size());
+          for (auto i : Range(dofs_trial))
+            el2patch_trial[i] = patchdofs_trial.Pos(dofs_trial[i]);          
+          el2patch_test.SetSize(dofs.Size());
+          for (auto i : Range(dofs_test))
+            el2patch_test[i] = patchdofs_test.Pos(dofs_test[i]);   
+
+          FlatMatrix<> elmat(dofs_trial.Size(),dofs_test.Size(), lh);
+          FlatMatrix<> elmati(dofs_trial.Size(),dofs_test.Size(), lh);
+
+          //TODO: Make a loop over vb : {VOL, ...} instead of just VOL
+          elmat = 0.0;
+          for (auto & bfi : bfis[VOL])
+          {
+            bfi -> CalcElementMatrix(fel, trafo, elmati, lh);
+            elmat += elmati;
+            // bfi -> CalcElementMatrixAdd(fel, trafo, elmat, lh);
+          }        
+
+            
+          FlatVector<> elvec(dofs_test.Size(), lh);
+          FlatVector<> sumelvec(dofs_test.Size(), lh);
+          sumelvec = 0.0;
+          for (auto & lfi : lfis[VOL])
+          {
+            lfi -> CalcElementVector(fel_test, trafo, elvec, lh);
+            sumelvec += elvec;
+          }    
+
+          for (auto i : Range(dofs_test))
+            for (auto j : Range(dofs_trial))
+              if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION &&
+                  el2patch_trial[j] != Array<DofId>::ILLEGAL_POSITION)
+                patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
+          for (auto i : Range(dofs_test))
+            if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION)
+              patchvec(el2patch_test[i]) += sumelvec(i);
+
+        }
+        // TODO : + Debug out!
+        // TODO : + Facet loop       
+
+      }
+
+    } );  
   }
-
-
 
 }

@@ -262,6 +262,16 @@ Updates a Element Aggregation based ...
                "vector mapping facets to (non-trivial) patches")      
     ;
 
+  m.def("PatchDummy", [] (shared_ptr<ElementAggregation> elagg, 
+                   shared_ptr<FESpace> fes_trial,
+                   shared_ptr<FESpace> fes_test,
+                   shared_ptr<SumOfIntegrals> bf,
+                   shared_ptr<SumOfIntegrals> lf
+                  ) { 
+                    LocalHeap lh(10000000);
+                    PatchDummy(elagg, fes_trial, fes_test, bf, lf, lh); 
+                    });
+
 
   m.def("GetFacetsWithNeighborTypes",
         [] (shared_ptr<MeshAccess> ma,

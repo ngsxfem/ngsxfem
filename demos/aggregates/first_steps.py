@@ -33,4 +33,13 @@ Draw(BitArrayCF(bads), mesh, 'bads')
 gf_patch_index = GridFunction(L2(mesh))
 gf_patch_index.vec.FV().NumPy()[:] = EA.element_to_patch[:]
 #gf_patch_index.vec.FV().NumPy()[gf_patch_index.vec.FV().NumPy()==-1]=nan
-Draw(gf_patch_index,mesh,"patchindex")
+Draw(gf_patch_index,mesh,"patchindex") 
+
+
+fes = H1(mesh,order=3)
+u, v = fes.TnT()
+bf = u*v*dx
+lf = v*dx
+
+PatchDummy(EA, fes, fes, bf, lf)
+
