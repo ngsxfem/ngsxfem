@@ -1,7 +1,6 @@
 /// from ngxfem
 #include "../xfem/cutinfo.hpp"
 #include "../xfem/aggregates.hpp"
-#include <integratorcf.hpp>
 
 
 #include <unordered_map>
@@ -294,7 +293,7 @@ namespace ngcomp
         for (auto icf : bf->icfs)
         {
           auto & dx = icf->dx;
-          if(!dx.skeleton)
+          if(!dx.skeleton && 0!=dynamic_pointer_cast<FacetPatchDifferentialSymbol>(make_shared<DifferentialSymbol>(dx)))
             bfis[dx.vb] += icf->MakeBilinearFormIntegrator ();
           else
             bfis_skeleton[dx.vb] += icf->MakeBilinearFormIntegrator();
@@ -366,7 +365,7 @@ namespace ngcomp
               patchvec(el2patch_test[i]) += sumelvec(i);
 
         }
-
+        
         for (size_t fac : facets_in_patch)
         {
           HeapReset hr(lh);
@@ -432,11 +431,12 @@ namespace ngcomp
                   el2patch_trial[j] != Array<DofId>::ILLEGAL_POSITION)
                 patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
         } 
+        
 
         (*testout) << "patch nr " << p << endl;
         // (*testout) << "dofs trial \n" << patchdofs_trial << endl;
         // (*testout) << "dofs test\n" << patchdofs_test << endl;
-        (*testout) << "patch vector \n" << patchvec << endl;
+        // (*testout) << "patch vector \n" << patchvec << endl;
         (*testout) << "patch matrix \n" << patchmat << endl;
         // TODO : + Facet loop       
 

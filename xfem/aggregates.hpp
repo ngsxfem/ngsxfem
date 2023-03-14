@@ -4,6 +4,8 @@
 #include <solve.hpp>
 #include <comp.hpp>
 #include <fem.hpp>
+// #include <integratorcf.hpp>
+#include "../cutint/cutintegral.hpp"
 
 
 using namespace ngsolve;
