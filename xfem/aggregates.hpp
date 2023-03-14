@@ -42,12 +42,12 @@ namespace ngcomp
     void Update(shared_ptr<BitArray> & root_els, shared_ptr<BitArray> & bad_els, LocalHeap & lh);
   
     shared_ptr<BitArray> & GetInnerPatchFacets(){ return inner_patch_facets; }
+    void GetInnerPatchFacets(int patchnr, Array<size_t> & ret);
     shared_ptr<BitArray> & GetElsInTrivialPatch(){ return el_in_trivial_patch; }
     shared_ptr<BitArray> & GetElsInNontrivialPatch(){ return el_in_nontrivial_patch; }
     const Array<size_t> & GetPatchRoots(){ return patch_roots; }
     const Table<size_t> & GetPatchLeafs(){ return patch_leafs; }
     const Table<size_t> & GetPatchFacets(){ return patch_facets; }
-    void GetPatchFacets(int patchnr, Array<size_t> & ret);
     const Table<size_t> & GetPatch(){ return patch; }
     void GetPatch(int patchnr, Array<size_t> & ret);
     const Vector<int> & GetElementToPatch(){ return element_to_patch; }

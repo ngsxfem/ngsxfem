@@ -220,7 +220,7 @@ namespace ngcomp
     }
   }
 
-  void ElementAggregation::GetPatchFacets(int patchnr, Array<size_t> & ret){
+  void ElementAggregation::GetInnerPatchFacets(int patchnr, Array<size_t> & ret){
     const int triv_patch_idx = patchnr - GetNNontrivialPatches();
     if (triv_patch_idx < 0)
     {
@@ -272,7 +272,7 @@ namespace ngcomp
       for (auto p : r)
       {
         elagg->GetPatch(p, els_in_patch);
-        elagg->GetPatchFacets(p, facets_in_patch);
+        elagg->GetInnerPatchFacets(p, facets_in_patch);
         
         patchdofs_test.SetSize0();
         patchdofs_trial.SetSize0();
