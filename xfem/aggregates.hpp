@@ -25,6 +25,7 @@ namespace ngcomp
     shared_ptr<BitArray> el_in_trivial_patch; 
     /// @brief elements that are involved in a non-trivial patches
     shared_ptr<BitArray> el_in_nontrivial_patch;
+    shared_ptr<BitArray> el_roots = nullptr;
     size_t n_trivial_els = -1;
     size_t n_els_in_nontrivial_patches = -1;
     size_t n_nontrivial_patches = -1;
@@ -47,6 +48,7 @@ namespace ngcomp
     void GetInnerPatchFacets(int patchnr, Array<size_t> & ret);
     shared_ptr<BitArray> & GetElsInTrivialPatch(){ return el_in_trivial_patch; }
     shared_ptr<BitArray> & GetElsInNontrivialPatch(){ return el_in_nontrivial_patch; }
+    shared_ptr<BitArray> & GetRootElements(){ return el_roots; }
     const Array<size_t> & GetPatchRoots(){ return patch_roots; }
     const Table<size_t> & GetPatchLeafs(){ return patch_leafs; }
     const Table<size_t> & GetPatchFacets(){ return patch_facets; }
