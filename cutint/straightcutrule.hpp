@@ -118,6 +118,8 @@ namespace xintegration
 
   class LevelsetCutQuadrilateral : public LevelsetCutPolytopE {
   public:
+      Quadrilateral q;
+
       SWAP_DIMENSIONS_POLICY pol;
       bool consider_dim_swap;
 
@@ -125,9 +127,7 @@ namespace xintegration
       void GetTensorProductAlongXiIntegrationRule(IntegrationRule &intrule, int order);
       DIMENSION_SWAP GetDimensionSwap();
 
-      Quadrilateral q;
-
-      LevelsetCutQuadrilateral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadrilateral a_q, SWAP_DIMENSIONS_POLICY a_pol, bool a_consider_dim_swap = true) : LevelsetCutPolytopE(a_lset, a_dt), pol(a_pol), q(a_q), consider_dim_swap(a_consider_dim_swap) { ;}
+      LevelsetCutQuadrilateral(LevelsetWrapper a_lset, DOMAIN_TYPE a_dt, Quadrilateral a_q, SWAP_DIMENSIONS_POLICY a_pol, bool a_consider_dim_swap = true) : LevelsetCutPolytopE(a_lset, a_dt), q(a_q), pol(a_pol), consider_dim_swap(a_consider_dim_swap) { ;}
       void GetIntegrationRuleAlongXi(IntegrationRule &intrule, int order);
   private:
       void GetIntegrationRuleOnXYPermutatedQuad(IntegrationRule &intrule, int order);
