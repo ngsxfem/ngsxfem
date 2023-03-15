@@ -83,7 +83,7 @@ namespace xintegration
       // RegionTimer reg(t);
       double trafofac = GetVolume();
 
-      const IntegrationRule * ir_ngs;
+      const IntegrationRule * ir_ngs = nullptr;
       if(D == 0) ir_ngs = & SelectIntegrationRule(ET_POINT, order);
       else if(D == 1) ir_ngs = & SelectIntegrationRule(ET_SEGM, order);
       else if(D == 2) ir_ngs = & SelectIntegrationRule(ET_TRIG, order);
@@ -105,7 +105,7 @@ namespace xintegration
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       double trafofac = GetVolume();
 
-      const IntegrationRule * ir_ngs;
+      const IntegrationRule * ir_ngs = nullptr;
       Mat<3,3> A(0.0);
       if(D == 2){
           ir_ngs = & SelectIntegrationRule(ET_QUAD, order);
