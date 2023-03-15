@@ -221,7 +221,7 @@ namespace xintegration
       //RegionTimer reg(t);
       // ThreadRegionTimer reg (t, TaskManager::GetThreadId());
       set<double> TopologyChangeXisS{0,1};
-      int xi = q.D ==2 ? 1 : 2;
+      // int xi = q.D ==2 ? 1 : 2;
       vector<tuple<int,int>> EdgesOfDimXi;
       if( q.D == 2) EdgesOfDimXi = {make_tuple(1,2),make_tuple(0,3)};
       else if (q.D == 3) EdgesOfDimXi = {make_tuple(0,4),make_tuple(1,5),make_tuple(2,6),make_tuple(3,7)};

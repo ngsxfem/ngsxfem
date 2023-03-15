@@ -709,7 +709,7 @@ namespace ngfem
     //}
     //if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
 
-    IntegrationRule * ir_facet = nullptr;
+    // IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
 
     Array<double> wei_arr;
