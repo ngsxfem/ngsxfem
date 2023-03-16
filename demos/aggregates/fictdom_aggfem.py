@@ -104,7 +104,7 @@ EA.Update(els_neg, els_if)
 facets_in_patches = EA.patch_interior_facets
 
 # Set up FE-Space
-Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
+Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=False)
 Vh = Restrict(Vhbase, els_hasneg)
 
 gfu = GridFunction(Vh)
