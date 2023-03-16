@@ -265,10 +265,27 @@ Updates a Element Aggregation based ...
   m.def("SetupAggEmbedding", [] (shared_ptr<ElementAggregation> elagg, 
                                  shared_ptr<FESpace> fes,
                                  shared_ptr<SumOfIntegrals> bf
-                                ) { 
-                                  LocalHeap lh(10000000);
-                                  return SetupAggEmbedding(elagg, fes, bf, lh); 
-                                  });
+                                )
+        { 
+          LocalHeap lh(10000000);
+          return SetupAggEmbedding(elagg, fes, bf, lh); 
+        },
+        py::arg("elagg"),
+        py::arg("fes"),
+        py::arg("bf"),
+        docu_string(R"raw_string(
+            Computes the embedding matrix for aggregated finite elements.
+            Parameters:
+
+            elagg : 
+              ElementAggregation
+
+            fes : ngsolve.FESpace
+              first BitArray 
+
+            bf : ngsolve.SumOfIntegrals
+            )raw_string")
+        );
 
   m.def("GetFacetsWithNeighborTypes",
         [] (shared_ptr<MeshAccess> ma,

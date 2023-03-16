@@ -259,7 +259,6 @@ namespace ngcomp
       (*testout) << i << ": " << ret << endl;
     }
 
-
     const BitArray & freedofs_test = *fes_test->GetFreeDofs();
     ParallelForRange (Range(npatch), [&] (IntRange r)
     {
@@ -318,7 +317,6 @@ namespace ngcomp
 
         FlatMatrix<> patchmat(patchdofs_test.Size(), patchdofs_trial.Size(), lh);
         FlatVector<> patchvec(patchdofs_test.Size(), lh);        
-        //FlatVector<> patchsol(patchdofs_trial.Size(), lh);        
         patchmat = 0.0;
         patchvec = 0.0;
 
