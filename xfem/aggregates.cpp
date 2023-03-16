@@ -348,7 +348,9 @@ namespace ngcomp
           elmat = 0.0;
           for (auto & bfi : bfis[VOL])
           {
-            bfi -> CalcElementMatrix(fel, trafo, elmati, lh);
+
+            auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
+            bfi -> CalcElementMatrix(fel, mapped_trafo, elmati, lh);
             elmat += elmati;
             // bfi -> CalcElementMatrixAdd(fel, trafo, elmat, lh);
           }        
@@ -365,7 +367,8 @@ namespace ngcomp
             sumelvec = 0.0;
             for (auto &lfi : lfis[VOL])
             {
-              lfi->CalcElementVector(fel_test, trafo, elvec, lh);
+              auto & mapped_trafo = trafo.AddDeformation(lfi->GetDeformation().get(), lh);
+              lfi->CalcElementVector(fel_test, mapped_trafo, elvec, lh);
               sumelvec += elvec;
             }
 
@@ -426,8 +429,10 @@ namespace ngcomp
           {
             auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator>(bfi);
             if (fbfi) {
-              fbfi -> CalcFacetMatrix(fel, facnr1, trafo, vnums,
-                                      fel2, facnr2, trafo2, vnums2, elmati, lh);
+              auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
+              auto & mapped_trafo2 = trafo2.AddDeformation(bfi->GetDeformation().get(), lh);
+              fbfi -> CalcFacetMatrix(fel, facnr1, mapped_trafo, vnums,
+                                      fel2, facnr2, mapped_trafo2, vnums2, elmati, lh);
               elmat += elmati;
             }
             else throw Exception("Cast failed");
