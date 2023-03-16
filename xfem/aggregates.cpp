@@ -56,7 +56,7 @@ namespace ngcomp
         nc ++;
       }
     }
-    cout << "Number of (nontrivial) patches: " << nc << endl;
+    (*testout) << "Number of (nontrivial) patches: " << nc << endl;
 
     element_to_patch.SetSize(ne);
     element_to_patch = -1;
@@ -461,6 +461,8 @@ namespace ngcomp
 
     BitArray non_trivial_dofs(fes->GetNDof());
     non_trivial_dofs.Clear();
+    BitArray trivial_dofs(fes->GetNDof());
+    trivial_dofs.Clear();
     BitArray root_dofs(fes->GetNDof());
     root_dofs.Clear();
 
@@ -483,9 +485,21 @@ namespace ngcomp
             root_dofs.SetBitAtomic(i);
         }
       }
+      if ( (*elagg->GetElsInTrivialPatch())[ei.Nr()] )
+      {
+        fes->GetDofNrs(ei, dofs);
+        for( auto i : dofs )
+          trivial_dofs.SetBitAtomic(i);
+      }
+
     });
 
-    size_t n_root_dof = root_dofs.NumSet();
+    BitArray rdofs(fes->GetNDof());
+    rdofs.Clear();
+    rdofs |= trivial_dofs;
+    rdofs |= root_dofs;
+    const int nrdofs = rdofs.NumSet(); 
+    const size_t n_root_dof = root_dofs.NumSet();
     (*testout) << "n_root_dof: " << n_root_dof << endl;
 
     size_t n_nontriv_patch = elagg->GetNPatches(false);
@@ -511,13 +525,13 @@ namespace ngcomp
 
     Array<DofId> dof2rdof(fes->GetNDof());
     dof2rdof = -1;
-    Array<DofId> rdof2dof(n_root_dof);
+    Array<DofId> rdof2dof(nrdofs);
     rdof2dof = -1;
 
     int cnt = 0;
     for (int i : Range(fes->GetNDof()))
     {
-        if (root_dofs.Test(i))
+        if (!non_trivial_dofs.Test(i) || root_dofs.Test(i))
         {
         dof2rdof[i] = cnt;
         rdof2dof[cnt] = i;
@@ -532,9 +546,9 @@ namespace ngcomp
 
     size_t npatch = elagg->GetNPatches(true);
     Table<int> table, rtable;
+    TableCreator<int> creator(npatch);
+    TableCreator<int> creator2(npatch);
     {
-      TableCreator<int> creator(npatch);
-      TableCreator<int> creator2(npatch);
       Array<size_t> els_in_patch;
       Array<DofId> patchdofs;
       for (; !creator.Done(); creator++, creator2++)
@@ -562,11 +576,11 @@ namespace ngcomp
         }
       }
       table = creator.MoveTable ();
-      rtable = creator2.MoveTable ();    
+      rtable = creator2.MoveTable ();
     }
     shared_ptr<SparseMatrix<double>> P
       = make_shared<SparseMatrix<double>> (fes->GetNDof (), 
-                                            n_root_dof, table, rtable, false);
+                                           nrdofs, table, rtable, false);
     
     P->SetZero ();
 
@@ -624,7 +638,6 @@ namespace ngcomp
       {
         Q.Row(i) /= dof_in_npatches[patchdofs[nr_dofs_inner+i]];
       }
-
       Array<DofId> patchrdofs(nr_dofs_inner);
       for (int i : Range(nr_dofs_inner))
         patchrdofs[i] = dof2rdof[patchdofs[i]];
