@@ -17,7 +17,8 @@ namespace ngcomp
     //std::cout << "Hello from element aggregation" << endl;
   }
 
-  void ElementAggregation::Update(shared_ptr<BitArray> & root_els, shared_ptr<BitArray> & bad_els, LocalHeap & lh){
+  void ElementAggregation::Update(shared_ptr<BitArray> & root_els, shared_ptr<BitArray> & bad_els, LocalHeap & lh)
+  {
     const size_t ne = ma->GetNE();
     const size_t nf = ma->GetNFacets();
 
@@ -207,7 +208,8 @@ namespace ngcomp
 
   }
 
-  void ElementAggregation::GetPatch(int patchnr, Array<size_t> & ret){
+  void ElementAggregation::GetPatch(int patchnr, Array<size_t> & ret)
+  {
     const int triv_patch_idx = patchnr - GetNNontrivialPatches();
     if (triv_patch_idx < 0)
     {
@@ -221,7 +223,8 @@ namespace ngcomp
     }
   }
 
-  void ElementAggregation::GetInnerPatchFacets(int patchnr, Array<size_t> & ret){
+  void ElementAggregation::GetInnerPatchFacets(int patchnr, Array<size_t> & ret)
+  {
     const int triv_patch_idx = patchnr - GetNNontrivialPatches();
     if (triv_patch_idx < 0)
     {
@@ -452,109 +455,110 @@ namespace ngcomp
   {
 
     // Setup of Sparse-Matrix for Embedding
-      const BitArray & freedofs = *fes->GetFreeDofs();
+    const BitArray & freedofs = *fes->GetFreeDofs();
 
-      shared_ptr<MeshAccess> ma = elagg->GetMesh();
+    shared_ptr<MeshAccess> ma = elagg->GetMesh();
 
-      BitArray non_trivial_dofs(fes->GetNDof());
-      non_trivial_dofs.Clear();
-      BitArray root_dofs(fes->GetNDof());
-      root_dofs.Clear();
+    BitArray non_trivial_dofs(fes->GetNDof());
+    non_trivial_dofs.Clear();
+    BitArray root_dofs(fes->GetNDof());
+    root_dofs.Clear();
 
-      Array<int> dof_in_npatches(fes->GetNDof());
-      dof_in_npatches = 0;
+    Array<int> dof_in_npatches(fes->GetNDof());
+    dof_in_npatches = 0;
 
-      (*testout) << "dof_in_npatches:\n" << dof_in_npatches << endl;
+    (*testout) << "dof_in_npatches:\n" << dof_in_npatches << endl;
 
-      ma->IterateElements(VOL, clh, [&](auto ei, LocalHeap &mlh)
+    ma->IterateElements(VOL, clh, [&](auto ei, LocalHeap &mlh)
+    {
+      Array<DofId> dofs;
+      if ( (*elagg->GetElsInNontrivialPatch())[ei.Nr()] )
+      {
+        const bool root = (*elagg->GetRootElements())[ei.Nr()];
+        fes->GetDofNrs(ei, dofs);
+        for( auto i : dofs )
+        {
+          non_trivial_dofs.SetBitAtomic(i);
+          if (root)
+            root_dofs.SetBitAtomic(i);
+        }
+      }
+    });
+
+    size_t n_root_dof = root_dofs.NumSet();
+    (*testout) << "n_root_dof: " << n_root_dof << endl;
+
+    size_t n_nontriv_patch = elagg->GetNPatches(false);
+
+    for (int pi : Range(n_nontriv_patch))
+    {
+      Array<DofId> patchdofs;
+      Array<size_t> els_in_patch;
+      patchdofs.SetSize0();
+      elagg->GetPatch(pi, els_in_patch);
+      for (int i : els_in_patch)
       {
         Array<DofId> dofs;
-        if ( (*elagg->GetElsInNontrivialPatch())[ei.Nr()] )
-        {
-          const bool root = (*elagg->GetRootElements())[ei.Nr()];
-          fes->GetDofNrs(ei, dofs);
-          for( auto i : dofs )
+        fes->GetDofNrs(ElementId(VOL, i), dofs);
+        for (auto d : dofs)
+          if (!patchdofs.Contains(d) && non_trivial_dofs[d] && !root_dofs[d])
           {
-            non_trivial_dofs.SetBitAtomic(i);
-            if (root)
-              root_dofs.SetBitAtomic(i);
+            patchdofs.Append(d);
+            dof_in_npatches[d] ++;
           }
-        } });
+      }
+    }
 
-      size_t n_root_dof = root_dofs.NumSet();
-      (*testout) << "n_root_dof: " << n_root_dof << endl;
+    Array<DofId> dof2rdof(fes->GetNDof());
+    dof2rdof = -1;
+    Array<DofId> rdof2dof(n_root_dof);
+    rdof2dof = -1;
 
-      size_t n_nontriv_patch = elagg->GetNPatches(false);
+    int cnt = 0;
+    for (int i : Range(fes->GetNDof()))
+    {
+        if (root_dofs.Test(i))
+        {
+        dof2rdof[i] = cnt;
+        rdof2dof[cnt] = i;
+        cnt++;
+        }
+    }
 
-      for (int pi : Range(n_nontriv_patch))
+    (*testout) << "dof2rdof \n"
+                << dof2rdof << endl;
+    (*testout) << "rdof2dof \n"
+                << rdof2dof << endl;
+
+    size_t npatch = elagg->GetNPatches(true);
+    Table<int> table, rtable;
+    {
+      TableCreator<int> creator(npatch);
+      TableCreator<int> creator2(npatch);
+      Array<size_t> els_in_patch;
+      Array<DofId> patchdofs;
+      for (; !creator.Done(); creator++, creator2++)
       {
-        Array<DofId> patchdofs;
-        Array<size_t> els_in_patch;
+        for (int pi : Range(npatch))
+        {
         patchdofs.SetSize0();
         elagg->GetPatch(pi, els_in_patch);
         for (int i : els_in_patch)
         {
           Array<DofId> dofs;
-          fes->GetDofNrs(ElementId(VOL, i), dofs);
+          auto ei = ElementId(VOL, i);
+          fes->GetDofNrs(ei, dofs);
           for (auto d : dofs)
-            if (!patchdofs.Contains(d) && non_trivial_dofs[d] && !root_dofs[d])
-            {
+            if (!patchdofs.Contains(d))
               patchdofs.Append(d);
-              dof_in_npatches[d] ++;
-            }
         }
-      }
-
-      Array<DofId> dof2rdof(fes->GetNDof());
-      dof2rdof = -1;
-      Array<DofId> rdof2dof(n_root_dof);
-      rdof2dof = -1;
-
-      int cnt = 0;
-      for (int i : Range(fes->GetNDof()))
-      {
-          if (root_dofs.Test(i))
-          {
-          dof2rdof[i] = cnt;
-          rdof2dof[cnt] = i;
-          cnt++;
-          }
-      }
-
-      (*testout) << "dof2rdof \n"
-                  << dof2rdof << endl;
-      (*testout) << "rdof2dof \n"
-                  << rdof2dof << endl;
-
-      size_t npatch = elagg->GetNPatches(true);
-      Table<int> table, rtable;
-      {
-          TableCreator<int> creator(npatch);
-          TableCreator<int> creator2(npatch);
-          Array<size_t> els_in_patch;
-          Array<DofId> patchdofs;
-          for (; !creator.Done(); creator++, creator2++)
-          {
-          for (int pi : Range(npatch))
-          {
-            patchdofs.SetSize0();
-            elagg->GetPatch(pi, els_in_patch);
-            for (int i : els_in_patch)
-            {
-              Array<DofId> dofs;
-              auto ei = ElementId(VOL, i);
-              fes->GetDofNrs(ei, dofs);
-              for (auto d : dofs)
-                if (!patchdofs.Contains(d))
-                  patchdofs.Append(d);
-            }
-            for (auto d : patchdofs)
-            {
-              creator.Add(pi,d);
-              const int rdof = dof2rdof[d];
-              if (IsRegularDof(rdof))
-                creator2.Add(pi,rdof);
-            }
+        for (auto d : patchdofs)
+        {
+          creator.Add(pi,d);
+          const int rdof = dof2rdof[d];
+          if (IsRegularDof(rdof))
+            creator2.Add(pi,rdof);
+        }
         }
       }
       table = creator.MoveTable ();
@@ -574,7 +578,7 @@ namespace ngcomp
       if (!non_trivial_dofs[i] || root_dofs[i])
       {
         cdof[0] = i; 
-        crdof[0] = dof2rdof[i]; 
+        crdof[0] = dof2rdof[i];
         P->AddElementMatrix(cdof, crdof, I);
       }
     }
@@ -621,9 +625,6 @@ namespace ngcomp
         Q.Row(i) /= dof_in_npatches[patchdofs[nr_dofs_inner+i]];
       }
 
-      (*testout) << "matrix Q \n"
-                 << Q << endl;
-
       Array<DofId> patchrdofs(nr_dofs_inner);
       for (int i : Range(nr_dofs_inner))
         patchrdofs[i] = dof2rdof[patchdofs[i]];
@@ -635,17 +636,17 @@ namespace ngcomp
       // (*testout) << "patch vector \n" << patchvec << endl;
       (*testout) << "patch matrix \n"
                  << patchmat << endl;
-      (*testout) << "dofs trial \n"
+      (*testout) << "patch dofs\n"
                  << patchdofs << endl;
       // (*testout) << "dofs of root \n" << dofs << endl;
-      (*testout) << "P_patch: \n"
+      (*testout) << "Q: \n"
                  << Q << endl;
-        
 
     });
 
     // Finalizing steps
-    (*testout) << "P result: " << *P << endl;  
+    (*testout) << "P result: \n"
+               << *P << endl;  
     return P;
-    } // end of SetupAgg..
-  }
+  } // end of SetupAgg..
+}
