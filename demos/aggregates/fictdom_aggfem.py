@@ -59,11 +59,9 @@ ngsglobals.msg_level = 2
 # Quadrilateral (or simplicial mesh)
 quad_mesh = False
 # Mesh diameter
-maxh = 0.1
+maxh = 0.1 / 2
 # Finite element space order
-order = 3
-# Stabilization parameter for ghost-penalty
-gamma_stab = 0.1
+order = 2
 # Stabilization parameter for Nitsche
 lambda_nitsche = 10 * order * order
 
@@ -139,15 +137,15 @@ f.Assemble()
 # Set up embedding matrix for element aggregation
 ghost_penalty = (u - u.Other()) * (v - v.Other()) * dw
 
-PPT = SetupAggEmbedding(EA, Vh, ghost_penalty)
-print(f'PT shape: {PPT.shape}')
-PP = PPT.CreateTranspose()
+P = SetupAggEmbedding(EA, Vh, ghost_penalty)
+print(f'PT shape: {P.shape}')
+PT = P.CreateTranspose()
 
-Aemb = PP @ a.mat @ PPT
+Aemb = PT @ a.mat @ P
 
 # Solve linear system
-gfuE = Aemb.Inverse(inverse='sparsecholesky') * (PP * f.vec)
-gfu.vec.data = PPT * gfuE
+gfuE = Aemb.Inverse(inverse='sparsecholesky') * (PT * f.vec)
+gfu.vec.data = P * gfuE
 
 # Measure the error
 l2error = sqrt(Integrate((gfu - exact)**2 * dx, mesh))
