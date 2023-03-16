@@ -67,12 +67,19 @@ namespace ngcomp
   //    * solutions of patchwise problems 
   //    * or setup of embedding matrices
   //    * or similar things
-  void PatchDummy (shared_ptr<ElementAggregation> elagg, 
+  /*void PatchDummy (shared_ptr<ElementAggregation> elagg, 
                    shared_ptr<FESpace> fes_trial,
                    shared_ptr<FESpace> fes_test,
                    shared_ptr<SumOfIntegrals> bf,
                    shared_ptr<SumOfIntegrals> lf,
                    LocalHeap & clh
-                  );
+                  );*/
+
+  void SetupAggEmbedding (shared_ptr<ElementAggregation> elagg, 
+                          shared_ptr<FESpace> fes,
+                          shared_ptr<SumOfIntegrals> bf,
+                          LocalHeap & clh
+                         );
+
 
 }
