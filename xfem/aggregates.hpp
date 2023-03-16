@@ -58,6 +58,7 @@ namespace ngcomp
   };
 
 
+
   template <typename TFUNC>
   void PatchLoop (shared_ptr<ElementAggregation> elagg, 
                   bool include_trivial_patches,
@@ -73,4 +74,12 @@ namespace ngcomp
                                                      shared_ptr<FESpace> fes,
                                                      shared_ptr<SumOfIntegrals> bf,
                                                      LocalHeap &clh);
+
+  void PatchwiseSolve(shared_ptr<ElementAggregation> elagg, 
+                      shared_ptr<FESpace> fes,
+                      shared_ptr<SumOfIntegrals> bf,
+                      shared_ptr<SumOfIntegrals> lf,
+                      shared_ptr<BaseVector> vec,
+                      LocalHeap & clh
+                      );
 }

@@ -222,9 +222,9 @@ Creates a ElementAggregation based on ...
 )raw_string")
       )
         .def("Update", [](ElementAggregation & self,
-                      PyBA root, 
-                      PyBA bad,
-                      int heapsize)
+                          PyBA root, 
+                          PyBA bad,
+                          int heapsize)
          {
            LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
            self.Update(root,bad,lh);
@@ -262,29 +262,71 @@ Updates a Element Aggregation based ...
                "vector mapping facets to (non-trivial) patches")      
     ;
 
+  m.def("PatchwiseSolve", [](shared_ptr<ElementAggregation> elagg, 
+                              shared_ptr<FESpace> fes,
+                              shared_ptr<SumOfIntegrals> bf,
+                              shared_ptr<SumOfIntegrals> lf,
+                              int heapsize
+                            )
+  {
+    VVector<double> hvec(fes->GetNDof());
+    shared_ptr<BaseVector> vec = make_shared<VVector<double>>(hvec); 
+    LocalHeap lh(heapsize, "Patchwisesolve-heap", true);
+    PatchwiseSolve(elagg, fes, bf, lf, vec, lh);
+    return vec;
+  },
+    py::arg("elagg"),
+    py::arg("fes"),
+    py::arg("bf"),
+    py::arg("lf"),
+    py::arg("heapsize") = 1000000, docu_string(R"raw_string(
+Solve patch-wise problem based on the patches provided by the element aggregation input.
+
+Parameters
+
+elagg: ElementAggregatetion
+  The instance defining the patches
+
+fes : FESpace
+  The finite element space on which the local solve is performed.
+
+bf : SumOfIntegrals
+  Integrators defining the matrix problem.
+
+lf : SumOfIntegrals
+  Integrators defining the right-hand side.
+)raw_string")
+  );
+
+
   m.def("SetupAggEmbedding", [] (shared_ptr<ElementAggregation> elagg, 
                                  shared_ptr<FESpace> fes,
-                                 shared_ptr<SumOfIntegrals> bf
+                                 shared_ptr<SumOfIntegrals> bf,
+                                 int heapsize
                                 )
         { 
-          LocalHeap lh(10000000);
+          LocalHeap lh(heapsize, "SetupAggEmbedding-heap", true);
           return SetupAggEmbedding(elagg, fes, bf, lh); 
         },
         py::arg("elagg"),
         py::arg("fes"),
         py::arg("bf"),
+        py::arg("heapsize") = 1000000,
         docu_string(R"raw_string(
-            Computes the embedding matrix for aggregated finite elements.
-            Parameters:
+Computes the embedding matrix for aggregated finite elements.
 
-            elagg : 
-              ElementAggregation
+Parameters:
 
-            fes : ngsolve.FESpace
-              first BitArray 
+elagg : ElementAggregation
+  ElementAggregation instace defining the patches which are aggregated into a single element
 
-            bf : ngsolve.SumOfIntegrals
-            )raw_string")
+fes : ngsolve.FESpace
+  The finite element space which is aggregated. 
+
+bf : ngsolve.SumOfIntegrals
+  The bilinear form, ....
+
+)raw_string")
         );
 
   m.def("GetFacetsWithNeighborTypes",

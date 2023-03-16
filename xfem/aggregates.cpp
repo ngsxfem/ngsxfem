@@ -300,13 +300,13 @@ namespace ngcomp
         Array<shared_ptr<BilinearFormIntegrator>> bfis_skeleton[4];
         for (auto icf : bf->icfs)
         {
+          shared_ptr<BilinearFormIntegrator> bfi = icf->MakeBilinearFormIntegrator();
+          auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator> (bfi);
           auto & dx = icf->dx;
-          if(!dx.skeleton && 0!=dynamic_pointer_cast<FacetPatchDifferentialSymbol>(make_shared<DifferentialSymbol>(dx)))
+          if (!fbfi)
             bfis[dx.vb] += icf->MakeBilinearFormIntegrator ();
           else
             bfis_skeleton[dx.vb] += icf->MakeBilinearFormIntegrator();
-          //if (dx.vb == VOL)
-          //  bfis += make_shared<SymbolicBilinearFormIntegrator> (icf->cf, VOL, dx.element_vb);
         }        
 
         Array<shared_ptr<LinearFormIntegrator>> lfis[4];
@@ -348,7 +348,6 @@ namespace ngcomp
           elmat = 0.0;
           for (auto & bfi : bfis[VOL])
           {
-
             auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
             bfi -> CalcElementMatrix(fel, mapped_trafo, elmati, lh);
             elmat += elmati;
@@ -446,10 +445,78 @@ namespace ngcomp
                 patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
         }
 
-        patchwise_func(p,patchmat,patchvec,patchdofs_trial,patchdofs_test);
+        (*testout) << "patchmat in Patchloop\n" << patchmat << endl;
+
+        patchwise_func(p,patchmat,patchvec,patchdofs_trial,patchdofs_test,lh);
 
       }
     });
+  }
+
+  void PatchwiseSolve(shared_ptr<ElementAggregation> elagg, 
+                      shared_ptr<FESpace> fes,
+                      shared_ptr<SumOfIntegrals> bf,
+                      shared_ptr<SumOfIntegrals> lf,
+                      shared_ptr<BaseVector> vec,
+                      LocalHeap & clh
+                      )
+  {
+    const BitArray & freedofs = *fes->GetFreeDofs();
+    shared_ptr<MeshAccess> ma = elagg->GetMesh();
+
+    size_t n_patch = elagg->GetNPatches(true);
+    Array<int> dof_in_npatches(fes->GetNDof());
+    for (int pi : Range(n_patch))
+    {
+      Array<DofId> patchdofs;
+      Array<size_t> els_in_patch;
+      patchdofs.SetSize0();
+      elagg->GetPatch(pi, els_in_patch);
+      //cout << pi << " - els_in_patch - " << els_in_patch << endl;
+      for (int i : els_in_patch)
+      {
+        Array<DofId> dofs;
+        fes->GetDofNrs(ElementId(VOL, i), dofs);
+        for (auto d : dofs)
+          if (!patchdofs.Contains(d))
+          {
+            patchdofs.Append(d);
+            dof_in_npatches[d] ++;
+          }
+      }
+    }    
+    //cout << " - dof_in_npatches - " << dof_in_npatches << endl;
+    
+    PatchLoop(elagg, true, fes, fes, bf, lf, clh, [&] (int p, 
+                                                       FlatMatrix<> patchmat, 
+                                                       FlatVector<> patchvec,
+                                                       Array<DofId> & patchdofs,
+                                                       Array<DofId> & patchdofs_dummy,
+                                                       LocalHeap & lh
+                                                       )
+    {
+      FlatMatrix<> patchinv(patchdofs.Size(),patchdofs.Size(),lh); 
+      CalcInverse(patchmat, patchinv);
+      FlatVector<> patchsol(patchdofs.Size(),lh); 
+      patchsol = patchinv * patchvec;
+      vec->AddIndirect (patchdofs, patchsol);
+    });
+
+    ParallelForRange (dof_in_npatches.Size(), [&] (IntRange r)
+    {
+      //VectorMem<10,SCAL> fluxi(dim);
+      VectorMem<10,double> fluxi(1);
+      ArrayMem<int,1> dnums(1);
+      for (auto i : r)
+        if (dof_in_npatches[i] > 1)
+        {
+          dnums[0] = i;
+          vec->GetIndirect (dnums, fluxi);
+          fluxi /= double (dof_in_npatches[i]);
+          vec->SetIndirect (dnums, fluxi);
+        }
+    });
+    
   }
 
   shared_ptr<SparseMatrix<double>> SetupAggEmbedding(shared_ptr<ElementAggregation> elagg, 
@@ -461,7 +528,6 @@ namespace ngcomp
 
     // Setup of Sparse-Matrix for Embedding
     const BitArray & freedofs = *fes->GetFreeDofs();
-
     shared_ptr<MeshAccess> ma = elagg->GetMesh();
 
     BitArray non_trivial_dofs(fes->GetNDof());
@@ -609,7 +675,8 @@ namespace ngcomp
                                                             FlatMatrix<> patchmat, 
                                                             FlatVector<> patchvec,
                                                             Array<DofId> & patchdofs,
-                                                            Array<DofId> & patchdofs_dummy
+                                                            Array<DofId> & patchdofs_dummy,
+                                                            LocalHeap & lh
                                                             )
     {
       Array<size_t> els_in_patch;
@@ -628,15 +695,15 @@ namespace ngcomp
 
       int nr_dofs_outer = patchdofs.Size() - nr_dofs_inner;
 
-      Matrix<double> Soo(nr_dofs_outer, nr_dofs_outer);
+      FlatMatrix<double> Soo(nr_dofs_outer, nr_dofs_outer, lh);
       Soo = patchmat.Rows(nr_dofs_inner, patchdofs.Size()).Cols(nr_dofs_inner, patchdofs.Size());
 
-      Matrix<double> Soi(nr_dofs_outer, nr_dofs_inner);
+      FlatMatrix<double> Soi(nr_dofs_outer, nr_dofs_inner, lh);
       Soi = patchmat.Rows(nr_dofs_inner, patchdofs.Size()).Cols(0, nr_dofs_inner);
 
-      Matrix<double> Sooinv(nr_dofs_outer, nr_dofs_outer);
+      FlatMatrix<double> Sooinv(nr_dofs_outer, nr_dofs_outer, lh);
       CalcInverse(Soo, Sooinv);
-      Matrix<double> Q(nr_dofs_outer, nr_dofs_inner);
+      FlatMatrix<double> Q(nr_dofs_outer, nr_dofs_inner, lh);
       Q = -Sooinv * Soi;
 
       for (int i : Range(nr_dofs_outer))
