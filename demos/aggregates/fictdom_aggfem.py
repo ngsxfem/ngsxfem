@@ -96,15 +96,18 @@ lsetp1 = lsetmeshadap.lset_p1
 
 # Element, facet and dof marking w.r.t. boundary approximation with lsetp1:
 ci = CutInfo(mesh, lsetp1)
-hasneg = ci.GetElementsOfType(HASNEG)
-hasif = ci.GetElementsOfType(IF)
+els_hasneg = ci.GetElementsOfType(HASNEG)
+els_neg = ci.GetElementsOfType(NEG)
+els_if = ci.GetElementsOfType(IF)
 
-# Set-up for element aggregation
+# Compute element patches for element aggregation
 EA = ElementAggregation(mesh)
-EA.Update(hasneg, hasif)
+EA.Update(els_neg, els_if)
+facets_in_patches = EA.patch_interior_facets
 
+# Set up FE-Space
 Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
-Vh = Restrict(Vhbase, hasneg)
+Vh = Restrict(Vhbase, els_hasneg)
 
 gfu = GridFunction(Vh)
 
@@ -113,9 +116,9 @@ h = specialcf.mesh_size
 n = Normalize(grad(lsetp1))
 
 # integration domains:
-dx = dCut(lsetp1, NEG, definedonelements=hasneg, deformation=deformation)
-ds = dCut(lsetp1, IF, definedonelements=hasif, deformation=deformation)
-dw = dFacetPatch(definedonelements=ba_facets, deformation=deformation)
+dx = dCut(lsetp1, NEG, definedonelements=els_hasneg, deformation=deformation)
+ds = dCut(lsetp1, IF, definedonelements=els_if, deformation=deformation)
+dw = dFacetPatch(definedonelements=facets_in_patches, deformation=deformation)
 
 a = BilinearForm(Vh, symmetric=False)
 # Diffusion term
@@ -129,21 +132,25 @@ a += (lambda_nitsche / h) * u * v * ds
 f = LinearForm(Vh)
 f += coeff_f * v * dx
 
-# Set up embedding matrix for element aggregation
-ghost_penalty = (u - u.Other()) * (v - v.Other()) * dw
-
-PT = SetupAggEmbedding(EA, Vh, ghost_penalty)
-
-
-# Assemble system
+# Assemble unstable system
 a.Assemble()
 f.Assemble()
 
+# Set up embedding matrix for element aggregation
+ghost_penalty = (u - u.Other()) * (v - v.Other()) * dw
+
+PPT = SetupAggEmbedding(EA, Vh, ghost_penalty)
+print(f'PT shape: {PPT.shape}')
+PP = PPT.CreateTranspose()
+
+Aemb = PP @ a.mat @ PPT
+
 # Solve linear system
-gfu.vec.data = a.mat.Inverse(Vh.FreeDofs()) * f.vec
+gfuE = Aemb.Inverse(inverse='sparsecholesky') * (PP * f.vec)
+gfu.vec.data = PPT * gfuE
 
 # Measure the error
-l2error = sqrt(Integrate((gfu - exact)**2*dx, mesh))
+l2error = sqrt(Integrate((gfu - exact)**2 * dx, mesh))
 print("L2 Error: {0}".format(l2error))
 
 # visualization:

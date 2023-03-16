@@ -140,7 +140,7 @@ f.Assemble()
 gfu.vec.data = a.mat.Inverse(Vh.FreeDofs()) * f.vec
 
 # Measure the error
-l2error = sqrt(Integrate((gfu - exact)**2*dx, mesh))
+l2error = sqrt(Integrate((gfu - exact)**2 * dx, mesh))
 print("L2 Error: {0}".format(l2error))
 
 # visualization:
