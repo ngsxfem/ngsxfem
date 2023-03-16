@@ -267,7 +267,7 @@ Updates a Element Aggregation based ...
                                  shared_ptr<SumOfIntegrals> bf
                                 ) { 
                                   LocalHeap lh(10000000);
-                                  SetupAggEmbedding(elagg, fes, bf, lh); 
+                                  return SetupAggEmbedding(elagg, fes, bf, lh); 
                                   });
 
   m.def("GetFacetsWithNeighborTypes",
