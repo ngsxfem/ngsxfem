@@ -23,14 +23,14 @@ do
     rm -f *.whl
 
     # avx2 build:
-    pip uninstall -y ngsolve
-    pip uninstall -y netgen-mesher
+    #pip uninstall -y ngsolve
+    #pip uninstall -y netgen-mesher
     
-    pip install ngsolve-avx2>=$NGSOLVE_VERSION 
-    NETGEN_ARCH=avx2 pip wheel -vvv .
+    #pip install ngsolve-avx2>=$NGSOLVE_VERSION 
+    #NETGEN_ARCH=avx2 pip wheel -vvv .
     
-    auditwheel repair xfem*.whl
-    rm -f *.whl
+    #auditwheel repair xfem*.whl
+    #rm -f *.whl
     
 done
 
