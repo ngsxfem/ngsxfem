@@ -12,8 +12,8 @@ USER ${NB_USER}
         
 WORKDIR ${HOME}
 
-RUN git clone -b v2.0.2204 --single-branch https://github.com/ngsxfem/ngsxfem.git ngsxfem
-RUN pip3 install git+https://github.com/ngsxfem/ngsxfem.git@v2.0.2204 --user --upgrade --verbose
+RUN git clone -b v2.1.2301 --single-branch https://github.com/ngsxfem/ngsxfem.git ngsxfem
+RUN pip3 install git+https://github.com/ngsxfem/ngsxfem.git@v2.1.2301 --user --upgrade --verbose
                 
 RUN python3 -c "import ngsolve; import xfem"        
                 
