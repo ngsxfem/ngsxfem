@@ -35,7 +35,7 @@ The main features of `ngsxfem` are:
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 
 | Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Agg` | `Hex` | `Tet` | `MPI` |
-|-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes | yes |
 | `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | no | yes | yes | yes |
 | `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | yes| yes | yes| yes| yes | no |
@@ -48,7 +48,7 @@ Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an
 | `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
 | `MPI`: MPI | yes | yes | no | yes | yes | yes | no | no | yes | yes | / |
 
-Some of the *no*s are work in progress (e.g. `MLS`&`STF`) and some have not been considered so far (e.g. `DGF`&`STF`). If you need a certain combination to work, please contact us and we will see what we can do. 
+Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
 
 # Examples and Documentation
 
