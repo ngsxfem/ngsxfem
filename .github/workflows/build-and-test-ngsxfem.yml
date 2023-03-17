@@ -112,6 +112,7 @@ jobs:
       - name: Publish source distribution to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
+          skip_existing: true
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   check-demo-codestyle:
