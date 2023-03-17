@@ -2,12 +2,14 @@
 set -e
 
 
-#/opt/python/cp39-cp39/bin/python .ci/fix_auditwheel_policy.py
+/opt/python/cp39-cp39/bin/python .ci/fix_auditwheel_policy.py
 
 # 38 39
+rm -rf wheelhouse
+mkdir wheelhouse
 
 export ORIGINAL_PATH="$PATH"
-for pyversion in 38 39 310 311
+for pyversion in 39 #38 310 311
 do
     #export pyversion=310
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
