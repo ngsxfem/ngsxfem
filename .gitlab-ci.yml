@@ -129,7 +129,9 @@ pages:
   #  - release # this job will affect only the 'sphinx' branch
 
 pip_linux:
-  image: quay.io/pypa/manylinux2014_x86_64
+  #image: quay.io/pypa/manylinux2014_x86_64
+  image: sameli/manylinux2014_x86_64_cuda_11      
+
   stage: build
   script:
     - ./.ci/build_pip.sh

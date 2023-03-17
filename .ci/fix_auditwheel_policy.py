@@ -19,7 +19,7 @@ additional_libs = [
         "libgui.so",
         "libinterface.so",
         "libmesh.so",
-        "libmkl_rt.so.1",
+        "libmkl_rt.so.2",
         "libngcore.so",
         "libnggui.so",
         "libnglib.so",

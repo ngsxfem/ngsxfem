@@ -13,7 +13,9 @@ do
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
     export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
     export PATH="$ORIGINAL_PATH:$PYDIR"
-    pip install ngsolve pybind11-stubgen
+    $PYDIR/pip install -U pytest-check numpy wheel scikit-build mkl==2022.* mkl-devel==2022.* setuptools
+    $PYDIR/pip install ngsolve #--pre
+
     #RUN $PYDIR/pip install -vvv .
     pip wheel -vvv .
     rm -rf _skbuild
@@ -24,7 +26,7 @@ do
     pip uninstall -y ngsolve
     pip uninstall -y netgen-mesher
     
-    pip install ngsolve-avx2>=$NGSOLVE_VERSION
+    pip install ngsolve-avx2>=$NGSOLVE_VERSION 
     NETGEN_ARCH=avx2 pip wheel -vvv .
     
     auditwheel repair xfem*.whl

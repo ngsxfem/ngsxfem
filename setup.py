@@ -35,7 +35,7 @@ def path_to_version(path):
 try:
     version = path_to_version(".")
 except:
-    version = "2.0.2204.dev1"
+    version = "2.1.2301.dev1"
 
 try:
     ngsolve_version = path_to_version("external_dependencies/ngsolve")
