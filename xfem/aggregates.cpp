@@ -466,6 +466,7 @@ namespace ngcomp
 
     size_t n_patch = elagg->GetNPatches(true);
     Array<int> dof_in_npatches(fes->GetNDof());
+    dof_in_npatches = 0;
     for (int pi : Range(n_patch))
     {
       Array<DofId> patchdofs;
@@ -486,7 +487,7 @@ namespace ngcomp
       }
     }    
     //cout << " - dof_in_npatches - " << dof_in_npatches << endl;
-    
+    (*vec) = 0.0;
     PatchLoop(elagg, true, fes, fes, bf, lf, clh, [&] (int p, 
                                                        FlatMatrix<> patchmat, 
                                                        FlatVector<> patchvec,
