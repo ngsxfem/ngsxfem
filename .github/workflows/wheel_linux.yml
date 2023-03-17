@@ -30,5 +30,6 @@ jobs:
       - name: Publish binary distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          skip_existing: true
           password: ${{ secrets.PYPI_API_TOKEN_2 }}
           packages_dir: wheelhouse/
