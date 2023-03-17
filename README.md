@@ -34,20 +34,21 @@ The main features of `ngsxfem` are:
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 
-| Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Hex` | `Tet` | `MPI` |
-|-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes |
-| `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | yes | yes | yes |
-| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | yes| yes | yes| yes | no |
-| `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes | yes | yes |
-| `MLS`: multiple level set | yes | no | no | no | / | no | yes | no | yes | yes |
-| `STF`: space-time FEM | yes | no | yes | yes | no | / | yes | yes | yes | yes |
-| `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | yes | yes | no |
-| `Hex`: quads / hexes | yes | yes | yes | yes | no | yes | yes | / | / | yes |
-| `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
-| `MPI`: MPI | yes | yes | no | yes | yes | yes | no | yes | yes | / |
+| Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Agg` | `Hex` | `Tet` | `MPI` |
+|-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | no | yes | yes | yes |
+| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | yes| yes | yes| yes| yes | no |
+| `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes| yes | yes | yes |
+| `MLS`: multiple level set | yes | no | no | no | / | no | yes | yes| no | yes | yes |
+| `STF`: space-time FEM | yes | no | yes | yes | no | / | yes | no | yes | yes | yes |
+| `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | / |  yes | yes | no |
+| `Agg`: Aggregated FEM | yes | no | yes | yes | yes | no | / | / | yes | yes | no |
+| `Hex`: quads / hexes | yes | yes | yes | yes | no | yes | yes | yes | / | / | yes |
+| `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
+| `MPI`: MPI | yes | yes | no | yes | yes | yes | no | no | yes | yes | / |
 
-Some of the *no*s are work in progress (e.g. `MLS`&`STF`) and some have not been considered so far (e.g. `DGF`&`STF`). If you need a certain combination to work, please contact us and we will see what we can do. 
+Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
 
 # Examples and Documentation
 
@@ -63,14 +64,14 @@ We provide two main sources with which to learn how to use `ngsxfem`:
 Major contributions:
 
 * Christoph Lehrenfeld (main author)
-* Fabian Heimann (cut integration, space-time)
-* Henry von Wahl (multiple levelsets, mac support)
+* Fabian Heimann (cut integration, space-time, AggFEM)
+* Henry von Wahl (multiple levelsets, mac support, AggFEM)
 * Janosch Preuss (space-time)
 * Thomas Ludescher (multigrid)
+* Paul Stocker (CI, docu, builds, AggFEM)
 
 Additional contributions:
 
-* Paul Stocker (CI, docu, builds)
 * Pedro Costa Klein (CI, docu)
 
 # Community guidelines

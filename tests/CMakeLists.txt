@@ -96,6 +96,12 @@ add_test(NAME pytests_utils COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_memory COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_memory_usage.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_aggregates COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_aggregates.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
+add_test(NAME pytests_patchsolve COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_local_solve.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 install( FILES
   ngsxfem_report.py
   DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/report

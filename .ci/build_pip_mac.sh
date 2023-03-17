@@ -6,6 +6,7 @@ export PYDIR=$Python3_ROOT_DIR/bin
 $PYDIR/python3 --version
 export NGSOLVE_VERSION=`$PYDIR/python3 external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
 
+$PYDIR/pip3 install pybind11-stubgen
 $PYDIR/pip3 install ngsolve>=$NGSOLVE_VERSION wheel
 
 export NETGEN_Dir=$PYDIR/../lib/python$1/site-packages/netgen/cmake

@@ -85,8 +85,8 @@ namespace ngcomp
         [&] (int elnr, LocalHeap & lh)
       {
         ElementId ei = ElementId(vb,elnr);
-        Ngs_Element ngel = ma->GetElement(ei);
-        ELEMENT_TYPE eltype = ngel.GetType();
+        // Ngs_Element ngel = ma->GetElement(ei);
+        // ELEMENT_TYPE eltype = ngel.GetType();
         ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
 
         double part_vol [] = {0.0, 0.0};
@@ -260,6 +260,29 @@ namespace ngcomp
         
   }
 
+  shared_ptr<BitArray> CutInformation::GetElementsWithThresholdContribution(DOMAIN_TYPE dt,
+                                                                              double threshold,
+                                                                              VorB vb){
+    int ne = ma->GetNE(vb);
+    shared_ptr<BitArray> elems_with_threshold = make_shared<BitArray>(ne);
+    elems_with_threshold->Clear();
+    if (dt == POS)
+        threshold = 1 - threshold;
+
+    LocalHeap dummy_lh (1000, "GetElementsWithThresholdContribution-heap", true);
+    IterateRange
+      (ne, dummy_lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+      if (dt == NEG && (*cut_ratio_of_element[vb])(elnr) >= threshold)
+        (*elems_with_threshold).SetBitAtomic(elnr);
+      else if (dt == POS && (*cut_ratio_of_element[vb])(elnr) <= threshold)
+        (*elems_with_threshold).SetBitAtomic(elnr);
+    });
+
+    return elems_with_threshold;
+  }
+
   MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
                                                             const Array<shared_ptr<GridFunction>> & lsets_in)
     : ma(ama), lsets(lsets_in)
@@ -344,8 +367,8 @@ namespace ngcomp
        [&] (int elnr, LocalHeap & lh)
        {
          ElementId ei = ElementId(vb,elnr);
-         Ngs_Element ngel = ma->GetElement(ei);
-         ELEMENT_TYPE eltype = ngel.GetType();
+         // Ngs_Element ngel = ma->GetElement(ei);
+         // ELEMENT_TYPE eltype = ngel.GetType();
          ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
 
          Array<DofId> dnums(0,lh);
@@ -519,7 +542,7 @@ namespace ngcomp
                                                      LocalHeap & lh)
   {
     if (ma->GetCommunicator().Size() > 1)
-      throw Exception("GetDofsOfElements:: No Ghost-Markers for MPI yet");
+      throw Exception("GetElementsWithNeighborFacets:: No Ghost-Markers for MPI yet");
 
     int nf = ma->GetNFacets();
     int ne = ma->GetNE();

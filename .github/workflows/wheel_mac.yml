@@ -12,7 +12,7 @@ jobs:
     name: Build wheels for macOS
     strategy:
       matrix:
-        py: ['3.8', '3.9', '3.10']
+        py: ['3.8', '3.9', '3.10', '3.11']
     runs-on: macos-11
     env:
       MACOSX_DEPLOYMENT_TARGET: '10.15'

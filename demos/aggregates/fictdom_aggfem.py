@@ -2,8 +2,8 @@
 In this example we solve a scalar *unfitted* PDE problem. As a
 discretisation method we use a level set based geometry description and
 a Cut (or Fictitious) Finite element method with a Nitsche formulation
-to impose boundary conditions. For stability we add a ghost penalty
-stabilization.
+to impose boundary conditions. For stability we use element aggregations
+which constrain dofs on cut elements by extrapolating interior dofs
 
 Domain:
 -------
@@ -26,7 +26,7 @@ Discretisation:
 
 * Nitsche formulation to impose boundary conditions, see. e.g. [1]
 
-* Ghost penalty stabilization to deal with bad cuts (version as in [2])
+* Element aggregation to deal with bad cuts.
 
 Implementational aspects:
 -------------------------
@@ -44,8 +44,9 @@ Literature:
 [1] E. Burman, P. Hansbo, Fictitious domain finite element methods using
     cut elements: II. A stabilized Nitsche method, Appl. Num. Math.
     62(4):328-341, 2012.
-[2] J. Preuß, Higher order unfitted isoparametric space-time FEM on
-    moving domains. Master's thesis, NAM, University of Göttingen, 2018.
+[2] S. Badia, F. Verdugo, and A. F. Martín. The aggregated unfitted finite 
+    element method for elliptic problems. Comput. Methods Appl. Mech. 
+    Engrg., 336:533–553, 2018.  
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -61,11 +62,9 @@ ngsglobals.msg_level = 2
 # Quadrilateral (or simplicial mesh)
 quad_mesh = False
 # Mesh diameter
-maxh = 0.1
+maxh = 0.1 / 2
 # Finite element space order
-order = 3
-# Stabilization parameter for ghost-penalty
-gamma_stab = 0.1
+order = 2
 # Stabilization parameter for Nitsche
 lambda_nitsche = 10 * order * order
 
@@ -98,14 +97,13 @@ lsetp1 = lsetmeshadap.lset_p1
 
 # Element, facet and dof marking w.r.t. boundary approximation with lsetp1:
 ci = CutInfo(mesh, lsetp1)
-hasneg = ci.GetElementsOfType(HASNEG)
-hasif = ci.GetElementsOfType(IF)
+els_hasneg = ci.GetElementsOfType(HASNEG)
+els_neg = ci.GetElementsOfType(NEG)
+els_if = ci.GetElementsOfType(IF)
 
-# facets used for stabilization:
-ba_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasif)
-
-Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
-Vh = Restrict(Vhbase, hasneg)
+# Set up FE-Space
+Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=False)
+Vh = Restrict(Vhbase, els_hasneg)
 
 gfu = GridFunction(Vh)
 
@@ -114,30 +112,39 @@ h = specialcf.mesh_size
 n = Normalize(grad(lsetp1))
 
 # integration domains:
-dx = dCut(lsetp1, NEG, definedonelements=hasneg, deformation=deformation)
-ds = dCut(lsetp1, IF, definedonelements=hasif, deformation=deformation)
-dw = dFacetPatch(definedonelements=ba_facets, deformation=deformation)
+dx = dCut(lsetp1, NEG, definedonelements=els_hasneg, deformation=deformation)
+ds = dCut(lsetp1, IF, definedonelements=els_if, deformation=deformation)
 
-a = BilinearForm(Vh, symmetric=False)
+a = BilinearForm(Vh, symmetric=True)
 # Diffusion term
 a += grad(u) * grad(v) * dx
 # Nitsche term
 a += -grad(u) * n * v * ds
 a += -grad(v) * n * u * ds
 a += (lambda_nitsche / h) * u * v * ds
-# Ghost penalty stabilization (near the boundary)
-a += gamma_stab / h**2 * (u - u.Other()) * (v - v.Other()) * dw
 
 # R.h.s. term:
 f = LinearForm(Vh)
 f += coeff_f * v * dx
 
-# Assemble system
+# Assemble unstable system
 a.Assemble()
 f.Assemble()
 
+# Compute element patches for element aggregation
+EA = ElementAggregation(mesh, els_neg, els_if)
+
+# Set up embedding matrix for element aggregation
+P = AggEmbedding(EA, Vh, deformation=deformation)
+
+print(f'P shape: {P.shape}')
+PT = P.CreateTranspose()
+
+Aemb = PT @ a.mat @ P
+
 # Solve linear system
-gfu.vec.data = a.mat.Inverse(Vh.FreeDofs()) * f.vec
+gfuE = Aemb.Inverse(inverse='sparsecholesky') * (PT * f.vec)
+gfu.vec.data = P * gfuE
 
 # Measure the error
 l2error = sqrt(Integrate((gfu - exact)**2 * dx, mesh))

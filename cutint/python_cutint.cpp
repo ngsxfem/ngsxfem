@@ -29,11 +29,16 @@ void ExportNgsx_cutint(py::module &m)
         {
           static Timer timer("IntegrateX");
           RegionTimer reg (timer);
-          py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
-          if (ip_cont_.check())
-            ip_cont = make_shared<py::list>(ip_cont_());
-                       
+          py::extract<py::object> ip_cont_(ip_container);
+          if (!ip_cont_().is_none())
+          {
+            py::extract<py::list> ip_cont_as_list(ip_container);
+            if (ip_cont_as_list.check())
+            {
+              ip_cont = make_shared<py::list>(ip_cont_as_list());
+            }
+          }
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrateX");
@@ -42,7 +47,7 @@ void ExportNgsx_cutint(py::module &m)
           Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
           element_sum = 0.0;
 
-          int DIM = ma->GetDimension();
+          // int DIM = ma->GetDimension();
 
           int cfdim = cf->Dimension();
           if(element_wise && cfdim != 1)
@@ -75,7 +80,11 @@ void ExportNgsx_cutint(py::module &m)
                    for (int i = 0; i < mir.Size(); i++)
                    {
                      MyLock lock_ip_cont(mutex_ip_cont);
-                     ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                     if (space_time)
+                         ip_cont->append(tuple ( MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                                                ma.get(), VOL, static_cast<int>(el.Nr())}, (*ir)[i].Weight()));
+                     else
+                        ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
                                                ma.get(), VOL, static_cast<int>(el.Nr())});
                    }
                  if (element_wise)
@@ -164,14 +173,14 @@ heapsize : int
           static Timer timer("IntegrationPointExtrema"); RegionTimer reg (timer);
 
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
-          bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+          // bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrationPointExtrema");
 
           double min = 1e99;
           double max = -1e99;
 
-          int DIM = ma->GetDimension();
-          int cfdim = cf->Dimension();
+          // int DIM = ma->GetDimension();
+          // int cfdim = cf->Dimension();
 
           ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)

@@ -88,7 +88,7 @@ void ExportNgsx_spacetime(py::module &m)
   },
        py::arg("spacefes"),
        py::arg("timefe"),
-       py::arg_v("dirichlet", DummyArgument(), "None"),
+       py::arg("dirichlet")=py::none(),
        py::arg("heapsize") = 1000000,
        docu_string(R"raw_string(
 This function creates a SpaceTimeFiniteElementSpace based on a spacial FE space and a time Finite element

@@ -481,7 +481,7 @@ namespace ngfem
           HeapReset hr(lh);
           ngfem::ELEMENT_TYPE etfacet = transform.FacetType (k);
           //if(etfacet != ET_SEGM) throw Exception("Only ET_SEGM support yet!");
-          const IntegrationRule * ir_facet_tmp;
+          const IntegrationRule * ir_facet_tmp = nullptr;
 
           if(etfacet == ET_SEGM){
               IntegrationPoint ipl(0,0,0,0);
@@ -709,7 +709,7 @@ namespace ngfem
     //}
     //if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
 
-    IntegrationRule * ir_facet = nullptr;
+    // IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
 
     Array<double> wei_arr;
@@ -1216,7 +1216,7 @@ namespace ngfem
         auto mip_ai = new (lh) MappedIntegrationPoint<D,D>(*ip_ai,to_trafo);
         A.Col(d) = mip_ai->GetPoint() - mip_a0->GetPoint();
       }
-      Ainv = Inv(A);
+      CalcInverse(A,Ainv);
       w00 = abs(Det(A));
       ip_x00->Point().Range(0,D) = Ainv * f;
       ip_x0->Point().Range(0,D) = ip_x00->Point();
