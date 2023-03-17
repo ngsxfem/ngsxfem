@@ -481,7 +481,7 @@ namespace ngfem
           HeapReset hr(lh);
           ngfem::ELEMENT_TYPE etfacet = transform.FacetType (k);
           //if(etfacet != ET_SEGM) throw Exception("Only ET_SEGM support yet!");
-          const IntegrationRule * ir_facet_tmp;
+          const IntegrationRule * ir_facet_tmp = nullptr;
 
           if(etfacet == ET_SEGM){
               IntegrationPoint ipl(0,0,0,0);
@@ -709,7 +709,7 @@ namespace ngfem
     //}
     //if(etfacet == ET_POINT) throw Exception("ET_POINT not implemented/ tested in SymbolicCutFacetBilinearFormIntegrator");
 
-    IntegrationRule * ir_facet = nullptr;
+    // IntegrationRule * ir_facet = nullptr;
     const IntegrationRule * ir_scr = nullptr;
 
     Array<double> wei_arr;

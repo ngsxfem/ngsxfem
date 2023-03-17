@@ -1655,7 +1655,7 @@ namespace xintegration
             Vec<2> nref = interface_quad.normals[i];
             Vec<2> normal = absdet * Trans(Finv) * nref ;
             double len = L2Norm(normal);
-            const double weight = interface_quad.weights[i] * len;
+            // const double weight = interface_quad.weights[i] * len;
 
             (*ir_interface)[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
             ir = ir_interface;
@@ -1676,7 +1676,7 @@ namespace xintegration
             Vec<3> nref = interface_quad.normals[i];
             Vec<3> normal = absdet * Trans(Finv) * nref ;
             double len = L2Norm(normal);
-            const double weight = interface_quad.weights[i] * len;
+            // const double weight = interface_quad.weights[i] * len;
 
             (*ir_interface)[i] = IntegrationPoint (&interface_quad.points[i](0),interface_quad.weights[i] * len / mip.GetMeasure());
             ir = ir_interface;

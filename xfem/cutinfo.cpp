@@ -85,8 +85,8 @@ namespace ngcomp
         [&] (int elnr, LocalHeap & lh)
       {
         ElementId ei = ElementId(vb,elnr);
-        Ngs_Element ngel = ma->GetElement(ei);
-        ELEMENT_TYPE eltype = ngel.GetType();
+        // Ngs_Element ngel = ma->GetElement(ei);
+        // ELEMENT_TYPE eltype = ngel.GetType();
         ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
 
         double part_vol [] = {0.0, 0.0};
@@ -367,8 +367,8 @@ namespace ngcomp
        [&] (int elnr, LocalHeap & lh)
        {
          ElementId ei = ElementId(vb,elnr);
-         Ngs_Element ngel = ma->GetElement(ei);
-         ELEMENT_TYPE eltype = ngel.GetType();
+         // Ngs_Element ngel = ma->GetElement(ei);
+         // ELEMENT_TYPE eltype = ngel.GetType();
          ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
 
          Array<DofId> dnums(0,lh);

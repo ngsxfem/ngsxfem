@@ -47,7 +47,7 @@ void ExportNgsx_cutint(py::module &m)
           Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
           element_sum = 0.0;
 
-          int DIM = ma->GetDimension();
+          // int DIM = ma->GetDimension();
 
           int cfdim = cf->Dimension();
           if(element_wise && cfdim != 1)
@@ -173,14 +173,14 @@ heapsize : int
           static Timer timer("IntegrationPointExtrema"); RegionTimer reg (timer);
 
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
-          bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+          // bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrationPointExtrema");
 
           double min = 1e99;
           double max = -1e99;
 
-          int DIM = ma->GetDimension();
-          int cfdim = cf->Dimension();
+          // int DIM = ma->GetDimension();
+          // int cfdim = cf->Dimension();
 
           ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)

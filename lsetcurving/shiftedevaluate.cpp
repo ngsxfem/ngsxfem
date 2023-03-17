@@ -18,7 +18,7 @@ namespace ngfem
 
     //const ScalarFiniteElement<SpaceD> & scafe =
             //dynamic_cast<const ScalarFiniteElement<SpaceD> & > (bfel);
-    const int ndof = bfel.GetNDof();
+    // const int ndof = bfel.GetNDof();
 
     //FlatVector<> shape (ndof,lh);
 

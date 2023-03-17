@@ -102,7 +102,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
   static Timer timer("CutIntegral::T_CutIntegrate");
   RegionTimer reg (timer);
   LocalHeap glh(1000000000, "lh-T_CutIntegrate");
-  bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+  // bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
     throw Exception("CutIntegrate can only deal with VOL a.t.m..");
   TSCAL sum = 0.0;
@@ -121,7 +121,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
         }
     }
   
-  int DIM = ma.GetDimension();
+  // int DIM = ma.GetDimension();
   int cfdim = cf->Dimension();
   if(cfdim != 1)
     throw Exception("only implemented for 1 dimensional coefficientfunctions");

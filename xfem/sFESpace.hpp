@@ -13,9 +13,9 @@ namespace ngcomp
   {
   protected:
     int ndof=0;
+    shared_ptr<CoefficientFunction> coef_lset = NULL;
     int order;
     BitArray activeelem;
-    shared_ptr<CoefficientFunction> coef_lset = NULL;
     Array<int> firstdof_of_el;
     Array<Mat<2>> cuts_on_el;
     DummyFE<ET_TRIG> * dummy;

@@ -28,7 +28,7 @@ private:
 
     DiffOpShiftedEval(shared_ptr<GridFunction> aback,shared_ptr<GridFunction> aforth, shared_ptr<DifferentialOperator> a_evaluator)
       : DifferentialOperator(a_evaluator->Dim(), a_evaluator->BlockDim(), VOL, a_evaluator->DiffOrder()),
-        back(aback), forth(aforth), evaluator(a_evaluator)
+        evaluator(a_evaluator), back(aback), forth(aforth)
     {
       SetDimensions(Array<int> ( { a_evaluator->Dim()} ));
     }

@@ -114,7 +114,7 @@ namespace ngfem
     FacetPatchDifferentialSymbol (VorB _vb, VorB _element_vb, bool _skeleton, int _time_order, optional<double> _tref)
       : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), time_order(_time_order), tref(_tref){ ; }
     FacetPatchDifferentialSymbol (FacetPatchDifferentialSymbol & _cds, double _scale)
-      : DifferentialSymbol(_cds), time_order(_cds.time_order), tref(_cds.tref), scale(_cds.scale*_scale) { ; }
+      : DifferentialSymbol(_cds), time_order(_cds.time_order), scale(_cds.scale*_scale), tref(_cds.tref) { ; }
 
     virtual ~FacetPatchDifferentialSymbol() { ; }
     virtual shared_ptr<Integral> MakeIntegral(shared_ptr<CoefficientFunction> cf) const
