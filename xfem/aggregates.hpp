@@ -70,11 +70,13 @@ namespace ngcomp
                   const TFUNC & patchwise_func
                   );
 
-  shared_ptr<SparseMatrix<double>> SetupAggEmbedding(shared_ptr<ElementAggregation> elagg,
+  // setup AggFEM Embedding matrix
+  shared_ptr<SparseMatrix<double>> SetupExtensionEmbedding(shared_ptr<ElementAggregation> elagg,
                                                      shared_ptr<FESpace> fes,
                                                      shared_ptr<SumOfIntegrals> bf,
                                                      LocalHeap &clh);
 
+  // solve patch-local problems
   void PatchwiseSolve(shared_ptr<ElementAggregation> elagg, 
                       shared_ptr<FESpace> fes,
                       shared_ptr<SumOfIntegrals> bf,

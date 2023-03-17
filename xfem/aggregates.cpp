@@ -520,11 +520,10 @@ namespace ngcomp
     
   }
 
-  shared_ptr<SparseMatrix<double>> SetupAggEmbedding(shared_ptr<ElementAggregation> elagg, 
-                                                     shared_ptr<FESpace> fes,
-                                                     shared_ptr<SumOfIntegrals> bf,
-                                                     LocalHeap & clh
-                                                     )
+  shared_ptr<SparseMatrix<double>> SetupExtensionEmbedding(shared_ptr<ElementAggregation> elagg,
+                                                           shared_ptr<FESpace> fes,
+                                                           shared_ptr<SumOfIntegrals> bf,
+                                                           LocalHeap &clh)
   {
 
     // Setup of Sparse-Matrix for Embedding

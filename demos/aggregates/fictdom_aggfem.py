@@ -2,8 +2,8 @@
 In this example we solve a scalar *unfitted* PDE problem. As a
 discretisation method we use a level set based geometry description and
 a Cut (or Fictitious) Finite element method with a Nitsche formulation
-to impose boundary conditions. For stability we add a ghost penalty
-stabilization.
+to impose boundary conditions. For stability we use element aggregations
+which constrain dofs on cut elements by extrapolating interior dofs
 
 Domain:
 -------
@@ -44,6 +44,9 @@ Literature:
 [1] E. Burman, P. Hansbo, Fictitious domain finite element methods using
     cut elements: II. A stabilized Nitsche method, Appl. Num. Math.
     62(4):328-341, 2012.
+[2] S. Badia, F. Verdugo, and A. F. Martín. The aggregated unfitted finite 
+    element method for elliptic problems. Comput. Methods Appl. Mech. 
+    Engrg., 336:533–553, 2018.  
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -98,11 +101,6 @@ els_hasneg = ci.GetElementsOfType(HASNEG)
 els_neg = ci.GetElementsOfType(NEG)
 els_if = ci.GetElementsOfType(IF)
 
-# Compute element patches for element aggregation
-EA = ElementAggregation(mesh)
-EA.Update(els_neg, els_if)
-facets_in_patches = EA.patch_interior_facets
-
 # Set up FE-Space
 Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=False)
 Vh = Restrict(Vhbase, els_hasneg)
@@ -116,9 +114,8 @@ n = Normalize(grad(lsetp1))
 # integration domains:
 dx = dCut(lsetp1, NEG, definedonelements=els_hasneg, deformation=deformation)
 ds = dCut(lsetp1, IF, definedonelements=els_if, deformation=deformation)
-dw = dFacetPatch(definedonelements=facets_in_patches, deformation=deformation)
 
-a = BilinearForm(Vh, symmetric=False)
+a = BilinearForm(Vh, symmetric=True)
 # Diffusion term
 a += grad(u) * grad(v) * dx
 # Nitsche term
@@ -134,11 +131,13 @@ f += coeff_f * v * dx
 a.Assemble()
 f.Assemble()
 
-# Set up embedding matrix for element aggregation
-ghost_penalty = (u - u.Other()) * (v - v.Other()) * dw
+# Compute element patches for element aggregation
+EA = ElementAggregation(mesh, els_neg, els_if)
 
-P = SetupAggEmbedding(EA, Vh, ghost_penalty)
-print(f'PT shape: {P.shape}')
+# Set up embedding matrix for element aggregation
+P = AggEmbedding(EA, Vh, deformation=deformation)
+
+print(f'P shape: {P.shape}')
 PT = P.CreateTranspose()
 
 Aemb = PT @ a.mat @ P

@@ -211,12 +211,29 @@ py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
 ElementAggregation does ...)
 )raw")
     .def("__init__",  [] (ElementAggregation *instance,
-                          shared_ptr<MeshAccess> ma
+                          shared_ptr<MeshAccess> ma,
+                          py::object proot, 
+                          py::object pbad,
+                          int heapsize                          
                           )
          {
-           new (instance) ElementAggregation (ma);
+           auto self = new (instance) ElementAggregation (ma);
+           PyBA root = nullptr, bad= nullptr;
+           if (!proot.is_none() && py::extract<PyBA> (proot).check())
+             root = py::extract<PyBA>(proot)();
+           if (!pbad.is_none() && py::extract<PyBA> (pbad).check())
+             bad = py::extract<PyBA>(pbad)();
+
+           if (root && bad)
+           {
+             LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
+             self->Update(root, bad, lh);
+           }
          },
          py::arg("mesh"),
+         py::arg("root_elements") = py::none(),
+         py::arg("bad_elements") = py::none(),
+         py::arg("heapsize") = 1000000,
          docu_string(R"raw_string(
 Creates a ElementAggregation based on ...
 )raw_string")
@@ -299,21 +316,22 @@ lf : SumOfIntegrals
   );
 
 
-  m.def("SetupAggEmbedding", [] (shared_ptr<ElementAggregation> elagg, 
+  m.def("ExtensionEmbedding", [] (shared_ptr<ElementAggregation> elagg, 
                                  shared_ptr<FESpace> fes,
                                  shared_ptr<SumOfIntegrals> bf,
                                  int heapsize
                                 )
         { 
-          LocalHeap lh(heapsize, "SetupAggEmbedding-heap", true);
-          return SetupAggEmbedding(elagg, fes, bf, lh); 
+          LocalHeap lh(heapsize, "ExtensionEmbedding-heap", true);
+          return SetupExtensionEmbedding(elagg, fes, bf, lh); 
         },
         py::arg("elagg"),
         py::arg("fes"),
         py::arg("bf"),
         py::arg("heapsize") = 1000000,
         docu_string(R"raw_string(
-Computes the embedding matrix for aggregated finite elements.
+Computes the embedding matrix for an extension minimizing a described energy on 
+patched (followed by averaging if some dofs are shared by multiple patches)
 
 Parameters:
 
@@ -324,7 +342,7 @@ fes : ngsolve.FESpace
   The finite element space which is aggregated. 
 
 bf : ngsolve.SumOfIntegrals
-  The bilinear form, ....
+  The bilinear form describing the energy to be minized
 
 )raw_string")
         );

@@ -36,6 +36,9 @@ Literature:
 [2] E. Burman, P. Hansbo, Fictitious domain finite element methods using
     cut elements: II. A stabilized Nitsche method, Appl. Num. Math.
     62(4):328-341, 2012.
+[3] S. Badia, F. Verdugo, and A. F. Martín. The aggregated unfitted finite 
+    element method for elliptic problems. Comput. Methods Appl. Mech. 
+    Engrg., 336:533–553, 2018.      
 """
 
 # ------------------------------ LOAD LIBRARIES -------------------------------
@@ -93,10 +96,6 @@ els_neg = ci.GetElementsOfType(NEG)
 els_if = ci.GetElementsOfType(IF)
 # Facets with parts inside the domain
 ba_fd_facets = GetFacetsWithNeighborTypes(mesh, a=els_hasneg, b=els_hasneg)
-# Compute element patches for element aggregation
-EA = ElementAggregation(mesh)
-EA.Update(els_neg, els_if)
-facets_in_patches = EA.patch_interior_facets
 
 Vhbase = L2(mesh, order=order, dirichlet=[], dgjumps=True)
 Vh = Restrict(Vhbase, els_hasneg)
@@ -120,8 +119,6 @@ dk = dCut(lsetp1, NEG, skeleton=True, definedonelements=ba_fd_facets,
           deformation=deformation)
 # Domain boundary integrals
 ds = dCut(lsetp1, IF, definedonelements=els_if, deformation=deformation)
-# Ghost penalty integrals
-dw = dFacetPatch(definedonelements=facets_in_patches, deformation=deformation)
 
 a = RestrictedBilinearForm(Vh, "a", els_hasneg, ba_fd_facets, check_unused=False)
 a += grad(u) * grad(v) * dx
@@ -135,11 +132,12 @@ f += coeff_f * v * dx
 f.Assemble()
 a.Assemble()
 
-# Set up embedding matrix for element aggregation
-ghost_penalty = (u - u.Other()) * (v - v.Other()) * dw
+# Compute element patches for element aggregation
+EA = ElementAggregation(mesh, els_neg, els_if)
 
-P = SetupAggEmbedding(EA, Vh, ghost_penalty)
-print(f'PT shape: {P.shape}')
+# Set up embedding matrix for element aggregation
+P = AggEmbedding(EA, Vh, deformation=deformation)
+print(f'P shape: {P.shape}')
 PT = P.CreateTranspose()
 
 Aemb = PT @ a.mat @ P
