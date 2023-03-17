@@ -64,14 +64,14 @@ We provide two main sources with which to learn how to use `ngsxfem`:
 Major contributions:
 
 * Christoph Lehrenfeld (main author)
-* Fabian Heimann (cut integration, space-time)
-* Henry von Wahl (multiple levelsets, mac support)
+* Fabian Heimann (cut integration, space-time, AggFEM)
+* Henry von Wahl (multiple levelsets, mac support, AggFEM)
 * Janosch Preuss (space-time)
 * Thomas Ludescher (multigrid)
+* Paul Stocker (CI, docu, builds, AggFEM)
 
 Additional contributions:
 
-* Paul Stocker (CI, docu, builds)
 * Pedro Costa Klein (CI, docu)
 
 # Community guidelines
