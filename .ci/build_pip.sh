@@ -21,8 +21,8 @@ do
     rm -rf _skbuild
     #auditwheel repair xfem*.whl
     #rm -f *.whl
-    rename linux_ manylinux_2_17_x86_64.manylinux2014_ ngsxfem*.whl
-    mv ngsxfem*.whl wheelhouse/
+    rename linux_ manylinux_2_17_x86_64.manylinux2014_ xfem*.whl
+    mv xfem*.whl wheelhouse/
     rm -rf *.whl
 
     # avx2 build:
