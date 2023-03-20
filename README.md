@@ -1,5 +1,5 @@
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ngsxfem/ngsxfem/build-and-test-ngsxfem.yml?label=GitHub%20Workflow%20Status&logo=github)]((https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml))
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Build,%20test%20(and%20publish%20release)%20of%20ngsxfem?label=build%20and%20test&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
+ [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
 [![jossstatus](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb/status.svg)](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb)
 
  
@@ -34,21 +34,21 @@ The main features of `ngsxfem` are:
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 
-| Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | :ghost: | `Agg` | `Hex` | `Tet` | `MPI` |
+| Features ⇲| `CFE` | `XFE` | `DG` | `Iso` | `MLS` | `ST` | `Gh` | `Ag` | `Hex` | `Tet` | `MPI` |
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `CFE`: CutFEM form. | / | / | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| `XFE`: XFEM formulation | / | / | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| `DGF`: Discont. Galerkin  | :heavy_check_mark: | :heavy_check_mark: | / | :heavy_check_mark: | :x: | :heavy_check_mark:| :heavy_check_mark: | :heavy_check_mark:| :heavy_check_mark:| :heavy_check_mark: | :x: |
-| `Iso`: isoparametric map | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:| :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| `MLS`: multiple level set | :heavy_check_mark: | :x: | :x: | :x: | / | :x: | :heavy_check_mark: | :heavy_check_mark:| :x: | :heavy_check_mark: | :heavy_check_mark: |
-| `STF`: space-time FEM | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :x: | / | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-|  :ghost: : Ghost penalty | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | / |  :heavy_check_mark: | :heavy_check_mark: | :x: |
-| `Agg`: Aggregated FEM | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x: | / | / | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| `Hex`: quads / hexes | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | / | :heavy_check_mark: |
-| `Tet`: trigs./tets | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | / | :heavy_check_mark: |
-| `MPI`: MPI | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: | :heavy_check_mark: | / |
+| `CFE`: CutFEM form. | / | / | y | y | y | y | y | y | y | y | y |
+| `XFE`: XFEM formulation | / | / | y | y | n | n | y | n | y | y | y |
+| `DG`: Discont. Galerkin  | y | y | / | y | n | y| y | y| y| y | n |
+| `Iso`: isoparametric map | y | y | y | / | n | y | y | y| y | y | y |
+| `MLS`: multiple level set | y | n | n | n | / | n | y | y| n | y | y |
+| `ST`: space-time FEM | y | n | y | y | n | / | y | n | y | y | y |
+| `Gh`: Ghost penalty | y | y | y | y | y | y | / | / |  y | y | n |
+| `Ag`: Agg. FEM | y | n | y | y | y | n | / | / | y | y | n |
+| `Hex`: quads / hexes | y | y | y | y | n | y | y | y | / | / | y |
+| `Tet`: trigs./tets | y | y | y | y | y | y | y | y | / | / | y |
+| `MPI`: MPI | y | y | n | y | y | y | n | n | y | y | / |
 
-Some of the :x:s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
+Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
 
 # Examples and Documentation
 
