@@ -34,21 +34,21 @@ The main features of `ngsxfem` are:
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 
-| Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Agg` | `Hex` | `Tet` | `MPI` |
+| Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | :ghost: | `Agg` | `Hex` | `Tet` | `MPI` |
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes | yes |
-| `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | no | yes | yes | yes |
-| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | yes| yes | yes| yes| yes | no |
-| `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes| yes | yes | yes |
-| `MLS`: multiple level set | yes | no | no | no | / | no | yes | yes| no | yes | yes |
-| `STF`: space-time FEM | yes | no | yes | yes | no | / | yes | no | yes | yes | yes |
-| `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | / |  yes | yes | no |
-| `Agg`: Aggregated FEM | yes | no | yes | yes | yes | no | / | / | yes | yes | no |
-| `Hex`: quads / hexes | yes | yes | yes | yes | no | yes | yes | yes | / | / | yes |
-| `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
-| `MPI`: MPI | yes | yes | no | yes | yes | yes | no | no | yes | yes | / |
+| `CFE`: CutFEM form. | / | / | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `XFE`: XFEM formulation | / | / | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `DGF`: Discont. Galerkin  | :heavy_check_mark: | :heavy_check_mark: | / | :heavy_check_mark: | :x: | :heavy_check_mark:| :heavy_check_mark: | :heavy_check_mark:| :heavy_check_mark:| :heavy_check_mark: | :x: |
+| `Iso`: isoparametric map | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:| :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `MLS`: multiple level set | :heavy_check_mark: | :x: | :x: | :x: | / | :x: | :heavy_check_mark: | :heavy_check_mark:| :x: | :heavy_check_mark: | :heavy_check_mark: |
+| `STF`: space-time FEM | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :x: | / | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+|  :ghost: : Ghost penalty | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | / |  :heavy_check_mark: | :heavy_check_mark: | :x: |
+| `Agg`: Aggregated FEM | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x: | / | / | :heavy_check_mark: | :heavy_check_mark: | :x: |
+| `Hex`: quads / hexes | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | / | :heavy_check_mark: |
+| `Tet`: trigs./tets | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | / | / | :heavy_check_mark: |
+| `MPI`: MPI | :heavy_check_mark: | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: | :heavy_check_mark: | / |
 
-Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
+Some of the :x:s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
 
 # Examples and Documentation
 
