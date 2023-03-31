@@ -31,8 +31,6 @@ Scientific literature using `ngsxfem`
 
 * S. Groß, A. Reusken. "Analysis of optimal Preconditioners for CutFEM". 2022. arXiv: [2202.09069](https://arxiv.org/abs/2202.09069) [math.NA].
 
-* P. Brandner. “Numerical Methods for Surface Navier-Stokes Equations in Stream Function Formulation”. PhD thesis. RWTH Aachen University, 2022. doi: [10.18154/RWTH-2022-04531](https://doi.org/10.18154/RWTH-2022-04531).
-
 ### Fracture Porous Media
 
 * G. Fu, Y. Yang. "A hybridizable discontinuous Galerkin method on unfitted meshes for single-phase Darcy flow in fractured porous media". arXiv: [2209.05445](https://arxiv.org/abs/2209.05445) [math.NA].
@@ -89,6 +87,10 @@ Scientific literature using `ngsxfem`
 * P. Brandner and A. Reusken. “Finite element error analysis of surface Stokes equations in stream function formulation”. In: ESAIM Math. Model. Numer. Anal. 54.6 (12th Oct. 2020), pp. 2069–2097. doi: [10.1051/m2an/2020044](https://doi.org/10.1051/m2an/2020044).
 
 * H. Sass and A. Reusken. An Accurate and Robust Eulerian Finite Element Method for Partial Differential Equations on Evolving Surfaces. Dec. 22, 2022. arXiv: [2212.12030](https://arxiv.org/abs/2212.12030) [math.NA].
+
+* P. Brandner. “Numerical Methods for Surface Navier-Stokes Equations in Stream Function Formulation”. PhD thesis. RWTH Aachen University, 2022. doi: [10.18154/RWTH-2022-04531](https://doi.org/10.18154/RWTH-2022-04531).
+
+* S. Lu and X. Xu. “A Geometrically Consistent Trace Finite Element Method For The Laplace-Beltrami Eigenvalue Problem”. 2021. arXiv: [2108.02434](https://arxiv.org/abs/2108.02434) [math.NA]
 
 ### Shape optimization
 * H.-G. Raumer. “Shape Optimization for Interface Problems using unfitted Finite Elements”. MA thesis. Georg-August Universität Göttingen, 28th Mar. 2018. url: http://cpde.math.uni-goettingen.de/data/Rau18_Ma.pdf.
