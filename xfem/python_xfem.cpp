@@ -208,7 +208,10 @@ VOL_or_BND : ngsolve.comp.VorB
 
 py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
     (m, "ElementAggregation",R"raw(
-ElementAggregation does ...)
+ElementAggregation does the following:  
+  It collects patches of elements that allow to stabilize bad cut elements by at least one
+  good element (the root element).
+)
 )raw")
     .def("__init__",  [] (ElementAggregation *instance,
                           shared_ptr<MeshAccess> ma,
@@ -235,7 +238,7 @@ ElementAggregation does ...)
          py::arg("bad_elements") = py::none(),
          py::arg("heapsize") = 1000000,
          docu_string(R"raw_string(
-Creates a ElementAggregation based on ...
+Creates a ElementAggregation based on a mesh, a list of root and a list of bad elements.
 )raw_string")
       )
         .def("Update", [](ElementAggregation & self,

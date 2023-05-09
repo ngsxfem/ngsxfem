@@ -100,7 +100,6 @@ jobs:
   publish:
     needs: [ctest-pytests, ctest-tutorials, ctest-mayfail]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/release'
     steps:
       - uses: actions/checkout@v2
       - name: Update pip and Install setuptools
