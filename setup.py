@@ -109,9 +109,9 @@ class CMakeBuild(build_ext):
 
 name = "xfem"
 ngsolve_name = "ngsolve"
-if 'NETGEN_ARCH' in os.environ and os.environ["NETGEN_ARCH"] == "avx2":
-    name = "xfem-avx2"
-    ngsolve_name = "ngsolve-avx2"
+#if 'NETGEN_ARCH' in os.environ and os.environ["NETGEN_ARCH"] == "avx2":
+#    name = "xfem-avx2"
+#    ngsolve_name = "ngsolve-avx2"
 
 if ngsolve_version:    
     print("require", ngsolve_name+">="+ngsolve_version)
