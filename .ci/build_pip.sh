@@ -39,6 +39,7 @@ do
     
 done
 
+python3 setup.py sdist --dist-dir wheelhouse
 
 pip install -U twine
 #twine upload wheelhouse/*manylinux*.whl
