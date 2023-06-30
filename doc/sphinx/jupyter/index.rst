@@ -32,7 +32,6 @@ To work through the i-tutorials we refer to the repository https://github.com/ng
    :numbered:
    :maxdepth: 1
 
-  aggregation.ipynb
   basics.ipynb
   intlset.ipynb
   cutfem.ipynb
@@ -40,5 +39,6 @@ To work through the i-tutorials we refer to the repository https://github.com/ng
   spacetime_unfitted.ipynb
   mlset_basic.ipynb
   mlset_pde.ipynb
+  aggregation.ipynb
   unfmixed.ipynb
   
