@@ -33,7 +33,7 @@ Scientific literature using `ngsxfem`
 
 ### Fracture Porous Media
 
-* G. Fu, Y. Yang. "A hybridizable discontinuous Galerkin method on unfitted meshes for single-phase Darcy flow in fractured porous media". arXiv: [2209.05445](https://arxiv.org/abs/2209.05445) [math.NA].
+* G. Fu, Y. Yang. "A hybridizable discontinuous Galerkin method on unfitted meshes for single-phase Darcy flow in fractured porous media". Adv. in Water Resources, 2023, doi: [10.1016/j.advwatres.2023.104390](https://doi.org/10.1016/j.advwatres.2023.104390), arXiv: [2209.05445](https://arxiv.org/abs/2209.05445) [math.NA].
 
 ### PDEs on moving domains: Space-time methods
 * F. Heimann, C. Lehrenfeld and J. Preuß. "Geometrically higher order unfitted space-time methods for PDEs on moving domains". Feb. 2022, arXiv: [2202.02216](https://arxiv.org/abs/2202.02216)
@@ -96,7 +96,8 @@ Scientific literature using `ngsxfem`
 * H.-G. Raumer. “Shape Optimization for Interface Problems using unfitted Finite Elements”. MA thesis. Georg-August Universität Göttingen, 28th Mar. 2018. url: http://cpde.math.uni-goettingen.de/data/Rau18_Ma.pdf.
 
 ### Model order reduction and optimal control
-* A. Aretaki and E. N. Karatzas. Random geometries for optimal control PDE problems based on fictitious domain FEMs and cut elements. 29th Feb. 2020. arXiv: [2003.00352](https://arxiv.org/abs/2003.00352) [math.NA].
+* A. Aretaki and E. N. Karatzas. Random geometries for optimal control PDE problems based on fictitious domain FEMs and cut elements. 
+Journal of Computational and Appl. Math, 2022, doi: [10.1016/j.cam.2022.114286](https://doi.org/10.1016/j.cam.2022.114286), arXiv: [2003.00352](https://arxiv.org/abs/2003.00352) [math.NA].
 
 * E. N. Karatzas, M. Nonino, F. Ballarin and G. Rozza. A Reduced Order Cut Finite Element method for geometrically parameterized steady and unsteady Navier-Stokes problems. 10th Oct. 2020. arXiv: [2010.04953](https://arxiv.org/abs/2010.04953) [math.NA].
 
