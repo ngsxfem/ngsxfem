@@ -15,7 +15,8 @@ do
     export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
     export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
     export PATH="$ORIGINAL_PATH:$PYDIR"
-    $PYDIR/pip install -U pytest-check numpy wheel scikit-build mkl==2022.* mkl-devel==2022.* setuptools
+    $PYDIR/pip install -U pytest-check numpy wheel scikit-build setuptools 
+    #mkl==2022.* mkl-devel==2022.*
     $PYDIR/pip install ngsolve #--pre
 
     #RUN $PYDIR/pip install -vvv .
@@ -39,6 +40,7 @@ do
     
 done
 
+python3 setup.py sdist --dist-dir wheelhouse
 
 pip install -U twine
 #twine upload wheelhouse/*manylinux*.whl

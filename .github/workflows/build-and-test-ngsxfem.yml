@@ -97,23 +97,22 @@ jobs:
         run: .ci/ci_ctests.sh pytests
         shell: bash
 
-  publish:
-    needs: [ctest-pytests, ctest-tutorials, ctest-mayfail]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/release'
-    steps:
-      - uses: actions/checkout@v2
-      - name: Update pip and Install setuptools
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools
-      - name: Package xfem Sources for PyPI
-        run: python3 setup.py sdist
-      - name: Publish source distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          skip_existing: true
-          password: ${{ secrets.PYPI_API_TOKEN }}
+  # publish:
+  #   needs: [ctest-pytests, ctest-tutorials, ctest-mayfail]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Update pip and Install setuptools
+  #       run: |
+  #         python3 -m pip install --upgrade pip
+  #         python3 -m pip install setuptools
+  #     - name: Package xfem Sources for PyPI
+  #       run: python3 setup.py sdist
+  #     - name: Publish source distribution to PyPI
+  #       uses: pypa/gh-action-pypi-publish@master
+  #       with:
+  #         skip_existing: true
+  #         password: ${{ secrets.PYPI_API_TOKEN }}
 
   check-demo-codestyle:
     runs-on: ubuntu-latest  

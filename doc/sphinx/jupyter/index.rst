@@ -39,4 +39,6 @@ To work through the i-tutorials we refer to the repository https://github.com/ng
   spacetime_unfitted.ipynb
   mlset_basic.ipynb
   mlset_pde.ipynb
-
+  aggregation.ipynb
+  unfmixed.ipynb
+  

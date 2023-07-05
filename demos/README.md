@@ -13,6 +13,9 @@ The python files in this directory provide several examples that demonstrate the
 | [tracefem.py](tracefem.py) | stationary surface PDE problem with a TraceFEM discretization |
 | [fictdom_dg.py](fictdom_dg.py) |   Poisson problem on an unfitted (smooth) domain described by a level set function, discretized with a Cut Discontinuous Galerkin method and Nitsche.|
 | [moving_domain.py](moving_domain.py) | Parabolic PDE on a moving domain solved by an Eulerian time stepping method using isoparametric CutFEM and Ghost penalty stabilization. |
+| [aggregates/aggfem_shapetester.py](aggregates/aggfem_shapetester.py) | Explanation of aggregated FEM basis functions as a means to deal with (small) cut elements. |
+| [aggregates/fictdom_aggfem.py](aggregates/fictdom_aggfem.py) | FEM basis aggregation to solve a fictitious domain problem (without ghost penalties). |
+| [aggregates/fictdom_dg_aggfem.py](aggregates/fictdom_dg_aggfem.py) | DG basis aggregation (cell merging) to solve a fictitious domain problem (without ghost penalties). |
 | [spacetime/spacetimeDG_fitted.py](spacetime/spacetimeDG_fitted.py) | Parabolic PDE on a stationary fitted domain solved by a space-time DG-in-time method. |
 | [spacetime/spacetimeDG_unfitted.py](spacetime/spacetimeDG_unfitted.py) | Parabolic PDE on a moving domain solved by a an unfitted isoparametric space-time DG-in-time CG-in-time method. |
 | [spacetime/spacetimeCG_unfitted.py](spacetime/spacetimeCG_unfitted.py) | Parabolic PDE on a moving domain solved by a an unfitted isoparametric space-time continuous-in-time CG-in-time Petrov-Galerkin method. |

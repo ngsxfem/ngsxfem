@@ -5,10 +5,10 @@ from ngsolve.meshes import MakeStructured2DMesh
 mesh = MakeStructured2DMesh(quads=False, nx=3, ny=2)
 
 levelset = x - 0.8
-gfu = GridFunction(H1(mesh))
-InterpolateToP1(levelset, gfu)
+gflset = GridFunction(H1(mesh))
+InterpolateToP1(levelset, gflset)
 
-ci = CutInfo(mesh, gfu)
+ci = CutInfo(mesh, gflset)
 roots = ci.GetElementsOfType(NEG)
 bads = ci.GetElementsOfType(IF)
 

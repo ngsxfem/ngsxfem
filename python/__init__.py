@@ -985,26 +985,29 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
         else:
             return RestrictedBilinearFormDouble(space,*argument_list,**kwargs)
 
-def AggEmbedding(EA, fes, deformation=None):
+def AggEmbedding(EA, fes, deformation=None, heapsize=1000000):
     """
     Computes and returns embedding matrix for a patchwise polynomial extension 
     (realized through ghost penalties), 
     followed by averaging if some dofs are shared by multiple patches.
 
-    Parameters:
+    Parameters
 
     elagg : ElementAggregation
-    ElementAggregation instace defining the patches which are aggregated into a single element
+      ElementAggregation instace defining the patches which are aggregated into a single element
 
     fes : ngsolve.FESpace
-    The finite element space which is aggregated. 
+      The finite element space which is aggregated. 
     
     deformation : ngsolve.GridFunction [mesh.dim]
-    The mesh deformation (needed for Ghost penalty assembly)
+      The mesh deformation (needed for Ghost penalty assembly)
+
+    heapsize : int
+        heapsize for local computations.
     """
     u,v = fes.TnT()
     ghost_penalty = (u - u.Other()) * (v - v.Other()) * dFacetPatch(deformation=deformation)
-    return ExtensionEmbedding(EA, fes, ghost_penalty)
+    return ExtensionEmbedding(EA, fes, ghost_penalty, heapsize=heapsize)
 
 
 # some global scope manipulations (monkey patches etc..):

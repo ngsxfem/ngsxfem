@@ -1,5 +1,5 @@
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ngsxfem/ngsxfem/build-and-test-ngsxfem.yml?label=GitHub%20Workflow%20Status&logo=github)]((https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml))
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ngsxfem/ngsxfem/Build,%20test%20(and%20publish%20release)%20of%20ngsxfem?label=build%20and%20test&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
+ [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
 [![jossstatus](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb/status.svg)](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb)
 
  
@@ -34,19 +34,19 @@ The main features of `ngsxfem` are:
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 
-| Features ⇲| `CFE` | `XFE` | `DGF` | `Iso` | `MLS` | `STF` | `GhP` | `Agg` | `Hex` | `Tet` | `MPI` |
+| Features ⇲| `CFE` | `XFE` | `DG` | `Iso` | `MLS` | `ST` | `Gh` | `Ag` | `Hex` | `Tet` | `MPI` |
 |-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `CFE`: CutFEM form. | / | / | yes | yes | yes | yes | yes | yes | yes | yes | yes |
-| `XFE`: XFEM formulation | / | / | yes | yes | no | no | yes | no | yes | yes | yes |
-| `DGF`: Discont. Galerkin  | yes | yes | / | yes | no | yes| yes | yes| yes| yes | no |
-| `Iso`: isoparametric map | yes | yes | yes | / | no | yes | yes | yes| yes | yes | yes |
-| `MLS`: multiple level set | yes | no | no | no | / | no | yes | yes| no | yes | yes |
-| `STF`: space-time FEM | yes | no | yes | yes | no | / | yes | no | yes | yes | yes |
-| `GhP`: Ghost penalty | yes | yes | yes | yes | yes | yes | / | / |  yes | yes | no |
-| `Agg`: Aggregated FEM | yes | no | yes | yes | yes | no | / | / | yes | yes | no |
-| `Hex`: quads / hexes | yes | yes | yes | yes | no | yes | yes | yes | / | / | yes |
-| `Tet`: trigs./tets | yes | yes | yes | yes | yes | yes | yes | yes | / | / | yes |
-| `MPI`: MPI | yes | yes | no | yes | yes | yes | no | no | yes | yes | / |
+| `CFE`: CutFEM form. | / | / | y | y | y | y | y | y | y | y | y |
+| `XFE`: XFEM formulation | / | / | y | y | n | n | y | n | y | y | y |
+| `DG`: Discont. Galerkin  | y | y | / | y | n | y| y | y| y| y | n |
+| `Iso`: isoparametric map | y | y | y | / | n | y | y | y| y | y | y |
+| `MLS`: multiple level set | y | n | n | n | / | n | y | y| n | y | y |
+| `ST`: space-time FEM | y | n | y | y | n | / | y | n | y | y | y |
+| `Gh`: Ghost penalty | y | y | y | y | y | y | / | / |  y | y | n |
+| `Ag`: Agg. FEM | y | n | y | y | y | n | / | / | y | y | n |
+| `Hex`: quads / hexes | y | y | y | y | n | y | y | y | / | / | y |
+| `Tet`: trigs./tets | y | y | y | y | y | y | y | y | / | / | y |
+| `MPI`: MPI | y | y | n | y | y | y | n | n | y | y | / |
 
 Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
 

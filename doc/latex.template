@@ -4,6 +4,8 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{longtable}
+\usepackage{booktabs}
 
 \usepackage{fontspec}
 \setmainfont[Numbers = Uppercase,

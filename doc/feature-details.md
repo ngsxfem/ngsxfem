@@ -34,3 +34,10 @@ Thereby the piecewise linear approximation of the level set (which is only of se
 To obtain robust methods for partial differential equations on unfitted moving domain we can formulate space-time discretizations. `ngsxfem` provides the necessary tools to define space-time finite element spaces and to integrate on space-time domains. Furthermore, it extends the tools for higher order accurate geometry handling into the space-time setting.
 
 ![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a linear-in-space space-time level set function on the reference configuration (red).](graphics/spacetime.png)
+
+### Patches for Element Aggregation or Ghost Penalties
+To stabilize small cut configurations `ngsxfem` allows to apply Ghost Penalty stabilizations which however increases the number of couplings. To reduce the couplings a minimum set of stabilization facets can be obtain by selecting stabilization patches on which stabilization is active. Alternatively an aggregation method can be used to extend shape functions from the stable interior to ill-cut elements. The basis for both is the selection of element aggregation patches and corresponding operations.
+
+![Left: Sketch of cut elements and aggregation patches.](graphics/patches.png)
+
+

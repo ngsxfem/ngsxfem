@@ -35,3 +35,7 @@ doc/jupyter_execute
 **/*.orig
 **.orig
 **~
+html/**
+xfem.egg-info/**
+jupyter_execute/**
+dist/**
