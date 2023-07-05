@@ -165,6 +165,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'paper','env']
 #html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_css_files = ['bullets.css']
 
 # html_theme_options = {
 #     'github_user': 'ngsxfem',

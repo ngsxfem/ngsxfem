@@ -121,6 +121,7 @@ pages:
     - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - sphinx-build doc/sphinx html
+    - cp doc/sphinx/bullets.css html/_static
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
     - rm -f html/jupyter/*.ipynb
     - mv html public
