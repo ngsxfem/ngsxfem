@@ -15,8 +15,8 @@ WORKDIR ${HOME}
 ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:/usr/local/lib/:/home/jovyan/.local/lib/"
 ENV PATH "${PATH}:/home/jovyan/.local/bin"
 
-RUN git clone -b v2.1.2302 --single-branch https://github.com/ngsxfem/ngsxfem.git ngsxfem
-RUN pip3 install git+https://github.com/ngsxfem/ngsxfem.git@v2.1.2302 --user --upgrade --verbose --no-dependencies
+RUN git clone -b v2.1.2303 --single-branch https://github.com/ngsxfem/ngsxfem.git ngsxfem
+RUN pip3 install git+https://github.com/ngsxfem/ngsxfem.git@v2.1.2303 --user --upgrade --verbose --no-dependencies
                 
 RUN python3 -c "import ngsolve; import xfem"        
 
