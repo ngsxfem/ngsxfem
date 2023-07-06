@@ -605,7 +605,7 @@ def MakeDiscontinuousDraw(Draw):
     """
 Generates a Draw-like visualization function. If Draw is from the webgui, a special evaluator is used to draw a pixel-sharp discontinuity otherwise an IfPos-CoefficientFunction is used.     
     """
-    if (Draw.__module__ == "ngsolve.webgui"):
+    if (Draw.__module__ == "ngsolve.webgui" or Draw.__module__ == "netgen.webgui"):
         ret = partial(DrawDiscontinuous_webgui,Draw)
     else:
         ret = partial(DrawDiscontinuous_std,Draw)
