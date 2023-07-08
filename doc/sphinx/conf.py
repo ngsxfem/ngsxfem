@@ -202,3 +202,6 @@ nbsphinx_allow_errors = True
 html_static_path = ['_static']
 
 # html_js_files = ['webgui_jupyter_widgets.js', 'webgui.js', 'tentswebgui.js']
+
+def setup(app):
+    app.add_css_file("custom.css")
