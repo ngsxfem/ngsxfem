@@ -120,6 +120,8 @@ pages:
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
     - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
     - cp -r doc/graphics doc/sphinx/xfem_misc/
+    - export NETGEN_DOCUMENTATION_SRC_DIR="./doc/sphinx"
+    - export NETGEN_DOCUMENTATION_OUT_DIR="./html"
     - sphinx-build doc/sphinx html
     - cp doc/sphinx/bullets.css html/_static
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
