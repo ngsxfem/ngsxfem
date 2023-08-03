@@ -1,6 +1,7 @@
 #include <python_ngstd.hpp>
 #include "../xfem/sFESpace.hpp"
 #include "../xfem/cutinfo.hpp"
+#include "../xfem/aggregates.hpp"
 #include "../xfem/xFESpace.hpp"
 #include "../xfem/symboliccutbfi.hpp"
 #include "../xfem/symboliccutlfi.hpp"
@@ -65,7 +66,7 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
                           int heapsize)
          {
            new (instance) CutInformation (ma);
-           if (py::extract<PyCF> (lset).check())
+           if ((!lset.is_none()) && py::extract<PyCF> (lset).check())
            {
              PyCF cflset = py::extract<PyCF>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
@@ -73,7 +74,7 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
            }
          },
          py::arg("mesh"),
-         py::arg("levelset") = DummyArgument(),
+         py::arg("levelset") = py::none(),
          py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
          py::arg("heapsize") = 1000000,docu_string(R"raw_string(
@@ -172,8 +173,182 @@ corresponding combined domain type
 Returns Vector of the ratios between the measure of the NEG domain on a (boundary) element and the
 full (boundary) element
 )raw_string"))
+    .def("GetElementsWithThresholdContribution", [](CutInformation & self,
+                                                    py::object dt,
+                                                    double threshold,
+                                                    VorB vb)
+         {
+           DOMAIN_TYPE _dt = NEG;
+           if (py::extract<DOMAIN_TYPE> (dt).check() && py::extract<DOMAIN_TYPE> (dt)() != IF)
+              _dt = py::extract<DOMAIN_TYPE>(dt)();
+           else
+              throw Exception("Unknown/Invalid type for dt: Only POS, NEG are implemented a.t.m.");
+           return self.GetElementsWithThresholdContribution(_dt, threshold, vb);
+         },
+         py::arg("domain_type") = NEG,
+         py::arg("threshold") = 1.0,
+         py::arg("VOL_or_BND") = VOL, docu_string(R"raw_string(
+Returns BitArray marking the elements where the cut ratio is greater or equal to the given 
+threshold.
+
+Parameters
+
+domain_type : ENUM
+    Check POS or NEG elements.
+
+threshold : float
+    Mark elements with cut ratio (volume of domain_type / volume background mesh) greater or equal to threshold.
+
+VOL_or_BND : ngsolve.comp.VorB
+    input VOL, BND, ..
+
+)raw_string"))
     ;
 
+
+py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
+    (m, "ElementAggregation",R"raw(
+ElementAggregation does the following:  
+  It collects patches of elements that allow to stabilize bad cut elements by at least one
+  good element (the root element).
+)
+)raw")
+    .def("__init__",  [] (ElementAggregation *instance,
+                          shared_ptr<MeshAccess> ma,
+                          py::object proot, 
+                          py::object pbad,
+                          int heapsize                          
+                          )
+         {
+           auto self = new (instance) ElementAggregation (ma);
+           PyBA root = nullptr, bad= nullptr;
+           if (!proot.is_none() && py::extract<PyBA> (proot).check())
+             root = py::extract<PyBA>(proot)();
+           if (!pbad.is_none() && py::extract<PyBA> (pbad).check())
+             bad = py::extract<PyBA>(pbad)();
+
+           if (root && bad)
+           {
+             LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
+             self->Update(root, bad, lh);
+           }
+         },
+         py::arg("mesh"),
+         py::arg("root_elements") = py::none(),
+         py::arg("bad_elements") = py::none(),
+         py::arg("heapsize") = 1000000,
+         docu_string(R"raw_string(
+Creates a ElementAggregation based on a mesh, a list of root and a list of bad elements.
+)raw_string")
+      )
+        .def("Update", [](ElementAggregation & self,
+                          PyBA root, 
+                          PyBA bad,
+                          int heapsize)
+         {
+           LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
+           self.Update(root,bad,lh);
+         },
+         py::arg("root_elements"),
+         py::arg("bad_elements"),
+         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+Updates a Element Aggregation based ...
+)raw_string")
+      )
+      .def_property_readonly("patch_interior_facets",
+                [](ElementAggregation & self) { return self.GetInnerPatchFacets(); },
+               "BitArray that is true for every facet that is *inside* an aggregation cluster")      
+      .def_property_readonly("els_in_trivial_patch",
+                [](ElementAggregation & self) { return self.GetElsInTrivialPatch(); },
+               "BitArray that is true for every element that is not part of a (non-trivial) patch")      
+      .def_property_readonly("els_in_nontrivial_patch",
+                [](ElementAggregation & self) { return self.GetElsInNontrivialPatch(); },
+               "BitArray that is true for every element that is part of a (non-trivial) patch")      
+      .def_property_readonly("element_to_patch",
+                [](ElementAggregation & self) { 
+                  py::list ret;
+                  for (int i : self.GetElementToPatch())
+                    ret.append(i);
+                  return ret; 
+                  },
+               "vector mapping elements to (non-trivial) patches")      
+      .def_property_readonly("facet_to_patch",
+                [](ElementAggregation & self) { 
+                  py::list ret;
+                  for (int i : self.GetFacetToPatch())
+                    ret.append(i);
+                  return ret; 
+                  },
+               "vector mapping facets to (non-trivial) patches")      
+    ;
+
+  m.def("PatchwiseSolve", [](shared_ptr<ElementAggregation> elagg, 
+                              shared_ptr<FESpace> fes,
+                              shared_ptr<SumOfIntegrals> bf,
+                              shared_ptr<SumOfIntegrals> lf,
+                              int heapsize
+                            )
+  {
+    VVector<double> hvec(fes->GetNDof());
+    shared_ptr<BaseVector> vec = make_shared<VVector<double>>(hvec); 
+    LocalHeap lh(heapsize, "Patchwisesolve-heap", true);
+    PatchwiseSolve(elagg, fes, bf, lf, vec, lh);
+    return vec;
+  },
+    py::arg("elagg"),
+    py::arg("fes"),
+    py::arg("bf"),
+    py::arg("lf"),
+    py::arg("heapsize") = 1000000, docu_string(R"raw_string(
+Solve patch-wise problem based on the patches provided by the element aggregation input.
+
+Parameters
+
+elagg: ElementAggregatetion
+  The instance defining the patches
+
+fes : FESpace
+  The finite element space on which the local solve is performed.
+
+bf : SumOfIntegrals
+  Integrators defining the matrix problem.
+
+lf : SumOfIntegrals
+  Integrators defining the right-hand side.
+)raw_string")
+  );
+
+
+  m.def("ExtensionEmbedding", [] (shared_ptr<ElementAggregation> elagg, 
+                                 shared_ptr<FESpace> fes,
+                                 shared_ptr<SumOfIntegrals> bf,
+                                 int heapsize
+                                )
+        { 
+          LocalHeap lh(heapsize, "ExtensionEmbedding-heap", true);
+          return SetupExtensionEmbedding(elagg, fes, bf, lh); 
+        },
+        py::arg("elagg"),
+        py::arg("fes"),
+        py::arg("bf"),
+        py::arg("heapsize") = 1000000,
+        docu_string(R"raw_string(
+Computes the embedding matrix for an extension minimizing a described energy on 
+patched (followed by averaging if some dofs are shared by multiple patches)
+
+Parameters:
+
+elagg : ElementAggregation
+  ElementAggregation instace defining the patches which are aggregated into a single element
+
+fes : ngsolve.FESpace
+  The finite element space which is aggregated. 
+
+bf : ngsolve.SumOfIntegrals
+  The bilinear form describing the energy to be minized
+
+)raw_string")
+        );
 
   m.def("GetFacetsWithNeighborTypes",
         [] (shared_ptr<MeshAccess> ma,
@@ -186,7 +361,7 @@ full (boundary) element
         {
           LocalHeap lh (heapsize, "FacetsWithNeighborTypes-heap", true);
           shared_ptr<BitArray> b = nullptr;
-          if (py::extract<PyBA> (bb).check())
+          if ((!bb.is_none()) && py::extract<PyBA> (bb).check())
             b = py::extract<PyBA>(bb)();
           else
             b = a;
@@ -197,7 +372,7 @@ full (boundary) element
         py::arg("bnd_val_a") = true,
         py::arg("bnd_val_b") = true,
         py::arg("use_and") = true,
-        py::arg("b") = DummyArgument(),
+        py::arg("b")=py::none(),
         py::arg("heapsize") = 1000000, docu_string(R"raw_string(
 Given a mesh and two BitArrays (if only one is provided these are set to be equal) facets will be
 marked (in terms of BitArrays) depending on the BitArray-values on the neighboring elements. The
@@ -553,11 +728,11 @@ heapsize : int = 1000000
         {
           shared_ptr<CoefficientFunction> cf_lset = nullptr;
           shared_ptr<CutInformation> cutinfo = nullptr;
-          if (py::extract<PyCI> (acutinfo).check())
+          if ((!acutinfo.is_none()) && py::extract<PyCI> (acutinfo).check())
             cutinfo = py::extract<PyCI>(acutinfo)();
-          if (py::extract<PyCF> (acutinfo).check())
+          if ((!acutinfo.is_none()) && py::extract<PyCF> (acutinfo).check())
             cf_lset = py::extract<PyCF>(acutinfo)();
-          if (py::extract<PyCF> (alset).check())
+          if ((!alset.is_none()) && py::extract<PyCF> (alset).check())
             cf_lset = py::extract<PyCF>(alset)();
 
 
@@ -589,8 +764,8 @@ heapsize : int = 1000000
           return ret;
         },
         py::arg("basefes"),
-        py::arg("cutinfo") = DummyArgument(),
-        py::arg("lset") = DummyArgument(),
+        py::arg("cutinfo")=py::none(),
+        py::arg("lset")=py::none(),
         py::arg("flags") = py::dict(),
         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
 Constructor for XFESpace [For documentation of XFESpace-class see help(CXFESpace)]:
@@ -686,10 +861,9 @@ elnr : int
                              py::object deformation)
         -> PyBFI
         {
-
           py::extract<Region> defon_region(definedon);
-          if (defon_region.check())
-            vb = VorB(defon_region());
+          if ((!definedon.is_none() ) && defon_region.check())
+            vb = VorB(py::extract<Region>(definedon)());
 
           // check for DG terms
           bool has_other = false;
@@ -720,19 +894,23 @@ elnr : int
               throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
             bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
           }
-          if (py::extract<py::list> (definedon).check())
-            bfi -> SetDefinedOn (makeCArray<int> (definedon));
 
-          if (defon_region.check())
+          if (!definedon.is_none() )
           {
-            cout << IM(3) << "defineon = " << defon_region().Mask() << endl;
-            bfi->SetDefinedOn(defon_region().Mask());
+            if (py::extract<py::list> (definedon).check())
+              bfi -> SetDefinedOn (makeCArray<int> (definedon));
+            
+            if (defon_region.check())
+            {
+              cout << IM(3) << "definedon = " << defon_region().Mask() << endl;
+              bfi->SetDefinedOn(defon_region().Mask());
+            }
           }
 
-          if (! py::extract<DummyArgument> (definedonelem).check())
+          if (! definedonelem.is_none() )
             bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
-          if (! py::extract<DummyArgument> (deformation).check())
+          if (! deformation.is_none() )
             bfi->SetDeformation(py::extract<PyGF>(deformation)());
 
           return PyBFI(bfi);
@@ -742,9 +920,9 @@ elnr : int
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=false,
         py::arg("skeleton")=false,
-        py::arg("definedon")=DummyArgument(),
-        py::arg("definedonelements")=DummyArgument(),
-        py::arg("deformation")=DummyArgument(),
+        py::arg("definedon")=py::none(),
+        py::arg("definedonelements")=py::none(),
+        py::arg("deformation")=py::none(),
         docu_string(R"raw_string(
 see documentation of SymbolicBFI (which is a wrapper))raw_string")
     );
@@ -784,10 +962,10 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
             bfi = bfime;
           }
 
-          if (! py::extract<DummyArgument> (definedonelem).check())
+          if (! definedonelem.is_none())
             bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
-          if (! py::extract<DummyArgument> (deformation).check())
+          if (! deformation.is_none())
             bfi->SetDeformation(py::extract<PyGF>(deformation)());
 
           return PyBFI(bfi);
@@ -796,8 +974,8 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
         py::arg("force_intorder")=-1,
         py::arg("time_order")=-1,
         py::arg("skeleton") = true,
-        py::arg("definedonelements")=DummyArgument(),
-        py::arg("deformation")=DummyArgument(),
+        py::arg("definedonelements")=py::none(),
+        py::arg("deformation")=py::none(),
         docu_string(R"raw_string(
 Integrator on facet patches. Two versions are possible:
 * Either (skeleton=False) an integration on the element patch consisting of two neighboring elements is applied, 
@@ -836,7 +1014,7 @@ time_order : int
         {
 
           py::extract<Region> defon_region(definedon);
-          if (defon_region.check())
+          if ((!definedon.is_none()) && defon_region.check())
             vb = VorB(defon_region());
 
           // if (vb == BND)
@@ -848,7 +1026,7 @@ time_order : int
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           auto lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, vb);
 
-          if (py::extract<py::list> (definedon).check())
+          if ((!definedon.is_none()) && py::extract<py::list> (definedon).check())
             lfi -> SetDefinedOn (makeCArray<int> (definedon));
 
           if (defon_region.check())
@@ -857,10 +1035,10 @@ time_order : int
             lfi->SetDefinedOn(defon_region().Mask());
           }
 
-          if (! py::extract<DummyArgument> (definedonelem).check())
+          if (! definedonelem.is_none())
             lfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
 
-          if (! py::extract<DummyArgument> (deformation).check())
+          if (! deformation.is_none())
             lfi->SetDeformation(py::extract<PyGF>(deformation)());
 
           return PyLFI(lfi);
@@ -870,9 +1048,9 @@ time_order : int
         py::arg("VOL_or_BND")=VOL,
         py::arg("element_boundary")=py::bool_(false),
         py::arg("skeleton")=py::bool_(false),
-        py::arg("definedon")=DummyArgument(),
-        py::arg("definedonelements")=DummyArgument(),
-        py::arg("deformation")=DummyArgument(),
+        py::arg("definedon")=py::none(),
+        py::arg("definedonelements")=py::none(),
+        py::arg("deformation")=py::none(),
         docu_string(R"raw_string(
 see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );
@@ -893,8 +1071,7 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
               comparr[0] = c;
             }
           }
-
-          if (py::extract<py::list> (comp).check())
+          else if (py::extract<py::list> (comp).check())
             comparr = makeCArray<int> (py::extract<py::list> (comp)());
 
           if (comparr.Size()== 0 && dynamic_pointer_cast<CompoundDifferentialOperator>(self->Evaluator()))

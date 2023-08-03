@@ -110,6 +110,7 @@ namespace ngfem
           Vector<> stencil(size);
           {
             Matrix<> A(size);
+            Matrix<> invA(size);
             Vector<> f(size);
             double inv_factorial=1.0;
             for (int k = 0; k < size; k++)
@@ -120,7 +121,8 @@ namespace ngfem
                 A(k,l) = std::pow(l-stencil_width,k) * inv_factorial;
               f(k) = k==order ? 1.0 : 0;
             }
-            stencil = Inv(A) * f;
+            CalcInverse(A,invA);
+            stencil = invA * f;
           }
 
           for (int col = 0; col < size; ++col)

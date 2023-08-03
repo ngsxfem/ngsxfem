@@ -95,6 +95,14 @@ INLINE void MarkAsSpaceTimeIntegrationPoint(ngcomp::IntegrationPoint & ip)
 #endif  
 }
 
+INLINE void MarkAsSpaceTimeIntegrationRule(ngcomp::IntegrationRule & ir)
+{
+#ifdef SPACETIME_SANITY_CHECKS                    
+  for (auto & ip : ir)
+    ip.SetNr(SPACETIME_SANITY_CHECK_NR);
+#endif  
+}
+
 INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
 {
 #ifdef SPACETIME_SANITY_CHECKS                    

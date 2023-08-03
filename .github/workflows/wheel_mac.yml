@@ -1,0 +1,53 @@
+name: Build pip wheel (mac) and publish
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+
+jobs:
+  build_wheels:
+    name: Build wheels for macOS
+    strategy:
+      matrix:
+        py: ['3.8', '3.9', '3.10', '3.11']
+    runs-on: macos-11
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '10.15'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Get Python ${{ matrix.py }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Run build script
+        run: .ci/build_pip_mac.sh ${{ matrix.py }}
+        shell: bash
+      - name: Store the binary wheel
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-package-distributions
+          path: dist
+
+  publish-pip-bin:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build_wheels
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v2
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish binary distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip_existing: true
+        password: ${{ secrets.PYPI_API_TOKEN_2 }}

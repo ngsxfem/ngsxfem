@@ -12,24 +12,25 @@ namespace ngfem
   template <int SpaceD>
   class DiffOpShiftedEval : public DifferentialOperator
   {
-
+private:
+      shared_ptr<DifferentialOperator> evaluator;
 
   public:
 
     shared_ptr<GridFunction> back;
     shared_ptr<GridFunction> forth;
 
-    enum { DIM = 1 };          // 1 copies of the spaces
-    enum { DIM_SPACE = SpaceD };    // D-dim space
-    enum { DIM_ELEMENT = SpaceD };  // D-dim elements (in contrast to boundary elements)
-    enum { DIM_DMAT = 1 };     // 1-matrix
-    enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
+    //enum { DIM = 1 };          // 1 copies of the spaces
+    //enum { DIM_SPACE = SpaceD };    // D-dim space
+    //enum { DIM_ELEMENT = SpaceD };  // D-dim elements (in contrast to boundary elements)
+    //enum { DIM_DMAT = 1 };     // 1-matrix
+    //enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
 
-    DiffOpShiftedEval(shared_ptr<GridFunction> aback,shared_ptr<GridFunction> aforth)
-      : DifferentialOperator(DIM_DMAT, 1, VorB(int(DIM_SPACE)-int(DIM_ELEMENT)), DIFFORDER),
-        back(aback), forth(aforth)
+    DiffOpShiftedEval(shared_ptr<GridFunction> aback,shared_ptr<GridFunction> aforth, shared_ptr<DifferentialOperator> a_evaluator)
+      : DifferentialOperator(a_evaluator->Dim(), a_evaluator->BlockDim(), VOL, a_evaluator->DiffOrder()),
+        evaluator(a_evaluator), back(aback), forth(aforth)
     {
-      SetDimensions(Array<int> ( { DIM_DMAT } ));
+      SetDimensions(Array<int> ( { a_evaluator->Dim()} ));
     }
     /*
     virtual int Dim() const { return DIM_DMAT; }

@@ -13,14 +13,14 @@ namespace ngfem
               SliceMatrix<double,ColMajor> mat,
               LocalHeap & lh) const
   {
-    const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE> & mip =
-      static_cast<const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE>&> (bmip);
+    const MappedIntegrationPoint<SpaceD,SpaceD> & mip =
+      static_cast<const MappedIntegrationPoint<SpaceD,SpaceD>&> (bmip);
 
-    const ScalarFiniteElement<SpaceD> & scafe =
-            dynamic_cast<const ScalarFiniteElement<SpaceD> & > (bfel);
-    const int ndof = scafe.GetNDof();
+    //const ScalarFiniteElement<SpaceD> & scafe =
+            //dynamic_cast<const ScalarFiniteElement<SpaceD> & > (bfel);
+    // const int ndof = bfel.GetNDof();
 
-    FlatVector<> shape (ndof,lh);
+    //FlatVector<> shape (ndof,lh);
 
     IntegrationPoint ip(mip.IP());
     auto elid = mip.GetTransformation().GetElementId();
@@ -31,7 +31,7 @@ namespace ngfem
     if (forth)
     {
       forth->GetFESpace()->GetDofNrs(elid,dnums);
-      FlatVector<> values_forth(dnums.Size()*DIM_SPACE,lh);
+      FlatVector<> values_forth(dnums.Size()*SpaceD,lh);
       FlatMatrixFixWidth<SpaceD> vector_forth(dnums.Size(),&(values_forth(0)));
       forth->GetVector().GetIndirect(dnums,values_forth);
 
@@ -51,7 +51,7 @@ namespace ngfem
     {
       
       back->GetFESpace()->GetDofNrs(elid,dnums);
-      FlatVector<> values_back(dnums.Size()*DIM_SPACE,lh);
+      FlatVector<> values_back(dnums.Size()*SpaceD,lh);
       FlatMatrixFixWidth<SpaceD> vector_back(dnums.Size(),&(values_back(0)));
       back->GetVector().GetIndirect(dnums,values_back);
     
@@ -203,10 +203,11 @@ namespace ngfem
 
          }
       */
-
-      scafe.CalcShape(ipx,shape);
-      mat = 0.0;
-      mat.Row(0) = shape;
+      MappedIntegrationPoint<SpaceD, SpaceD> mipx(ipx, mip.GetTransformation());
+      evaluator->CalcMatrix(bfel, mipx, mat, lh);
+      //scafe.CalcShape(ipx,shape);
+      //mat = 0.0;
+      //mat.Row(0) = shape;
       // for (int j = 0; j < D; j++)
       //   for (int k = 0; k < shape.Size(); k++)
       //     mat(j,k*D+j) = shape(k);      
@@ -233,12 +234,15 @@ namespace ngfem
       if (its == globxvar.FIXED_POINT_ITER_TRESHOLD)
         throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
 
-      scafe.CalcShape(ipx,shape);
-      mat = 0.0;
+      MappedIntegrationPoint<SpaceD, SpaceD> mipx(ipx, mip.GetTransformation());
+      evaluator->CalcMatrix(bfel, mipx, mat, lh);
+
+      //scafe.CalcShape(ipx,shape);
+      //mat = 0.0;
       // for (int j = 0; j < D; j++)
       //   for (int k = 0; k < shape.Size(); k++)
       //     mat(j,k*D+j) = shape(k);
-      mat.Row(0) = shape;
+      //mat.Row(0) = shape;
       //mat.Row(1) = shape;
 
       //cout << "mat:\n" << mat << endl;
@@ -256,7 +260,7 @@ namespace ngfem
          LocalHeap & lh) const
   {
     HeapReset hr(lh);
-    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof(), lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof()*BlockDim(), lh);
     CalcMatrix (fel, mip, mat, lh);
     flux = mat * x;
   }
@@ -270,7 +274,7 @@ namespace ngfem
               LocalHeap & lh) const
   {
     HeapReset hr(lh);
-    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof(), lh);
+    FlatMatrix<double,ColMajor> mat(Dim(), fel.GetNDof()*BlockDim(), lh);
     CalcMatrix (fel, mip, mat, lh);
     x.Range(0,fel.GetNDof()) = Trans(mat) * flux;
   }

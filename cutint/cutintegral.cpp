@@ -24,8 +24,8 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() c
     bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, dx.vb, dx.element_vb);
   else
   {
-    if (lsetintdom->GetTimeIntegrationOrder() >= 0)
-      throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
+    //if (lsetintdom->GetTimeIntegrationOrder() >= 0)
+    //  throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
     if (dx.vb == BND)
       throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
     bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
@@ -102,7 +102,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
   static Timer timer("CutIntegral::T_CutIntegrate");
   RegionTimer reg (timer);
   LocalHeap glh(1000000000, "lh-T_CutIntegrate");
-  bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+  // bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
     throw Exception("CutIntegrate can only deal with VOL a.t.m..");
   TSCAL sum = 0.0;
@@ -121,7 +121,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
         }
     }
   
-  int DIM = ma.GetDimension();
+  // int DIM = ma.GetDimension();
   int cfdim = cf->Dimension();
   if(cfdim != 1)
     throw Exception("only implemented for 1 dimensional coefficientfunctions");

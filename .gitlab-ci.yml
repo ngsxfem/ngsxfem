@@ -8,12 +8,15 @@ build:
   image: ngsxfem/ngsolve:latest
   script:
     - python3 -c "import ngsolve"
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
     - git submodule
-    - git submodule update --init --recursive
+    - git submodule update --init
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DCMAKE_INSTALL_PREFIX=../install ..
     - make install
   artifacts:
     paths:
@@ -56,7 +59,7 @@ metrics:
   artifacts:
     reports:
       metrics: metrics.txt
-  when: always
+  when: manual
   allow_failure: true
 
 codestyle-demos:
@@ -97,3 +100,43 @@ paper-appendix:
       - literature.pdf
       - feature-details.pdf
         
+        
+pages:
+  stage: deploy
+  image: ngsxfem/ngsolve:latest
+  script:
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - git submodule
+    - git submodule update --init
+    - pip3 install --user -r ./doc/sphinx/requirements.txt
+    - export PATH="$PATH:/home/jovyan/.local/bin"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
+    - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
+    - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
+    - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
+    - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
+    - cp -r doc/graphics doc/sphinx/xfem_misc/
+    - sphinx-build doc/sphinx html
+    - cp doc/sphinx/bullets.css html/_static
+    - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
+    - rm -f html/jupyter/*.ipynb
+    - mv html public
+  artifacts:
+    paths:
+      - public
+  #only:
+  #  - release # this job will affect only the 'sphinx' branch
+
+pip_linux:
+  #image: quay.io/pypa/manylinux2014_x86_64
+  image: sameli/manylinux2014_x86_64_cuda_11      
+
+  stage: build
+  script:
+    - ./.ci/build_pip.sh
+    - twine upload wheelhouse/*manylinux*.whl
+  when: manual

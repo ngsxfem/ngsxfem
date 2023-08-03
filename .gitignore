@@ -25,6 +25,17 @@ doc/betterbib_cache.sqlite
 demos/local
 doc/feature-details.pdf
 doc/literature.pdf
+doc/sphinx/xfem_doc
+doc/sphinx/xfem_doc/**
+doc/sphinx/jupyter/*.ipynb
+doc/sphinx/jupyter/*.vtk
+doc/sphinx/jupyter/*.vtu
+doc/sphinx/jupyter/.ipynb_checkpoints
+doc/jupyter_execute
 **/*.orig
 **.orig
 **~
+html/**
+xfem.egg-info/**
+jupyter_execute/**
+dist/**

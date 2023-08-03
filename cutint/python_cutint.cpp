@@ -29,11 +29,16 @@ void ExportNgsx_cutint(py::module &m)
         {
           static Timer timer("IntegrateX");
           RegionTimer reg (timer);
-          py::extract<py::list> ip_cont_(ip_container);
           shared_ptr<py::list> ip_cont = nullptr;
-          if (ip_cont_.check())
-            ip_cont = make_shared<py::list>(ip_cont_());
-                       
+          py::extract<py::object> ip_cont_(ip_container);
+          if (!ip_cont_().is_none())
+          {
+            py::extract<py::list> ip_cont_as_list(ip_container);
+            if (ip_cont_as_list.check())
+            {
+              ip_cont = make_shared<py::list>(ip_cont_as_list());
+            }
+          }
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrateX");
@@ -42,7 +47,7 @@ void ExportNgsx_cutint(py::module &m)
           Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
           element_sum = 0.0;
 
-          int DIM = ma->GetDimension();
+          // int DIM = ma->GetDimension();
 
           int cfdim = cf->Dimension();
           if(element_wise && cfdim != 1)
@@ -75,7 +80,11 @@ void ExportNgsx_cutint(py::module &m)
                    for (int i = 0; i < mir.Size(); i++)
                    {
                      MyLock lock_ip_cont(mutex_ip_cont);
-                     ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                     if (space_time)
+                         ip_cont->append(tuple ( MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
+                                                ma.get(), VOL, static_cast<int>(el.Nr())}, (*ir)[i].Weight()));
+                     else
+                        ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
                                                ma.get(), VOL, static_cast<int>(el.Nr())});
                    }
                  if (element_wise)
@@ -164,14 +173,14 @@ heapsize : int
           static Timer timer("IntegrationPointExtrema"); RegionTimer reg (timer);
 
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
-          bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
+          // bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrationPointExtrema");
 
           double min = 1e99;
           double max = -1e99;
 
-          int DIM = ma->GetDimension();
-          int cfdim = cf->Dimension();
+          // int DIM = ma->GetDimension();
+          // int cfdim = cf->Dimension();
 
           ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
@@ -277,6 +286,11 @@ Note that the most important options are set in the second line when the basic
 CutDifferentialSymbol is further specified.
 )raw_string")  
   )
+    .def(py::init<>(), docu_string(R"raw_string(
+Constructor of CutDifferentialSymbol.
+
+  Argument: none
+)raw_string"))
     .def(py::init<VorB>(), docu_string(R"raw_string(
 Constructor of CutDifferentialSymbol.
 
@@ -285,6 +299,7 @@ Constructor of CutDifferentialSymbol.
     .def("__call__", [](CutDifferentialSymbol & self,
                         py::dict lsetdom,
                         optional<variant<Region,string>> definedon,
+                        VorB vb, 
                         bool element_boundary,
                         VorB element_vb, bool skeleton,
                         shared_ptr<GridFunction> deformation,
@@ -292,7 +307,7 @@ Constructor of CutDifferentialSymbol.
          {
            if (element_boundary) element_vb = BND;
            auto dx = CutDifferentialSymbol(PyDict2LevelsetIntegrationDomain(lsetdom), 
-                                           self.vb, element_vb, skeleton);
+                                           vb, element_vb, skeleton);
            if (definedon)
              {
                if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
@@ -309,6 +324,7 @@ Constructor of CutDifferentialSymbol.
          },
          py::arg("levelset_domain"),
          py::arg("definedon")=nullptr,
+         py::arg("vb")=VOL,
          py::arg("element_boundary")=false,
          py::arg("element_vb")=VOL,
          py::arg("skeleton")=false,
@@ -323,6 +339,8 @@ Parameters:
 levelset_domain (dict) : specifies the level set domain.
 definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
   the current form shall be defined.
+vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view 
+  of the mesh.
 element_boundary (bool) : Does the integral take place on the boundary of an element-
 element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
   of an element.
@@ -335,6 +353,7 @@ definedonelements (BitArray) : Set of elements or facets where the integral shal
     {
       return CutDifferentialSymbol(self, x );
     })
+
     .def("order", [](CutDifferentialSymbol & self, int order)
     {
       auto _cds = CutDifferentialSymbol(self);
@@ -342,6 +361,10 @@ definedonelements (BitArray) : Set of elements or facets where the integral shal
       return _cds;
     },
     py::arg("order"))
+    .def_property("vb",
+                  [](CutDifferentialSymbol & self) { return self.vb; },
+                  [](CutDifferentialSymbol & self, VorB vb) { self.vb = vb; return self.vb;},
+                  "Volume of boundary?")
     ;
     
   py::class_<FacetPatchDifferentialSymbol,DifferentialSymbol>(m, "FacetPatchDifferentialSymbol",

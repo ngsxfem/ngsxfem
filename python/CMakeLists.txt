@@ -34,6 +34,7 @@ if(NETGEN_USE_PYTHON)
       ../xfem/xfemdiffops.cpp
       ../xfem/xFESpace.cpp
       ../xfem/xfiniteelement.cpp
+      ../xfem/aggregates.cpp
     )
     set_target_properties(ngsxfem_py PROPERTIES INSTALL_RPATH "${NETGEN_RPATH_TOKEN}/../${NETGEN_PYTHON_RPATH}")
     install(TARGETS ngsxfem_py DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem COMPONENT xfem)
@@ -55,7 +56,7 @@ if(pybind11_stubgen AND NOT ${pybind11_stubgen} EQUAL 0)
 for better autocompletion support install it with pip.")
 else()
   message("-- Found pybind11-stubgen: ${stubgen_path}")
-  install(CODE "execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pybind11_stubgen --no-setup-py xfem)") 
+  install(CODE "execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pybind11_stubgen --ignore-invalid=all --skip-signature-downgrade --no-setup-py xfem)") 
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../stubs/xfem-stubs/ DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem/ COMPONENT xfem)
 endif()
 endif(BUILD_STUB_FILES)

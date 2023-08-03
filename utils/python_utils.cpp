@@ -75,10 +75,11 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
 
     shared_ptr<BitArray> el_restriction = nullptr;
     shared_ptr<BitArray> fac_restriction = nullptr;
-    if (py::extract<PyBA> (ael_restriction).check())
+
+    if ((!ael_restriction.is_none()) && py::extract<PyBA> (ael_restriction).check())
       el_restriction = py::extract<PyBA>(ael_restriction)();
 
-    if (py::extract<PyBA> (afac_restriction).check())
+    if ((!afac_restriction.is_none()) && py::extract<PyBA> (afac_restriction).check())
       fac_restriction = py::extract<PyBA>(afac_restriction)();
 
     auto biform = make_shared<Rbfi_TT> (fes, aname, el_restriction, fac_restriction, flags);
@@ -86,8 +87,8 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
   }),
   py::arg("space"),
   py::arg("name") = "bfa",
-  py::arg("element_restriction") = DummyArgument(),
-  py::arg("facet_restriction") = DummyArgument(),
+  py::arg("element_restriction")=py::none(),
+  py::arg("facet_restriction")=py::none(),
   rblf_string_T)
 .def(py::init([](shared_ptr<FESpace> fes1,
    shared_ptr<FESpace> fes2,
@@ -99,10 +100,10 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
    auto flags = CreateFlagsFromKwArgs(kwargs);
    shared_ptr<BitArray> el_restriction = nullptr;
    shared_ptr<BitArray> fac_restriction = nullptr;
-   if (py::extract<PyBA> (ael_restriction).check())
+   if ((!ael_restriction.is_none()) && py::extract<PyBA> (ael_restriction).check())
      el_restriction = py::extract<PyBA>(ael_restriction)();
 
-   if (py::extract<PyBA> (afac_restriction).check())
+   if ((!afac_restriction.is_none()) && py::extract<PyBA> (afac_restriction).check())
      fac_restriction = py::extract<PyBA>(afac_restriction)();
 
    auto biform = make_shared<Rbfi_TT> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
@@ -111,8 +112,8 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
 py::arg("trialspace"),
 py::arg("testspace"),
 py::arg("name") = "bfa",
-py::arg("element_restriction") = DummyArgument(),
-py::arg("facet_restriction") = DummyArgument(),
+py::arg("element_restriction")=py::none(),
+py::arg("facet_restriction")=py::none(),
 rblf_string_T)        
 .def_property("element_restriction", 
 	  &Rbfi_TT::GetElementRestriction,
@@ -323,12 +324,12 @@ active_els : BitArray or None
                     // throw py::type_error("cannot apply compression on CompoundFESpace - Use CompressCompound(..)");
                     auto ret = make_shared<RestrictedFESpace> (fes);
                     shared_ptr<BitArray> actdofs = nullptr;
-                    if (! py::extract<DummyArgument> (active_els).check())
+                    if (!active_els.is_none())
                       dynamic_pointer_cast<RestrictedFESpace>(ret)->SetActiveElements(py::extract<shared_ptr<BitArray>>(active_els)());
                     ret->Update();
                     ret->FinalizeUpdate();
                     return ret;                    
-                  }), py::arg("fespace"), py::arg("active_elements")=DummyArgument())
+                  }), py::arg("fespace"), py::arg("active_elements")=py::none())
     .def("GetBaseSpace", [](RestrictedFESpace & self)
          {
            return self.GetBaseSpace();

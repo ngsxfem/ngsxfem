@@ -131,9 +131,9 @@ evaluation)
 
   gfu : GridFunction (or list of GridFunctions)
     GridFunction(s) to store for later deformation updates.
-        """      
-        if isinstance(gf,list):
-            self.gf_to_project.extend((gf, update_domain))
+        """
+        if isinstance(gf,list) or isinstance(gf,tuple):
+            self.gf_to_project.extend([(gfa, update_domain) for gfa in gf])
         else:
             self.gf_to_project.append((gf, update_domain))
 
