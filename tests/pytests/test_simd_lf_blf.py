@@ -45,7 +45,7 @@ def test_lf_blf(maxh, order):
     ci = CutInfo(mesh, lsetp1)
     hasneg = ci.GetElementsOfType(HASNEG)
 
-    Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
+    Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True, dim=mesh.dim)
     Vh = Restrict(Vhbase, hasneg)
 
     u, v = Vh.TrialFunction(), Vh.TestFunction()
@@ -55,9 +55,9 @@ def test_lf_blf(maxh, order):
 
     # R.h.s. term:
     f = LinearForm(Vh)
-    f += coeff_f * v * dx
+    f += CF((coeff_f,sin(x))) * v * dx
     g = LinearForm(Vh)
-    g += coeff_f * v * dx
+    g += CF((coeff_f,sin(x))) * v * dx
     a = BilinearForm(Vh)
     a += (u) * (v) * dx
     b = BilinearForm(Vh)
@@ -66,7 +66,7 @@ def test_lf_blf(maxh, order):
     t_blf_normal = 0
     t_simd = 0
     t_blf_simd = 0
-    n=20
+    n=1
     for k in range(n):
         ngsxfemglobals.SwitchSIMD(False)
         ########################
@@ -122,4 +122,4 @@ def test_lf_blf(maxh, order):
     print("Time for blf, simd: ", t_blf_simd)
  
 
-test_lf_blf(0.1, 5)
+test_lf_blf(0.01, 4)
