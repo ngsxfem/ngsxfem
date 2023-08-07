@@ -75,7 +75,6 @@ def test_lf_blf(maxh, order):
 
         f.Assemble()
         end = timer()
-        vals1 = f.vec.FV().NumPy()
         t_normal += end-start
         #########################
         # time BLF, no simd
@@ -83,7 +82,6 @@ def test_lf_blf(maxh, order):
 
         a.Assemble()
         end = timer()
-        A_dense = a.mat.asVector()
         t_blf_normal += end-start
 
         ngsxfemglobals.SwitchSIMD(True)
@@ -94,7 +92,6 @@ def test_lf_blf(maxh, order):
 
         g.Assemble()
         end = timer()
-        vals2 = g.vec.FV().NumPy()
 
         t_simd += end-start
         #########################
@@ -103,16 +100,26 @@ def test_lf_blf(maxh, order):
 
         b.Assemble()
         end = timer()
-        B_dense = b.mat.asVector()
         t_blf_simd += end-start
     t_normal /= n
     t_blf_normal /= n
     t_simd /= n
     t_blf_simd /= n
-    assert(np.linalg.norm(B_dense-A_dense) < 1e-8)
-    assert(np.linalg.norm(vals1-vals2) < 1e-8)
+
+    diffvec = f.vec.CreateVector()
+    diffvec.data = f.vec - g.vec
+    assert(diffvec.Norm() < 1e-8)
+
+    diffvec = a.mat.AsVector().CreateVector()
+    diffvec.data = a.mat.AsVector() - b.mat.AsVector()
+    assert(diffvec.Norm() < 1e-8)
+
     # We cannot guarantee, that SIMD operations are faster then non-SIMD..
-#    assert(t_normal > t_simd)
+    #assert(t_normal > t_simd)
+    print("Time for linear form, no simd: ", t_normal)
+    print("Time for linear form, simd: ", t_simd)
+    print("Time for blf, no simd: ", t_blf_normal)
+    print("Time for blf, simd: ", t_blf_simd)
  
 
-test_lf_blf(0.1, 4)
+test_lf_blf(0.1, 5)
