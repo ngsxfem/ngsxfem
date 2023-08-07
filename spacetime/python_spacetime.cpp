@@ -64,12 +64,12 @@ void ExportNgsx_spacetime(py::module &m)
 
     if (py::isinstance<py::str>(dirichlet))
     {
-          std::regex pattern(dirichlet.cast<string>());
-          Array<double> dirlist;
-          for (int i = 0; i < ma->GetNBoundaries(); i++)
-             if (std::regex_match (ma->GetMaterial(BND, i), pattern))
-               dirlist.Append (i+1);
-               flags.SetFlag("dirichlet", dirlist);
+        Array<double> dirlist;
+        Region dir(ma, BND, dirichlet.cast<string>());
+        for (int i = 0; i < ma->GetNBoundaries(); i++)
+            if (dir.Mask()[i])
+              dirlist.Append (i+1);
+        flags.SetFlag("dirichlet", dirlist);
     }
 
     auto tfe = dynamic_pointer_cast<ScalarFiniteElement<1>>(fe);
