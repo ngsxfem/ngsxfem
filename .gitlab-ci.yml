@@ -137,8 +137,10 @@ pip_linux:
 
   stage: build
   script:
-    - ./.ci/build_pip.sh
+    - ./.ci/build_pip.sh 38
+    - ./.ci/build_pip.sh 39
+    - ./.ci/build_pip.sh 310
+    - ./.ci/build_pip.sh 311
     - /opt/python/cp39-cp39/bin/pip install twine
-    - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/*manylinux*.whl -u __token__ -p $PYPI_UPLOAD_TOKEN
-    - /opt/python/cp39-cp39/bin/python -m twine upload dist/* -u __token__ -p $PYPI_UPLOAD_TOKEN
+    - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
   when: manual
