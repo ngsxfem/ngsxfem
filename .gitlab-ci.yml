@@ -139,5 +139,5 @@ pip_linux:
   script:
     - ./.ci/build_pip.sh
     - /opt/python/cp39-cp39/bin/pip install twine
-    - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/*manylinux*.whl
+    - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/*manylinux*.whl -u __token__ -p $PYPI_UPLOAD_TOKEN
   when: manual
