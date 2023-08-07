@@ -8,9 +8,9 @@ build:
   image: ngsxfem/ngsolve:latest
   script:
     - python3 -c "import ngsolve"
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
     - git submodule
     - git submodule update --init
     - mkdir build
@@ -105,9 +105,9 @@ pages:
   stage: deploy
   image: ngsxfem/ngsolve:latest
   script:
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
     - git submodule
     - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
