@@ -138,5 +138,6 @@ pip_linux:
   stage: build
   script:
     - ./.ci/build_pip.sh
+    - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/*manylinux*.whl
   when: manual
