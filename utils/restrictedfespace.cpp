@@ -148,7 +148,7 @@ namespace ngfem
               BareSliceMatrix<SIMD<double>> mat) const
   {
     if (fel.GetNDof() == 0)
-      mat *= 0.0;
+      mat.AddSize(fel.GetNDof(),fel.GetNDof()) = 0.0;
     else
       diffop->CalcMatrix(fel, mir, mat);
   }
@@ -159,7 +159,7 @@ namespace ngfem
               BareSliceMatrix<SIMD<Complex>> mat) const
   {
     if (fel.GetNDof() == 0)
-      mat *= 0.0;
+      mat.AddSize(fel.GetNDof(),fel.GetNDof()) = 0.0;
     else
       diffop->CalcMatrix(fel, mir, mat);
   }
@@ -198,7 +198,7 @@ namespace ngfem
   // LocalHeap & lh) const
   {
     if (fel.GetNDof() == 0)
-      flux *= 0.0;
+      flux.AddSize(fel.GetNDof(),diffop->Dim()) = 0.0;
     else
       diffop->Apply(fel, mir, x, flux);
   }
@@ -211,7 +211,7 @@ namespace ngfem
   // LocalHeap & lh) const
   {
     if (fel.GetNDof() == 0)
-      flux *= 0.0;
+      flux.AddSize(fel.GetNDof(),diffop->Dim()) = 0.0;
     else
       diffop->Apply(fel, mir, x, flux);
   }
@@ -224,7 +224,7 @@ namespace ngfem
               LocalHeap & lh) const
   {
     if (fel.GetNDof() == 0)
-      flux *= 0.0;
+      flux = 0.0;
     else
       diffop->ApplyTrans(fel, mip, flux, x, lh);
   }
@@ -237,7 +237,7 @@ namespace ngfem
               LocalHeap & lh) const
   {
     if (fel.GetNDof() == 0)
-      flux *= 0.0;
+      flux = 0.0;
     else
       diffop->ApplyTrans(fel, mip, flux, x, lh);
   }
