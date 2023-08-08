@@ -63,48 +63,47 @@ namespace ngfem
     // tstart.Start();
     
     if (element_vb != VOL)
-      {
-        switch (trafo.SpaceDim())
-          {
-          // case 1:
-          //   T_CalcElementMatrixEB<1,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
-          //   return;
-          // case 2:
-          //   T_CalcElementMatrixEB<2,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
-          //   return;
-          // case 3:
-          //   T_CalcElementMatrixEB<3,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
-          //   return;
-          default:
-            throw Exception ("symbolicCutLFI, EB not yet implemented");
-            // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
-          }
-      }
-  
-
-  if (simd_evaluate && globxvar.SIMD_EVAL)
     {
+      switch (trafo.SpaceDim())
+      {
+        // case 1:
+        //   T_CalcElementMatrixEB<1,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
+        //   return;
+        // case 2:
+        //   T_CalcElementMatrixEB<2,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
+        //   return;
+        // case 3:
+        //   T_CalcElementMatrixEB<3,SCAL, SCAL_SHAPES> (fel, trafo, elmat, lh);
+        //   return;
+        default:
+          throw Exception ("symbolicCutLFI, EB not yet implemented");
+          // throw Exception ("Illegal space dimension" + ToString(trafo.SpaceDim()));
+        }
+    }
+  
+    // only 1D, 2D and some 3D integration rules are supported yet
+    auto et = trafo.GetElementType();
+    if (!(et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX))
+      throw Exception("SymbolicCutlfi can only treat simplices right now");
 
+    LevelsetIntegrationDomain lsetintdom_local(lsetintdom);
+    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
+      lsetintdom_local.SetIntegrationOrder(2 * fel.Order());
+
+    ProxyUserData ud;
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+
+    elvec = 0;
+
+    // case: simd enabled; if an error occurs, switch back to normal evaluation
+    if (simd_evaluate && globxvar.SIMD_EVAL){
       try
       {
-        auto et = trafo.GetElementType();
-        if (!(et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX))
-          throw Exception("SymbolicCutlfi can only treat simplices right now");
-
-        LevelsetIntegrationDomain lsetintdom_local(lsetintdom);
-        if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
-          lsetintdom_local.SetIntegrationOrder(2 * fel.Order());
-
-        ProxyUserData ud;
-        const_cast<ElementTransformation &>(trafo).userdata = &ud;
-
-        elvec = 0;
-
         const IntegrationRule *ns_ir;
         Array<double> ns_wei_arr;
         tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
         if (ns_ir == nullptr)
-          return;
+          return;        
 
         SIMD_IntegrationRule ir(*ns_ir, lh);
         const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
@@ -128,11 +127,11 @@ namespace ngfem
 
         PrecomputeCacheCF(cache_cfs, mir, lh);
 
-        //elvec = 0;
+		//elvec = 0;
 
-        for (auto proxy : proxies)
-        {
-          // NgProfiler::StartThreadTimer(telvec_dvec, tid);
+		for (auto proxy : proxies)
+		{
+		  // NgProfiler::StartThreadTimer(telvec_dvec, tid);
           FlatMatrix<SIMD<SCAL>> proxyvalues(proxy->Dimension(), ir.Size(), lh);
           for (size_t k = 0; k < proxy->Dimension(); k++)
           {
@@ -146,23 +145,23 @@ namespace ngfem
 
           proxy->Evaluator()->AddTrans(fel, mir, proxyvalues, elvec);
         }
-        //delete[] wei_arr;
-        /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
-        /*
-        for (auto proxy : proxies)
+		
+		//delete[] wei_arr;
+		/// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
+		/*
+		for (auto proxy : proxies)
+		{
+        // td.Start();
+        FlatMatrix<SCAL> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+        for (int k = 0; k < proxy->Dimension(); k++)
         {
-          // td.Start();
-          FlatMatrix<SCAL> proxyvalues(mir.Size(), proxy->Dimension(), lh);
-          for (int k = 0; k < proxy->Dimension(); k++)
-          {
-            ud.testfunction = proxy;
-            ud.test_comp = k;
-            // cf -> Evaluate (mir, values);
-            for (int i = 0; i < mir.Size(); i++)
-              values(i, 0) = cf->Evaluate(mir[i]);
-
-            for (int i = 0; i < mir.Size(); i++)
-              proxyvalues(i, k) = mir[i].GetMeasure() * ns_wei_arr[i] * values(i, 0);
+          ud.testfunction = proxy;
+          ud.test_comp = k;
+          // cf -> Evaluate (mir, values);
+          for (int i = 0; i < mir.Size(); i++)
+            values(i, 0) = cf->Evaluate(mir[i]);
+          for (int i = 0; i < mir.Size(); i++)
+            proxyvalues(i, k) = mir[i].GetMeasure() * ns_wei_arr[i] * values(i, 0);
           }
           // td.Stop();
           // tb.Start();
@@ -170,31 +169,18 @@ namespace ngfem
           // tb.Stop();
           elvec += elvec1;
         }
-      }*/
-      }
-      catch (ExceptionNOSIMD e)
-      {
+		}*/
+      } catch (ExceptionNOSIMD e) {
         cout << IM(6) << e.What() << endl
              << "switching back to standard evaluation" << endl;
         simd_evaluate = false;
         T_CalcElementVector(fel, trafo, elvec, lh);
       }
-    }
-    else
-    {
-      auto et = trafo.GetElementType();
- if (! (et == ET_SEGM || et == ET_TRIG || et == ET_TET || et == ET_QUAD || et == ET_HEX) )
-      throw Exception("SymbolicCutlfi can only treat simplices right now");
 
-    LevelsetIntegrationDomain lsetintdom_local(lsetintdom);    
-    if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
-      lsetintdom_local.SetIntegrationOrder(2*fel.Order());
-        
-    ProxyUserData ud;
-    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    return;
+	}
 
-    elvec = 0;
-
+    // case: simd disabled
     const IntegrationRule * ir;
     Array<double> wei_arr;
     tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
@@ -205,34 +191,33 @@ namespace ngfem
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
-    FlatVector<SCAL> elvec1(elvec.Size(), lh);
-    elvec1 = 0.0;
-    FlatMatrix<SCAL> values(ir->Size(), 1, lh);
+	FlatVector<SCAL> elvec1(elvec.Size(), lh);
+	elvec1 = 0.0;
+	FlatMatrix<SCAL> values(ir->Size(), 1, lh);
+  
+	/// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
 
-    /// WHAT FOLLOWS IN THIS FUNCTION IS COPY+PASTE FROM NGSOLVE !!!
+	for (auto proxy : proxies){
+	  // td.Start();
+      FlatMatrix<SCAL> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+      for (int k = 0; k < proxy->Dimension(); k++){
+        ud.testfunction = proxy;
+        ud.test_comp = k;
+        cf -> Evaluate (mir, values);
+        // for (int i=0; i < mir.Size(); i++)
+        //   values(i,0) = cf->Evaluate(mir[i]);
 
-    for (auto proxy : proxies)
-      {
-        // td.Start();
-        FlatMatrix<SCAL> proxyvalues(mir.Size(), proxy->Dimension(), lh);
-        for (int k = 0; k < proxy->Dimension(); k++)
-          {
-            ud.testfunction = proxy;
-            ud.test_comp = k;
-            cf -> Evaluate (mir, values);
-            // for (int i=0; i < mir.Size(); i++)
-            //   values(i,0) = cf->Evaluate(mir[i]);
-
-            for (int i = 0; i < mir.Size(); i++)
-              proxyvalues(i,k) = mir[i].GetMeasure() * wei_arr[i] * values(i,0);
-          }
-        // td.Stop();
-        // tb.Start();
-        proxy->Evaluator()->ApplyTrans(fel, mir, proxyvalues, elvec1, lh);
-        // tb.Stop();
-        elvec += elvec1;
+        for (int i = 0; i < mir.Size(); i++)
+          proxyvalues(i,k) = mir[i].GetMeasure() * wei_arr[i] * values(i,0);
       }
+      // td.Stop();
+      // tb.Start();
+      proxy->Evaluator()->ApplyTrans(fel, mir, proxyvalues, elvec1, lh);
+      // tb.Stop();
+      elvec += elvec1;
+    }
+	
+    return;
+  }
 
-  }
-  }
 }
