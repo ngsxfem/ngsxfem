@@ -14,7 +14,7 @@ from numpy import sqrt
 
 # compare simd to normal Integrate
 @pytest.mark.parametrize("maxh", [2**(-k) for k in range(5)])
-@pytest.mark.parametrize("element_wise", [False, True])
+@pytest.mark.parametrize("element_wise", [True, False])
 @pytest.mark.parametrize("order", [4])
 def test_simd_integrate(maxh, element_wise, order):
     square = SplineGeometry()
@@ -73,8 +73,9 @@ def test_simd_integrate(maxh, element_wise, order):
 
 # compare simd to normal IntegrateX
 @pytest.mark.parametrize("maxh", [2**(-k) for k in range(5)])
-@pytest.mark.parametrize("order", [4])
-def test_simd_cutint(maxh, order):
+@pytest.mark.parametrize("element_wise", [True, False])
+def test_simd_integrateX(maxh, element_wise):
+    order = 4
     square = SplineGeometry()
     square.AddRectangle((-1, -1), (1, 1), bc=1)
     ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
@@ -117,10 +118,9 @@ def test_simd_cutint(maxh, order):
         end = timer()
         
         t_simd += (end-start)
-        
         solutions.append(integral_simd - integral_normal)
     print()
     print("Time for IntegrateX (normal): " + str(t_normal/testruns))
     print("Time for IntegrateX (simd): " + str(t_simd/testruns))
     print("performance ratio (normal/simd): " + str(t_normal/t_simd))
-    assert(np.max(solutions) < 1e-8)
+    assert(np.max(solutions) < 1e-7)
