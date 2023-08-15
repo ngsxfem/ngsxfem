@@ -105,7 +105,6 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
   // bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
   if (dx.element_vb == BND)
     throw Exception("CutIntegrate can only deal with VOL a.t.m..");
-  TSCAL sum = 0.0;
 
   BitArray defon;
 
@@ -126,6 +125,58 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
   if(cfdim != 1)
     throw Exception("only implemented for 1 dimensional coefficientfunctions");
 
+	if (globxvar.SIMD_EVAL && !element_wise.Size()) {
+		TSCAL sum = 0.0;
+		ma.IterateElements(VOL, glh, [&] (Ngs_Element el, LocalHeap & lh)
+		{
+			if (defon.Size() && !defon.Test(el.GetIndex()))
+				return;
+			if (dx.definedonelements && !dx.definedonelements->Test(el.Nr()))
+				return;
+
+			auto & trafo1 = ma.GetTrafo (el, lh);
+			auto & trafo = trafo1.AddDeformation(this->dx.deformation.get(), lh);
+			const IntegrationRule *ns_ir;
+			Array<double> ns_wei_arr;
+			tie (ns_ir, ns_wei_arr) = CreateCutIntegrationRule(*lsetintdom,trafo,lh);
+			//if (ns_ir == nullptr)
+			//	return;
+			
+			SIMD_IntegrationRule ir(*ns_ir, lh);
+			const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
+			SIMD<double> *wei_arr = new (lh) SIMD<double>[simd_blocks];
+			for (int i = 0; i < simd_blocks; i++) {
+				wei_arr[i] = [&](int j)
+				{
+					const int nr = i * SIMD<IntegrationPoint>::Size() + j;
+					if (nr < ns_ir->Size())
+						return ns_wei_arr[nr];
+					else
+						return 0.;
+				};
+			}
+
+			if (&ir != nullptr)
+			{
+				SIMD_BaseMappedIntegrationRule & simd_mir = trafo(ir, lh);
+				FlatMatrix<SIMD<TSCAL>> val(simd_mir.Size(), ir.Size(), lh);
+	
+				cf -> Evaluate (simd_mir, val);
+	
+				SIMD<TSCAL> lsum(0.0);
+				for (int i = 0; i < simd_mir.Size(); i++)
+						lsum += simd_mir[i].GetMeasure()*wei_arr[i]*val(i,0);
+	
+				//if (element_wise.Size())
+				//	element_wise(el.Nr()) += lsum;
+				
+				AtomicAdd(sum, HSum(lsum));
+			}
+		});
+		return ma.GetCommunicator().AllReduce(sum, MPI_SUM);
+	}
+	
+  TSCAL sum = 0.0;
   ma.IterateElements(VOL, glh, [&] (Ngs_Element el, LocalHeap & lh)
   {
     if (defon.Size() && !defon.Test(el.GetIndex()))
