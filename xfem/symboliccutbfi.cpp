@@ -118,21 +118,21 @@ namespace ngfem
       lsetintdom_local.SetIntegrationOrder(intorder);
      bool symmetric_so_far = false; //we don't check for symmetry in the formulatin so far (TODO)!
     
+		ProxyUserData ud;
+    const_cast<ElementTransformation &>(trafo).userdata = &ud;
 
     if (simd_evaluate && globxvar.SIMD_EVAL)
-      try
+      
+			try
       {
-        // static Timer tsimd(string("SymbolicBFI::CalcElementMatrixAddSIMD")+typeid(SCAL).name()+typeid(SCAL_SHAPES).name()+typeid(SCAL_RES).name(), NoTracing);
-        // RegionTracer regsimd(TaskManager::GetThreadId(), tsimd);
-
-        const IntegrationRule *ns_ir;
+				const IntegrationRule *ns_ir;
         Array<double> ns_wei_arr;
         tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
         if (ns_ir == nullptr)
           return;
         SIMD_IntegrationRule ir(*ns_ir, lh);
         SIMD_BaseMappedIntegrationRule &mir = trafo(ir, lh);
-        SIMD<double> *wei_arr = new SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
+				SIMD<double> *wei_arr = new SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
         for (int i = 0; i < (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
         {
           wei_arr[i] = [&](int j)
@@ -145,11 +145,9 @@ namespace ngfem
             return weight;
           };
         }
-        // NgProfiler::StopThreadTimer (timer_SymbBFIstart, TaskManager::GetThreadId());
-
-        ProxyUserData ud;
-        const_cast<ElementTransformation &>(trafo).userdata = &ud;
-        PrecomputeCacheCF(cache_cfs, mir, lh);
+				PrecomputeCacheCF(cache_cfs, mir, lh);
+        
+				
 
         // bool symmetric_so_far = true;
         int k1 = 0;
@@ -328,6 +326,7 @@ namespace ngfem
         // T_CalcElementMatrixAdd<SCAL, SCAL_SHAPES, SCAL_RES> (fel, trafo, elmat, lh);
         // return;
       }
+			
     const IntegrationRule * ir;
     Array<double> wei_arr;
     tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
@@ -335,9 +334,6 @@ namespace ngfem
       return;
     ///
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
-    
-    ProxyUserData ud;
-    const_cast<ElementTransformation&>(trafo).userdata = &ud;
     
     // tstart.Stop();
     int k1 = 0;
