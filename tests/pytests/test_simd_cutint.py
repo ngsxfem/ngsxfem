@@ -74,8 +74,8 @@ def test_simd_integrate(maxh, element_wise, order):
 # compare simd to normal IntegrateX
 @pytest.mark.parametrize("maxh", [2**(-k) for k in range(5)])
 @pytest.mark.parametrize("element_wise", [True, False])
-def test_simd_integrateX(maxh, element_wise):
-    order = 4
+@pytest.mark.parametrize("order", [4])
+def test_simd_integrateX(maxh, element_wise, order):
     square = SplineGeometry()
     square.AddRectangle((-1, -1), (1, 1), bc=1)
     ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
@@ -124,3 +124,7 @@ def test_simd_integrateX(maxh, element_wise):
     print("Time for IntegrateX (simd): " + str(t_simd/testruns))
     print("performance ratio (normal/simd): " + str(t_normal/t_simd))
     assert(np.max(solutions) < 1e-7)
+
+
+test_simd_integrate(0.1, False, 4)
+test_simd_integrateX(0.1, False, 4)
