@@ -132,22 +132,19 @@ namespace ngfem
           return;
         SIMD_IntegrationRule ir(*ns_ir, lh);
         SIMD_BaseMappedIntegrationRule &mir = trafo(ir, lh);
-				SIMD<double> *wei_arr = new SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
-        for (int i = 0; i < (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
+				const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
+				SIMD<double> *wei_arr = new (lh) SIMD<double>[simd_blocks];
+        for (int i = 0; i < simd_blocks; i++)
         {
           wei_arr[i] = [&](int j)
           {
             int nr = i * SIMD<IntegrationPoint>::Size() + j;
-            bool regularip = nr < ns_ir->Size();
-            double weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
-            if (!regularip)
-              weight = 0;
-            return weight;
+            if (nr < ns_ir->Size())
+							return ns_wei_arr[nr];
+            return 0.0;
           };
         }
 				PrecomputeCacheCF(cache_cfs, mir, lh);
-        
-				
 
         // bool symmetric_so_far = true;
         int k1 = 0;
@@ -1725,7 +1722,6 @@ namespace ngfem
   {
     // THIS IS UGLY CODE DUPLICATION FROM SYMBOLICCUTBFI::T_CalcElementMatrixAdd
     // and SymbolicBilinearFormIntegrator::ApplyElementMatrix (no simd)
-    // no simd
 
     if (element_vb != VOL)
         throw Exception ("Apply for EB not yet implemented");
@@ -1762,7 +1758,75 @@ namespace ngfem
     LevelsetIntegrationDomain lsetintdom_local(*lsetintdom);    
     if (lsetintdom_local.GetIntegrationOrder() < 0) // integration order shall not be enforced by lsetintdom
       lsetintdom_local.SetIntegrationOrder(intorder);
-    
+	
+    ProxyUserData ud(trial_proxies.Size(),lh);
+    const_cast<ElementTransformation&>(trafo).userdata = &ud;
+    ud.fel = &fel;
+
+		
+		/*
+		if (simd-evaluate && globxvar.SIMD_EVAL) {
+			const IntegrationRule * ns_ir;
+			Array<double> ns_wei_arr;
+			tie (ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
+		
+			if (ns_ir == nullptr)
+				return;
+		
+			SIMD_IntegrationRule ir(*ns_ir, ns_wei_arr);
+			if (ir == nullptr)
+				return;
+			
+			SIMD<double> *wei_arr = new (lh) SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
+      for (int i = 0; i < (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
+      {
+        wei_arr[i] = [&](int j)
+        {
+          int nr = i * SIMD<IntegrationPoint>::Size() + j;
+          bool regularip = nr < ns_ir->Size();
+          double weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
+          if (!regularip)
+            weight = 0;
+          return weight;
+        };
+      }
+			
+			SIMD_BaseMappedIntegrationRule &mir = trafo(ir, lh);
+
+			ely = 0;
+			
+			for (ProxyFunction * proxy : trial_proxies)
+				ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
+
+			for (ProxyFunction * proxy : trial_proxies)
+				proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
+			
+			FlatVector<SIMD<double>> ely1(ely.Size(), lh);
+	
+			FlatMatrix<SIMD<double>> val(mir.Size(), simd_blocks,lh);
+			for (auto proxy : test_proxies)
+			{
+				HeapReset hr(lh);
+				FlatMatrix<SIMD<double>> proxyvalues(mir.Size(), proxy->Dimension(), lh);
+				for (int k = 0; k < proxy->Dimension(); k++)
+				{
+					ud.testfunction = proxy;
+					ud.test_comp = k;
+					cf -> Evaluate (mir, val);
+					proxyvalues.Col(k) = val.Col(0);
+				}
+					
+				for (int i = 0; i < mir.Size(); i++)
+					proxyvalues.Row(i) *= mir[i].GetMeasure()*wei_arr[i];
+	
+				proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
+				ely += ely1; //???
+			}
+			
+			return;
+		}
+		*/
+		
     const IntegrationRule * ir;
     Array<double> wei_arr;
     tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
@@ -1772,9 +1836,6 @@ namespace ngfem
     ///
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
     
-    ProxyUserData ud(trial_proxies.Size(),lh);
-    const_cast<ElementTransformation&>(trafo).userdata = &ud;
-    ud.fel = &fel;
     
     for (ProxyFunction * proxy : trial_proxies)
       ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
@@ -1804,7 +1865,6 @@ namespace ngfem
       proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
       ely += ely1;
     }
-    
   }
 
 
