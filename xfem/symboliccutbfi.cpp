@@ -331,6 +331,7 @@ namespace ngfem
       return;
     ///
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+    PrecomputeCacheCF(cache_cfs, mir, lh);
     
     // tstart.Stop();
     int k1 = 0;
@@ -1764,44 +1765,40 @@ namespace ngfem
     ud.fel = &fel;
 
 		
-		/*
-		if (simd-evaluate && globxvar.SIMD_EVAL) {
+		
+		if (simd_evaluate && globxvar.SIMD_EVAL) {
+
 			const IntegrationRule * ns_ir;
 			Array<double> ns_wei_arr;
 			tie (ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
-		
 			if (ns_ir == nullptr)
 				return;
-		
-			SIMD_IntegrationRule ir(*ns_ir, ns_wei_arr);
-			if (ir == nullptr)
-				return;
-			
-			SIMD<double> *wei_arr = new (lh) SIMD<double>[(ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size()];
-      for (int i = 0; i < (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size(); i++)
+
+      SIMD_IntegrationRule ir(*ns_ir, lh);
+      SIMD_BaseMappedIntegrationRule &mir = trafo(ir, lh);
+      const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
+      SIMD<double> *wei_arr = new (lh) SIMD<double>[simd_blocks];
+      for (int i = 0; i < simd_blocks; i++)
       {
         wei_arr[i] = [&](int j)
         {
           int nr = i * SIMD<IntegrationPoint>::Size() + j;
-          bool regularip = nr < ns_ir->Size();
-          double weight = ns_wei_arr[regularip ? nr : ns_ir->Size() - 1];
-          if (!regularip)
-            weight = 0;
-          return weight;
+          if (nr < ns_ir->Size())
+            return ns_wei_arr[nr];
+          return 0.0;
         };
       }
-			
-			SIMD_BaseMappedIntegrationRule &mir = trafo(ir, lh);
+      PrecomputeCacheCF(cache_cfs, mir, lh);
 
 			ely = 0;
 			
 			for (ProxyFunction * proxy : trial_proxies)
-				ud.AssignMemory (proxy, ir->GetNIP(), proxy->Dimension(), lh);
+				ud.AssignMemory (proxy, ir.GetNIP(), proxy->Dimension(), lh);
 
 			for (ProxyFunction * proxy : trial_proxies)
-				proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetMemory(proxy), lh);
+				proxy->Evaluator()->Apply(fel_trial, mir, elx, ud.GetAMemory(proxy));
 			
-			FlatVector<SIMD<double>> ely1(ely.Size(), lh);
+			FlatVector<double> ely1(ely.Size(), lh);
 	
 			FlatMatrix<SIMD<double>> val(mir.Size(), simd_blocks,lh);
 			for (auto proxy : test_proxies)
@@ -1819,13 +1816,12 @@ namespace ngfem
 				for (int i = 0; i < mir.Size(); i++)
 					proxyvalues.Row(i) *= mir[i].GetMeasure()*wei_arr[i];
 	
-				proxy->Evaluator()->ApplyTrans(fel_test, mir, proxyvalues, ely1, lh);
-				ely += ely1; //???
+				proxy->Evaluator()->AddTrans(fel_test, mir, proxyvalues, ely);
 			}
 			
 			return;
 		}
-		*/
+		
 		
     const IntegrationRule * ir;
     Array<double> wei_arr;
