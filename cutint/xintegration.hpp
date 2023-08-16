@@ -16,6 +16,10 @@ namespace xintegration
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh);
+  //tuple<const SIMD_IntegrationRule *, Array<SIMD<double>>> 
+  //  CreateSIMD_CutIntegrationRule(tuple<const IntegrationRule *, Array<double>>,LocalHeap & lh);
+
+
 
   /// OLD STYLE (to be removed on the long run, hopefully)
   /// struct which defines the relation a < b for Point4DCL 

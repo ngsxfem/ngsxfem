@@ -122,6 +122,12 @@ namespace xintegration
     return CreateCutIntegrationRule(lsetintdom, trafo, lh);
   }
   
+  //tuple<const SIMD_IntegrationRule *, Array<SIMD<double>>> 
+  //  CreateSIMD_CutIntegrationRule(tuple<const IntegrationRule *, Array<double>>,LocalHeap & lh){
+  //  
+  //}
+
+
   template<int SD>
   PointContainer<SD>::PointContainer()
   {
