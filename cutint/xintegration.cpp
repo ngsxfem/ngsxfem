@@ -122,10 +122,29 @@ namespace xintegration
     return CreateCutIntegrationRule(lsetintdom, trafo, lh);
   }
   
-  //tuple<const SIMD_IntegrationRule *, Array<SIMD<double>>> 
-  //  CreateSIMD_CutIntegrationRule(tuple<const IntegrationRule *, Array<double>>,LocalHeap & lh){
-  //  
-  //}
+  tuple<const SIMD_IntegrationRule *, Array<SIMD<double>>> 
+    CreateSIMD_CutIntegrationRule(tuple<const IntegrationRule *, Array<double>> t,LocalHeap & lh)
+  {
+    const IntegrationRule *ns_ir;
+    Array<double> ns_wei_arr;
+    tie(ns_ir, ns_wei_arr) = t;
+
+    SIMD_IntegrationRule simd_ir(*ns_ir, lh);
+    const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
+    Array<SIMD<double>> *simd_wei_arr = new (lh) Array<SIMD<double>>[simd_blocks];
+
+    for (int i = 0; i < simd_blocks; i++){
+      simd_wei_arr[i] = [&] (int j)
+      {
+        const int nr = i * SIMD<IntegrationPoint>::Size() + j;
+        if (nr < ns_ir->Size())
+          return ns_wei_arr[nr];
+        return 0.0;
+      };
+    }
+    
+    return make_tuple(&simd_ir, *simd_wei_arr);
+  }
 
 
   template<int SD>
