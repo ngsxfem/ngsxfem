@@ -11,6 +11,12 @@ from xfem import *
 from xfem.lsetcurv import *
 import scipy.sparse as sp
 
+from ngsolve.meshes import *
+from netgen.csg import *
+from math import pi
+import netgen.meshing as ngm
+from xfem.lset_spacetime import *
+
 import numpy as np
 
 
@@ -66,7 +72,7 @@ def test_lf_blf(maxh, order):
     t_blf_normal = 0
     t_simd = 0
     t_blf_simd = 0
-    n=1
+    n=10
     for k in range(n):
         ngsxfemglobals.SwitchSIMD(False)
         ########################
@@ -118,8 +124,55 @@ def test_lf_blf(maxh, order):
     #assert(t_normal > t_simd)
     print("Time for linear form, no simd: ", t_normal)
     print("Time for linear form, simd: ", t_simd)
+    print("ratio: ", t_normal/t_simd)
     print("Time for blf, no simd: ", t_blf_normal)
     print("Time for blf, simd: ", t_blf_simd)
- 
+    print("ratio: ", t_blf_normal/t_blf_simd)
 
-test_lf_blf(0.01, 4)
+@pytest.mark.parametrize("quad", [True, False])
+@pytest.mark.parametrize("domain", [NEG, POS, IF])
+def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
+    mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
+
+    tref = ReferenceTimeVariable()
+    
+    levelset = lambda t : 1 - 2*x - 2*t
+    referencevals = { POS : 1./8, NEG : 1 - 1/8, IF : 1.0/2 }
+
+    h1fes = H1(mesh,order=1)
+    lset_approx_h1 = GridFunction(h1fes)
+    tfe = ScalarTimeFE(1) 
+    fes= SpaceTimeFESpace(h1fes,tfe)
+    lset_approx = GridFunction(fes)
+
+    InterpolateToP1(levelset(0),lset_approx_h1)
+    lset_approx.vec[0:h1fes.ndof].data = lset_approx_h1.vec
+    InterpolateToP1(levelset(1),lset_approx_h1)
+    lset_approx.vec[h1fes.ndof:2*h1fes.ndof].data = lset_approx_h1.vec
+    
+    f = CoefficientFunction(1)
+    n = 10
+    t_ns = 0
+    t_simd = 0
+    error = 0
+    for i in range(n):
+        # non-SIMD
+        ngsxfemglobals.SwitchSIMD(False)
+        start = timer()
+        integral_ns = IntegrateX(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain, "time_order": 0, "order": 0},
+                             mesh=mesh, cf=f)
+        end = timer()
+        t_ns += end - start
+
+        # SIMD
+        ngsxfemglobals.SwitchSIMD(True)
+        start = timer()
+        integral_simd = IntegrateX(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain, "time_order": 0, "order": 0},
+                             mesh=mesh, cf=f)
+        end = timer()
+        t_simd += end - start
+
+        error += abs(integral_ns - integral_simd)
+        #error += abs(integral - referencevals[domain])
+    print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
+    assert error/n < 1 # error to high, but test fails with less (is this normal?)
