@@ -176,3 +176,36 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
         #error += abs(integral - referencevals[domain])
     print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
     assert error/n < 1 # error to high, but test fails with less (is this normal?)
+
+@pytest.mark.parametrize("quad", [True, False])
+def test_facetpatch(quad):
+    mesh = MakeStructured2DMesh(quads = quad, nx=2, ny=2)    
+
+    fes = H1(mesh,order=3,dgjumps=True)
+    u,v = fes.TnT()
+
+    for i in range(2):
+        a = BilinearForm(fes)
+        a += u * v * dFacetPatch()
+        # non-SIMD
+        ngsxfemglobals.SwitchSIMD(False)
+        start = timer()
+        a.Assemble()
+        end = timer()
+        t_ns = end - start
+
+        a2 = BilinearForm(fes)
+        a2 += u * v * dFacetPatch()
+        # SIMD
+        ngsxfemglobals.SwitchSIMD(True)
+        start = timer()
+        a2.Assemble()
+        end = timer()
+        t_simd = end - start
+
+    a.mat.AsVector().data -= a2.mat.AsVector().data
+
+    error = Norm(a.mat.AsVector())
+    #error += abs(integral - referencevals[domain])
+    print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
+    assert error < 1e-9 # error to high, but test fails with less (is this normal?)
