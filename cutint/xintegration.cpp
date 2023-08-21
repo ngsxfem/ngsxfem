@@ -122,28 +122,22 @@ namespace xintegration
     return CreateCutIntegrationRule(lsetintdom, trafo, lh);
   }
   
-  tuple<const SIMD_IntegrationRule *, Array<SIMD<double>>> 
-    CreateSIMD_CutIntegrationRule(tuple<const IntegrationRule *, Array<double>> t,LocalHeap & lh)
+  template<class SCAL> 
+  FlatArray<SIMD<SCAL>> CreateSIMD_FlatArray(FlatArray<SCAL> ns_arr, LocalHeap & lh)
   {
-    const IntegrationRule *ns_ir;
-    Array<double> ns_wei_arr;
-    tie(ns_ir, ns_wei_arr) = t;
-
-    SIMD_IntegrationRule simd_ir(*ns_ir, lh);
-    const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
-    Array<SIMD<double>> *simd_wei_arr = new (lh) Array<SIMD<double>>[simd_blocks];
+    const int simd_blocks = (ns_arr.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
+    FlatArray<SIMD<SCAL>> simd_arr(simd_blocks,lh);
 
     for (int i = 0; i < simd_blocks; i++){
-      simd_wei_arr[i] = [&] (int j)
+      simd_arr[i] = [&] (int j)
       {
         const int nr = i * SIMD<IntegrationPoint>::Size() + j;
-        if (nr < ns_ir->Size())
-          return ns_wei_arr[nr];
-        return 0.0;
+        if (nr < ns_arr.Size())
+          return ns_arr[nr];
+        return SCAL(0.0);
       };
     }
-    
-    return make_tuple(&simd_ir, *simd_wei_arr);
+    return simd_arr;
   }
 
 
@@ -1746,5 +1740,8 @@ namespace xintegration
     return ir;
   }
 
-  
+  template FlatArray<SIMD<double>> CreateSIMD_FlatArray(FlatArray<double> ns_arr, LocalHeap & lh);
+  //template FlatArray<SIMD<Complex>> CreateSIMD_FlatArray(FlatArray<Complex> ns_arr, LocalHeap & lh);
+
+
 } // end of namespace

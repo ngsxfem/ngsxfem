@@ -94,50 +94,21 @@ namespace ngfem
     const_cast<ElementTransformation&>(trafo).userdata = &ud;
 
     elvec = 0;
+    const IntegrationRule *ir;
+    Array<double> wei_arr;
+    tie(ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
+    if (ir == nullptr)
+      return;
 
     // case: simd enabled; if an error occurs, switch back to normal evaluation
     if (simd_evaluate && globxvar.SIMD_EVAL){
       try
       {
-        const IntegrationRule *ns_ir;
-        Array<double> ns_wei_arr;
-        tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
-        if (ns_ir == nullptr)
-          return;
         
-        SIMD_IntegrationRule simd_ir(*ns_ir, lh);
-        
-        const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
-        SIMD<double> *simd_wei_arr = new (lh) SIMD<double>[simd_blocks];
-        for (int i = 0; i < simd_blocks; i++)
-        {
-          simd_wei_arr[i] = [&](int j)
-          {
-            const int nr = i * SIMD<IntegrationPoint>::Size() + j;
-            if (nr < ns_ir->Size())
-              return ns_wei_arr[nr];
-            else
-              return 0.;
-          };
-        }
-
-        /*
-        const SIMD_IntegrationRule *simd_ir;
-        Array<SIMD<double>> wei_arr;
-        tie(simd_ir, wei_arr) = CreateSIMD_CutIntegrationRule(make_tuple(ns_ir, ns_wei_arr), lh);
-
-        if (simd_ir == nullptr)
-          return;
-        
-        // if (simd_wei_arr == nullptr)
-        //   return;
-
-        SIMD_BaseMappedIntegrationRule &mir = trafo(*simd_ir, lh);
-        auto &mir = trafo(*simd_ir, lh);
-        
-        */
+        SIMD_IntegrationRule & simd_ir = *(new (lh) SIMD_IntegrationRule(*ir, lh));
+        FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(wei_arr, lh);        
         auto &mir = trafo(simd_ir, lh);
-        
+
         for (CoefficientFunction *cf : gridfunction_cfs)
           ud.AssignMemory(cf, simd_ir.GetNIP(), cf->Dimension(), lh);
 
@@ -195,15 +166,6 @@ namespace ngfem
 
       return;
 	}
-
-    // case: simd disabled
-    const IntegrationRule * ir;
-    Array<double> wei_arr;
-    tie (ir, wei_arr) = CreateCutIntegrationRule(lsetintdom_local, trafo, lh);
-    
-    if (ir == nullptr)
-      return;
-
 
     BaseMappedIntegrationRule & mir = trafo(*ir, lh);
 
