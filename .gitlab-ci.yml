@@ -22,6 +22,7 @@ build:
     paths:
       - build
       - install
+  needs: []  
 
 ctests-demos:
   stage: test
@@ -30,6 +31,7 @@ ctests-demos:
     - bash .ci/ci_ctests.sh demos
   when: always
   allow_failure: false
+  needs: [build]  
 
 ctests-mayfail:
   stage: test
@@ -38,6 +40,7 @@ ctests-mayfail:
     - bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
+  needs: [build]  
 
 ctests-pytests:
   stage: test
@@ -46,6 +49,13 @@ ctests-pytests:
     -  bash .ci/ci_ctests.sh pytests
   when: always
   allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - build/ctest-results.xml
+    reports:
+      junit: build/ctest-results.xml
+  needs: [build]  
 
 metrics:
   tags:
@@ -61,6 +71,7 @@ metrics:
       metrics: metrics.txt
   when: manual
   allow_failure: true
+  needs: [build]  
 
 codestyle-demos:
   stage: test
@@ -71,9 +82,10 @@ codestyle-demos:
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
   when: always
   allow_failure: true
-        
+  needs: []  
+
 paper:
-  stage: build
+  stage: deploy
   image:
     name: openjournals/paperdraft
     entrypoint: [""] 
@@ -84,9 +96,10 @@ paper:
   artifacts:
     paths:
       - paper.pdf
+  needs: []  
 
 paper-appendix:
-  stage: build
+  stage: deploy
   image:
     name: schruste/latex
     entrypoint: [""] 
@@ -99,6 +112,7 @@ paper-appendix:
     paths:
       - literature.pdf
       - feature-details.pdf
+  needs: []  
         
         
 pages:
@@ -128,6 +142,8 @@ pages:
   artifacts:
     paths:
       - public
+  needs: [build,ctests-demos,ctests-pytests]  
+
   #only:
   #  - release # this job will affect only the 'sphinx' branch
 
@@ -135,7 +151,7 @@ pip_linux:
   #image: quay.io/pypa/manylinux2014_x86_64
   image: sameli/manylinux2014_x86_64_cuda_11      
 
-  stage: build
+  stage: deploy
   script:
     - ./.ci/build_pip.sh 38
     - ./.ci/build_pip.sh 39
@@ -144,6 +160,7 @@ pip_linux:
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
   when: manual
+  needs: []  
 
 
 docker_build:
@@ -157,9 +174,8 @@ docker_build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:latest"
+      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
-  only:
-    - master # the branch you want to publish
   when: manual 
+  needs: []  
 

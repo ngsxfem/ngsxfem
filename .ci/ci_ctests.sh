@@ -21,5 +21,5 @@ if [ $1 == "mayfail" ]; then
 fi
 
 if [ $1 == "pytests" ]; then
-    ctest -V -R 'pytests'
+    ctest -V -R 'pytests' --output-junit ctest-results.xml
 fi
