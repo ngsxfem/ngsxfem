@@ -79,7 +79,7 @@ codestyle-demos:
   allow_failure: true
         
 paper:
-  stage: build
+  stage: deploy
   image:
     name: openjournals/paperdraft
     entrypoint: [""] 
@@ -92,7 +92,7 @@ paper:
       - paper.pdf
 
 paper-appendix:
-  stage: build
+  stage: deploy
   image:
     name: schruste/latex
     entrypoint: [""] 
@@ -141,7 +141,7 @@ pip_linux:
   #image: quay.io/pypa/manylinux2014_x86_64
   image: sameli/manylinux2014_x86_64_cuda_11      
 
-  stage: build
+  stage: deploy
   script:
     - ./.ci/build_pip.sh 38
     - ./.ci/build_pip.sh 39
@@ -163,9 +163,7 @@ docker_build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:latest"
+      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
-  only:
-    - master # the branch you want to publish
   when: manual 
 
