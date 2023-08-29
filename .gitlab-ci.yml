@@ -144,3 +144,22 @@ pip_linux:
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
   when: manual
+
+
+docker_build:
+  stage: deploy
+
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+     
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:latest"
+  
+  only:
+    - master # the branch you want to publish
+  when: manual 
+
