@@ -46,6 +46,12 @@ ctests-pytests:
     -  bash .ci/ci_ctests.sh pytests
   when: always
   allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - .ci/ctest-results.xml
+    reports:
+      junit: .ci/ctest-results.xml
 
 metrics:
   tags:
