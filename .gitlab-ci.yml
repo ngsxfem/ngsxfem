@@ -142,7 +142,7 @@ pages:
   artifacts:
     paths:
       - public
-  needs: [build]  
+  needs: [build,ctests-demos,ctests-pytests]]  
 
   #only:
   #  - release # this job will affect only the 'sphinx' branch
