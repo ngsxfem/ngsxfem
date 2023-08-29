@@ -22,6 +22,7 @@ build:
     paths:
       - build
       - install
+  needs: []  
 
 ctests-demos:
   stage: test
@@ -30,6 +31,7 @@ ctests-demos:
     - bash .ci/ci_ctests.sh demos
   when: always
   allow_failure: false
+  needs: [build]  
 
 ctests-mayfail:
   stage: test
@@ -38,6 +40,7 @@ ctests-mayfail:
     - bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
+  needs: [build]  
 
 ctests-pytests:
   stage: test
@@ -49,9 +52,10 @@ ctests-pytests:
   artifacts:
     when: always
     paths:
-      - .ci/ctest-results.xml
+      - build/ctest-results.xml
     reports:
-      junit: .ci/ctest-results.xml
+      junit: build/ctest-results.xml
+  needs: [build]  
 
 metrics:
   tags:
@@ -67,6 +71,7 @@ metrics:
       metrics: metrics.txt
   when: manual
   allow_failure: true
+  needs: [build]  
 
 codestyle-demos:
   stage: test
@@ -77,7 +82,8 @@ codestyle-demos:
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
   when: always
   allow_failure: true
-        
+  needs: []  
+
 paper:
   stage: deploy
   image:
@@ -90,6 +96,7 @@ paper:
   artifacts:
     paths:
       - paper.pdf
+  needs: []  
 
 paper-appendix:
   stage: deploy
@@ -105,6 +112,7 @@ paper-appendix:
     paths:
       - literature.pdf
       - feature-details.pdf
+  needs: []  
         
         
 pages:
@@ -134,6 +142,8 @@ pages:
   artifacts:
     paths:
       - public
+  needs: [build]  
+
   #only:
   #  - release # this job will affect only the 'sphinx' branch
 
@@ -150,6 +160,7 @@ pip_linux:
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
   when: manual
+  needs: []  
 
 
 docker_build:
@@ -166,4 +177,5 @@ docker_build:
       --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
   when: manual 
+  needs: []  
 
