@@ -23,7 +23,8 @@ import numpy as np
 @pytest.mark.parametrize("maxh", [2**(-k) for k in range(5)])
 @pytest.mark.parametrize("order", [4])
 def test_lf_blf(maxh, order):
-
+    print()
+    print("test for CalcElementMatrixAdd(symboliccutbfi and CalcElementVector(symboliccutlfi) with order=" + str(order) + " and maxh=" + str(maxh))
     square = SplineGeometry()
     square.AddRectangle((-1, -1), (1, 1), bc=1)
     ngmesh = square.GenerateMesh(maxh=maxh, quad_dominated=False)
@@ -129,9 +130,12 @@ def test_lf_blf(maxh, order):
     print("Time for blf, simd: ", t_blf_simd)
     print("ratio: ", t_blf_normal/t_blf_simd)
 
+# space-time test case
 @pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
 def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
+    print()
+    print("spacetime test with quad=" + str(quad) + " and domain=" + str(domain))
     mesh = MakeStructured2DMesh(quads = quad, nx=1, ny=1)    
 
     tref = ReferenceTimeVariable()
@@ -177,8 +181,11 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
     print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
     assert error/n < 1 # error to high, but test fails with less (is this normal?)
 
+# facetpatch test
 @pytest.mark.parametrize("quad", [True, False])
 def test_facetpatch(quad):
+    print()
+    print("test for FacetPatch with quad=" + str(quad))
     mesh = MakeStructured2DMesh(quads = quad, nx=2, ny=2)    
 
     fes = H1(mesh,order=3,dgjumps=True)
@@ -208,4 +215,69 @@ def test_facetpatch(quad):
     error = Norm(a.mat.AsVector())
     #error += abs(integral - referencevals[domain])
     print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
-    assert error < 1e-9 # error to high, but test fails with less (is this normal?)
+    assert error < 1e-9
+
+# CalcLinearizedElementMatrix-test
+def test_calc_linearized():
+    print()
+    print("Pytest for CalcLinearizedElementMatrix")
+    square = SplineGeometry()
+    square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
+    mesh = Mesh (square.GenerateMesh(maxh=0.8))
+    
+    levelset = (sqrt(sqrt(x*x*x*x+y*y*y*y)) - 1.0)
+
+    lsetp1 = GridFunction(H1(mesh))
+    lsetp1.Set(levelset)
+    lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0}
+    
+    ci = CutInfo(mesh,lsetp1)
+    hasneg = ci.GetElementsOfType(HASNEG)
+
+    Vh = H1(mesh, order = 2, dirichlet=[])    
+    active_dofs = GetDofsOfElements(Vh,hasneg)
+    Vh = Compress(Vh,active_dofs)
+    
+    u,v = Vh.TnT()
+
+    gfu = GridFunction(Vh)
+    gfu.Set(sin(x))
+    
+    a5 = BilinearForm(Vh)
+    a5 += SymbolicBFI(levelset_domain = lset_neg, form = gfu*u * v)
+    a6 = BilinearForm(Vh)
+    a6 += SymbolicBFI(levelset_domain = lset_neg, form = gfu*u * v)
+
+    # SIMD enabled
+    ngsxfemglobals.SwitchSIMD(True)
+    start = timer()
+    a5.AssembleLinearization(gfu.vec)
+    end = timer()
+
+    print("SIMD done in python")
+    t_simd = end - start
+    
+    # SIMD disabled
+    ngsxfemglobals.SwitchSIMD(False)
+    start = timer()
+    a6.AssembleLinearization(gfu.vec)
+    end = timer()
+    print("non-SIMD done in python")
+
+    t_ns = end - start
+
+    print("Normal to SIMD ratio: ", str(t_ns/t_simd))
+
+    w5 = gfu.vec.CreateVector()
+    w6 = gfu.vec.CreateVector()
+
+    w5.data = a5.mat * gfu.vec
+    w6.data = a6.mat * gfu.vec
+    
+    # print(Norm(w5))
+    # print(Norm(w6))
+
+    w5.data -= w6.data
+    diff3 = Norm(w5)
+    print("diff3 : ",diff3)
+    assert diff3 < 1e-12
