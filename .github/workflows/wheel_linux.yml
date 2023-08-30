@@ -10,6 +10,9 @@ on:
 jobs:
   
   publish-pip-bin:
+    strategy:
+      matrix:
+        py: ['38', '39', '310', '311']    
     needs: []
     runs-on: ubuntu-latest
     container:
@@ -26,7 +29,7 @@ jobs:
       - name: git describe
         run: git describe --tags
       - name: Build and package xfem binaries for PyPI
-        run: .ci/build_pip.sh
+        run: .ci/build_pip.sh ${{ matrix.py }}
       - name: Publish binary distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
