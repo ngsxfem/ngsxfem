@@ -53,73 +53,58 @@ void ExportNgsx_cutint(py::module &m)
           MyMutex mutex_ip_cont;
           //MyLock lock_ip_cont(mutex_ip_cont);
 					
-					double sum = 0.0;
-					if(globxvar.SIMD_EVAL && !element_wise) {
-
-						ma->IterateElements
-            (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
-            {
-							auto & trafo = ma->GetTrafo (el, lh);
-
-              const IntegrationRule *ns_ir;
-							Array<double> ns_wei_arr;
-							tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(*lsetintdom, trafo, lh);
-        
-							if (ns_ir == nullptr)
-								return;        
-
-							SIMD_IntegrationRule ir(*ns_ir, lh);
-							const int simd_blocks = (ns_ir->Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
-							SIMD<double> *wei_arr = new (lh) SIMD<double>[simd_blocks];
-							for (int i = 0; i < simd_blocks; i++) {
-								wei_arr[i] = [&](int j)
-								{
-									const int nr = i * SIMD<IntegrationPoint>::Size() + j;
-									if (nr < ns_ir->Size())
-										return ns_wei_arr[nr];
-									else
-										return 0.;
-								};
-							}
-								
-							SIMD_BaseMappedIntegrationRule &simd_mir = trafo(ir, lh);
-							BaseMappedIntegrationRule &mir = trafo(*ns_ir, lh);
-							FlatMatrix<SIMD<double>> val(simd_mir.Size(), ir.Size(), lh);
-							
-							cf -> Evaluate(simd_mir, val);
-							
-							SIMD<double> lsum = 0.0;
-							for (int i = 0; i < simd_mir.Size(); i++)
-								lsum = lsum + simd_mir[i].GetMeasure()*wei_arr[i]*val(i,0);
-							
-							if (ip_cont != nullptr)
-								for (int i = 0; i < mir.Size(); i++) {
-									MyLock lock_ip_cont(mutex_ip_cont);
-                   if (space_time) {
-                     ip_cont->append(tuple ( MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
-                                             ma.get(), VOL, static_cast<int>(el.Nr())}, (*ns_ir)[i].Weight()));
-                   } else {
-                     ip_cont->append(MeshPoint{mir[i].IP()(0), mir[i].IP()(1), mir[i].IP()(2),
-                                             ma.get(), VOL, static_cast<int>(el.Nr())});
-									}
-								}
-							
-							//if (element_wise)
-              //    element_sum(el.Nr()) = lsum;
-							
-							// equivalent to AtomicAdd; no-simd-(l)sum are scalar
-							for (int i = 0; i < simd_blocks; i++) {
-								sum += lsum[i];
-							}
-						});
-						
-						py::object result;
-						result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
-						return result;
-					}
-
           Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
           element_sum = 0.0;
+					double sum = 0.0;
+					if(globxvar.SIMD_EVAL && ip_cont==nullptr) {
+            try {
+						  ma->IterateElements
+              (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
+              {
+						  	auto & trafo = ma->GetTrafo (el, lh);
+
+                const IntegrationRule *ns_ir;
+						  	Array<double> ns_wei_arr;
+						  	tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(*lsetintdom, trafo, lh);
+
+						  	if (ns_ir == nullptr)
+						  		return;        
+
+						  	SIMD_IntegrationRule simd_ir(*ns_ir, lh);
+						  	FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
+  
+						  	SIMD_BaseMappedIntegrationRule &simd_mir = trafo(simd_ir, lh);
+						  	FlatMatrix<SIMD<double>> val(simd_mir.Size(), simd_ir.Size(), lh);
+  
+						  	cf -> Evaluate(simd_mir, val);
+  
+						  	SIMD<double> lsum = 0.0;
+						  	for (int i = 0; i < simd_mir.Size(); i++)
+						  		lsum = lsum + simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
+  
+						  	// if (element_wise)
+                //    element_sum(el.Nr()) = HSum(lsum);
+  
+						  	// equivalent to AtomicAdd; no-simd-(l)sum are scalar
+						  	for (int i = 0; i < simd_wei_arr.Size(); i++) {
+						  		sum += lsum[i];
+                  element_sum(el.Nr()) = lsum[i]; // problem ?
+						  	}
+						  });
+  
+						  py::object result;
+              if (element_wise)
+                result = py::cast(element_sum);
+              else
+  						  result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
+	
+  					  return result;
+            } catch (ExceptionNOSIMD e) {
+              cout << IM(6) << e.What() << endl
+                   << "switching to non-SIMD evaluation" << endl;
+            }
+
+					}
           
 					ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
