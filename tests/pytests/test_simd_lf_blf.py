@@ -244,9 +244,9 @@ def test_calc_linearized():
     gfu.Set(sin(x))
     
     a5 = BilinearForm(Vh)
-    a5 += SymbolicBFI(levelset_domain = lset_neg, form = gfu*u * v)
+    a5 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
     a6 = BilinearForm(Vh)
-    a6 += SymbolicBFI(levelset_domain = lset_neg, form = gfu*u * v)
+    a6 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
 
     # SIMD enabled
     ngsxfemglobals.SwitchSIMD(True)

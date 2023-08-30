@@ -61,6 +61,7 @@ void ExportNgsx_cutint(py::module &m)
 						  ma->IterateElements
               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
               {
+                HeapReset hr(lh);
 						  	auto & trafo = ma->GetTrafo (el, lh);
 
                 const IntegrationRule *ns_ir;
@@ -74,24 +75,19 @@ void ExportNgsx_cutint(py::module &m)
 						  	FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
   
 						  	SIMD_BaseMappedIntegrationRule &simd_mir = trafo(simd_ir, lh);
-						  	FlatMatrix<SIMD<double>> val(simd_mir.Size(), simd_ir.Size(), lh);
+						  	FlatMatrix<SIMD<double>> val(simd_mir.Size(), 1, lh);
   
 						  	cf -> Evaluate(simd_mir, val);
   
 						  	SIMD<double> lsum = 0.0;
 						  	for (int i = 0; i < simd_mir.Size(); i++)
-						  		lsum = lsum + simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
-  
-						  	// if (element_wise)
-                //    element_sum(el.Nr()) = HSum(lsum);
-  
-						  	// equivalent to AtomicAdd; no-simd-(l)sum are scalar
-						  	for (int i = 0; i < simd_wei_arr.Size(); i++) {
-						  		sum += lsum[i];
-                  element_sum(el.Nr()) = lsum[i]; // problem ?
-						  	}
+						  		lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
+
+                AtomicAdd(sum,HSum(lsum));
+                if (element_wise)
+                  element_sum(el.Nr()) = HSum(lsum); // problem ?
+
 						  });
-  
 						  py::object result;
               if (element_wise)
                 result = py::cast(element_sum);
@@ -105,10 +101,14 @@ void ExportNgsx_cutint(py::module &m)
             }
 
 					}
+
+					if(globxvar.SIMD_EVAL && ip_cont!=nullptr) 
+            cout << IM(6) << "Switching to non-SIMD evaluation due to IntegrationPointContainer" << endl;
           
 					ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
              {
+               HeapReset hr(lh);
                auto & trafo = ma->GetTrafo (el, lh);
 
                const IntegrationRule * ir;
