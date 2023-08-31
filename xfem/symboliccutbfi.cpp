@@ -1613,9 +1613,16 @@ namespace ngfem
       ir2 = &ir_patch2;
     }
 
+    if (simd_evaluate && globxvar.SIMD_EVAL) {
+      try {
 
-    // getchar();
-    
+      } catch (ExceptionNOSIMD e) {
+        cout << IM(6) << e.What() <<
+             << "switching to non-SIMD evaluation (in T_CalcFacetMatrix)" endl;
+      }
+    }
+
+
     BaseMappedIntegrationRule & mir1 = trafo1(*ir1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(*ir2, lh);
 
@@ -1761,7 +1768,6 @@ namespace ngfem
 
         PrecomputeCacheCF(cache_cfs, simd_mir, lh);
 
-			  ely = 0;
   
 			  for (ProxyFunction * proxy : trial_proxies)
 			  	ud.AssignMemory (proxy, simd_ir.GetNIP(), proxy->Dimension(), lh);
@@ -1770,10 +1776,11 @@ namespace ngfem
 			  	proxy->Evaluator()->Apply(fel_trial, simd_mir, elx, ud.GetAMemory(proxy));
   
 			  FlatVector<double> ely1(ely.Size(), lh);
-  
-			  FlatMatrix<SIMD<double>> val(simd_mir.Size(), simd_wei_arr[0].Size(),lh);
+        
+        ely = 0;
+        FlatMatrix<SIMD<double>> val(simd_mir.Size(), 1,lh);
 			  for (auto proxy : test_proxies)
-			  {
+        {
 			  	HeapReset hr(lh);
 			  	FlatMatrix<SIMD<double>> proxyvalues(simd_mir.Size(), proxy->Dimension(), lh);
 			  	for (int k = 0; k < proxy->Dimension(); k++)
