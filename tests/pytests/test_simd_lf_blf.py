@@ -243,15 +243,15 @@ def test_calc_linearized():
     gfu = GridFunction(Vh)
     gfu.Set(sin(x))
     
-    a5 = BilinearForm(Vh)
-    a5 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
-    a6 = BilinearForm(Vh)
-    a6 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
+    a1 = BilinearForm(Vh)
+    a1 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
+    a2 = BilinearForm(Vh)
+    a2 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
 
     # SIMD enabled
     ngsxfemglobals.SwitchSIMD(True)
     start = timer()
-    a5.AssembleLinearization(gfu.vec)
+    a1.AssembleLinearization(gfu.vec)
     end = timer()
 
     print("SIMD done in python")
@@ -260,7 +260,7 @@ def test_calc_linearized():
     # SIMD disabled
     ngsxfemglobals.SwitchSIMD(False)
     start = timer()
-    a6.AssembleLinearization(gfu.vec)
+    a2.AssembleLinearization(gfu.vec)
     end = timer()
     print("non-SIMD done in python")
 
@@ -268,16 +268,80 @@ def test_calc_linearized():
 
     print("Normal to SIMD ratio: ", str(t_ns/t_simd))
 
-    w5 = gfu.vec.CreateVector()
-    w6 = gfu.vec.CreateVector()
+    w1 = gfu.vec.CreateVector()
+    w2 = gfu.vec.CreateVector()
 
-    w5.data = a5.mat * gfu.vec
-    w6.data = a6.mat * gfu.vec
+    w1.data = a1.mat * gfu.vec
+    w2.data = a2.mat * gfu.vec
     
-    # print(Norm(w5))
-    # print(Norm(w6))
+    # print(Norm(w1))
+    # print(Norm(w2))
 
-    w5.data -= w6.data
-    diff3 = Norm(w5)
-    print("diff3 : ",diff3)
-    assert diff3 < 1e-12
+    w1.data -= w2.data
+    diff = Norm(w1)
+    print("diff : ",diff)
+    assert diff < 1e-12
+
+
+# test for ApplyElementMatrix
+def test_calc_linearized():
+    square = SplineGeometry()
+    square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
+    mesh = Mesh (square.GenerateMesh(maxh=0.8))
+    
+    levelset = (sqrt(sqrt(x*x*x*x+y*y*y*y)) - 1.0)
+
+    lsetp1 = GridFunction(H1(mesh))
+    lsetp1.Set(levelset)
+    lset_neg = { "levelset" : lsetp1, "domain_type" : NEG, "subdivlvl" : 0}
+    
+    ci = CutInfo(mesh,lsetp1)
+    hasneg = ci.GetElementsOfType(HASNEG)
+
+    Vh = H1(mesh, order = 2, dirichlet=[])    
+    active_dofs = GetDofsOfElements(Vh,hasneg)
+    Vh = Compress(Vh,active_dofs)
+    
+    u,v = Vh.TnT()
+
+    gfu = GridFunction(Vh)
+    gfu.Set(sin(x))
+
+    a1 = BilinearForm(Vh)
+    a1 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
+    a1.Assemble()
+    
+    a2 = BilinearForm(Vh)
+    a2 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
+    a2.Assemble()
+
+    w1 = gfu.vec.CreateVector()
+    w2 = gfu.vec.CreateVector()
+
+    w1.data = a1.mat * gfu.vec
+    w2.data = a2.mat * gfu.vec
+    
+    t_simd = 0
+    t_ns = 0
+    testruns = 5
+    for i in range(testruns):
+        # SIMD enabled
+        ngsxfemglobals.SwitchSIMD(True)
+        start = timer()
+        a1.Apply(gfu.vec,w1)
+        end = timer()
+        t_simd += end-start
+
+        # SIMD disabled
+        ngsxfemglobals.SwitchSIMD(False)
+        start = timer()
+        a2.Apply(gfu.vec,w2)
+        end = timer()
+        t_ns += end-start
+
+    print("Normal/SIMD: ", t_ns/t_simd)
+
+    w1.data -= w2
+    diff = Norm(w1)
+    print("diff : ",diff)
+    assert diff < 1e-12
