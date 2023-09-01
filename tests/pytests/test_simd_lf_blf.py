@@ -1,3 +1,11 @@
+'''
+These test-cases compare the results of SIMD-enabled and
+  SIMD-disabled evaluation of e.g. .Apply(), .Assemble(), 
+  .AssembleLinearized(). We cannot guarantee that SIMD-enabled
+  evaluates faster than without, therefore this is not checked; 
+  but can be printed with pytest -s 'filename.py'.
+last edited: 01-09-2023 (DD-MM-YYYY)
+'''
 
 from xfem import ngsxfemglobals
 from timeit import default_timer as timer
@@ -130,6 +138,7 @@ def test_lf_blf(maxh, order):
     print("Time for blf, simd: ", t_blf_simd)
     print("ratio: ", t_blf_normal/t_blf_simd)
 
+
 # space-time test case
 @pytest.mark.parametrize("quad", [True, False])
 @pytest.mark.parametrize("domain", [NEG, POS, IF])
@@ -179,7 +188,8 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
         error += abs(integral_ns - integral_simd)
         #error += abs(integral - referencevals[domain])
     print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
-    assert error/n < 1 # error to high, but test fails with less (is this normal?)
+    assert error/n < 1e-8
+
 
 # facetpatch test
 @pytest.mark.parametrize("quad", [True, False])
@@ -191,7 +201,9 @@ def test_facetpatch(quad):
     fes = H1(mesh,order=3,dgjumps=True)
     u,v = fes.TnT()
 
-    for i in range(2):
+    testruns = 5
+
+    for i in range(testruns):
         a = BilinearForm(fes)
         a += u * v * dFacetPatch()
         # non-SIMD
@@ -216,6 +228,7 @@ def test_facetpatch(quad):
     #error += abs(integral - referencevals[domain])
     print("Non-SIMD to SIMD-ratio: ", t_ns/t_simd)
     assert error < 1e-9
+
 
 # CalcLinearizedElementMatrix-test
 def test_calc_linearized():
@@ -248,22 +261,22 @@ def test_calc_linearized():
     a2 = BilinearForm(Vh)
     a2 += SymbolicBFI(levelset_domain = lset_neg, form = 0.5*u**2 * v)
 
-    # SIMD enabled
-    ngsxfemglobals.SwitchSIMD(True)
-    start = timer()
-    a1.AssembleLinearization(gfu.vec)
-    end = timer()
+    testruns = 5
+    for i in range(testruns):
+        # SIMD enabled
+        ngsxfemglobals.SwitchSIMD(True)
+        start = timer()
+        a1.AssembleLinearization(gfu.vec)
+        end = timer()
 
-    print("SIMD done in python")
-    t_simd = end - start
-    
-    # SIMD disabled
-    ngsxfemglobals.SwitchSIMD(False)
-    start = timer()
-    a2.AssembleLinearization(gfu.vec)
-    end = timer()
-    print("non-SIMD done in python")
+        t_simd = end - start
 
+        # SIMD disabled
+        ngsxfemglobals.SwitchSIMD(False)
+        start = timer()
+        a2.AssembleLinearization(gfu.vec)
+        end = timer()
+        
     t_ns = end - start
 
     print("Normal to SIMD ratio: ", str(t_ns/t_simd))
@@ -285,6 +298,8 @@ def test_calc_linearized():
 
 # test for ApplyElementMatrix
 def test_calc_linearized():
+    print()
+    print("test for CalcLinearizedElementMatrix")
     square = SplineGeometry()
     square.AddRectangle([-1.5,-1.5],[1.5,1.5],bc=1)
     mesh = Mesh (square.GenerateMesh(maxh=0.8))
@@ -343,5 +358,5 @@ def test_calc_linearized():
 
     w1.data -= w2
     diff = Norm(w1)
-    print("diff : ",diff)
+    print("error: ",diff)
     assert diff < 1e-12
