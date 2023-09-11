@@ -16,3 +16,4 @@ export CMAKE_OSX_ARCHITECTURES='x86_64'
 
 $PYDIR/pip wheel -vvv -w dist .
 cd dist; rm -f netgen*.whl ngsolve*.whl
+wheel tags --platform-tag macosx_10_15_x86_64 xfem-*.whl
