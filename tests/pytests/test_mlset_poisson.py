@@ -40,7 +40,7 @@ geo.AddRectangle((-0.2, -0.2), (1.2, 1.2),
 
 
 def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1, 
-        u_ex=None, grad_u_ex=None, inverse="pardiso"):
+        u_ex=None, grad_u_ex=None, inverse="sparsecholesky"):
 
     nr_ls = len(level_sets)
 
@@ -120,7 +120,7 @@ def SolvePossionOnUnitSquare(level_sets, mesh, k, rhs, gamma_n=10, gamma_s=0.1,
     # ----------------------------- Solve Problem -----------------------------
     f.Assemble()
     a.Assemble()
-    inv = a.mat.Inverse(freedofs=freedofs)
+    inv = a.mat.Inverse(freedofs=freedofs,inverse=inverse)
 
     gfu.vec.data = PreRic(a=a, rhs=f.vec, pre=inv, freedofs=freedofs)
 
