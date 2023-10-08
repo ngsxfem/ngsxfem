@@ -519,7 +519,7 @@ namespace ngfem
       
       const int order_sum = fel_trial.Order()+fel_test.Order();
 
-      if (simd_evaluate)
+      if (simd_evaluate && globxvar.SIMD_EVAL)
         // if (false)  // throwing the no-simd exception after some terms already added is still a problem
         {
           try
@@ -686,8 +686,8 @@ namespace ngfem
             {
               cout << IM(4) << e.What() << endl
                    << "switching to non-SIMD evaluation (in T_CalcElementMatrixEBAdd)" << endl;
-              // simd_evaluate = false;
-              // throw ExceptionNOSIMD("disabled simd-evaluate in AddElementMatrixEB");
+              simd_evaluate = false;
+              throw ExceptionNOSIMD("disabled simd-evaluate in AddElementMatrixEB");
             }
         }
 
@@ -1076,7 +1076,7 @@ namespace ngfem
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo1).userdata = &ud;
 
-    if (simd_evaluate) {
+    if (simd_evaluate && globxvar.SIMD_EVAL) {
       try {
         SIMD_IntegrationRule simd_ir_facet_vol1(ir_facet_vol1);
         SIMD_IntegrationRule simd_ir_facet_vol2(ir_facet_vol2);
