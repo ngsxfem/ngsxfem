@@ -516,8 +516,7 @@ namespace ngfem
 
       Facet2ElementTrafo transform(eltype, element_vb);
       int nfacet = transform.GetNFacets();
-
-      /*
+      
       if (simd_evaluate)
         // if (false)  // throwing the no-simd exception after some terms already added is still a problem
         {
@@ -656,12 +655,13 @@ namespace ngfem
           catch (ExceptionNOSIMD e)
             {
               cout << IM(4) << e.What() << endl
-                   << "switching to scalar evaluation, may be a problem with Add" << endl;
-              simd_evaluate = false;
-              throw ExceptionNOSIMD("disabled simd-evaluate in AddElementMatrixEB");
+                   << "switching to non-SIMD evaluation (in T_CalcElementMatrixEBAdd)" << endl;
+              // simd_evaluate = false;
+              // throw ExceptionNOSIMD("disabled simd-evaluate in AddElementMatrixEB");
             }
-        }*/
+        }
 
+      
       const int order_sum = fel_trial.Order()+fel_test.Order();
       for (int k = 0; k < nfacet; k++)
         {
