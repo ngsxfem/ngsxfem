@@ -1073,16 +1073,113 @@ namespace ngfem
         for(int i=1; i<ir_facet_vol2.Size(); i++) ir_facet_vol2[i].Point() = right_pnt;
     }
 
-    cout << "in CalcFacetMatrix" << endl;
+    ProxyUserData ud;
+    const_cast<ElementTransformation&>(trafo1).userdata = &ud;
+
+    if (simd_evaluate) {
+      try {
+        SIMD_IntegrationRule simd_ir_facet_vol1(ir_facet_vol1);
+        SIMD_IntegrationRule simd_ir_facet_vol2(ir_facet_vol2);
+        SIMD_IntegrationRule simd_ir_scr(*ir_scr);
+        FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(wei_arr, lh);
+
+        SIMD_BaseMappedIntegrationRule & simd_mir1 = trafo1(simd_ir_facet_vol1, lh);
+        SIMD_BaseMappedIntegrationRule & simd_mir2 = trafo1(simd_ir_facet_vol2, lh);
+
+        simd_mir1.SetOtherMIR(&simd_mir2);
+        simd_mir2.SetOtherMIR(&simd_mir1);
+
+        IntRange unified_r1(0, 0);
+        for (int l1 : Range(test_proxies)) {
+          HeapReset hr(lh);
+          auto proxy2 = test_proxies[l1];
+
+          FlatMatrix<SIMD<SCAL>> bdbmat1(elmat.Width()*proxy2->Dimension(), simd_ir_facet_vol1.Size(), lh);
+          FlatMatrix<SIMD<SCAL>> hbdbmat1(elmat.Width(), proxy2->Dimension()*simd_ir_facet_vol1.Size(), &bdbmat1(0,0));
+          
+          bdbmat1 = 0.0;
+
+          for (int k1 : Range(trial_proxies)) {
+            HeapReset hr(lh);
+            auto proxy1 = trial_proxies[k1];
+
+            FlatMatrix<SIMD<SCAL>> val(simd_mir1.Size(), 1, lh);
+            FlatMatrix<SIMD<SCAL>> proxyvalues(proxy1->Dimension()*proxy2->Dimension(), simd_ir_facet_vol1.Size(), lh);
+
+            for (size_t k = 0, kk = 0; k < proxy1->Dimension(); k++) {
+              for (size_t j = 0; j < proxy2->Dimension(); j++, kk++) {
+                ud.trialfunction = proxy1;
+                ud.trial_comp = k;
+                ud.testfunction = proxy2;
+                ud.test_comp = j;
+
+                auto row = proxyvalues.Rows(kk, kk+1);
+                cf->Evaluate(simd_mir1, row);
+                
+                if (lsetintdom->GetDomainType() == IF) // either 2D->0D (no need for weight correction) or 3D->1D ( weights are already corrected)
+                  for (int i = 0; i < simd_mir1.Size(); i++){
+                    proxyvalues(kk, i) *= ( time_order < 0 ? (simd_ir_scr)[i].Weight() : simd_wei_arr[i]);
+                } else { // codim 1
+                  for (int i = 0; i < simd_mir1.Size(); i++){
+                    proxyvalues(kk,i) *= simd_mir1[i].GetMeasure() * ( time_order < 0 ? (simd_ir_scr)[i].Weight() : simd_wei_arr[i]);
+                  }
+                }
+              }
+            }
+
+            IntRange trial_range = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1.GetNDof());
+            IntRange r1 = proxy1->Evaluator()->UsedDofs(proxy1->IsOther() ? fel2 : fel1);
+
+            FlatMatrix<SIMD<SCAL_SHAPES>> bbmat1(elmat.Width()*proxy1->Dimension(), simd_ir_facet_vol1.Size(), lh);
+
+            if (proxy1->IsOther())
+              proxy1->Evaluator()->CalcMatrix(fel2, simd_mir2, bbmat1);
+            else
+              proxy1->Evaluator()->CalcMatrix(fel1, simd_mir1, bbmat1);
+          
+            for (auto i : trial_range) {
+              for (size_t j = 0; j < proxy2->Dimension(); j++) {
+                for (size_t k = 0; k < proxy1->Dimension(); k++) {
+                  bdbmat1.Row(i*proxy2->Dimension()+j) += 
+                    pw_mult(bbmat1.Row(i*proxy1->Dimension()+k), 
+                            proxyvalues.Row(k*proxy2->Dimension()+j));
+                }
+              }
+            }
+
+            if (unified_r1.Next() == 0)
+              unified_r1 = r1;
+            else
+              unified_r1 = IntRange (min2(r1.First(), unified_r1.First()),
+                                        max2(r1.Next(), unified_r1.Next()));
+
+          }
+ 
+          IntRange r2 = proxy2->Evaluator()->UsedDofs(proxy2->IsOther() ? fel2 : fel1);
+
+          FlatMatrix<SIMD<SCAL>> bbmat2(elmat.Height()*proxy2->Dimension(), simd_ir_facet_vol1.Size(), lh);
+          FlatMatrix<SIMD<SCAL>> hbbmat2(elmat.Height(), proxy2->Dimension()*simd_ir_facet_vol1.Size(), &bbmat2(0,0));
+
+          if (proxy2->IsOther())
+            proxy2->Evaluator()->CalcMatrix(fel2, simd_mir2, bbmat2);
+          else
+            proxy2->Evaluator()->CalcMatrix(fel1, simd_mir1, bbmat2);
+        
+          AddABt(hbbmat2.Rows(r2), hbdbmat1.Rows(unified_r1), elmat.Rows(r2).Cols(unified_r1));
+        }
+
+        return;
+      } catch (ExceptionNOSIMD e) {
+        cout << e.What() << endl
+             << "switching to non-SIMD evaluation (in CalcFacetMatrix)" << endl;
+      }
+    }
 
     BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(ir_facet_vol2, lh);
 
     mir1.SetOtherMIR (&mir2);
     mir2.SetOtherMIR (&mir1);
-    
-    ProxyUserData ud;
-    const_cast<ElementTransformation&>(trafo1).userdata = &ud;
 
     for (int k1 : Range(trial_proxies))
       for (int l1 : Range(test_proxies))
