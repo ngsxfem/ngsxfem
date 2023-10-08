@@ -4,7 +4,7 @@ These test-cases compare the results of SIMD-enabled and
   .AssembleLinearized(). We cannot guarantee that SIMD-enabled
   evaluates faster than without, therefore this is not checked; 
   but can be printed with pytest -s 'filename.py'.
-last edited: 01-09-2023 (DD-MM-YYYY)
+last edited: 08-10-2023 (DD-MM-YYYY)
 '''
 
 from xfem import ngsxfemglobals
@@ -508,3 +508,87 @@ def test_eb_cut_integrator_2d(i):
     assert abs(h1error_simd - h1error_ns) < 1e-12
 
     mesh.UnsetDeformation()
+
+# copy from test_differential_symbol.pytest - this test compares the result SIMD to non-SIMD
+@pytest.mark.parametrize('order', [1, 2, 3])
+@pytest.mark.parametrize('DOM', [POS, NEG])
+@pytest.mark.parametrize('skeleton', [True, False])
+@pytest.mark.parametrize('element_boundary', [True, False])
+def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
+    mesh = Mesh(unit_square.GenerateMesh(maxh=0.2))
+    levelset = (x - 0.5)**2 + (y - 0.5)**2 - 0.33**2
+
+    if skeleton is False and element_boundary is False:
+        return None
+    if order > 1:
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order,
+                                              levelset=levelset)
+    else:
+        lsetmeshadap = NoDeformation(mesh, levelset)
+
+    lset_h = lsetmeshadap.lset_p1
+    deform = lsetmeshadap.deform
+
+    ci = CutInfo(mesh, lset_h)
+    els_hasdom = ci.GetElementsOfType(HAS(DOM))
+    facets_dom = GetFacetsWithNeighborTypes(mesh, a=els_hasdom, b=els_hasdom)
+    els_none = BitArray(mesh.ne)
+    els_none[:] = False
+
+    V = H1(mesh, order=order, dgjumps=True)
+    u, v = V.TnT()
+
+    gfu = GridFunction(V)
+    gfu.Set(sin(x))
+
+    w1, w2 = gfu.vec.CreateVector(), gfu.vec.CreateVector()
+
+    # Bilinear form to integrate
+    nF = specialcf.normal(mesh.dim)
+    flux_u = -0.5 * (grad(u) + grad(u.Other())) * nF
+    flux_v = -0.5 * (grad(v) + grad(v.Other())) * nF
+    jump_u = u - u.Other()
+    jump_v = v - v.Other()
+
+    form = jump_u * jump_v + flux_u * jump_v + flux_v * jump_u
+
+    # Differential Symbol Version
+    a1 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+                                facet_restriction=facets_dom,
+                                check_unused=False)
+    a1 += form * dCut(lset_h, DOM, definedonelements=facets_dom,
+                      deformation=deform, skeleton=skeleton,
+                      element_boundary=element_boundary)
+    a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+                                facet_restriction=facets_dom,
+                                check_unused=False)
+    a2 += form * dCut(lset_h, DOM, definedonelements=facets_dom,
+                      deformation=deform, skeleton=skeleton,
+                      element_boundary=element_boundary)
+    
+    ngsxfemglobals.SwitchSIMD(True)
+    a1.Assemble()
+    ngsxfemglobals.SwitchSIMD(False)
+    a2.Assemble()
+    
+    w1.data = a1.mat * gfu.vec
+    w2.data = a2.mat * gfu.vec
+
+    # # SymbolicBFI version
+    # lset_dom = {'levelset': lset_h, 'domain_type': DOM, 'subdivlvl': 0}
+    # a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+    #                             facet_restriction=facets_dom,
+    #                             check_unused=False)
+    # a2 += SymbolicBFI(levelset_domain=lset_dom, form=form,
+    #                   definedonelements=facets_dom, skeleton=skeleton,
+    #                   element_boundary=element_boundary)
+    # mesh.SetDeformation(deform)
+    # a2.Assemble()
+    # mesh.UnsetDeformation()
+    # w2.data = a2.mat * gfu.vec
+
+    # Check
+    w1.data -= w2
+    diff = Norm(w1)
+    print(f'diff : {diff}')
+    assert diff < 1e-12
