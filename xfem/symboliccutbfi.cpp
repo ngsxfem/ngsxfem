@@ -239,8 +239,8 @@ namespace ngfem
                 // static Timer t("DB", NoTracing);
                 // RegionTracer reg(TaskManager::GetThreadId(), t);
 
-                // bdbmat1 = 0.0;
-                hbdbmat1.Rows(r1) = 0.0;
+                bdbmat1 = 0.0;
+                //hbdbmat1.Rows(r1) = 0.0;
 
                 for (size_t j = 0; j < dim_proxy2; j++)
                   for (size_t k = 0; k < dim_proxy1; k++)
@@ -251,7 +251,7 @@ namespace ngfem
                       auto bdbmat1_j = bdbmat1.RowSlice(j, dim_proxy2).Rows(r1);
 
                       for (size_t i = 0; i < simd_ir.Size(); i++)
-                        bdbmat1_j.Col(i).Range(0, r1.Size()) += proxyvalues_jk(i) *simd_wei_arr[k]*simd_mir[k].GetMeasure() * bbmat1_k.Col(i);
+                        bdbmat1_j.Col(i).Range(0, r1.Size()) += proxyvalues_jk(i) *simd_wei_arr[i]*simd_mir[i].GetMeasure() * bbmat1_k.Col(i);
                     }
               }
                   symmetric_so_far &= samediffop && is_diagonal;
@@ -599,8 +599,10 @@ namespace ngfem
                     throw Exception("Only ET_SEGM, ET_TRIG and ET_QUAD are implemented yet.");
                   }
 
-                  SIMD_IntegrationRule ir_facet( (*ir_facet_tmp).Size(), lh);
-                  for(int i=0; i<(*ir_facet_tmp).Size(); i++) ir_facet[i] = (*ir_facet_tmp)[i];
+                  // SIMD_IntegrationRule ir_facet( (*ir_facet_tmp).Size(), lh);
+                  SIMD_IntegrationRule ir_facet(*ir_facet_tmp, lh);
+                  // NON-SIMD conform:
+                  //for(int i=0; i<(*ir_facet_tmp).Size(); i++) ir_facet[i] = (*ir_facet_tmp)[i];
                   auto & ir_facet_vol = transform(k, ir_facet, lh);
 
                   SIMD_BaseMappedIntegrationRule & mir = trafo(ir_facet_vol, lh);
@@ -623,15 +625,15 @@ namespace ngfem
                         FlatMatrix<SIMD<SCAL>> proxyvalues(dim_proxy1*dim_proxy2, ir_facet.Size(), lh);
 
                         // td.Start();
-                        for (int k = 0; k < dim_proxy1; k++)
+                        for (int ck = 0; ck < dim_proxy1; ck++)
                           for (int l = 0; l < dim_proxy2; l++)
                             {
                               ud.trialfunction = proxy1;
-                              ud.trial_comp = k;
+                              ud.trial_comp = ck;
                               ud.testfunction = proxy2;
                               ud.test_comp = l;
 
-                              auto kk = l + k*dim_proxy2;
+                              auto kk = l + ck*dim_proxy2;
                               cf->Evaluate (mir, proxyvalues.Rows(kk, kk+1));
                               if (lsetintdom->GetDomainType() != IF) {
                                  for (size_t i = 0; i < mir.Size(); i++)
@@ -668,11 +670,11 @@ namespace ngfem
                         bdbmat1 = 0.0;
                         for (auto i : r1)
                           for (size_t j = 0; j < dim_proxy2; j++)
-                            for (size_t k = 0; k < dim_proxy1; k++)
+                            for (size_t ck = 0; ck < dim_proxy1; ck++)
                               {
                                 auto res = bdbmat1.Row(i*dim_proxy2+j);
-                                auto a = bbmat1.Row(i*dim_proxy1+k);
-                                auto b = proxyvalues.Row(k*dim_proxy2+j);
+                                auto a = bbmat1.Row(i*dim_proxy1+ck);
+                                auto b = proxyvalues.Row(ck*dim_proxy2+j);
                                 res += pw_mult(a,b);
                               }
 
