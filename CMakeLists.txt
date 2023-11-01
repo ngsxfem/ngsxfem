@@ -86,8 +86,11 @@ If you know what you are doing you can turn off this check by setting the cmake 
 ")
     endif (NOT ${ngsfits} EQUAL 1)
   endif (CHECK_NGSOLVE_VERSION)
-  set(CMAKE_CXX_COMPILER "ngscxx" CACHE STRING "Default CXX compiler" FORCE)
-  set(CMAKE_LINKER "ngsld" CACHE STRING "Default linker" FORCE)
+  if(CMAKE_CROSSCOMPILING)
+  else(CMAKE_CROSSCOMPILING)
+    set(CMAKE_CXX_COMPILER "ngscxx" CACHE STRING "Default CXX compiler" FORCE)
+    set(CMAKE_LINKER "ngsld" CACHE STRING "Default linker" FORCE)
+  endif(CMAKE_CROSSCOMPILING)
 
 endif(BUILD_NGSOLVE)
 
