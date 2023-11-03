@@ -293,8 +293,10 @@ dont_project_gfs : bool
         self.interpol_p1()
         RestrictGFInTime(spacetime_gf=self.deform,reference_time=1.0,space_gf=self.deform_last_top)   
 
+        nb = False
         if blending == None or blending == "none":
             blending = CoefficientFunction(0.0)
+            nb = True
 
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
@@ -315,7 +317,7 @@ dont_project_gfs : bool
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime if blending == None or blending == "none" else None,
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime if nb else None,
                          fix_tref( blending, self.v_ho_st.TimeFE_nodes()[i]), self.lset_lower_bound,
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
