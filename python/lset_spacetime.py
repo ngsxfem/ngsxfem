@@ -329,16 +329,18 @@ dont_project_gfs : bool
 
         blend_1d_polyn = lambda x: IfPos( 0.5 - x, 2**(self.smooth_blend_order-1)*x**self.smooth_blend_order, 1-2**(self.smooth_blend_order-1) *(1-x)**self.smooth_blend_order)
         if self.smooth_blend_type == "autodetect_cut_discont":
-          minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, self.ci.GetElementsOfType(IF)) -1, "domain_type" : POS, "order": 3}, self.mesh, fix_tref(levelset,0.5))
+          minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, self.hasif_spacetime) -1, "domain_type" : POS, "order": 3}, self.mesh, fix_tref(levelset,0.5))
           lset_treshold = max(abs(minv), abs(maxv))
           print("Found lset_treshold: ", lset_treshold)
           self.smooth_blend_CF = IfPos(lset_treshold - sqrt(levelset**2), 0, IfPos( sqrt(levelset**2) - (lset_treshold + self.smooth_blend_width), 1, blend_1d_polyn( ( sqrt(levelset**2) - lset_treshold)/(self.smooth_blend_width) ) ))
         elif self.smooth_blend_type == "fixed_width_cont":
           self.smooth_blend_CF = IfPos(self.smooth_blend_width - sqrt(levelset**2), 0, IfPos(sqrt(levelset**2) - 2*self.smooth_blend_width, 1, blend_1d_polyn( ( sqrt(levelset**2) - self.smooth_blend_width)/(self.smooth_blend_width) ) ))
           if self.smooth_blend_check:
-            minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, self.ci.GetElementsOfType(IF)) -1, "domain_type" : POS, "order": 3}, self.mesh, IfPos( fix_tref(self.smooth_blend_CF, 1) - fix_tref(self.smooth_blend_CF, 0), fix_tref(self.smooth_blend_CF, 1), fix_tref(self.smooth_blend_CF, 0) ) )
-            if maxv > 1e-6:
-              print("Warning: Detected cut element with blending > 0.")
+            dummy_st_lset_p1 = GridFunction(self.levelsetp1[INTERVAL].space)
+            SpaceTimeInterpolateToP1(CF(1), tref, dummy_st_lset_p1)
+            minv, maxv = IntegrationPointExtrema({"levelset": dummy_st_lset_p1, "domain_type" : POS, "order": 3, "time_order":3}, self.mesh, IndicatorCF(self.mesh, self.hasif_spacetime)*self.smooth_blend_CF )
+            if maxv > 1e-3:
+              print("Warning: Detected cut element with blending > 0: ", maxv)
 
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
