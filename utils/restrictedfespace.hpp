@@ -97,13 +97,13 @@ namespace ngfem
     NGS_DLL_HEADER virtual void
     CalcMatrix (const FiniteElement & fel,
 		const BaseMappedIntegrationPoint & mip,
-		SliceMatrix<double,ColMajor> mat, 
+		BareSliceMatrix<double,ColMajor> mat, 
 		LocalHeap & lh) const override;    
     
     NGS_DLL_HEADER virtual void
     CalcMatrix (const FiniteElement & fel,
 		const BaseMappedIntegrationPoint & mip,
-		SliceMatrix<Complex,ColMajor> mat, 
+    BareSliceMatrix<Complex,ColMajor> mat, 
 		LocalHeap & lh) const override;    
 
     NGS_DLL_HEADER virtual void
