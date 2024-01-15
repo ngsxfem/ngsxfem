@@ -25,7 +25,7 @@ The result is a space-time finite element deformation (`deform`). For each
 fixed time the behavior is as for an `LevelSetMeshAdaptation` object, i.e.
 
 
-1)phi_lin( Psi(x) ) = phi_h(x)
+1)phi_lin( Psi(x) ) = phi_h(x) ... mixture with phi_lin (b...)
 
   with Psi(x) = x + d(x) qn(x) =: D(x)
 
@@ -194,12 +194,9 @@ The computed deformation depends on different options:
         self.deformation = {INTERVAL : self.deform, BOTTOM : self.deform_bottom, TOP : self.deform_top}
 
         if (smooth_blend != None) and (smooth_blend != "None"):
-          self.lset_lower_bound = -1000
-          self.lset_upper_bound = 1000
           self.smooth_blend = smooth_blend
         else:
           self.smooth_blend = None
-          self.smooth_blend_CF = CF(0.)
         
     def ProjectOnUpdate(self,gf,update_domain=None):
         """
@@ -314,27 +311,26 @@ dont_project_gfs : bool
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
 
-        # blend_1d_polyn = lambda x: IfPos( 0.5 - x, 2**(self.smooth_blend_order-1)*x**self.smooth_blend_order, 1-2**(self.smooth_blend_order-1) *(1-x)**self.smooth_blend_order)
-        # if self.smooth_blend_type == "autodetect_cut_discont":
-        #   minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, self.hasif_spacetime) -1, "domain_type" : POS, "order": 3}, self.mesh, fix_tref(levelset,0.5))
-        #   lset_treshold = max(abs(minv), abs(maxv))
-        #   print("Found lset_treshold: ", lset_treshold)
-        #   self.smooth_blend_CF = IfPos(lset_treshold - sqrt(levelset**2), 0, IfPos( sqrt(levelset**2) - (lset_treshold + self.smooth_blend_width), 1, blend_1d_polyn( ( sqrt(levelset**2) - lset_treshold)/(self.smooth_blend_width) ) ))
-        # elif self.smooth_blend_type == "fixed_width_cont":
-        #   self.smooth_blend_CF = IfPos(self.smooth_blend_width - sqrt(levelset**2), 0, IfPos(sqrt(levelset**2) - 2*self.smooth_blend_width, 1, blend_1d_polyn( ( sqrt(levelset**2) - self.smooth_blend_width)/(self.smooth_blend_width) ) ))
-        #   if self.smooth_blend_check:
-        #     dummy_st_lset_p1 = GridFunction(self.levelsetp1[INTERVAL].space)
-        #     SpaceTimeInterpolateToP1(CF(1), tref, dummy_st_lset_p1)
-        #     minv, maxv = IntegrationPointExtrema({"levelset": dummy_st_lset_p1, "domain_type" : POS, "order": 3, "time_order":3}, self.mesh, IndicatorCF(self.mesh, self.hasif_spacetime)*self.smooth_blend_CF )
-        #     if maxv > 1e-3:
-        #       print("Warning: Detected cut element with blending > 0: ", maxv)
+        self.blending_forwarded = CF(0.)
+        self.where_projected = BitArray(self.hasif_spacetime)
+        if self.smooth_blend != None:
+            ci_blend_helper = CutInfo(self.mesh, time_order=self.order_time)
+            b_disc_node_p1 = GridFunction(self.v_p1)
+            b_disc_p1 = GridFunction(self.v_p1_st)
+            times = [xi for xi in self.v_p1_st.TimeFE_nodes()]
+            for i,ti in enumerate(times):
+                b_disc_node_p1.Set(fix_tref( self.smooth_blend ,ti) -1 + 1e-6)
+                b_disc_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = b_disc_node_p1.vec[:]
+            ci_blend_helper.Update(b_disc_p1 , time_order=0)
+            self.where_projected = ci_blend_helper.GetElementsOfType(HASNEG)
+            self.blending_forwarded = self.smooth_blend
 
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime if self.smooth_blend == None else None,
-                         fix_tref( self.smooth_blend.smooth_blend_CF, self.v_ho_st.TimeFE_nodes()[i]), self.lset_lower_bound,
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.where_projected,
+                         fix_tref(self.blending_forwarded, self.v_ho_st.TimeFE_nodes()[i]), self.lset_lower_bound,
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
 

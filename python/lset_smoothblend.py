@@ -5,30 +5,27 @@ from enum import Enum
 class SmoothBlendingType(Enum):
     BLEND_AUTODETECT = 1
     BLEND_FIXED_WIDTH = 2
-    BLEND_MANUAL = 3
 
 globals().update(SmoothBlendingType.__members__)
 
 class LevelSetMeshAdaptation_SmoothBlending:
 
-    def __init__(self, sb_type, option_dict_or_fun):
+    def __init__(self, sb_type, option_dict):
         self.smooth_blend_type = sb_type
         if sb_type == BLEND_AUTODETECT or sb_type == BLEND_FIXED_WIDTH:
-            if isinstance(option_dict_or_fun, dict):
-                self.lset = option_dict_or_fun["lset"]
-                self.width = option_dict_or_fun["width"]
-                self.order = option_dict_or_fun["order"]
-                if "time_order" in option_dict_or_fun:
-                    self.time_order = option_dict_or_fun["time_order"]
+            if isinstance(option_dict, dict):
+                self.lset = option_dict["lset"]
+                self.width = option_dict["width"]
+                self.order = option_dict["order"]
+                if "time_order" in option_dict:
+                    self.time_order = option_dict["time_order"]
                 else:
                     self.time_order = -1
                 if sb_type == BLEND_AUTODETECT:
-                    self.mesh = option_dict_or_fun["mesh"]
+                    self.mesh = option_dict["mesh"]
                 self.Calc_blend_CF()
             else:
                 print("Error: LevelSetMeshAdaptation_SmoothBlending needs a dictionary when called with BLEND_AUTODETECT or BLEND_FIXED_WIDTH")
-        elif sb_type == BLEND_MANUAL:
-            self.smooth_blend_CF = option_dict_or_fun["b"]
         else:
             print("Error: Illegal first argument in LevelSetMeshAdaptation_SmoothBlending")
 
