@@ -8,7 +8,7 @@ class SmoothBlendingType(Enum):
 
 globals().update(SmoothBlendingType.__members__)
 
-class LevelSetMeshAdaptation_SmoothBlending:
+class LevelSet_SmoothBlending:
 
     def __init__(self, sb_type, option_dict):
         self.smooth_blend_type = sb_type
@@ -32,7 +32,7 @@ class LevelSetMeshAdaptation_SmoothBlending:
     def Calc_blend_CF(self):
         blend_1d_polyn = lambda x: IfPos( 0.5 - x, 2**(self.order-1)*x**self.order, 1-2**(self.order-1) *(1-x)**self.order)
         if self.smooth_blend_type == BLEND_FIXED_WIDTH:
-            self.smooth_blend_CF = IfPos(self.width - sqrt(self.lset**2), 0, IfPos(sqrt(self.lset**2) - 2*self.width, 1, blend_1d_polyn( ( sqrt(self.lset**2) - self.width)/(self.width) ) ))
+            self.CF = IfPos(self.width - sqrt(self.lset**2), 0, IfPos(sqrt(self.lset**2) - 2*self.width, 1, blend_1d_polyn( ( sqrt(self.lset**2) - self.width)/(self.width) ) ))
         elif self.smooth_blend_type == BLEND_AUTODETECT:
             ci = CutInfo(self.mesh, time_order=self.time_order)
             fes_space = H1(self.mesh, order=1)
@@ -49,4 +49,4 @@ class LevelSetMeshAdaptation_SmoothBlending:
 
             minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, ci.GetElementsOfType(IF)) -1, "domain_type" : POS, "order": 3}, self.mesh, fix_tref(self.lset,0.5))
             lset_treshold = max(abs(minv), abs(maxv))
-            self.smooth_blend_CF = IfPos(lset_treshold - sqrt(self.lset**2), 0, IfPos( sqrt(self.lset**2) - (lset_treshold + self.width), 1, blend_1d_polyn( ( sqrt(self.lset**2) - lset_treshold)/(self.width) ) ))
+            self.CF = IfPos(lset_treshold - sqrt(self.lset**2), 0, IfPos( sqrt(self.lset**2) - (lset_treshold + self.width), 1, blend_1d_polyn( ( sqrt(self.lset**2) - lset_treshold)/(self.width) ) ))
