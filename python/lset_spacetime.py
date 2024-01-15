@@ -8,6 +8,7 @@ from ngsolve.internal import *
 from xfem import *
 from math import pi
 
+from xfem.lset_smoothblend import *
 
 class LevelSetMeshAdaptation_Spacetime:
     """
@@ -61,7 +62,7 @@ This class holds its own members for the higher order and lower order
 
     @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
-                 lset_upper_bound = 0, threshold = -1, smooth_blend=None, smooth_blend_options= {},
+                 lset_upper_bound = 0, threshold = -1, smooth_blend=None,
                  discontinuous_qn = False, heapsize=1000000,periodic=False):
 
         """
@@ -195,23 +196,9 @@ The computed deformation depends on different options:
         if (smooth_blend != None) and (smooth_blend != "None"):
           self.lset_lower_bound = -1000
           self.lset_upper_bound = 1000
-          if smooth_blend == "autodetect_cut_discont":
-            self.smooth_blend_order = smooth_blend_options["order"]
-            self.smooth_blend_width = smooth_blend_options["width"]
-            self.smooth_blend_type = "autodetect_cut_discont"
-          elif smooth_blend == "fixed_width_cont":
-            self.smooth_blend_order = smooth_blend_options["order"]
-            self.smooth_blend_width = smooth_blend_options["width"]
-            if "do_check" in smooth_blend_options:
-              self.smooth_blend_check = smooth_blend_options["do_check"]
-            else:
-              self.smooth_blend_check = False
-            self.smooth_blend_type = "fixed_width_cont"
-          else:
-            self.smooth_blend_CF = smooth_blend
-            self.smooth_blend_type = "user_fun"
+          self.smooth_blend = smooth_blend
         else:
-          self.smooth_blend_type = None
+          self.smooth_blend = None
           self.smooth_blend_CF = CF(0.)
         
     def ProjectOnUpdate(self,gf,update_domain=None):
@@ -327,27 +314,27 @@ dont_project_gfs : bool
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
 
-        blend_1d_polyn = lambda x: IfPos( 0.5 - x, 2**(self.smooth_blend_order-1)*x**self.smooth_blend_order, 1-2**(self.smooth_blend_order-1) *(1-x)**self.smooth_blend_order)
-        if self.smooth_blend_type == "autodetect_cut_discont":
-          minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, self.hasif_spacetime) -1, "domain_type" : POS, "order": 3}, self.mesh, fix_tref(levelset,0.5))
-          lset_treshold = max(abs(minv), abs(maxv))
-          print("Found lset_treshold: ", lset_treshold)
-          self.smooth_blend_CF = IfPos(lset_treshold - sqrt(levelset**2), 0, IfPos( sqrt(levelset**2) - (lset_treshold + self.smooth_blend_width), 1, blend_1d_polyn( ( sqrt(levelset**2) - lset_treshold)/(self.smooth_blend_width) ) ))
-        elif self.smooth_blend_type == "fixed_width_cont":
-          self.smooth_blend_CF = IfPos(self.smooth_blend_width - sqrt(levelset**2), 0, IfPos(sqrt(levelset**2) - 2*self.smooth_blend_width, 1, blend_1d_polyn( ( sqrt(levelset**2) - self.smooth_blend_width)/(self.smooth_blend_width) ) ))
-          if self.smooth_blend_check:
-            dummy_st_lset_p1 = GridFunction(self.levelsetp1[INTERVAL].space)
-            SpaceTimeInterpolateToP1(CF(1), tref, dummy_st_lset_p1)
-            minv, maxv = IntegrationPointExtrema({"levelset": dummy_st_lset_p1, "domain_type" : POS, "order": 3, "time_order":3}, self.mesh, IndicatorCF(self.mesh, self.hasif_spacetime)*self.smooth_blend_CF )
-            if maxv > 1e-3:
-              print("Warning: Detected cut element with blending > 0: ", maxv)
+        # blend_1d_polyn = lambda x: IfPos( 0.5 - x, 2**(self.smooth_blend_order-1)*x**self.smooth_blend_order, 1-2**(self.smooth_blend_order-1) *(1-x)**self.smooth_blend_order)
+        # if self.smooth_blend_type == "autodetect_cut_discont":
+        #   minv, maxv = IntegrationPointExtrema({"levelset": 2*IndicatorCF(self.mesh, self.hasif_spacetime) -1, "domain_type" : POS, "order": 3}, self.mesh, fix_tref(levelset,0.5))
+        #   lset_treshold = max(abs(minv), abs(maxv))
+        #   print("Found lset_treshold: ", lset_treshold)
+        #   self.smooth_blend_CF = IfPos(lset_treshold - sqrt(levelset**2), 0, IfPos( sqrt(levelset**2) - (lset_treshold + self.smooth_blend_width), 1, blend_1d_polyn( ( sqrt(levelset**2) - lset_treshold)/(self.smooth_blend_width) ) ))
+        # elif self.smooth_blend_type == "fixed_width_cont":
+        #   self.smooth_blend_CF = IfPos(self.smooth_blend_width - sqrt(levelset**2), 0, IfPos(sqrt(levelset**2) - 2*self.smooth_blend_width, 1, blend_1d_polyn( ( sqrt(levelset**2) - self.smooth_blend_width)/(self.smooth_blend_width) ) ))
+        #   if self.smooth_blend_check:
+        #     dummy_st_lset_p1 = GridFunction(self.levelsetp1[INTERVAL].space)
+        #     SpaceTimeInterpolateToP1(CF(1), tref, dummy_st_lset_p1)
+        #     minv, maxv = IntegrationPointExtrema({"levelset": dummy_st_lset_p1, "domain_type" : POS, "order": 3, "time_order":3}, self.mesh, IndicatorCF(self.mesh, self.hasif_spacetime)*self.smooth_blend_CF )
+        #     if maxv > 1e-3:
+        #       print("Warning: Detected cut element with blending > 0: ", maxv)
 
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime if self.smooth_blend_type == None else None,
-                         fix_tref( self.smooth_blend_CF, self.v_ho_st.TimeFE_nodes()[i]), self.lset_lower_bound,
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime if self.smooth_blend == None else None,
+                         fix_tref( self.smooth_blend.smooth_blend_CF, self.v_ho_st.TimeFE_nodes()[i]), self.lset_lower_bound,
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
 
