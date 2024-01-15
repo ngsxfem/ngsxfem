@@ -87,11 +87,11 @@ namespace ngfem
   void DiffOpFixAnyTime<SpaceD> ::
   CalcMatrix (const FiniteElement & bfel,
               const BaseMappedIntegrationPoint & bmip,
-              SliceMatrix<double,ColMajor> mat,
+              BareSliceMatrix<double,ColMajor> mat,
               LocalHeap & lh) const
   {
 
-      mat = 0.0;
+      //mat = 0.0;
       const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE> & mip =
       static_cast<const MappedIntegrationPoint<DIM_ELEMENT,DIM_SPACE>&> (bmip);
 
