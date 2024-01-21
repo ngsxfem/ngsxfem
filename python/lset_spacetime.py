@@ -25,9 +25,9 @@ The result is a space-time finite element deformation (`deform`). For each
 fixed time the behavior is as for an `LevelSetMeshAdaptation` object, i.e.
 
 
-1)phi_lin( Psi(x) ) = phi_h(x) ... mixture with phi_lin (b...)
+  (1-b)*phi_h(x,t) + b*phi_lin( x,t ) = phi_h(Psi(x,t))
 
-  with Psi(x) = x + d(x) qn(x) =: D(x)
+  with Psi(x,t) = x + d(x,t) qn(x,t) =: D(x,t)
 
 for all x on 'cut' elements
 
@@ -44,6 +44,17 @@ with
 
   qn : self.qn
     normal direction field
+
+  b: self.smooth_blend
+    an optional space-time CoefficientFunction to ensure a smooth transition
+    between curved and uncurved elements. This class offers the options of
+    1) a finite element blending, in which case b is assumed as b=0 and shall
+    not be specified in the constructor, and 2) a smooth blending, in which the
+    sufficiently regular function b ranging from 0 at cut locations to 1 outside
+    with zero deformation is taken into consideration. Check out
+    https://arxiv.org/abs/2311.02348 for a detailed mathematical description,
+    the constructor of this class for specification, and the class
+    LevelSet_SmoothBlending for generating function b in a pre-defined way.
 
 This class holds its own members for the higher order and lower order
  (P1-in-space) space-time approximation of the level set function and 
@@ -89,6 +100,16 @@ The computed deformation depends on different options:
     of the mesh transformation. A small value might be necessary if the geometry is only coarsely
     approximated to avoid irregular meshes after a corresponding mesh deformation.
 
+  smooth_blend : CoefficientFunction or None(default)
+    If a smooth blending function is specified, the deformation to be calculated will involve
+    the smooth blending stemming from this function. Provide a space-time function such as the
+    member function LevelSet_SmoothBlending.CF. If this is None, the finite element blending
+    will be applied, amounting formally to an overall function of b=0. Check out
+    https://arxiv.org/abs/2311.02348 for a detailed mathematical description. Note that in
+    the case of the smooth blending, the function b will also be used to define all the elements
+    where the deformation is calculated firstly locally; those are the elements with b<1
+    at one of the time nodes of the ScalarTimeFE with order time_order.
+
   discontinuous_qn: boolean
     As an approximation for the normal direction we use n_h = nabla phi_h (gradient of higher order
     level set approximation) depending on the discontinuous_qn flag this normal field will be
@@ -96,10 +117,6 @@ The computed deformation depends on different options:
 
   heapsize : int
     heapsize for local computations.
-
-  levelset : CoefficientFunction or None(default)
-    If a level set function is prescribed the deformation is computed right away. Otherwise the 
-    computation is triggered only at calls for `CalcDeformation`.
         """
 
         self.gf_to_project = []

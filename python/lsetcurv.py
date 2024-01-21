@@ -17,7 +17,7 @@ only applied on elements where a level value inside a certain interval (lower,up
 
 The result is a deform function (D) which is computed pointwise as
 
-1)phi_lin( Psi(x) ) = phi_h(x)
+1)phi_lin( x ) = phi_h(Psi(x))
 
   with Psi(x) = x + d(x) qn(x) =: D(x)
 
