@@ -92,7 +92,7 @@ namespace ngfem
       if (coef_blending)
         alpha = coef_blending->Evaluate(mip);
 
-      if (alpha > 1)
+      if (alpha > 1+1e-6)
         throw Exception("alpha should not be larger than 1");
       
       double goal_val = (1.0-alpha) * lsetp1val + alpha * lseteval->Evaluate(mip.IP(),lh);

@@ -26,7 +26,7 @@ A *preliminary* collection of documentation (demos, tutorials, API) can be found
 
 The main features of `ngsxfem` are:
 
-* Tools to work on an a subset of the triangulation, the \"active mesh\" only
+* Tools to work on a subset of the triangulation, the \"active mesh\" only
 * Numerical integration on geometries that are (implicitly) described through level set functions.
 * Higher order representation of level set geometries
 * Space-Time Finite Elements for the treatment of moving domain problems

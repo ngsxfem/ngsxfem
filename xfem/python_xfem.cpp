@@ -440,6 +440,18 @@ heapsize : int
 )raw_string")
     );
 
+  m.def("GetElementsWithSharedVertex",
+      [] (shared_ptr<MeshAccess> ma,
+         shared_ptr<BitArray> a,
+         int heapsize)
+      {
+          LocalHeap lh (heapsize, "GetElementsWithNeighborFacets-heap", true);
+          return GetElementsWithSharedVertex(ma,a,lh);
+      } ,
+      py::arg("mesh"),
+      py::arg("a"),
+      py::arg("heapsize") = 1000000);
+
   m.def("GetDofsOfElements",
         [] (PyFES fes,
             PyBA a,
