@@ -18,7 +18,7 @@ export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_ve
 export PATH="$ORIGINAL_PATH:$PYDIR"
 $PYDIR/pip install -U pytest-check numpy wheel scikit-build setuptools 
 #mkl==2022.* mkl-devel==2022.*
-$PYDIR/pip install ngsolve #--pre
+$PYDIR/pip install ngsolve --pre
 
 #RUN $PYDIR/pip install -vvv .
 pip wheel -vvv .
