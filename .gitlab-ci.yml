@@ -63,8 +63,8 @@ metrics:
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
     - python3 tests/ngsxfem_report.py 2> metrics.txt
   artifacts:
     reports:
@@ -126,9 +126,9 @@ pages:
     - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/dist-packages/xfem/
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
