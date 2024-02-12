@@ -159,7 +159,7 @@ namespace ngcomp
     }
     
     graph -> FindSameNZE();
-    return move(*graph);
+    return std::move(*graph);
   }
 
 template class RestrictedBilinearForm<double,double>;

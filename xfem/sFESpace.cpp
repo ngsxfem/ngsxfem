@@ -116,7 +116,7 @@ namespace ngcomp
 
       Array<Vec<2>> cuts(0);
 
-      Array<INT<2>> edges = { INT<2>(0,1), INT<2>(0,2), INT<2>(1,2)};
+      Array<IVec<2>> edges = { IVec<2>(0,1), IVec<2>(0,2), IVec<2>(1,2)};
       for (auto e: edges)
       {
         const double lset1 = lsets[e[0]];

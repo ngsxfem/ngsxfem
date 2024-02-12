@@ -8,9 +8,6 @@
 
 namespace xintegration
 {
-  using ngfem::INT;
-
-
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
@@ -613,7 +610,7 @@ namespace xintegration
     case ET_TET:
     {
       // int sum = 0;
-      INT< D > I;
+      IVec< D > I;
       Vec< SD > position;
       for (int i = 0; i < D; ++i)
         I[i] = 0;

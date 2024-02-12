@@ -23,7 +23,7 @@ namespace ngcomp
 
     Array<shared_ptr<ValueField>> value_field;
     Array<Vec<3>> points;
-    Array<INT<ELEMENT_MAXPOINTS+1>> cells;
+    Array<IVec<ELEMENT_MAXPOINTS+1>> cells;
 
     int output_cnt = 0;
     
@@ -40,8 +40,8 @@ namespace ngcomp
     
     void ResetArrays();
     
-    void FillReferenceHex(Array<IntegrationPoint> & ref_coords,Array<INT<ELEMENT_MAXPOINTS+1>> & ref_elems); 
-    void FillReferencePrism(Array<IntegrationPoint> & ref_coords,Array<INT<ELEMENT_MAXPOINTS+1>> & ref_elems);    
+    void FillReferenceHex(Array<IntegrationPoint> & ref_coords,Array<IVec<ELEMENT_MAXPOINTS+1>> & ref_elems); 
+    void FillReferencePrism(Array<IntegrationPoint> & ref_coords,Array<IVec<ELEMENT_MAXPOINTS+1>> & ref_elems);    
 
     void PrintPoints();
     void PrintCells();

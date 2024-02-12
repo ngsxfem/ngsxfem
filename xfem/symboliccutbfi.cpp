@@ -743,7 +743,7 @@ namespace ngfem
       static Timer t("symbolicCutBFI - CoDim2", NoTracing);
       RegionTimer reg (t);
 
-      INT<4> int_tuple = 
+      IVec<4> int_tuple = 
         SwitchET<ET_HEX,ET_TET,ET_PRISM,ET_PYRAMID> (eltype1, [&LocalFacetNr1, &ElVertices1] (auto et)
          { return ET_trait<et>::GetFaceSort(LocalFacetNr1,ElVertices1); });
 
@@ -800,7 +800,7 @@ namespace ngfem
     else if (Dim(etfacet) == 1) 
     {
 
-        INT<2> int_tuple = 
+        IVec<2> int_tuple = 
           SwitchET<ET_TRIG,ET_QUAD> (eltype1, [&LocalFacetNr1, &ElVertices1] (auto et) { return ET_trait<et>::GetEdgeSort(LocalFacetNr1,ElVertices1); });
 
         if(time_order < 0) {

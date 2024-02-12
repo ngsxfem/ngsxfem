@@ -581,10 +581,15 @@ namespace ngcomp
             Array<int> nodenums(0,lh);
             nodenums = ma->GetElVertices(elid);
             for (int node : nodenums) {
+              /*
                 Array<int> elnums(0,lh);
                 ma->GetVertexElements(node, elnums);
                 for (auto elnr : elnums)
                     ret->SetBitAtomic(elnr);
+              */
+              for (auto elnr : ma->GetVertexElements(node))
+                ret->SetBitAtomic(elnr);
+              
             }
         }
     });
