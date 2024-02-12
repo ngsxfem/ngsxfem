@@ -38,9 +38,12 @@ namespace ngcomp
       double val_lset;
       if (coef)
       {
+        /*
         Array<int> elnums;
         ma -> GetVertexElements (vnr, elnums);
         Ngs_Element ngel = ma -> GetElement (ElementId(VOL,elnums[0]));
+        */
+        Ngs_Element ngel = ma -> GetElement (ElementId(VOL,ma->GetVertexElements (vnr)[0]));
         auto & eltrans = ma -> GetTrafo (ngel, lh);
 
         if( ma -> GetDimension() == 2)
