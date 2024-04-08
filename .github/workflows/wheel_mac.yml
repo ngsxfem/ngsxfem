@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: ${{ matrix.py }}
       - name: Run build script
-        run: .ci/build_pip_mac.sh ${{ matrix.py }}
+        run: cd xfem && .ci/build_pip_mac.sh ${{ matrix.py }}
         shell: bash
       - name: Store the binary wheel
         uses: actions/upload-artifact@v4
