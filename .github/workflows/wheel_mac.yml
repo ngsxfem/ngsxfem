@@ -51,7 +51,6 @@ jobs:
       with:
         pattern: python-package-distributions-*
         merge-multiple: true
-        name: python-package-distributions
         path: xfem/wheelhouse
     - name: Publish binary distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
