@@ -19,10 +19,11 @@ jobs:
     
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
+          path: "xfem"
       - name: Get Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
