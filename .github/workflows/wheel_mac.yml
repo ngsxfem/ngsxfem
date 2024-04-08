@@ -31,10 +31,14 @@ jobs:
         run: .ci/build_pip_mac.sh ${{ matrix.py }}
         shell: bash
       - name: Store the binary wheel
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: python-package-distributions
-          path: dist
+          name: python-package-distributions-mac-${{ matrix.py }}
+          path: xfem/wheelhouse      
+        # uses: actions/upload-artifact@v2
+        # with:
+        #   name: python-package-distributions
+        #   path: dist
 
   publish-pip-bin:
     name: Publish to PyPI
