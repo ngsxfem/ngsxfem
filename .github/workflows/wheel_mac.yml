@@ -49,10 +49,13 @@ jobs:
     - name: Download all the dists
       uses: actions/download-artifact@v4
       with:
+        pattern: python-package-distributions-*
+        merge-multiple: true
         name: python-package-distributions
         path: xfem/wheelhouse
     - name: Publish binary distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         skip_existing: true
+        packages-dir: xfem/wheelhouse/
         password: ${{ secrets.PYPI_API_TOKEN_2 }}
