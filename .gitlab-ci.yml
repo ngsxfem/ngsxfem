@@ -163,7 +163,7 @@ pip_linux:
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   when: never # we don't want to trigger this job in ngsxfem-simd: remove before merge
-  needs: []
+  needs: [ctests-demos, ctests-pytests]
 
 
 docker_build:
@@ -180,5 +180,5 @@ docker_build:
       --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
   when: manual 
-  needs: []  
+  needs: [ctests-demos, ctests-pytests]  
 
