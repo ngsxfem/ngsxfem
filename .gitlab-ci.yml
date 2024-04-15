@@ -162,7 +162,7 @@ pip_linux:
     # - ./.ci/build_pip.sh 312
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  when: never # we don't want to trigger this job in ngsxfem-simd: remove before merge
+  when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
   needs: [ctests-demos, ctests-pytests]
 
 
