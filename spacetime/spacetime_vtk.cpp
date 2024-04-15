@@ -39,7 +39,7 @@ namespace ngcomp
     
 
   /// Fill principil lattices (points and connections on subdivided reference hexahedron) in 3D
-  void SpaceTimeVTKOutput::FillReferenceHex(Array<IntegrationPoint> & ref_coords,Array<INT<ELEMENT_MAXPOINTS+1>> & ref_elems)
+  void SpaceTimeVTKOutput::FillReferenceHex(Array<IntegrationPoint> & ref_coords,Array<IVec<ELEMENT_MAXPOINTS+1>> & ref_elems)
   {
     if(subdivisionx == 0 && subdivisiont == 0)
     {
@@ -50,7 +50,7 @@ namespace ngcomp
         MarkAsSpaceTimeIntegrationPoint(tmp);
         ref_coords.Append(tmp);
       }
-      INT<ELEMENT_MAXPOINTS+1> elem;
+      IVec<ELEMENT_MAXPOINTS+1> elem;
       elem[0] = 8;
       for(int i=0; i<ElementTopology::GetNVertices(ET_HEX); i++)
         elem[i+1] = i;
@@ -85,7 +85,7 @@ namespace ngcomp
           pidx = i*incr_i + j*incr_j;
           for(int k = 0; k < rt; ++k, pidx++)
           {
-            ref_elems.Append(INT<ELEMENT_MAXPOINTS+1>(8, pidx, pidx+1, pidx+incr_j+1, pidx+incr_j,
+            ref_elems.Append(IVec<ELEMENT_MAXPOINTS+1>(8, pidx, pidx+1, pidx+incr_j+1, pidx+incr_j,
                                                          pidx+incr_i, pidx+incr_i+1, pidx+incr_i+incr_j+1, pidx+incr_j+incr_i));
           }          
         } 
@@ -94,7 +94,7 @@ namespace ngcomp
   }
 
   
-  void SpaceTimeVTKOutput::FillReferencePrism(Array<IntegrationPoint> & ref_coords,Array<INT<ELEMENT_MAXPOINTS+1>> & ref_elems)
+  void SpaceTimeVTKOutput::FillReferencePrism(Array<IntegrationPoint> & ref_coords,Array<IVec<ELEMENT_MAXPOINTS+1>> & ref_elems)
   {
     if(subdivisionx == 0 && subdivisiont == 0)
     {
@@ -106,7 +106,7 @@ namespace ngcomp
         MarkAsSpaceTimeIntegrationPoint(tmp);
         ref_coords.Append(tmp);
       }
-      INT<ELEMENT_MAXPOINTS+1> elem;
+      IVec<ELEMENT_MAXPOINTS+1> elem;
       elem[0] = 6;
       for(int i=0; i<ElementTopology::GetNVertices(ET_PRISM); i++)
         elem[i+1] = i;
@@ -144,12 +144,12 @@ namespace ngcomp
             int pidx_incr_i = pidx+1;
             int pidx_incr_j = pidx+s-i;
 
-            ref_elems.Append(INT<ELEMENT_MAXPOINTS+1>(6, pidx, pidx_incr_i, pidx_incr_j, pidx+incr_k, pidx_incr_i+incr_k, pidx_incr_j+incr_k, 0, 0 ));
+            ref_elems.Append(IVec<ELEMENT_MAXPOINTS+1>(6, pidx, pidx_incr_i, pidx_incr_j, pidx+incr_k, pidx_incr_i+incr_k, pidx_incr_j+incr_k, 0, 0 ));
               
             int pidx_incr_ij = pidx_incr_j + 1;
 
             if(i+j+1<rx)
-              ref_elems.Append(INT<ELEMENT_MAXPOINTS+1>(6, pidx_incr_i, pidx_incr_ij, pidx_incr_j, pidx_incr_i+incr_k, pidx_incr_ij+incr_k, pidx_incr_j+incr_k,0,0));
+              ref_elems.Append(IVec<ELEMENT_MAXPOINTS+1>(6, pidx_incr_i, pidx_incr_ij, pidx_incr_j, pidx_incr_i+incr_k, pidx_incr_ij+incr_k, pidx_incr_j+incr_k,0,0));
           }
       }
     }
@@ -255,9 +255,9 @@ namespace ngcomp
     ResetArrays();
 
     Array<IntegrationPoint> ref_vertices_prism(0), ref_vertices_hex(0);
-    Array<INT<ELEMENT_MAXPOINTS+1>> ref_prisms(0), ref_hexes(0);
+    Array<IVec<ELEMENT_MAXPOINTS+1>> ref_prisms(0), ref_hexes(0);
     FlatArray<IntegrationPoint> ref_vertices;
-    FlatArray<INT<ELEMENT_MAXPOINTS+1>> ref_elems;
+    FlatArray<IVec<ELEMENT_MAXPOINTS+1>> ref_elems;
     FillReferencePrism(ref_vertices_prism,ref_prisms);
     FillReferenceHex(ref_vertices_hex,ref_hexes);
       
@@ -343,7 +343,7 @@ namespace ngcomp
       
       for ( auto elem : ref_elems)
       {
-        INT<ELEMENT_MAXPOINTS+1> new_elem = elem;
+        IVec<ELEMENT_MAXPOINTS+1> new_elem = elem;
         for (int i = 1; i <= new_elem[0]; ++i)
           new_elem[i] += offset;
         cells.Append(new_elem);

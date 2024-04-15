@@ -43,7 +43,7 @@ if(NETGEN_USE_PYTHON)
     # target_link_libraries(ngsxfem_py ngsxfem_lsetcurving ngsxfem_utils ngsxfem_cutint ngsxfem_xfem ngsxfem_spacetime)
 
     install (FILES
-        __init__.py cutmg.py mlset.py lset_spacetime.py lsetcurv.py utils.py ngs_check.py
+        __init__.py cutmg.py mlset.py lset_spacetime.py lset_smoothblend.py lsetcurv.py utils.py ngs_check.py
         DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
     )
@@ -56,8 +56,8 @@ if(pybind11_stubgen AND NOT ${pybind11_stubgen} EQUAL 0)
 for better autocompletion support install it with pip.")
 else()
   message("-- Found pybind11-stubgen: ${stubgen_path}")
-  install(CODE "execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pybind11_stubgen --ignore-invalid=all --skip-signature-downgrade --no-setup-py xfem)") 
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../stubs/xfem-stubs/ DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem/ COMPONENT xfem)
+  install(CODE "execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pybind11_stubgen --ignore-all-errors xfem)") 
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../stubs/xfem/ DESTINATION ${NGSOLVE_INSTALL_DIR_PYTHON}/xfem/ COMPONENT xfem)
 endif()
 endif(BUILD_STUB_FILES)
 

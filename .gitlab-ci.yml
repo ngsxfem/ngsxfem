@@ -7,7 +7,7 @@ build:
   stage: build
   image: ngsxfem/ngsolve:latest
   script:
-    - python3 -c "import ngsolve"
+    - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
@@ -63,8 +63,8 @@ metrics:
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
     - python3 tests/ngsxfem_report.py 2> metrics.txt
   artifacts:
     reports:
@@ -126,9 +126,9 @@ pages:
     - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/dist-packages/xfem/
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
@@ -159,8 +159,9 @@ pip_linux:
     - ./.ci/build_pip.sh 311
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
-  when: manual
-  needs: []  
+    # - ./.ci/build_pip.sh 312
+  when: always
+  needs: []
 
 
 docker_build:

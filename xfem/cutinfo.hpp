@@ -161,6 +161,8 @@ namespace ngcomp
                                                      shared_ptr<BitArray> a,
                                                      LocalHeap & lh);
 
+  shared_ptr<BitArray> GetElementsWithSharedVertex(shared_ptr<MeshAccess> ma, shared_ptr<BitArray> a, LocalHeap & lh);
+
   shared_ptr<BitArray> GetDofsOfElements(shared_ptr<FESpace> fes,
                                          shared_ptr<BitArray> a,
                                          LocalHeap & lh);
