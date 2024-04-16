@@ -158,10 +158,12 @@ pip_linux:
     - ./.ci/build_pip.sh 310
     - ./.ci/build_pip.sh 311
     - /opt/python/cp39-cp39/bin/pip install twine
-    - /opt/python/cp39-cp39/bin/python -m twine upload wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
+    - /opt/python/cp39-cp39/bin/python -m twine upload --skip-existing wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
     # - ./.ci/build_pip.sh 312
-  when: always
-  needs: []
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
+  needs: [ctests-demos, ctests-pytests]
 
 
 docker_build:
@@ -178,5 +180,5 @@ docker_build:
       --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
   when: manual 
-  needs: []  
+  needs: [ctests-demos, ctests-pytests]  
 

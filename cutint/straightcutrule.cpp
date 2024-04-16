@@ -627,6 +627,8 @@ namespace xintegration
       else{
           LevelsetCutQuadrilateral q(lset, dt, Quadrilateral(et), quad_dir_policy);
           q.GetIntegrationRule(quad_untrafo, intorder);
+          if (quad_untrafo.Size() == 0)
+            return nullptr;
       }
       //timer1.Stop();
     }
