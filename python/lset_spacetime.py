@@ -8,6 +8,7 @@ from ngsolve.internal import *
 from xfem import *
 from math import pi
 
+from xfem.lset_smoothblend import *
 
 class LevelSetMeshAdaptation_Spacetime:
     """
@@ -24,9 +25,9 @@ The result is a space-time finite element deformation (`deform`). For each
 fixed time the behavior is as for an `LevelSetMeshAdaptation` object, i.e.
 
 
-1)phi_lin( Psi(x) ) = phi_h(x)
+  (1-b)*phi_h(x,t) + b*phi_lin( x,t ) = phi_h(Psi(x,t))
 
-  with Psi(x) = x + d(x) qn(x) =: D(x)
+  with Psi(x,t) = x + d(x,t) qn(x,t) =: D(x,t)
 
 for all x on 'cut' elements
 
@@ -43,6 +44,17 @@ with
 
   qn : self.qn
     normal direction field
+
+  b: self.smooth_blend
+    an optional space-time CoefficientFunction to ensure a smooth transition
+    between curved and uncurved elements. This class offers the options of
+    1) a finite element blending, in which case b is assumed as b=0 and shall
+    not be specified in the constructor, and 2) a smooth blending, in which the
+    sufficiently regular function b ranging from 0 at cut locations to 1 outside
+    with zero deformation is taken into consideration. Check out
+    https://arxiv.org/abs/2311.02348 for a detailed mathematical description,
+    the constructor of this class for specification, and the class
+    LevelSet_SmoothBlending for generating function b in a pre-defined way.
 
 This class holds its own members for the higher order and lower order
  (P1-in-space) space-time approximation of the level set function and 
@@ -61,7 +73,8 @@ This class holds its own members for the higher order and lower order
 
     @TimeFunction
     def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
-                 lset_upper_bound = 0, threshold = -1, discontinuous_qn = False, heapsize=1000000,periodic=False):
+                 lset_upper_bound = 0, threshold = -1, smooth_blend=None,
+                 discontinuous_qn = False, heapsize=1000000,periodic=False):
 
         """
 The computed deformation depends on different options:
@@ -87,20 +100,23 @@ The computed deformation depends on different options:
     of the mesh transformation. A small value might be necessary if the geometry is only coarsely
     approximated to avoid irregular meshes after a corresponding mesh deformation.
 
+  smooth_blend : CoefficientFunction or None(default)
+    If a smooth blending function is specified, the deformation to be calculated will involve
+    the smooth blending stemming from this function. Provide a space-time function such as the
+    member function LevelSet_SmoothBlending.CF. If this is None, the finite element blending
+    will be applied, amounting formally to an overall function of b=0. Check out
+    https://arxiv.org/abs/2311.02348 for a detailed mathematical description. Note that in
+    the case of the smooth blending, the function b will also be used to define all the elements
+    where the deformation is calculated firstly locally; those are the elements with b<1
+    at one of the time nodes of the ScalarTimeFE with order time_order.
+
   discontinuous_qn: boolean
     As an approximation for the normal direction we use n_h = nabla phi_h (gradient of higher order
     level set approximation) depending on the discontinuous_qn flag this normal field will be
     projected onto a continuous finite element space or not.
 
-  eps_perturbation: float
-    epsilon perturbation that is used to interpolate to P1
-
   heapsize : int
     heapsize for local computations.
-
-  levelset : CoefficientFunction or None(default)
-    If a level set function is prescribed the deformation is computed right away. Otherwise the 
-    computation is triggered only at calls for `CalcDeformation`.
         """
 
         self.gf_to_project = []
@@ -194,6 +210,10 @@ The computed deformation depends on different options:
         self.levelsetp1 = {INTERVAL : self.lset_p1, BOTTOM : self.lset_p1_bottom, TOP : self.lset_p1_top}
         self.deformation = {INTERVAL : self.deform, BOTTOM : self.deform_bottom, TOP : self.deform_top}
 
+        if (smooth_blend != None) and (smooth_blend != "None"):
+          self.smooth_blend = smooth_blend
+        else:
+          self.smooth_blend = None
         
     def ProjectOnUpdate(self,gf,update_domain=None):
         """
@@ -293,7 +313,6 @@ dont_project_gfs : bool
         self.interpol_p1()
         RestrictGFInTime(spacetime_gf=self.deform,reference_time=1.0,space_gf=self.deform_last_top)   
 
-
         for i in  range(len(self.v_ho_st.TimeFE_nodes())):
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
             if calc_kappa:
@@ -308,12 +327,27 @@ dont_project_gfs : bool
         self.haspos_spacetime |= self.ci.GetElementsOfType(POS)
         self.hasif_spacetime[:] = False
         self.hasif_spacetime |= self.ci.GetElementsOfType(IF)
-        
+
+        self.blending_forwarded = CF(0.)
+        self.where_projected = BitArray(self.hasif_spacetime)
+        if self.smooth_blend != None:
+            ci_blend_helper = CutInfo(self.mesh, time_order=self.order_time)
+            b_disc_node_p1 = GridFunction(self.v_p1)
+            b_disc_p1 = GridFunction(self.v_p1_st)
+            times = [xi for xi in self.v_p1_st.TimeFE_nodes()]
+            for i,ti in enumerate(times):
+                b_disc_node_p1.Set(fix_tref( self.smooth_blend ,ti) -1 + 1e-6)
+                b_disc_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1].data = b_disc_node_p1.vec[:]
+            ci_blend_helper.Update(b_disc_p1 , time_order=0)
+            self.where_projected = ci_blend_helper.GetElementsOfType(HASNEG)
+            self.blending_forwarded = self.smooth_blend
+
         for i in range(self.order_time + 1):
             self.lset_ho_node.vec[:].data = self.lset_ho.vec[i*self.ndof_node : (i+1)*self.ndof_node]
             self.qn.Set(self.lset_ho_node.Deriv())
             self.lset_p1_node.vec[:].data = self.lset_p1.vec[i*self.ndof_node_p1 : (i+1)*self.ndof_node_p1]
-            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.hasif_spacetime, None, self.lset_lower_bound, 
+            ProjectShift(self.lset_ho_node, self.lset_p1_node, self.deform_node, self.qn, self.where_projected,
+                         fix_tref(self.blending_forwarded, self.v_ho_st.TimeFE_nodes()[i]), self.lset_lower_bound,
                          self.lset_upper_bound, self.threshold, heapsize=self.heapsize)
             self.deform.vec[i*self.ndof_node : (i+1)*self.ndof_node].data = self.deform_node.vec[:]
 

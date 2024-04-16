@@ -134,10 +134,13 @@ public:
 
     int NON_CONV_WARN_MSG_LVL;
 
+    bool SIMD_EVAL;
+
     GlobalNgsxfemVariables();
     
     void SetDefaults();
     void MultiplyAllEps(double fac);
+    void SwitchSIMD(bool simd);
     void Output();
 };
 

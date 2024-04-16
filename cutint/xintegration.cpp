@@ -8,9 +8,6 @@
 
 namespace xintegration
 {
-  using ngfem::INT;
-
-
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
@@ -122,6 +119,25 @@ namespace xintegration
     return CreateCutIntegrationRule(lsetintdom, trafo, lh);
   }
   
+  template<class SCAL> 
+  FlatArray<SIMD<SCAL>> CreateSIMD_FlatArray(FlatArray<SCAL> ns_arr, LocalHeap & lh)
+  {
+    const int simd_blocks = (ns_arr.Size() + SIMD<IntegrationPoint>::Size() - 1) / SIMD<IntegrationPoint>::Size();
+    FlatArray<SIMD<SCAL>> simd_arr(simd_blocks,lh);
+
+    for (int i = 0; i < simd_blocks; i++){
+      simd_arr[i] = [&] (int j)
+      {
+        const int nr = i * SIMD<IntegrationPoint>::Size() + j;
+        if (nr < ns_arr.Size())
+          return ns_arr[nr];
+        return SCAL(0.0);
+      };
+    }
+    return simd_arr;
+  }
+
+
   template<int SD>
   PointContainer<SD>::PointContainer()
   {
@@ -613,7 +629,7 @@ namespace xintegration
     case ET_TET:
     {
       // int sum = 0;
-      INT< D > I;
+      IVec< D > I;
       Vec< SD > position;
       for (int i = 0; i < D; ++i)
         I[i] = 0;
@@ -1721,5 +1737,8 @@ namespace xintegration
     return ir;
   }
 
-  
+  template FlatArray<SIMD<double>> CreateSIMD_FlatArray(FlatArray<double> ns_arr, LocalHeap & lh);
+  //template FlatArray<SIMD<Complex>> CreateSIMD_FlatArray(FlatArray<Complex> ns_arr, LocalHeap & lh);
+
+
 } // end of namespace

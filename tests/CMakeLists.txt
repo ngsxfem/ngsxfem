@@ -30,6 +30,12 @@ add_test(NAME py_demo_unfitted_poisson COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME py_demo_spacetime_unfitted_DG COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/spacetime/spacetimeDG_unfitted.py" "testmode")
 
+add_test(NAME pytests_simd_lfblf COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_simd_lf_blf.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
+add_test(NAME pytests_simd_cutint COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_simd_cutint.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 

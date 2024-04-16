@@ -3,9 +3,6 @@
 
 namespace xintegration
 {
-  using ngfem::INT;
-
-
   tuple<const IntegrationRule *, Array<double> > CreateMultiLevelsetCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                                        const ElementTransformation & trafo,
                                                                                        LocalHeap & lh)

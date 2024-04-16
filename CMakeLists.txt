@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(xfem)
 
-set(BUILD_NGSOLVE ON CACHE BOOL "build NGSolve from scratch")
+set(BUILD_NGSOLVE OFF CACHE BOOL "build NGSolve from scratch")
 set(CHECK_NGSOLVE_VERSION ON CACHE BOOL "Check if installed NGSolve (if exist) is compatible")
 set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
 set(USE_CCACHE OFF CACHE BOOL "use ccache")
@@ -86,8 +86,17 @@ If you know what you are doing you can turn off this check by setting the cmake 
 ")
     endif (NOT ${ngsfits} EQUAL 1)
   endif (CHECK_NGSOLVE_VERSION)
-  set(CMAKE_CXX_COMPILER "ngscxx" CACHE STRING "Default CXX compiler" FORCE)
-  set(CMAKE_LINKER "ngsld" CACHE STRING "Default linker" FORCE)
+  if(CMAKE_CROSSCOMPILING)
+  else(CMAKE_CROSSCOMPILING)
+    if (CMAKE_CXX_COMPILER)
+    else (CMAKE_CXX_COMPILER)
+      set(CMAKE_CXX_COMPILER "ngscxx" CACHE STRING "Default CXX compiler" FORCE)
+    endif (CMAKE_CXX_COMPILER)
+    if (CMAKE_LINKER)
+    else (CMAKE_LINKER)
+      set(CMAKE_LINKER "ngsld" CACHE STRING "Default linker" FORCE)
+    endif(CMAKE_LINKER)
+  endif(CMAKE_CROSSCOMPILING)
 
 endif(BUILD_NGSOLVE)
 
@@ -159,7 +168,6 @@ endfunction()
 
 string(TOUPPER "CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}" name)
 set(flags "${${name}} ${CMAKE_CXX_FLAGS}")
-
 
 message("
 ------------------------------------------------------------------------

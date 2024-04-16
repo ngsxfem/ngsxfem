@@ -43,9 +43,6 @@ void ExportNgsx_cutint(py::module &m)
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrateX");
 
-          double sum = 0.0;
-          Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
-          element_sum = 0.0;
 
           // int DIM = ma->GetDimension();
 
@@ -55,10 +52,63 @@ void ExportNgsx_cutint(py::module &m)
 
           MyMutex mutex_ip_cont;
           //MyLock lock_ip_cont(mutex_ip_cont);
+					
+          Vector<> element_sum(element_wise ? ma->GetNE(VOL) : 0);
+          element_sum = 0.0;
+					double sum = 0.0;
+					if(globxvar.SIMD_EVAL && ip_cont==nullptr) {
+            try {
+						  ma->IterateElements
+              (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
+              {
+                HeapReset hr(lh);
+						  	auto & trafo = ma->GetTrafo (el, lh);
 
-          ma->IterateElements
+                const IntegrationRule *ns_ir;
+						  	Array<double> ns_wei_arr;
+						  	tie(ns_ir, ns_wei_arr) = CreateCutIntegrationRule(*lsetintdom, trafo, lh);
+
+						  	if (ns_ir == nullptr)
+						  		return;        
+
+						  	SIMD_IntegrationRule simd_ir(*ns_ir, lh);
+						  	FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
+  
+						  	SIMD_BaseMappedIntegrationRule &simd_mir = trafo(simd_ir, lh);
+						  	FlatMatrix<SIMD<double>> val(simd_mir.Size(), 1, lh);
+  
+						  	cf -> Evaluate(simd_mir, val);
+  
+						  	SIMD<double> lsum = 0.0;
+						  	for (int i = 0; i < simd_mir.Size(); i++)
+						  		lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
+
+                AtomicAdd(sum,HSum(lsum));
+                if (element_wise)
+                  element_sum(el.Nr()) = HSum(lsum); // problem ?
+
+						  });
+						  py::object result;
+              if (element_wise)
+                result = py::cast(element_sum);
+              else
+  						  result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
+	
+  					  return result;
+            } catch (ExceptionNOSIMD e) {
+              cout << IM(6) << e.What() << endl
+                   << "switching to non-SIMD evaluation" << endl;
+            }
+
+					}
+
+					if(globxvar.SIMD_EVAL && ip_cont!=nullptr) 
+            cout << IM(6) << "Switching to non-SIMD evaluation due to IntegrationPointContainer" << endl;
+          
+					ma->IterateElements
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
              {
+               HeapReset hr(lh);
                auto & trafo = ma->GetTrafo (el, lh);
 
                const IntegrationRule * ir;
@@ -94,13 +144,10 @@ void ExportNgsx_cutint(py::module &m)
                }
              });
 
-          py::object result;
-          if (element_wise)
-          {
+					py::object result;
+          if (element_wise) {
             result = py::cast(element_sum);
-          }
-          else
-          {
+          } else {
             result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
           }
           return result;

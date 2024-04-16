@@ -557,12 +557,44 @@ namespace ngcomp
       {
         Array<int> elnums(0,lh);
         ma->GetFacetElements (facnr, elnums);
+
         for (auto elnr : elnums)
           ret->SetBitAtomic(elnr);
       }
     });
     return ret;
   }
+
+  shared_ptr<BitArray> GetElementsWithSharedVertex(shared_ptr<MeshAccess> ma, shared_ptr<BitArray> a, LocalHeap & lh)
+  {
+    if (ma->GetCommunicator().Size() > 1)
+      throw Exception("GetElementsWithNeighborFacets:: No GetElementsWithSharedVertex for MPI yet");
+    int ne = ma->GetNE();
+    shared_ptr<BitArray> ret = make_shared<BitArray> (ne);
+    ret->Clear();
+    IterateRange
+      (ne, lh,
+      [&] (int elnr, LocalHeap & lh)
+    {
+        if(a->Test(elnr)){
+            ElementId elid(VOL,elnr);
+            Array<int> nodenums(0,lh);
+            nodenums = ma->GetElVertices(elid);
+            for (int node : nodenums) {
+              /*
+                Array<int> elnums(0,lh);
+                ma->GetVertexElements(node, elnums);
+                for (auto elnr : elnums)
+                    ret->SetBitAtomic(elnr);
+              */
+              for (auto elnr : ma->GetVertexElements(node))
+                ret->SetBitAtomic(elnr);
+              
+            }
+        }
+    });
+    return ret;
+}
 
   shared_ptr<BitArray> GetDofsOfElements(shared_ptr<FESpace> fes,
                                          shared_ptr<BitArray> a,

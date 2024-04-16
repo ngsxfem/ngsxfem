@@ -10,7 +10,7 @@ namespace ngfem
   void DiffOpShiftedEval<SpaceD> ::
   CalcMatrix (const FiniteElement & bfel,
               const BaseMappedIntegrationPoint & bmip,
-              SliceMatrix<double,ColMajor> mat,
+              BareSliceMatrix<double,ColMajor> mat,
               LocalHeap & lh) const
   {
     const MappedIntegrationPoint<SpaceD,SpaceD> & mip =

@@ -7,10 +7,10 @@ build:
   stage: build
   image: ngsxfem/ngsolve:latest
   script:
-    - python3 -c "import ngsolve"
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - python3 -c "import ngsolve; print(ngsolve.__version__)"
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
     - git submodule
     - git submodule update --init
     - mkdir build
@@ -22,6 +22,7 @@ build:
     paths:
       - build
       - install
+  needs: []  
 
 ctests-demos:
   stage: test
@@ -30,6 +31,7 @@ ctests-demos:
     - bash .ci/ci_ctests.sh demos
   when: always
   allow_failure: false
+  needs: [build]  
 
 ctests-mayfail:
   stage: test
@@ -38,6 +40,7 @@ ctests-mayfail:
     - bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
+  needs: [build]  
 
 ctests-pytests:
   stage: test
@@ -46,6 +49,13 @@ ctests-pytests:
     -  bash .ci/ci_ctests.sh pytests
   when: always
   allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - build/ctest-results.xml
+    reports:
+      junit: build/ctest-results.xml
+  needs: [build]  
 
 metrics:
   tags:
@@ -53,14 +63,15 @@ metrics:
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem"
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem"
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
     - python3 tests/ngsxfem_report.py 2> metrics.txt
   artifacts:
     reports:
       metrics: metrics.txt
   when: manual
   allow_failure: true
+  needs: [build]  
 
 codestyle-demos:
   stage: test
@@ -71,9 +82,10 @@ codestyle-demos:
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
   when: always
   allow_failure: true
-        
+  needs: []  
+
 paper:
-  stage: build
+  stage: deploy
   image:
     name: openjournals/paperdraft
     entrypoint: [""] 
@@ -84,9 +96,10 @@ paper:
   artifacts:
     paths:
       - paper.pdf
+  needs: []  
 
 paper-appendix:
-  stage: build
+  stage: deploy
   image:
     name: schruste/latex
     entrypoint: [""] 
@@ -99,22 +112,23 @@ paper-appendix:
     paths:
       - literature.pdf
       - feature-details.pdf
+  needs: []  
         
         
 pages:
   stage: deploy
   image: ngsxfem/ngsolve:latest
   script:
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/lehrenfeld/ngsxfem/external_dependencies/ngsolve
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
     - git submodule
     - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3/dist-packages/xfem/" 
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3/dist-packages"
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3/dist-packages/xfem/
+    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
+    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/dist-packages/xfem/
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
@@ -128,6 +142,8 @@ pages:
   artifacts:
     paths:
       - public
+  needs: [build,ctests-demos,ctests-pytests]  
+
   #only:
   #  - release # this job will affect only the 'sphinx' branch
 
@@ -135,8 +151,34 @@ pip_linux:
   #image: quay.io/pypa/manylinux2014_x86_64
   image: sameli/manylinux2014_x86_64_cuda_11      
 
-  stage: build
+  stage: deploy
   script:
-    - ./.ci/build_pip.sh
-    - twine upload wheelhouse/*manylinux*.whl
-  when: manual
+    - ./.ci/build_pip.sh 38
+    - ./.ci/build_pip.sh 39
+    - ./.ci/build_pip.sh 310
+    - ./.ci/build_pip.sh 311
+    - /opt/python/cp39-cp39/bin/pip install twine
+    - /opt/python/cp39-cp39/bin/python -m twine upload --skip-existing wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
+    # - ./.ci/build_pip.sh 312
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
+  needs: [ctests-demos, ctests-pytests]
+
+
+docker_build:
+  stage: deploy
+
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+     
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
+  
+  when: manual 
+  needs: [ctests-demos, ctests-pytests]  
+

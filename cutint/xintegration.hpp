@@ -12,10 +12,19 @@ using namespace ngfem;
 using ngfem::ELEMENT_TYPE;
 namespace xintegration
 {
-
+  //TODO: switch to FlatArray (call be reference or remove tuple for that)
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh);
+  template<class SCAL> 
+  /**
+   * Creates a new FlatArray of SIMD values from a given FlatArray of scalar values.
+   *
+   * @param ns_arr The FlatArray of scalar values to convert to SIMD values.
+   * @param lh The LocalHeap to allocate memory from for the new FlatArray.
+   * @return A new FlatArray of SIMD values.
+   */
+  FlatArray<SIMD<SCAL>> CreateSIMD_FlatArray(FlatArray<SCAL> ns_arr, LocalHeap & lh);
 
   /// OLD STYLE (to be removed on the long run, hopefully)
   /// struct which defines the relation a < b for Point4DCL 
