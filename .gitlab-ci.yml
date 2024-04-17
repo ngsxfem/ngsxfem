@@ -3,7 +3,7 @@ stages:
     - test
     - deploy
         
-build:
+build-on-src-ngs:
   stage: build
   image: ngsxfem/ngsolve:latest
   script:
@@ -24,6 +24,26 @@ build:
       - install
   needs: []  
 
+build-on-pip-ngs:
+  stage: build
+  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  script:
+    - python3 -c "import ngsolve; print(ngsolve.__version__)"
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    - git submodule
+    - git submodule update --init
+    - mkdir build
+    - mkdir install    
+    - cd build
+    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DBUILD_ON_PIP=ON -DCMAKE_INSTALL_PREFIX=../install ..
+    - make install
+  artifacts:
+    paths:
+      - install
+  needs: []
+
 ctests-demos:
   stage: test
   image: ngsxfem/ngsolve:latest
@@ -31,7 +51,9 @@ ctests-demos:
     - bash .ci/ci_ctests.sh demos
   when: always
   allow_failure: false
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]
 
 ctests-mayfail:
   stage: test
@@ -40,7 +62,9 @@ ctests-mayfail:
     - bash .ci/ci_ctests.sh mayfail
   when: always
   allow_failure: true
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]  
 
 ctests-pytests:
   stage: test
@@ -55,7 +79,26 @@ ctests-pytests:
       - build/ctest-results.xml
     reports:
       junit: build/ctest-results.xml
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]
+
+ctests-pytests-on-pip-ngs:
+  stage: test
+  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  script:
+    -  bash .ci/ci_ctests.sh pytests
+  when: always
+  allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - build/ctest-results.xml
+    reports:
+      junit: build/ctest-results.xml
+  dependencies:
+    - build-on-pip-ngs
+  needs: [build-on-pip-ngs]  
 
 metrics:
   tags:
@@ -71,7 +114,9 @@ metrics:
       metrics: metrics.txt
   when: manual
   allow_failure: true
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]  
 
 codestyle-demos:
   stage: test
@@ -82,6 +127,8 @@ codestyle-demos:
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
   when: always
   allow_failure: true
+  dependencies:
+    - build-on-src-ngs
   needs: []  
 
 paper:
@@ -142,7 +189,9 @@ pages:
   artifacts:
     paths:
       - public
-  needs: [build,ctests-demos,ctests-pytests]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs,ctests-demos,ctests-pytests,ctests-pytests-on-pip-ngs]  
 
   #only:
   #  - release # this job will affect only the 'sphinx' branch
@@ -162,8 +211,10 @@ pip_linux:
     # - ./.ci/build_pip.sh 312
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  dependencies:
+    - build-on-src-ngs
   when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
-  needs: [ctests-demos, ctests-pytests]
+  needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs]
 
 
 docker_build:
@@ -179,6 +230,6 @@ docker_build:
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
-  when: manual 
-  needs: [ctests-demos, ctests-pytests]  
+  when: manual
+  needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs]  
 
