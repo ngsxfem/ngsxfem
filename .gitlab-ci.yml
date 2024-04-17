@@ -49,7 +49,7 @@ ctests-demos:
   image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh demos
-  when: always
+  when: on_success
   allow_failure: false
   dependencies:
     - build-on-src-ngs
@@ -60,7 +60,7 @@ ctests-mayfail:
   image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh mayfail
-  when: always
+  when: on_success
   allow_failure: true
   dependencies:
     - build-on-src-ngs
@@ -71,7 +71,7 @@ ctests-pytests:
   image: ngsxfem/ngsolve:latest
   script:
     -  bash .ci/ci_ctests.sh pytests
-  when: always
+  when: on_success
   allow_failure: false
   artifacts:
     when: always
@@ -88,7 +88,7 @@ ctests-pytests-on-pip-ngs:
   image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
   script:
     -  bash .ci/ci_ctests.sh pytests
-  when: always
+  when: on_success
   allow_failure: false
   artifacts:
     when: always
@@ -135,7 +135,7 @@ paper:
   stage: deploy
   image:
     name: openjournals/paperdraft
-    entrypoint: [""] 
+    entrypoint: [""]
   script:
     - cd doc
     - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md
