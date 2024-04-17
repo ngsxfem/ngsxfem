@@ -3,12 +3,10 @@
 set -e
 echo "pwd: ${PWD}"
 ls -al .
-# echo "cmake-tests"
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/"
-export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
-# echo "${PWD}/install/lib/python3/dist-packages"
-# ls -al ${PWD}/install/lib/python3/dist-packages
-# export | grep PYTHONPATH
+
+# this adjusts for different python versions and is independent of installation to site- or dist-packages
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(PWD)/install/`find -name xfem`/.."
+export PYTHONPATH="$(pwd)/install/`find -name xfem`/..":$PYTHONPATH
 
 cd build
 
