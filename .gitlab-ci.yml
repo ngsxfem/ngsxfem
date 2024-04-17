@@ -214,7 +214,7 @@ pip_linux:
   dependencies:
     - build-on-src-ngs
   when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
-  needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs]
+  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs]
 
 
 docker_build:
