@@ -41,6 +41,7 @@ build-on-pip-ngs:
     - make install
   artifacts:
     paths:
+      - build
       - install
   needs: []
 
