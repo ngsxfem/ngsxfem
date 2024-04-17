@@ -37,7 +37,7 @@ build-on-pip-ngs:
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DBUILD_ON_PIP=ON -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DCMAKE_INSTALL_PREFIX=../install ..
     - make install
   artifacts:
     paths:
