@@ -302,10 +302,10 @@ while tend - t_old > delta_t/2:
             a.mat.AsVector().data = a.mat.AsVector() + weight* a_patch_time_node.mat.AsVector()
     
     # solve linear system
-    #pre = a.mat.Inverse(active_dofs,"umfpack")
+    #pre = a.mat.Inverse(active_dofs,"")
     #inv = CGSolver(a.mat, pre, printrates=True, precision=1e-10, maxsteps=15)
     #inv = GMRESSolver(mat=a.mat,pre=pre,printrates=True,precision=1e-8,maxsteps=15)
-    pre = a.mat.Inverse(active_dofs,"umfpack")
+    pre = a.mat.Inverse(active_dofs,"")
     inv = CGSolver(a.mat,pre,printrates=True,maxsteps=5)
     # inv = a.mat.Inverse(active_dofs,inverse="pardiso")
     gfu.vec.data = inv* f.vec.data

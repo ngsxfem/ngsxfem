@@ -222,7 +222,7 @@ while tend - t_old > delta_t/2:
     a.mat.AsVector().data += epsilon * m_reg.mat.AsVector()
     f.Assemble()
     mesh.UnsetDeformation()
-    u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
+    u0.vec.data = a.mat.Inverse(active_dofs,"") * f.vec
        
     # exploiting the nodal property of the time fe:
     for i in range(2): 

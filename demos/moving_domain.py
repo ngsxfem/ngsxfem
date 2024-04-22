@@ -61,7 +61,7 @@ nu = 1e-5
 c_gamma = 1
 
 # Sparse direct solver
-inverse = "umfpack"
+inverse = ""
 
 # Problem Data
 # Initial condition and right-hand side

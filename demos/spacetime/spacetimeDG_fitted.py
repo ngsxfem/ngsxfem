@@ -89,7 +89,7 @@ Draw(u_last, mesh, "u")
 
 while tend - told.Get() > delta_t / 2:
     f.Assemble()
-    gfu.vec.data = a.mat.Inverse(st_fes.FreeDofs(), "umfpack") * f.vec
+    gfu.vec.data = a.mat.Inverse(st_fes.FreeDofs(), "") * f.vec
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
     l2error = sqrt(Integrate((u_exact - gfu)**2 * dxnew, mesh))
     Redraw()
