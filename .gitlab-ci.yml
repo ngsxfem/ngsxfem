@@ -1,18 +1,17 @@
 # use gitlab-ci's anchor to only run build-jobs if files are changed that affect build stage
 .build-template: &build-config
-  rules:
-    changes:
-      paths:
-        - .gitlab-ci.yml
-        # - .ci/* # currently in .ci are only scripts for testing
-        - .github/*
-        - cutint/*
-        - external_dependencies/*
-        - lsetcurving/*
-        - python/*
-        - spacetime/*
-        - utils/*
-        - xfem/*
+  rules: 
+    - changes:
+      - .gitlab-ci.yml
+      # - .ci/* # currently in .ci are only scripts for testing
+      - .github/*
+      - cutint/*
+      - external_dependencies/*
+      - lsetcurving/*
+      - python/*
+      - spacetime/*
+      - utils/*
+      - xfem/*
 
 stages:
     - build
