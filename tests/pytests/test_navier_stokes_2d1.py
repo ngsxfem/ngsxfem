@@ -19,7 +19,7 @@ gamma_n = 40                                    # Nitsche parameter
 gamma_gp = 0.01                                 # Ghost penalty parameter
 pReg = 1e-8                                     # Pressure regularisation
 
-inverse = "umfpack"                             # Direct linear solver used
+inverse = ""                                    # Direct linear solver used
 condense = True                                 # Use static condensation 
 maxit_newt = 15                                 # Max. nr. of Newton iterations
 tol_newt = 1e-10                                # l2 Newton residual tolerance
@@ -51,7 +51,7 @@ def UpdateMarkers(element_marker, union_elememts, intersection_elements = None):
 
 # -------------------------------- NEWTON LOOP --------------------------------
 def CutFEM_QuasiNewton(a, alin, u, f, freedofs, maxit=100, maxerr=1e-11,
-                       inverse="umfpack", dampfactor=1, jacobi_update_tol=0.1,
+                       inverse="", dampfactor=1, jacobi_update_tol=0.1,
                        reuse = False, printing=True, **kwargs):
 
     res = u.vec.CreateVector()
