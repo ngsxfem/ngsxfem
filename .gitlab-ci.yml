@@ -2,6 +2,7 @@
 .build-template: &build-config
   rules: 
     - changes:
+      - CMakeLists.txt
       - .gitlab-ci.yml
       # - .ci/* # currently in .ci are only scripts for testing
       - .github/*
