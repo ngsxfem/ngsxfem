@@ -1,3 +1,19 @@
+# use gitlab-ci's anchor to only run build-jobs if files are changed that affect build stage
+.build-template: &build-config
+  rules:
+    changes:
+      paths:
+        - .gitlab-ci.yml
+        # - .ci/* # currently in .ci are only scripts for testing
+        - .github/*
+        - cutint/*
+        - external_dependencies/*
+        - lsetcurving/*
+        - python/*
+        - spacetime/*
+        - utils/*
+        - xfem/*
+
 stages:
     - build
     - test
@@ -17,7 +33,8 @@ build-on-src-ngs:
     - mkdir install    
     - cd build
     - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DCMAKE_INSTALL_PREFIX=../install ..
-    - make install
+    - make -j8 install
+  <<: *build-config
   artifacts:
     paths:
       - build
@@ -38,7 +55,8 @@ build-on-pip-ngs:
     - mkdir install    
     - cd build
     - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DCMAKE_INSTALL_PREFIX=../install ..
-    - make install
+    - make -j8 install
+  <<: *build-config
   artifacts:
     paths:
       - build
@@ -100,6 +118,17 @@ ctests-pytests-on-pip-ngs:
   dependencies:
     - build-on-pip-ngs
   needs: [build-on-pip-ngs]  
+
+ctests-demos-on-pip-ngs:
+  stage: test
+  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  script:
+    - bash .ci/ci_ctests.sh demos
+  when: on_success
+  allow_failure: false
+  dependencies:
+    - build-on-pip-ngs
+  needs: [build-on-pip-ngs]
 
 metrics:
   tags:
@@ -192,7 +221,7 @@ pages:
       - public
   dependencies:
     - build-on-src-ngs
-  needs: [build-on-src-ngs,ctests-demos,ctests-pytests,ctests-pytests-on-pip-ngs]  
+  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]  
 
   #only:
   #  - release # this job will affect only the 'sphinx' branch
@@ -214,8 +243,8 @@ pip_linux:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   dependencies:
     - build-on-src-ngs
-  when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
-  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs]
+  when: manual # we don't want to trigger this job in ngsxfem-simd
+  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
 
 
 docker_build:
@@ -232,5 +261,5 @@ docker_build:
       --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
   when: manual
-  needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs]  
+  needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
 
