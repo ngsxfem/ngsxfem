@@ -9,7 +9,7 @@ Scientific literature using `ngsxfem`
 
 * H. Liu. “Unfitted finite element methods for the Stokes problem using the Scott- Vogelius pair”. PhD thesis. University of Pittsburgh, 2022.
 
-* F. Heimann, C. Lehrenfeld, P. Stocker, and H. von Wahl. “Unfitted Trefftz discontinuous Galerkin methods for elliptic boundary value problems“. Dec. 26, 2022. arXiv: [2212.12236](https://arxiv.org/abs/2212.12236) [math.NA].
+* F. Heimann, C. Lehrenfeld, P. Stocker, and H. von Wahl. “Unfitted Trefftz discontinuous Galerkin methods for elliptic boundary value problems“. In: ESAIM Math. Model. Numer. Anal. 57.5, 2023. doi: [10.1051/m2an/2023064](https://doi.org/10.1051/m2an/2023064)
 
 * C. Lehrenfeld, T. van Beeck, and I. Voulis. “Analysis of divergence-preserving unfitted finite element methods for the mixed Poisson problem“.  June 22, 2023. arXiv: [2306.12722](https://arxiv.org/abs/2306.12722) [math.NA].
 
@@ -45,7 +45,6 @@ URI [hdl:10012/19340](http://hdl.handle.net/10012/19340).
 
 * A. C. Wendler. "Monolithic Unfitted Space-Time FEM for an Osmotic Cell Swelling Problem". MA thesis. Georg-August Universität Göttingen, Feb. 2022. doi: [10.25625/0KPEON](http://dx.doi.org/10.25625/0KPEON)
 
-
 * J. Preuß. “Higher order unfitted isoparametric space-time FEM on moving domains”. MA thesis. Georg-August Universität Göttingen, 31st Jan. 2018. doi: [10.25625/UACWXS](http://dx.doi.org/10.25625/UACWXS)
 
 * F. Heimann. “On Discontinuous- and Continuous-In-Time Unfitted Space-Time Methods for PDEs on Moving Domains”. MA thesis. Georg-August Universität Göttingen, Oct. 2020. doi: [10.25625/OIBRT4](http://dx.doi.org/10.25625/OIBRT4).
@@ -57,9 +56,11 @@ URI [hdl:10012/19340](http://hdl.handle.net/10012/19340).
 
 * H. von Wahl, T. Richter and C. Lehrenfeld. “An unfitted Eulerian finite element method for the time-dependent Stokes problem on moving domains”. In: IMA J. Numer. Anal. (2021). doi: [10.1093/imanum/drab044](https://doi.org/10.1093/imanum/drab044).
 
-* H. von Wahl and T. Richter. “Error analysis for a parabolic PDE model problem on a coupled moving domain in a fully Eulerian framework”. Siam J. Num. Anal. 2023. doi: [10.1137/21M1458417](https://doi.org/10.1137/21M1458417).
+* H. von Wahl and T. Richter. “Error analysis for a parabolic PDE model problem on a coupled moving domain in a fully Eulerian framework”. In: SIAM J. Num. Anal. 2023. doi: [10.1137/21M1458417](https://doi.org/10.1137/21M1458417).
 
 * H. von Wahl and T. Richter. “An Eulerian time-stepping scheme for a coupled parabolic moving domain problem using equal order unfitted finite elements”. In: Proc. Appl. Math. Mech. 2023. doi: [10.1002/pamm.202200003](https://doi.org/10.1002/pamm.202200003).
+
+* M. Olshanskii and H. von Wahl "A conservative Eulerian finite element method for transport and diffusion in moving domains". 10th April 2024, arXiv: [2404.07130](https://arxiv.org/abs/2404.07130) [math.NA].
 
 ### Fluid structure interaction
 * M. Kemper. “Pure Eulerian unfitted FEM for Biological Fluid-Structure Interaction Problems”. MA thesis. Georg-August Universität Göttingen, 1st Feb. 2022. doi: [10.25625/DYUGCA](http://dx.doi.org/10.25625/DYUGCA)
@@ -70,7 +71,7 @@ URI [hdl:10012/19340](http://hdl.handle.net/10012/19340).
 
 * H. von Wahl. "Unfitted finite elements for fluid-rigid body interaction problems". PhD Thesis. Otto-von-Guericke-Universität Magdeburg. Oct. 2021, doi: [10.25673/40013](https://doi.org/10.25673/40013).
 
-* H. von Wahl and T. Wick. "A high-precision framework for phase-field fracture interface reconstructions with application to Stokes fluid-filled fracture surrounded by an elastic medium". Dec. 2022. arXiv: [2212.07982](https://arxiv.org/abs/2212.07982) [math.NA].
+* H. von Wahl and T. Wick. "A high-accuracy framework for phase-field fracture interface reconstructions with application to Stokes fluid-filled fracture surrounded by an elastic medium". Comput. Methods Appl. Mech. Engrg., 415.116202, 2023. doi: [10.1016/j.cma.2023.116202](https://doi.org/10.1016/j.cma.2023.116202).
 
 ###  Surface PDEs
 
@@ -124,4 +125,6 @@ Journal of Computational and Appl. Math, 2022, doi: [10.1016/j.cam.2022.114286](
 
 * H. von Wahl and T. Wick. A high-precision framework for phase-field fracture interface reconstructions with application to Stokes fluid-filled fracture surrounded by an elastic medium - Reproduction code. Zenodo repository, Dec. 15, 2022. doi: [10.5281/zenodo.7443025](https://doi.org/10.5281/zenodo.7443025).
 
-* F. Heimann, C. Lehrenfeld, P. Stocker, and H. von Wahl. Unfitted Trefftz dis- continuous Galerkin methods for elliptic boundary value problems - Reproduction scripts. Zenodo repository, Dec. 2022. doi: [10.5281/zenodo.7474688](https://doi.org/10.5281/zenodo.7474688).
+* F. Heimann, C. Lehrenfeld, P. Stocker, and H. von Wahl. Unfitted Trefftz discontinuous Galerkin methods for elliptic boundary value problems - Reproduction scripts. Zenodo repository, Dec. 2022. doi: [10.5281/zenodo.7474688](https://doi.org/10.5281/zenodo.7474688).
+
+* M. Olshanskii and H. von Wahl. A conservative Eulerian finite element method for transport and diffusion in moving domains - Reproduction Scripts. Zenodo repository, April. 2023. doi: [10.5281/zenodo.10951768](https://doi.org/10.5281/zenodo.10951768).
