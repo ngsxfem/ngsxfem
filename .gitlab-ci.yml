@@ -247,6 +247,7 @@ pip_linux:
   needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
 
 
+# build a docker image that is published only in gitlab container registry
 docker_build:
   stage: deploy
 
@@ -258,7 +259,7 @@ docker_build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
+      --destination "$CI_REGISTRY_IMAGE/$CI_PROJECT_NAME/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
   when: manual
   needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
