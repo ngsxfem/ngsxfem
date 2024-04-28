@@ -47,10 +47,6 @@ build-on-pip-ngs:
   script:
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    - git submodule
-    - git submodule update --init
     - mkdir build
     - mkdir install    
     - cd build
