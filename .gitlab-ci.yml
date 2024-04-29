@@ -50,7 +50,7 @@ build-on-pip-ngs:
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/.venv/lib/cmake -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
     - make -j8 install
   <<: *build-config
   artifacts:
