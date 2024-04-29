@@ -1,53 +1,96 @@
+# use gitlab-ci's anchor to only run build-jobs if files are changed that affect build stage
+.build-template: &build-config
+  rules: 
+    - changes:
+      - CMakeLists.txt
+      - .gitlab-ci.yml
+      # - .ci/* # currently in .ci are only scripts for testing
+      - .github/*
+      - cutint/*
+      - external_dependencies/*
+      - lsetcurving/*
+      - python/*
+      - spacetime/*
+      - utils/*
+      - xfem/*
+
 stages:
     - build
     - test
     - deploy
         
-build:
+build-on-src-ngs:
   stage: build
   image: ngsxfem/ngsolve:latest
   script:
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    - git submodule
-    - git submodule update --init
+    # i think we do not need external dependencies in the pipeline
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    # - git submodule
+    # - git submodule update --init
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCHECK_NGSOLVE_VERSION=OFF -DCMAKE_INSTALL_PREFIX=../install ..
-    - make install
+    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - make -j8 install
+  # <<: *build-config
   artifacts:
     paths:
       - build
       - install
   needs: []  
 
+build-on-pip-ngs:
+  stage: build
+  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  script:
+    - python3 -c "import ngsolve; print(ngsolve.__version__)"
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
+    - mkdir build
+    - mkdir install    
+    - cd build
+    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
+    - make -j8 install
+  # <<: *build-config
+  artifacts:
+    paths:
+      - build
+      - install
+  needs: []
+
 ctests-demos:
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh demos
-  when: always
+  # <<: *build-config
+  when: on_success
   allow_failure: false
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]
 
 ctests-mayfail:
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
     - bash .ci/ci_ctests.sh mayfail
-  when: always
+  # <<: *build-config
+  when: on_success
   allow_failure: true
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]  
 
 ctests-pytests:
   stage: test
   image: ngsxfem/ngsolve:latest
   script:
     -  bash .ci/ci_ctests.sh pytests
-  when: always
+  # <<: *build-config
+  when: on_success
   allow_failure: false
   artifacts:
     when: always
@@ -55,7 +98,39 @@ ctests-pytests:
       - build/ctest-results.xml
     reports:
       junit: build/ctest-results.xml
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]
+
+ctests-pytests-on-pip-ngs:
+  stage: test
+  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  script:
+    -  bash .ci/ci_ctests.sh pytests
+  # <<: *build-config
+  when: on_success
+  allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - build/ctest-results.xml
+    reports:
+      junit: build/ctest-results.xml
+  dependencies:
+    - build-on-pip-ngs
+  needs: [build-on-pip-ngs]  
+
+ctests-demos-on-pip-ngs:
+  stage: test
+  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  script:
+    - bash .ci/ci_ctests.sh demos
+  # <<: *build-config
+  when: on_success
+  allow_failure: false
+  dependencies:
+    - build-on-pip-ngs
+  needs: [build-on-pip-ngs]
 
 metrics:
   tags:
@@ -66,12 +141,15 @@ metrics:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
     - python3 tests/ngsxfem_report.py 2> metrics.txt
+  # <<: *build-config
   artifacts:
     reports:
       metrics: metrics.txt
   when: manual
   allow_failure: true
-  needs: [build]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs]  
 
 codestyle-demos:
   stage: test
@@ -80,15 +158,18 @@ codestyle-demos:
     - pip3 install --user pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
+  # <<: *build-config
   when: always
   allow_failure: true
+  dependencies:
+    - build-on-src-ngs
   needs: []  
 
 paper:
   stage: deploy
   image:
     name: openjournals/paperdraft
-    entrypoint: [""] 
+    entrypoint: [""]
   script:
     - cd doc
     - /usr/local/bin/pandoc --defaults="$OPENJOURNALS_PATH"/docker-defaults.yaml --defaults="$OPENJOURNALS_PATH"/"$JOURNAL"/defaults.yaml -s -o paper.pdf paper.md
@@ -120,10 +201,11 @@ pages:
   image: ngsxfem/ngsolve:latest
   script:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    - git submodule
-    - git submodule update --init
+    # i think we do not need external dependencies in the pipeline
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    # - git submodule
+    # - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
@@ -139,10 +221,13 @@ pages:
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
     - rm -f html/jupyter/*.ipynb
     - mv html public
+  # <<: *build-config
   artifacts:
     paths:
       - public
-  needs: [build,ctests-demos,ctests-pytests]  
+  dependencies:
+    - build-on-src-ngs
+  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]  
 
   #only:
   #  - release # this job will affect only the 'sphinx' branch
@@ -162,10 +247,13 @@ pip_linux:
     # - ./.ci/build_pip.sh 312
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  when: manual # we don't want to trigger this job in ngsxfem-simd: remove before merge
-  needs: [ctests-demos, ctests-pytests]
+  dependencies:
+    - build-on-src-ngs
+  when: manual # we don't want to trigger this job in ngsxfem-simd
+  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
 
 
+# build a docker image that is published only in gitlab container registry
 docker_build:
   stage: deploy
 
@@ -177,8 +265,8 @@ docker_build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "docker.gitlab.gwdg.de/lehrenfeld/ngsxfem/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
+      --destination "$CI_REGISTRY_IMAGE/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
-  when: manual 
-  needs: [ctests-demos, ctests-pytests]  
+  when: manual
+  needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
 

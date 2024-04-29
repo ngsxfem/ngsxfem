@@ -63,6 +63,11 @@ if(BUILD_NGSOLVE)
   endif(CMAKE_GENERATOR STREQUAL "Ninja")
 
 else(BUILD_NGSOLVE)
+  if(BUILD_ON_PIP_NGSOLVE)
+    message("Build xfem based on pip-installation of NGSolve...")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=14 -D_GLIBCXX_USE_CXX11_ABI=0")
+  endif(BUILD_ON_PIP_NGSOLVE)
+
   find_package(PythonInterp 3 REQUIRED)
   find_package(PythonLibs 3 REQUIRED)
   # check if CMAKE_INSTALL_PREFIX is set by user, otherwise install to user-local python modules directory
@@ -77,7 +82,7 @@ else(BUILD_NGSOLVE)
 
 
   if (CHECK_NGSOLVE_VERSION)
-    execute_process(COMMAND ${NETGEN_PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/python/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; sys.path.insert(1,\"${PROJECT_SOURCE_DIR}/python/\"); import ngs_check; sys.exit(ngs_check.check_if_ngsolve_newer_than(ngs_check.__ngsolve_required__))" RESULT_VARIABLE ngsfits)
     if (NOT ${ngsfits} EQUAL 1)
       message(FATAL_ERROR "
 NGSolve version is smaller than required.

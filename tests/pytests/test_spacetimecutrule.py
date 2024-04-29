@@ -129,7 +129,7 @@ def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
             f += SymbolicLFI(form = u0_ic*v)
         f.Assemble()
         
-        u0.vec.data = a.mat.Inverse(st_fes.FreeDofs(),"umfpack") * f.vec
+        u0.vec.data = a.mat.Inverse(st_fes.FreeDofs(),"") * f.vec
         
         # exploiting the nodal property of the time fe:
         #u0_ic.vec[:] = u0.vec[0:fes1.ndof]
@@ -335,7 +335,7 @@ def test_spacetime_model_spacetime_caller():
 #         f.Assemble()
 
 #         # solve linear system
-#         inv = a_i.mat.Inverse(active_dofs,inverse="umfpack")
+#         inv = a_i.mat.Inverse(active_dofs,inverse="")
 #         f.vec.data -= a_e.mat * gfu_e.vec
 #         gfu_i.vec.data =  inv * f.vec
 
@@ -488,7 +488,7 @@ def test_spacetime_spaceP1_timeDGP1():
         f.Assemble()
 
         # solve linear system
-        inv = a.mat.Inverse(active_dofs,inverse="umfpack")
+        inv = a.mat.Inverse(active_dofs,inverse="")
         gfu.vec.data =  inv * f.vec
         
 
@@ -993,7 +993,7 @@ def test_spacetime_spaceP4_timeDGP4():
         f.Assemble()
 
         # Solve linear system
-        inv = a.mat.Inverse(active_dofs, inverse="umfpack")
+        inv = a.mat.Inverse(active_dofs, inverse="")
         gfu.vec.data = inv * f.vec.data
 
         # Evaluate upper trace of solution for

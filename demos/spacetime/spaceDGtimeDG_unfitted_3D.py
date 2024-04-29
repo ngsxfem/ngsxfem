@@ -218,7 +218,7 @@ while tend - told.Get() > delta_t / 2:
     f.Assemble()
 
     # Solve linear system
-    inv = a.mat.Inverse(active_dofs, inverse="umfpack")
+    inv = a.mat.Inverse(active_dofs, inverse="")
     gfu.vec.data = inv * f.vec.data
 
     # Evaluate upper trace of solution for

@@ -213,7 +213,7 @@ while tend - t_old > delta_t/2:
            
     res = f.vec.CreateVector()
     res.data = f.vec - a.mat * u0.vec
-    u0.vec.data += a.mat.Inverse(active_dofs,"umfpack") * res
+    u0.vec.data += a.mat.Inverse(active_dofs,"") * res
            
     
        

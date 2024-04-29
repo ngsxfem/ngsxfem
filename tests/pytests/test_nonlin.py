@@ -86,7 +86,7 @@ def test_nonlin():
 
     from ngsolve.solvers import Newton
 
-    Newton(a,gfu,freedofs=freedofs)
+    Newton(a,gfu,freedofs=freedofs, inverse="")
 
     
 if __name__ == "__main__":

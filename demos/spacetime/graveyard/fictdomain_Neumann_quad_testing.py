@@ -98,7 +98,7 @@ while tend - t_old > delta_t/2:
     f += SymbolicLFI(levelset_domain = lset_neg, form = delta_t*coeff_f*v, time_order=2)
     f += SymbolicLFI(levelset_domain = lset_neg_bottom,form = u0_ic*fix_t(v,0) )
     f.Assemble()
-    u0.vec.data = a.mat.Inverse(active_dofs,"umfpack") * f.vec
+    u0.vec.data = a.mat.Inverse(active_dofs,"") * f.vec
        
     # exploiting the nodal property of the time fe:
     u0_ic.vec[:] = u0.vec[fes1.ndof : 2*fes1.ndof]
