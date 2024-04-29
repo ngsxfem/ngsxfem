@@ -265,7 +265,7 @@ docker_build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "$CI_REGISTRY_IMAGE/$CI_PROJECT_NAME/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
+      --destination "$CI_REGISTRY_IMAGE/$CI_PROJECT_NAME:$CI_COMMIT_BRANCH"
   
   when: manual
   needs: [ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]
