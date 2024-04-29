@@ -51,7 +51,7 @@ RUN git clone --single-branch https://github.com/ngsxfem/ngsxfem.git
 
 # github/xfem currently needs explicit cmake cxx flags 
 RUN cmake -DCMAKE_INSTALL_PREFIX=${HOME}/.venv -DBUILD_NGSOLVE=OFF -DNGSolve_DIR=/home/.venv/lib/cmake/ngsolve -DCMAKE_CXX_FLAGS='-fabi-version=14 -D_GLIBCXX_USE_CXX11_ABI=0' -DCHECK_NGSOLVE_VERSION=OFF ${HOME}/ngsxfem
-RUN make -j8 install
+RUN make install
 
 
 FROM ubuntu:24.04 as postbuild
