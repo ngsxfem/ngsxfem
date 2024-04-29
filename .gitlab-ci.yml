@@ -25,10 +25,11 @@ build-on-src-ngs:
   script:
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    - git submodule
-    - git submodule update --init
+    # i think we do not need external dependencies in the pipeline
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    # - git submodule
+    # - git submodule update --init
     - mkdir build
     - mkdir install    
     - cd build
@@ -193,10 +194,11 @@ pages:
   image: ngsxfem/ngsolve:latest
   script:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    - git submodule
-    - git submodule update --init
+    # i think we do not need external dependencies in the pipeline
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    # - git submodule
+    # - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
     - export PATH="$PATH:/home/jovyan/.local/bin"
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
