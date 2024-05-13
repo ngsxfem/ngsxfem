@@ -402,6 +402,9 @@ region_wise : bool
 element_wise : bool
   integration result is return per element
 
+deformation : gridfunction (or None)
+  deformation of the mesh (only active if levelset_domain is not None)
+
 ip_container : list (or None)
   a list to store integration points (for debugging or visualization purposes only!)
 

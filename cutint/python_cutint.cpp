@@ -23,6 +23,7 @@ void ExportNgsx_cutint(py::module &m)
         [](py::dict lsetdom,
            shared_ptr<MeshAccess> ma,
            PyCF cf,
+           py::object gfdeformation,
            py::object ip_container,
            bool element_wise,
            int heapsize)
@@ -35,10 +36,17 @@ void ExportNgsx_cutint(py::module &m)
           {
             py::extract<py::list> ip_cont_as_list(ip_container);
             if (ip_cont_as_list.check())
-            {
               ip_cont = make_shared<py::list>(ip_cont_as_list());
-            }
           }
+          shared_ptr<GridFunction> deformation = nullptr;
+          py::extract<py::object> deformation_(gfdeformation);
+          if (!deformation_().is_none())
+          {
+            py::extract<shared_ptr<GridFunction>> deformation_as_gf(gfdeformation);
+            if (deformation_as_gf.check())
+              deformation = deformation_as_gf();
+          }
+
           shared_ptr<LevelsetIntegrationDomain> lsetintdom = PyDict2LevelsetIntegrationDomain(lsetdom);
           bool space_time = lsetintdom->GetTimeIntegrationOrder() >= 0;
           LocalHeap lh(heapsize, "lh-IntegrateX");
@@ -62,7 +70,8 @@ void ExportNgsx_cutint(py::module &m)
               (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
               {
                 HeapReset hr(lh);
-						  	auto & trafo = ma->GetTrafo (el, lh);
+						  	auto & trafo1 = ma->GetTrafo (el, lh);
+         		  	auto & trafo = trafo1.AddDeformation(deformation.get(), lh);
 
                 const IntegrationRule *ns_ir;
 						  	Array<double> ns_wei_arr;
@@ -109,7 +118,8 @@ void ExportNgsx_cutint(py::module &m)
             (VOL, lh, [&] (Ngs_Element el, LocalHeap & lh)
              {
                HeapReset hr(lh);
-               auto & trafo = ma->GetTrafo (el, lh);
+               auto & trafo1 = ma->GetTrafo (el, lh);
+               auto & trafo = trafo1.AddDeformation(deformation.get(), lh);
 
                const IntegrationRule * ir;
                Array<double> wei_arr;
@@ -155,6 +165,7 @@ void ExportNgsx_cutint(py::module &m)
         py::arg("levelset_domain"),
         py::arg("mesh"),
         py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+        py::arg("deformation")=py::none(),
         py::arg("ip_container")=py::none(),
         py::arg("element_wise")=false,
         py::arg("heapsize")=1000000,
@@ -200,6 +211,9 @@ mesh :
 
 cf : ngsolve.CoefficientFunction
   the integrand
+
+deformation : gridfunction (or None)
+  deformation of the mesh
 
 ip_container : list (or None)
   a list to store integration points (for debugging or visualization purposes)
