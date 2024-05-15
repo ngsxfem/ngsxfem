@@ -163,7 +163,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
 		  		AtomicAdd(sum, HSum(lsum));
 		  	}
 		  });
-		  return ma.GetCommunicator().AllReduce(sum, MPI_SUM);
+		  return ma.GetCommunicator().AllReduce(sum, NG_MPI_SUM);
     } catch (ExceptionNOSIMD e) {
       cout << IM(6) << e.What()
            << "switching to non-SIMD evaluation" << endl;
@@ -201,7 +201,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
       AtomicAdd(sum,lsum);
     }
   });
-  return ma.GetCommunicator().AllReduce(sum, MPI_SUM);
+  return ma.GetCommunicator().AllReduce(sum, NG_MPI_SUM);
 }
 
 
