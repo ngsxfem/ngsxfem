@@ -201,16 +201,18 @@ pages:
   image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    # i think we do not need external dependencies in the pipeline
-    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    # - git submodule
-    # - git submodule update --init
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    - git submodule
+    - git submodule update --init
     - pip3 install --user -r ./doc/sphinx/requirements.txt
-    - export PATH="$PATH:/home/jovyan/.local/bin"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/dist-packages/xfem/
+    - cd install/lib
+    # the following exports work independent of python version
+    - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
+    - export XFEM_PATH="$(pwd)/`find -name xfem`/.."
+    - export PYTHONPATH=XFEM_PATH:$PYTHONPATH
+    - cd ../..
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc XFEM_PATH/xfem
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
