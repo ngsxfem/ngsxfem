@@ -44,14 +44,14 @@ build-on-src-ngs:
 
 build-on-pip-ngs:
   stage: build
-  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:pip-dev
   script:
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/app/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
     - make -j3 install
   # <<: *build-config
   artifacts:
@@ -104,7 +104,7 @@ ctests-pytests:
 
 ctests-pytests-on-pip-ngs:
   stage: test
-  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:pip-dev
   script:
     -  bash .ci/ci_ctests.sh pytests
   # <<: *build-config
@@ -122,7 +122,7 @@ ctests-pytests-on-pip-ngs:
 
 ctests-demos-on-pip-ngs:
   stage: test
-  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:pip-dev
   script:
     - bash .ci/ci_ctests.sh demos
   # <<: *build-config
