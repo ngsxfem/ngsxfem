@@ -34,7 +34,7 @@ build-on-src-ngs:
     - mkdir install    
     - cd build
     - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
-    - make -j8 install
+    - make -j3 install
   # <<: *build-config
   artifacts:
     paths:
@@ -52,7 +52,7 @@ build-on-pip-ngs:
     - mkdir install    
     - cd build
     - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
-    - make -j8 install
+    - make -j3 install
   # <<: *build-config
   artifacts:
     paths:
