@@ -155,7 +155,7 @@ codestyle-demos:
   stage: test
   image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
-    - pip3 install --user pycodestyle
+    - pip3 install pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
   # <<: *build-config
@@ -205,7 +205,7 @@ pages:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
     - git submodule
     - git submodule update --init
-    - pip3 install --user -r ./doc/sphinx/requirements.txt
+    - pip3 install -r ./doc/sphinx/requirements.txt
     - cd install/lib
     # the following exports work independent of python version
     - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
