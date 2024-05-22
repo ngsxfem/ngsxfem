@@ -7,7 +7,7 @@
 #  generates the image.
 ##################################################
 
-# this file is partially copied from gitlab.gwdg.de/lehrenfeld/docker-ngsolve
+# this file is partially copied from gitlab.gwdg.de/ngsuite/docker-ngsolve
 FROM ubuntu:24.04 as prebuild
 
 ARG NB_USER=jovyan
