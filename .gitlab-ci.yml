@@ -247,6 +247,7 @@ pip_linux:
     - ./.ci/build_pip.sh 39
     - ./.ci/build_pip.sh 310
     - ./.ci/build_pip.sh 311
+    - ./.ci/build_pip.sh 312
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload --skip-existing wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
     # - ./.ci/build_pip.sh 312
