@@ -222,10 +222,19 @@ pages:
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - sphinx-build doc/sphinx html
     - cp doc/sphinx/bullets.css html/_static
+    # copy missing files
+    - cp doc/feature-details.md html/doc/feature-details.md
+    - cp demos html/demos
+    - cp INSTALLATION.md html/INSTALLATION.md
+    - cp python/ngs_check.py html/xfem_misc/python/ngs_check.py
+    - cp demos/aggregates/{aggfem_shapetester, fictdom_aggfem, fictdom_dg_aggfem}.py html/xfem_misc/aggregates/
+    - cp demos/spacetime/{spacetimeDG_fitted, spacetimeDG_unfitted, spacetimeCG_unfitted, spaceDGtimeDG_unfitted, spaceDGtimeDG_unfitted_3d, spacetime_vtk}.py html/xfem_misc/spacetime/
+    - cp demos/spdes/surfstokestracefem.py html/xfem_misc/spdes/surfstokestracefem.py
+    - cp demos/mpi/mpi_nxfem.py html/xfem_misc/mpi/mpi_nxfem.py
+
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
     - rm -f html/jupyter/*.ipynb
     - mv html public
-    - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py public/xfem_misc/
   # <<: *build-config
   artifacts:
     paths:
