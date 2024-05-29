@@ -218,19 +218,20 @@ pages:
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
-    - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
+    - cp demos/*.py doc/sphinx/xfem_misc/
+    - cp demos/{aggregates/}*.py doc/sphinx/xfem_misc/aggregates
+    - cp demos/{mpi/}*.py doc/sphinx/xfem_misc/mpi
+    - cp demos/{spacetime/}*.py doc/sphinx/xfem_misc/spacetime
+    - cp demos/{spdes/}*.py doc/sphinx/xfem_misc/spdes
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - sphinx-build doc/sphinx html
     - cp doc/sphinx/bullets.css html/_static
+
     # copy missing files
+    - mkdir -p html/doc html/xfem_misc/python
     - cp doc/feature-details.md html/doc/feature-details.md
-    - cp demos html/demos
     - cp INSTALLATION.md html/INSTALLATION.md
     - cp python/ngs_check.py html/xfem_misc/python/ngs_check.py
-    - cp demos/aggregates/{aggfem_shapetester, fictdom_aggfem, fictdom_dg_aggfem}.py html/xfem_misc/aggregates/
-    - cp demos/spacetime/{spacetimeDG_fitted, spacetimeDG_unfitted, spacetimeCG_unfitted, spaceDGtimeDG_unfitted, spaceDGtimeDG_unfitted_3d, spacetime_vtk}.py html/xfem_misc/spacetime/
-    - cp demos/spdes/surfstokestracefem.py html/xfem_misc/spdes/surfstokestracefem.py
-    - cp demos/mpi/mpi_nxfem.py html/xfem_misc/mpi/mpi_nxfem.py
 
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
     - rm -f html/jupyter/*.ipynb
