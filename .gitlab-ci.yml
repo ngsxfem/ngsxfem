@@ -219,10 +219,11 @@ pages:
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
     - cp demos/*.py doc/sphinx/xfem_misc/
-    - cp demos/{aggregates/}*.py doc/sphinx/xfem_misc/aggregates
-    - cp demos/{mpi/}*.py doc/sphinx/xfem_misc/mpi
-    - cp demos/{spacetime/}*.py doc/sphinx/xfem_misc/spacetime
-    - cp demos/{spdes/}*.py doc/sphinx/xfem_misc/spdes
+    - mkdir -p doc/sphinx/xfem_misc/aggregates doc/sphinx/xfem_misc/mpi doc/sphinx/xfem_misc/spacetime doc/sphinx/xfem_misc/spdes
+    - cp demos/aggregates/*.py doc/sphinx/xfem_misc/aggregates
+    - cp demos/mpi/*.py doc/sphinx/xfem_misc/mpi
+    - cp demos/spacetime/*.py doc/sphinx/xfem_misc/spacetime
+    - cp demos/spdes/*.py doc/sphinx/xfem_misc/spdes
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - sphinx-build doc/sphinx html
     - cp doc/sphinx/bullets.css html/_static
