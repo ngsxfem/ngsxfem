@@ -29,7 +29,7 @@
 
    index
 
-   xfem_misc/feature_details
+   xfem_misc/feature-details
 
 .. toctree::
    :caption: Installation
