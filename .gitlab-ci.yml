@@ -205,15 +205,28 @@ pages:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
     - git submodule
     - git submodule update --init
-    - pip3 install --break-system-packages -r ./doc/sphinx/requirements.txt
-    - cd install/lib
+
+    # this export is needed for some sphinx-command
+    - export TZ=UTC
+  
+    # after nbconvert 5.6.1 (i.e. 6+) the templates are missing
+    - python3 -m venv --clear venv
+    - source venv/bin/activate
+    - mkdir -p venv/share
+    - mkdir -p venv/share/jupyter
+    - cp -r ~/.venv/share/jupyter/nbconvert venv/share/jupyter/
+    # In src-ngsolve-dockerimage an alias for pip3 is set to avoid use of break-system-packages. We do not need this here => execute "the right pip3"
+    - /usr/bin/pip3 install -r doc/sphinx/requirements.txt
+  
     # the following exports work independent of python version
+    - cd install/lib
     - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
     - export PATH="${PATH}:/home/jovyan/.local/bin"
     - export XFEM_PATH="$(pwd)/`find -name xfem`/.."
     - export PYTHONPATH=$XFEM_PATH:$PYTHONPATH
     - cd ../..
-    - export TZ=UTC
+
+    # generate html-files and copy some stuff
     - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc $XFEM_PATH/xfem
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter

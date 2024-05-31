@@ -74,7 +74,7 @@ extensions = [
     "sphinx_mdinclude",
     "jupyter_sphinx",
     "sphinx.ext.autodoc",
-    # "nbsphinx"
+    "myst_nb",
     ]
 
 templates_path = ['_templates']

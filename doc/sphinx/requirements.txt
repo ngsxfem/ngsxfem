@@ -8,5 +8,6 @@ jupyter_sphinx
 nbsphinx
 sphinxemoji
 pandocfilters
-nbconvert>=7
-mistune>=2
+nbconvert
+mistune
+myst-nb
