@@ -215,8 +215,7 @@ pages:
     - mkdir -p venv/share
     - mkdir -p venv/share/jupyter
     - cp -r ~/.venv/share/jupyter/nbconvert venv/share/jupyter/
-    # In src-ngsolve-dockerimage an alias for pip3 is set to avoid use of break-system-packages. We do not need this here => execute "the right pip3"
-    - /usr/bin/pip3 install -r doc/sphinx/requirements.txt
+    - pip3 install -r doc/sphinx/requirements.txt
   
     # the following exports work independent of python version
     - cd install/lib

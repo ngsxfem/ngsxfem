@@ -108,49 +108,5 @@ def setup(app):
     app.add_css_file("custom.css")
 
 
-#-------nbsphinx (and probably also other) stuff
-# The template used when exporting from nbconvert
-#   full  - Outputs the full HTML document [Default]
-#   basic - Outputs a single div (with no additional resources)
-# run_notebook_export_template = 'basic'  # Default: 'full'
-
-# # Display the source links to the generated evaluated files
-# run_notebook_display_source_links = False  # Default: True
-
-# # Whether or not to evaluate the notebooks prior to embedding them
-# evaluate_notebooks = True  # Default: True
-
-# # START nbsphinx stuff
-# #increase timeout for cell execution, since some files take long to execute
-# nbsphinx_timeout = 100000
-
-# # If True, the build process is continued even if an exception occurs:
-# nbsphinx_allow_errors = False
-
-# # This is processed by Jinja2 and inserted before each notebook
-# nbsphinx_prolog = r"""
-# .. raw:: html
-
-#     <style>
-#         .p-Widget {
-#             height: 400px;
-#         }
-#         .dg.main {
-#             margin-left: 0px;
-#         }
-#         div.p-Widget div div div div.dg ul li {
-#             list-style: none;
-#             margin-left: 0px;
-#         }
-#         div.p-Widget div div div div.dg ul li div.dg {
-#             margin-bottom: 0px;
-#         }
-#     </style>
-
-# .. only:: html
-#     .. role:: raw-html(raw)
-#         :format: html
-# """
-
-# nbsphinx_widgets_path = ""
-# # END nbsphinx stuff
+# enable latex rendering in myst-nb
+myst_enable_extensions = ["dollarmath", "amsmath"]
