@@ -91,8 +91,8 @@ jobs:
           key: ${{ runner.os }}-${{ github.sha }}-build-results
       - name: Install python dependences
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install psutil
+          python3 -m pip install --upgrade pip --break-system-packages
+          python3 -m pip install psutil --break-system-packages
       - name: Run pytest ctests
         run: .ci/ci_ctests.sh pytests
         shell: bash
@@ -104,8 +104,8 @@ jobs:
   #     - uses: actions/checkout@v2
   #     - name: Update pip and Install setuptools
   #       run: |
-  #         python3 -m pip install --upgrade pip
-  #         python3 -m pip install setuptools
+  #         python3 -m pip install --upgrade pip --break-system-packages
+  #         python3 -m pip install setuptools --break-system-packages
   #     - name: Package xfem Sources for PyPI
   #       run: python3 setup.py sdist
   #     - name: Publish source distribution to PyPI
@@ -120,8 +120,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install python dependences
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install pycodestyle
+          python3 -m pip install --upgrade pip --break-system-packages
+          python3 -m pip install pycodestyle --break-system-packages
       - name: Check PEP8 conformity
         run: python3 -m pycodestyle demos/{*,spacetime/*,mpi/*}.py
         continue-on-error: true
