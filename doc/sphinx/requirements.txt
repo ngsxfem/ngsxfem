@@ -8,4 +8,6 @@ jupyter_sphinx
 nbsphinx
 sphinxemoji
 pandocfilters
-mistune==0.8.4
+nbconvert
+mistune
+myst-nb

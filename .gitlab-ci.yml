@@ -21,7 +21,7 @@ stages:
         
 build-on-src-ngs:
   stage: build
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
@@ -34,7 +34,7 @@ build-on-src-ngs:
     - mkdir install    
     - cd build
     - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
-    - make -j8 install
+    - make -j3 install
   # <<: *build-config
   artifacts:
     paths:
@@ -44,15 +44,15 @@ build-on-src-ngs:
 
 build-on-pip-ngs:
   stage: build
-  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:pip-dev
   script:
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
-    - make -j8 install
+    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DNGSolve_DIR=/home/app/.venv/lib/cmake/ngsolve -DCMAKE_INSTALL_PREFIX=../install ..
+    - make -j3 install
   # <<: *build-config
   artifacts:
     paths:
@@ -62,7 +62,7 @@ build-on-pip-ngs:
 
 ctests-demos:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     - bash .ci/ci_ctests.sh demos
   # <<: *build-config
@@ -74,7 +74,7 @@ ctests-demos:
 
 ctests-mayfail:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     - bash .ci/ci_ctests.sh mayfail
   # <<: *build-config
@@ -86,7 +86,7 @@ ctests-mayfail:
 
 ctests-pytests:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     -  bash .ci/ci_ctests.sh pytests
   # <<: *build-config
@@ -104,7 +104,7 @@ ctests-pytests:
 
 ctests-pytests-on-pip-ngs:
   stage: test
-  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:pip-dev
   script:
     -  bash .ci/ci_ctests.sh pytests
   # <<: *build-config
@@ -122,7 +122,7 @@ ctests-pytests-on-pip-ngs:
 
 ctests-demos-on-pip-ngs:
   stage: test
-  image: docker.gitlab.gwdg.de/lehrenfeld/docker-ngsolve/docker-ngsolve:pip
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:pip-dev
   script:
     - bash .ci/ci_ctests.sh demos
   # <<: *build-config
@@ -136,7 +136,7 @@ metrics:
   tags:
     - c5
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem"
     - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
@@ -153,9 +153,9 @@ metrics:
 
 codestyle-demos:
   stage: test
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
-    - pip3 install --user pycodestyle
+    - pip3 install --break-system-packages pycodestyle
     - export PATH="${PATH}:/home/jovyan/.local/bin"
     - pycodestyle demos/{*,spacetime/*,mpi/*}.py
   # <<: *build-config
@@ -198,30 +198,57 @@ paper-appendix:
         
 pages:
   stage: deploy
-  image: ngsxfem/ngsolve:latest
+  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
   script:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
-    # i think we do not need external dependencies in the pipeline
-    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    # - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    # - git submodule
-    # - git submodule update --init
-    - pip3 install --user -r ./doc/sphinx/requirements.txt
-    - export PATH="$PATH:/home/jovyan/.local/bin"
-    - export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/install/lib/python3.10/dist-packages/xfem/" 
-    - export PYTHONPATH="${PYTHONPATH}:${PWD}/install/lib/python3.10/dist-packages"
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc install/lib/python3.10/dist-packages/xfem/
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
+    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
+    - git submodule
+    - git submodule update --init
+
+    # this export is needed for some sphinx-command
+    - export TZ=UTC
+  
+    # after nbconvert 5.6.1 (i.e. 6+) the templates are missing
+    - python3 -m venv --clear venv
+    - source venv/bin/activate
+    - mkdir -p venv/share
+    - mkdir -p venv/share/jupyter
+    - cp -r ~/.venv/share/jupyter/nbconvert venv/share/jupyter/
+    - pip3 install -r doc/sphinx/requirements.txt
+  
+    # the following exports work independent of python version
+    - cd install/lib
+    - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
+    - export PATH="${PATH}:/home/jovyan/.local/bin"
+    - export XFEM_PATH="$(pwd)/`find -name xfem`/.."
+    - export PYTHONPATH=$XFEM_PATH:$PYTHONPATH
+    - cd ../..
+
+    # generate html-files and copy some stuff
+    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc $XFEM_PATH/xfem
     - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
     - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
     - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
-    - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py doc/sphinx/xfem_misc/
+    - cp demos/*.py doc/sphinx/xfem_misc/
+    - mkdir -p doc/sphinx/xfem_misc/aggregates doc/sphinx/xfem_misc/mpi doc/sphinx/xfem_misc/spacetime doc/sphinx/xfem_misc/spdes
+    - cp demos/aggregates/*.py doc/sphinx/xfem_misc/aggregates
+    - cp demos/mpi/*.py doc/sphinx/xfem_misc/mpi
+    - cp demos/spacetime/*.py doc/sphinx/xfem_misc/spacetime
+    - cp demos/spdes/*.py doc/sphinx/xfem_misc/spdes
     - cp -r doc/graphics doc/sphinx/xfem_misc/
     - sphinx-build doc/sphinx html
     - cp doc/sphinx/bullets.css html/_static
+
+    # copy missing files
+    - mkdir -p html/doc html/xfem_misc/python
+    - cp doc/feature-details.md html/doc/feature-details.md
+    - cp INSTALLATION.md html/INSTALLATION.md
+    - cp python/ngs_check.py html/xfem_misc/python/ngs_check.py
+
     - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
     - rm -f html/jupyter/*.ipynb
     - mv html public
-    - cp demos/{,aggregates/,mpi/,spacetime/,spdes/}*.py public/xfem_misc/
   # <<: *build-config
   artifacts:
     paths:
@@ -243,6 +270,7 @@ pip_linux:
     - ./.ci/build_pip.sh 39
     - ./.ci/build_pip.sh 310
     - ./.ci/build_pip.sh 311
+    - ./.ci/build_pip.sh 312
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload --skip-existing wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN
     # - ./.ci/build_pip.sh 312
