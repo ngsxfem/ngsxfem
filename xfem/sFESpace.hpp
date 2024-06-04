@@ -1,6 +1,6 @@
 #pragma once
 
-/// from ngxfem
+/// from ngsxfem
 #include "../xfem/xFESpace.hpp"
 
 using namespace ngsolve;

@@ -1,4 +1,4 @@
-/// from ngxfem
+/// from ngsxfem
 #include "../xfem/cutinfo.hpp"
 #include "../cutint/xintegration.hpp"
 #include "../cutint/straightcutrule.hpp"

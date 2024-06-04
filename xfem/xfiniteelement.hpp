@@ -5,7 +5,7 @@
 #include <fem.hpp>   // for ScalarFiniteElement
 #include <ngstd.hpp> // for Array
 
-/// from ngxfem
+/// from ngsxfem
 #include "../cutint/xintegration.hpp"  // for MasterElement
 
 //using namespace ngsolve;

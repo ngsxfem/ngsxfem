@@ -1,4 +1,4 @@
-/// from ngxfem
+/// from ngsxfem
 #include "xfiniteelement.hpp"
 
 namespace ngfem

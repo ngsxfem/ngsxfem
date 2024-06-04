@@ -1,4 +1,4 @@
-/// from ngxfem
+/// from ngsxfem
 #include "fieldeval.hpp"
 
 namespace ngfem

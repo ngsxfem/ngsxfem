@@ -1,6 +1,6 @@
 #pragma once
 
-/// from ngxfem
+/// from ngsxfem
 #include <multigrid.hpp>
 //#include <comp.hpp>
 // using namespace ngsolve;

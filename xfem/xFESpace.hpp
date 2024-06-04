@@ -6,7 +6,7 @@
 #include <comp.hpp>
 #include <fem.hpp>
 
-/// from ngxfem
+/// from ngsxfem
 #include "../cutint/xintegration.hpp"
 #include "../xfem/xfiniteelement.hpp"
 #include "../xfem/cutinfo.hpp"

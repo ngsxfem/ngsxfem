@@ -1,4 +1,4 @@
-/// from ngxfem
+/// from ngsxfem
 #include "../xfem/cutinfo.hpp"
 #include "../xfem/aggregates.hpp"
 
