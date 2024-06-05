@@ -263,7 +263,7 @@ pages:
 
 pip_linux:
   #image: quay.io/pypa/manylinux2014_x86_64
-  image: sameli/manylinux2014_x86_64_cuda_11      
+  image: sameli/manylinux2014_x86_64_cuda_11.7      
 
   stage: deploy
   script:
