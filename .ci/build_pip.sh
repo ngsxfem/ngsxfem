@@ -22,8 +22,8 @@ export PATH="$ORIGINAL_PATH:$PYDIR"
 ls -al $PYDIR
 $PYDIR/pip install -U pytest-check numpy wheel scikit-build setuptools
 #mkl==2022.* mkl-devel==2022.*
-$PYDIR/pip3 install netgen-mesher>=$NETGEN_VERSION
-$PYDIR/pip3 install ngsolve>=$NGSOLVE_VERSION
+$PYDIR/pip3 install netgen-mesher>=$NETGEN_VERSION --pre
+$PYDIR/pip3 install ngsolve>=$NGSOLVE_VERSION --pre
 #$PYDIR/pip install ngsolve --pre
 
 #RUN $PYDIR/pip install -vvv .
