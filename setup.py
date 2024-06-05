@@ -44,8 +44,17 @@ try:
 except:
     ngsolve_version = None
 
+try:
+    netgen_version = path_to_version("external_dependencies/ngsolve/external_dependencies/netgen")
+    if "post" in netgen_version:
+        netgen_version += ".dev0"
+except:
+    netgen_version = None
+
+
 print("ngsxfem_version =", version)
 print("ngsolve_version =", ngsolve_version)
+print("netgen_version =", netgen_version)
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
