@@ -39,6 +39,8 @@ except:
 
 try:
     ngsolve_version = path_to_version("external_dependencies/ngsolve")
+    if "post" in ngsolve_version:
+        ngsolve_version += ".dev0"
 except:
     ngsolve_version = None
 

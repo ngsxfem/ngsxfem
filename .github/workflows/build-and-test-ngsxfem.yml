@@ -91,7 +91,7 @@ jobs:
           key: ${{ runner.os }}-${{ github.sha }}-build-results
       - name: Install python dependences
         run: |
-          python3 -m pip install --upgrade pip
+          python3 -m pip install --upgrade pip --break-system-packages
           python3 -m pip install psutil --break-system-packages
       - name: Run pytest ctests
         run: .ci/ci_ctests.sh pytests
