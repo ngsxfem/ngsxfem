@@ -8,7 +8,7 @@ pyversion=$1
 # 38 39
 rm -rf wheelhouse
 mkdir wheelhouse
-
+export PIP_BREAK_SYSTEM_PACKAGES=1
 export ORIGINAL_PATH="$PATH"
 #for pyversion in 39 38 310 311
 #do
@@ -16,9 +16,9 @@ export ORIGINAL_PATH="$PATH"
 export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
 export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
 export PATH="$ORIGINAL_PATH:$PYDIR"
-$PYDIR/pip install -U pytest-check numpy wheel scikit-build setuptools --break-system-packages 
+$PYDIR/pip install -U pytest-check numpy wheel scikit-build setuptools
 #mkl==2022.* mkl-devel==2022.*
-$PYDIR/pip install ngsolve --pre --break-system-packages
+$PYDIR/pip install ngsolve --pre
 
 #RUN $PYDIR/pip install -vvv .
 pip wheel -vvv .
