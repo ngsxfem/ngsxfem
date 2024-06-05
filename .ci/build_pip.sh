@@ -14,12 +14,17 @@ export ORIGINAL_PATH="$PATH"
 #do
 #export pyversion=310
 export PYDIR="/opt/python/cp${pyversion}-cp${pyversion}/bin"
-export NGSOLVE_VERSION=`python external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
+export NGSOLVE_VERSION=`$PYDIR/python3 external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
+export NETGEN_VERSION=`$PYDIR/python3 external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve/external_dependencies/netgen`
+
+
 export PATH="$ORIGINAL_PATH:$PYDIR"
 ls -al $PYDIR
 $PYDIR/pip install -U pytest-check numpy wheel scikit-build setuptools
 #mkl==2022.* mkl-devel==2022.*
-$PYDIR/pip install ngsolve --pre
+$PYDIR/pip3 install netgen-mesher>=$NETGEN_VERSION
+$PYDIR/pip3 install ngsolve>=$NGSOLVE_VERSION
+#$PYDIR/pip install ngsolve --pre
 
 #RUN $PYDIR/pip install -vvv .
 pip wheel -vvv .

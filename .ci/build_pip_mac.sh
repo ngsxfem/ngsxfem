@@ -5,9 +5,12 @@ mkdir dist
 export PYDIR=$Python3_ROOT_DIR/bin
 $PYDIR/python3 --version
 export NGSOLVE_VERSION=`$PYDIR/python3 external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve`
+export NETGEN_VERSION=`$PYDIR/python3 external_dependencies/ngsolve/tests/get_python_version_string_from_git.py external_dependencies/ngsolve/external_dependencies/netgen`
 
 $PYDIR/pip3 install pybind11-stubgen
-$PYDIR/pip3 install ngsolve>=$NGSOLVE_VERSION scikit-build wheel
+$PYDIR/pip3 install netgen-mesher>=$NETGEN_VERSION
+$PYDIR/pip3 install ngsolve>=$NGSOLVE_VERSION
+$PYDIR/pip3 install scikit-build wheel
 
 export PATH=/Applications/CMake.app/Contents/bin:$PATH
 export NETGEN_Dir=$PYDIR/../lib/python$1/site-packages/netgen/cmake
