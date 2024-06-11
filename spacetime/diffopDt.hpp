@@ -108,6 +108,9 @@ template<int SpaceD>
   extern template class T_DifferentialOperator<DiffOpDt<1>>;
   extern template class T_DifferentialOperator<DiffOpDt<2>>;
   extern template class T_DifferentialOperator<DiffOpDt<3>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 3>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<1, 1>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<1, 2>>;
   extern template class T_DifferentialOperator<DiffOpDtVec<2, 1>>;
