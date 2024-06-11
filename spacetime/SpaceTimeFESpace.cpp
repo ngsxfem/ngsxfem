@@ -61,9 +61,10 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       evaluator[BND] = 
         make_shared<BlockDifferentialOperator> (evaluator[BND], dimension);
       Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
+        enum {SDIM2 = SDIM()+2}; // work around MSVC compile issue
         Switch<3> (dimension-1, [&] (auto DIM) {
-          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM+2,DIM+1>>>());
-          additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM2,DIM()+1>>>());
+          additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM()+1>>> ());
         });
       });
     }
