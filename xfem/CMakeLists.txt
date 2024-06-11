@@ -8,6 +8,6 @@ install( FILES
   xfiniteelement.hpp
   symboliccutbfi.hpp
   symboliccutlfi.hpp
-  DESTINATION ${NGSOLVE_INSTALL_DIR_INCLUDE}
+  DESTINATION ${XFEM_INSTALL_DIR_INCLUDE}
   )
 

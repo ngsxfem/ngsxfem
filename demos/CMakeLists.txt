@@ -7,12 +7,12 @@ install( FILES
   stokescutfem.py
   tracefem.py
   unf_interf_prob.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem
+  DESTINATION ${XFEM_INSTALL_DIR_RES}/ngsxfem
 )
 
 install( FILES
   mpi/mpi_nxfem.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/mpi
+  DESTINATION ${XFEM_INSTALL_DIR_RES}/ngsxfem/mpi
 )
 
 install( FILES
@@ -20,5 +20,5 @@ install( FILES
   spacetime/spacetimeCG_unfitted.py
   spacetime/spacetimeDG_unfitted.py
   spacetime/spacetimeDG_fitted.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/spacetime
+  DESTINATION ${XFEM_INSTALL_DIR_RES}/ngsxfem/spacetime
 )

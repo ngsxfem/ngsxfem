@@ -1,0 +1,47 @@
+[project]
+name = "xfem"
+dynamic = ["version"]
+authors = [{name="Christoph Lehrenfeld", email= "lehrenfeld@math.uni-goettingen.de"}]
+description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM."
+urls = {github="https://github.com/ngsxfem/ngsxfem"}
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["ngsolve>=6.2.2403.post68.dev0"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+]
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake", "ngsolve>=6.2.2403.post68.dev0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["python/_version.py"]
+#build-dir = "./build_py/{wheel_tag}" # local build directory - for debugging
+
+[tool.setuptools_scm]  # Section required
+write_to = "python/_version.py"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.cibuildwheel]
+skip = """
+  pp*
+  *_i686
+  *musllinux*
+  *win32
+"""
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = ""
+
+[tool.cibuildwheel.macos]
+environment = {MACOSX_DEPLOYMENT_TARGET="10.15"}
+repair-wheel-command = ""
+archs = ["universal2"]
+

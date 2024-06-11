@@ -20,8 +20,10 @@ from ngsolve.comp import Integrate as ngsolve_Integrate
 from ngsolve.comp import ProxyFunction
 from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
 from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
-from xfem.ngsxfem_py import *
+from xfem.xfem import *
 from xfem.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
+
+from ._version import __version__
 
 check_if_ngsolve_newer_than(__ngsolve_required__)
 

@@ -112,5 +112,5 @@ add_test(NAME pytests_patchsolve COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 
 install( FILES
   ngsxfem_report.py
-  DESTINATION ${NGSOLVE_INSTALL_DIR_RES}/ngsxfem/report
+  DESTINATION ${XFEM_INSTALL_DIR_RES}/ngsxfem/report
 )

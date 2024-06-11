@@ -48,7 +48,7 @@ void ExportNgsx(py::module &m)
 
 }
 
-PYBIND11_MODULE(ngsxfem_py, m)
+PYBIND11_MODULE(xfem, m)
 {
   cout << "importing ngsxfem-" << NGSXFEM_VERSION << endl;
   ExportNgsx(m);
