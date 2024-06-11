@@ -4,8 +4,8 @@ set(addon_name xfem)
 project(${addon_name})
 
 # Download ngsolve_addon.cmake from template project
-set(ngsolve_addon_version 317ecdf599286663cb64672874e43ed672b149a3)
-set(ngsolve_addon_md5 1323a01e21eea856c79893c50a3b6b4e)
+set(ngsolve_addon_version 2264321bac8fb565eb4d38e5232369178646cd5f)
+set(ngsolve_addon_md5 1deafa0b768789ce07de3e149aeaeb51)
 file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
   EXPECTED_MD5 ${ngsolve_addon_md5}
@@ -21,9 +21,10 @@ if(SKBUILD_PROJECT_VERSION)
   set(XFEM_INSTALL_DIR_INCLUDE ${SKBUILD_DATA_DIR}/include/xfem)
   set(XFEM_INSTALL_DIR_RES ${SKBUILD_DATA_DIR}/share/xfem)
 else()
-  set(NGSXFEM_VERSION "0.0.1")
-  set(XFEM_INSTALL_DIR_INCLUDE ${NGSOLVE_INSTALL_DIR_INCLUDE})
-  set(XFEM_INSTALL_DIR_RES ${NGSOLVE_INSTALL_DIR_RES})
+  set(NGSXFEM_VERSION "2.1.2303.dev0")
+  set(XFEM_INSTALL_DIR_INCLUDE ${NETGEN_INSTALL_DIR_INCLUDE})
+  set(XFEM_INSTALL_DIR_RES ${NETGEN_INSTALL_DIR_RES})
+  file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
 endif()
 
 add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")

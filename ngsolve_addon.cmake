@@ -40,17 +40,23 @@ execute_process(COMMAND ${Python3_EXECUTABLE} -c "import sys,sysconfig,os.path; 
 )
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  # Set install prefix to user-base if a user site is available, sys.prefix otherwise
-  execute_process(COMMAND ${Python3_EXECUTABLE} -c "import sys; print(sys.prefix)"
-    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE install_prefix
-  )
-  execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-base
-    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE user_base RESULT_VARIABLE ret
-  )
-  if (ret EQUAL 0)
-    set(install_prefix ${user_base})
+  if(NETGEN_BULID_FOR_CONDA)
+    # Netgen is assumed to be installed as python package
+    # Set install prefix to user-base if a user site is available, sys.prefix otherwise
+    execute_process(COMMAND ${Python3_EXECUTABLE} -c "import sys; print(sys.prefix)"
+      OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE install_prefix
+    )
+    execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-base
+      OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE user_base RESULT_VARIABLE ret
+    )
+    if (ret EQUAL 0)
+      set(install_prefix ${user_base})
+    endif()
+    set(CMAKE_INSTALL_PREFIX ${install_prefix}/${python3_library_dir} CACHE PATH "Install dir" FORCE)
+  else()
+    # Netgen is self-compiled -> install into Netgen directory
+    set(CMAKE_INSTALL_PREFIX ${NETGEN_DIR} CACHE PATH "Install prefix" FORCE)
   endif()
-  set(CMAKE_INSTALL_PREFIX ${install_prefix}/${python3_library_dir} CACHE PATH "Install dir" FORCE)
   set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OFF)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
