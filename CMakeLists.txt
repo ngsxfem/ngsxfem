@@ -3,7 +3,13 @@ cmake_minimum_required(VERSION 3.16)
 set(addon_name xfem)
 project(${addon_name})
 
-file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/317ecdf599286663cb64672874e43ed672b149a3/ngsolve_addon.cmake ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake) #EXPECTED_MD5 450caf3fa2b4bdee67624cfe448353a2)
+# Download ngsolve_addon.cmake from template project
+set(ngsolve_addon_version 317ecdf599286663cb64672874e43ed672b149a3)
+set(ngsolve_addon_md5 1323a01e21eea856c79893c50a3b6b4e)
+file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
+  EXPECTED_MD5 ${ngsolve_addon_md5}
+)
 include(ngsolve_addon.cmake)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
