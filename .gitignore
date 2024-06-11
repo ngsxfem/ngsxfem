@@ -39,3 +39,4 @@ html/**
 xfem.egg-info/**
 jupyter_execute/**
 dist/**
+python/_version.py
