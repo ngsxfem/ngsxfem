@@ -12,6 +12,11 @@ file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/$
 )
 include(ngsolve_addon.cmake)
 
+set(SPACETIME_SANITY_CHECKS ON CACHE BOOL "use space-time sanity checks (abuses ngsolve's intrule nr)")
+if(SPACETIME_SANITY_CHECKS)
+  add_definitions(-DSPACETIME_SANITY_CHECKS)
+endif(SPACETIME_SANITY_CHECKS)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories ("${PROJECT_SOURCE_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}")
@@ -31,6 +36,10 @@ add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 message(STATUS "NGSXFEM_VERSION: ${NGSXFEM_VERSION}")
 
 add_ngsolve_addon(${addon_name})
+#######################################################################
+# CTest
+enable_testing()
+include(CTest)
 
 add_subdirectory(python)
 add_subdirectory(utils)
@@ -48,3 +57,10 @@ install(TARGETS ${addon_name} DESTINATION ${addon_name})
 install(CODE ${stubgen_generation_code})
 install(DIRECTORY ${stubgen_directory} DESTINATION ${addon_name})
 
+# uninstall target
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+add_custom_target(uninstall_xfem
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
