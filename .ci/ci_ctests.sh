@@ -6,11 +6,11 @@ set -e
 echo "pwd: ${PWD}"
 ls -al .
 
-cd install/lib
+cd /__w/ngsxfem/ngsxfem/install/lib
 # this adjusts for different python versions and is independent of installation to site- or dist-packages
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
 export PYTHONPATH="$(pwd)/`find -name xfem`/..":$PYTHONPATH
-cd ../..
+cd -
 
 echo $PYTHONPATH
 
