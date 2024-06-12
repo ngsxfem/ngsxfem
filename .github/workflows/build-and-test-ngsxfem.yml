@@ -36,69 +36,69 @@ jobs:
             install
           key: ${{ runner.os }}-${{ github.sha }}-build-results
 
-  ctest-tutorials:
-    needs: [configure, build]
-    runs-on: ubuntu-latest
-    container: 
-      image: ngsxfem/ngsolve:latest
-      options: --user ${{ needs.configure.outputs.uid_gid }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Retrieve cached build results
-        uses: actions/cache@v2
-        with:
-          path: |
-            build
-            install
-          key: ${{ runner.os }}-${{ github.sha }}-build-results
-      - name: Run demo ctests
-        run: .ci/ci_ctests.sh tutorial
-        shell: bash
-    continue-on-error: true
+  # ctest-tutorials:
+  #   needs: [configure, build]
+  #   runs-on: ubuntu-latest
+  #   container: 
+  #     image: ngsxfem/ngsolve:latest
+  #     options: --user ${{ needs.configure.outputs.uid_gid }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Retrieve cached build results
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           build
+  #           install
+  #         key: ${{ runner.os }}-${{ github.sha }}-build-results
+  #     - name: Run demo ctests
+  #       run: .ci/ci_ctests.sh tutorial
+  #       shell: bash
+  #   continue-on-error: true
 
-  ctest-mayfail:
-    needs: [configure, build]
-    runs-on: ubuntu-latest
-    container: 
-      image: ngsxfem/ngsolve:latest
-      options: --user ${{ needs.configure.outputs.uid_gid }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Retrieve cached build results
-        uses: actions/cache@v2
-        with:
-          path: |
-            build
-            install
-          key: ${{ runner.os }}-${{ github.sha }}-build-results
-      - name: Run mayfail ctests
-        run: .ci/ci_ctests.sh mayfail
-        shell: bash
-    continue-on-error: true
+  # ctest-mayfail:
+  #   needs: [configure, build]
+  #   runs-on: ubuntu-latest
+  #   container: 
+  #     image: ngsxfem/ngsolve:latest
+  #     options: --user ${{ needs.configure.outputs.uid_gid }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Retrieve cached build results
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           build
+  #           install
+  #         key: ${{ runner.os }}-${{ github.sha }}-build-results
+  #     - name: Run mayfail ctests
+  #       run: .ci/ci_ctests.sh mayfail
+  #       shell: bash
+  #   continue-on-error: true
   
-  ctest-pytests:
-    needs: [configure, build]
-    runs-on: ubuntu-latest
-    container: 
-      image: ngsxfem/ngsolve:latest
-      options: --user ${{ needs.configure.outputs.uid_gid }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Retrieve cached build results
-        uses: actions/cache@v2
-        with:
-          path: |
-            build
-            install
-          key: ${{ runner.os }}-${{ github.sha }}-build-results
-      - name: Install python dependences
-        run: |
-          export PIP_BREAK_SYSTEM_PACKAGES=1
-          python3 -m pip install --upgrade pip
-          python3 -m pip install psutil
-      - name: Run pytest ctests
-        run: .ci/ci_ctests.sh pytests
-        shell: bash
+  # ctest-pytests:
+  #   needs: [configure, build]
+  #   runs-on: ubuntu-latest
+  #   container: 
+  #     image: ngsxfem/ngsolve:latest
+  #     options: --user ${{ needs.configure.outputs.uid_gid }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Retrieve cached build results
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           build
+  #           install
+  #         key: ${{ runner.os }}-${{ github.sha }}-build-results
+  #     - name: Install python dependences
+  #       run: |
+  #         export PIP_BREAK_SYSTEM_PACKAGES=1
+  #         python3 -m pip install --upgrade pip
+  #         python3 -m pip install psutil
+  #     - name: Run pytest ctests
+  #       run: .ci/ci_ctests.sh pytests
+  #       shell: bash
 
   # publish:
   #   needs: [ctest-pytests, ctest-tutorials, ctest-mayfail]

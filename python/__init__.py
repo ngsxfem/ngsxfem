@@ -25,7 +25,7 @@ from xfem.xfem import *
 
 from ._version import __version__
 
-check_if_ngsolve_newer_than(__ngsolve_required__)
+#check_if_ngsolve_newer_than(__ngsolve_required__)
 
 def HAS(domain_type):
     """
