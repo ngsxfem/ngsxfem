@@ -1,6 +1,6 @@
 #pragma once
 
-#undef LAPACK
+// #undef LAPACK
 /// from ngsolve
 #include <comp.hpp>
 
