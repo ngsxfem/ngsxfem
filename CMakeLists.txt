@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.16)
 set(addon_name xfem)
 project(${addon_name})
 
+set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "release type")
+
 # Download ngsolve_addon.cmake from template project
 set(ngsolve_addon_version 2264321bac8fb565eb4d38e5232369178646cd5f)
 set(ngsolve_addon_md5 1deafa0b768789ce07de3e149aeaeb51)
