@@ -193,9 +193,9 @@ namespace ngcomp
       
     if (ma->GetCommunicator().Size() > 1)
     {
-      ma->AllReduceNodalData (NT_VERTEX, neg_vertex, NG_MPI_LOR);
-      ma->AllReduceNodalData (NT_EDGE, neg_edge, NG_MPI_LOR);
-      ma->AllReduceNodalData (NT_FACE, neg_face, NG_MPI_LOR);
+      ma->AllReduceNodalData (NT_VERTEX, neg_vertex, MPI_LOR);
+      ma->AllReduceNodalData (NT_EDGE, neg_edge, MPI_LOR);
+      ma->AllReduceNodalData (NT_FACE, neg_face, MPI_LOR);
     }
     
     if (ma->GetDimension() == 3) {

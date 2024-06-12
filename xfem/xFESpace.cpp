@@ -357,9 +357,9 @@ namespace ngcomp
       // Array<bool> active_edge_old(active_edge);
       // Array<bool> active_face_old(active_face);
       
-      ma->AllReduceNodalData (NT_VERTEX, active_vertex, NG_MPI_LOR);
-      ma->AllReduceNodalData (NT_EDGE, active_edge, NG_MPI_LOR);
-      ma->AllReduceNodalData (NT_FACE, active_face, NG_MPI_LOR);
+      ma->AllReduceNodalData (NT_VERTEX, active_vertex, MPI_LOR);
+      ma->AllReduceNodalData (NT_EDGE, active_edge, MPI_LOR);
+      ma->AllReduceNodalData (NT_FACE, active_face, MPI_LOR);
 
       // debug only:
       // for (int i = 0; i < ma->GetNV(); i++)
