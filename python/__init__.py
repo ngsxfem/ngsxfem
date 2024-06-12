@@ -21,7 +21,7 @@ from ngsolve.comp import ProxyFunction
 from ngsolve.comp import SymbolicBFI as ngsolve_SymbolicBFI
 from ngsolve.comp import SymbolicLFI as ngsolve_SymbolicLFI
 from xfem.xfem import *
-from xfem.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
+#from xfem.ngs_check import check_if_ngsolve_newer_than, __ngsolve_required__
 
 from ._version import __version__
 

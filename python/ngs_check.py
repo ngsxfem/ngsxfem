@@ -1,3 +1,4 @@
+### DEACTIVATED FOR NOW!
 __ngsolve_required__ = "6.2.2402-0"
 
 def check_if_ngsolve_newer_than(ngsolve_version_required):
