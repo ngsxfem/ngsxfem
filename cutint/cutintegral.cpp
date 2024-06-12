@@ -146,7 +146,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
 		  	SIMD_IntegrationRule simd_ir(*ns_ir, lh);
 		  	FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
 
-		  	if (&simd_ir != nullptr)
+		  	//if (&simd_ir != nullptr)
 		  	{
 		  		SIMD_BaseMappedIntegrationRule & simd_mir = trafo(simd_ir, lh);
 		  		FlatMatrix<SIMD<TSCAL>> val(simd_mir.Size(), 1, lh);
