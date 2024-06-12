@@ -25,10 +25,12 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 if(SKBUILD_PROJECT_VERSION)
   set(NGSXFEM_VERSION ${SKBUILD_PROJECT_VERSION})
+  set(XFEM_INSTALL_DIR_PYTHON .)
   set(XFEM_INSTALL_DIR_INCLUDE ${SKBUILD_DATA_DIR}/include/xfem)
   set(XFEM_INSTALL_DIR_RES ${SKBUILD_DATA_DIR}/share/xfem)
 else()
   set(NGSXFEM_VERSION "2.1.2303.dev0")
+  set(XFEM_INSTALL_DIR_PYTHON ${NETGEN_INSTALL_DIR_PYTHON})
   set(XFEM_INSTALL_DIR_INCLUDE ${NETGEN_INSTALL_DIR_INCLUDE})
   set(XFEM_INSTALL_DIR_RES ${NETGEN_INSTALL_DIR_RES})
   file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
@@ -52,12 +54,12 @@ add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 add_subdirectory(spacetime)
 
-install(TARGETS ${addon_name} DESTINATION ${addon_name})
+install(TARGETS ${addon_name} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_name})
 
 # generate stub files for autocomplete in IDEs
 # this must be done at the very end (such that the stubgen generation happens after the python modules are installed)
 install(CODE ${stubgen_generation_code})
-install(DIRECTORY ${stubgen_directory} DESTINATION ${addon_name})
+install(DIRECTORY ${stubgen_directory} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_name})
 
 # uninstall target
 configure_file(
