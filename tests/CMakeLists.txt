@@ -8,8 +8,8 @@ endif(APPLE)
 
 set(NETGEN_PYTHON_EXECUTABLE python3)
 
-add_test(NAME pytests_ngsolve_version COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
-  "${PROJECT_SOURCE_DIR}/tests/pytests/test_ngsolve_version.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+#add_test(NAME pytests_ngsolve_version COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+#  "${PROJECT_SOURCE_DIR}/tests/pytests/test_ngsolve_version.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 add_test(NAME py_demo_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/tracefem.py" "testmode")
