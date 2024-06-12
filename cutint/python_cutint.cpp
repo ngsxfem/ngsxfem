@@ -101,7 +101,7 @@ void ExportNgsx_cutint(py::module &m)
               if (element_wise)
                 result = py::cast(element_sum);
               else
-  						  result = py::cast(ma->GetCommunicator().AllReduce(sum, NG_MPI_SUM));
+  						  result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
 	
   					  return result;
             } catch (ExceptionNOSIMD e) {
@@ -158,7 +158,7 @@ void ExportNgsx_cutint(py::module &m)
           if (element_wise) {
             result = py::cast(element_sum);
           } else {
-            result = py::cast(ma->GetCommunicator().AllReduce(sum, NG_MPI_SUM));
+            result = py::cast(ma->GetCommunicator().AllReduce(sum, MPI_SUM));
           }
           return result;
         },
