@@ -24,6 +24,7 @@ sdist.include = ["python/_version.py"]
 
 [tool.setuptools_scm]  # Section required
 write_to = "python/_version.py"
+local_scheme = "no-local-version"
 
 [project.optional-dependencies]
 test = ["pytest"]
