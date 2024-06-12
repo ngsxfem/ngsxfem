@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(addon_name xfem)
-project(${addon_name})
+project(xfem)
 
 # Set default build type to Release if not specified
 if(NOT CMAKE_BUILD_TYPE)
@@ -9,8 +8,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Download ngsolve_addon.cmake from template project
-set(ngsolve_addon_version 2264321bac8fb565eb4d38e5232369178646cd5f)
-set(ngsolve_addon_md5 1deafa0b768789ce07de3e149aeaeb51)
+set(ngsolve_addon_version bbfb9648f2ff7a952a3a8edca58f460c198ca462)
+set(ngsolve_addon_md5 d1b208d6aa63edce64a264e5e0370d3a)
 file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
   EXPECTED_MD5 ${ngsolve_addon_md5}
@@ -28,21 +27,19 @@ include_directories ("${PROJECT_BINARY_DIR}")
 
 if(SKBUILD_PROJECT_VERSION)
   set(NGSXFEM_VERSION ${SKBUILD_PROJECT_VERSION})
-  set(XFEM_INSTALL_DIR_PYTHON .)
-  set(XFEM_INSTALL_DIR_INCLUDE ${SKBUILD_DATA_DIR}/include/xfem)
-  set(XFEM_INSTALL_DIR_RES ${SKBUILD_DATA_DIR}/share/xfem)
 else()
   set(NGSXFEM_VERSION "2.1.2303.dev0")
-  set(XFEM_INSTALL_DIR_PYTHON ${NETGEN_INSTALL_DIR_PYTHON})
-  set(XFEM_INSTALL_DIR_INCLUDE ${NETGEN_INSTALL_DIR_INCLUDE})
-  set(XFEM_INSTALL_DIR_RES ${NETGEN_INSTALL_DIR_RES})
   file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
 endif()
+
+set(XFEM_INSTALL_DIR_PYTHON ${ADDON_INSTALL_DIR_PYTHON})
+set(XFEM_INSTALL_DIR_INCLUDE ${ADDON_INSTALL_DIR_INCLUDE})
+set(XFEM_INSTALL_DIR_RES ${ADDON_INSTALL_DIR_RES})
 
 add_definitions(-DNGSXFEM_VERSION="${NGSXFEM_VERSION}")
 message(STATUS "NGSXFEM_VERSION: ${NGSXFEM_VERSION}")
 
-add_ngsolve_addon(${addon_name})
+add_ngsolve_addon(xfem)
 #######################################################################
 # CTest
 enable_testing()
@@ -57,12 +54,9 @@ add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 add_subdirectory(spacetime)
 
-install(TARGETS ${addon_name} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_name})
+install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
 
-# generate stub files for autocomplete in IDEs
-# this must be done at the very end (such that the stubgen generation happens after the python modules are installed)
-#install(CODE ${stubgen_generation_code})
-#install(DIRECTORY ${stubgen_directory} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_name})
+ngsolve_generate_stub_files(xfem)
 
 # uninstall target
 configure_file(
