@@ -33,7 +33,7 @@ build-on-src-ngs:
     - mkdir build
     - mkdir install    
     - cd build
-    - cmake -DBUILD_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
+    - cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=OFF -DCMAKE_INSTALL_PREFIX=../install ..
     - make -j3 install
   # <<: *build-config
   artifacts:
@@ -41,6 +41,7 @@ build-on-src-ngs:
       - build
       - install
   needs: []  
+  when: manual
 
 build-on-pip-ngs:
   stage: build
