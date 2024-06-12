@@ -41,7 +41,8 @@ skip = """
 """
 
 [tool.cibuildwheel.linux]
-repair-wheel-command = "rename linux_x86_64 manylinux2014 {wheel}"
+repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux2014 {dest_dir}/*-linux_x86_64*.whl"
+
 
 [tool.cibuildwheel.macos]
 environment = {MACOSX_DEPLOYMENT_TARGET="10.15"}
