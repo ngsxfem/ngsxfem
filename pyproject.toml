@@ -6,13 +6,13 @@ description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut
 urls = {github="https://github.com/ngsxfem/ngsxfem"}
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["ngsolve>=6.2.2403"]
+dependencies = ["ngsolve>=6.2.2403.post74.dev0"]
 classifiers = [
   "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
 ]
 
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2403"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2403.post74.dev0"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
