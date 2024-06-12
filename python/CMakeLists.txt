@@ -37,6 +37,6 @@ target_sources(xfem PRIVATE
 )
 install (FILES
         __init__.py cutmg.py mlset.py lset_spacetime.py lset_smoothblend.py lsetcurv.py utils.py ngs_check.py _version.py
-        DESTINATION xfem
+        DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
 )
