@@ -19,15 +19,15 @@ jobs:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
         os: [ubuntu-latest] #, macos-13, macos-14] # windows-latest, 
-        include:
-          - os: windows-2019
-            cibw-arch: AMD64
-            cmake-generator: "Visual Studio 16 2019"
-            cmake_generator_platform: "x64"
-          - os: windows-2019
-            cibw-arch: x86
-            cmake-generator: "Visual Studio 16 2019"
-            cmake_generator_platform: "Win32"        
+        # include:
+        #   - os: windows-2019
+        #     cibw-arch: AMD64
+        #     cmake-generator: "Visual Studio 16 2019"
+        #     cmake_generator_platform: "x64"
+        #   - os: windows-2019
+        #     cibw-arch: x86
+        #     cmake-generator: "Visual Studio 16 2019"
+        #     cmake_generator_platform: "Win32"        
 
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +49,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{  github.ref_name }}
+          fetch-tags: 'true'
+          fetch-depth: 0
 
       - name: Build sdist
         run: pipx run build --sdist
