@@ -66,5 +66,5 @@ jobs:
         with:
           skip_existing: true
           password: ${{ secrets.PYPI_API_TOKEN_2 }}
-          packages_dir: ./wheelhouse/        
+          #packages_dir: ./wheelhouse/        
           # To test: repository-url: https://test.pypi.org/legacy/
