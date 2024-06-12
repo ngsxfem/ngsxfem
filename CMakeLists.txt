@@ -58,8 +58,8 @@ install(TARGETS ${addon_name} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_nam
 
 # generate stub files for autocomplete in IDEs
 # this must be done at the very end (such that the stubgen generation happens after the python modules are installed)
-install(CODE ${stubgen_generation_code})
-install(DIRECTORY ${stubgen_directory} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_name})
+#install(CODE ${stubgen_generation_code})
+#install(DIRECTORY ${stubgen_directory} DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/${addon_name})
 
 # uninstall target
 configure_file(
