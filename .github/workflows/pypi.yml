@@ -1,16 +1,10 @@
 name: Build and upload to PyPI
 
 on:
-  workflow_dispatch:
-  pull_request:
   push:
     branches:
       - master
-      - ghwflows
-      - for2403
-  release:
-    types:
-      - published
+      - release
 
 jobs:
   build_wheels:
