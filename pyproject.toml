@@ -41,7 +41,7 @@ skip = """
 """
 
 [tool.cibuildwheel.linux]
-repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux2014 {dest_dir}/*-linux_x86_64*.whl"
+repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_17 {dest_dir}/*-linux_x86_64*.whl"
 
 
 [tool.cibuildwheel.macos]
