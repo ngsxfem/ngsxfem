@@ -6,7 +6,7 @@ description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut
 urls = {github="https://github.com/ngsxfem/ngsxfem"}
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [] # ngsolve will be added automatically
+#dependencies = [] # ngsolve will be added automatically
 dynamic = ["dependencies"]
 classifiers = [
   "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
