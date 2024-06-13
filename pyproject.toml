@@ -12,7 +12,7 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2403.post94.dev0"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "toml", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2403.post94.dev0"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
