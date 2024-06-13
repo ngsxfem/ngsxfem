@@ -1,4 +1,4 @@
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ngsxfem/ngsxfem/build-and-test-ngsxfem.yml?branch=master&label=build%20and%20test&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/build-and-test-ngsxfem.yml) 
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ngsxfem/ngsxfem/pypi.yml?branch=master&label=build%20and%20pypi&logo=github)](https://github.com/ngsxfem/ngsxfem/actions/workflows/pypi.yml) 
  [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ngsxfem/ngsxfem?label=latest%20release&logo=github)](https://github.com/ngsxfem/ngsxfem) 
 [![jossstatus](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb/status.svg)](https://joss.theoj.org/papers/9fda1eadfc58af64b89dc7f27043f4cb)
 
@@ -15,7 +15,8 @@
 
 ### Documentation
 
-A *preliminary* collection of documentation (demos, tutorials, API) can be found [here](https://ngsuite.pages.gwdg.de/ngsxfem/).
+A *preliminary* collection of documentation (demos, tutorials, mini API) can be found [here](https://ngsuite.pages.gwdg.de/ngsxfem/).
+A simple doxygen collection of `NGSolve`, `ngsxfem` and `ngstrefftz` C++ API can be found [here](https://ngsuite.pages.gwdg.de/ngs-doxygen/).
 
 # About `ngsxfem`
 
