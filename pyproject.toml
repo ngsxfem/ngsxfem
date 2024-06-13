@@ -6,13 +6,14 @@ description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut
 urls = {github="https://github.com/ngsxfem/ngsxfem"}
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["ngsolve>=6.2.2403.post74.dev0"]
+dependencies = [] # ngsolve will be added automatically
+dynamic = ["dependencies"]
 classifiers = [
   "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
 ]
 
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2403.post74.dev0"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2403.post94.dev0"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
@@ -21,6 +22,10 @@ ninja.version = ">=1.11"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["python/_version.py"]
 #build-dir = "./build_py/{wheel_tag}" # local build directory - for debugging
+
+experimental = true
+# This adds ngsolve (with exact build-time version) to the dependencies
+metadata.dependencies.provider="ngsolve._scikit_build_core_dependencies"
 
 [tool.setuptools_scm]  # Section required
 write_to = "python/_version.py"
