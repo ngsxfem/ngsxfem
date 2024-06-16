@@ -110,6 +110,8 @@ ctests-pytests-on-pip-ngs:
   stage: test
   image: python:3.12
   script:
+    - apt-get update
+    - apt-get install -y cmake
     - pip3 install ngsolve
     - bash .ci/ci_ctests.sh pytests
   # <<: *build-config
