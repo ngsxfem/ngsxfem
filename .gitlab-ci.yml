@@ -112,7 +112,7 @@ ctests-pytests-on-pip-ngs:
   script:
     - apt-get update
     - apt-get install -y cmake
-    - pip3 install ngsolve
+    - pip3 install ngsolve pytest scipy numpy psutil
     - bash .ci/ci_ctests.sh pytests
   # <<: *build-config
   when: on_success
@@ -131,6 +131,8 @@ ctests-demos-on-pip-ngs:
   stage: test
   image: python:3.12
   script:
+    - apt-get update
+    - apt-get install -y cmake
     - pip3 install ngsolve pytest scipy numpy psutil
     - bash .ci/ci_ctests.sh demos
   # <<: *build-config
