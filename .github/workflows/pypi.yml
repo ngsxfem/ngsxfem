@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - release
+      - pypi_release_build
     tags:
       - '*'
       
