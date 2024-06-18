@@ -51,5 +51,5 @@ environment = {MACOSX_DEPLOYMENT_TARGET="10.15"}
 repair-wheel-command = ""
 archs = ["universal2"]
 
-[[tool.cibuildwheel.overrides]]
+[tool.cibuildwheel.overrides]
 select = "{cp311*,cp312*}"
