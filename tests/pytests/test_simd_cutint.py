@@ -45,8 +45,7 @@ def test_simd_integrate(maxh, element_wise, order):
     testruns = 5
     for i in range(testruns):
         # simd disabled
-        ngsxfemglobals.SwitchSIMD(False)
-        
+        ngsxfemglobals.simd_eval = False
         start = timer()
         integral_normal = Integrate(f, mesh, VOL)
         end = timer()
@@ -54,7 +53,7 @@ def test_simd_integrate(maxh, element_wise, order):
         t_normal += (end-start)
         
         # simd enabled
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         
         start = timer()
         integral_simd = Integrate(f, mesh, VOL)
@@ -102,8 +101,7 @@ def test_simd_integrateX(maxh, element_wise, order):
     testruns = 5
     for i in range(testruns):
         # simd disabled
-        ngsxfemglobals.SwitchSIMD(False)
-        
+        ngsxfemglobals.simd_eval = False
         start = timer()
         integral_normal = IntegrateX(dict, mesh, f)
         end = timer()
@@ -111,7 +109,7 @@ def test_simd_integrateX(maxh, element_wise, order):
         t_normal += (end-start)
         
         # simd enabled
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         
         start = timer()
         integral_simd = IntegrateX(dict, mesh, f)

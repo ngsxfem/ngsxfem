@@ -83,7 +83,7 @@ def test_lf_blf(maxh, order):
     t_blf_simd = 0
     n=10
     for k in range(n):
-        ngsxfemglobals.SwitchSIMD(False)
+        ngsxfemglobals.simd_eval = False
         ########################
         # Time Linear Form, no simd
         start = timer()
@@ -99,7 +99,7 @@ def test_lf_blf(maxh, order):
         end = timer()
         t_blf_normal += end-start
 
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         #########################
         # time linear form, simd
 
@@ -170,7 +170,7 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
     error = 0
     for i in range(n):
         # non-SIMD
-        ngsxfemglobals.SwitchSIMD(False)
+        ngsxfemglobals.simd_eval = False
         start = timer()
         integral_ns = IntegrateX(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain, "time_order": 0, "order": 0},
                              mesh=mesh, cf=f)
@@ -178,7 +178,7 @@ def test_spacetime_integrateX_via_straight_cutted_quad2Dplus1D(domain, quad):
         t_ns += end - start
 
         # SIMD
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         start = timer()
         integral_simd = IntegrateX(levelset_domain = { "levelset" : lset_approx, "domain_type" : domain, "time_order": 0, "order": 0},
                              mesh=mesh, cf=f)
@@ -207,7 +207,7 @@ def test_facetpatch(quad):
         a = BilinearForm(fes)
         a += u * v * dFacetPatch()
         # non-SIMD
-        ngsxfemglobals.SwitchSIMD(False)
+        ngsxfemglobals.simd_eval = False
         start = timer()
         a.Assemble()
         end = timer()
@@ -216,7 +216,7 @@ def test_facetpatch(quad):
         a2 = BilinearForm(fes)
         a2 += u * v * dFacetPatch()
         # SIMD
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         start = timer()
         a2.Assemble()
         end = timer()
@@ -264,7 +264,7 @@ def test_calc_linearized():
     testruns = 5
     for i in range(testruns):
         # SIMD enabled
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         start = timer()
         a1.AssembleLinearization(gfu.vec)
         end = timer()
@@ -272,7 +272,7 @@ def test_calc_linearized():
         t_simd = end - start
 
         # SIMD disabled
-        ngsxfemglobals.SwitchSIMD(False)
+        ngsxfemglobals.simd_eval = False
         start = timer()
         a2.AssembleLinearization(gfu.vec)
         end = timer()
@@ -341,14 +341,14 @@ def test_calc_linearized():
     testruns = 5
     for i in range(testruns):
         # SIMD enabled
-        ngsxfemglobals.SwitchSIMD(True)
+        ngsxfemglobals.simd_eval = True
         start = timer()
         a1.Apply(gfu.vec,w1)
         end = timer()
         t_simd += end-start
 
         # SIMD disabled
-        ngsxfemglobals.SwitchSIMD(False)
+        ngsxfemglobals.simd_eval = False
         start = timer()
         a2.Apply(gfu.vec,w2)
         end = timer()
@@ -492,16 +492,16 @@ def test_eb_cut_integrator_2d(i):
         
     err_sqr_coefs = (gfu.components[0]-exact)**2
 
-    ngsxfemglobals.SwitchSIMD(True)
+    ngsxfemglobals.simd_eval = True
     l2error_simd = sqrt( Integrate( levelset_domain=lset_if, cf=err_sqr_coefs, mesh=mesh, order=2*order+1) )
         
-    ngsxfemglobals.SwitchSIMD(False)
+    ngsxfemglobals.simd_eval = False
     l2error_ns = sqrt( Integrate( levelset_domain=lset_if, cf=err_sqr_coefs, mesh=mesh, order=2*order+1) )
         
     H1_err_sqr_coefs = Norm( P (gfu.components[0].Deriv() - exact_grad, n_phi1) )**2
-    ngsxfemglobals.SwitchSIMD(True)
+    ngsxfemglobals.simd_eval = True
     h1error_simd = sqrt( l2error_simd**2 + Integrate( levelset_domain=lset_if, cf=H1_err_sqr_coefs, mesh=mesh, order=2*order+1) )
-    ngsxfemglobals.SwitchSIMD(False)
+    ngsxfemglobals.simd_eval = False
     h1error_ns = sqrt( l2error_ns**2 + Integrate( levelset_domain=lset_if, cf=H1_err_sqr_coefs, mesh=mesh, order=2*order+1) )
 
     assert abs(l2error_simd - l2error_ns) < 1e-12
@@ -566,9 +566,9 @@ def test_cut_symbols_dg(order, DOM, skeleton, element_boundary):
                       deformation=deform, skeleton=skeleton,
                       element_boundary=element_boundary)
     
-    ngsxfemglobals.SwitchSIMD(True)
+    ngsxfemglobals.simd_eval = True
     a1.Assemble()
-    ngsxfemglobals.SwitchSIMD(False)
+    ngsxfemglobals.simd_eval = False
     a2.Assemble()
     
     w1.data = a1.mat * gfu.vec
