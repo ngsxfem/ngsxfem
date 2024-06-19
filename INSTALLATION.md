@@ -7,6 +7,13 @@ We provide two (and a half) ways to setup `ngsxfem` on your machine:
 
 Below we discuss these installation steps in more detail. If you observe any problems with the installation, you can contact us through the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) or the [NGSolve user forum](https://ngsolve.org/forum/index).
 
+Note that your xfem installation depends on your NGSolve installation. 
+If you are already NGSolve user and have NGSolve installed, you should choose your xfem-installation based on your NGSolve installation. 
+The recommended options are:
+ * If you have a release version of NGSolve installed through pip, you should install the release version of xfem through pip as well. 
+ * If you have a pre-release are self-built version of NGSolve, you should install xfem through the source wheel. 
+
+
 ## Installation through `pip` (`pip3`)
 Table of contents for `pip` install:
   * [Releases](#releases)
@@ -21,11 +28,15 @@ Installation of `ngsxfem` releases through `pip` is carried with the command
 pip3 install xfem
 ```
 You may add standard `pip` options such as `--user`, `--upgrade` and/or `--verbose` or specify a concrete version, e.g. by replacing `xfem` with `xfem==1.4.2104`.
-
 ### Development version
 
-For pre-release versions add `--pre`. 
+For pre-release versions the recommended version is to build from 
+source through a source whell.  
 
+``` 
+pip3 install xfem --no-binary --no-build-isolation --pre
+```
+Alternatively, you can try using the binaries also for prelease versions, but compatibility cannot be guaranteed.
 
 ## Installation from source
 
