@@ -1540,7 +1540,7 @@ namespace ngfem
       CalcInverse(A,Ainv);
       w00 = abs(Det(A));
       ip_x00->Point().Range(0,D) = Ainv * f;
-      ip_x0->Point().Range(0,D) = ip_x00->Point();
+      ip_x0->Point().Range(0,D) = ip_x00->Point().Range(0,D);
     }
 
     int its = 0;
