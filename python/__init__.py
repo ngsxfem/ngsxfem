@@ -643,10 +643,13 @@ Dummy deformation class. Does nothing to the mesh. Has two dummy members:
   * lset_p1 : ngsolve.GridFunction
     The piecewise linear level set function 
   * deform : ngsolve.GridFunction
-    A zero GridFunction (for compatibility with netgen Draw(... deformation=)) 
+    A zero GridFunction (for compatibility with netgen Draw(... deformation=))
+Has method
+  * self.CalcDeformation()
+    Convenience function  for code compatibility with LevelSetMeshAdaptation class
     """
 
-    def __init__(self, mesh=None, levelset=None):
+    def __init__(self, mesh=None, levelset=None, warn=True):
         self.deform = GridFunction(H1(mesh, order=1, dim=mesh.dim), "dummy_deform")
         self.deform.vec.data[:] = 0.0
         if levelset != None:
@@ -654,6 +657,7 @@ Dummy deformation class. Does nothing to the mesh. Has two dummy members:
                 raise Exception("need mesh")
             self.lset_p1 = GridFunction(H1(mesh, order=1))
             InterpolateToP1(levelset, self.lset_p1)
+        self.warn = warn
 
     def __enter__(self):
         return self.lset_p1
@@ -661,6 +665,14 @@ Dummy deformation class. Does nothing to the mesh. Has two dummy members:
     def __exit__(self, type, value, tb):
         pass
 
+    def CalcDeformation(self, levelset):
+        """
+        P1 interpolation of levelset function for compatibility with
+        """
+        if self.warn is True:
+            print('WARNING: CalcDeformation called on instance of NoDeformation. No deformation computed.')
+        InterpolateToP1(levelset, self.lset_p1)
+        return self.deform
 
 try:
     __IPYTHON__
