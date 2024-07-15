@@ -120,56 +120,11 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
         }
     }
   
-  // int DIM = ma.GetDimension();
+  bool simd_eval = globxvar.SIMD_EVAL;
   int cfdim = cf->Dimension();
   if(cfdim != 1)
     throw Exception("only implemented for 1 dimensional coefficientfunctions");
 
-	if (globxvar.SIMD_EVAL) {
-		try {
-      TSCAL sum = 0.0;
-		  ma.IterateElements(VOL, glh, [&] (Ngs_Element el, LocalHeap & lh)
-		  {
-		  	if (defon.Size() && !defon.Test(el.GetIndex()))
-		  		return;
-		  	if (dx.definedonelements && !dx.definedonelements->Test(el.Nr()))
-		  		return;
-
-		  	auto & trafo1 = ma.GetTrafo (el, lh);
-		  	auto & trafo = trafo1.AddDeformation(this->dx.deformation.get(), lh);
-		  	const IntegrationRule *ns_ir;
-		  	Array<double> ns_wei_arr;
-		  	tie (ns_ir, ns_wei_arr) = CreateCutIntegrationRule(*lsetintdom,trafo,lh);
-		  	if (ns_ir == nullptr)
-		  		return;
-  
-		  	SIMD_IntegrationRule simd_ir(*ns_ir, lh);
-		  	FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
-
-		  	//if (&simd_ir != nullptr)
-		  	{
-		  		SIMD_BaseMappedIntegrationRule & simd_mir = trafo(simd_ir, lh);
-		  		FlatMatrix<SIMD<TSCAL>> val(simd_mir.Size(), 1, lh);
-  
-		  		cf -> Evaluate (simd_mir, val);
-  
-		  		SIMD<TSCAL> lsum(0.0);
-		  		for (int i = 0; i < simd_mir.Size(); i++)
-		  				lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
-  
-		  		if (element_wise.Size())
-		  			element_wise(el.Nr()) += HSum(lsum); // problem?
-  
-		  		AtomicAdd(sum, HSum(lsum));
-		  	}
-		  });
-		  return ma.GetCommunicator().AllReduce(sum, NG_MPI_SUM);
-    } catch (ExceptionNOSIMD e) {
-      cout << IM(6) << e.What()
-           << "switching to non-SIMD evaluation" << endl;
-    }
-	}
-	
   TSCAL sum = 0.0;
   ma.IterateElements(VOL, glh, [&] (Ngs_Element el, LocalHeap & lh)
   {
@@ -180,25 +135,48 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
 
     auto & trafo1 = ma.GetTrafo (el, lh);
     auto & trafo = trafo1.AddDeformation(this->dx.deformation.get(), lh);
-    const IntegrationRule * ir;
-    Array<double> wei_arr;
-    tie (ir, wei_arr) = CreateCutIntegrationRule(*lsetintdom,trafo,lh);
+    const IntegrationRule *ns_ir;
+    Array<double> ns_wei_arr;
+    tie (ns_ir, ns_wei_arr) = CreateCutIntegrationRule(*lsetintdom,trafo,lh);
+    if (ns_ir == nullptr)
+      return;
 
-    if (ir != nullptr)
+    if (simd_eval) {
+      try 
+      {
+        SIMD_IntegrationRule simd_ir(*ns_ir, lh);
+        FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
+        {
+          SIMD_BaseMappedIntegrationRule & simd_mir = trafo(simd_ir, lh);
+          FlatMatrix<SIMD<TSCAL>> val(simd_mir.Size(), 1, lh);
+          cf -> Evaluate (simd_mir, val);
+          SIMD<TSCAL> lsum(0.0);
+          for (int i = 0; i < simd_mir.Size(); i++)
+              lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
+          if (element_wise.Size())
+            element_wise(el.Nr()) += HSum(lsum);
+          AtomicAdd(sum, HSum(lsum));
+        }
+      } catch (ExceptionNOSIMD e) {
+        cout << IM(6) << e.What()
+            << "switching to non-SIMD evaluation" << endl;
+        simd_eval = false;
+      }
+    }
+    //scalar (non-SIMD) evaluation
     {
-      BaseMappedIntegrationRule & mir = trafo(*ir, lh);
+      BaseMappedIntegrationRule & mir = trafo(*ns_ir, lh);
       FlatMatrix<TSCAL> val(mir.Size(), 1, lh);
-
       cf -> Evaluate (mir, val);
-
       TSCAL lsum(0.0);
       for (int i = 0; i < mir.Size(); i++)
-          lsum += mir[i].GetMeasure()*wei_arr[i]*val(i,0);
+          lsum += mir[i].GetMeasure()*ns_wei_arr[i]*val(i,0);
 
       if (element_wise.Size())
         element_wise(el.Nr()) += lsum;
       
       AtomicAdd(sum,lsum);
+
     }
   });
   return ma.GetCommunicator().AllReduce(sum, NG_MPI_SUM);
