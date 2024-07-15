@@ -156,6 +156,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
           if (element_wise.Size())
             element_wise(el.Nr()) += HSum(lsum);
           AtomicAdd(sum, HSum(lsum));
+          return;
         }
       } catch (ExceptionNOSIMD e) {
         cout << IM(6) << e.What()
