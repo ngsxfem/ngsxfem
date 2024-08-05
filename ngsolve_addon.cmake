@@ -5,6 +5,11 @@
 ###############################################################################
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Set default build type to RelWithDebInfo
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type" FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
 # Find NGSolve and Netgen using python
 if(CMAKE_VERSION VERSION_LESS "3.18")
   find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
@@ -24,6 +29,7 @@ find_package(NGSolve CONFIG REQUIRED)
 macro(add_ngsolve_addon module_name)
   # Create the module
   add_library(${module_name} SHARED ${ARGN})
+  target_include_directories(${module_name} BEFORE PRIVATE $<TARGET_PROPERTY:ngsolve,INTERFACE_INCLUDE_DIRECTORIES>)
   target_link_libraries(${module_name} PUBLIC ngsolve Python3::Module)
   set_target_properties(${module_name} PROPERTIES PREFIX "" CXX_STANDARD 17)
 

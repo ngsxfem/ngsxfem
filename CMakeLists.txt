@@ -2,14 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(xfem)
 
-# Set default build type to Release if not specified
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING "Choose the type of build." FORCE)
-endif()
-
 # Download ngsolve_addon.cmake from template project
-set(ngsolve_addon_version bbfb9648f2ff7a952a3a8edca58f460c198ca462)
-set(ngsolve_addon_md5 d1b208d6aa63edce64a264e5e0370d3a)
+set(ngsolve_addon_version f06decb0ee04051b8d59bc29a310b92a7561c48c)
+set(ngsolve_addon_md5 3190b388db12f1e542c57379fa444a85)
 file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
   EXPECTED_MD5 ${ngsolve_addon_md5}
