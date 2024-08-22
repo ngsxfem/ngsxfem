@@ -85,7 +85,7 @@ namespace ngcomp
           pidx = i*incr_i + j*incr_j;
           for(int k = 0; k < rt; ++k, pidx++)
           {
-            ref_elems.Append(IVec<ELEMENT_MAXPOINTS+1>(8, pidx, pidx+1, pidx+incr_j+1, pidx+incr_j,
+            ref_elems.Append(IVec<9>(8, pidx, pidx+1, pidx+incr_j+1, pidx+incr_j,
                                                          pidx+incr_i, pidx+incr_i+1, pidx+incr_i+incr_j+1, pidx+incr_j+incr_i));
           }          
         } 
@@ -144,12 +144,12 @@ namespace ngcomp
             int pidx_incr_i = pidx+1;
             int pidx_incr_j = pidx+s-i;
 
-            ref_elems.Append(IVec<ELEMENT_MAXPOINTS+1>(6, pidx, pidx_incr_i, pidx_incr_j, pidx+incr_k, pidx_incr_i+incr_k, pidx_incr_j+incr_k, 0, 0 ));
+            ref_elems.Append(IVec<9>(6, pidx, pidx_incr_i, pidx_incr_j, pidx+incr_k, pidx_incr_i+incr_k, pidx_incr_j+incr_k, 0, 0 ));
               
             int pidx_incr_ij = pidx_incr_j + 1;
 
             if(i+j+1<rx)
-              ref_elems.Append(IVec<ELEMENT_MAXPOINTS+1>(6, pidx_incr_i, pidx_incr_ij, pidx_incr_j, pidx_incr_i+incr_k, pidx_incr_ij+incr_k, pidx_incr_j+incr_k,0,0));
+              ref_elems.Append(IVec<9>(6, pidx_incr_i, pidx_incr_ij, pidx_incr_j, pidx_incr_i+incr_k, pidx_incr_ij+incr_k, pidx_incr_j+incr_k,0,0));
           }
       }
     }
