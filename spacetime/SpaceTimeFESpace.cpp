@@ -131,26 +131,53 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   {
      ScalarFiniteElement<1>* t_FE = tfe.get();
      if(ma->GetDimension() == 2){
-       ScalarFiniteElement<2>* s_FE2 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
-       //cout << "SpaceTimeFESpace :: GetFE for 2D called" << endl;
-       SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE2,t_FE,override_time,time);
-       return *st_FE;
+       if (ei.IsVolume()) {
+         ScalarFiniteElement<2>* s_FE2 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
+         SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE2,t_FE,override_time,time);
+	 return *st_FE;
+       }
+       else if (ei.IsBoundary()) {
+         ScalarFiniteElement<1>* s_FE2 = dynamic_cast<ScalarFiniteElement<1>*>(&(Vh->GetFE(ei,alloc)));
+         SpaceTimeFE<1> * st_FE =  new (alloc) SpaceTimeFE<1>(s_FE2,t_FE,override_time,time);
+         return *st_FE;  
+       }
+       else {
+         throw Exception ("illegal element in SpaceTimeFESpace :: GetFE");
+       }
      }
      else if (ma->GetDimension() == 3){
-       ScalarFiniteElement<3>* s_FE3 = dynamic_cast<ScalarFiniteElement<3>*>(&(Vh->GetFE(ei,alloc)));
-       //cout << "SpaceTimeFESpace :: GetFE for 3D called" << endl;
-       SpaceTimeFE<3> * st_FE =  new (alloc) SpaceTimeFE<3>(s_FE3,t_FE,override_time,time);
-       return *st_FE;
+       if (ei.IsVolume()) { 
+         ScalarFiniteElement<3>* s_FE3 = dynamic_cast<ScalarFiniteElement<3>*>(&(Vh->GetFE(ei,alloc)));
+         SpaceTimeFE<3> * st_FE =  new (alloc) SpaceTimeFE<3>(s_FE3,t_FE,override_time,time);
+         return *st_FE;
+       }
+       else if (ei.IsBoundary()) { 
+         ScalarFiniteElement<2>* s_FE3 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
+         SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE3,t_FE,override_time,time);
+         return *st_FE;
+       }	     
+       else {
+         throw Exception ("illegal element in SpaceTimeFESpace :: GetFE");
+       }
      }
-     else if (ma->GetDimension() == 1){
-       ScalarFiniteElement<1>* s_FE1 = dynamic_cast<ScalarFiniteElement<1>*>(&(Vh->GetFE(ei,alloc)));
-       //cout << "SpaceTimeFESpace :: GetFE for 3D called" << endl;
-       SpaceTimeFE<1> * st_FE =  new (alloc) SpaceTimeFE<1>(s_FE1,t_FE,override_time,time);
-       return *st_FE;
+     else if (ma->GetDimension() == 1){ 
+       if (ei.IsVolume()) { 
+         ScalarFiniteElement<1>* s_FE1 = dynamic_cast<ScalarFiniteElement<1>*>(&(Vh->GetFE(ei,alloc)));
+         SpaceTimeFE<1> * st_FE =  new (alloc) SpaceTimeFE<1>(s_FE1,t_FE,override_time,time);
+         return *st_FE;
+       }
+       else if (ei.IsBoundary()) { 
+         ScalarFiniteElement<0>* s_FE1 = dynamic_cast<ScalarFiniteElement<0>*>(&(Vh->GetFE(ei,alloc)));
+         SpaceTimeFE<0> * st_FE =  new (alloc) SpaceTimeFE<0>(s_FE1,t_FE,override_time,time);
+         return *st_FE; 
+       }
+       else {
+         throw Exception ("illegal element in SpaceTimeFESpace :: GetFE");
+       }
      }
      else
        throw Exception("SpaceTimeFESpace :: GetFE cannot help dimension != 1,2,3");
-   }
+  }
 
   template<typename SCAL>
   void SpaceTimeFESpace :: RestrictGFInTime(shared_ptr<GridFunction> st_GF, double time, shared_ptr<GridFunction> s_GF)
