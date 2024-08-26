@@ -24,6 +24,9 @@ namespace ngfem
     shared_ptr<LevelsetIntegrationDomain> lsetintdom = nullptr;
     CutIntegral (shared_ptr<CoefficientFunction> _cf,
                  shared_ptr<CutDifferentialSymbol> _dx);
+    CutIntegral (shared_ptr<CoefficientFunction> _cf,
+                 DifferentialSymbol _dx, 
+                 shared_ptr<LevelsetIntegrationDomain> _lsetintdom);
     virtual ~CutIntegral() { }
 
     template <typename TSCAL>
@@ -39,6 +42,12 @@ namespace ngfem
 
     virtual shared_ptr<BilinearFormIntegrator> MakeBilinearFormIntegrator() const;
     virtual shared_ptr<LinearFormIntegrator> MakeLinearFormIntegrator() const;
+
+    virtual shared_ptr<Integral> CreateSameIntegralType (shared_ptr<CoefficientFunction> _cf)
+    {
+      return make_shared<CutIntegral> (_cf, dx, lsetintdom);
+    }
+    
   };
 
 
@@ -70,7 +79,6 @@ namespace ngfem
         throw Exception("no level set domain prescribed. Cannot define a CutIntegral.");
     }
 
-
   };
 
   class FacetPatchDifferentialSymbol;
@@ -81,6 +89,8 @@ namespace ngfem
     optional<double> tref = nullopt;
     FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
                  shared_ptr<FacetPatchDifferentialSymbol> _dx);
+    FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf, DifferentialSymbol _dx,
+                        int _time_order, optional<double> _tref);
     virtual ~FacetPatchIntegral() { }
 
     virtual double Integrate (const ngcomp::MeshAccess & ma,
@@ -100,6 +110,12 @@ namespace ngfem
     {
       throw Exception("MakeLinearFormIntegrator not Implemented for FacetPatchIntegral");
     }
+
+    virtual shared_ptr<Integral> CreateSameIntegralType (shared_ptr<CoefficientFunction> _cf)
+    {
+      return make_shared<FacetPatchIntegral> (_cf, dx, time_order, tref);
+    }
+
   };
 
 
