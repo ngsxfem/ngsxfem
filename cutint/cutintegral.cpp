@@ -29,9 +29,13 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() c
   {
     //if (lsetintdom->GetTimeIntegrationOrder() >= 0)
     //  throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
-    if (dx.vb == BND)
-      throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-    bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
+    if (dx.vb == BND) {
+      cout << "Warning: Symbolic cuts on boundary facets are an experimental feature for now (not fully tested ..)." << endl;
+      bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf, dx.vb);
+    }
+    else {
+      bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf,dx.vb);
+    }
   }
 
   if (dx.definedon)
