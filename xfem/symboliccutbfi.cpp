@@ -506,6 +506,7 @@ namespace ngfem
       */
       NgProfiler::RegionTimer reg (timer);
 
+      //cout << "Calling T_CalcElementMatrixEBAdd " << endl; 
       //elmat = 0;
 
       const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
@@ -885,8 +886,13 @@ namespace ngfem
 
   SymbolicCutFacetBilinearFormIntegrator ::
   SymbolicCutFacetBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
-                                          shared_ptr<CoefficientFunction> acf)
-    : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
+                                          shared_ptr<CoefficientFunction> acf,
+					  VorB avb
+					  )
+     //    : SymbolicFacetBilinearFormIntegrator(acf,VOL, aelement_boundary)
+     //      : SymbolicFacetBilinearFormIntegrator(acf, aelement_boundary ? BND : VOL, aelement_boundary)
+	    //:   SymbolicFacetBilinearFormIntegrator(acf, aelement_boundary ? BND : VOL, false) 
+	 :   SymbolicFacetBilinearFormIntegrator(acf, avb, false)
   {
     lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
     simd_evaluate=false;
@@ -905,7 +911,6 @@ namespace ngfem
     static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
     NgProfiler::RegionTimer reg(timer);
     elmat = SCAL(0.0);
-
     if (lsetintdom->IsMultiLevelsetDomain())
       throw Exception("cut element boundary integrals not implemented for multi level sets");
 
@@ -1310,6 +1315,250 @@ namespace ngfem
             }
         }
   }
+
+  template<typename SCAL, typename SCAL_SHAPES>
+  void SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix(const FiniteElement & fel1, int LocalFacetNr1,
+                    const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
+                    const ElementTransformation & strafo, FlatArray<int> & SElVertices1,
+                    FlatMatrix<SCAL> elmat,
+                    LocalHeap & lh) const 
+  { 
+
+    static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
+    NgProfiler::RegionTimer reg(timer);
+    
+    bool is_mixedfe1 = typeid(fel1) == typeid(const MixedFiniteElement&);
+    const MixedFiniteElement * mixedfe1 = static_cast<const MixedFiniteElement*> (&fel1);
+    const FiniteElement & fel1_trial = is_mixedfe1 ? mixedfe1->FETrial() : fel1;
+    const FiniteElement & fel1_test = is_mixedfe1 ? mixedfe1->FETest() : fel1;
+
+    elmat = SCAL(0.0);
+    if (lsetintdom->IsMultiLevelsetDomain())
+      throw Exception("cut element boundary integrals not implemented for multi level sets");
+
+    //int maxorder = fel1.Order();
+    int maxorder = max2 (fel1_trial.Order(), fel1_test.Order());
+
+    auto etvol = trafo1.GetElementType();
+    auto etfacet = ElementTopology::GetFacetType (etvol, LocalFacetNr1);
+
+    const IntegrationRule& ir_facet = GetIntegrationRule(etfacet, 2*maxorder+bonus_intorder);
+    Facet2ElementTrafo transform1(etvol, ElVertices1);
+    Facet2SurfaceElementTrafo stransform(strafo.GetElementType(), SElVertices1); 
+    
+    //IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, ir_facet, lh);
+     
+    const IntegrationRule * ir_scr = nullptr;
+    // IntegrationRule & ir_facet_surf = stransform(ir_facet, lh);  // not yet used ???
+   
+    Array<double> wei_arr;
+    auto gflset = lsetintdom->GetLevelsetGF();
+    if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
+
+    Array<DofId> dnums(0,lh);
+    gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
+    FlatVector<> elvec(dnums.Size(),lh);
+    gflset->GetVector().GetIndirect(dnums,elvec);
+
+    shared_ptr<SpaceTimeFESpace> st_FE = nullptr;
+    shared_ptr<NodalTimeFE> time_FE = nullptr;
+    if(time_order > -1){
+      st_FE = dynamic_pointer_cast<SpaceTimeFESpace >(gflset->GetFESpace());
+      if(st_FE == nullptr) 
+        throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+      time_FE = dynamic_pointer_cast< NodalTimeFE>(st_FE->GetTimeFE());
+      if(time_FE == nullptr) 
+        throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+    }
+
+    int NV = ElementTopology::GetNVertices(etfacet); // number of vertices of et_facet
+
+    if (Dim(etfacet) == 2) 
+    {
+      
+      static Timer t("symbolicCutBFI - CoDim2", NoTracing);
+      RegionTimer reg (t);
+
+      IVec<4> int_tuple = 
+        SwitchET<ET_HEX,ET_TET,ET_PRISM,ET_PYRAMID> (etvol, [&LocalFacetNr1, &ElVertices1] (auto et)
+         { return ET_trait<et>::GetFaceSort(LocalFacetNr1,ElVertices1); });
+
+      FlatVector<> lset_fv(NV,lh);
+      if(time_order < 0) {
+        for (int i = 0; i < NV; i++)
+          lset_fv(i) = elvec[int_tuple[i]];
+        ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+      }
+      else {
+        int M = time_FE->GetNDof(); //time nodes
+        int L = dnums.Size()/M; // dofs (or verts) per vol element 
+        FlatVector<> cf_lset_at_element(NV*M, lh);
+        FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
+
+        for (int i = 0; i < NV; i++)
+          cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
+
+        tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+      }
+      if(ir_scr == nullptr) return;
+      //cout << "ir_scr: " << *ir_scr << endl;
+      if (lsetintdom->GetDomainType() == IF) // correct measure for 3D -> 1D case ( codim1 - adjustment is done automatically)
+      {
+        if (time_order > -1)
+          throw Exception("correcting the IF-measure in space-time case is still missing");
+        vector<double> lset(NV);
+        for(int i=0; i<NV; i++) 
+          lset[i] = lset_fv(i);
+        LevelsetWrapper lsw(lset, etfacet);
+        Vec<3> tetdiffvec2(0.);
+
+        IntegrationRule & ir_scr_intet2 = transform1( LocalFacetNr1, (*ir_scr), lh);
+        MappedIntegrationRule<3,3> mir3(ir_scr_intet2,trafo1,lh);
+        int npoints = ir_scr->Size();
+
+        for (int i = 0; i < npoints; i++)
+        {
+            IntegrationPoint & ip = (*ir_scr)[i];
+            Vec<3> normal = lsw.GetNormal(ip.Point());
+            Vec<2> tang = {normal[1],-normal[0]};
+
+            tetdiffvec2 = transform1.GetJacobian( LocalFacetNr1, lh) * tang;
+            auto F = mir3[i].GetJacobian();
+            auto mapped_tang = F * tetdiffvec2;
+            const double ratio_meas1D = L2Norm(mapped_tang);
+            ip.SetWeight((*ir_scr)[i].Weight() * ratio_meas1D);
+        }
+      }
+    }
+    else if (Dim(etfacet) == 1) 
+    {
+
+        IVec<2> int_tuple = 
+          SwitchET<ET_TRIG,ET_QUAD> (etvol, [&LocalFacetNr1, &ElVertices1] (auto et) { return ET_trait<et>::GetEdgeSort(LocalFacetNr1,ElVertices1); });
+
+        if(time_order < 0) {
+            Vec<2> lset_vals_edge = {elvec[int_tuple[0]],elvec[int_tuple[1]]}; 
+            ir_scr = StraightCutIntegrationRuleUntransformed(lset_vals_edge, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+        }
+        else {
+            int M = time_FE->GetNDof(); //time nodes
+            int L = dnums.Size()/M; // dofs (or verts) per vol element 
+            FlatVector<> cf_lset_at_element(NV*M, lh);
+            FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
+
+            for (int i = 0; i < NV; i++)
+              cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
+
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+        }
+        if (ir_scr == nullptr) return;
+    }
+    else if (Dim(etfacet) == 0) {
+      FlatVector <> lset_on_facet(elvec.Size()/2,lh);
+      lset_on_facet = elvec.Slice(LocalFacetNr1,2);
+      //LocalFacetNr1
+        if(time_order < 0) {
+            ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+        }
+        else {
+          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+        }
+        if (ir_scr == nullptr) return;
+
+        //throw Exception("no 1D cut facet integration provided yet");
+    }
+    else
+      throw Exception("no 1D cut facet integration provided yet");
+
+    IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_scr), lh);
+    MarkAsSpaceTimeIntegrationRule(ir_facet_vol1);
+
+    if(transform1.FacetType(LocalFacetNr1) == ET_POINT){
+        Vec<3> right_pnt;
+        right_pnt = ir_facet_vol1[0].Point();
+        for(int i=1; i<ir_facet_vol1.Size(); i++) ir_facet_vol1[i].Point() = right_pnt;
+    }
+  
+    ProxyUserData ud;
+    const_cast<ElementTransformation&>(trafo1).userdata = &ud;
+
+    BaseMappedIntegrationRule & mir1 = trafo1(ir_facet_vol1, lh);
+    
+    //PrecomputeCacheCF(cache_cfs, mir1, lh);
+
+    for (int k1 : Range(trial_proxies))
+      for (int l1 : Range(test_proxies))
+        {
+          HeapReset hr(lh);
+          FlatMatrix<SCAL> val(mir1.Size(), 1, lh);
+          
+          auto proxy1 = trial_proxies[k1];
+          auto proxy2 = test_proxies[l1];
+          if (proxy1->IsOther() || proxy2->IsOther()) continue;
+
+          FlatTensor<3, SCAL> proxyvalues(lh, mir1.Size(), proxy2->Dimension(), proxy1->Dimension());
+          
+          mir1.ComputeNormalsAndMeasure (etvol, LocalFacetNr1);          
+          
+	  for (size_t k = 0; k < proxy1->Dimension(); k++)
+            for (size_t l = 0; l < proxy2->Dimension(); l++)
+              {
+                ud.trialfunction = proxy1;
+                ud.trial_comp = k;
+                ud.testfunction = proxy2;
+                ud.test_comp = l;
+                
+                cf -> Evaluate (mir1, val);
+                proxyvalues(STAR,l,k) = val.Col(0);
+              }
+
+          if (lsetintdom->GetDomainType() == IF) // either 2D->0D (no need for weight correction) or 3D->1D ( weights are already corrected)
+          for (size_t i = 0; i < mir1.Size(); i++) {
+            //proxyvalues(i,STAR,STAR) *=  mir1[i].GetMeasure() * ir_facet[i].Weight();
+	        proxyvalues(i,STAR,STAR) *= ( time_order < 0 ? (*ir_scr)[i].Weight() : wei_arr[i]); 
+	  }
+
+          else // codim 1
+          {
+             // throw Exception("Foo!");
+             for (int i = 0; i < mir1.Size(); i++){
+                 //proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
+                 // proxyvalues(i,STAR,STAR) *= measure(i) * ir_scr[i].Weight();
+                 proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * ( time_order < 0 ? (*ir_scr)[i].Weight() : wei_arr[i]);
+                //  if(time_order < 0) proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * (*ir_scr)[i].Weight();
+                //  else proxyvalues(i,STAR,STAR) *= mir1[i].GetMeasure() * wei_arr[i];
+             }
+          }
+
+
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat1(proxy1->Dimension(), elmat.Width(), lh);
+          FlatMatrix<SCAL_SHAPES,ColMajor> bmat2(proxy2->Dimension(), elmat.Height(), lh);
+
+          constexpr size_t BS = 16;          
+          for (size_t i = 0; i < mir1.Size(); i+=BS)
+            {
+              size_t rest = min2(size_t(BS), mir1.Size()-i);
+              HeapReset hr(lh);
+              FlatMatrix<SCAL,ColMajor> bdbmat1(rest*proxy2->Dimension(), elmat.Width(), lh);
+              FlatMatrix<SCAL,ColMajor> bbmat2(rest*proxy2->Dimension(), elmat.Height(), lh);
+
+              for (size_t j = 0; j < rest; j++)
+                {
+                  size_t ii = i+j;
+                  IntRange r2 = proxy2->Dimension() * IntRange(j,j+1);
+                  proxy1->Evaluator()->CalcMatrix(fel1_trial, mir1[ii], bmat1, lh);
+                  proxy2->Evaluator()->CalcMatrix(fel1_test, mir1[ii], bmat2, lh);
+                  bdbmat1.Rows(r2) = proxyvalues(ii,STAR,STAR) * bmat1;
+                  bbmat2.Rows(r2) = bmat2;
+                }
+
+              IntRange r1 = proxy1->Evaluator()->UsedDofs(fel1_trial);
+              IntRange r2 = proxy2->Evaluator()->UsedDofs(fel1_test);
+              elmat.Rows(r2).Cols(r1) += Trans (bbmat2.Cols(r2)) * bdbmat1.Cols(r1) | Lapack;
+            }
+        }
+    //throw Exception("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix on boundary not yet implemented");
+  } 
 
   SymbolicFacetBilinearFormIntegrator2 ::
   SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf)

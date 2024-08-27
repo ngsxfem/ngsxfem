@@ -113,10 +113,12 @@ namespace ngfem
                                             DOMAIN_TYPE adt,
                                             int asubdivlvl);
     SymbolicCutFacetBilinearFormIntegrator (LevelsetIntegrationDomain & lsetintdom_in,
-                                            shared_ptr<CoefficientFunction> acf);
+                                            shared_ptr<CoefficientFunction> acf,
+					    VorB avb);
 
     virtual VorB VB () const { return vb; }
     virtual xbool IsSymmetric() const { return maybe; }
+    virtual bool BoundaryForm() const { return vb == BND; }
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     
     virtual DGFormulation GetDGFormulation() const { return DGFormulation(neighbor_testfunction,
@@ -154,14 +156,34 @@ namespace ngfem
                      }
 
     
+    template<typename SCAL, typename SCAL_SHAPES = double>
+    void T_CalcFacetMatrix(const FiniteElement & fel1, int LocalFacetNr1,
+                    const ElementTransformation & trafo1, FlatArray<int> & ElVertices1,
+                    const ElementTransformation & strafo, FlatArray<int> & SElVertices1,
+                    FlatMatrix<SCAL> elmat,
+                    LocalHeap & lh) const;
+      
+     virtual void
+     CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
+                   const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
+                   const ElementTransformation & seltrans, FlatArray<int> & SElVertices,
+                   FlatMatrix<double> elmat,
+                   LocalHeap & lh) const
+    {
+      
+       T_CalcFacetMatrix(volumefel,  LocalFacetNr, eltrans, ElVertices, seltrans, SElVertices, elmat, lh);
+      //throw Exception("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix on boundary not yet implemented");
+    }
+
     virtual void
     CalcFacetMatrix (const FiniteElement & volumefel, int LocalFacetNr,
                      const ElementTransformation & eltrans, FlatArray<int> & ElVertices,
-                     const ElementTransformation & seltrans,  
-                     FlatMatrix<double> & elmat,
+                     const ElementTransformation & seltrans, FlatArray<int> & SElVertices,
+		     FlatMatrix<Complex> & elmat,
                      LocalHeap & lh) const
     {
-      throw Exception("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix on boundary not yet implemented");
+      T_CalcFacetMatrix(volumefel,  LocalFacetNr, eltrans, ElVertices, seltrans, SElVertices, elmat, lh);
+      //throw Exception("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix on boundary not yet implemented");
     }
 
     virtual void
