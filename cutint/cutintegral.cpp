@@ -30,7 +30,11 @@ shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() c
     //if (lsetintdom->GetTimeIntegrationOrder() >= 0)
     //  throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
     if (dx.vb == BND) {
-      cout << "Warning: Symbolic cuts on boundary facets are an experimental feature for now (not fully tested ..)." << endl;
+      static bool warned = false;
+      if (!warned) {
+        cout << "WARNING: Symbolic cuts on boundary facets are an experimental feature for now (not fully tested ..). \n" << endl;
+      }
+      warned = true;
       bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf, dx.vb);
     }
     else {
@@ -76,8 +80,25 @@ shared_ptr<LinearFormIntegrator> CutIntegral :: MakeLinearFormIntegrator() const
   if (has_other && (dx.element_vb != BND) && !dx.skeleton)
     throw Exception("DG-facet terms need either skeleton=True or element_boundary=True");
 
-  shared_ptr<LinearFormIntegrator> lfi;
-  lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, dx.vb);
+  shared_ptr<LinearFormIntegrator> lfi; 
+  if (!has_other && !dx.skeleton)
+    lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, dx.vb);
+  else
+  {
+    if (dx.vb == BND) {
+      static bool warned = false;
+      if (!warned) {
+        cout << "WARNING: Symbolic cuts on boundary facets are an experimental feature for now (not fully tested ..). \n" << endl;
+      }
+      warned = true;
+      lfi  = make_shared<SymbolicCutFacetLinearFormIntegrator> (*lsetintdom, cf, dx.vb);
+    }
+    else {
+      throw Exception("SymbolicFacetCutLinearFormIntegrator not yet implemented for interior facets.");
+    }
+  }
+  //lfi  = make_shared<SymbolicCutLinearFormIntegrator> (*lsetintdom, cf, dx.vb);
+
   if (dx.definedon)
     {
       if (auto definedon_bitarray = get_if<BitArray> (&*dx.definedon); definedon_bitarray)
