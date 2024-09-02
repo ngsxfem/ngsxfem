@@ -6,6 +6,9 @@
 CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, shared_ptr<CutDifferentialSymbol> _dx)
   : Integral(_cf, *_dx), lsetintdom(_dx->lsetintdom) { ; }
 
+CutIntegral :: CutIntegral (shared_ptr<CoefficientFunction> _cf, DifferentialSymbol _dx, shared_ptr<LevelsetIntegrationDomain> _lsetintdom)
+  : Integral(_cf, _dx), lsetintdom(_lsetintdom) { ; }
+
 shared_ptr<BilinearFormIntegrator> CutIntegral :: MakeBilinearFormIntegrator() const
 {
   // check for DG terms
@@ -198,6 +201,9 @@ FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
                                         shared_ptr<FacetPatchDifferentialSymbol> _dx)
       : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref) { ; }
 
+FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf, DifferentialSymbol _dx,
+                                        int _time_order, optional<double> _tref)
+      : Integral(_cf, _dx), time_order(_time_order), tref(_tref) { ; }
 
 shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator() const
 {
