@@ -42,13 +42,6 @@ def MarkCutElementsForCondensing(mesh, FES, ghost_facets):
     FES.FinalizeUpdate()
 
 
-def UpdateMarkers(element_marker, union_elememts, intersection_elements = None):
-    
-    element_marker.Clear()
-    element_marker |= union_elememts
-    if intersection_elements:
-        element_marker &= intersection_elements
-
 # -------------------------------- NEWTON LOOP --------------------------------
 def CutFEM_QuasiNewton(a, alin, u, f, freedofs, maxit=100, maxerr=1e-11,
                        inverse="", dampfactor=1, jacobi_update_tol=0.1,
@@ -173,19 +166,15 @@ def test_st2d1_drag_lift():
     ci_main = CutInfo(mesh, lsetp1)
 
     # ------------------------------ ELEMENT MARKERS ------------------------------
-    els_hasneg, els_if = BitArray(mesh.ne), BitArray(mesh.ne)
-    facets_gp = BitArray(mesh.nedge)
-    active_dofs = BitArray(X.ndof)
-
-    UpdateMarkers(els_hasneg, ci_main.GetElementsOfType(HASNEG))
-    UpdateMarkers(els_if, ci_main.GetElementsOfType(IF))
-    UpdateMarkers(facets_gp, GetFacetsWithNeighborTypes(mesh, a=els_hasneg, 
-                                                        b=els_if, use_and=True))
+    els_hasneg = ci_main.GetElementsOfType(HASNEG)
+    els_if = ci_main.GetElementsOfType(IF)
+    facets_gp = GetFacetsWithNeighborTypes(mesh, a=els_hasneg, b=els_if,
+                                           use_and=True, bnd_val_b=False)
 
     if condense:
         MarkCutElementsForCondensing(mesh, X, facets_gp)
-    UpdateMarkers(active_dofs, GetDofsOfElements(X, els_hasneg), 
-                  X.FreeDofs(coupling=condense))
+    active_dofs = BitArray(X.ndof)
+    active_dofs[:] = GetDofsOfElements(X, els_hasneg) & X.FreeDofs(coupling=condense)
 
     # ----------------------------- (BI)LINEAR FORMS ------------------------------
     (u, p), (v, q) = X.TnT()
