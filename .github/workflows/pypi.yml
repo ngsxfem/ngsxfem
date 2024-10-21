@@ -12,8 +12,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      PYTHON_VERSION: 3.11    
+    container: python:3.12    
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
