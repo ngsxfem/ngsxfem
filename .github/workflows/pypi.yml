@@ -12,6 +12,8 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHON_VERSION: 3.11    
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
@@ -40,6 +42,8 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: 3.11    
     steps:
       - uses: actions/checkout@v4
         with:

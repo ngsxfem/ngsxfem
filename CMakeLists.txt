@@ -28,7 +28,7 @@ include_directories ("${PROJECT_BINARY_DIR}")
 if(SKBUILD_PROJECT_VERSION)
   set(NGSXFEM_VERSION ${SKBUILD_PROJECT_VERSION})
 else()
-  set(NGSXFEM_VERSION "2.1.2303.dev0")
+  set(NGSXFEM_VERSION "2.1.2405.dev0")
   file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
 endif()
 
@@ -56,7 +56,7 @@ add_subdirectory(spacetime)
 
 install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
 
-# ngsolve_generate_stub_files(xfem)
+ngsolve_generate_stub_files(xfem)
 
 # uninstall target
 configure_file(
