@@ -155,6 +155,33 @@ namespace ngfem
 
     }
 
+    template <int D>
+    void SpaceTimeFE<D> :: CalcDDtShape (const IntegrationPoint & ip,
+                                     BareSliceVector<> ddshape) const
+
+    {
+        // matrix of derivatives:
+
+           Matrix<double> time_ddshape(tFE->GetNDof(),1);
+           IntegrationPoint z(override_time ? time : ip.Weight());
+
+           if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
+             throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+           
+           tFE->CalcDDShape(z,time_ddshape);
+
+           Vector<> space_shape(sFE->GetNDof());
+           sFE->CalcShape(ip,space_shape);
+
+           int ii = 0;
+           for(int j = 0; j < tFE->GetNDof(); j++) {
+              for(int i=0; i< sFE->GetNDof(); i++) {
+                 ddshape(ii++) = space_shape(i)*time_ddshape(j,0);
+              }
+           }
+
+    }
+
    void LagrangePolyHornerCalc::CalcNewtonBasisCoeffs() {
         NewtonBasisCoeffs.SetSize(nodes.Size(), nodes.Size());
         for(int i=0; i<nodes.Size(); i++){

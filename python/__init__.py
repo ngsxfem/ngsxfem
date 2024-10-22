@@ -135,6 +135,15 @@ Evaluates the time derivative (w.r.t. the reference time interval) of a Space-Ti
         return add
     raise Exception("cannot form dt")
 
+def ddtref(func):
+    """
+Evaluates the 2nd time derivative (w.r.t. the reference time interval) of a Space-Time function.
+    """
+    add = func.Operator("ddt")
+    if add:
+        return add
+    raise Exception("cannot form ddt")
+
 def dt(func):
     """
 Deprecated: use "dtref" instead
