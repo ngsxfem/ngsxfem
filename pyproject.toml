@@ -5,7 +5,7 @@ authors = [{name="Christoph Lehrenfeld", email= "lehrenfeld@math.uni-goettingen.
 description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM."
 urls = {github="https://github.com/ngsxfem/ngsxfem"}
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.8"
 #dependencies = [] # ngsolve will be added automatically
 classifiers = [
   "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
@@ -13,6 +13,8 @@ classifiers = [
 
 [build-system]
 requires = ["setuptools>=45", "setuptools_scm[toml]>=8", "toml", "scikit-build-core>=0.9.0", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2405"]
+
+
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
