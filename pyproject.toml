@@ -14,11 +14,11 @@ classifiers = [
 [build-system]
 requires = ["setuptools>=45", 
             "setuptools_scm[toml]>=8", 
-            "toml", 
             "scikit-build-core>=0.9.0", 
             "pybind11_stubgen", 
             "cmake>=3.26.1", 
             "ngsolve>=6.2.2405",
+            "toml;  python_version >= '3.11'", 
             "tomli>=1.1.0; python_version < '3.11'"
             ]
 
