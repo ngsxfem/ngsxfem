@@ -31,7 +31,7 @@ pip wheel -vvv .
 rm -rf _skbuild
 #auditwheel repair xfem*.whl
 #rm -f *.whl
-rename linux_ manylinux_2_28_x86_64.manylinux2014_ xfem*.whl
+rename linux_ manylinux_2_17_x86_64.manylinux2014_ xfem*.whl
 mv xfem*.whl wheelhouse/
 rm -rf *.whl
 
