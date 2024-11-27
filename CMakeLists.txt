@@ -62,10 +62,10 @@ add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 add_subdirectory(spacetime)
 
-ngsolve_generate_stub_files(xfem)
 
 install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
 
+ngsolve_generate_stub_files(xfem)
 
 # uninstall target
 configure_file(
