@@ -2000,17 +2000,21 @@ namespace ngfem
 			  for (auto proxy : test_proxies)
         {
 			  	HeapReset hr(lh);
-			  	FlatMatrix<SIMD<double>> proxyvalues(simd_mir.Size(), proxy->Dimension(), lh);
+			  	FlatMatrix<SIMD<double>> proxyvalues(proxy->Dimension(), simd_mir.Size(), lh);
 			  	for (int k = 0; k < proxy->Dimension(); k++)
 			  	{
 			  		ud.testfunction = proxy;
 			  		ud.test_comp = k;
-			  		cf -> Evaluate (simd_mir, val);
-			  		proxyvalues.Col(k) = val.Col(0);
+			  		cf -> Evaluate (simd_mir, proxyvalues.Rows(k,k+1));
 			  	}
   
-			  	for (int i = 0; i < simd_mir.Size(); i++)
-			  		proxyvalues.Row(i) *= simd_mir[i].GetMeasure()*simd_wei_arr[i];
+              
+          for (size_t i = 0; i < proxyvalues.Height(); i++)
+            {
+              auto row = proxyvalues.Row(i);
+              for (size_t j = 0; j < row.Size(); j++)
+                row(j) *= simd_mir[j].GetMeasure()*simd_wei_arr[j];
+            }  
   
 			  	proxy->Evaluator()->AddTrans(fel_test, simd_mir, proxyvalues, ely);
 			  }
