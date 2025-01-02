@@ -102,6 +102,7 @@ namespace ngfem
       trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
     for (auto proxy : test_proxies)
       test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+    if (trial_proxies.Size() == 0) trial_difforder = 0;
 
     int intorder = fel_trial.Order()+fel_test.Order();
 
@@ -1951,6 +1952,7 @@ namespace ngfem
       trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
     for (auto proxy : test_proxies)
       test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+    if (trial_proxies.Size() == 0) trial_difforder = 0;
 
     int intorder = fel_trial.Order()+fel_test.Order();
 
@@ -2086,6 +2088,7 @@ namespace ngfem
       trial_difforder = min(trial_difforder, proxy->Evaluator()->DiffOrder());
     for (auto proxy : test_proxies)
       test_difforder = min(test_difforder, proxy->Evaluator()->DiffOrder());
+    if (trial_proxies.Size() == 0) trial_difforder = 0;
 
     int intorder = fel_trial.Order()+fel_test.Order();
 
