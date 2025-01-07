@@ -44,9 +44,10 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     // needed to draw solution function
     Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+1>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+1>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+1>>>();
+        constexpr int SDIM1 = SDIM+1;
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM1>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM1>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM1>>>();
     });
     //if (ma->GetDimension() < 2)
     //    throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
