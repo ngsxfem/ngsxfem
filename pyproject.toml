@@ -48,7 +48,7 @@ testpaths = ["tests"]
 
 [tool.cibuildwheel]
 #build-verbosity = 1
-manylinux-x86_64-image = "manylinux_2_17"
+manylinux-x86_64-image = "manylinux_2_28"
 skip = """
   pp*
   *_i686
@@ -57,7 +57,7 @@ skip = """
 """
 
 [tool.cibuildwheel.linux]
-repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_17_x86_64.manylinux2014_x86_64 {dest_dir}/*-linux_x86_64*.whl"
+repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_28_x86_64.manylinux2014_x86_64 {dest_dir}/*-linux_x86_64*.whl"
 
 
 [tool.cibuildwheel.macos]
