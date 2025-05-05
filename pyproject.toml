@@ -17,7 +17,7 @@ requires = ["setuptools>=45",
             "scikit-build-core>=0.9.0", 
             "pybind11_stubgen", 
             "cmake>=3.26.1", 
-            "ngsolve>=6.2.2406",
+            "ngsolve>=6.2.2501",
             "toml;  python_version >= '3.11'", 
             "tomli>=1.1.0; python_version < '3.11'"
             ]
@@ -48,7 +48,7 @@ testpaths = ["tests"]
 
 [tool.cibuildwheel]
 #build-verbosity = 1
-manylinux-x86_64-image = "manylinux_2_28"
+manylinux-x86_64-image = "cerbsim/manylinux_2_28_x86_64_cuda_12.8"
 skip = """
   pp*
   *_i686
