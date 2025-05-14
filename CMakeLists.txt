@@ -36,7 +36,7 @@ include_directories ("${PROJECT_BINARY_DIR}")
 if(SKBUILD_PROJECT_VERSION)
   set(NGSXFEM_VERSION ${SKBUILD_PROJECT_VERSION})
 else()
-  set(NGSXFEM_VERSION "2.1.2405.dev0")
+  set(NGSXFEM_VERSION "2.1.2501.dev0")
   file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
 endif()
 
