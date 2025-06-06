@@ -15,7 +15,7 @@
 
 ### Documentation
 
-A *preliminary* collection of documentation (demos, tutorials, mini API) can be found [here](https://ngsuite.pages.gwdg.de/ngsxfem/).
+A *preliminary* collection of documentation (demos, tutorials, mini API) can be found [here](https://ngsuite.pages.gwdg.de/ngsxfem/) and is also part of the i-tutorials of NGSolve, see [here](https://docu.ngsolve.org/latest/i-tutorials/index.html#unfitted-finite-elements).
 A simple doxygen collection of `NGSolve`, `ngsxfem` and `ngstrefftz` C++ API can be found [here](https://ngsuite.pages.gwdg.de/ngs-doxygen/).
 
 # About `ngsxfem`
