@@ -38,6 +38,9 @@ namespace ngfem
       virtual void CalcDtShape (const IntegrationPoint & ip,
                                BareSliceVector<> dshape) const;
 
+      virtual void CalcDDtShape (const IntegrationPoint & ip,
+                               BareSliceVector<> dshape) const;
+
       virtual void CalcDShape (const IntegrationPoint & ip,
                                BareSliceMatrix<> dshape) const;
 

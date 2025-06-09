@@ -24,12 +24,12 @@ jobs:
           pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md        
           pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
       - name: Upload-features
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: doc-features
           path: doc/feature-details.pdf
       - name: Upload-features
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: doc-literature
           path: doc/literature.pdf

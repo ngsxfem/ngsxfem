@@ -38,12 +38,11 @@ ngsglobals.msg_level = 1
 # Space finite element order
 order = 2
 # Time finite element order
-k_t = 2
+k_t = order
 # Final simulation time
 tend = 0.5
 # Time step
 delta_t = 1 / 8
-#time_order = 2*k_t 
 time_order = 2*k_t 
 
 # ----------------------------------- MAIN ------------------------------------

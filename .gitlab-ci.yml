@@ -273,15 +273,15 @@ pages:
 
 pip_linux:
   #image: quay.io/pypa/manylinux2014_x86_64
-  image: sameli/manylinux2014_x86_64_cuda_11.7      
+  image: quay.io/pypa/manylinux_2_28_x86_64    
 
   stage: deploy
   script:
-    - ./.ci/build_pip.sh 38
     - ./.ci/build_pip.sh 39
     - ./.ci/build_pip.sh 310
     - ./.ci/build_pip.sh 311
     - ./.ci/build_pip.sh 312
+    - ./.ci/build_pip.sh 313
     - export PIP_BREAK_SYSTEM_PACKAGES=1
     - /opt/python/cp39-cp39/bin/pip install twine
     - /opt/python/cp39-cp39/bin/python -m twine upload --skip-existing wheelhouse/* -u __token__ -p $PYPI_UPLOAD_TOKEN

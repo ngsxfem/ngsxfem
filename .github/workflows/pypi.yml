@@ -12,6 +12,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    #container: python:3.12    
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
@@ -30,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19.0
+        uses: pypa/cibuildwheel@v2.21.2
 
       - uses: actions/upload-artifact@v4
         with:
@@ -40,6 +41,7 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v4
         with:

@@ -44,9 +44,10 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
     // needed to draw solution function
     Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM+1>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM+1>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM+1>>>();
+        constexpr int SDIM1 = SDIM+1;
+        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM1>>>();
+        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM1>>>();
+        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM1>>>();
     });
     //if (ma->GetDimension() < 2)
     //    throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
@@ -63,14 +64,16 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       Switch<2> (ma->GetDimension()-2, [&] (auto SDIM) {
         enum {SDIM2 = SDIM()+2}; // work around MSVC compile issue
         Switch<3> (dimension-1, [&] (auto DIM) {
-          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM2,DIM()+1>>>());
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM2,DIM()+1,1>>>());
+          additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDtVec<SDIM2,DIM()+1,2>>>());
           additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM()+1>>> ());
         });
       });
     }
     else
       Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
-        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1>>>());
+        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,1>>>());
+        additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
         additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
         additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
         additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());

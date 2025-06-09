@@ -50,7 +50,7 @@ Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an
 | `Tet`: trigs./tets | y | y | y | y | y | y | y | y | / | / | y |
 | `MPI`: MPI | y | y | n | y | y | y | n | n | y | y | / |
 
-Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do. 
+Some of the *no*s are work in progress and some have not been considered so far. If you need a certain combination to work, please contact us and we will see what we can do (`MPI` for `Gh` is planned for the not so far future).
 
 # Examples and Documentation
 

@@ -8,12 +8,20 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Download ngsolve_addon.cmake from template project
-set(ngsolve_addon_version bbfb9648f2ff7a952a3a8edca58f460c198ca462)
-set(ngsolve_addon_md5 d1b208d6aa63edce64a264e5e0370d3a)
-file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
+# set(ngsolve_addon_version bbfb9648f2ff7a952a3a8edca58f460c198ca462)
+# set(ngsolve_addon_md5 d1b208d6aa63edce64a264e5e0370d3a)
+# file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
+#   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
+#   EXPECTED_MD5 ${ngsolve_addon_md5}
+# )
+
+set(ngsolve_addon_version 913da7921b1a1371e5b9071055efa803a0ae4567)
+set(ngsolve_addon_md5 c2c300dbf360b0018ec027fd3e659475)
+file(DOWNLOAD https://raw.githubusercontent.com/johann-cm/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
   EXPECTED_MD5 ${ngsolve_addon_md5}
 )
+
 include(ngsolve_addon.cmake)
 
 set(SPACETIME_SANITY_CHECKS ON CACHE BOOL "use space-time sanity checks (abuses ngsolve's intrule nr)")
@@ -28,7 +36,7 @@ include_directories ("${PROJECT_BINARY_DIR}")
 if(SKBUILD_PROJECT_VERSION)
   set(NGSXFEM_VERSION ${SKBUILD_PROJECT_VERSION})
 else()
-  set(NGSXFEM_VERSION "2.1.2303.dev0")
+  set(NGSXFEM_VERSION "2.1.2501.dev0")
   file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
 endif()
 
@@ -53,6 +61,7 @@ add_subdirectory(demos)
 add_subdirectory(lsetcurving)
 add_subdirectory(tests)
 add_subdirectory(spacetime)
+
 
 install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
 

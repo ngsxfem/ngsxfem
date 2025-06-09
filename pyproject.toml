@@ -5,14 +5,24 @@ authors = [{name="Christoph Lehrenfeld", email= "lehrenfeld@math.uni-goettingen.
 description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM."
 urls = {github="https://github.com/ngsxfem/ngsxfem"}
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 #dependencies = [] # ngsolve will be added automatically
 classifiers = [
   "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
 ]
 
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm>=8", "scikit-build-core>=0.3.3", "pybind11_stubgen", "cmake>=3.26.1", "ngsolve>=6.2.2404.post2"]
+requires = ["setuptools>=45", 
+            "setuptools_scm[toml]>=8", 
+            "scikit-build-core>=0.9.0", 
+            "pybind11_stubgen", 
+            "cmake>=3.26.1", 
+            "ngsolve>=6.2.2501",
+            "toml;  python_version >= '3.11'", 
+            "tomli>=1.1.0; python_version < '3.11'"
+            ]
+
+
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
@@ -38,6 +48,7 @@ testpaths = ["tests"]
 
 [tool.cibuildwheel]
 #build-verbosity = 1
+manylinux-x86_64-image = "cerbsim/manylinux_2_28_x86_64_cuda_12.8"
 skip = """
   pp*
   *_i686
@@ -46,7 +57,7 @@ skip = """
 """
 
 [tool.cibuildwheel.linux]
-repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_17_x86_64.manylinux2014_x86_64 {dest_dir}/*-linux_x86_64*.whl"
+repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_28_x86_64.manylinux2014_x86_64 {dest_dir}/*-linux_x86_64*.whl"
 
 
 [tool.cibuildwheel.macos]

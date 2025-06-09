@@ -32,7 +32,7 @@ RUN apt-get install -y python3.12-venv python3.12-dev cmake
 RUN apt-get update
 RUN ln -s /usr/bin/python3.12 /usr/bin/python3
 
-ARG NGS_VERSION=6.2.2402
+ARG NGS_VERSION=6.2.2406
 # ARG XFEM_VERSION=v2.1.2303
 
 # install pip-packages in a virtual environment and set PYTHONPATH to the according venv-directory

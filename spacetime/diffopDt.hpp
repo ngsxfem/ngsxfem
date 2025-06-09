@@ -7,8 +7,8 @@
 namespace ngfem
 {
 
-template<int SpaceD>
-  class DiffOpDt : public DiffOp<DiffOpDt<SpaceD>>
+template<int SpaceD, int DerivOrder>
+  class DiffOpDt : public DiffOp<DiffOpDt<SpaceD, DerivOrder>>
   {
 
   public:
@@ -23,8 +23,8 @@ template<int SpaceD>
                                 MAT & mat, LocalHeap & lh);
   };
 
-  template <int SpaceD, int D>
-  class DiffOpDtVec : public DiffOp<DiffOpDtVec<SpaceD, D>>
+  template <int SpaceD, int D, int DerivOrder>
+  class DiffOpDtVec : public DiffOp<DiffOpDtVec<SpaceD, D, DerivOrder>>
   {
 
   public:
@@ -105,20 +105,40 @@ template<int SpaceD>
 
 
 #ifndef FILE_DIFFOPDT_CPP
-  extern template class T_DifferentialOperator<DiffOpDt<1>>;
-  extern template class T_DifferentialOperator<DiffOpDt<2>>;
-  extern template class T_DifferentialOperator<DiffOpDt<3>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<0, 1>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<0, 2>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<0, 3>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<1, 1>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<1, 2>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<2, 1>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<2, 2>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<2, 3>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<3, 1>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<3, 2>>;
-  extern template class T_DifferentialOperator<DiffOpDtVec<3, 3>>;
+  extern template class T_DifferentialOperator<DiffOpDt<1,1>>;
+  extern template class T_DifferentialOperator<DiffOpDt<2,1>>;
+  extern template class T_DifferentialOperator<DiffOpDt<3,1>>;
+  extern template class T_DifferentialOperator<DiffOpDt<1,1>>;
+  extern template class T_DifferentialOperator<DiffOpDt<2,1>>;
+  extern template class T_DifferentialOperator<DiffOpDt<3,1>>;
+  extern template class T_DifferentialOperator<DiffOpDt<1,2>>;
+  extern template class T_DifferentialOperator<DiffOpDt<2,2>>;
+  extern template class T_DifferentialOperator<DiffOpDt<3,2>>;
+  extern template class T_DifferentialOperator<DiffOpDt<1,2>>;
+  extern template class T_DifferentialOperator<DiffOpDt<2,2>>;
+  extern template class T_DifferentialOperator<DiffOpDt<3,2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 1, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 2, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 3, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<1, 1, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<1, 2, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<2, 1, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<2, 2, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<2, 3, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<3, 1, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<3, 2, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<3, 3, 1>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 1, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 2, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<0, 3, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<1, 1, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<1, 2, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<2, 1, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<2, 2, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<2, 3, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<3, 1, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<3, 2, 2>>;
+  extern template class T_DifferentialOperator<DiffOpDtVec<3, 3, 2>>;
   extern template class T_DifferentialOperator<DiffOpFixt<1, 0>>;
   extern template class T_DifferentialOperator<DiffOpFixt<1, 1>>;
   extern template class T_DifferentialOperator<DiffOpFixt<2, 0>>;

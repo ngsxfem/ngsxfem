@@ -5,6 +5,11 @@
 ###############################################################################
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Set default build type to RelWithDebInfo
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type" FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
 # Find NGSolve and Netgen using python
 if(CMAKE_VERSION VERSION_LESS "3.18")
   find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
@@ -24,6 +29,7 @@ find_package(NGSolve CONFIG REQUIRED)
 macro(add_ngsolve_addon module_name)
   # Create the module
   add_library(${module_name} SHARED ${ARGN})
+  target_include_directories(${module_name} BEFORE PRIVATE $<TARGET_PROPERTY:ngsolve,INTERFACE_INCLUDE_DIRECTORIES>)
   target_link_libraries(${module_name} PUBLIC ngsolve Python3::Module)
   set_target_properties(${module_name} PROPERTIES PREFIX "" CXX_STANDARD 17)
 
@@ -89,9 +95,16 @@ endif()
 macro(ngsolve_generate_stub_files module_name)
   set(stubgen_generation_code "execute_process(WORKING_DIRECTORY ${stubgen_working_dir} COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen --ignore-all-errors -o ${CMAKE_CURRENT_BINARY_DIR}/stubs ${module_name})")
   set(stubgen_directory "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}/")
+  set(stubgen_file "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}.pyi")
 
   install(CODE ${stubgen_generation_code})
-  install(DIRECTORY ${stubgen_directory} DESTINATION ${ADDON_INSTALL_DIR_PYTHON}/${module_name})
+  if(IS_READABLE ${stubgen_file})
+    install(FILES ${stubgen_file} DESTINATION ${ADDON_INSTALL_DIR_PYTHON}/${module_name})
+  elseif(IS_DIRECTORY ${stubgen_directory})
+    install(DIRECTORY ${stubgen_directory} DESTINATION ${ADDON_INSTALL_DIR_PYTHON}/${module_name})
+  else()
+    message(WARNING "Unable to locate and install stub files.")
+  endif()
 endmacro()
 
 message(STATUS "Install dir: ${CMAKE_INSTALL_PREFIX}")
