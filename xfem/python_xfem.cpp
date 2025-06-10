@@ -899,12 +899,14 @@ elnr : int
             bfi  = make_shared<SymbolicCutBilinearFormIntegrator> (*lsetintdom, cf, vb, element_vb);
           }
           else
-          {
-            if (lsetintdom->GetTimeIntegrationOrder() >= 0)
-              throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for time_order >= 0..");
-            if (vb == BND)
-              throw Exception("Symbolic cuts on facets and boundary not yet (implemented/tested) for boundaries..");
-            bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf);
+          {		 
+	    if (vb == BND) {
+	      cout << "Warning: Symbolic cuts on boundary facets are an experimental feature for now (not fully tested ..)." << endl;
+	      bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf, vb);
+	    }
+	    else {
+	      bfi = make_shared<SymbolicCutFacetBilinearFormIntegrator> (*lsetintdom, cf,vb);
+	    }
           }
 
           if (!definedon.is_none() )

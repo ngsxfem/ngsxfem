@@ -30,7 +30,6 @@ namespace ngfem
     void SpaceTimeFE<D> :: CalcShape (const IntegrationPoint & ip,
                                     BareSliceVector<> shape) const
     {
-
        if (tFE->Order() == 0)
           sFE->CalcShape(ip,shape);
        else
@@ -378,6 +377,7 @@ namespace ngfem
       }
 
   
+      template class SpaceTimeFE<0>;
       template class SpaceTimeFE<1>;
       template class SpaceTimeFE<2>;
       template class SpaceTimeFE<3>;
