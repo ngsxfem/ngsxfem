@@ -243,9 +243,11 @@ def test_st2d1_drag_lift():
     with TaskManager():
         a_test.Assemble()
 
+    res = gfu.vec.CreateVector()
+    res.data = a_test.mat * gfu.vec
     Um = 2 * 0.3 / 3
-    C_drag = -2.0 / (0.1 * Um**2) * a_test(gfu, drag_x_test)
-    C_lift = -2.0 / (0.1 * Um**2) * a_test(gfu, drag_y_test)
+    C_drag = -2.0 / (0.1 * Um**2) * InnerProduct(res, drag_x_test.vec)
+    C_lift = -2.0 / (0.1 * Um**2) * InnerProduct(res, drag_y_test.vec)
     pdiff = pre(0.15, 0.2) - pre(0.25, 0.2)
 
     err_drag = abs(C_drag - 5.57953523384)

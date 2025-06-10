@@ -853,6 +853,7 @@ def test_spacetime_area_of_a_hypersphere(structured):
     print("Average: ", avg)
     assert avg > 1.9
 
+@pytest.mark.skip(reason="function is tested in test_utils")
 def test_spacetime_spaceP4_timeDGP4():
     ngsglobals.msg_level = 1
 
