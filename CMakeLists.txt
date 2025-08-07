@@ -15,8 +15,8 @@ endif()
 #   EXPECTED_MD5 ${ngsolve_addon_md5}
 # )
 
-set(ngsolve_addon_version 913da7921b1a1371e5b9071055efa803a0ae4567)
-set(ngsolve_addon_md5 c2c300dbf360b0018ec027fd3e659475)
+set(ngsolve_addon_version 82faa8d89925b9b52cf5a536ffe2fd70bb9bfd05)
+set(ngsolve_addon_md5 a6b581d665d61438e30af1c07effa36d)
 file(DOWNLOAD https://raw.githubusercontent.com/johann-cm/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
   EXPECTED_MD5 ${ngsolve_addon_md5}
@@ -65,7 +65,7 @@ add_subdirectory(spacetime)
 
 install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
 
-# ngsolve_generate_stub_files(xfem)
+ngsolve_generate_stub_files(xfem)
 
 # uninstall target
 configure_file(

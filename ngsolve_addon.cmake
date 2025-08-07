@@ -96,15 +96,13 @@ macro(ngsolve_generate_stub_files module_name)
   set(stubgen_generation_code "execute_process(WORKING_DIRECTORY ${stubgen_working_dir} COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen --ignore-all-errors -o ${CMAKE_CURRENT_BINARY_DIR}/stubs ${module_name})")
   set(stubgen_directory "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}/")
   set(stubgen_file "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}.pyi")
+  set(stubgen_install_destination ${ADDON_INSTALL_DIR_PYTHON}/${module_name}/)
 
   install(CODE ${stubgen_generation_code})
-  if(IS_READABLE ${stubgen_file})
-    install(FILES ${stubgen_file} DESTINATION ${ADDON_INSTALL_DIR_PYTHON}/${module_name})
-  elseif(IS_DIRECTORY ${stubgen_directory})
-    install(DIRECTORY ${stubgen_directory} DESTINATION ${ADDON_INSTALL_DIR_PYTHON}/${module_name})
-  else()
-    message(WARNING "Unable to locate and install stub files.")
-  endif()
+
+  # sometimes, stubgen will only generate one file, and sometimes a whole folder. Try both.
+  install(FILES ${stubgen_file} DESTINATION ${stubgen_install_destination} OPTIONAL)
+  install(DIRECTORY ${stubgen_directory} DESTINATION ${stubgen_install_destination} OPTIONAL)
 endmacro()
 
 message(STATUS "Install dir: ${CMAKE_INSTALL_PREFIX}")
