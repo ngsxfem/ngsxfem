@@ -49,7 +49,7 @@ build-on-pip-ngs:
   script:
     - apt-get update
     - apt-get install -y cmake git
-    - pip3 install ngsolve
+    - pip3 install ngsolve numpy
     - python3 -c "import ngsolve; print(ngsolve.__version__)"
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
     - mkdir build
