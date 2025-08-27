@@ -1,5 +1,5 @@
 """
-Heat equation (fitted) with nonhomogeneous Dirichlet b.c. solved with a 
+Heat equation (fitted) with nonhomogeneous Dirichlet b.c. solved with a
 DG-in-time space-time finite element discretisation
 
 Domain:
@@ -73,7 +73,8 @@ dxt = delta_t * dxtref(mesh, time_order=time_order)
 dxold = dmesh(mesh, tref=0)
 dxnew = dmesh(mesh, tref=1)
 # for Nitsche terms:
-dst = delta_t * dxtref(mesh, time_order=time_order,skeleton=True, vb=BND)
+dst = delta_t * dxtref(mesh, time_order=time_order, skeleton=True, vb=BND)
+
 
 def dt(u):
     return 1.0 / delta_t * dtref(u)
