@@ -14,21 +14,20 @@ using namespace ngcomp;
 
 void ExportNgsx_lsetcurving(py::module &m)
 {
-  typedef shared_ptr<FESpace> PyFES;
-  typedef shared_ptr<CoefficientFunction> PyCF;
+  typedef FESpace FES;
+  typedef CoefficientFunction CF;
   typedef GridFunction GF;
-  typedef shared_ptr<GF> PyGF;
-  typedef shared_ptr<BitArray> PyBA;
+  typedef BitArray BA;
 
 
-  m.def("ProjectShift",  [] (PyGF lset_ho, PyGF lset_p1, PyGF deform, PyCF qn,
+  m.def("ProjectShift",  [] (shared_ptr<GF> lset_ho, shared_ptr<GF> lset_p1, shared_ptr<GF> deform, shared_ptr<CF> qn,
                              py::object active_elems_in,
-                             PyCF blending,
+                             shared_ptr<CF> blending,
                              double lower, double upper, double threshold, int heapsize)
         {
           shared_ptr<BitArray> active_elems = nullptr;
-          if ((!active_elems_in.is_none()) && py::extract<PyBA> (active_elems_in).check())
-            active_elems = py::extract<PyBA>(active_elems_in)();
+          if ((!active_elems_in.is_none()) && py::extract<shared_ptr<BA>> (active_elems_in).check())
+            active_elems = py::extract<shared_ptr<BA>>(active_elems_in)();
           LocalHeap lh (heapsize, "ProjectShift-Heap");
           ProjectShift(lset_ho, lset_p1, deform, qn, active_elems, blending, lower, upper, threshold, lh);
         } ,
@@ -113,7 +112,7 @@ heapsize : int
 // ProjectShift
 
 
-  m.def("RefineAtLevelSet",  [] (PyGF lset_p1, double lower, double upper, int heapsize)
+  m.def("RefineAtLevelSet",  [] (shared_ptr<GF> lset_p1, double lower, double upper, int heapsize)
         {
           LocalHeap lh (heapsize, "RefineAtLevelSet-Heap");
           RefineAtLevelSet(lset_p1, lower, upper, lh);
@@ -138,17 +137,17 @@ heapsize : int
   heapsize of local computations.
 )raw_string"));
 
-  m.def("shifted_eval", [](PyGF self,
+  m.def("shifted_eval", [](shared_ptr<GF> self,
                            py::object back_in,
                            py::object forth_in)
-        -> PyCF
+        -> shared_ptr<CF>
         {
-          PyGF back = nullptr;
-          if ((!back_in.is_none()) && py::extract<PyGF> (back_in).check())
-            back = py::extract<PyGF>(back_in)();
-          PyGF forth = nullptr;
-          if ((!forth_in.is_none()) && py::extract<PyGF> (forth_in).check())
-            forth = py::extract<PyGF>(forth_in)();
+          shared_ptr<GF> back = nullptr;
+          if ((!back_in.is_none()) && py::extract<shared_ptr<GF>> (back_in).check())
+            back = py::extract<shared_ptr<GF>>(back_in)();
+          shared_ptr<GF> forth = nullptr;
+          if ((!forth_in.is_none()) && py::extract<shared_ptr<GF>> (forth_in).check())
+            forth = py::extract<shared_ptr<GF>>(forth_in)();
 
           shared_ptr<DifferentialOperator> diffop  = nullptr;
 
@@ -156,7 +155,7 @@ heapsize : int
               diffop = make_shared<DiffOpShiftedEval<SDIM+1>> (back,forth, self->GetFESpace()->GetEvaluator(VOL));
           });
 
-          return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
+          return shared_ptr<CF>(make_shared<GridFunctionCoefficientFunction> (self, diffop, self->GetFESpace()->GetEvaluator(BND), self->GetFESpace()->GetEvaluator(BBND)));
         },
         py::arg("gf"),
         py::arg("back")=py::none(),

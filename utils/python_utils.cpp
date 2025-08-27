@@ -15,7 +15,7 @@
 GlobalNgsxfemVariables globxvar;
 
 using namespace ngcomp;
-typedef shared_ptr<BitArray> PyBA;
+typedef BitArray BA;
 
  auto rblf_string_T = docu_string(R"raw_string(
 A restricted bilinear form is a bilinear form with a reduced MatrixGraph
@@ -76,11 +76,11 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
     shared_ptr<BitArray> el_restriction = nullptr;
     shared_ptr<BitArray> fac_restriction = nullptr;
 
-    if ((!ael_restriction.is_none()) && py::extract<PyBA> (ael_restriction).check())
-      el_restriction = py::extract<PyBA>(ael_restriction)();
+    if ((!ael_restriction.is_none()) && py::extract<shared_ptr<BA>> (ael_restriction).check())
+      el_restriction = py::extract<shared_ptr<BA>>(ael_restriction)();
 
-    if ((!afac_restriction.is_none()) && py::extract<PyBA> (afac_restriction).check())
-      fac_restriction = py::extract<PyBA>(afac_restriction)();
+    if ((!afac_restriction.is_none()) && py::extract<shared_ptr<BA>> (afac_restriction).check())
+      fac_restriction = py::extract<shared_ptr<BA>>(afac_restriction)();
 
     auto biform = make_shared<Rbfi_TT> (fes, aname, el_restriction, fac_restriction, flags);
     return biform;
@@ -100,11 +100,11 @@ rblf_T.def(py::init([](shared_ptr<FESpace> fes,
    auto flags = CreateFlagsFromKwArgs(kwargs);
    shared_ptr<BitArray> el_restriction = nullptr;
    shared_ptr<BitArray> fac_restriction = nullptr;
-   if ((!ael_restriction.is_none()) && py::extract<PyBA> (ael_restriction).check())
-     el_restriction = py::extract<PyBA>(ael_restriction)();
+   if ((!ael_restriction.is_none()) && py::extract<shared_ptr<BA>> (ael_restriction).check())
+     el_restriction = py::extract<shared_ptr<BA>>(ael_restriction)();
 
-   if ((!afac_restriction.is_none()) && py::extract<PyBA> (afac_restriction).check())
-     fac_restriction = py::extract<PyBA>(afac_restriction)();
+   if ((!afac_restriction.is_none()) && py::extract<shared_ptr<BA>> (afac_restriction).check())
+     fac_restriction = py::extract<shared_ptr<BA>>(afac_restriction)();
 
    auto biform = make_shared<Rbfi_TT> (fes1, fes2, aname, el_restriction, fac_restriction, flags);
    return biform;
@@ -127,11 +127,10 @@ rblf_string_T)
 
 void ExportNgsx_utils(py::module &m)
 {
-  typedef shared_ptr<CoefficientFunction> PyCF;
+  typedef CoefficientFunction CF;
   typedef GridFunction GF;
-  typedef shared_ptr<GF> PyGF;
 
-  m.def("InterpolateToP1",  [] (PyGF gf_ho, PyGF gf_p1, double eps_perturbation, int heapsize)
+  m.def("InterpolateToP1",  [] (shared_ptr<GF> gf_ho, shared_ptr<GF> gf_p1, double eps_perturbation, int heapsize)
         {
           InterpolateP1 interpol(gf_ho, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
@@ -163,7 +162,7 @@ heapsize : int
     )
     ;
 
-  m.def("InterpolateToP1",  [] (PyCF coef, PyGF gf_p1, double eps_perturbation, int heapsize)
+  m.def("InterpolateToP1",  [] (shared_ptr<CF> coef, shared_ptr<GF> gf_p1, double eps_perturbation, int heapsize)
         {
           InterpolateP1 interpol(coef, gf_p1);
           LocalHeap lh (heapsize, "InterpolateP1-Heap");
@@ -204,7 +203,7 @@ heapsize : int
           size_t cnt = 0;
           for( auto aba : balist )
           {
-            shared_ptr<BitArray> ba = py::extract<PyBA>(aba)();
+            shared_ptr<BitArray> ba = py::extract<shared_ptr<BA>>(aba)();
             cnt += ba->Size();
           }
           shared_ptr<BitArray> res = make_shared<BitArray>(cnt);
@@ -212,7 +211,7 @@ heapsize : int
           size_t offset = 0;
           for( auto aba : balist )
           {
-            shared_ptr<BitArray> ba = py::extract<PyBA>(aba)();
+            shared_ptr<BitArray> ba = py::extract<shared_ptr<BA>>(aba)();
             for (size_t i = 0; i < ba->Size(); ++i)
             {
               if (ba->Test(i))
@@ -286,8 +285,7 @@ eps_spacetime_fes_node : double
   
   m.attr("ngsxfemglobals") = py::cast(&globxvar);
 
-  typedef shared_ptr<BitArrayCoefficientFunction> PyBACF;
-  py::class_<BitArrayCoefficientFunction, PyBACF, CoefficientFunction>
+  py::class_<BitArrayCoefficientFunction, shared_ptr<BitArrayCoefficientFunction>, CoefficientFunction>
     (m, "BitArrayCF",
         docu_string(R"raw_string(
 CoefficientFunction that evaluates a BitArray. On elements with an index i where the BitArray
@@ -361,8 +359,7 @@ active_els : BitArray or None
 
 
 
-  typedef shared_ptr<P1Prolongation> PyP1P;
-  py::class_<P1Prolongation, PyP1P, Prolongation>
+  py::class_<P1Prolongation, shared_ptr<P1Prolongation>, Prolongation>
     (m, "P1Prolongation",
         docu_string(R"raw_string(
 Prolongation for P1-type spaces (with possibly inactive dofs) --- 
@@ -384,8 +381,7 @@ for prototype and testing...
          py::arg("space")
       );
 
-      typedef shared_ptr<P2Prolongation> PyP2P;
-  py::class_<P2Prolongation, PyP2P, Prolongation>
+  py::class_<P2Prolongation, shared_ptr<P2Prolongation>, Prolongation>
     (m, "P2Prolongation",
         docu_string(R"raw_string(
 Prolongation for P2 spaces (with possibly inactive dofs) --- 
@@ -408,8 +404,7 @@ for prototype and testing...
       );
 
 
-      typedef shared_ptr<P2CutProlongation> PyP2CutP;
-  py::class_<P2CutProlongation, PyP2CutP, Prolongation>
+  py::class_<P2CutProlongation, shared_ptr<P2CutProlongation>, Prolongation>
     (m, "P2CutProlongation",
         docu_string(R"raw_string(
 Prolongation for P2 spaces (with possibly inactive dofs) --- 
@@ -431,8 +426,7 @@ for prototype and testing...
          py::arg("space")
       );
 
-    typedef shared_ptr<CompoundProlongation> PyCProl;
-    py::class_< CompoundProlongation, PyCProl, Prolongation>
+    py::class_< CompoundProlongation, shared_ptr<CompoundProlongation>, Prolongation>
     ( m, "CompoundProlongation", 
      docu_string(R"raw_string(prolongation for compound spaces)raw_string"))
      .def("__init__",

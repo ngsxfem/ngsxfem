@@ -15,19 +15,14 @@ void ExportNgsx_xfem(py::module &m)
 {
 
 
-  typedef shared_ptr<CoefficientFunction> PyCF;
-  typedef shared_ptr<FESpace> PyFES;
-  typedef shared_ptr<SFESpace> PySFES;
-
+  typedef CoefficientFunction CF;
+  typedef FESpace FES;
   typedef GridFunction GF;
-  typedef shared_ptr<GF> PyGF;
-  typedef shared_ptr<CutInformation> PyCI;
-  typedef shared_ptr<MultiLevelsetCutInformation> PyMLCI;
-  typedef shared_ptr<BitArray> PyBA;
+  typedef BitArray BA;
   
   
-  m.def("SFESpace", [](shared_ptr<MeshAccess> ma, PyCF lset, int order, py::dict bpflags)
-        -> PyFES
+  m.def("SFESpace", [](shared_ptr<MeshAccess> ma, shared_ptr<CF> lset, int order, py::dict bpflags)
+        -> shared_ptr<FES>
         {
           Flags flags = py::extract<Flags> (bpflags)();
           shared_ptr<FESpace> ret = make_shared<SFESpace> (ma, lset, order, flags);
@@ -41,9 +36,7 @@ This is a special finite elemetn space which is a 1D polynomial along the zero l
 approximated level set function lset and constantly extended in normal directions to this.
 )raw_string"));
 
-  typedef shared_ptr<XFESpace> PyXFES;
-
-  m.def("XToNegPos",  [] (PyGF gfx, PyGF gfnegpos) {
+  m.def("XToNegPos",  [] (shared_ptr<GF> gfx, shared_ptr<GF> gfnegpos) {
       XFESpace::XToNegPos(gfx,gfnegpos);
     }, docu_string(R"raw_string(
 Takes a GridFunction of an extended FESpace, i.e. a compound space of V and VX = XFESpace(V) and
@@ -66,9 +59,9 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
                           int heapsize)
          {
            new (instance) CutInformation (ma);
-           if ((!lset.is_none()) && py::extract<PyCF> (lset).check())
+           if ((!lset.is_none()) && py::extract<shared_ptr<CF>> (lset).check())
            {
-             PyCF cflset = py::extract<PyCF>(lset)();
+             shared_ptr<CF> cflset = py::extract<shared_ptr<CF>>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
              instance->Update(cflset, subdivlvl, time_order, lh);
            }
@@ -93,7 +86,7 @@ time_order : int
 )raw_string")
       )
     .def("Update", [](CutInformation & self,
-                      PyCF lset,
+                      shared_ptr<CF> lset,
                       int subdivlvl,
                       int time_order,
                       int heapsize)
@@ -221,11 +214,11 @@ ElementAggregation does the following:
                           )
          {
            auto self = new (instance) ElementAggregation (ma);
-           PyBA root = nullptr, bad= nullptr;
-           if (!proot.is_none() && py::extract<PyBA> (proot).check())
-             root = py::extract<PyBA>(proot)();
-           if (!pbad.is_none() && py::extract<PyBA> (pbad).check())
-             bad = py::extract<PyBA>(pbad)();
+           shared_ptr<BA> root = nullptr, bad= nullptr;
+           if (!proot.is_none() && py::extract<shared_ptr<BA>> (proot).check())
+             root = py::extract<shared_ptr<BA>>(proot)();
+           if (!pbad.is_none() && py::extract<shared_ptr<BA>> (pbad).check())
+             bad = py::extract<shared_ptr<BA>>(pbad)();
 
            if (root && bad)
            {
@@ -242,8 +235,8 @@ Creates a ElementAggregation based on a mesh, a list of root and a list of bad e
 )raw_string")
       )
         .def("Update", [](ElementAggregation & self,
-                          PyBA root, 
-                          PyBA bad,
+                          shared_ptr<BA> root, 
+                          shared_ptr<BA> bad,
                           int heapsize)
          {
            LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
@@ -361,8 +354,8 @@ bf : ngsolve.SumOfIntegrals
         {
           LocalHeap lh (heapsize, "FacetsWithNeighborTypes-heap", true);
           shared_ptr<BitArray> b = nullptr;
-          if ((!bb.is_none()) && py::extract<PyBA> (bb).check())
-            b = py::extract<PyBA>(bb)();
+          if ((!bb.is_none()) && py::extract<shared_ptr<BA>> (bb).check())
+            b = py::extract<shared_ptr<BA>>(bb)();
           else
             b = a;
           return GetFacetsWithNeighborTypes(ma,a,b,bv_a,bv_b,use_and,lh);
@@ -453,8 +446,8 @@ heapsize : int
       py::arg("heapsize") = 1000000);
 
   m.def("GetDofsOfElements",
-        [] (PyFES fes,
-            PyBA a,
+        [] (shared_ptr<FES> fes,
+            shared_ptr<BA> a,
             int heapsize)
         {
           LocalHeap lh (heapsize, "GetDofsOfElements-heap", true);
@@ -484,8 +477,8 @@ heapsize : int
     );
 
   m.def("GetDofsOfFacets",
-        [] (PyFES fes,
-            PyBA a,
+        [] (shared_ptr<FES> fes,
+            shared_ptr<BA> a,
             int heapsize)
         {
           LocalHeap lh (heapsize, "GetDofsOfFacets-heap", true);
@@ -732,7 +725,7 @@ heapsize : int = 1000000
 
 //   .def("__init__",  [] (XFESpace *instance,
   m.def("XFESpace", [] (
-          PyFES basefes,
+          shared_ptr<FES> basefes,
           py::object acutinfo,
           py::object alset,
           py::dict bpflags,
@@ -740,12 +733,12 @@ heapsize : int = 1000000
         {
           shared_ptr<CoefficientFunction> cf_lset = nullptr;
           shared_ptr<CutInformation> cutinfo = nullptr;
-          if ((!acutinfo.is_none()) && py::extract<PyCI> (acutinfo).check())
-            cutinfo = py::extract<PyCI>(acutinfo)();
-          if ((!acutinfo.is_none()) && py::extract<PyCF> (acutinfo).check())
-            cf_lset = py::extract<PyCF>(acutinfo)();
-          if ((!alset.is_none()) && py::extract<PyCF> (alset).check())
-            cf_lset = py::extract<PyCF>(alset)();
+          if ((!acutinfo.is_none()) && py::extract<shared_ptr<CutInformation>> (acutinfo).check())
+            cutinfo = py::extract<shared_ptr<CutInformation>>(acutinfo)();
+          if ((!acutinfo.is_none()) && py::extract<shared_ptr<CF>> (acutinfo).check())
+            cf_lset = py::extract<shared_ptr<CF>>(acutinfo)();
+          if ((!alset.is_none()) && py::extract<shared_ptr<CF>> (alset).check())
+            cf_lset = py::extract<shared_ptr<CF>>(alset)();
 
 
           Flags flags = py::extract<Flags> (bpflags)();
@@ -808,7 +801,7 @@ heapsize : int
 )raw_string"));
          
 
-  py::class_<XFESpace, PyXFES, FESpace>
+  py::class_<XFESpace, shared_ptr<XFESpace>, FESpace>
     (m, "CXFESpace",docu_string(R"raw_string(
 XFESpace-class [For documentation of the XFESpace-constructor see help(XFESpace)]:
 
@@ -819,12 +812,12 @@ and assigns to them a sign (NEG/POS). One of the differential operators neg(...)
 evaluates like the basis function of the origin space, the other one as zero for every basis
 function. Away from cut elements no basis function is supported.
 )raw_string"))
-    .def("GetCutInfo", [](PyXFES self)
+    .def("GetCutInfo", [](shared_ptr<XFESpace> self)
          {
            return self->GetCutInfo();
          },
          "Get Information of cut geometry")
-    .def("BaseDofOfXDof", [](PyXFES self, int i)
+    .def("BaseDofOfXDof", [](shared_ptr<XFESpace> self, int i)
          {
            return self->GetBaseDofOfXDof(i);
          },docu_string(R"raw_string(
@@ -835,7 +828,7 @@ Parameters
 i : int
   degree of freedom 
 )raw_string"))
-    .def("GetDomainOfDof", [](PyXFES self, int i)
+    .def("GetDomainOfDof", [](shared_ptr<XFESpace> self, int i)
          {
            return self->GetDomainOfDof(i);
          },docu_string(R"raw_string(
@@ -846,7 +839,7 @@ Parameters
 i : int
   degree of freedom 
 )raw_string"))
-    .def("GetDomainNrs",   [] (PyXFES self, int elnr) {
+    .def("GetDomainNrs",   [] (shared_ptr<XFESpace> self, int elnr) {
         Array<DOMAIN_TYPE> domnums;
         self->GetDomainNrs( elnr, domnums );
         return domnums;
@@ -860,18 +853,15 @@ elnr : int
 )raw_string"))
     ;
 
-  typedef shared_ptr<BilinearFormIntegrator> PyBFI;
-  typedef shared_ptr<LinearFormIntegrator> PyLFI;
-
   m.def("SymbolicCutBFI", [](py::dict lsetdom,
-                             PyCF cf,
+                             shared_ptr<CF> cf,
                              VorB vb,
                              bool element_boundary,
                              bool skeleton,
                              py::object definedon,
                              py::object definedonelem,
                              py::object deformation)
-        -> PyBFI
+        -> shared_ptr<BilinearFormIntegrator>
         {
           py::extract<Region> defon_region(definedon);
           if ((!definedon.is_none() ) && defon_region.check())
@@ -922,12 +912,12 @@ elnr : int
           }
 
           if (! definedonelem.is_none() )
-            bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
+            bfi -> SetDefinedOnElements (py::extract<shared_ptr<BA>>(definedonelem)());
 
           if (! deformation.is_none() )
-            bfi->SetDeformation(py::extract<PyGF>(deformation)());
+            bfi->SetDeformation(py::extract<shared_ptr<GF>>(deformation)());
 
-          return PyBFI(bfi);
+          return shared_ptr<BilinearFormIntegrator>(bfi);
         },
         py::arg("levelset_domain"),
         py::arg("form"),
@@ -941,13 +931,13 @@ elnr : int
 see documentation of SymbolicBFI (which is a wrapper))raw_string")
     );
 
-  m.def("SymbolicFacetPatchBFI", [](PyCF cf,
+  m.def("SymbolicFacetPatchBFI", [](shared_ptr<CF> cf,
                                     int order,
                                     int time_order,
                                     bool skeleton,
                                     py::object definedonelem,
                                     py::object deformation)
-        -> PyBFI
+        -> shared_ptr<BilinearFormIntegrator>
         {
           // check for DG terms
           bool has_other = false;
@@ -977,12 +967,12 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
           }
 
           if (! definedonelem.is_none())
-            bfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
+            bfi -> SetDefinedOnElements (py::extract<shared_ptr<BA>>(definedonelem)());
 
           if (! deformation.is_none())
-            bfi->SetDeformation(py::extract<PyGF>(deformation)());
+            bfi->SetDeformation(py::extract<shared_ptr<GF>>(deformation)());
 
-          return PyBFI(bfi);
+          return shared_ptr<BilinearFormIntegrator>(bfi);
         },
         py::arg("form"),
         py::arg("force_intorder")=-1,
@@ -1017,14 +1007,14 @@ time_order : int
 
   
   m.def("SymbolicCutLFI", [](py::dict lsetdom,
-                             PyCF cf,
+                             shared_ptr<CF> cf,
                              VorB vb,
                              bool element_boundary,
                              bool skeleton,
                              py::object definedon,
                              py::object definedonelem,
                              py::object deformation)
-        -> PyLFI
+        -> shared_ptr<LinearFormIntegrator>
         {
 
           py::extract<Region> defon_region(definedon);
@@ -1050,12 +1040,12 @@ time_order : int
           }
 
           if (! definedonelem.is_none())
-            lfi -> SetDefinedOnElements (py::extract<PyBA>(definedonelem)());
+            lfi -> SetDefinedOnElements (py::extract<shared_ptr<BA>>(definedonelem)());
 
           if (! deformation.is_none())
-            lfi->SetDeformation(py::extract<PyGF>(deformation)());
+            lfi->SetDeformation(py::extract<shared_ptr<GF>>(deformation)());
 
-          return PyLFI(lfi);
+          return shared_ptr<LinearFormIntegrator>(lfi);
         },
         py::arg("levelset_domain"),
         py::arg("form"),
@@ -1069,8 +1059,7 @@ time_order : int
 see documentation of SymbolicLFI (which is a wrapper))raw_string")
     );
 
-  typedef shared_ptr<ProxyFunction> PyProxyFunction;
-  m.def("dn", [] (const PyProxyFunction self, int order, py::object comp, bool hdiv)
+  m.def("dn", [] (const shared_ptr<ProxyFunction> self, int order, py::object comp, bool hdiv)
         {
 
           const int dim_space = self->GetFESpace()->GetSpatialDimension();
@@ -1152,7 +1141,7 @@ see documentation of SymbolicLFI (which is a wrapper))raw_string")
           if (self->IsOther())
             adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
 
-          return PyProxyFunction(adddiffop);
+          return shared_ptr<ProxyFunction>(adddiffop);
         },
         py::arg("proxy"),
         py::arg("order"),
@@ -1178,7 +1167,7 @@ hdiv : boolean
 )raw_string")
     );
 
-  m.def("dn", [](PyGF gf, int order) -> PyCF
+  m.def("dn", [](shared_ptr<GF> gf, int order) -> shared_ptr<CF>
         {
           shared_ptr<DifferentialOperator> diffopdudnk;
           switch (order)
@@ -1193,7 +1182,7 @@ hdiv : boolean
           case 8 : diffopdudnk = make_shared<T_DifferentialOperator<DiffOpDuDnk<2,8>>> (); break;
           default : throw Exception("no order higher than 8 implemented yet");
           }
-          return PyCF(make_shared<GridFunctionCoefficientFunction> (gf, diffopdudnk));
+          return shared_ptr<CF>(make_shared<GridFunctionCoefficientFunction> (gf, diffopdudnk));
         },
         py::arg("gf"),
         py::arg("order"),

@@ -12,9 +12,8 @@
 
 using namespace xintegration;
 
-typedef shared_ptr<CoefficientFunction> PyCF;
+typedef CoefficientFunction CF;
 typedef GridFunction GF;
-typedef shared_ptr<GF> PyGF;
   
 
 void ExportNgsx_cutint(py::module &m)
@@ -22,7 +21,7 @@ void ExportNgsx_cutint(py::module &m)
     m.def("IntegrateX",
         [](py::dict lsetdom,
            shared_ptr<MeshAccess> ma,
-           PyCF cf,
+           shared_ptr<CF> cf,
            py::object gfdeformation,
            py::object ip_container,
            bool element_wise,
@@ -164,7 +163,7 @@ void ExportNgsx_cutint(py::module &m)
         },
         py::arg("levelset_domain"),
         py::arg("mesh"),
-        py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+        py::arg("cf")=shared_ptr<CF>(make_shared<ConstantCoefficientFunction>(0.0)),
         py::arg("deformation")=py::none(),
         py::arg("ip_container")=py::none(),
         py::arg("element_wise")=false,
@@ -228,7 +227,7 @@ heapsize : int
     m.def("IntegrationPointExtrema",
         [](py::dict lsetdom,
            shared_ptr<MeshAccess> ma,
-           PyCF cf,
+           shared_ptr<CF> cf,
            int heapsize)
         {
           static Timer timer("IntegrationPointExtrema"); RegionTimer reg (timer);
@@ -280,7 +279,7 @@ heapsize : int
         },
         py::arg("levelset_domain"),
         py::arg("mesh"),
-        py::arg("cf")=PyCF(make_shared<ConstantCoefficientFunction>(0.0)),
+        py::arg("cf")=shared_ptr<CF>(make_shared<ConstantCoefficientFunction>(0.0)),
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Determine minimum and maximum on integration points on a level set domain. The sampling uses the same

@@ -31,18 +31,14 @@ void ExportNgsx_spacetime(py::module &m)
 {
 
 
-
-
-  typedef shared_ptr<FESpace> PyFES;
-  typedef shared_ptr<CoefficientFunction> PyCF;
+  typedef FESpace FES;
+  typedef CoefficientFunction CF;
   typedef GridFunction GF;
-  typedef shared_ptr<GF> PyGF;
-  typedef shared_ptr<BitArray> PyBA;
-  typedef shared_ptr<SpaceTimeFESpace> PySTFES;
-  typedef shared_ptr<ProxyFunction> PyProxyFunction;
+  typedef BitArray BA;
+  typedef SpaceTimeFESpace STFES;
 
   m.def("SpaceTimeFESpace", [] (
-                                        PyFES basefes,
+                                        shared_ptr<FES> basefes,
                                         shared_ptr<FiniteElement> fe,
                                         py::object dirichlet,
                                         int heapsize, 
@@ -119,27 +115,27 @@ dgjumps : bool
   )raw_string")
    );
 
-  py::class_<SpaceTimeFESpace, PySTFES, FESpace>
+  py::class_<SpaceTimeFESpace, shared_ptr<STFES>, FESpace>
     (m, "CSpaceTimeFESpace")
-  .def("SetTime", [](PySTFES self, double t)
+  .def("SetTime", [](shared_ptr<STFES> self, double t)
   {
     self->SetTime(t);
   },
        "Set the time variable\n Also sets override time")
   .def_property_readonly("spaceFES",
-                [](PySTFES self) { return self->GetSpaceFESpace(); },
+                [](shared_ptr<STFES> self) { return self->GetSpaceFESpace(); },
                "get space FESpace")
-  .def("SetOverrideTime", [](PySTFES self, bool override)
+  .def("SetOverrideTime", [](shared_ptr<STFES> self, bool override)
   {
     self->SetOverrideTime(override);
   },
        "Set flag to or not to override the time variable")
-  .def("k_t", [](PySTFES self)
+  .def("k_t", [](shared_ptr<STFES> self)
   {
      return self->order_time();
   },
      "Return order of the time FE")
-  .def("TimeFE_nodes", [](PySTFES self)
+  .def("TimeFE_nodes", [](shared_ptr<STFES> self)
   {
       Array<double> & nodesr = self->TimeFE_nodes();
       py::list nodes (nodesr.Size());
@@ -148,7 +144,7 @@ dgjumps : bool
       return nodes;
    },
      "Return nodes of time FE")
-  .def("IsTimeNodeActive", [](PySTFES self, int i)
+  .def("IsTimeNodeActive", [](shared_ptr<STFES> self, int i)
   {
       return self->IsTimeNodeActive(i);
    },
@@ -228,14 +224,11 @@ docu missing
   );
   
 
-
-  typedef shared_ptr<TimeVariableCoefficientFunction> PyTimeVariableCF;
-
-  py::class_<TimeVariableCoefficientFunction, PyTimeVariableCF, CoefficientFunction>(m, "TimeVariableCoefficientFunction")
-          .def("__init__", [] () -> PyTimeVariableCF { return make_shared<TimeVariableCoefficientFunction>(); })
+  py::class_<TimeVariableCoefficientFunction, shared_ptr<TimeVariableCoefficientFunction>, CoefficientFunction>(m, "TimeVariableCoefficientFunction")
+          .def("__init__", [] () -> shared_ptr<TimeVariableCoefficientFunction> { return make_shared<TimeVariableCoefficientFunction>(); })
           .def("FixTime", &TimeVariableCoefficientFunction::FixTime)
           .def("UnfixTime", &TimeVariableCoefficientFunction::UnfixTime)
-          .def("IsFixed", [] (PyTimeVariableCF self) -> bool {
+          .def("IsFixed", [] (shared_ptr<TimeVariableCoefficientFunction> self) -> bool {
             try {
                 self->Evaluate(BaseMappedIntegrationPoint());
             } catch (...) {
@@ -244,7 +237,7 @@ docu missing
             return true;
           });
 
-   m.def("ReferenceTimeVariable", []() -> PyTimeVariableCF
+   m.def("ReferenceTimeVariable", []() -> shared_ptr<TimeVariableCoefficientFunction>
    {
      return make_shared<TimeVariableCoefficientFunction> ();
    }, docu_string(R"raw_string(
@@ -259,7 +252,7 @@ ngsxfem.__init__ defines tref.
 
    // DiffOpFixt
 
-  m.def("fix_tref_proxy", [] (const PyProxyFunction self, double time, py::object comp, bool use_FixAnyTime )
+  m.def("fix_tref_proxy", [] (const shared_ptr<ProxyFunction> self, double time, py::object comp, bool use_FixAnyTime )
   {
     Array<int> comparr(0);
     if (py::extract<int> (comp).check())
@@ -318,7 +311,7 @@ ngsxfem.__init__ defines tref.
     if (self->IsOther())
       adddiffop = adddiffop->Other(make_shared<ConstantCoefficientFunction>(0.0));
 
-    return PyProxyFunction(adddiffop);
+    return shared_ptr<ProxyFunction>(adddiffop);
     },
           py::arg("proxy"),
           py::arg("time"),
@@ -326,7 +319,7 @@ ngsxfem.__init__ defines tref.
           py::arg("use_FixAnyTime") = false
           );
 
-  m.def("fix_tref_coef", [](PyCF self, py::object time) -> PyCF
+  m.def("fix_tref_coef", [](shared_ptr<CF> self, py::object time) -> shared_ptr<CF>
   {
     shared_ptr<ParameterCoefficientFunction<double>> t = nullptr;
     auto t1 = py::extract<shared_ptr<ParameterCoefficientFunction<double>>> (time);
@@ -342,7 +335,7 @@ ngsxfem.__init__ defines tref.
       else  
         throw Exception("time object not valid");
     }
-    return PyCF(make_shared<FixTimeCoefficientFunction> (self, t));
+    return shared_ptr<CF>(make_shared<FixTimeCoefficientFunction> (self, t));
   },
   docu_string(R"raw_string(
 fix_t fixes the evaluated time to a fixed value.
@@ -358,7 +351,7 @@ time: Parameter or double
 )raw_string")
      );
      
-   m.def("fix_tref_gf", [](PyGF self, double time) -> PyCF
+   m.def("fix_tref_gf", [](shared_ptr<GF> self, double time) -> shared_ptr<CF>
    {
      shared_ptr<DifferentialOperator> diffopfixt;
      const int SpaceD = self->GetFESpace()->GetSpatialDimension();
@@ -380,7 +373,7 @@ time: Parameter or double
          diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
        });
      }
-     return PyCF(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
+     return shared_ptr<CF>(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));
    },
    py::arg("gf"),
    py::arg("time") = 0.0,
@@ -399,7 +392,7 @@ time: double
 )raw_string")
 );
 
-   m.def("CreateTimeRestrictedGF", [](PyGF st_GF,double time) -> PyGF
+   m.def("CreateTimeRestrictedGF", [](shared_ptr<GF> st_GF,double time) -> shared_ptr<GF>
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
@@ -409,7 +402,7 @@ time: double
    py::arg("reference_time") = 0.0,
    "Create spatial-only Gridfunction corresponding to a fixed time.");
 
-   m.def("RestrictGFInTime", [](PyGF st_GF,double time,PyGF s_GF)
+   m.def("RestrictGFInTime", [](shared_ptr<GF> st_GF,double time,shared_ptr<GF> s_GF)
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
@@ -434,7 +427,7 @@ time: double
    py::arg("space_gf"),
    "Extract Gridfunction corresponding to a fixed time from a space-time GridFunction.");
 
-   m.def("SpaceTimeInterpolateToP1", [](PyCF st_CF, PyCF tref, PyGF st_GF)
+   m.def("SpaceTimeInterpolateToP1", [](shared_ptr<CF> st_CF, shared_ptr<CF> tref, shared_ptr<GF> st_GF)
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);

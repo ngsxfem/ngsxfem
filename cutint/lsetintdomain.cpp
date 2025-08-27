@@ -167,9 +167,8 @@ namespace xintegration
   }
   
 
-  typedef shared_ptr<CoefficientFunction> PyCF;
+  typedef CoefficientFunction CF;
   typedef GridFunction GF;
-  typedef shared_ptr<GF> PyGF;
 
   shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomain(py::dict dictionary)
   {
@@ -225,7 +224,7 @@ namespace xintegration
     
     if (py::extract<DOMAIN_TYPE> (dt_in).check())
     {
-      py::extract<PyCF> pycf(lset);
+      py::extract<shared_ptr<CF>> pycf(lset);
       py::extract<int> dt(dt_in);
       if (!dt.check())
         throw Exception("dt is not a domain type");
