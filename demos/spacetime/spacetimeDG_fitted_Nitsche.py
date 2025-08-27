@@ -1,6 +1,6 @@
 """
-Heat equation (fitted) with nonhomogeneous Dirichlet b.c. solved with a DG-in-time
-space-time finite element discretisation
+Heat equation (fitted) with nonhomogeneous Dirichlet b.c. solved with a 
+DG-in-time space-time finite element discretisation
 
 Domain:
 -------
@@ -43,15 +43,15 @@ k_t = order
 tend = 0.5
 # Time step
 delta_t = 1 / 8
-time_order = 2*k_t 
+time_order = 2*k_t
 
 # ----------------------------------- MAIN ------------------------------------
 mesh = Mesh(unit_square.GenerateMesh(maxh=0.1, quad_dominated=False))
 n = specialcf.normal(mesh.dim)
 h = specialcf.mesh_size
 
-V = H1(mesh, order=order, dirichlet=[],dgjumps=False)
-#V = H1(mesh, order=order, dirichlet=".*")
+V = H1(mesh, order=order, dirichlet=[], dgjumps=False)
+# V = H1(mesh, order=order, dirichlet=".*")
 tfe = ScalarTimeFE(k_t)
 st_fes = tfe * V
 
@@ -72,10 +72,12 @@ u, v = st_fes.TnT()
 dxt = delta_t * dxtref(mesh, time_order=time_order)
 dxold = dmesh(mesh, tref=0)
 dxnew = dmesh(mesh, tref=1)
-dst = delta_t * dxtref(mesh, time_order=time_order,skeleton=True, vb=BND) # for Nitsche terms
+# for Nitsche terms:
+dst = delta_t * dxtref(mesh, time_order=time_order,skeleton=True, vb=BND)
 
 def dt(u):
     return 1.0 / delta_t * dtref(u)
+
 
 a = BilinearForm(st_fes, symmetric=False)
 a += grad(u) * grad(v) * dxt
@@ -86,7 +88,7 @@ lam = 100
 # Nitsche terms
 a += (-1) * grad(u) * n * v * dst
 a += (-1) * grad(v) * n * u * dst
-a += lam * (1/h) * u * v * dst 
+a += lam * (1/h) * u * v * dst
 a.Assemble()
 
 f = LinearForm(st_fes)
@@ -101,9 +103,6 @@ Draw(u_last, mesh, "u")
 
 while tend - told.Get() > delta_t / 2:
     f.Assemble()
-    #gfu.Set(u_exact,BND )
-    #r = f.vec - a.mat * gfu.vec
-    #gfu.vec.data += a.mat.Inverse(st_fes.FreeDofs(), "umfpack") * r
     gfu.vec.data = a.mat.Inverse(st_fes.FreeDofs(), "umfpack") * f.vec
     RestrictGFInTime(spacetime_gf=gfu, reference_time=1.0, space_gf=u_last)
     l2error = sqrt(Integrate((u_exact - gfu)**2 * dxnew, mesh))
