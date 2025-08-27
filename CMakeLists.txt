@@ -8,20 +8,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Download ngsolve_addon.cmake from template project
-# set(ngsolve_addon_version bbfb9648f2ff7a952a3a8edca58f460c198ca462)
-# set(ngsolve_addon_md5 d1b208d6aa63edce64a264e5e0370d3a)
-# file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
-#   ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
-#   EXPECTED_MD5 ${ngsolve_addon_md5}
-# )
-
-set(ngsolve_addon_version 82faa8d89925b9b52cf5a536ffe2fd70bb9bfd05)
-set(ngsolve_addon_md5 a6b581d665d61438e30af1c07effa36d)
-file(DOWNLOAD https://raw.githubusercontent.com/johann-cm/ngsolve-addon-template/${ngsolve_addon_version}/ngsolve_addon.cmake
-  ${CMAKE_CURRENT_SOURCE_DIR}/ngsolve_addon.cmake
-  EXPECTED_MD5 ${ngsolve_addon_md5}
-)
-
+set(ngsolve_addon_commit_hash refs/heads/main)
+file(DOWNLOAD https://raw.githubusercontent.com/NGSolve/ngsolve-addon-template/${ngsolve_addon_commit_hash}/ngsolve_addon.cmake ${CMAKE_BINARY_DIR}/cmake_modules/ngsolve_addon.cmake)
 include(ngsolve_addon.cmake)
 
 set(SPACETIME_SANITY_CHECKS ON CACHE BOOL "use space-time sanity checks (abuses ngsolve's intrule nr)")
