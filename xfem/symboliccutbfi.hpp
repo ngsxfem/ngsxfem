@@ -298,10 +298,12 @@ namespace ngfem
     int time_order = -1;
     bool has_tref = false;
     double tref = 0.0;
+    double ir_scaling = 1.0;
   public:
     SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf);
     void SetTimeIntegrationOrder(int tiorder) { time_order = tiorder; }
     void SetReferenceTime(double _tref) { has_tref = true; tref = _tref; }
+    void SetIRScaling(double _ir_scaling) {ir_scaling = _ir_scaling; }
 
     virtual VorB VB () const { return vb; }
     virtual xbool IsSymmetric() const { return maybe; }  // correct would be: don't know

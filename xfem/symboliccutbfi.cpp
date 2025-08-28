@@ -1835,6 +1835,43 @@ namespace ngfem
     }
   }
 
+  // Downscale integration rule and center at given edge
+  template<int D>
+  void ScaleAndMapIntegrationRule(double scaling,
+                                  IntegrationRule & ir,
+                                  int LocalFacetNr,
+                                  ELEMENT_TYPE et,
+                                  LocalHeap & lh)
+  {
+    HeapReset hr(lh);
+
+    FlatVector<double> shift(D, lh);
+    shift.Range(0, D) = 0;
+    double _w;
+
+    switch (et){
+      case ET_TRIG:
+        if (LocalFacetNr == 0)
+          shift[0] = (1 - scaling) / 2;
+        else if (LocalFacetNr == 1)
+          shift[1] = (1 - scaling) / 2;
+        else if (LocalFacetNr == 2){
+          shift[0] = (1 - scaling) / 2;
+          shift[1] = (1 - scaling) / 2;
+        }
+        else throw Exception("Unknown facet number");
+
+        for (int l = 0; l < ir.Size(); l++){
+          ir[l].Point().Range(0, D) *= scaling;
+          ir[l].Point().Range(0, D) += shift;
+          _w = ir[l].Weight();
+          ir[l].SetWeight(_w * scaling * scaling);
+        }
+        break;
+      default:
+        throw Exception ("SymbolicFacetPatchBFI: Scaling only implemented for ET_TRIG ");
+    }
+  }
 
   template<typename SCAL, typename SCAL_SHAPES>
   void SymbolicFacetPatchBilinearFormIntegrator ::
@@ -1863,12 +1900,39 @@ namespace ngfem
     auto eltype1 = trafo1.GetElementType();
     auto eltype2 = trafo2.GetElementType();
 
-    IntegrationRule ir_vol1(eltype1, 2*maxorder);
-    IntegrationRule ir_vol2(eltype2, 2*maxorder);
+    IntegrationRule _ir_vol1(eltype1, 2*maxorder);
+    IntegrationRule ir_vol1 = _ir_vol1.Copy();
+    IntegrationRule _ir_vol2(eltype2, 2*maxorder);
+    IntegrationRule ir_vol2 = _ir_vol2.Copy();
 
-    // cout << " ir_vol1 = " << ir_vol1 << endl;
-    // cout << " ir_vol2 = " << ir_vol2 << endl;
-    
+    // cout << " ir_vol1 = " << endl << ir_vol1 << endl;
+    // cout << " ir_vol2 = " << endl << ir_vol2 << endl;
+
+    // Scale integration rules and center around joint facet
+    if (ir_scaling < 1 && ir_scaling > 0){
+      if (D==2){
+        ScaleAndMapIntegrationRule<2>(ir_scaling, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<2>(ir_scaling, ir_vol2, LocalFacetNr2, eltype2, lh);
+      }
+      else if (D==1){
+        ScaleAndMapIntegrationRule<1>(ir_scaling, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<1>(ir_scaling, ir_vol2, LocalFacetNr2, eltype2, lh);
+      }
+      else
+      {
+        ScaleAndMapIntegrationRule<3>(ir_scaling, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<3>(ir_scaling, ir_vol2, LocalFacetNr2, eltype2, lh); 
+      }
+
+      // cout << "Scaled quadrature rules with ir_scaling = " << ir_scaling << endl;
+      // cout << " ir_vol1 = " << endl << ir_vol1 << endl;
+      // cout << " ir_vol2 = " << endl << ir_vol2 << endl;
+    }
+    else if (ir_scaling <= 0 || ir_scaling > 1){
+      throw Exception ("SymbolicFacetPatchBFI: Only 0 < ir_scaling <= 1 valid");
+    }
+    else;
+
     IntegrationRule ir_patch1 (ir_vol1.Size()+ir_vol2.Size(),lh);
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
     //In the non-space time case, the result of the mapping to the other element does not depend on the time
@@ -1892,8 +1956,8 @@ namespace ngfem
         }
     }
 
-    // cout << " ir_patch1 = " << ir_patch1 << endl;
-    // cout << " ir_patch2 = " << ir_patch2 << endl;
+    // cout << " ir_patch1 = " << endl << ir_patch1 << endl;
+    // cout << " ir_patch2 = " << endl << ir_patch2 << endl;
     
     IntegrationRule * ir1 = nullptr;
     IntegrationRule * ir2 = nullptr;
