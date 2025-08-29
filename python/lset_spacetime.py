@@ -72,9 +72,9 @@ This class holds its own members for the higher order and lower order
 
 
     @TimeFunction
-    def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0,
-                 lset_upper_bound = 0, threshold = -1, smooth_blend=None,
-                 discontinuous_qn = False, heapsize=1000000,periodic=False):
+    def __init__(self, mesh, order_space = 2, order_time = 1, lset_lower_bound = 0.0,
+                 lset_upper_bound = 0.0, threshold = -1.0, smooth_blend=None,
+                 discontinuous_qn = False, heapsize=1000000, periodic=False):
 
         """
 The computed deformation depends on different options:

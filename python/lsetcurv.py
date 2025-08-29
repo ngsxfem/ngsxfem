@@ -50,8 +50,8 @@ the mesh deformation is applied on the mesh inside the context.
     order_lset = 2
 
     @TimeFunction
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0, lset_upper_bound = 0, 
-                 threshold = -1, discontinuous_qn = False, 
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0.0, lset_upper_bound = 0.0, 
+                 threshold = -1.0, discontinuous_qn = False, 
                  eps_perturbation = 1e-14, heapsize=1000000,
                  levelset = None):
         """
