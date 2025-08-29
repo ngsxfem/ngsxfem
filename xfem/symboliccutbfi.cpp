@@ -1905,31 +1905,33 @@ namespace ngfem
     IntegrationRule _ir_vol2(eltype2, 2*maxorder);
     IntegrationRule ir_vol2 = _ir_vol2.Copy();
 
-    // cout << " ir_vol1 = " << endl << ir_vol1 << endl;
-    // cout << " ir_vol2 = " << endl << ir_vol2 << endl;
+    // cout << " ir_vol1 = " << endl << ir_vol1;
+    // cout << " LocalFacetNr1 = " << LocalFacetNr1 << endl << endl;
+    // cout << " ir_vol2 = " << endl << ir_vol2;
+    // cout << " LocalFacetNr2 = " << LocalFacetNr2 << endl << endl;
 
     // Scale integration rules and center around joint facet
-    if (ir_scaling < 1 && ir_scaling > 0){
+    if (downscale < 1 && downscale > 0){
       if (D==2){
-        ScaleAndMapIntegrationRule<2>(ir_scaling, ir_vol1, LocalFacetNr1, eltype1, lh);
-        ScaleAndMapIntegrationRule<2>(ir_scaling, ir_vol2, LocalFacetNr2, eltype2, lh);
+        ScaleAndMapIntegrationRule<2>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<2>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh);
       }
       else if (D==1){
-        ScaleAndMapIntegrationRule<1>(ir_scaling, ir_vol1, LocalFacetNr1, eltype1, lh);
-        ScaleAndMapIntegrationRule<1>(ir_scaling, ir_vol2, LocalFacetNr2, eltype2, lh);
+        ScaleAndMapIntegrationRule<1>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<1>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh);
       }
       else
       {
-        ScaleAndMapIntegrationRule<3>(ir_scaling, ir_vol1, LocalFacetNr1, eltype1, lh);
-        ScaleAndMapIntegrationRule<3>(ir_scaling, ir_vol2, LocalFacetNr2, eltype2, lh); 
+        ScaleAndMapIntegrationRule<3>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<3>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh); 
       }
 
-      // cout << "Scaled quadrature rules with ir_scaling = " << ir_scaling << endl;
+      // cout << "Scaled quadrature rules with downscale = " << downscale << endl;
       // cout << " ir_vol1 = " << endl << ir_vol1 << endl;
       // cout << " ir_vol2 = " << endl << ir_vol2 << endl;
     }
-    else if (ir_scaling <= 0 || ir_scaling > 1){
-      throw Exception ("SymbolicFacetPatchBFI: Only 0 < ir_scaling <= 1 valid");
+    else if (downscale <= 0 || downscale > 1){
+      throw Exception ("SymbolicFacetPatchBFI: Only 0 < downscale <= 1 valid");
     }
     else;
 

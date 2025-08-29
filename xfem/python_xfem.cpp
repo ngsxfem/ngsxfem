@@ -937,7 +937,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
                                     bool skeleton,
                                     py::object definedonelem,
                                     py::object deformation,
-                                    py::object ir_scaling)
+                                    py::object downscale)
         -> shared_ptr<BilinearFormIntegrator>
         {
           // check for DG terms
@@ -964,8 +964,8 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
             // throw Exception("Patch facet blf not implemented yet: TODO(2)!");
             auto bfime = make_shared<SymbolicFacetPatchBilinearFormIntegrator> (cf);
             bfime->SetTimeIntegrationOrder(time_order);
-            if (! ir_scaling.is_none())
-              bfime->SetIRScaling(py::extract<double>(ir_scaling)());
+            if (! downscale.is_none())
+              bfime->SetIRScaling(py::extract<double>(downscale)());
             bfi = bfime;
           }
 
@@ -983,7 +983,7 @@ see documentation of SymbolicBFI (which is a wrapper))raw_string")
         py::arg("skeleton") = true,
         py::arg("definedonelements")=py::none(),
         py::arg("deformation")=py::none(),
-        py::arg("ir_scaling")=py::none(),
+        py::arg("downscale")=py::none(),
         docu_string(R"raw_string(
 Integrator on facet patches. Two versions are possible:
 * Either (skeleton=False) an integration on the element patch consisting of two neighboring elements is applied, 
@@ -1007,7 +1007,7 @@ time_order : int
   order in time that is used in the space-time integration. time_order=-1 means that no space-time
   rule will be applied. This is only relevant for space-time discretizations.
 
-ir_scaling : None | double
+downscale : None | double
   Downscale facet patch around facets.
 )raw_string")
     );

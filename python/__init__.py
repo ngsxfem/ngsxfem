@@ -761,7 +761,8 @@ def dFacetPatch(**kwargs):
     tref : double
         Turn spatial integration into space-time integration with 
         fixed time tref.
-
+    downscale : double
+        Downscale integration rule around facet.
     Returns
     -------
       FacetPatchDifferentialSymbol(VOL)

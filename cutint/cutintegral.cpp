@@ -224,11 +224,11 @@ Complex CutIntegral::Integrate (const ngcomp::MeshAccess & ma,
 
 FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf,
                                         shared_ptr<FacetPatchDifferentialSymbol> _dx)
-      : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref), ir_scaling(_dx->ir_scaling) { ; }
+      : Integral(_cf, *_dx), time_order(_dx->time_order), tref(_dx->tref), downscale(_dx->downscale) { ; }
 
 FacetPatchIntegral::FacetPatchIntegral (shared_ptr<CoefficientFunction> _cf, DifferentialSymbol _dx,
-                                        int _time_order, optional<double> _tref, optional<double> _ir_scaling)
-      : Integral(_cf, _dx), time_order(_time_order), tref(_tref), ir_scaling(_ir_scaling) { ; }
+                                        int _time_order, optional<double> _tref, optional<double> _downscale)
+      : Integral(_cf, _dx), time_order(_time_order), tref(_tref), downscale(_downscale) { ; }
 
 shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegrator() const
 {
@@ -259,8 +259,8 @@ shared_ptr<BilinearFormIntegrator> FacetPatchIntegral :: MakeBilinearFormIntegra
   bfi->SetBonusIntegrationOrder(dx.bonus_intorder);
   if(dx.definedonelements)
     bfi->SetDefinedOnElements(dx.definedonelements);
-  if (ir_scaling)
-    bfi->SetIRScaling(*ir_scaling);
+  if (downscale)
+    bfi->SetIRScaling(*downscale);
   return bfi;
 }
 
