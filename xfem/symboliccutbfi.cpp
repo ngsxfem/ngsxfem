@@ -1909,19 +1909,11 @@ namespace ngfem
 
     // Scale integration rules and center around joint facet
     if (downscale < 1 && downscale > 0){
-      if (D==2){
-        ScaleAndMapIntegrationRule<2>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
-        ScaleAndMapIntegrationRule<2>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh);
-      }
-      else if (D==1){
-        ScaleAndMapIntegrationRule<1>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
-        ScaleAndMapIntegrationRule<1>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh);
-      }
-      else
-      {
-        ScaleAndMapIntegrationRule<3>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
-        ScaleAndMapIntegrationRule<3>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh); 
-      }
+
+      Switch<3> (D-1, [&] (auto DD) {
+        ScaleAndMapIntegrationRule<DD+1>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<DD+1>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh);
+      });
 
       // cout << "Scaled quadrature rules with downscale = " << downscale << endl;
       // cout << " ir_vol1 = " << endl << ir_vol1 << endl;
