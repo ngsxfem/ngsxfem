@@ -1849,27 +1849,24 @@ namespace ngfem
     shift.Range(0, D) = 0;
     double _w;
 
-    switch (et){
-      case ET_TRIG:
-        if (LocalFacetNr == 0)
-          shift[0] = (1 - scaling) / 2;
-        else if (LocalFacetNr == 1)
-          shift[1] = (1 - scaling) / 2;
-        else if (LocalFacetNr == 2){
-          shift[0] = (1 - scaling) / 2;
-          shift[1] = (1 - scaling) / 2;
-        }
-        else throw Exception("Unknown facet number");
+    // Compute midpoint on reference facet
+    int vi;
+    ELEMENT_TYPE facet_et = ElementTopology::GetFacetType(et, LocalFacetNr);
+    for (int i = 0; i < ElementTopology::GetNVertices(facet_et); i++){
+      vi = ElementTopology::GetEdges(et)[LocalFacetNr][i];
+      for (int l = 0; l < D; l++ ){
+        shift[l] += ElementTopology::GetVertices(et)[vi][l];
+      }
+    }
+    // rescale shift to move to center of reference facet
+    shift.Range(0, D) *= (1 - scaling) / 2;
 
-        for (int l = 0; l < ir.Size(); l++){
-          ir[l].Point().Range(0, D) *= scaling;
-          ir[l].Point().Range(0, D) += shift;
-          _w = ir[l].Weight();
-          ir[l].SetWeight(_w * scaling * scaling);
-        }
-        break;
-      default:
-        throw Exception ("SymbolicFacetPatchBFI: Scaling only implemented for ET_TRIG ");
+    // downscale ir and shift
+    for (int l = 0; l < ir.Size(); l++){
+      ir[l].Point().Range(0, D) *= scaling;
+      ir[l].Point().Range(0, D) += shift;
+      _w = ir[l].Weight();
+      ir[l].SetWeight(_w * scaling * scaling);
     }
   }
 
@@ -1944,7 +1941,7 @@ namespace ngfem
             if (l<ir_vol1.Size()) {
                 ir_patch1[l] = ir_vol1[l];
                 if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-                else if(D==1) MapPatchIntegrationPoint<1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                else if (D==1) MapPatchIntegrationPoint<1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
                 else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
             }
             else {
