@@ -1851,15 +1851,15 @@ namespace ngfem
 
     // Compute midpoint on reference facet
     int vi;
-    ELEMENT_TYPE facet_et = ElementTopology::GetFacetType(et, LocalFacetNr);
-    for (int i = 0; i < ElementTopology::GetNVertices(facet_et); i++){
+    int nv = ElementTopology::GetNVertices(ElementTopology::GetFacetType(et, LocalFacetNr));
+    for (int i = 0; i < nv; i++){
       vi = ElementTopology::GetEdges(et)[LocalFacetNr][i];
       for (int l = 0; l < D; l++ ){
         shift[l] += ElementTopology::GetVertices(et)[vi][l];
       }
     }
     // rescale shift to move to center of reference facet
-    shift.Range(0, D) *= (1 - scaling) / 2;
+    shift.Range(0, D) *= (1 - scaling) / nv;
 
     // downscale ir and shift
     for (int l = 0; l < ir.Size(); l++){
