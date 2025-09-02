@@ -1835,6 +1835,43 @@ namespace ngfem
     }
   }
 
+  // Downscale integration rule and center at given edge
+  template<int D>
+  void ScaleAndMapIntegrationRule(double scaling,
+                                  IntegrationRule & ir,
+                                  int LocalFacetNr,
+                                  ELEMENT_TYPE et,
+                                  LocalHeap & lh)
+  {
+    HeapReset hr(lh);
+
+    FlatVector<double> shift(D, lh);
+    shift.Range(0, D) = 0;
+    double _w;
+
+    // Compute midpoint on reference facet
+    int vi;
+    int nv = ElementTopology::GetNVertices(ElementTopology::GetFacetType(et, LocalFacetNr));
+    for (int i = 0; i < nv; i++){
+      if (D == 2) vi = ElementTopology::GetEdges(et)[LocalFacetNr][i];
+      else if (D == 1) vi = ElementTopology::GetVertices(et)[LocalFacetNr][i];
+      else vi = ElementTopology::GetFaces(et)[LocalFacetNr][i];
+
+      for (int l = 0; l < D; l++ ){
+        shift[l] += ElementTopology::GetVertices(et)[vi][l];
+      }
+    }
+    // rescale shift to move to center of reference facet
+    shift.Range(0, D) *= (1 - scaling) / nv;
+
+    // downscale ir and shift
+    for (int l = 0; l < ir.Size(); l++){
+      ir[l].Point().Range(0, D) *= scaling;
+      ir[l].Point().Range(0, D) += shift;
+      _w = ir[l].Weight();
+      ir[l].SetWeight(_w * scaling * scaling);
+    }
+  }
 
   template<typename SCAL, typename SCAL_SHAPES>
   void SymbolicFacetPatchBilinearFormIntegrator ::
@@ -1863,12 +1900,33 @@ namespace ngfem
     auto eltype1 = trafo1.GetElementType();
     auto eltype2 = trafo2.GetElementType();
 
-    IntegrationRule ir_vol1(eltype1, 2*maxorder);
-    IntegrationRule ir_vol2(eltype2, 2*maxorder);
+    IntegrationRule _ir_vol1(eltype1, 2*maxorder);
+    IntegrationRule ir_vol1 = _ir_vol1.Copy();
+    IntegrationRule _ir_vol2(eltype2, 2*maxorder);
+    IntegrationRule ir_vol2 = _ir_vol2.Copy();
 
-    // cout << " ir_vol1 = " << ir_vol1 << endl;
-    // cout << " ir_vol2 = " << ir_vol2 << endl;
-    
+    // cout << " ir_vol1 = " << endl << ir_vol1;
+    // cout << " LocalFacetNr1 = " << LocalFacetNr1 << endl << endl;
+    // cout << " ir_vol2 = " << endl << ir_vol2;
+    // cout << " LocalFacetNr2 = " << LocalFacetNr2 << endl << endl;
+
+    // Scale integration rules and center around joint facet
+    if (downscale < 1 && downscale > 0){
+
+      Switch<3> (D-1, [&] (auto DD) {
+        ScaleAndMapIntegrationRule<DD+1>(downscale, ir_vol1, LocalFacetNr1, eltype1, lh);
+        ScaleAndMapIntegrationRule<DD+1>(downscale, ir_vol2, LocalFacetNr2, eltype2, lh);
+      });
+
+      // cout << "Scaled quadrature rules with downscale = " << downscale << endl;
+      // cout << " ir_vol1 = " << endl << ir_vol1 << endl;
+      // cout << " ir_vol2 = " << endl << ir_vol2 << endl;
+    }
+    else if (downscale <= 0 || downscale > 1){
+      throw Exception ("SymbolicFacetPatchBFI: Only 0 < downscale <= 1 valid");
+    }
+    else;
+
     IntegrationRule ir_patch1 (ir_vol1.Size()+ir_vol2.Size(),lh);
     IntegrationRule ir_patch2 (ir_vol1.Size()+ir_vol2.Size(),lh);
     //In the non-space time case, the result of the mapping to the other element does not depend on the time
@@ -1877,23 +1935,23 @@ namespace ngfem
         for (int l = 0; l < ir_patch1.Size(); l++) {
             if (l<ir_vol1.Size()) {
                 ir_patch1[l] = ir_vol1[l];
-                if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-                else if(D==1) MapPatchIntegrationPoint<1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-                else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                Switch<3> (D-1, [&] (auto DD) {
+                  MapPatchIntegrationPoint<DD+1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                });
             }
             else {
                 ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
-                if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
-                else if (D==1) MapPatchIntegrationPoint<1>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
-                else MapPatchIntegrationPoint<3>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                Switch<3> (D-1, [&] (auto DD) {
+                  MapPatchIntegrationPoint<DD+1>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                });
             }
             ir_patch1[l].SetNr(l);
             ir_patch2[l].SetNr(l);
         }
     }
 
-    // cout << " ir_patch1 = " << ir_patch1 << endl;
-    // cout << " ir_patch2 = " << ir_patch2 << endl;
+    // cout << " ir_patch1 = " << endl << ir_patch1 << endl;
+    // cout << " ir_patch2 = " << endl << ir_patch2 << endl;
     
     IntegrationRule * ir1 = nullptr;
     IntegrationRule * ir2 = nullptr;
@@ -1924,9 +1982,9 @@ namespace ngfem
             double physical_weight = tmp.Weight();
             tmp.SetWeight(tval);
             MarkAsSpaceTimeIntegrationPoint(tmp);
-            if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
-            else if (D==1) MapPatchIntegrationPoint<1>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
-            else MapPatchIntegrationPoint<3>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+            Switch<3> (D-1, [&] (auto DD) {
+              MapPatchIntegrationPoint<DD+1>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+            });
           }
 
           ir_st1_wei_arr[ij] = ir_time[i].Weight() * ir_patch1[j].Weight();
@@ -1954,9 +2012,9 @@ namespace ngfem
             double physical_weight = tmp.Weight();
             tmp.SetWeight(tval);
             MarkAsSpaceTimeIntegrationPoint(tmp);
-            if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
-            else if (D==1) MapPatchIntegrationPoint<1>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
-            else MapPatchIntegrationPoint<3>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
+            Switch<3> (D-1, [&] (auto DD) {
+              MapPatchIntegrationPoint<DD+1>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
+            });
           }
           else ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
 
