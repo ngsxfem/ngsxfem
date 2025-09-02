@@ -1935,15 +1935,15 @@ namespace ngfem
         for (int l = 0; l < ir_patch1.Size(); l++) {
             if (l<ir_vol1.Size()) {
                 ir_patch1[l] = ir_vol1[l];
-                if (D==2) MapPatchIntegrationPoint<2>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-                else if (D==1) MapPatchIntegrationPoint<1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-                else MapPatchIntegrationPoint<3>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                Switch<3> (D-1, [&] (auto DD) {
+                  MapPatchIntegrationPoint<DD+1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                });
             }
             else {
                 ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
-                if (D==2) MapPatchIntegrationPoint<2>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
-                else if (D==1) MapPatchIntegrationPoint<1>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
-                else MapPatchIntegrationPoint<3>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                Switch<3> (D-1, [&] (auto DD) {
+                  MapPatchIntegrationPoint<DD+1>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                });
             }
             ir_patch1[l].SetNr(l);
             ir_patch2[l].SetNr(l);
@@ -1982,9 +1982,9 @@ namespace ngfem
             double physical_weight = tmp.Weight();
             tmp.SetWeight(tval);
             MarkAsSpaceTimeIntegrationPoint(tmp);
-            if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
-            else if (D==1) MapPatchIntegrationPoint<1>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
-            else MapPatchIntegrationPoint<3>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+            Switch<3> (D-1, [&] (auto DD) {
+              MapPatchIntegrationPoint<DD+1>(tmp, trafo2, trafo1 ,ir_patch1[j], lh, true, physical_weight);
+            });
           }
 
           ir_st1_wei_arr[ij] = ir_time[i].Weight() * ir_patch1[j].Weight();
@@ -2012,9 +2012,9 @@ namespace ngfem
             double physical_weight = tmp.Weight();
             tmp.SetWeight(tval);
             MarkAsSpaceTimeIntegrationPoint(tmp);
-            if (D==2) MapPatchIntegrationPoint<2>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
-            else if (D==1) MapPatchIntegrationPoint<1>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
-            else MapPatchIntegrationPoint<3>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
+            Switch<3> (D-1, [&] (auto DD) {
+              MapPatchIntegrationPoint<DD+1>(tmp, trafo1, trafo2 ,ir_patch2[j], lh, true, physical_weight);
+            });
           }
           else ir_patch2[j] = ir_vol2[j - ir_vol1.Size()];
 
