@@ -1853,7 +1853,10 @@ namespace ngfem
     int vi;
     int nv = ElementTopology::GetNVertices(ElementTopology::GetFacetType(et, LocalFacetNr));
     for (int i = 0; i < nv; i++){
-      vi = ElementTopology::GetEdges(et)[LocalFacetNr][i];
+      if (D == 2) vi = ElementTopology::GetEdges(et)[LocalFacetNr][i];
+      else if (D == 1) vi = ElementTopology::GetVertices(et)[LocalFacetNr][i];
+      else vi = ElementTopology::GetFaces(et)[LocalFacetNr][i];
+
       for (int l = 0; l < D; l++ ){
         shift[l] += ElementTopology::GetVertices(et)[vi][l];
       }
