@@ -225,7 +225,7 @@ docu missing
   
 
   py::class_<TimeVariableCoefficientFunction, shared_ptr<TimeVariableCoefficientFunction>, CoefficientFunction>(m, "TimeVariableCoefficientFunction")
-          .def("__init__", [] () -> shared_ptr<TimeVariableCoefficientFunction> { return make_shared<TimeVariableCoefficientFunction>(); })
+          .def(py::init([] () -> shared_ptr<TimeVariableCoefficientFunction> { return make_shared<TimeVariableCoefficientFunction>(); }))
           .def("FixTime", &TimeVariableCoefficientFunction::FixTime)
           .def("UnfixTime", &TimeVariableCoefficientFunction::UnfixTime)
           .def("IsFixed", [] (shared_ptr<TimeVariableCoefficientFunction> self) -> bool {
