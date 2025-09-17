@@ -23,6 +23,21 @@ namespace xintegration
     else
     {
       auto gflset = lsetintdom.GetLevelsetGF();
+
+      // if Discontinuous level set function is provided, we don't support BND information!
+      if ((gflset) && (gflset->GetFESpace()->GetClassName() == "DiscontinuousH1HighOrderFESpace") && (trafo.VB() == BND))
+      {
+        static bool warned = false;
+        if (!warned) {
+          cout << IM(2) << "discontinuous level set function does not support boundary integration" << endl;
+          cout << IM(2) << "returning empty integration rule" << endl;
+        }
+        warned = true;
+        return make_tuple(nullptr, Array<double>());
+      }
+      
+
+
       auto cflset = lsetintdom.GetLevelsetCF();
       int intorder = lsetintdom.GetIntegrationOrder();
       int time_intorder = lsetintdom.GetTimeIntegrationOrder();
