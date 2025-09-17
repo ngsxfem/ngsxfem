@@ -1901,9 +1901,9 @@ namespace ngfem
     auto eltype2 = trafo2.GetElementType();
 
     IntegrationRule _ir_vol1(eltype1, 2*maxorder);
-    IntegrationRule ir_vol1 = _ir_vol1.Copy();
+    IntegrationRule ir_vol1(eltype1, 2*maxorder);
     IntegrationRule _ir_vol2(eltype2, 2*maxorder);
-    IntegrationRule ir_vol2 = _ir_vol2.Copy();
+    IntegrationRule ir_vol2(eltype2, 2*maxorder);
 
     // cout << " ir_vol1 = " << endl << ir_vol1;
     // cout << " LocalFacetNr1 = " << LocalFacetNr1 << endl << endl;
