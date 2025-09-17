@@ -159,7 +159,12 @@ namespace xintegration
     else
     {
       shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
-      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) && ( (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace") || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")))
+      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) 
+          && (    (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace")
+               || (ret->GetFESpace()->GetClassName() == "DiscontinuousH1HighOrderFESpace")
+               || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")
+             )
+         )
         return make_tuple(nullptr, ret);
       else
         return make_tuple(cflset, nullptr);
