@@ -557,25 +557,23 @@ namespace xintegration
 
   template<unsigned int D>
   void TransformQuadUntrafoToIRInterface(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper &lset, IntegrationRule * ir_interface, bool spacetime_mode, double tval){
-      Vec<D> p, nref, normal;  
-      Mat<D,D> Finv;
       for (int i = 0; i < quad_untrafo.Size(); ++i)
       {
-          double myweight = quad_untrafo[i].Weight();
+          const double myweight = quad_untrafo[i].Weight();
           if(spacetime_mode) {
               quad_untrafo[i].SetWeight(tval);
               MarkAsSpaceTimeIntegrationPoint(quad_untrafo[i]);
           }
 
-          MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
-          Finv = mip.GetJacobianInverse();
-          p = quad_untrafo[i].Point();
-          nref = lset.GetNormal(p);
-          FlatVector<double> fv(D,&(nref(0)));
-          normal = Trans(Finv) * fv;
+          const MappedIntegrationPoint<D,D> mip(quad_untrafo[i],trafo);
+          const Mat<D,D> Finv = mip.GetJacobianInverse();
+          const FlatVec<3> p = quad_untrafo[i].Point();
+          const Vec<3> nref = lset.GetNormal(p);
+          const FlatVector<const double> fv = nref.Range(0,D);
+          const Vec<D> normal = Trans(Finv) * fv;
           const double weight = myweight * L2Norm(normal);
 
-          (*ir_interface)[i] = IntegrationPoint (quad_untrafo[i].Point(), weight);
+          (*ir_interface)[i] = IntegrationPoint (p, weight);
       }
   }
 
