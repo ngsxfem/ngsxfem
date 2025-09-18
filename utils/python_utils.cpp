@@ -1,3 +1,4 @@
+#include <prolongation.hpp>
 #include <python_ngstd.hpp>
 
 /// from ngsolve
@@ -293,11 +294,10 @@ evaluates to true the CoefficientFunction will evaluate as 1, otherwise as 0.
 
 Similar functionality (also for facets) can be obtained with IndicatorCF.
 )raw_string"))
-    .def("__init__",
-         [](BitArrayCoefficientFunction *instance, shared_ptr<BitArray> ba)
+    .def(py::init([](shared_ptr<BitArray> ba) -> shared_ptr<BitArrayCoefficientFunction>
          {
-           new (instance) BitArrayCoefficientFunction (ba);
-         },
+           return make_shared<BitArrayCoefficientFunction> (ba);
+         }),
          py::arg("bitarray")
       );
 
@@ -367,11 +367,11 @@ As is asks the fespace for dofs to vertices at several occasions the
 current implementation is not very fast and should be primarily used
 for prototype and testing...
 )raw_string"))
-    .def("__init__",
-         [](P1Prolongation *instance, shared_ptr<MeshAccess> ma)
+    .def(py::init(
+         [](shared_ptr<MeshAccess> ma) -> shared_ptr<P1Prolongation>
          {
-           new (instance) P1Prolongation (ma);
-         },
+           return make_shared< P1Prolongation> (ma);
+         }),
          py::arg("mesh"))
     .def("Update",
          [](shared_ptr<P1Prolongation> p1p, shared_ptr<FESpace> fes)
@@ -389,11 +389,11 @@ As is asks the fespace for dofs to vertices at several occasions the
 current implementation is not very fast and should be primarily used
 for prototype and testing...
 )raw_string"))
-    .def("__init__",
-         [](P2Prolongation *instance, shared_ptr<MeshAccess> ma)
+    .def(py::init(
+         [](shared_ptr<MeshAccess> ma) -> shared_ptr<P2Prolongation>
          {
-           new (instance) P2Prolongation (ma);
-         },
+           return make_shared< P2Prolongation> (ma);
+         }),
          py::arg("mesh"))
     .def("Update",
          [](shared_ptr<P2Prolongation> p2p, shared_ptr<FESpace> fes)
@@ -412,11 +412,11 @@ As is asks the fespace for dofs to vertices at several occasions the
 current implementation is not very fast and should be primarily used
 for prototype and testing...
 )raw_string"))
-    .def("__init__",
-         [](P2CutProlongation *instance, shared_ptr<MeshAccess> ma)
+    .def(py::init(
+         [](shared_ptr<MeshAccess> ma) -> shared_ptr<P2CutProlongation>
          {
-           new (instance) P2CutProlongation (ma);
-         },
+           return make_shared<P2CutProlongation> (ma);
+         }),
          py::arg("mesh"))
     .def("Update",
          [](shared_ptr<P2CutProlongation> p2p, shared_ptr<FESpace> fes)
@@ -429,11 +429,11 @@ for prototype and testing...
     py::class_< CompoundProlongation, shared_ptr<CompoundProlongation>, Prolongation>
     ( m, "CompoundProlongation", 
      docu_string(R"raw_string(prolongation for compound spaces)raw_string"))
-     .def("__init__",
-          [](CompoundProlongation *instance, const FESpace *fes)
+     .def(py::init(
+          [](const FESpace *fes) -> shared_ptr<CompoundProlongation>
           {
-            new (instance) CompoundProlongation( dynamic_cast<const CompoundFESpace*>(fes) );
-          },
+            return make_shared<CompoundProlongation> (dynamic_cast<const CompoundFESpace*>(fes));
+          }),
           py::arg("compoundFESpace"))
       .def("Update", &CompoundProlongation::Update, py::arg("fespace"))
       .def ("Prolongate", &CompoundProlongation::ProlongateInline, py::arg("finelevel"), py::arg("vec"))

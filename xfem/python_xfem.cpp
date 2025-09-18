@@ -51,21 +51,21 @@ Elements (BND / VOL) and facets can be either cut elements or in the positive (P
 (NEG) part of the domain. A CutInfo provides information about the cut configuration in terms of
 BitArrays and Vectors of Ratios. (Internally also domain_types for different mesh nodes are stored.)
 )raw")
-    .def("__init__",  [] (CutInformation *instance,
-                          shared_ptr<MeshAccess> ma,
+    .def(py::init([] (shared_ptr<MeshAccess> ma,
                           py::object lset,
                           int subdivlvl,
                           int time_order,
-                          int heapsize)
+                          int heapsize) -> shared_ptr<CutInformation>
          {
-           new (instance) CutInformation (ma);
+           auto cut_info = make_shared<CutInformation> (ma);
            if ((!lset.is_none()) && py::extract<shared_ptr<CF>> (lset).check())
            {
              shared_ptr<CF> cflset = py::extract<shared_ptr<CF>>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-             instance->Update(cflset, subdivlvl, time_order, lh);
+             cut_info->Update(cflset, subdivlvl, time_order, lh);
            }
-         },
+           return cut_info;
+         }),
          py::arg("mesh"),
          py::arg("levelset") = py::none(),
          py::arg("subdivlvl") = 0,
@@ -206,14 +206,13 @@ ElementAggregation does the following:
   good element (the root element).
 )
 )raw")
-    .def("__init__",  [] (ElementAggregation *instance,
-                          shared_ptr<MeshAccess> ma,
+    .def(py::init([] (shared_ptr<MeshAccess> ma,
                           py::object proot, 
                           py::object pbad,
                           int heapsize                          
-                          )
+                          ) -> shared_ptr<ElementAggregation>
          {
-           auto self = new (instance) ElementAggregation (ma);
+           auto element_aggregation = make_shared<ElementAggregation> (ma);
            shared_ptr<BA> root = nullptr, bad= nullptr;
            if (!proot.is_none() && py::extract<shared_ptr<BA>> (proot).check())
              root = py::extract<shared_ptr<BA>>(proot)();
@@ -223,9 +222,10 @@ ElementAggregation does the following:
            if (root && bad)
            {
              LocalHeap lh (heapsize, "ElementAggregation::Update-heap", true);
-             self->Update(root, bad, lh);
+             element_aggregation->Update(root, bad, lh);
            }
-         },
+           return element_aggregation;
+         }),
          py::arg("mesh"),
          py::arg("root_elements") = py::none(),
          py::arg("bad_elements") = py::none(),
@@ -511,8 +511,7 @@ heapsize : int
     (m, "MultiLevelsetCutInfo",R"raw(
 A minimal version of a CutInfo that allows for several levelsets and a list of tuples of domain_types.
 )raw")
-    .def("__init__",  [] (MultiLevelsetCutInformation *instance,
-                          shared_ptr<MeshAccess> ma,
+    .def(py::init([] (shared_ptr<MeshAccess> ma,
                           py::object lsets_in)
          {
            py::extract<py::list> lsets_(lsets_in);
@@ -530,8 +529,8 @@ A minimal version of a CutInfo that allows for several levelsets and a list of t
             lset_b[i]->Update();
             lset_b[i]->GetVectorPtr()->Set(1.0, lset_a[i]->GetVector());
            }
-           new (instance) MultiLevelsetCutInformation (ma, lset_b);
-         },
+           return make_shared<MultiLevelsetCutInformation> (ma, lset_b);
+         }),
          py::arg("mesh"),
          py::arg("levelset"),
          docu_string(R"raw_string(
