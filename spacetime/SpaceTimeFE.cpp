@@ -50,33 +50,17 @@ namespace ngfem
                                     BareSliceMatrix<> dshape) const
 
     {
-      // matrix of derivatives:
 
-         if (tFE->Order() == 0)
-            sFE->CalcDShape(ip,dshape);
-         else {
+      Vector<> time_shape(tFE->GetNDof());
+      Matrix<> space_shape(sFE->GetNDof(),D);
 
-            Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip.Weight());
-            
-            if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
-              throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
-            
-            tFE->CalcShape(z,time_shape);
-
-            Matrix<double> space_dshape(sFE->GetNDof(),D);
-            sFE->CalcDShape(ip,space_dshape);
-
-            int ii = 0;
-            for(int j = 0; j < tFE->GetNDof(); j++) {
-                for(int i=0; i< sFE->GetNDof(); i++) {
-                    for(int dimi = 0; dimi<D; dimi++) 
-                      dshape(ii,dimi) = space_dshape(i,dimi)*time_shape(j);
-                    ii++;
-                }
-            }
-         }
-
+      GenericCalcShape(ip, dshape,
+        [&](const IntegrationPoint& ipx, BareSliceMatrix<> x_shape) { sFE->CalcDShape(ipx,x_shape); },
+        space_shape, D,
+        [&](const IntegrationPoint& ipt, BareSliceVector<> t_shape) { tFE->CalcShape(ipt,t_shape); },
+        time_shape
+      );  
+      
     }
 
 
@@ -85,32 +69,16 @@ namespace ngfem
                                       BareSliceMatrix<> ddshape) const
 
     {
-      auto ip = mip.IP();
-      // matrix of derivatives:
-         if (tFE->Order() == 0)
-            sFE->CalcMappedDDShape(mip,ddshape);
-         else {
 
-            Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip.Weight());
-            
-            if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
-              throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
-            
-            tFE->CalcShape(z,time_shape);
+      Vector<> time_shape(tFE->GetNDof());
+      Matrix<> space_shape(sFE->GetNDof(),D*D);
 
-            Matrix<double> space_ddshape(sFE->GetNDof(),D*D);
-            sFE->CalcMappedDDShape(mip,space_ddshape);
-
-            int ii = 0;
-            for(int j = 0; j < tFE->GetNDof(); j++) {
-                for(int i=0; i< sFE->GetNDof(); i++) {
-                    for(int dimi = 0; dimi<D*D; dimi++) 
-                        ddshape(ii,dimi) = space_ddshape(i,dimi)*time_shape(j);
-                    ii++;
-                }
-            }
-         }
+      GenericCalcMappedShape(mip, ddshape,
+        [&](const BaseMappedIntegrationPoint& mipx, BareSliceMatrix<> x_shape) { sFE->CalcMappedDDShape(mipx,x_shape); },
+        space_shape, D*D,
+        [&](const IntegrationPoint& ipt, BareSliceVector<> t_shape) { tFE->CalcShape(ipt,t_shape); },
+        time_shape
+      );  
 
     }
 
