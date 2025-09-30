@@ -26,35 +26,24 @@ namespace ngfem
         override_time = aoverride_time;
     }
 
+
+
    template <int D>
     void SpaceTimeFE<D> :: CalcShape (const IntegrationPoint & ip,
                                     BareSliceVector<> shape) const
     {
-       if (tFE->Order() == 0)
-          sFE->CalcShape(ip,shape);
-       else
-       {
+      Vector<> time_shape(tFE->GetNDof());
+      Vector<> space_shape(sFE->GetNDof());
 
-            Vector<> time_shape(tFE->GetNDof());
-            IntegrationPoint z(override_time ? time : ip.Weight());
-            
-            if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
-              throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
-            
-            tFE->CalcShape(z,time_shape);
-
-            Vector<> space_shape(sFE->GetNDof());
-            sFE->CalcShape(ip,space_shape);
-
-            // define shape functions
-            int ii = 0;
-            for(int j=0; j<tFE->GetNDof(); j++) {
-              for(int i=0; i<sFE->GetNDof(); i++) {
-                shape(ii++) = space_shape(i)*time_shape(j);
-              }
-            }
-       }
+      GenericCalcShape(ip, shape, 1,
+        [&](const IntegrationPoint& ipx, BareSliceVector<> x_shape) { sFE->CalcShape(ipx,x_shape); },
+        space_shape,
+        [&](const IntegrationPoint& ipt, BareSliceVector<> t_shape) { tFE->CalcShape(ipt,t_shape); },
+        time_shape
+      );
      }
+
+
 
     template <int D>
     void SpaceTimeFE<D> :: CalcDShape (const IntegrationPoint & ip,
@@ -81,7 +70,8 @@ namespace ngfem
             int ii = 0;
             for(int j = 0; j < tFE->GetNDof(); j++) {
                 for(int i=0; i< sFE->GetNDof(); i++) {
-                    for(int dimi = 0; dimi<D; dimi++) dshape(ii,dimi) = space_dshape(i,dimi)*time_shape(j);
+                    for(int dimi = 0; dimi<D; dimi++) 
+                      dshape(ii,dimi) = space_dshape(i,dimi)*time_shape(j);
                     ii++;
                 }
             }
@@ -132,26 +122,15 @@ namespace ngfem
                                      BareSliceVector<> dshape) const
 
     {
-        // matrix of derivatives:
-
-           Matrix<double> time_dshape(tFE->GetNDof(),1);
-           IntegrationPoint z(override_time ? time : ip.Weight());
-
-           if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
-             throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
-           
-           tFE->CalcDShape(z,time_dshape);
-
-           Vector<> space_shape(sFE->GetNDof());
-           sFE->CalcShape(ip,space_shape);
-
-           int ii = 0;
-           for(int j = 0; j < tFE->GetNDof(); j++) {
-              for(int i=0; i< sFE->GetNDof(); i++) {
-                 dshape(ii++) = space_shape(i)*time_dshape(j,0);
-              }
-           }
-
+      Matrix<> time_dshape(tFE->GetNDof(),1);
+      Vector<> space_shape(sFE->GetNDof());
+      GenericCalcShape(ip, dshape, 1,
+        [&](const IntegrationPoint& ipx, BareSliceVector<> x_shape) { sFE->CalcShape(ipx,x_shape); },
+        space_shape,
+        [&](const IntegrationPoint& ipt, BareSliceMatrix<> t_shape) { tFE->CalcDShape(ipt,t_shape); },
+        time_dshape
+      );
+      return;
     }
 
     template <int D>
@@ -159,26 +138,15 @@ namespace ngfem
                                      BareSliceVector<> ddshape) const
 
     {
-        // matrix of derivatives:
-
-           Matrix<double> time_ddshape(tFE->GetNDof(),1);
-           IntegrationPoint z(override_time ? time : ip.Weight());
-
-           if(!IsSpaceTimeIntegrationPoint(ip))//only effectiv if sanity check is on
-             throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
-           
-           tFE->CalcDDShape(z,time_ddshape);
-
-           Vector<> space_shape(sFE->GetNDof());
-           sFE->CalcShape(ip,space_shape);
-
-           int ii = 0;
-           for(int j = 0; j < tFE->GetNDof(); j++) {
-              for(int i=0; i< sFE->GetNDof(); i++) {
-                 ddshape(ii++) = space_shape(i)*time_ddshape(j,0);
-              }
-           }
-
+      Matrix<> time_dshape(tFE->GetNDof(),1);
+      Vector<> space_shape(sFE->GetNDof());
+      GenericCalcShape(ip, ddshape, 1,
+        [&](const IntegrationPoint& ipx, BareSliceVector<> x_shape) { sFE->CalcShape(ipx,x_shape); },
+        space_shape, 
+        [&](const IntegrationPoint& ipt, BareSliceMatrix<> t_shape) { tFE->CalcDDShape(ipt,t_shape); },
+        time_dshape
+      );
+      return;
     }
 
    void LagrangePolyHornerCalc::CalcNewtonBasisCoeffs() {

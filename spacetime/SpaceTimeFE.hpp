@@ -1,16 +1,10 @@
 #ifndef FILE_SPACETIMEFE_HPP
 #define FILE_SPACETIMEFE_HPP
 
-// SpaceTimeFE based on:
-
-/*********************************************************************/
-/* File:   myElement.hpp                                             */
-/* Author: Joachim Schoeberl                                         */
-/* Date:   26. Apr. 2009                                             */
-/*********************************************************************/
-
+// SpaceTimeFE:
 
 #include <fem.hpp>
+//#include "../utils/ngsxstd.hpp"
 
 namespace ngfem
 {
@@ -32,6 +26,25 @@ namespace ngfem
 
       virtual void CalcShape (const IntegrationPoint & ip,
                               BareSliceVector<> shape) const;
+
+
+      template <typename SpaceTimeShape, typename SpaceCalcShape, typename SpaceShape, typename TimeCalcShape, typename TimeShape>
+      void GenericCalcShape(const IntegrationPoint& ip,
+                            SpaceTimeShape shape,
+                            int MD,
+                            SpaceCalcShape&& space_calcshape,
+                            SpaceShape&& space_shape,
+                            TimeCalcShape&& time_calcshape,
+                            TimeShape&& time_shape) const;
+
+      template <typename SpaceCalcShape, typename SpaceShape, typename TimeCalcShape, typename TimeShape>
+      void GenericCalcDShape(const IntegrationPoint& ip,
+                            BareSliceMatrix<> shape,
+                            int MD,
+                            SpaceCalcShape&& space_calcshape,
+                            SpaceShape&& space_shape,
+                            TimeCalcShape&& time_calcshape,
+                            TimeShape&& time_shape) const;
 
       // for time derivatives
 
@@ -152,8 +165,88 @@ namespace ngfem
 
       };
   
- }
 
+
+  template <int D>
+  template <typename SpaceTimeShape, 
+            typename SpaceCalcShape, typename SpaceShape, 
+            typename TimeCalcShape, typename TimeShape>
+  void SpaceTimeFE<D>::GenericCalcShape(
+      const IntegrationPoint& ip,
+      SpaceTimeShape shape,
+      int MD,
+      SpaceCalcShape&& space_calcshape,
+      SpaceShape&& space_shape,
+      TimeCalcShape&& time_calcshape,
+      TimeShape&& time_shape
+  ) const
+  {
+      if (tFE->Order() == 0) {
+          space_calcshape(ip, shape);
+      } else {
+          IntegrationPoint z(override_time ? time : ip.Weight());
+
+          //if(!IsSpaceTimeIntegrationPoint(ip)) /// <- re-introduce this
+          //    throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+
+          //Vector<> time_shape(tFE->GetNDof());
+          time_calcshape(z, time_shape);
+          FlatMatrix<> t_shape(tFE->GetNDof(), 1, &time_shape(0));
+          //Vector<> space_shape(sFE->GetNDof());
+          space_calcshape(ip, space_shape);
+          FlatMatrix<> x_shape(sFE->GetNDof(), MD, &space_shape(0));
+
+          FlatMatrix<> st_shape(sFE->GetNDof()*tFE->GetNDof(), MD, &shape(0));
+
+          int ii = 0;
+          for (int j = 0; j < tFE->GetNDof(); j++) {
+              for (int i = 0; i < sFE->GetNDof(); i++) {
+                  for(int dimi = 0; dimi < MD; dimi++) 
+                      st_shape(ii,dimi) = x_shape(i,dimi)*t_shape(j,0);
+                  ii++; 
+              }
+          }
+          cout << "st_shape: " << st_shape << endl;
+      }
+  }     
+
+  template <int D>
+  template <typename SpaceCalcShape, typename SpaceShape, typename TimeCalcShape, typename TimeShape>
+  void SpaceTimeFE<D>::GenericCalcDShape(
+      const IntegrationPoint& ip,
+      BareSliceMatrix<> dshape,
+      int MD,
+      SpaceCalcShape&& space_calcdshape,
+      SpaceShape&& space_dshape,
+      TimeCalcShape&& time_calcshape,
+      TimeShape&& time_shape
+  ) const
+  {
+      if (tFE->Order() == 0) {
+          space_calcdshape(ip, dshape);
+      } else {
+          IntegrationPoint z(override_time ? time : ip.Weight());
+
+          //if(!IsSpaceTimeIntegrationPoint(ip))
+          //    throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+
+          //Vector<> time_shape(tFE->GetNDof());
+          time_calcshape(z, time_shape);
+          //Matrix<double> space_dshape(sFE->GetNDof(),MD);
+          space_calcdshape(ip, space_dshape);
+
+          int ii = 0;
+          for (int j = 0; j < tFE->GetNDof(); j++) {
+              for (int i = 0; i < sFE->GetNDof(); i++) {
+                  for(int dimi = 0; dimi < MD; dimi++) 
+                      dshape(ii,dimi) = space_dshape(i,dimi)*time_shape(j);
+                  ii++;
+              }
+          }
+      }
+  }     
+
+ }
 
 #endif
 
