@@ -35,9 +35,9 @@ namespace ngfem
       Vector<> time_shape(tFE->GetNDof());
       Vector<> space_shape(sFE->GetNDof());
 
-      GenericCalcShape(ip, shape, 1,
+      GenericCalcShape(ip, shape,
         [&](const IntegrationPoint& ipx, BareSliceVector<> x_shape) { sFE->CalcShape(ipx,x_shape); },
-        space_shape,
+        space_shape, 1,
         [&](const IntegrationPoint& ipt, BareSliceVector<> t_shape) { tFE->CalcShape(ipt,t_shape); },
         time_shape
       );
@@ -124,9 +124,9 @@ namespace ngfem
     {
       Matrix<> time_dshape(tFE->GetNDof(),1);
       Vector<> space_shape(sFE->GetNDof());
-      GenericCalcShape(ip, dshape, 1,
+      GenericCalcShape(ip, dshape,
         [&](const IntegrationPoint& ipx, BareSliceVector<> x_shape) { sFE->CalcShape(ipx,x_shape); },
-        space_shape,
+        space_shape, 1,
         [&](const IntegrationPoint& ipt, BareSliceMatrix<> t_shape) { tFE->CalcDShape(ipt,t_shape); },
         time_dshape
       );
@@ -140,9 +140,9 @@ namespace ngfem
     {
       Matrix<> time_dshape(tFE->GetNDof(),1);
       Vector<> space_shape(sFE->GetNDof());
-      GenericCalcShape(ip, ddshape, 1,
+      GenericCalcShape(ip, ddshape,
         [&](const IntegrationPoint& ipx, BareSliceVector<> x_shape) { sFE->CalcShape(ipx,x_shape); },
-        space_shape, 
+        space_shape, 1,
         [&](const IntegrationPoint& ipt, BareSliceMatrix<> t_shape) { tFE->CalcDDShape(ipt,t_shape); },
         time_dshape
       );
