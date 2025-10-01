@@ -42,3 +42,7 @@ dist/**
 python/_version.py
 .ci/pyodide/**
 **/*.out
+.history
+demos/mpi/output
+.codeviz
+

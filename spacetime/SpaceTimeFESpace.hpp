@@ -24,7 +24,7 @@ namespace ngcomp
     shared_ptr<ScalarFiniteElement<1>> tfe;
     double time;
     bool override_time = false;
-
+    bool vectorh1l2;
   public:
 
     SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags);
@@ -36,9 +36,8 @@ namespace ngcomp
 
     virtual string GetClassName () const
     {
-      return "SpaceTimeFESpace";
+      return "SpaceTimeFESpace(" + Vh->GetClassName() + ")";
     }
-
 
     virtual void Update();
     virtual size_t GetNDof () const { return ndof; }
