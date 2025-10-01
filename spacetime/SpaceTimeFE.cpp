@@ -28,6 +28,30 @@ namespace ngfem
 
 
 
+
+    template <int D>
+    void SpaceTimeFE<D> :: CalcTimeShape (const IntegrationPoint & ip,
+                                          BareSliceVector<> time_shape,
+                                          int derivorder) const
+    {
+      IntegrationPoint z(override_time ? time : ip.Weight());
+
+      if(!IsSpaceTimeIntegrationPoint(ip))
+        throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
+
+          //Vector<> time_shape(tFE->GetNDof());
+      FlatMatrix<> t_shape(tFE->GetNDof(),1,&time_shape(0));
+      if (derivorder == 0)
+        tFE->CalcShape(z,time_shape);
+      else if (derivorder == 1)
+        tFE->CalcDShape(z,t_shape);
+      else if (derivorder == 2)
+        tFE->CalcDDShape(z,t_shape);
+      else 
+        throw Exception("SpaceTimeFE :: CalcTimeShape called with an invalid time derivative order");
+    }
+
+
    template <int D>
     void SpaceTimeFE<D> :: CalcShape (const IntegrationPoint & ip,
                                     BareSliceVector<> shape) const

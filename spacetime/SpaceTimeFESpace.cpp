@@ -53,9 +53,9 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     {
       Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
           constexpr int SDIM1 = SDIM+1;
-          evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpIdVectorH1<SDIM1,VOL>>>();
-          flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradVectorH1<SDIM1>>>();
-          evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdVectorH1<SDIM1,BND>>>();
+          evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpDtVectorH1<SDIM1,0,VOL>>>();
+          flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<SDIM1,0,VOL>>>();
+          evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpDtVectorH1<SDIM1,0,BND>>>(); 
       });
     }
     else
@@ -89,14 +89,38 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       });
     }
     else
-      Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
-        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,1>>>());
-        additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
-        additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
-        additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
-        additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
-      });
-    
+    {
+      if (vectorh1l2)
+      {
+        Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDtVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("dtt", make_shared<T_DifferentialOperator<DiffOpDtVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("div", make_shared<T_DifferentialOperator<DiffOpDtDivVectorH1<DIM+1,0>>>());
+          additional_evaluators.Set ("dtdiv", make_shared<T_DifferentialOperator<DiffOpDtDivVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("dttdiv", make_shared<T_DifferentialOperator<DiffOpDtDivVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("dxt", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("dxtt", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("dtx", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("dttx", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpDtFixtVectorH1<DIM+1,0,0>>>());
+          additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpDtFixtVectorH1<DIM+1,0,1>>>());
+          //additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
+        });
+
+      }
+      else
+      {
+        Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,1>>>());
+          additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
+          additional_evaluators.Set ("dtt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
+          additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
+          additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
+          additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
+        });
+      }
+    }
         
 
 

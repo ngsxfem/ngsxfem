@@ -23,9 +23,15 @@ namespace ngfem
 
       virtual ELEMENT_TYPE ElementType() const { return sFE->ElementType(); }
 
+      ScalarFiniteElement<1> * GetTimeFE() const { return tFE; }
+      ScalarFiniteElement<D> * GetSpaceFE() const { return sFE; }
 
       virtual void CalcShape (const IntegrationPoint & ip,
                               BareSliceVector<> shape) const;
+
+      virtual void CalcTimeShape (const IntegrationPoint & ip,
+                                  BareSliceVector<> shape,
+                                  int derivorder) const;    
 
 
       template <typename SpaceTimeShape, 
