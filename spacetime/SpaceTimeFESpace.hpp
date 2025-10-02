@@ -31,6 +31,8 @@ namespace ngcomp
 
     shared_ptr<FESpace> GetSpaceFESpace() { return Vh; }
 
+    bool IsVectorH1L2() const { return vectorh1l2; }
+
     // destructor
     virtual ~SpaceTimeFESpace ();
 

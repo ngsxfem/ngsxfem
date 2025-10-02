@@ -15,6 +15,7 @@ target_sources(xfem PRIVATE
       ../lsetcurving/shiftintegrators.cpp
       ../python/python_ngsxfem.cpp
       ../spacetime/diffopDt.cpp
+      ../spacetime/diffopFixt.cpp
       ../spacetime/SpaceTimeFE.cpp
       ../spacetime/SpaceTimeFESpace.cpp
       ../spacetime/timecf.cpp

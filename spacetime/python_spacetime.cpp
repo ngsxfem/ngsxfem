@@ -279,25 +279,26 @@ ngsxfem.__init__ defines tref.
 
     shared_ptr<DifferentialOperator> diffopfixt;
     const int SpaceD = self->GetFESpace()->GetSpatialDimension();
+    auto stfes = dynamic_pointer_cast<SpaceTimeFESpace> (self->GetFESpace());
+
     if(!use_FixAnyTime && (time == 0.0 || time == 1.0))
     {
-      //if (SpaceD < 2)
-        //throw Exception("SpaceD < 2 not implemented yet.");
       Switch<2> (int(time), [&] (auto TT) {
-        if (SpaceD == 2)
-        // Switch<2> (SpaceD-2, [&] (auto SD) {
-          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, TT>>> ();
-        else if(SpaceD == 1)
-            diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<1, TT>>> ();
-        else
-          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, TT>>> ();
-        // });
+        Switch<2> (SpaceD-1, [&] (auto SD) {
+          if (stfes->IsVectorH1L2())
+            diffopfixt = make_shared<T_DifferentialOperator<DiffOpDtFixtVectorH1<SD+1, 0, TT>>> ();
+          else
+            diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<SD+1, TT>>> ();
+        });
       });
     } 
     else {
       cout << IM(4) << "Calling DiffOpFixAnyTime" << endl;
       Switch<2> (SpaceD-2, [&] (auto SD) {
-        diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
+        if (stfes->IsVectorH1L2())
+          diffopfixt = make_shared<DiffOpFixAnyTimeVectorH1<SD+2>> (time);
+        else
+          diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
       });
     }
 
@@ -356,22 +357,26 @@ time: Parameter or double
    {
      shared_ptr<DifferentialOperator> diffopfixt;
      const int SpaceD = self->GetFESpace()->GetSpatialDimension();
+     auto stfes = dynamic_pointer_cast<SpaceTimeFESpace> (self->GetFESpace());
      if(time == 0.0 || time == 1.0)
      {
       if (SpaceD < 2) throw Exception("Requested time not implemented yet.");
       Switch<2> (int(time), [&] (auto TT) {
-        if (SpaceD == 2)
-        // Switch<2> (SpaceD-2, [&] (auto SD) {
-          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<2, TT>>> ();
-        else
-          diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<3, TT>>> ();
-        // });
+        Switch<2> (SpaceD-2, [&] (auto SD) {
+          if (stfes->IsVectorH1L2())
+            diffopfixt = make_shared<T_DifferentialOperator<DiffOpDtFixtVectorH1<SD+2, 0, TT>>> ();
+          else
+            diffopfixt = make_shared<T_DifferentialOperator<DiffOpFixt<SD+2, TT>>> ();
+        });
       });
      }
      else {
        cout << IM(4) << "Calling DiffOpFixAnyTime" << endl;
        Switch<2> (SpaceD-2, [&] (auto SD) {
-         diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
+          if (stfes->IsVectorH1L2())
+            diffopfixt = make_shared<DiffOpFixAnyTimeVectorH1<SD+2>> (time);
+          else
+            diffopfixt = make_shared<DiffOpFixAnyTime<SD+2>> (time);
        });
      }
      return shared_ptr<CF>(make_shared<GridFunctionCoefficientFunction> (self, diffopfixt));

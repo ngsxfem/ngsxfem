@@ -45,7 +45,7 @@ def test_spacetime_vecH1_diffops():
     gfs.Set(CF((1 + 3.5 + 3*x + 4*y, 2 + 4 + 5*x + 6*y)))
     gfu.vec.data[len(gfs.vec):len(gfu.vec)] = gfs.vec
 
-    print(gfu.vec)
+    #print(gfu.vec)
 
     q = []
     for i, eval in enumerate([
@@ -86,6 +86,15 @@ def test_spacetime_vecH1_diffops():
         q.append(Integrate( eval(gfu) * dst, mesh))
         assert( abs(i+10-q[-1]) < 1e-10 )
 
+    gfs.Set(CF((14, 15)))
+    gfu.vec.data[0:len(gfs.vec)] = gfs.vec
+    gfs.Set(CF((18, 19)))
+    gfu.vec.data[len(gfs.vec):len(gfu.vec)] = gfs.vec
+
+    for i, t in enumerate([0,0.5,1]):
+        for j in range(2):
+            q.append(Integrate( fix_tref(gfu,t)[j] * dst, mesh))
+            assert( abs(i*2+j+14-q[-1]) < 1e-10 )
 
     print(q)
 
