@@ -69,7 +69,7 @@ template<int SpaceD, int DerivOrder>
     enum { DIM_SPACE = SpaceD };
     enum { DIM_ELEMENT = SpaceD-VB };
     enum { DIM_DMAT = SpaceD*SpaceD };
-    enum { DIFFORDER = 0 };
+    enum { DIFFORDER = 1 };
     
     static Array<int> GetDimensions() { return Array<int> ( { SpaceD, SpaceD } ); }
 
@@ -91,7 +91,7 @@ template<int SpaceD, int DerivOrder>
     enum { DIM_SPACE = SpaceD };
     enum { DIM_ELEMENT = SpaceD-VB };
     enum { DIM_DMAT = 1 };
-    enum { DIFFORDER = 0 };
+    enum { DIFFORDER = 1 };
     
     static string Name() { return DerivOrder == 0? "div" : (DerivOrder == 1 ? "dtdiv" : "dttdiv"); }
     static constexpr bool SUPPORT_PML = false;
