@@ -21,6 +21,7 @@
 #include "../spacetime/SpaceTimeFE.hpp"
 #include "../spacetime/SpaceTimeFESpace.hpp"
 #include "../spacetime/diffopDt.hpp"
+#include "../spacetime/diffopFixt.hpp"
 #include "../spacetime/timecf.hpp"
 #include "../spacetime/spacetime_vtk.hpp"
 

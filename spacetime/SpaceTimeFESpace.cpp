@@ -14,6 +14,7 @@
 
 #include "timecf.hpp"
 #include "diffopDt.hpp"
+#include "diffopFixt.hpp"
 
 /*
 #include <diffop_impl.hpp>
