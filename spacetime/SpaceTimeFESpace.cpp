@@ -45,6 +45,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     auto vh1space = dynamic_pointer_cast<VectorH1FESpace>(Vh);
     auto vl2space = dynamic_pointer_cast<VectorL2FESpace>(Vh);
 
+    vectorh1l2 = false;
     if (vh1space || vl2space)
       vectorh1l2 = true;
 
@@ -175,9 +176,6 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
 
-    auto vh1space = dynamic_pointer_cast<VectorH1FESpace>(Vh);
-    auto vl2space = dynamic_pointer_cast<VectorL2FESpace>(Vh);
-
      ScalarFiniteElement<1>* t_FE = tfe.get();
      FiniteElement * ret_FE = nullptr;
      Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
@@ -185,8 +183,7 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
        const int cdim = ei.IsVolume() ? 0 : 1 ;
        Switch<1> (cdim, [&] (auto CDIM) {
          constexpr int RDIM = SDIM1-CDIM;
-         //cout << "SDIM, SDIM1, cdim, RDIM = " << SDIM << ", " << SDIM1 << ", " << cdim << ", " << RDIM << endl;
-         if (vectorh1l2)
+         if (this->vectorh1l2)
          {
            auto v_FE = dynamic_cast<VectorFiniteElement*>(&Vh->GetFE(ei,alloc));
            const FiniteElement& fe = (*v_FE)[0];
