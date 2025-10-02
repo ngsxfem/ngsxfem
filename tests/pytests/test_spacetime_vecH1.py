@@ -88,3 +88,54 @@ def test_spacetime_vecH1_diffops():
 
 
     print(q)
+
+import pytest
+@pytest.mark.parametrize("k_t", [0,1,2])
+@pytest.mark.parametrize("k_s", [1,2,3])
+@pytest.mark.parametrize("n_threads", [1,2])
+def test_spacetime_vecH1_diffops_compare(k_t, k_s, n_threads):
+    solver = "pardiso"
+    SetNumThreads(n_threads)
+    time_order = 2*k_t+2
+    
+    from netgen.occ import MoveTo, Circle, Face, OCCGeometry
+    base = MoveTo(0,0).Circle(1.1).Face()
+    hole = MoveTo(0,0).Circle(1.5/5).Face()
+    base -= hole
+    geo = OCCGeometry(base, dim=2)
+    ngmesh = geo.GenerateMesh(maxh=0.4)
+    mesh = Mesh(ngmesh)
+    
+    mesh.Curve(k_s)
+
+    dst = dxtref(mesh, time_order=time_order)
+    V = VectorH1(mesh,order=k_s, dgjumps=True, dirichlet="default")
+    tfe = ScalarTimeFE(k_t)
+
+    st_vfes = tfe*V
+
+    u,v = st_vfes.TnT()
+
+    a = BilinearForm(st_vfes)
+    a += (grad(u) | grad(v)) * dst 
+    a.Assemble()
+
+    W = H1(mesh,order=k_s, dgjumps=True, dirichlet="default")
+    st_fes = (tfe*W)*(tfe*W)
+
+    (u1,u2),(v1,v2) = st_fes.TnT()
+    us,vs = (u1,u2),(v1,v2)
+    
+    def sgrad(u):
+        return CF((grad(u[0])[0], grad(u[0])[1], grad(u[1])[0], grad(u[1])[1]),dims=(2,2))
+
+    a_s = BilinearForm(st_fes)
+    a_s += (sgrad(us) | sgrad(vs)) * dst
+    
+    a_s.Assemble()
+
+    print(Norm(a.mat.AsVector()))
+    print(Norm(a_s.mat.AsVector()))
+    assert(abs(Norm(a.mat.AsVector()) - Norm(a.mat.AsVector())) < 1e-10)
+
+    
