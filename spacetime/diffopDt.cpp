@@ -83,6 +83,145 @@ namespace ngfem
   template class T_DifferentialOperator<DiffOpDtVec<3, 2, 2>>;
   template class T_DifferentialOperator<DiffOpDtVec<3, 3, 2>>;
 
+  template <int SpaceD, int DerivOrder, VorB VB>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpDtVectorH1<SpaceD, DerivOrder, VB>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                                                 MAT && mat, LocalHeap & lh)
+  {
+    auto & fel = static_cast<const VectorFiniteElement&> (bfel);
+    mat.AddSize(DIM_DMAT, bfel.GetNDof()) = 0.0;
+
+    auto & feli = static_cast<const SpaceTimeFE<SpaceD>&> (fel[0]);
+    const int tndof = feli.GetTimeFE()->GetNDof();
+    const int sndof = feli.GetNDof() / tndof;
+    HeapReset hr(lh);
+    FlatVector<> space_shape (sndof,lh); 
+    feli.GetSpaceFE()->CalcShape(mip.IP(),space_shape);
+    FlatVector<> time_shape (tndof,lh); 
+    feli.CalcTimeShape(mip.IP(),time_shape,DerivOrder);
+
+    for (int i = 0; i < tndof; i++)
+      for (int d = 0; d < SpaceD; d++)
+        for (int j = 0; j < sndof; j++)
+          mat(d,i*SpaceD*sndof+d*sndof+j) = space_shape(j)*time_shape(i);
+  }        
+
+  template <int SpaceD, int DerivOrder, VorB VB>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpDtGradVectorH1<SpaceD, DerivOrder, VB>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                                                 MAT && mat, LocalHeap & lh)
+  {
+    auto & fel = static_cast<const VectorFiniteElement&> (bfel);
+    mat.AddSize(DIM_DMAT, bfel.GetNDof()) = 0.0;
+
+    auto & feli = static_cast<const SpaceTimeFE<SpaceD>&> (fel[0]);
+    const int tndof = feli.GetTimeFE()->GetNDof();
+    const int sndof = feli.GetNDof() / tndof;
+    HeapReset hr(lh);
+    FlatMatrix<> space_shape (sndof,SpaceD,lh); 
+    feli.GetSpaceFE()->CalcMappedDShape(mip,space_shape);
+    FlatVector<> time_shape (tndof,lh); 
+    feli.CalcTimeShape(mip.IP(),time_shape,DerivOrder);
+
+    for (int i = 0; i < tndof; i++)
+      for (int d = 0; d < SpaceD; d++)
+        for (int j = 0; j < sndof; j++)
+          for (int l = 0; l < SpaceD; l++)
+            mat(d*SpaceD+l,i*SpaceD*sndof+d*sndof+j) = space_shape(j,l)*time_shape(i);
+  }        
+
+  template <int SpaceD, int DerivOrder, VorB VB>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpDtDivVectorH1<SpaceD, DerivOrder, VB>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                                                 MAT && mat, LocalHeap & lh)
+  {
+    auto & fel = static_cast<const VectorFiniteElement&> (bfel);
+    mat.AddSize(DIM_DMAT, bfel.GetNDof()) = 0.0;
+
+    auto & feli = static_cast<const SpaceTimeFE<SpaceD>&> (fel[0]);
+    const int tndof = feli.GetTimeFE()->GetNDof();
+    const int sndof = feli.GetNDof() / tndof;
+    HeapReset hr(lh);
+    FlatMatrix<> space_shape (sndof,SpaceD,lh); 
+    feli.GetSpaceFE()->CalcMappedDShape(mip,space_shape);
+    FlatVector<> time_shape (tndof,lh); 
+    feli.CalcTimeShape(mip.IP(),time_shape,DerivOrder);
+
+    for (int i = 0; i < tndof; i++)
+      for (int d = 0; d < SpaceD; d++)
+        for (int j = 0; j < sndof; j++)
+          mat(0,i*SpaceD*sndof+d*sndof+j) = space_shape(j,d)*time_shape(i);
+  }        
+
+
+
+  template <int SpaceD, int DerivOrder, int time, VorB VB>
+  template <typename FEL, typename MIP, typename MAT>
+  void DiffOpDtFixtVectorH1<SpaceD, DerivOrder, time, VB>::GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                                                           MAT && mat, LocalHeap & lh)
+  {
+    auto & fel = static_cast<const VectorFiniteElement&> (bfel);
+    mat.AddSize(DIM_DMAT, bfel.GetNDof()) = 0.0;
+
+    auto & feli = static_cast<const SpaceTimeFE<SpaceD>&> (fel[0]);
+    const int tndof = feli.GetTimeFE()->GetNDof();
+    const int sndof = feli.GetNDof() / tndof;
+    HeapReset hr(lh);
+    FlatVector<> space_shape (sndof,lh); 
+    feli.GetSpaceFE()->CalcShape(mip.IP(),space_shape);
+    FlatVector<> time_shape (tndof,lh); 
+
+
+    IntegrationPoint ip(mip.IP()(0),mip.IP()(1), mip.IP()(2), time);
+    MarkAsSpaceTimeIntegrationPoint(ip);    
+    feli.CalcTimeShape(ip,time_shape,DerivOrder);
+
+    for (int i = 0; i < tndof; i++)
+      for (int d = 0; d < SpaceD; d++)
+        for (int j = 0; j < sndof; j++)
+          mat(d,i*SpaceD*sndof+d*sndof+j) = space_shape(j)*time_shape(i);
+  }        
+
+
+#define INSTANTIATE_ONE(CLASS, SPACEDIM, TD, VB) \
+  template class T_DifferentialOperator<CLASS<SPACEDIM, TD, VB>>;
+
+#define INSTANTIATE_ALL_VB(CLASS, SPACEDIM, TD) \
+  INSTANTIATE_ONE(CLASS, SPACEDIM, TD, VOL) 
+//  \
+//  INSTANTIATE_ONE(CLASS, SPACEDIM, TD, BND)
+
+#define INSTANTIATE_ALL_TIME_DERIVS(CLASS, SPACEDIM) \
+  INSTANTIATE_ALL_VB(CLASS, SPACEDIM, 0) \
+  INSTANTIATE_ALL_VB(CLASS, SPACEDIM, 1) \
+  INSTANTIATE_ALL_VB(CLASS, SPACEDIM, 2)
+ 
+#define INSTANTIATE_ALL_SPACEDIMS(CLASS) \
+  INSTANTIATE_ALL_TIME_DERIVS(CLASS, 0) \
+  INSTANTIATE_ALL_TIME_DERIVS(CLASS, 1) \
+  INSTANTIATE_ALL_TIME_DERIVS(CLASS, 2) \
+  INSTANTIATE_ALL_TIME_DERIVS(CLASS, 3)
+
+INSTANTIATE_ALL_SPACEDIMS(DiffOpDtVectorH1)
+INSTANTIATE_ALL_SPACEDIMS(DiffOpDtGradVectorH1)
+INSTANTIATE_ALL_SPACEDIMS(DiffOpDtDivVectorH1)
+
+template class T_DifferentialOperator<DiffOpDtVectorH1<1, 0, BND>>;
+template class T_DifferentialOperator<DiffOpDtVectorH1<2, 0, BND>>;
+template class T_DifferentialOperator<DiffOpDtVectorH1<3, 0, BND>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<1, 0, 0, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<1, 0, 1, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<1, 1, 0, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<1, 1, 1, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<2, 0, 0, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<2, 0, 1, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<2, 1, 0, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<2, 1, 1, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<3, 0, 0, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<3, 0, 1, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<3, 1, 0, VOL>>;
+template class T_DifferentialOperator<DiffOpDtFixtVectorH1<3, 1, 1, VOL>>;
+
   template <int SpaceD, int time>
   template <typename FEL, typename MIP, typename MAT>
   void DiffOpFixt<SpaceD, time>::GenerateMatrix (const FEL & bfel, const MIP & mip,

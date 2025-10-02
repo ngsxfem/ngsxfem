@@ -4,6 +4,7 @@ install( FILES
   restrictedblf.hpp
   restrictedfespace.hpp
   ngsxstd.hpp
+  spacetimechecks.hpp
   bitarraycf.hpp
   DESTINATION ${XFEM_INSTALL_DIR_INCLUDE}
 )

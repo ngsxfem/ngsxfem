@@ -162,7 +162,7 @@ namespace xintegration
       if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) 
           && (    (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace")
                || (ret->GetFESpace()->GetClassName() == "DiscontinuousH1HighOrderFESpace")
-               || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace")
+               || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace(H1HighOrderFESpace)")
              )
          )
         return make_tuple(nullptr, ret);

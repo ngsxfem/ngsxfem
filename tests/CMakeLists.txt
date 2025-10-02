@@ -113,6 +113,9 @@ add_test(NAME pytests_aggregates COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_patchsolve COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_local_solve.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_spacetime_diffops_vech1 COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_spacetime_vecH1.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 install( FILES
   ngsxfem_report.py
   DESTINATION ${XFEM_INSTALL_DIR_RES}/ngsxfem/report

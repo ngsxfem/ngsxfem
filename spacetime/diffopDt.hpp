@@ -18,6 +18,7 @@ template<int SpaceD, int DerivOrder>
     enum { DIM_DMAT = 1 };     // D-matrix
     enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
 
+    static string Name() { return DerivOrder == 0? "id" : (DerivOrder == 1 ? "dt" : "ddt"); }
     template <typename FEL, typename MIP, typename MAT>
     static void GenerateMatrix (const FEL & bfel, const MIP & sip,
                                 MAT & mat, LocalHeap & lh);
@@ -34,9 +35,93 @@ template<int SpaceD, int DerivOrder>
     enum { DIM_DMAT = D };     // D-matrix
     enum { DIFFORDER = 0 };    // minimal differential order (to determine integration order)
 
+    static string Name() { return DerivOrder == 0? "id" : (DerivOrder == 1 ? "dt" : "ddt"); }
     template <typename FEL, typename MIP, typename MAT>
     static void GenerateMatrix (const FEL & bfel, const MIP & sip,
                                 MAT & mat, LocalHeap & lh);
+  };
+
+  template <int SpaceD, int DerivOrder, VorB VB = VOL>
+  class DiffOpDtVectorH1 : public DiffOp<DiffOpDtVectorH1<SpaceD, DerivOrder, VB> >
+  {
+  public:
+    enum { DIM = 1 };
+    enum { DIM_SPACE = SpaceD };
+    enum { DIM_ELEMENT = SpaceD-VB };
+    enum { DIM_DMAT = SpaceD };
+    enum { DIFFORDER = 0 };
+
+    static string Name() { return DerivOrder == 0? "id" : (DerivOrder == 1 ? "dt" : "ddt"); }
+    static constexpr bool SUPPORT_PML = false;
+    static bool SupportsVB (VorB checkvb) { return true; }
+
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                MAT && mat, LocalHeap & lh);
+
+  };
+
+  template <int SpaceD, int DerivOrder, VorB VB = VOL>
+  class DiffOpDtGradVectorH1 : public DiffOp<DiffOpDtGradVectorH1<SpaceD, DerivOrder, VB> >
+  {
+  public:
+    enum { DIM = 1 };
+    enum { DIM_SPACE = SpaceD };
+    enum { DIM_ELEMENT = SpaceD-VB };
+    enum { DIM_DMAT = SpaceD*SpaceD };
+    enum { DIFFORDER = 1 };
+    
+    static Array<int> GetDimensions() { return Array<int> ( { SpaceD, SpaceD } ); }
+
+    static string Name() { return DerivOrder == 0? "grad" : (DerivOrder == 1 ? "dxt" : "dxtt"); }
+    static constexpr bool SUPPORT_PML = false;
+    static bool SupportsVB (VorB checkvb) { return true; }
+
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                MAT && mat, LocalHeap & lh);
+
+  };
+
+  template <int SpaceD, int DerivOrder, VorB VB = VOL>
+  class DiffOpDtDivVectorH1 : public DiffOp<DiffOpDtDivVectorH1<SpaceD, DerivOrder, VB> >
+  {
+  public:
+    enum { DIM = 1 };
+    enum { DIM_SPACE = SpaceD };
+    enum { DIM_ELEMENT = SpaceD-VB };
+    enum { DIM_DMAT = 1 };
+    enum { DIFFORDER = 1 };
+    
+    static string Name() { return DerivOrder == 0? "div" : (DerivOrder == 1 ? "dtdiv" : "dttdiv"); }
+    static constexpr bool SUPPORT_PML = false;
+    static bool SupportsVB (VorB checkvb) { return true; }
+
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                MAT && mat, LocalHeap & lh);
+
+  };
+
+
+  template <int SpaceD, int DerivOrder, int time, VorB VB = VOL>
+  class DiffOpDtFixtVectorH1 : public DiffOp<DiffOpDtFixtVectorH1<SpaceD, DerivOrder, time, VB> >
+  {
+  public:
+    enum { DIM = 1 };
+    enum { DIM_SPACE = SpaceD };
+    enum { DIM_ELEMENT = SpaceD-VB };
+    enum { DIM_DMAT = SpaceD };
+    enum { DIFFORDER = 0 };
+    
+    static string Name() { return DerivOrder == 0? "fixt" : (DerivOrder == 1 ? "fixtdt" : "fixtdtt"); }
+    static constexpr bool SUPPORT_PML = false;
+    static bool SupportsVB (VorB checkvb) { return true; }
+
+    template <typename FEL, typename MIP, typename MAT>
+    static void GenerateMatrix (const FEL & bfel, const MIP & mip,
+                                MAT && mat, LocalHeap & lh);
+
   };
 
 

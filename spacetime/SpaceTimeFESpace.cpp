@@ -42,13 +42,32 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
     *testout <<"Order Space: " << order_s << endl;
     *testout <<"Order Time: " << order_t << endl;
 
+    auto vh1space = dynamic_pointer_cast<VectorH1FESpace>(Vh);
+    auto vl2space = dynamic_pointer_cast<VectorL2FESpace>(Vh);
+
+    vectorh1l2 = false;
+    if (vh1space || vl2space)
+      vectorh1l2 = true;
+
     // needed to draw solution function
-    Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
-        constexpr int SDIM1 = SDIM+1;
-        evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM1>>>();
-        flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM1>>>();
-        evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM1>>>();
-    });
+    if (vectorh1l2)
+    {
+      Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
+          constexpr int SDIM1 = SDIM+1;
+          evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpDtVectorH1<SDIM1,0,VOL>>>();
+          flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<SDIM1,0,VOL>>>();
+          evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpDtVectorH1<SDIM1,0,BND>>>(); 
+      });
+    }
+    else
+    {
+      Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
+          constexpr int SDIM1 = SDIM+1;
+          evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpId<SDIM1>>>();
+          flux_evaluator[VOL] = make_shared<T_DifferentialOperator<DiffOpGradient<SDIM1>>>();
+          evaluator[BND] = make_shared<T_DifferentialOperator<DiffOpIdBoundary<SDIM1>>>();
+      });
+    }
     //if (ma->GetDimension() < 2)
     //    throw Exception ("Unsupported spatial dimension in SpaceTimeFESpace :: SpaceTimeFESpace");
 
@@ -71,14 +90,38 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
       });
     }
     else
-      Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
-        additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,1>>>());
-        additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
-        additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
-        additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
-        additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
-      });
-    
+    {
+      if (vectorh1l2)
+      {
+        Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDtVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDtVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("dtt", make_shared<T_DifferentialOperator<DiffOpDtVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("div", make_shared<T_DifferentialOperator<DiffOpDtDivVectorH1<DIM+1,0>>>());
+          additional_evaluators.Set ("dtdiv", make_shared<T_DifferentialOperator<DiffOpDtDivVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("dttdiv", make_shared<T_DifferentialOperator<DiffOpDtDivVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("dxt", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("dxtt", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("dtx", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,1>>>());
+          additional_evaluators.Set ("dttx", make_shared<T_DifferentialOperator<DiffOpDtGradVectorH1<DIM+1,2>>>());
+          additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpDtFixtVectorH1<DIM+1,0,0>>>());
+          additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpDtFixtVectorH1<DIM+1,0,1>>>());
+          //additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
+        });
+
+      }
+      else
+      {
+        Switch<3> (ma->GetDimension()-1, [&] (auto DIM) {
+          additional_evaluators.Set ("dt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,1>>>());
+          additional_evaluators.Set ("ddt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
+          additional_evaluators.Set ("dtt", make_shared<T_DifferentialOperator<DiffOpDt<DIM+1,2>>>());
+          additional_evaluators.Set ("fix_tref_bottom", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,0>>>());
+          additional_evaluators.Set ("fix_tref_top", make_shared<T_DifferentialOperator<DiffOpFixt<DIM+1,1>>>());
+          additional_evaluators.Set ("hesse", make_shared<T_DifferentialOperator<DiffOpHesse<DIM+1>>> ());
+        });
+      }
+    }
         
 
 
@@ -132,54 +175,33 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
   FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
+
      ScalarFiniteElement<1>* t_FE = tfe.get();
-     if(ma->GetDimension() == 2){
-       if (ei.IsVolume()) {
-         ScalarFiniteElement<2>* s_FE2 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
-         SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE2,t_FE,override_time,time);
-	 return *st_FE;
-       }
-       else if (ei.IsBoundary()) {
-         ScalarFiniteElement<1>* s_FE2 = dynamic_cast<ScalarFiniteElement<1>*>(&(Vh->GetFE(ei,alloc)));
-         SpaceTimeFE<1> * st_FE =  new (alloc) SpaceTimeFE<1>(s_FE2,t_FE,override_time,time);
-         return *st_FE;  
-       }
-       else {
-         throw Exception ("illegal element in SpaceTimeFESpace :: GetFE");
-       }
-     }
-     else if (ma->GetDimension() == 3){
-       if (ei.IsVolume()) { 
-         ScalarFiniteElement<3>* s_FE3 = dynamic_cast<ScalarFiniteElement<3>*>(&(Vh->GetFE(ei,alloc)));
-         SpaceTimeFE<3> * st_FE =  new (alloc) SpaceTimeFE<3>(s_FE3,t_FE,override_time,time);
-         return *st_FE;
-       }
-       else if (ei.IsBoundary()) { 
-         ScalarFiniteElement<2>* s_FE3 = dynamic_cast<ScalarFiniteElement<2>*>(&(Vh->GetFE(ei,alloc)));
-         SpaceTimeFE<2> * st_FE =  new (alloc) SpaceTimeFE<2>(s_FE3,t_FE,override_time,time);
-         return *st_FE;
-       }	     
-       else {
-         throw Exception ("illegal element in SpaceTimeFESpace :: GetFE");
-       }
-     }
-     else if (ma->GetDimension() == 1){ 
-       if (ei.IsVolume()) { 
-         ScalarFiniteElement<1>* s_FE1 = dynamic_cast<ScalarFiniteElement<1>*>(&(Vh->GetFE(ei,alloc)));
-         SpaceTimeFE<1> * st_FE =  new (alloc) SpaceTimeFE<1>(s_FE1,t_FE,override_time,time);
-         return *st_FE;
-       }
-       else if (ei.IsBoundary()) { 
-         ScalarFiniteElement<0>* s_FE1 = dynamic_cast<ScalarFiniteElement<0>*>(&(Vh->GetFE(ei,alloc)));
-         SpaceTimeFE<0> * st_FE =  new (alloc) SpaceTimeFE<0>(s_FE1,t_FE,override_time,time);
-         return *st_FE; 
-       }
-       else {
-         throw Exception ("illegal element in SpaceTimeFESpace :: GetFE");
-       }
-     }
-     else
-       throw Exception("SpaceTimeFESpace :: GetFE cannot help dimension != 1,2,3");
+     FiniteElement * ret_FE = nullptr;
+     Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
+       constexpr int SDIM1 = SDIM+1;
+       const int cdim = ei.IsVolume() ? 0 : 1 ;
+       Switch<1> (cdim, [&] (auto CDIM) {
+         constexpr int RDIM = SDIM1-CDIM;
+         if (this->vectorh1l2)
+         {
+           auto v_FE = dynamic_cast<VectorFiniteElement*>(&Vh->GetFE(ei,alloc));
+           const FiniteElement& fe = (*v_FE)[0];
+           auto sfe = dynamic_cast<const ScalarFiniteElement<RDIM>*>(&fe);
+           auto sfe2 = const_cast<ScalarFiniteElement<RDIM>*>(sfe);
+           auto st_FE =  new (alloc) SpaceTimeFE<RDIM>(sfe2,t_FE,override_time,time);
+           ret_FE =  new (alloc) VectorFiniteElement(*st_FE,RDIM);
+         }
+         else
+         {
+           auto s_FE2 = dynamic_cast<ScalarFiniteElement<RDIM>*>(&(Vh->GetFE(ei,alloc)));
+           ret_FE =  new (alloc) SpaceTimeFE<RDIM>(s_FE2,t_FE,override_time,time);
+         }
+       });
+     });
+     if (ret_FE != nullptr)
+       return *ret_FE;
+     throw Exception("SpaceTimeFESpace :: GetFE cannot help dimension != 1,2,3");
   }
 
   template<typename SCAL>

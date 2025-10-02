@@ -406,6 +406,8 @@ time: double
    {
      FESpace* raw_FE = (st_GF->GetFESpace()).get();
      SpaceTimeFESpace * st_FES = dynamic_cast<SpaceTimeFESpace*>(raw_FE);
+     if (st_FES == nullptr)
+        throw Exception("RestrictGFInTime called on a non-SpaceTimeFESpace");
      switch (st_FES->GetDimension())
      {
        case 1:
