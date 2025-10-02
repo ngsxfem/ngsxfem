@@ -3,6 +3,7 @@
 // #undef LAPACK
 /// from ngsolve
 #include <comp.hpp>
+#include "spacetimechecks.hpp"
 
 using namespace ngbla;
 
@@ -86,32 +87,6 @@ enum TIME_DOMAIN_TYPE {  BOTTOM = 0,
 
 
 void IterateRange (int ne, LocalHeap & clh, const function<void(int,LocalHeap&)> & func);
-
-const int SPACETIME_SANITY_CHECK_NR = -9;
-
-INLINE void MarkAsSpaceTimeIntegrationPoint(ngcomp::IntegrationPoint & ip)
-{
-#ifdef SPACETIME_SANITY_CHECKS                    
-  ip.SetNr(SPACETIME_SANITY_CHECK_NR);
-#endif  
-}
-
-INLINE void MarkAsSpaceTimeIntegrationRule(ngcomp::IntegrationRule & ir)
-{
-#ifdef SPACETIME_SANITY_CHECKS                    
-  for (auto & ip : ir)
-    ip.SetNr(SPACETIME_SANITY_CHECK_NR);
-#endif  
-}
-
-INLINE bool IsSpaceTimeIntegrationPoint(const ngcomp::IntegrationPoint & ip)
-{
-#ifdef SPACETIME_SANITY_CHECKS                    
-  return (ip.Nr() == SPACETIME_SANITY_CHECK_NR);
-#else
-  return true;
-#endif
-}
 
 ostream & operator<< (ostream & ost, DOMAIN_TYPE dt);
 ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt);

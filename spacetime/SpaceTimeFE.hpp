@@ -4,7 +4,7 @@
 // SpaceTimeFE:
 
 #include <fem.hpp>
-//#include "../utils/ngsxstd.hpp"
+#include "../utils/spacetimechecks.hpp"
 
 namespace ngfem
 {
@@ -192,13 +192,13 @@ namespace ngfem
       TimeShape&& time_shape
   ) const
   {
+      if(!IsSpaceTimeIntegrationPoint(ip))
+          throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
       if (tFE->Order() == 0) {
           space_calcshape(ip, shape);
       } else {
           IntegrationPoint z(override_time ? time : ip.Weight());
 
-          //if(!IsSpaceTimeIntegrationPoint(ip)) /// <- re-introduce this
-          //    throw Exception("SpaceTimeFE :: CalcShape called with a mere space IR");
 
           //Vector<> time_shape(tFE->GetNDof());
           time_calcshape(z, time_shape);
