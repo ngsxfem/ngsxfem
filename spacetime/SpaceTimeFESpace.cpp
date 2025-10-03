@@ -207,11 +207,10 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
        constexpr int SDIM1 = decltype(SDIM)::value + 1;
-       // CDIM: 0..1  -> ei.IsVolume() ? 0 : 1
-       Switch<2> (ei.IsVolume() ? 0 : 1, [&] (auto CDIM) {
-         constexpr int RDIM = SDIM1 - decltype(CDIM)::value;
-         MakeSpaceTimeFE_ForRDIM<RDIM>(this, ei, alloc, t_FE, ret_FE, override_time, time);
-       });
+       if (ei.IsVolume())
+         MakeSpaceTimeFE_ForRDIM<SDIM1>(this, ei, alloc, t_FE, ret_FE, override_time, time);
+       else
+         MakeSpaceTimeFE_ForRDIM<SDIM1-1>(this, ei, alloc, t_FE, ret_FE, override_time, time);
      });
      if (ret_FE != nullptr)
        return *ret_FE;
