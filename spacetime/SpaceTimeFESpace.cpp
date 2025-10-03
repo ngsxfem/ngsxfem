@@ -174,30 +174,43 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
   }
 
 
+
+  template <int RDIM>
+  static void MakeSpaceTimeFE_ForRDIM(const SpaceTimeFESpace *self,
+                                      ElementId ei, Allocator &alloc,
+                                      ScalarFiniteElement<1>* t_FE,
+                                      FiniteElement * &ret_FE,
+                                      bool override_time, double time)
+  {
+    if (self->IsVectorH1L2())
+    {
+      auto v_FE = dynamic_cast<VectorFiniteElement*>(&self->GetSpaceFESpace()->GetFE(ei,alloc));
+      const FiniteElement& fe = (*v_FE)[0];
+      auto sfe = dynamic_cast<const ScalarFiniteElement<RDIM>*>(&fe);
+      auto sfe2 = const_cast<ScalarFiniteElement<RDIM>*>(sfe);
+      auto st_FE = new (alloc) SpaceTimeFE<RDIM>(sfe2, t_FE, override_time, time);
+      ret_FE = new (alloc) VectorFiniteElement(*st_FE, RDIM);
+    }
+    else
+    {
+      auto s_FE2 = dynamic_cast<ScalarFiniteElement<RDIM>*>(&(self->GetSpaceFESpace()->GetFE(ei,alloc)));
+      ret_FE = new (alloc) SpaceTimeFE<RDIM>(s_FE2, t_FE, override_time, time);
+    }
+  }
+
+  
   FiniteElement & SpaceTimeFESpace :: GetFE (ElementId ei, Allocator & alloc) const
   {
 
      ScalarFiniteElement<1>* t_FE = tfe.get();
      FiniteElement * ret_FE = nullptr;
-     const bool need_vectorh1l2 = vectorh1l2;
+
      Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
        constexpr int SDIM1 = decltype(SDIM)::value + 1;
+       // CDIM: 0..1  -> ei.IsVolume() ? 0 : 1
        Switch<2> (ei.IsVolume() ? 0 : 1, [&] (auto CDIM) {
          constexpr int RDIM = SDIM1 - decltype(CDIM)::value;
-         if (need_vectorh1l2)
-         {
-           auto v_FE = dynamic_cast<VectorFiniteElement*>(&Vh->GetFE(ei,alloc));
-           const FiniteElement& fe = (*v_FE)[0];
-           auto sfe = dynamic_cast<const ScalarFiniteElement<RDIM>*>(&fe);
-           auto sfe2 = const_cast<ScalarFiniteElement<RDIM>*>(sfe);
-           auto st_FE =  new (alloc) SpaceTimeFE<RDIM>(sfe2,t_FE,override_time,time);
-           ret_FE =  new (alloc) VectorFiniteElement(*st_FE,RDIM);
-         }
-         else
-         {
-           auto s_FE2 = dynamic_cast<ScalarFiniteElement<RDIM>*>(&(Vh->GetFE(ei,alloc)));
-           ret_FE =  new (alloc) SpaceTimeFE<RDIM>(s_FE2,t_FE,override_time,time);
-         }
+         MakeSpaceTimeFE_ForRDIM<RDIM>(this, ei, alloc, t_FE, ret_FE, override_time, time);
        });
      });
      if (ret_FE != nullptr)

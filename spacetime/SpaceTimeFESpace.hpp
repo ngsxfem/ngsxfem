@@ -29,7 +29,7 @@ namespace ngcomp
 
     SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FESpace> aVh, shared_ptr<ScalarFiniteElement<1>> atfe, const Flags & flags);
 
-    shared_ptr<FESpace> GetSpaceFESpace() { return Vh; }
+    shared_ptr<FESpace> GetSpaceFESpace() const { return Vh; }
 
     bool IsVectorH1L2() const { return vectorh1l2; }
 
