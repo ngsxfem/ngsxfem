@@ -179,12 +179,13 @@ SpaceTimeFESpace :: SpaceTimeFESpace (shared_ptr<MeshAccess> ama, shared_ptr<FES
 
      ScalarFiniteElement<1>* t_FE = tfe.get();
      FiniteElement * ret_FE = nullptr;
+     const bool need_vectorh1l2 = vectorh1l2;
      Switch<3> (ma->GetDimension()-1, [&] (auto SDIM) {
        constexpr int SDIM1 = decltype(SDIM)::value + 1;
-       const int cdim = ei.IsVolume() ? 0 : 1 ;
+       int cdim = ei.IsVolume() ? 0 : 1 ;
        Switch<1> (cdim, [&] (auto CDIM) {
          constexpr int RDIM = SDIM1 - decltype(CDIM)::value;
-         if (this->vectorh1l2)
+         if (need_vectorh1l2)
          {
            auto v_FE = dynamic_cast<VectorFiniteElement*>(&Vh->GetFE(ei,alloc));
            const FiniteElement& fe = (*v_FE)[0];
