@@ -446,11 +446,8 @@ functionality (only on elements) can be obtained with BitArrayCF.
     """
     if facets:
         ret = GridFunction(FESpace("facet",mesh,order=0))
-        for i in range(len(ba)):
-            if ba[i]:
-                ret.vec[i] = 1.0
-            else:
-                ret.vec[i] = 0.0
+        ret.vec[:] = 0
+        ret.vec[ba] = 1
         return ret
     else:
         return BitArrayCF(BitArray(ba))
