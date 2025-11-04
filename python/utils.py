@@ -4,10 +4,7 @@ from netgen.csg import OrthoBrick, Pnt
 
 def IsEqual(A:BitArray, B:BitArray) -> bool:
     """Checks if A and B are elementwise equal"""
-    if ((A.__and__(~B)).NumSet() == 0) and (((B).__and__(~A)).NumSet() == 0):
-        return True
-    else:
-        return False
+    return ((A.__and__(~B)).NumSet() == 0) and (((B).__and__(~A)).NumSet() == 0)
 
 def AdjacencyMatrix (mesh, neighbortype : str = "vertex") -> BaseMatrix :
     """
