@@ -2,12 +2,18 @@ from math import pi
 from ngsolve import *
 from netgen.csg import OrthoBrick, Pnt
 
+def IsEqual(A:BitArray, B:BitArray) -> bool:
+    """Checks if A and B are elementwise equal"""
+    if ((A.__and__(~B)).NumSet() == 0) and (((B).__and__(~A)).NumSet() == 0):
+        return True
+    else:
+        return False
 
 def AdjacencyMatrix (mesh, neighbortype : str = "vertex") -> BaseMatrix :
-"""
+    """
     returns the adjacency matrix of the mesh elements w.r.t. vertices, edges or faces
     the return object is a BaseMatrix (double) with entries 0.0 or 1.0
-"""    
+    """    
     P0 = L2(mesh,order=0)
     if neighbortype == "vertex":
         W = H1(mesh,order=1)
@@ -25,11 +31,11 @@ def AdjacencyMatrix (mesh, neighbortype : str = "vertex") -> BaseMatrix :
     return B.mat @ B.mat.T
         
 def AddNeighborhood(marker : BitArray, adja : BaseMatrix, layers : int = 1, inplace : bool = False) -> BitArray:
-"""
+    """
     returns a BitArray which extends a marker of elements in a mesh with its neighborhood.
     The neighborhood consists of a number of layers of neighbors w.r.t. the provided adjacency matrix,
     see also `AdjacencyMatrix`.
-"""
+    """
     mv = adja.CreateColVector()
     mw = adja.CreateColVector()
     for i, b in enumerate(marker):
