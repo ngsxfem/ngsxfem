@@ -129,8 +129,8 @@ namespace ngfem
     optional<double> tref = nullopt;
     optional<double> downscale = nullopt;
     FacetPatchDifferentialSymbol (VorB _vb) : DifferentialSymbol(_vb) { ; }
-    FacetPatchDifferentialSymbol (VorB _vb, VorB _element_vb, bool _skeleton, int _time_order, optional<double> _tref, optional<double> _downscale)
-      : DifferentialSymbol(_vb, _element_vb, _skeleton, 0), time_order(_time_order), tref(_tref), downscale(_downscale) { ; }
+    FacetPatchDifferentialSymbol (VorB _vb, VorB _element_vb, bool _skeleton, int _time_order, optional<double> _tref, optional<double> _downscale, int _bonus_intorder = 0)
+      : DifferentialSymbol(_vb, _element_vb, _skeleton, _bonus_intorder), time_order(_time_order), tref(_tref), downscale(_downscale) { ; }
     FacetPatchDifferentialSymbol (FacetPatchDifferentialSymbol & _cds, double _scale)
       : DifferentialSymbol(_cds), time_order(_cds.time_order), scale(_cds.scale*_scale), tref(_cds.tref), downscale(_cds.downscale) { ; }
 

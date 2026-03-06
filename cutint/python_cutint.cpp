@@ -452,10 +452,11 @@ Constructor of FacetPatchDifferentialSymbol.
                         shared_ptr<BitArray> definedonelements,
                         int time_order, 
                         optional<double> tref,
-                        optional<double> downscale)
+                        optional<double> downscale,
+                        int bonus_intorder)
          {
            if (element_boundary) element_vb = BND;
-           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton,time_order,tref,downscale);
+           auto dx = FacetPatchDifferentialSymbol(self.vb, element_vb, skeleton, time_order, tref, downscale, bonus_intorder);
            if (definedon)
              {
                if (auto definedon_region = get_if<Region>(&*definedon); definedon_region)
@@ -479,6 +480,7 @@ Constructor of FacetPatchDifferentialSymbol.
          py::arg("time_order")=-1,
          py::arg("tref")=nullopt,
          py::arg("downscale")=nullopt,
+         py::arg("bonus_intorder")=0,
 docu_string(R"raw_string(
 The call of a FacetPatchDifferentialSymbol allows to specify what is needed to specify the 
 integration domain of an integral that runs over the volume patch of each facet. 
@@ -498,6 +500,7 @@ definedonelements (BitArray) : Set of elements or facets where the integral shal
 time_order (int) : integration order in time (for space-time) (default : -1).
 tref (float) : turn space integral into space-time integral with fixed time tref.
 downscale (float) : downscale patch integration rule around facet.
+bonus_intorder (int) : bonus integration order (default : 0).
 )raw_string"         
          ))
     .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)
