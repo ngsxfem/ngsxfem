@@ -2065,21 +2065,38 @@ namespace ngfem
         SIMD_BaseMappedIntegrationRule &simd_mir1 = trafo1(simd_ir1, lh);
         SIMD_BaseMappedIntegrationRule &simd_mir2 = trafo2(simd_ir2, lh);
 
-        IntRange unified_r1(0, 0);
         for (int l1 : Range(test_proxies)) {
           HeapReset hr(lh);
           auto proxy2 = test_proxies[l1];
+
+          // test_range maps this proxy's DOFs to their position in elmat rows
+          IntRange test_range = proxy2->IsOther() ?
+            IntRange(proxy2->Evaluator()->BlockDim()*fel1_test.GetNDof(), elmat.Height()) :
+            IntRange(0, proxy2->Evaluator()->BlockDim()*fel1_test.GetNDof());
+          int test_offset = test_range.First();
+          const FiniteElement &fel_test = proxy2->IsOther() ? fel2_test : fel1_test;
+          SIMD_BaseMappedIntegrationRule &simd_mir_test = proxy2->IsOther() ? simd_mir2 : simd_mir1;
 
           FlatMatrix<SIMD<SCAL>> bdbmat1(elmat.Width()*proxy2->Dimension(), simd_ir1.Size(), lh);
           FlatMatrix<SIMD<SCAL>> hbdbmat1(elmat.Width(), proxy2->Dimension()*simd_ir1.Size(), &bdbmat1(0,0));
           
           bdbmat1 = 0.0;
 
+          // unified_r1_global tracks which trial DOF columns of hbdbmat1 are non-zero
+          IntRange unified_r1_global(0, 0);
+
           for (int k1 : Range(trial_proxies)) {
             HeapReset hr(lh);
             auto proxy1 = trial_proxies[k1];
 
-            FlatMatrix<SIMD<SCAL>> val(simd_mir1.Size(), 1, lh);
+            // trial_range maps this proxy's DOFs to their position in elmat cols
+            IntRange trial_range = proxy1->IsOther() ?
+              IntRange(proxy1->Evaluator()->BlockDim()*fel1_trial.GetNDof(), elmat.Width()) :
+              IntRange(0, proxy1->Evaluator()->BlockDim()*fel1_trial.GetNDof());
+            int trial_offset = trial_range.First();
+            const FiniteElement &fel_trial = proxy1->IsOther() ? fel2_trial : fel1_trial;
+            SIMD_BaseMappedIntegrationRule &simd_mir_trial = proxy1->IsOther() ? simd_mir2 : simd_mir1;
+
             FlatMatrix<SIMD<SCAL>> proxyvalues(proxy1->Dimension()*proxy2->Dimension(), simd_ir1.Size(), lh);
 
             for (size_t k = 0, kk = 0; k < proxy1->Dimension(); k++) {
@@ -2088,57 +2105,56 @@ namespace ngfem
                 ud.trial_comp = k;
                 ud.testfunction = proxy2;
                 ud.test_comp = j;
+                cf->Evaluate(simd_mir1, proxyvalues.Rows(kk, kk+1));
 
-                cf->Evaluate(simd_mir1, val);
-                auto row = proxyvalues.Row(kk);
-                for (auto m : Range(simd_mir1.Size()))
-                  row(m) = val(m);
+                for (size_t i = 0; i < simd_ir1.Size(); i++) {
+                  if ((time_order >= 0) || has_tref)
+                    proxyvalues(kk, i) *= simd_mir1[i].GetMeasure() * simd_ir_st1_wei_arr[i];
+                  else
+                    proxyvalues(kk, i) *= simd_mir1[i].GetWeight();
+                }
               }
             }
 
-            for (size_t i = 0; i < simd_mir1.Size(); i++) {
-              proxyvalues.Col(i) *= simd_mir1[i].GetMeasure()*simd_ir_st1_wei_arr[i];
-            }
+            // Size bbmat1 to exactly this element's DOFs so CalcMatrix fills it completely.
+            // Using elmat.Width() rows (as in CutFacetBFI) would leave the IsOther() rows
+            // uninitialized, since CalcMatrix always writes starting at row 0.
+            FlatMatrix<SIMD<SCAL_SHAPES>> bbmat1(trial_range.Size()*proxy1->Dimension(), simd_ir1.Size(), lh);
+            proxy1->Evaluator()->CalcMatrix(fel_trial, simd_mir_trial, bbmat1);
 
-            IntRange trial_range = proxy1->IsOther() ? IntRange(proxy1->Evaluator()->BlockDim()*fel1_trial.GetNDof(), elmat.Width()) : IntRange(0, proxy1->Evaluator()->BlockDim()*fel1_trial.GetNDof());
-            IntRange r1 = proxy1->Evaluator()->UsedDofs(proxy1->IsOther() ? fel2_trial : fel1_trial);
-
-            FlatMatrix<SIMD<SCAL_SHAPES>> bbmat1(elmat.Width()*proxy1->Dimension(), simd_ir1.Size(), lh);
-
-            if (proxy1->IsOther())
-              proxy1->Evaluator()->CalcMatrix(fel2_trial, simd_mir2, bbmat1);
-            else
-              proxy1->Evaluator()->CalcMatrix(fel1_trial, simd_mir1, bbmat1);
-          
-            for (auto i : trial_range) {
+            IntRange r1_local = proxy1->Evaluator()->UsedDofs(fel_trial);
+            // accumulate into global elmat columns using trial_offset
+            for (auto li : r1_local) {
+              int i_global = trial_offset + li;
               for (size_t j = 0; j < proxy2->Dimension(); j++) {
                 for (size_t k = 0; k < proxy1->Dimension(); k++) {
-                  bdbmat1.Row(i*proxy2->Dimension()+j) += 
-                    pw_mult(bbmat1.Row(i*proxy1->Dimension()+k), 
+                  bdbmat1.Row(i_global*proxy2->Dimension()+j) += 
+                    pw_mult(bbmat1.Row(li*proxy1->Dimension()+k), 
                             proxyvalues.Row(k*proxy2->Dimension()+j));
                 }
               }
             }
 
-            if (unified_r1.Next() == 0)
-              unified_r1 = r1;
+            IntRange r1_global = IntRange(trial_offset + r1_local.First(),
+                                          trial_offset + r1_local.Next());
+            if (unified_r1_global.Next() == 0)
+              unified_r1_global = r1_global;
             else
-              unified_r1 = IntRange (min2(r1.First(), unified_r1.First()),
-                                        max2(r1.Next(), unified_r1.Next()));
+              unified_r1_global = IntRange (min2(r1_global.First(), unified_r1_global.First()),
+                                            max2(r1_global.Next(), unified_r1_global.Next()));
 
           }
- 
-          IntRange r2 = proxy2->Evaluator()->UsedDofs(proxy2->IsOther() ? fel2_test : fel1_test);
 
-          FlatMatrix<SIMD<SCAL>> bbmat2(elmat.Height()*proxy2->Dimension(), simd_ir1.Size(), lh);
-          FlatMatrix<SIMD<SCAL>> hbbmat2(elmat.Height(), proxy2->Dimension()*simd_ir1.Size(), &bbmat2(0,0));
+          IntRange r2_local = proxy2->Evaluator()->UsedDofs(fel_test);
+          IntRange r2_global = IntRange(test_offset + r2_local.First(),
+                                        test_offset + r2_local.Next());
 
-          if (proxy2->IsOther())
-            proxy2->Evaluator()->CalcMatrix(fel2_test, simd_mir2, bbmat2);
-          else
-            proxy2->Evaluator()->CalcMatrix(fel1_test, simd_mir1, bbmat2);
-        
-          AddABt(hbbmat2.Rows(r2), hbdbmat1.Rows(unified_r1), elmat.Rows(r2).Cols(unified_r1));
+          FlatMatrix<SIMD<SCAL_SHAPES>> bbmat2(test_range.Size()*proxy2->Dimension(), simd_ir1.Size(), lh);
+          FlatMatrix<SIMD<SCAL_SHAPES>> hbbmat2(test_range.Size(), proxy2->Dimension()*simd_ir1.Size(), &bbmat2(0,0));
+
+          proxy2->Evaluator()->CalcMatrix(fel_test, simd_mir_test, bbmat2);
+
+          AddABt(hbbmat2.Rows(r2_local), hbdbmat1.Rows(unified_r1_global), elmat.Rows(r2_global).Cols(unified_r1_global));
         }
 
         return;
