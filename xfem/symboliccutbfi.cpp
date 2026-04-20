@@ -896,7 +896,7 @@ namespace ngfem
 	 :   SymbolicFacetBilinearFormIntegrator(acf, avb, false)
   {
     lsetintdom = make_shared<LevelsetIntegrationDomain>(lsetintdom_in);
-    simd_evaluate=false;
+    simd_evaluate=true;
     time_order = lsetintdom_in.GetTimeIntegrationOrder();
   }
 
@@ -1565,7 +1565,7 @@ namespace ngfem
   SymbolicFacetBilinearFormIntegrator2 (shared_ptr<CoefficientFunction> acf)
     : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
-    simd_evaluate=false;
+    simd_evaluate=true;
   }
 
   template <typename SCAL, typename SCAL_SHAPES>
@@ -1729,7 +1729,7 @@ namespace ngfem
   SymbolicFacetPatchBilinearFormIntegrator (shared_ptr<CoefficientFunction> acf)
     : SymbolicFacetBilinearFormIntegrator(acf,VOL,false)
   {
-    simd_evaluate=false;
+    simd_evaluate=true;
   }
 
   // maps an integration point from inside one element to an integration point of the neighbor element
@@ -1873,6 +1873,102 @@ namespace ngfem
     }
   }
 
+  // Vectorized version of MapPatchIntegrationPoint: maps all integration points of ir_from
+  // to ir_to simultaneously using SIMD Newton iteration.
+  // Throws ExceptionNOSIMD if Newton does not converge for all points.
+  template<int D>
+  void MapPatchIntegrationPoints_SIMD(const IntegrationRule & ir_from,
+                                      const ElementTransformation & from_trafo,
+                                      const ElementTransformation & to_trafo,
+                                      IntegrationRule & ir_to,
+                                      LocalHeap & lh)
+  {
+    HeapReset hr(lh);
+    const int n = ir_from.Size();
+
+    // Step 1: Compute linearized mapping at reference origin (same initial guess for all pts)
+    Vec<D, double> phys_a0;
+    Mat<D, D, double> Ainv;
+    {
+      HeapReset hr2(lh);
+      IntegrationPoint ip0(0, 0, 0);
+      MappedIntegrationPoint<D,D> mip0(ip0, to_trafo);
+      phys_a0 = mip0.GetPoint();
+      Mat<D, D, double> A;
+      for (int d = 0; d < D; d++) {
+        IntegrationPoint ipd(0, 0, 0);
+        ipd(d) = 1.0;
+        MappedIntegrationPoint<D,D> mipd(ipd, to_trafo);
+        A.Col(d) = mipd.GetPoint() - phys_a0;
+      }
+      CalcInverse(A, Ainv);
+    }
+
+    // Step 2: Evaluate all source points simultaneously via SIMD
+    SIMD_IntegrationRule simd_ir_from(ir_from, lh);
+    SIMD_MappedIntegrationRule<D,D> simd_mir_from(simd_ir_from, from_trafo, lh);
+    const int n_simd = simd_ir_from.Size();
+
+    // Step 3: Build initial guess for target reference coordinates
+    FlatArray<SIMD<IntegrationPoint>> simd_ip_to_arr(n_simd, lh);
+    for (int i = 0; i < n_simd; i++) {
+      Vec<D, SIMD<double>> phys_from = simd_mir_from[i].GetPoint();
+      Vec<D, SIMD<double>> x_to;
+      for (int r = 0; r < D; r++) {
+        x_to(r) = SIMD<double>(0.0);
+        for (int c = 0; c < D; c++)
+          x_to(r) += SIMD<double>(Ainv(r,c)) * (phys_from(c) - SIMD<double>(phys_a0(c)));
+      }
+      for (int d = 0; d < D; d++) simd_ip_to_arr[i](d) = x_to(d);
+      simd_ip_to_arr[i].Weight() = SIMD<double>(1.0);
+    }
+    SIMD_IntegrationRule simd_ir_to(n_simd, &simd_ip_to_arr[0]);
+    SIMD_MappedIntegrationRule<D,D> simd_mir_to(simd_ir_to, to_trafo, -1, lh);
+    to_trafo.CalcMultiPointJacobian(simd_ir_to, simd_mir_to);
+
+    // Estimate element size h from source Jacobian determinants
+    double h = 0;
+    for (int i = 0; i < n_simd; i++) {
+      SIMD<double> meas = simd_mir_from[i].GetMeasure();
+      for (size_t lane = 0; lane < SIMD<double>::Size(); lane++)
+        h = max(h, meas[lane]);
+    }
+    h = sqrt(h);
+
+    // Step 4: Newton iterations over all points simultaneously
+    double max_diff = 1e100;
+    for (int its = 0; its < globxvar.NEWTON_ITER_TRESHOLD; its++) {
+      max_diff = 0;
+      for (int i = 0; i < n_simd; i++) {
+        Vec<D, SIMD<double>> diff = simd_mir_from[i].GetPoint() - simd_mir_to[i].GetPoint();
+        for (int d = 0; d < D; d++)
+          for (size_t lane = 0; lane < SIMD<double>::Size(); lane++)
+            max_diff = max(max_diff, fabs(diff(d)[lane]));
+        Vec<D, SIMD<double>> update = simd_mir_to[i].GetJacobianInverse() * diff;
+        for (int d = 0; d < D; d++) simd_ir_to[i](d) += update(d);
+      }
+      to_trafo.CalcMultiPointJacobian(simd_ir_to, simd_mir_to);
+      if (max_diff <= globxvar.EPS_FACET_PATCH_INTEGRATOR * h) break;
+    }
+
+    if (max_diff > globxvar.EPS_FACET_PATCH_INTEGRATOR * h) {
+      cout << IM(globxvar.NON_CONV_WARN_MSG_LVL)
+           << "MapPatchIntegrationPoints_SIMD: Newton did not converge, falling back to scalar" << endl;
+      throw ExceptionNOSIMD("MapPatchIntegrationPoints_SIMD: Newton did not converge");
+    }
+
+    // Step 5: Extract converged reference coordinates and weights to scalar ir_to
+    const int sw = SIMD<double>::Size();
+    for (int l = 0; l < n; l++) {
+      int packet = l / sw;
+      int lane   = l % sw;
+      for (int d = 0; d < D; d++)
+        ir_to[l](d) = simd_ir_to[packet](d)[lane];
+      ir_to[l].SetWeight(simd_mir_from[packet].GetWeight()[lane]
+                         / simd_mir_to[packet].GetMeasure()[lane]);
+    }
+  }
+
   template<typename SCAL, typename SCAL_SHAPES>
   void SymbolicFacetPatchBilinearFormIntegrator ::
   T_CalcFacetMatrix (const FiniteElement & fel1, int LocalFacetNr1,
@@ -1932,21 +2028,47 @@ namespace ngfem
     //In the non-space time case, the result of the mapping to the other element does not depend on the time
     //Therefore it is sufficient to do it once here.
     if(time_order == -1){
-        for (int l = 0; l < ir_patch1.Size(); l++) {
-            if (l<ir_vol1.Size()) {
+        bool simd_newton_done = false;
+        if (simd_evaluate && globxvar.SIMD_EVAL) {
+          try {
+            // Vectorized Newton: map all ir_vol1 → element 2 and all ir_vol2 → element 1 at once
+            IntegrationRule ir_mapped1(ir_vol1.Size(), lh);
+            IntegrationRule ir_mapped2(ir_vol2.Size(), lh);
+            Switch<3> (D-1, [&] (auto DD) {
+              MapPatchIntegrationPoints_SIMD<DD+1>(ir_vol1, trafo1, trafo2, ir_mapped1, lh);
+              MapPatchIntegrationPoints_SIMD<DD+1>(ir_vol2, trafo2, trafo1, ir_mapped2, lh);
+            });
+            for (int l = 0; l < ir_patch1.Size(); l++) {
+              if (l < (int)ir_vol1.Size()) {
                 ir_patch1[l] = ir_vol1[l];
-                Switch<3> (D-1, [&] (auto DD) {
-                  MapPatchIntegrationPoint<DD+1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
-                });
-            }
-            else {
+                ir_patch2[l] = ir_mapped1[l];
+              } else {
+                ir_patch1[l] = ir_mapped2[l - ir_vol1.Size()];
                 ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
-                Switch<3> (D-1, [&] (auto DD) {
-                  MapPatchIntegrationPoint<DD+1>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
-                });
+              }
+              ir_patch1[l].SetNr(l);
+              ir_patch2[l].SetNr(l);
             }
-            ir_patch1[l].SetNr(l);
-            ir_patch2[l].SetNr(l);
+            simd_newton_done = true;
+          } catch (ExceptionNOSIMD &) { }
+        }
+        if (!simd_newton_done) {
+          for (int l = 0; l < ir_patch1.Size(); l++) {
+              if (l<ir_vol1.Size()) {
+                  ir_patch1[l] = ir_vol1[l];
+                  Switch<3> (D-1, [&] (auto DD) {
+                    MapPatchIntegrationPoint<DD+1>(ir_patch1[l], trafo1, trafo2 ,ir_patch2[l], lh);
+                  });
+              }
+              else {
+                  ir_patch2[l] = ir_vol2[l - ir_vol1.Size()];
+                  Switch<3> (D-1, [&] (auto DD) {
+                    MapPatchIntegrationPoint<DD+1>(ir_patch2[l], trafo2, trafo1 ,ir_patch1[l], lh);
+                  });
+              }
+              ir_patch1[l].SetNr(l);
+              ir_patch2[l].SetNr(l);
+          }
         }
     }
 
@@ -2064,6 +2186,8 @@ namespace ngfem
         FlatArray<SIMD<double>> simd_ir_st1_wei_arr = CreateSIMD_FlatArray(ir_st1_wei_arr, lh);
         SIMD_BaseMappedIntegrationRule &simd_mir1 = trafo1(simd_ir1, lh);
         SIMD_BaseMappedIntegrationRule &simd_mir2 = trafo2(simd_ir2, lh);
+        simd_mir1.SetOtherMIR(&simd_mir2);
+        simd_mir2.SetOtherMIR(&simd_mir1);
 
         for (int l1 : Range(test_proxies)) {
           HeapReset hr(lh);
