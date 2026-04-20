@@ -23,7 +23,7 @@ jobs:
             cmake-generator: "Visual Studio 16 2019"
             cmake_generator_platform: "x64"
             doit: ${{ inputs.level != 'quick' }}
-            cibw_build: cp39-* cp310-* cp311-* cp312-* cp313-*
+            cibw_build: cp310-* cp311-* cp312-* cp313-* cp314-*
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.2
+        uses: pypa/cibuildwheel@v2.23.0
 
       - uses: actions/upload-artifact@v4
         with:
