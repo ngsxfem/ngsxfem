@@ -509,6 +509,54 @@ def test_eb_cut_integrator_2d(i):
 
     mesh.UnsetDeformation()
 
+# ghost penalty (FacetPatch) test with cut-restricted facets
+@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("quad", [True, False])
+def test_ghost_penalty(order, quad):
+    print()
+    print(f"test for Ghost Penalty (FacetPatch) with quad={quad}, order={order}")
+    mesh = MakeStructured2DMesh(quads=quad, nx=4, ny=4)
+    levelset = (x - 0.5)**2 + (y - 0.5)**2 - 0.33**2
+
+    if order > 1:
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, levelset=levelset)
+    else:
+        lsetmeshadap = NoDeformation(mesh, levelset)
+    lset_h = lsetmeshadap.lset_p1
+    deform = lsetmeshadap.deform
+
+    ci = CutInfo(mesh, lset_h)
+    hasneg = ci.GetElementsOfType(HASNEG)
+    hasif = ci.GetElementsOfType(IF)
+    ba_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasif)
+
+    V = H1(mesh, order=order, dgjumps=True)
+    u, v = V.TnT()
+    h = specialcf.mesh_size
+
+    dw = dFacetPatch(definedonelements=ba_facets, deformation=deform)
+
+    a1 = RestrictedBilinearForm(V, element_restriction=hasneg,
+                                facet_restriction=ba_facets,
+                                check_unused=False)
+    a1 += 1/h**2 * (u - u.Other()) * (v - v.Other()) * dw
+
+    a2 = RestrictedBilinearForm(V, element_restriction=hasneg,
+                                facet_restriction=ba_facets,
+                                check_unused=False)
+    a2 += 1/h**2 * (u - u.Other()) * (v - v.Other()) * dw
+
+    ngsxfemglobals.simd_eval = True
+    a1.Assemble()
+    ngsxfemglobals.simd_eval = False
+    a2.Assemble()
+
+    a1.mat.AsVector().data -= a2.mat.AsVector().data
+    diff = Norm(a1.mat.AsVector())
+    print(f"diff: {diff}")
+    assert diff < 1e-9
+
+
 # copy from test_differential_symbol.pytest - this test compares the result SIMD to non-SIMD
 @pytest.mark.parametrize('order', [1, 2, 3])
 @pytest.mark.parametrize('DOM', [POS, NEG])
