@@ -22,6 +22,7 @@ def AdjacencyMatrix (mesh, neighbortype : str = "vertex") -> BaseMatrix :
         raise Exception("Unknown neighbor type: "+neighbortype+"\n allowed are vertex, face and edge.")
 
     B = BilinearForm(testspace=P0,trialspace=W)
+    B += 0.0 * P0.TestFunction() * W.TrialFunction()[0] * dx(bonus_intorder=-100)
     B.Assemble()
     B.mat.AsVector()[:] = 1
 
