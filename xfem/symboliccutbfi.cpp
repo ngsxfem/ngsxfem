@@ -1097,6 +1097,9 @@ namespace ngfem
         simd_mir1.SetOtherMIR(&simd_mir2);
         simd_mir2.SetOtherMIR(&simd_mir1);
 
+        simd_mir1.ComputeNormalsAndMeasure(eltype1, LocalFacetNr1);
+        simd_mir2.ComputeNormalsAndMeasure(eltype2, LocalFacetNr2);
+
         for (int l1 : Range(test_proxies)) {
           HeapReset hr(lh);
           auto proxy2 = test_proxies[l1];
