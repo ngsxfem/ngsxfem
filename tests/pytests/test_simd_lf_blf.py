@@ -557,7 +557,60 @@ def test_ghost_penalty(order, quad):
     assert diff < 1e-9
 
 
-# copy from test_differential_symbol.pytest - this test compares the result SIMD to non-SIMD
+# Regression test: SIMD path for dCut(skeleton=True) with L2 FE space and
+# specialcf.normal (flux terms).  Without ComputeNormalsAndMeasure on the SIMD
+# MIRs, the normal vector and facet surface measure are wrong, making flux
+# contributions vanish and the jump term have an incorrect magnitude.
+@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("DOM", [POS, NEG])
+def test_cut_facet_dg_l2(order, DOM):
+    mesh = Mesh(unit_square.GenerateMesh(maxh=0.2))
+    levelset = (x - 0.5)**2 + (y - 0.5)**2 - 0.33**2
+
+    if order > 1:
+        lsetmeshadap = LevelSetMeshAdaptation(mesh, order=order, levelset=levelset)
+    else:
+        lsetmeshadap = NoDeformation(mesh, levelset)
+    lset_h = lsetmeshadap.lset_p1
+    deform = lsetmeshadap.deform
+
+    ci = CutInfo(mesh, lset_h)
+    els_hasdom = ci.GetElementsOfType(HAS(DOM))
+    facets_dom = GetFacetsWithNeighborTypes(mesh, a=els_hasdom, b=els_hasdom)
+
+    V = L2(mesh, order=order, dgjumps=True)
+    u, v = V.TnT()
+
+    nF = specialcf.normal(mesh.dim)
+    h = specialcf.mesh_size
+    jump_u = u - u.Other()
+    jump_v = v - v.Other()
+    flux_u = -0.5 * (grad(u) + grad(u.Other())) * nF
+    flux_v = -0.5 * (grad(v) + grad(v.Other())) * nF
+    form = 1/h * jump_u * jump_v + flux_u * jump_v + flux_v * jump_u
+
+    dw = dCut(lset_h, DOM, definedonelements=facets_dom, deformation=deform,
+              skeleton=True, element_boundary=False)
+
+    a1 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+                                facet_restriction=facets_dom, check_unused=False)
+    a1 += form * dw
+    a2 = RestrictedBilinearForm(V, element_restriction=els_hasdom,
+                                facet_restriction=facets_dom, check_unused=False)
+    a2 += form * dw
+
+    ngsxfemglobals.simd_eval = True
+    a1.Assemble()
+    ngsxfemglobals.simd_eval = False
+    a2.Assemble()
+
+    diff = a1.mat.AsVector().CreateVector()
+    diff.data = a1.mat.AsVector() - a2.mat.AsVector()
+    rel_diff = Norm(diff) / max(Norm(a2.mat.AsVector()), 1e-30)
+    assert rel_diff < 1e-9
+
+
+
 @pytest.mark.parametrize('order', [1, 2, 3])
 @pytest.mark.parametrize('DOM', [POS, NEG])
 @pytest.mark.parametrize('skeleton', [True, False])
