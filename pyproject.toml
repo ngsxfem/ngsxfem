@@ -60,7 +60,7 @@ skip = """
 
 [tool.cibuildwheel.windows]
 build = "cp311-* cp312-* cp313-* cp314-*"
-enable = ["cpython-prerelease-pythons"]
+enable = ["prerelease-pythons"]
 
 [tool.cibuildwheel.linux]
 repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_28_x86_64.manylinux2014_x86_64 {dest_dir}/*-linux_x86_64*.whl"
