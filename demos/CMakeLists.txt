@@ -1,5 +1,4 @@
 install( FILES
-  bnd_cut.py
   fictdom.py
   fictdom_dg.py
   fictdom_mlset.py
