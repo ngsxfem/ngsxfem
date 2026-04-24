@@ -791,10 +791,24 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         and no isoparametric mapping is used.
     definedon : Region
         Domain description on where the integrator is defined.
+        When vb=BND, pass mesh.Boundaries("name") to restrict to a
+        specific boundary label.
     vb : {VOL, BND, BBND}
-        Integration on mesh volume or its (B)boundary. Default: VOL
-        (if combined with skeleton=True VOL refers to interior facets
-                                        BND refers to boundary facets)
+        Integration on mesh volume or its (B)boundary. Default: VOL.
+        Use vb=BND to integrate over the portion of the mesh boundary
+        where the level set satisfies the given domain_type condition.
+        This enables imposing different BCs on parts of the same boundary
+        label separated by the level set interface (Nitsche approach).
+        Example::
+
+            # Integrate over the NEG part of the bottom boundary
+            ds_neg = dCut(lset_p1, NEG, vb=BND,
+                          definedon=mesh.Boundaries("bottom"))
+            a += -grad(u).Trace()*n*v*ds_neg - u*grad(v).Trace()*n*ds_neg
+            a += (lam/h) * u*v * ds_neg
+
+        (if combined with skeleton=True, VOL refers to interior facets
+                                         BND refers to boundary facets)
     element_boundary : bool
         Integration on each element boundary. Default: False
     element_vb : {VOL, BND, BBND}
@@ -808,6 +822,8 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
     definedonelements : ngsolve.BitArray
         Allows integration only on elements or facets (if skeleton=True)
         that are marked True. Default: None.
+        For vb=BND, a BitArray of cut boundary elements can be obtained via
+        CutInfo(mesh, lset).GetElementsOfType(HASNEG, BND).
     time_order : int
         Order in time that is used in the space-time integration.
         Default: time_order=-1 means that no space-time rule will be

@@ -154,7 +154,7 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
     throw Exception("only implemented for 1 dimensional coefficientfunctions");
 
   TSCAL sum = 0.0;
-  ma.IterateElements(VOL, glh, [&] (Ngs_Element el, LocalHeap & lh)
+  ma.IterateElements(dx.vb, glh, [&] (Ngs_Element el, LocalHeap & lh)
   {
     if (defon.Size() && !defon.Test(el.GetIndex()))
       return;
