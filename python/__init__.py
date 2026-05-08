@@ -611,7 +611,15 @@ def DrawDiscontinuous_webgui(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs):
     if fneg.dim > 1 or fpos.dim > 1:
         print("webgui discontinuous vis only for scalar functions a.t.m., switching to IfPos variant")
     else:
-        return WebGuiDraw(CoefficientFunction((levelset,fpos,fneg,0)),eval_function="value.x>0.0?value.y:value.z",*args,**kwargs)
+        # The CF has funcdim=3, so the webgui defaults to eval="norm" which computes
+        # sqrt(3)*|expr| instead of the desired custom expression result.
+        # Setting eval=0 in gui_settings selects the first component (= custom expr result)
+        # as the default display mode.
+        settings = dict(kwargs.pop("settings", {}))
+        settings.setdefault("eval", 0)
+        return WebGuiDraw(CoefficientFunction((levelset,fpos,fneg)),
+                          eval_function="value.x>0.0?value.y:value.z",
+                          settings=settings,*args,**kwargs)
     return DrawDiscontinuous_std(WebGuiDraw,levelset, fneg, fpos, *args, **kwargs)
 
 from functools import partial
