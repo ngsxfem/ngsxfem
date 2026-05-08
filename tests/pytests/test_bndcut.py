@@ -162,6 +162,61 @@ def test_bfi_assembly_2d_partial():
     assert abs(val - cut) < 1e-2, f"Expected ~{cut}, got {val}"
 
 
+# ---------------------------------------------------------------------------
+# IF+BND (co-dimension-2) tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("cut", [0.3, 0.5, 0.7])
+def test_integrate_if_bnd_2d_count(cut):
+    """Integrate(1 * dCut(lset, IF, vb=BND)) counts boundary–interface intersections.
+
+    With lset = x - cut the interface {lset=0} is the vertical line x=cut.
+    It intersects the boundary of the unit square in exactly 2 points:
+    (cut, 0) on the bottom edge and (cut, 1) on the top edge.
+    The point measure of 2 discrete points is 2.
+    """
+    mesh = make_2d_mesh()
+    lset = GridFunction(H1(mesh, order=1))
+    InterpolateToP1(x - cut, lset)
+
+    val = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND), mesh)
+    assert abs(val - 2.0) < 1e-10, f"Expected 2.0 (2 intersection points), got {val}"
+
+
+def test_integrate_if_bnd_2d_function():
+    """Integrating a function over IF+BND evaluates it at the intersection points.
+
+    lset = x - 0.5 → intersections at (0.5, 0) and (0.5, 1).
+    ∫ x dσ₀ = 0.5 + 0.5 = 1.0
+    ∫ y dσ₀ = 0.0 + 1.0 = 1.0
+    """
+    mesh = make_2d_mesh()
+    lset = GridFunction(H1(mesh, order=1))
+    InterpolateToP1(x - 0.5, lset)
+
+    val_x = Integrate(x * dCut(lset, IF, vb=BND), mesh)
+    val_y = Integrate(y * dCut(lset, IF, vb=BND), mesh)
+    assert abs(val_x - 1.0) < 1e-10, f"∫x dσ₀ expected 1.0, got {val_x}"
+    assert abs(val_y - 1.0) < 1e-10, f"∫y dσ₀ expected 1.0, got {val_y}"
+
+
+def test_integrate_if_bnd_2d_definedon():
+    """definedon restricts IF+BND to a single boundary edge."""
+    mesh = make_2d_mesh()
+    lset = GridFunction(H1(mesh, order=1))
+    InterpolateToP1(x - 0.5, lset)
+
+    # Only the bottom edge should have one intersection point at (0.5, 0)
+    val_bot = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND,
+                        definedon=mesh.Boundaries("bottom")), mesh)
+    assert abs(val_bot - 1.0) < 1e-10, f"Expected 1 intersection on bottom, got {val_bot}"
+
+    # Only the left edge (x=0) has no intersection with x=0.5
+    val_left = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND,
+                         definedon=mesh.Boundaries("left")), mesh)
+    assert abs(val_left - 0.0) < 1e-10, f"Expected 0 intersections on left, got {val_left}"
+
+
 def test_bfi_definedon_bitarray():
     """definedon can be supplied as a BitArray of boundary elements."""
     cut = 0.4

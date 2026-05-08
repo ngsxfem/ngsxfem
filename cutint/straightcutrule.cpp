@@ -643,7 +643,18 @@ namespace xintegration
       if (dt == IF)
       {
         auto ir_interface  = new (lh) IntegrationRule(quad_untrafo.Size(),lh);
-        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
+        if (et == ET_SEGM && DIM == 2)
+        {
+          // BND segment in a 2D mesh: the interface (IF) is a co-dim-2 point.
+          // Use point measure: weight = 1/GetMeasure() so that mip.GetMeasure()*weight = 1.
+          for (int i = 0; i < quad_untrafo.Size(); i++)
+          {
+            MappedIntegrationPoint<1,2> mip(quad_untrafo[i], trafo);
+            (*ir_interface)[i] = IntegrationPoint(quad_untrafo[i].Point(),
+                                                  quad_untrafo[i].Weight() / mip.GetMeasure());
+          }
+        }
+        else if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         ir = ir_interface;
