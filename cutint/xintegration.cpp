@@ -1630,7 +1630,7 @@ namespace xintegration
                                              int subdivlvl,
                                              LocalHeap & lh)
   {
-    static int timer = NgProfiler::CreateTimer ("OldCutIntegrationRule"); NgProfiler::RegionTimer reg (timer);
+    static Timer timer("OldCutIntegrationRule"); RegionTimer reg (timer);
 
     int DIM = trafo.SpaceDim();
     auto lset_eval

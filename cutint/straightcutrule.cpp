@@ -818,7 +818,7 @@ namespace xintegration
                                                        SWAP_DIMENSIONS_POLICY quad_dir_policy,
                                                        LocalHeap & lh)
     {
-      static int timer = NgProfiler::CreateTimer ("StraightCutIntegrationRuleUntransformed"); NgProfiler::RegionTimer reg (timer);
+      static Timer timer("StraightCutIntegrationRuleUntransformed"); RegionTimer reg (timer);
       //   static Timer timercutgeom ("NewStraightCutIntegrationRule::CheckIfCutFast");
       //   static Timer timermakequadrule("NewStraightCutIntegrationRule::MakeQuadRule");
 
