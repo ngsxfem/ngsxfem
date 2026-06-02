@@ -273,8 +273,7 @@ namespace ngfem
                         {
                           /*
                             RegionTimer regdmult(timer_SymbBFImultsym);
-                            NgProfiler::AddThreadFlops(timer_SymbBFImultsym, TaskManager::GetThreadId(),
-                            SIMD<double>::Size()*2*r2.Size()*(r1.Size()+1)*hbbmat2.Width() / 2);
+                            regdmult.AddFlops(SIMD<double>::Size()*2*r2.Size()*(r1.Size()+1)*hbbmat2.Width() / 2);
                           */
                           AddABtSym (hbbmat2.Rows(r2), hbdbmat1.Rows(r1), part_elmat);
                         }
@@ -282,8 +281,7 @@ namespace ngfem
                         {
                           /*
                           RegionTimer regdmult(timer_SymbBFImult);
-                          NgProfiler::AddThreadFlops(timer_SymbBFImult, TaskManager::GetThreadId(),
-                                                     SIMD<double>::Size()*2*r2.Size()*r1.Size()*hbbmat2.Width());
+                          regdmult.AddFlops(SIMD<double>::Size()*2*r2.Size()*r1.Size()*hbbmat2.Width());
                           */
                           AddABt (hbbmat2.Rows(r2), hbdbmat1.Rows(r1), part_elmat);
                         }
@@ -495,7 +493,7 @@ namespace ngfem
                                    LocalHeap & lh) const
 
                                        {
-      static int timer = NgProfiler::CreateTimer ("symbolicBFI - CalcElementMatrix EB");
+      static Timer timer("symbolicBFI - CalcElementMatrix EB");
       if (lsetintdom->IsMultiLevelsetDomain())
         throw Exception("cut element boundary integrals not implemented for multi level sets");
       /*
@@ -505,7 +503,7 @@ namespace ngfem
       static Timer tb("symbolicBFI - CalcElementMatrix EB - bmats", 2);
       static Timer tmult("symbolicBFI - CalcElementMatrix EB - mult", 2);
       */
-      NgProfiler::RegionTimer reg (timer);
+      RegionTimer reg (timer);
 
       //cout << "Calling T_CalcElementMatrixEBAdd " << endl; 
       //elmat = 0;
@@ -909,8 +907,8 @@ namespace ngfem
     FlatMatrix<SCAL> elmat,
     LocalHeap & lh) const
   {
-    static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
-    NgProfiler::RegionTimer reg(timer);
+    static Timer timer("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
+    RegionTimer reg(timer);
     elmat = SCAL(0.0);
     if (lsetintdom->IsMultiLevelsetDomain())
       throw Exception("cut element boundary integrals not implemented for multi level sets");
@@ -1337,8 +1335,8 @@ namespace ngfem
                     LocalHeap & lh) const 
   { 
 
-    static int timer = NgProfiler::CreateTimer ("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
-    NgProfiler::RegionTimer reg(timer);
+    static Timer timer("SymbolicCutFacetBilinearFormIntegrator::CalcFacetMatrix");
+    RegionTimer reg(timer);
     
     bool is_mixedfe1 = typeid(fel1) == typeid(const MixedFiniteElement&);
     const MixedFiniteElement * mixedfe1 = static_cast<const MixedFiniteElement*> (&fel1);
@@ -2539,8 +2537,8 @@ namespace ngfem
       warned = true;
     }
 
-    static int timer = NgProfiler::CreateTimer ("symboliccutbfi - calclinearized");
-    NgProfiler::RegionTimer reg(timer);
+    static Timer timer("symboliccutbfi - calclinearized");
+    RegionTimer reg(timer);
     
     const MixedFiniteElement * mixedfe = dynamic_cast<const MixedFiniteElement*> (&fel);
     const FiniteElement & fel_trial = mixedfe ? mixedfe->FETrial() : fel;
