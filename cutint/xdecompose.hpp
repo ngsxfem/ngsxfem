@@ -132,7 +132,8 @@ namespace xintegration
                                     PointContainer<SD> & pc, 
                                     LocalHeap & lh)
   {
-    static int timer = NgProfiler::CreateTimer ("DecomposePrismIntoSimplices"); NgProfiler::RegionTimer reg (timer);
+    static Timer timer ("DecomposePrismIntoSimplices");
+    RegionTimer reg (timer);
 
     ret.SetSize(SD);
     Array< const Vec<SD> * > tet(SD+1);
