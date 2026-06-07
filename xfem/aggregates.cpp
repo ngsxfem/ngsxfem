@@ -132,6 +132,19 @@ namespace ngcomp
         }
       }
       not_covered_yet &= ~newly_covered;
+
+      // Guard against non-termination: if a sweep covers no new element while
+      // bad elements remain uncovered, those elements belong to a connected
+      // component that contains no root element. They can never be aggregated,
+      // so the while-loop would spin forever. Fail loudly instead of hanging.
+      if (newly_covered.NumSet() == 0 && not_covered_yet.NumSet() > 0)
+        throw Exception("ElementAggregation::Update: " + ToString(not_covered_yet.NumSet()) +
+                        " bad element(s) are not connected (via facets) to any root element. "
+                        "Each connected component of the aggregation region must contain at "
+                        "least one root element; otherwise these elements cannot be aggregated. "
+                        "Check the root/bad element marking (e.g. a level set that is no longer "
+                        "a signed-distance function can create extension-band islands detached "
+                        "from the interior).");
     }
 
     (*testout) << "element_to_patch = \n" << element_to_patch << endl;
