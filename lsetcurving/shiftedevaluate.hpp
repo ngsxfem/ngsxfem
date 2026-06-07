@@ -49,20 +49,46 @@ private:
         BareSliceMatrix<double,ColMajor> mat,
         LocalHeap & lh) const;
 
+    // SIMD variant: evaluate the (inner) evaluator at the shifted integration
+    // rule. Removes the need for the non-SIMD fallback (and its warnings).
+    virtual void
+    CalcMatrix (const FiniteElement & bfel,
+                const SIMD_BaseMappedIntegrationRule & bmir,
+                BareSliceMatrix<SIMD<double>> mat) const;
+
 
     virtual void
     Apply (const FiniteElement & fel,
            const BaseMappedIntegrationPoint & mip,
-           BareSliceVector<double> x, 
+           BareSliceVector<double> x,
            FlatVector<double> flux,
            LocalHeap & lh) const;
-    
+
+    virtual void
+    Apply (const FiniteElement & bfel,
+           const SIMD_BaseMappedIntegrationRule & bmir,
+           BareSliceVector<double> x,
+           BareSliceMatrix<SIMD<double>> flux) const;
+
     virtual void
     ApplyTrans (const FiniteElement & fel,
                 const BaseMappedIntegrationPoint & mip,
                 FlatVector<double> flux,
                 BareSliceVector<double> x,
                 LocalHeap & lh) const;
+
+    virtual void
+    AddTrans (const FiniteElement & bfel,
+              const SIMD_BaseMappedIntegrationRule & bmir,
+              BareSliceMatrix<SIMD<double>> flux,
+              BareSliceVector<double> x) const;
+
+  private:
+    // Build the shifted SIMD integration rule (the inner evaluator is then
+    // evaluated on this rule). Allocated on lh.
+    SIMD_BaseMappedIntegrationRule &
+    CreateShiftedMIR (const SIMD_BaseMappedIntegrationRule & bmir,
+                      LocalHeap & lh) const;
 
   };
 
