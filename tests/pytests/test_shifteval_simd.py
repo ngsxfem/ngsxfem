@@ -89,3 +89,37 @@ def test_shifteval_simd_vs_nosimd(dimension, use_back, use_forth):
     print(f"dim={dimension} back={use_back} forth={use_forth} "
           f"|lf_simd - lf_nosimd|_2 = {diff_lf:.3e} (ref {refn:.3e})")
     assert diff_lf < 1e-11 * max(refn, 1.0)
+
+
+@pytest.mark.parametrize("order", [2, 3, 4])
+def test_shifteval_simd_vs_nosimd_curved(order):
+    # On curved (non-affine) elements the geometry Jacobian varies within an
+    # element. Both the scalar and the SIMD fixed point iteration use the
+    # Jacobian *frozen at the original integration point*, so the two paths must
+    # still agree up to round-off (this case is what distinguishes the frozen
+    # Jacobian from a per-iteration update; an affine mesh cannot).
+    import ngsolve
+    from netgen.geom2d import SplineGeometry
+    geo = SplineGeometry()
+    geo.AddCircle((0, 0), 1, bc="circle")
+    mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=0.3))
+    mesh.Curve(5)
+
+    fes = H1(mesh, order=order)
+    fes_dfm = H1(mesh, order=order, dim=2)
+    b = GridFunction(fes_dfm)
+    b.Set(CoefficientFunction((0.05 * sin(3 * y), 0.05 * cos(3 * x))))
+
+    gfu_old = GridFunction(fes)
+    gfu_old.Set(sin(4 * x) + cos(3 * y))
+    cf = shifted_eval(gfu_old, b, None)
+
+    gf_simd = GridFunction(fes)
+    gf_nosimd = GridFunction(fes)
+    gf_simd.Set(cf, use_simd=True)
+    gf_nosimd.Set(cf, use_simd=False)
+
+    diff = sqrt(Integrate((gf_simd - gf_nosimd) ** 2, mesh, order=2 * order))
+    ref = sqrt(Integrate(gf_nosimd ** 2, mesh, order=2 * order))
+    print(f"curved order={order} |simd - nosimd|_L2 = {diff:.3e} (ref {ref:.3e})")
+    assert diff < 1e-11 * max(ref, 1.0)

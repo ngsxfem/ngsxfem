@@ -132,6 +132,104 @@ namespace ngfem
 
       return ipx;
     }
+
+    // SIMD version of the fixed point iteration: solves for the shifted
+    // reference coordinates of a whole SIMD<IntegrationPoint> group (all lanes
+    // at once), mathematically equivalent to the scalar SolveShiftedRefPoint.
+    //
+    // Like the scalar version, the geometry Jacobian (jac/jacinv) is FROZEN at
+    // the original integration point; only the back-deformation displacement
+    // dvec_back is recomputed at the current iterate. Lanes converge
+    // independently via a frozen-mask (incl. best-so-far fallback / throw).
+    template <int D>
+    Vec<D,SIMD<double>>
+    SolveShiftedRefPointSIMD (const SIMD<IntegrationPoint> & sip,      // original ip group
+                              const Vec<D,SIMD<double>> & point0,      // Phi(ip0)
+                              const Mat<D,D,SIMD<double>> & jac,
+                              const Mat<D,D,SIMD<double>> & jacinv,
+                              SIMD<double> jacdet,
+                              const Vec<D,SIMD<double>> & phi0,        // Phi(0)
+                              const DeformationData<D> & back,
+                              const DeformationData<D> & forth,
+                              SIMD<double> done_init,                  // 1.0 for padding lanes
+                              LocalHeap & lh)
+    {
+      constexpr size_t W = SIMD<double>::Size();
+      Vec<D,SIMD<double>> ip0ref = sip;
+
+      // evaluate a deformation (back/forth) at reference coords -> displacement
+      auto eval_dvec = [&] (const Vec<D,SIMD<double>> & ref,
+                            const DeformationData<D> & dat) -> Vec<D,SIMD<double>>
+      {
+        HeapReset hr(lh);
+        SIMD<IntegrationPoint> cur = sip;
+        for (int d = 0; d < D; d++) cur(d) = ref(d);
+        SIMD_IntegrationRule ir1(1, &cur);
+        FlatMatrix<SIMD<double>> shape(dat.scafe->GetNDof(), 1, lh);
+        dat.scafe->CalcShape(ir1, shape);
+        Vec<D,SIMD<double>> dvec(SIMD<double>(0.0));
+        for (size_t k = 0; k < dat.vector.Height(); k++)
+          for (int d = 0; d < D; d++)
+            dvec(d) += dat.vector(k,d) * shape(k,0);
+        return dvec;
+      };
+
+      Vec<D,SIMD<double>> z = point0;
+      if (forth.valid) z += eval_dvec(ip0ref, forth);
+      Vec<D,SIMD<double>> zdiff = z - phi0;
+
+      const SIMD<double> h = pow(fabs(jacdet), 1.0/D);
+      const SIMD<double> eps_h = globxvar.EPS_SHIFTED_EVAL * h;
+      const SIMD<double> eh2 = eps_h * eps_h;
+
+      Vec<D,SIMD<double>> ipx = ip0ref;
+      SIMD<double> done = done_init;          // 1.0 => lane frozen
+      SIMD<double> best_nrm2 (1e99);
+      Vec<D,SIMD<double>> best_ipx = ipx;
+      int its = 0;
+
+      while (its < globxvar.FIXED_POINT_ITER_TRESHOLD)
+      {
+        Vec<D,SIMD<double>> dvec_back (SIMD<double>(0.0));
+        if (back.valid) dvec_back = eval_dvec(ipx, back);
+
+        Vec<D,SIMD<double>> rhs = zdiff - dvec_back;
+        Vec<D,SIMD<double>> diff = rhs - jac*ipx;
+        SIMD<double> nrm2 = diff(0)*diff(0);
+        for (int d = 1; d < D; d++) nrm2 += diff(d)*diff(d);
+
+        // best-so-far (used as fallback in the back-case)
+        SIMD<mask64> better = nrm2 < best_nrm2;
+        best_nrm2 = If(better, nrm2, best_nrm2);
+        for (int d = 0; d < D; d++) best_ipx(d) = If(better, ipx(d), best_ipx(d));
+
+        done = If(nrm2 < eh2, SIMD<double>(1.0), done);
+        if (HSum(done) >= double(W) - 0.5) break;   // all lanes done
+
+        Vec<D,SIMD<double>> ipx_upd = jacinv * rhs;
+        SIMD<mask64> frozen = SIMD<double>(0.5) < done;
+        for (int d = 0; d < D; d++) ipx(d) = If(frozen, ipx(d), ipx_upd(d));
+        its++;
+      }
+
+      SIMD<mask64> notdone = done < SIMD<double>(0.5);
+      if (HSum(If(notdone, SIMD<double>(1.0), SIMD<double>(0.0))) > 0.5)
+      {
+        if (back.valid)
+        {
+          // bad lane: not converged and best iterate is no good candidate (L2 >= 1)
+          SIMD<mask64> bad = notdone && (SIMD<double>(1.0) <= best_nrm2);
+          if (HSum(If(bad, SIMD<double>(1.0), SIMD<double>(0.0))) > 0.5)
+            throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD = "+to_string(globxvar.FIXED_POINT_ITER_TRESHOLD)+" iterations and didn't (yet?) converge! In addition, the best interation step is no good fallback candidate.");
+          cout << IM(globxvar.NON_CONV_WARN_MSG_LVL) << "In Shifted_eval (SIMD): Not converged, using best iterate as fallback candidate." << endl;
+          for (int d = 0; d < D; d++) ipx(d) = If(notdone, best_ipx(d), ipx(d));
+        }
+        else
+          throw Exception(" shifted eval took FIXED_POINT_ITER_TRESHOLD iterations and didn't (yet?) converge! ");
+      }
+
+      return ipx;
+    }
   }
 
   template <int SpaceD>
@@ -170,26 +268,36 @@ namespace ngfem
     const size_t nip = ir.GetNIP();
     constexpr size_t W = SIMD<IntegrationPoint>::Size();
 
+    // Phi(0): physical image of the reference origin (same for all lanes).
+    IntegrationPoint ip0(0,0,0);
+    MappedIntegrationPoint<SpaceD,SpaceD> mip0(ip0, trafo);
+    Vec<SpaceD,SIMD<double>> phi0;
+    for (int d = 0; d < SpaceD; d++) phi0(d) = SIMD<double>(mip0.GetPoint()(d));
+
+    const SIMD<double> lanes ([] (int l) { return double(l); });
+
     SIMD<IntegrationPoint> * mem = new (lh) SIMD<IntegrationPoint>[n];
 
     for (size_t i = 0; i < n; i++)
     {
       const SIMD<IntegrationPoint> & sip = ir[i];
-      IntegrationPoint shifted[W];
-      for (size_t l = 0; l < W; l++)
-      {
-        IntegrationPoint orig = sip[l];
-        // padding lanes (beyond the actual number of points) are not shifted
-        // to avoid spurious non-convergence of the fixed point iteration.
-        if (i*W + l >= nip)
-        {
-          shifted[l] = orig;
-          continue;
-        }
-        MappedIntegrationPoint<SpaceD,SpaceD> mip(orig, trafo);
-        shifted[l] = SolveShiftedRefPoint<SpaceD> (mip, data_back, data_forth, lh);
-      }
-      new (&mem[i]) SIMD<IntegrationPoint> ([&] (int l) { return shifted[l]; });
+      const auto & smip =
+        static_cast<const SIMD<MappedIntegrationPoint<SpaceD,SpaceD>>&> (bmir[i]);
+
+      // padding lanes (index >= nip) are marked done so they neither block the
+      // iteration nor trigger spurious non-convergence.
+      const size_t remain = (i*W < nip) ? min(W, nip - i*W) : size_t(0);
+      SIMD<double> done_init = If(SIMD<double>(double(remain)) <= lanes,
+                                  SIMD<double>(1.0), SIMD<double>(0.0));
+
+      Vec<SpaceD,SIMD<double>> ipx =
+        SolveShiftedRefPointSIMD<SpaceD> (sip, smip.GetPoint(), smip.GetJacobian(),
+                                          smip.GetJacobianInverse(), smip.GetJacobiDet(),
+                                          phi0, data_back, data_forth, done_init, lh);
+
+      SIMD<IntegrationPoint> res = sip;   // keep weight / facetnr / unused coord
+      for (int d = 0; d < SpaceD; d++) res(d) = ipx(d);
+      mem[i] = res;
     }
 
     SIMD_IntegrationRule shifted_ir(n, mem);
