@@ -52,7 +52,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build sdist
-        run: pipx run build --sdist
+        run: pipx run --spec build pyproject-build --sdist
 
       - uses: actions/upload-artifact@v4
         with:
