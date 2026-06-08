@@ -93,7 +93,16 @@ else()
 endif()
 
 macro(ngsolve_generate_stub_files module_name)
-  set(stubgen_generation_code "execute_process(WORKING_DIRECTORY ${stubgen_working_dir} COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen --ignore-all-errors -o ${CMAKE_CURRENT_BINARY_DIR}/stubs ${module_name})")
+  # Set PYTHONPATH so pybind11_stubgen can import the addon module, and
+  # propagate LD_LIBRARY_PATH so its native .so can load ngsolve shared libs.
+  set(stubgen_generation_code "
+    set(ENV{PYTHONPATH} \"${stubgen_working_dir}\")
+    set(ENV{LD_LIBRARY_PATH} \"${NETGEN_DIR}/${NETGEN_INSTALL_DIR_LIB}:$ENV{LD_LIBRARY_PATH}\")
+    execute_process(
+      WORKING_DIRECTORY \"${stubgen_working_dir}\"
+      COMMAND \"${Python3_EXECUTABLE}\" -m pybind11_stubgen --ignore-all-errors
+              -o \"${CMAKE_CURRENT_BINARY_DIR}/stubs\" ${module_name}
+    )")
   set(stubgen_directory "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}/")
   set(stubgen_file "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}.pyi")
   set(stubgen_install_destination ${ADDON_INSTALL_DIR_PYTHON}/${module_name}/)
