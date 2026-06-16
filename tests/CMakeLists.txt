@@ -20,8 +20,11 @@ add_test(NAME py_demo_tracefem COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME py_demo_stokescutfem COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/stokescutfem.py" "testmode")
 
-add_test(NAME py_demo_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
+add_test(NAME py_demo_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE}
   "${PROJECT_SOURCE_DIR}/demos/fictdom.py" "testmode")
+
+add_test(NAME py_demo_lsetcurv_boundary COMMAND ${NETGEN_PYTHON_EXECUTABLE}
+  "${PROJECT_SOURCE_DIR}/demos/lsetcurv_boundary.py" "testmode")
 
 add_test(NAME py_demo_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/fictdom_dg.py" "testmode")
@@ -61,6 +64,9 @@ add_test(NAME pytests_backupcutrule COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytes
 
 add_test(NAME pytests_intcurved COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_intcurved.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
+add_test(NAME pytests_lsetcurv_boundary COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_lsetcurv_boundary.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
 add_test(NAME pytests_differential_symbol COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_differential_symbol.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")

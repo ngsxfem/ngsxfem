@@ -6,6 +6,10 @@ from ngsolve.utils import *
 
 from xfem import *
 
+# `from xfem import *` shadows ngsolve's Integrate with the cut-integration one;
+# keep a handle to the plain ngsolve Integrate for the boundary defect measure.
+from ngsolve.comp import Integrate as _ngs_integrate
+
 class LevelSetMeshAdaptation:
     """
 Class to compute a proper mesh deformation to improve a piecewise (multi-) linear level set
@@ -50,10 +54,11 @@ the mesh deformation is applied on the mesh inside the context.
     order_lset = 2
 
     @TimeFunction
-    def __init__(self, mesh, order = 2, lset_lower_bound = 0.0, lset_upper_bound = 0.0, 
-                 threshold = -1.0, discontinuous_qn = False, 
+    def __init__(self, mesh, order = 2, lset_lower_bound = 0.0, lset_upper_bound = 0.0,
+                 threshold = -1.0, discontinuous_qn = False,
                  eps_perturbation = 1e-14, heapsize=1000000,
-                 levelset = None):
+                 levelset = None,
+                 boundary_tangential = False, boundary_normal = None):
         """
 The computed deformation depends on different options:
 
@@ -88,6 +93,22 @@ The computed deformation depends on different options:
 
   levelset : CoefficientFunction or None(default)
     If a level set function is prescribed the deformation is computed right away.
+
+  boundary_tangential : bool / str / list of str / Region (default False)
+    Handle the case where the zero level set *crosses the domain boundary*: the
+    search direction (qn) and the deformation (u) are made tangential to the
+    selected boundaries (u.n = 0), so the deformed boundary stays on the
+    (possibly curved) domain boundary and the higher-order cut accuracy is kept.
+    Selects on which boundaries: False (off); True / ".*" (all); a name / regex
+    ("left|bottom"); a list (["left", "bottom"]); or a boundary ``Region``
+    (``mesh.Boundaries(...)``).  Implies an L2 qn field.
+
+    Assumes the boundary is smooth where the interface crosses, and needs a mesh
+    with a sound boundary parametrisation for ``specialcf.normal`` (a netgen
+    mesh; ``MakeStructured2DMesh`` has degenerate left/right edges).
+
+  boundary_normal : CoefficientFunction or None (default)
+    Unused (kept for backward compatibility); the normal is ``specialcf.normal``.
         """
         self.order_deform = order
         self.order_qn = order
@@ -98,7 +119,14 @@ The computed deformation depends on different options:
         self.threshold = threshold
 
         self.eps_perturbation = eps_perturbation
-        
+
+        self.boundary_tangential = boundary_tangential
+        self.boundary_normal = boundary_normal
+        # the qn tangential correction is applied via an element-local L2 Set
+        # (whole mesh), which leaves the interior unchanged only for an L2 qn
+        if boundary_tangential and not discontinuous_qn:
+            discontinuous_qn = True
+
         self.mesh = mesh
         self.v_ho = H1(mesh, order=self.order_lset)
         self.lset_ho = GridFunction (self.v_ho, "lset_ho")
@@ -108,7 +136,7 @@ The computed deformation depends on different options:
         else:
             self.v_qn = H1(mesh, order=self.order_qn, dim=mesh.dim)
         self.qn = GridFunction(self.v_qn, "qn")
-    
+
         self.v_p1 = H1(mesh, order=1)
         self.lset_p1 = GridFunction (self.v_p1, "lset_p1")
 
@@ -117,10 +145,85 @@ The computed deformation depends on different options:
         self.deform_last = GridFunction(self.v_def, "deform_last")
         self.heapsize = heapsize
         self.gf_to_project = []
+
+        # boundary-tangential bookkeeping (built lazily, rebuilt on dof change)
+        self._bt_normals = None       # [(boundary Region, normal field)]
+        self._bt_def_region = None    # Region of selected boundaries
+        self._bt_qn_tmp = None        # reusable scratch on qn / deform spaces
+        self._bt_def_tmp = None
+        self._bt_ndof = None
+        if boundary_tangential:
+            self._BuildBoundaryProjections()
+
         if levelset != None:
           self.CalcDeformation(levelset)
 
-        
+    # ----------------------------------------------------------------------- #
+    #  boundary-tangential handling (for level sets crossing the boundary)
+    #
+    #  Per selected boundary, a VectorH1 field holds specialcf.normal on that
+    #  boundary, faded to 0 one element layer inside by the H1 basis.  qn and the
+    #  deformation u are then made tangential with it via pure CF/Set ops (one
+    #  field per boundary so distinct faces don't blend at shared edges).
+    # ----------------------------------------------------------------------- #
+    def _BoundaryPattern(self):
+        bt = self.boundary_tangential
+        if bt is True or bt == ".*":
+            return ".*"
+        return bt if isinstance(bt, str) else "|".join(bt)
+
+    def _BuildBoundaryProjections(self):
+        """One boundary-normal field (VectorH1, trace = specialcf.normal) per
+        selected boundary; stored in self._bt_normals."""
+        mesh = self.mesh
+        bt = self.boundary_tangential
+        self._bt_def_region = bt if isinstance(bt, Region) \
+            else mesh.Boundaries(self._BoundaryPattern())
+        names = mesh.GetBoundaries()
+        self._bt_normals = []
+        for nm in sorted({names[i] for i, on in enumerate(self._bt_def_region.Mask()) if on}):
+            region = mesh.Boundaries(nm)
+            nrm = GridFunction(VectorH1(mesh, order=self.order_deform))
+            nrm.Set(specialcf.normal(mesh.dim), definedon=region)
+            self._bt_normals.append((region, nrm))
+        # reusable scratch GridFunctions (qn copy / deform correction)
+        self._bt_qn_tmp = GridFunction(self.qn.space)
+        self._bt_def_tmp = GridFunction(self.deform.space)
+        self._bt_ndof = self.v_def.ndof
+
+    def _BoundaryProjectionsValid(self):
+        return self._bt_ndof == self.v_def.ndof
+
+    def _ApplyBoundaryTangentialQn(self):
+        # qn <- qn - (qn.n) n in the boundary layer.  n is normalised: in the
+        # volume the H1 field's magnitude decays, only its direction is wanted.
+        if not self._BoundaryProjectionsValid():
+            self._BuildBoundaryProjections()
+        tmp = self._bt_qn_tmp
+        for _, nrm in self._bt_normals:
+            n = nrm / sqrt(nrm * nrm + 1e-20)
+            tmp.vec.data = self.qn.vec          # Set clears its target -> copy
+            self.qn.Set(tmp - (tmp * n) * n)
+
+    def _ApplyBoundaryTangentialDeform(self):
+        # u <- u - (u.n) n on each boundary trace (n is unit there) -> u.n = 0
+        if not self._BoundaryProjectionsValid():
+            self._BuildBoundaryProjections()
+        corr = self._bt_def_tmp
+        for region, nrm in self._bt_normals:
+            corr.Set(-(self.deform * nrm) * nrm, definedon=region)
+            self.deform.vec.data += corr.vec
+
+    def CalcBoundaryNormalDefect(self):
+        """L2 norm of u.n over the treated boundaries (~0 if u stays on them)."""
+        if not self.boundary_tangential:
+            return 0.0
+        if not self._BoundaryProjectionsValid():
+            self._BuildBoundaryProjections()
+        n = specialcf.normal(self.mesh.dim)
+        return sqrt(_ngs_integrate((self.deform * n) ** 2, self.mesh,
+                                   definedon=self._bt_def_region))
+
     def ProjectOnUpdate(self,gf,update_domain=None):
         """
 When the LevelsetMeshAdaptation class generates a new deformation (due to 
@@ -198,6 +301,11 @@ dont_project_gfs : bool
         
         self.lset_ho.Set(levelset)
         self.qn.Set(self.lset_ho.Deriv())
+        # (boundary) project the search direction onto the boundary tangent so
+        # the deformation stays tangential where the interface crosses the
+        # boundary instead of pushing the boundary off the domain
+        if self.boundary_tangential:
+            self._ApplyBoundaryTangentialQn()
         InterpolateToP1(self.lset_ho,self.lset_p1,eps_perturbation=self.eps_perturbation)
         if blending == None or blending == "none":
             blending = CoefficientFunction(0.0)
@@ -207,7 +315,7 @@ dont_project_gfs : bool
         elif blending == "quartic":
             scale=sqrt(self.lset_p1.space.mesh.dim) * specialcf.mesh_size
             blending = self.lset_p1*self.lset_p1*self.lset_p1*self.lset_p1/(scale*scale*scale*scale)
-            
+
         self.deform_last.vec.data = self.deform.vec
         ProjectShift(self.lset_ho,
                      self.lset_p1,
@@ -219,6 +327,12 @@ dont_project_gfs : bool
                      upper=self.lset_upper_bound,
                      threshold=self.threshold,
                      heapsize=self.heapsize)
+
+        # (boundary) remove the boundary-normal component of the deformation on
+        # the boundary facets (u . n = 0): exact for straight facets, higher
+        # order for curved ones
+        if self.boundary_tangential:
+            self._ApplyBoundaryTangentialDeform()
 
         if not dont_project_gfs:
             self.ProjectGFs()
