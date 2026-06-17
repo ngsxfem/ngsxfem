@@ -147,7 +147,7 @@ The computed deformation depends on different options:
         self.gf_to_project = []
 
         # boundary-tangential bookkeeping (built lazily, rebuilt on dof change)
-        self._bt_normals = None       # [(boundary Region, normal field)]
+        self._bt_normals = None       # [(Region, nrm, nc, full-facet els)]
         self._bt_def_region = None    # Region of selected boundaries
         self._bt_qn_tmp = None        # reusable scratch on qn / deform spaces
         self._bt_def_tmp = None
@@ -161,10 +161,15 @@ The computed deformation depends on different options:
     # ----------------------------------------------------------------------- #
     #  boundary-tangential handling (for level sets crossing the boundary)
     #
-    #  Per selected boundary, a VectorH1 field holds specialcf.normal on that
-    #  boundary, faded to 0 one element layer inside by the H1 basis.  qn and the
-    #  deformation u are then made tangential with it via pure CF/Set ops (one
-    #  field per boundary so distinct faces don't blend at shared edges).
+    #  Per selected boundary we store, via specialcf.normal:
+    #    * nrm : a VectorH1 field with the normal on the boundary, used on the
+    #            boundary trace for the deformation (u.n = 0);
+    #    * nc  : its piecewise-constant (L2 order 0) per-element projection, and
+    #    * els : the volume elements with a full facet on that boundary;
+    #  the search direction qn is made tangential on els with the *constant* nc
+    #  (an exact, per-element projection).  Using the varying/normalised nrm in
+    #  the volume, or correcting vertex-touching elements, over-corrects qn and
+    #  folds the mesh on coarse grids -- hence nc on full-facet elements only.
     # ----------------------------------------------------------------------- #
     def _BoundaryPattern(self):
         bt = self.boundary_tangential
@@ -173,20 +178,32 @@ The computed deformation depends on different options:
         return bt if isinstance(bt, str) else "|".join(bt)
 
     def _BuildBoundaryProjections(self):
-        """One boundary-normal field (VectorH1, trace = specialcf.normal) per
-        selected boundary; stored in self._bt_normals."""
+        """Per selected boundary: normal field (nrm), its per-element constant
+        projection (nc) and the full-facet volume elements (els)."""
         mesh = self.mesh
+        D = mesh.dim
         bt = self.boundary_tangential
         self._bt_def_region = bt if isinstance(bt, Region) \
             else mesh.Boundaries(self._BoundaryPattern())
-        names = mesh.GetBoundaries()
+        bnames = mesh.GetBoundaries()
+        sel = sorted({bnames[i] for i, on in enumerate(self._bt_def_region.Mask()) if on})
+        els = {nm: BitArray(mesh.ne) for nm in sel}
+        for b in els.values():
+            b.Clear()
+        for be in mesh.Elements(BND):
+            nm = bnames[be.index]
+            if nm in els:
+                for e in mesh[be.elementnode].elements:
+                    els[nm][e.nr] = True
         self._bt_normals = []
-        for nm in sorted({names[i] for i, on in enumerate(self._bt_def_region.Mask()) if on}):
+        for nm in sel:
             region = mesh.Boundaries(nm)
             nrm = GridFunction(VectorH1(mesh, order=self.order_deform))
-            nrm.Set(specialcf.normal(mesh.dim), definedon=region)
-            self._bt_normals.append((region, nrm))
-        # reusable scratch GridFunctions (qn copy / deform correction)
+            nrm.Set(specialcf.normal(D), definedon=region)
+            nc = GridFunction(L2(mesh, order=0, dim=D))
+            nc.Set(nrm)
+            self._bt_normals.append((region, nrm, nc, els[nm]))
+        # reusable scratch GridFunctions for the additive corrections
         self._bt_qn_tmp = GridFunction(self.qn.space)
         self._bt_def_tmp = GridFunction(self.deform.space)
         self._bt_ndof = self.v_def.ndof
@@ -195,22 +212,21 @@ The computed deformation depends on different options:
         return self._bt_ndof == self.v_def.ndof
 
     def _ApplyBoundaryTangentialQn(self):
-        # qn <- qn - (qn.n) n in the boundary layer.  n is normalised: in the
-        # volume the H1 field's magnitude decays, only its direction is wanted.
+        # qn <- qn - (qn.n) n on the full-facet boundary elements, n = constant
+        # per-element normal nc (exact projection: (q.nc) nc / (nc.nc))
         if not self._BoundaryProjectionsValid():
             self._BuildBoundaryProjections()
-        tmp = self._bt_qn_tmp
-        for _, nrm in self._bt_normals:
-            n = nrm / sqrt(nrm * nrm + 1e-20)
-            tmp.vec.data = self.qn.vec          # Set clears its target -> copy
-            self.qn.Set(tmp - (tmp * n) * n)
+        corr = self._bt_qn_tmp
+        for _, nrm, nc, els in self._bt_normals:
+            corr.Set(-(self.qn * nc) * nc / (nc * nc + 1e-30), definedonelements=els)
+            self.qn.vec.data += corr.vec
 
     def _ApplyBoundaryTangentialDeform(self):
-        # u <- u - (u.n) n on each boundary trace (n is unit there) -> u.n = 0
+        # u <- u - (u.n) n on each boundary trace (nrm is unit there) -> u.n = 0
         if not self._BoundaryProjectionsValid():
             self._BuildBoundaryProjections()
         corr = self._bt_def_tmp
-        for region, nrm in self._bt_normals:
+        for region, nrm, nc, els in self._bt_normals:
             corr.Set(-(self.deform * nrm) * nrm, definedon=region)
             self.deform.vec.data += corr.vec
 
