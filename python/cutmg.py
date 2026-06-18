@@ -81,7 +81,7 @@ class CutFemSmoother:
         self.ifcorr_only_once = kwargs.get('ifcorr_only_once',True)
 
     def InterfaceCorrection(self, u, rhs,k,nu):
-        if self.ifsolver == None:
+        if self.ifsolver is None:
             return
         if self.ifcorr_only_once and k < nu-1:
             return

@@ -155,7 +155,7 @@ The computed deformation depends on different options:
         if boundary_tangential:
             self._BuildBoundaryProjections()
 
-        if levelset != None:
+        if levelset is not None:
           self.CalcDeformation(levelset)
 
     # ----------------------------------------------------------------------- #
@@ -323,7 +323,7 @@ dont_project_gfs : bool
         if self.boundary_tangential:
             self._ApplyBoundaryTangentialQn()
         InterpolateToP1(self.lset_ho,self.lset_p1,eps_perturbation=self.eps_perturbation)
-        if blending == None or blending == "none":
+        if blending is None or blending == "none":
             blending = CoefficientFunction(0.0)
         elif blending == "quadratic":
             scale=sqrt(self.lset_p1.space.mesh.dim) * specialcf.mesh_size
@@ -368,9 +368,9 @@ dont_project_gfs : bool
 Compute approximated distance between of the isoparametrically obtained geometry
 (should be called in deformed state)
         """
-        if order == None:
+        if order is None:
           order = 2 * self.order_qn
-        if heapsize == None:
+        if heapsize is None:
           heapsize = self.heapsize
         lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order}
         if self.mesh.deformation or not deform:
@@ -399,7 +399,7 @@ Compute approximated distance between of the isoparametrically obtained geometry
         fi = SymbolicFI(levelset_domain = self.levelset_domain(domain_type), 
                          form = form, 
                          deformation=self.deform)
-        if definedonelements != None:
+        if definedonelements is not None:
             fi.SetDefinedOnElements(definedonelements)       
         return fi
 
@@ -448,7 +448,7 @@ Parameters:
     decides if the refine_threshold is an absolute value or if it is weighted with the mesh size
         """
         lset_stats = StatisticContainer()
-        if levelset==None:
+        if levelset is None:
             levelset = self.lset_ho
         CalcDistances(lset_ho=levelset,lset_p1=self.lset_p1,deform=self.deform,stats=lset_stats,refine_threshold=refine_threshold,absolute=absolute)
         

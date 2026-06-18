@@ -105,10 +105,10 @@ for dtt, n in normals.items():
 
 # Test operators
 dta_t1 = bnd3 & bnd2
-assert dta_t1.lsets == None
+assert dta_t1.lsets is None
 assert dta_t1.persistent_compress == False
 dta_t2 = bnd3 | bnd2
-assert dta_t2.lsets == None
+assert dta_t2.lsets is None
 assert dta_t2.persistent_compress == False
 
 bnd4 = z_disc3.Boundary()

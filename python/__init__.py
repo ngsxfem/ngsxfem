@@ -224,7 +224,7 @@ Other Parameters :
     order in time that is used in the space-time integration. time_order=-1 means that no space-time
     rule will be applied. This is only relevant for space-time discretizations.
 """
-    if levelset_domain != None and type(levelset_domain)==dict:
+    if levelset_domain is not None and type(levelset_domain)==dict:
         # shallow copy is sufficient to modify "order" and "time_order" locally
         levelset_domain_local = levelset_domain.copy()
         if "order" in kwargs:
@@ -240,7 +240,7 @@ Other Parameters :
         return SymbolicCutBFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
         # print("SymbolicBFI-Wrapper: original SymbolicBFI called")
-        if (levelset_domain == None):
+        if (levelset_domain is None):
             return ngsolve_SymbolicBFI(*args,**kwargs)
         else:
             return ngsolve_SymbolicBFI(levelset_domain,*args,**kwargs)
@@ -317,7 +317,7 @@ Other Parameters :
     rule will be applied. This is only relevant for space-time discretizations. Note that
     time_order can only be active if the key "time_order" of the levelset_domain is not set (or -1)
 """
-    if levelset_domain != None and type(levelset_domain)==dict:
+    if levelset_domain is not None and type(levelset_domain)==dict:
         # shallow copy is sufficient to modify "order" and "time_order" locally
         levelset_domain_local = levelset_domain.copy()      
         if "order" in kwargs:
@@ -331,7 +331,7 @@ Other Parameters :
         
         return SymbolicCutLFI(levelset_domain=levelset_domain_local,*args, **kwargs)
     else:
-        if (levelset_domain == None):
+        if (levelset_domain is None):
             return ngsolve_SymbolicLFI(*args,**kwargs)
         else:
             return ngsolve_SymbolicLFI(levelset_domain,*args,**kwargs)
@@ -425,12 +425,12 @@ ip_container : list (or None)
 heapsize : int
   heapsize for local computations.
     """
-    if levelset_domain != None and type(levelset_domain)==dict:
+    if levelset_domain is not None and type(levelset_domain)==dict:
         # print("Integrate-Wrapper: IntegrateX called")
         return Integrate_X_special_args(levelset_domain, *args, **kwargs)
     else:
         # print("Integrate-Wrapper: original Integrate called")
-        if (levelset_domain == None):
+        if (levelset_domain is None):
             return ngsolve_Integrate(*args,**kwargs)
         else:
             newargs = [levelset_domain]
@@ -666,8 +666,8 @@ Has method
     def __init__(self, mesh=None, levelset=None, warn=True):
         self.deform = GridFunction(H1(mesh, order=1, dim=mesh.dim), "dummy_deform")
         self.deform.vec.data[:] = 0.0
-        if levelset != None:
-            if mesh == None:
+        if levelset is not None:
+            if mesh is None:
                 raise Exception("need mesh")
             self.lset_p1 = GridFunction(H1(mesh, order=1))
             InterpolateToP1(levelset, self.lset_p1)
@@ -957,7 +957,7 @@ def dmesh(mesh=None,*args,**kwargs):
         CutDifferentialSymbol(VOL)
     """
     if "tref" in kwargs:
-        if mesh == None:
+        if mesh is None:
             raise Exception("dx(..,tref..) needs mesh")
         gflset = GridFunction(H1(mesh))
         gflset.vec[:] = 1
@@ -1016,12 +1016,12 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
     """
 
     argument_list = [name]
-    if element_restriction != None:
+    if element_restriction is not None:
         argument_list.append(element_restriction)
-    if facet_restriction != None:
+    if facet_restriction is not None:
         argument_list.append(facet_restriction)
 
-    if trialspace != None and testspace != None:
+    if trialspace is not None and testspace is not None:
         if trialspace.is_complex and testspace.is_complex:
             return RestrictedBilinearFormComplex(trialspace,testspace,*argument_list,**kwargs)
         elif (not trialspace.is_complex) and (not testspace.is_complex):
@@ -1029,7 +1029,7 @@ def RestrictedBilinearForm(space=None,name="blf",element_restriction=None,facet_
         else:
             raise Exception("Trialspace is real and testspace is complex or vice versa. RestrictedBilinearForm not implemented for this case!")
     else: 
-        if space == None:
+        if space is None:
             raise Exception("No space given for RestrictedBilinearForm!")
         if space.is_complex:
             return RestrictedBilinearFormComplex(space,*argument_list,**kwargs)

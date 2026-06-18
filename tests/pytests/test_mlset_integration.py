@@ -196,7 +196,7 @@ def test_2d_overlaps():
     z_disc4 = DomainTypeArray(z_disc3.as_list, level_sets_p1, persistent_compress=False)
     z_disc5 = DomainTypeArray(z_disc3.as_list, level_sets_p1, persistent_compress=True)
 
-    assert z_disc4.lsets == None
+    assert z_disc4.lsets is None
     assert z_disc4.persistent_compress == False
 
     # ----------------------- Test Overlapping Domains ------------------------
@@ -233,7 +233,7 @@ def test_2d_overlaps():
         assert lset1 == lset2
 
     assert z_disc3_bnd_cmpr.persistent_compress == False
-    assert z_disc3_bnd_cmpr.lsets == None 
+    assert z_disc3_bnd_cmpr.lsets is None 
 
     lset_zdisc2_c = {"levelset": level_sets_p1, "domain_type": z_disc2}
     lset_zdisc3_c = {"levelset": level_sets_p1, "domain_type": z_disc3}

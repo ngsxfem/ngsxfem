@@ -210,7 +210,7 @@ The computed deformation depends on different options:
         self.levelsetp1 = {INTERVAL : self.lset_p1, BOTTOM : self.lset_p1_bottom, TOP : self.lset_p1_top}
         self.deformation = {INTERVAL : self.deform, BOTTOM : self.deform_bottom, TOP : self.deform_top}
 
-        if (smooth_blend != None) and (smooth_blend != "None"):
+        if (smooth_blend is not None) and (smooth_blend != "None"):
           self.smooth_blend = smooth_blend
         else:
           self.smooth_blend = None
@@ -330,7 +330,7 @@ dont_project_gfs : bool
 
         self.blending_forwarded = CF(0.)
         self.where_projected = BitArray(self.hasif_spacetime)
-        if self.smooth_blend != None:
+        if self.smooth_blend is not None:
             ci_blend_helper = CutInfo(self.mesh, time_order=self.order_time)
             b_disc_node_p1 = GridFunction(self.v_p1)
             b_disc_p1 = GridFunction(self.v_p1_st)
@@ -394,14 +394,14 @@ Convenience function to construct space-time Symbolic(Cut)LFI/Symbolic(Cut)BFI
             time_order (int, optional): integration order in time. Defaults to None.
             defineonelement (BitArray, optional): elements to define the linear form on. Defaults to None.
         """    
-        if time_order == None:
+        if time_order is None:
             time_order = 2 * self.order_time
         
         fi = SymbolicFI(levelset_domain = self.levelset_domain(domain_type,time_type), 
                          form = form, 
                          time_order=time_order, 
                          deformation=self.deformation[time_type])
-        if definedonelements != None:
+        if definedonelements is not None:
             fi.SetDefinedOnElements(definedonelements)       
         return fi
 
@@ -448,7 +448,7 @@ Convenience function to Integrate on cut space-time domain.
         Returns:
             float: return value of (cut) integral
         """
-        if time_order == None:
+        if time_order is None:
             time_order = 2 * self.order_time
         self.mesh.SetDeformation(self.deformation[time_type])
         fi = Integrate(levelset_domain = self.levelset_domain(domain_type,time_type), 
@@ -471,11 +471,11 @@ Compute approximated distance between of the isoparametrically obtained geometry
             time_order (int, optional): integration order in time. Defaults to None.
             heapsize (int, optional): heap size for local memory. Defaults to None.
         """
-        if order == None:
+        if order is None:
           order = 2 * self.order_qn
-        if time_order == None:
+        if time_order is None:
           time_order = 2 * self.order_time
-        if heapsize == None:
+        if heapsize is None:
           heapsize = self.heapsize
         lset_dom = {"levelset": self.lset_p1, "domain_type" : IF, "order": order, "time_order" : time_order}
         minv, maxv = IntegrationPointExtrema(lset_dom, self.mesh, levelset, heapsize=heapsize)
