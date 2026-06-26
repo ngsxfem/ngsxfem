@@ -153,6 +153,7 @@ namespace ngcomp
     deform->GetVector().SetParallelStatus(DISTRIBUTED);
     deform->GetVector().Cumulate(); 	 
     
+#ifndef WIN32
     if (task_manager)
     {
       SharedLoop sl (Range (factor->Size()));
@@ -178,6 +179,7 @@ namespace ngcomp
         });
     }
     else
+#endif // WIN32
     {
       Array<int> dnums(1);
       for (int i : Range(factor->Size()) )
