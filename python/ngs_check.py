@@ -1,4 +1,4 @@
-__ngsolve_required__ = "6.2.2605-0"
+__ngsolve_required__ = "6.2.2606-0"
 
 def check_if_ngsolve_newer_than(ngsolve_version_required):
     """
