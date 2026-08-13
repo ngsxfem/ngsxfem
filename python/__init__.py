@@ -663,13 +663,11 @@ Has method
     Convenience function  for code compatibility with LevelSetMeshAdaptation class
     """
 
-    def __init__(self, mesh=None, levelset=None, warn=True):
+    def __init__(self, mesh, levelset=None, warn=True):
         self.deform = GridFunction(H1(mesh, order=1, dim=mesh.dim), "dummy_deform")
         self.deform.vec.data[:] = 0.0
+        self.lset_p1 = GridFunction(H1(mesh, order=1))
         if levelset is not None:
-            if mesh is None:
-                raise Exception("need mesh")
-            self.lset_p1 = GridFunction(H1(mesh, order=1))
             InterpolateToP1(levelset, self.lset_p1)
         self.warn = warn
 
