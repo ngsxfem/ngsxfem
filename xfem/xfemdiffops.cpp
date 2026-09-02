@@ -23,7 +23,7 @@ namespace ngfem
 
       const int ndof = scafe.GetNDof();
 
-      if (DOX < DIFFOPX::EXTEND_GRAD)
+      if constexpr (DOX < DIFFOPX::EXTEND_GRAD)
       {
         FlatVector<> shape (ndof,lh);
         shape = scafe.GetShape(mip.IP(), lh);
