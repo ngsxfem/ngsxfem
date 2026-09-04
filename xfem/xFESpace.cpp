@@ -106,19 +106,19 @@ namespace ngcomp
   {
     shared_ptr<GridFunction> gf_neg = gf_neg_pos->GetComponent(0);
     BaseVector & bv_neg = gf_neg->GetVector();
-    FlatVector<> vneg = bv_neg.FVDouble();
+    FlatVector<> vneg = bv_neg.FV<double>();
 
     shared_ptr<GridFunction> gf_pos = gf_neg_pos->GetComponent(1);
     BaseVector & bv_pos = gf_pos->GetVector();
-    FlatVector<> vpos = bv_pos.FVDouble();
+    FlatVector<> vpos = bv_pos.FV<double>();
 
     shared_ptr<GridFunction> gf_base = gf->GetComponent(0);
     BaseVector & bv_base = gf_base->GetVector();
-    FlatVector<> vbase = bv_base.FVDouble();
+    FlatVector<> vbase = bv_base.FV<double>();
 
     shared_ptr<GridFunction> gf_x = gf->GetComponent(1);
     BaseVector & bv_x = gf_x->GetVector();
-    FlatVector<> vx = bv_x.FVDouble();
+    FlatVector<> vx = bv_x.FV<double>();
 
     auto xstdfes = dynamic_pointer_cast<CompoundFESpace>(gf->GetFESpace());
     if (!xstdfes)
