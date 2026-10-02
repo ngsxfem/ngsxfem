@@ -11,3 +11,4 @@ pandocfilters
 nbconvert
 mistune
 myst-nb
+pyyaml

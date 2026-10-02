@@ -32,7 +32,7 @@ The main features of `ngsxfem` are:
 * Space-Time Finite Elements for the treatment of moving domain problems
 * All these features combined with the usual flexibility and power of [NGSolve](https://ngsolve.org).
 
-`ngsxfem` has been used in a variety of applications. In the document [doc/feature-details.md](doc/feature-details.md) (see also [compiled pdf](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) ) more details on the features is given and in [doc/literature.md](doc/literature.md) (see also [literature](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) ) an overview of the scientific literature where `ngsxfem` is used is provided.
+`ngsxfem` has been used in a variety of applications. In the document [doc/feature-details.md](doc/feature-details.md) (see also [compiled pdf](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-features.zip) ) more details on the features is given and in [doc/literature.md](doc/literature.md) (see also the [rendered literature page](https://ngsuite.pages.gwdg.de/ngsxfem/xfem_misc/literature.html) and the [compiled pdf](https://nightly.link/ngsxfem/ngsxfem/workflows/extras-workflow/master/doc-literature.zip) ) an overview of the scientific literature where `ngsxfem` is used is provided. If you have used `ngsxfem` in a publication that is missing there, please open an issue or a pull request (the list is generated from [doc/literature.yaml](doc/literature.yaml)).
 
 Not all features of `ngsxfem` and `NGSolve` can directly be combined. Here is an overview of `ngsxfem` and `NGSolve` features and if they can directly be combined:
 
