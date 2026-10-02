@@ -78,7 +78,7 @@ extensions = [
     ]
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['xfem_misc/literature_entries.rst']  # included by literature.rst
 
 
 
@@ -91,7 +91,7 @@ source_suffix = ['.rst', '.md']
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_css_files = ['bullets.css']
+html_css_files = ['bullets.css', 'literature.css']
 
 html_sidebars = {
    'index': [
@@ -106,6 +106,19 @@ html_sidebars = {
 
 def setup(app):
     app.add_css_file("custom.css")
+
+
+# regenerate the literature page (doc/literature.md and
+# doc/sphinx/xfem_misc/literature_entries.rst) from doc/literature.yaml
+try:
+    import importlib.util
+    _spec = importlib.util.spec_from_file_location(
+        "make_literature", join(dirname(__file__), '..', 'make_literature.py'))
+    _make_literature = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_make_literature)
+    _make_literature.main([])
+except Exception as _err:  # never let the docs build fail because of this
+    print("warning: could not regenerate the literature page:", _err)
 
 
 # enable latex rendering in myst-nb

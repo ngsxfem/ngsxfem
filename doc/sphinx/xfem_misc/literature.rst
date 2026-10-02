@@ -1,27 +1,8 @@
-.. ngsxfem documentation master file, created by
-   copy+paste and changes from ngsxtrefftz.
+Scientific literature using ngsxfem
+===================================
 
-.. raw:: html
+.. The entries below are generated from doc/literature.yaml by
+   doc/make_literature.py (also run automatically by the Sphinx build,
+   see conf.py). Edit the yaml file, not literature_entries.rst.
 
-    <style>
-        .p-Widget {
-            height: 400px;
-        }
-        .dg.main {
-            margin-left: 0px;
-        }
-        div.p-Widget div div div div.dg ul li {
-            list-style: none;
-            margin-left: 0px;
-        }
-        div.p-Widget div div div div.dg ul li div.dg {
-            margin-bottom: 0px;
-        }
-    </style>
-
-.. only:: html
-    .. role:: raw-html(raw)
-        :format: html
-
-.. mdinclude:: ../../literature.md
-
+.. include:: literature_entries.rst

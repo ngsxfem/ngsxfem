@@ -52,8 +52,6 @@
 .. toctree::
    :caption: Literature
 
-   xfem_misc/paper
-
    xfem_misc/literature
 
 .. toctree::
