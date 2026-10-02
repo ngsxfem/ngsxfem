@@ -10,7 +10,7 @@ This list collects scientific works (journal articles, preprints, theses) in whi
 
 If you use `ngsxfem` for your research, please cite: C. Lehrenfeld, F. Heimann, J. Preuß and H. von Wahl. “ngsxfem: Add-on to NGSolve for geometrically unfitted finite element discretizations”. *Journal of Open Source Software* 6(64), 3237, 2021. doi: [10.21105/joss.03237](https://doi.org/10.21105/joss.03237). Software releases are archived on Zenodo: doi: [10.5281/zenodo.5081124](https://doi.org/10.5281/zenodo.5081124).
 
-```bibtex
+```
 @article{ngsxfem,
   author  = {Lehrenfeld, Christoph and Heimann, Fabian and Preu{\ss}, Janosch and von Wahl, Henry},
   title   = {ngsxfem: Add-on to NGSolve for geometrically unfitted finite element discretizations},

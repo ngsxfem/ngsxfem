@@ -213,7 +213,7 @@ def write_markdown(data):
     if cite.get("software_doi"):
         out[-1] += f" Software releases are archived on Zenodo: doi: [{cite['software_doi']}](https://doi.org/{cite['software_doi']})."
     out.append("")
-    out.append("```bibtex")
+    out.append("```")  # no language: pandoc would need highlighting macros (Shaded) in latex.template
     out.append(cite["bibtex"].rstrip())
     out.append("```")
     out.append("")
