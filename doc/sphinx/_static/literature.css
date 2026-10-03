@@ -24,6 +24,11 @@
     white-space: nowrap;
 }
 
+.pub-pdf {
+    font-size: 90%;
+    margin-bottom: 4px;
+}
+
 .pub-missing {
     font-size: 90%;
     color: #555;
