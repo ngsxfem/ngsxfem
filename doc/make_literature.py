@@ -305,6 +305,7 @@ def write_rst(data):
         f'  <span class="pub-stat">🎓 <b>{n_th}</b> theses</span>',
         f'  <span class="pub-stat">💾 <b>{n_code}</b> with code / data</span>',
         '</div>',
+        '<p class="pub-pdf">📥 <a href="../doc/literature.pdf">Download this list as PDF</a></p>',
         f'<p class="pub-missing">Missing a publication? Please open an <a href="{GITHUB_ISSUES_URL}">issue</a> '
         f'or a pull request: the list is generated from <a href="{GITHUB_DATA_URL}"><code>doc/literature.yaml</code></a>.</p>',
         '</div>',
