@@ -6,5 +6,5 @@ install( FILES
   ngsxstd.hpp
   spacetimechecks.hpp
   bitarraycf.hpp
-  DESTINATION ${XFEM_INSTALL_DIR_INCLUDE}
+  DESTINATION ${XFEM_INSTALL_DIR_INCLUDE}/utils
 )

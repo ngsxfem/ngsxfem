@@ -57,7 +57,7 @@ ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt)
   return ost;
 }
 
-//GlobalNgsxfemVariables globxvar;
+GlobalNgsxfemVariables globxvar;
 
 GlobalNgsxfemVariables::GlobalNgsxfemVariables() {
     SetDefaults();

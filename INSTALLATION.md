@@ -64,3 +64,17 @@ and open a browser on your host machine (not in the docker) and paste in the URL
 ``` 
 docker run -p 8888:8888 -v ${PWD}:/home/jovyan ngsxfem/ngsxfem-jupyter
 ```
+
+## Using the C++ core
+
+The installation includes the shared C++ library, headers, and CMake package.
+In your CMake project, you can use 
+```cmake
+    execute_process(COMMAND ${Python3_EXECUTABLE} -m xfem.config OUTPUT_VARIABLE xfem_DIR OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+```
+to locate the `xfem` package or use `-Dxfem_DIR=<that directory>`. Then link the exported target
+```cmake
+find_package(xfem CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE xfem::core)
+```
+Headers keep the source directory layout, e.g. `#include <xfem/aggregates.hpp>` and `#include <cutint/lsetintdomain.hpp>`.

@@ -12,7 +12,12 @@ xfem.mlset ... multiple level sets
 xfem.utils ... some example level set geometries
 """
 
+import os
+import sys
 
+if sys.platform.startswith("win"):
+    _dll_directory = os.add_dll_directory(os.path.dirname(__file__))
+del os, sys
 
 from ngsolve import (L2, VOL, BitArray, CoefficientFunction, FESpace,
                      GridFunction, H1, IfPos, LinearForm, Parameter, dx)

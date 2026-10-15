@@ -1,5 +1,7 @@
-target_sources(xfem PRIVATE
-      python_ngsxfem.cpp
+add_ngsolve_addon_library(xfem_core
+      PACKAGE xfem
+      EXPORT_NAME core
+      SOURCES
       ../cutint/lsetintdomain.cpp
       ../cutint/fieldeval.cpp
       ../cutint/spacetimecutrule.cpp
@@ -13,7 +15,6 @@ target_sources(xfem PRIVATE
       ../lsetcurving/projshift.cpp
       ../lsetcurving/shiftedevaluate.cpp
       ../lsetcurving/shiftintegrators.cpp
-      ../python/python_ngsxfem.cpp
       ../spacetime/diffopDt.cpp
       ../spacetime/diffopFixt.cpp
       ../spacetime/SpaceTimeFE.cpp
@@ -36,8 +37,17 @@ target_sources(xfem PRIVATE
       ../xfem/xfiniteelement.cpp
       ../xfem/aggregates.cpp
 )
+target_include_directories(xfem_core PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>)
+target_compile_definitions(xfem_core PRIVATE NGSXFEM_EXPORTS
+      PUBLIC $<$<BOOL:${SPACETIME_SANITY_CHECKS}>:SPACETIME_SANITY_CHECKS>)
+set_target_properties(xfem_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+target_sources(xfem PRIVATE python_ngsxfem.cpp)
+target_link_libraries(xfem PRIVATE xfem_core)
+ngsolve_addon_set_relative_rpath(xfem ".")
+
 install (FILES
-        __init__.py cutmg.py mlset.py lset_spacetime.py lset_smoothblend.py lsetcurv.py utils.py ngs_check.py _version.py
+        __init__.py config.py cutmg.py mlset.py lset_spacetime.py lset_smoothblend.py lsetcurv.py utils.py ngs_check.py _version.py
         DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem
         COMPONENT xfem
 )
