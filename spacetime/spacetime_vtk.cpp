@@ -355,6 +355,7 @@ namespace ngcomp
     PrintCells();
     PrintCellTypes(vb,drawelems);
     PrintFieldData();
+    fileout->close();
       
     cout << IM(4) << " Done." << endl;
   }    
