@@ -1,84 +1,102 @@
 name: Build and upload to PyPI
 
 on:
+  workflow_dispatch:
+    inputs:
+      ngsolve_version:
+        description: NGSolve version (empty builds the current checkout)
+        type: string
+      dry_run:
+        description: Build and test without uploading to PyPI
+        type: boolean
+        default: true
   push:
-    branches:
-      - master
-      - release
-    tags:
-      - '*'
-      
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build and test wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    #container: python:3.12    
     strategy:
+      fail-fast: false
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, macos-15-intel] # windows-latest,
-        include:
-          - os: windows-2022
-            cibw-arch: AMD64
-            cmake-generator: "Visual Studio 16 2019"
-            cmake_generator_platform: "x64"
-            doit: ${{ inputs.level != 'quick' }}
-            cibw_build: cp311-* cp312-* cp313-* cp314-*
-
+        os: [ubuntu-latest, macos-15-intel, windows-2022]
+    env:
+      CIBW_ARCHS_WINDOWS: AMD64
+      CIBW_ENVIRONMENT_WINDOWS: >-
+        CMAKE_GENERATOR='Visual Studio 17 2022'
+        CMAKE_GENERATOR_PLATFORM=x64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          ref: ${{  github.ref_name }}
-          fetch-tags: 'true'
+          persist-credentials: false
           fetch-depth: 0
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.0
-
-      - uses: actions/upload-artifact@v4
+      - uses: PaulSt/ngsolve-release-watcher@main
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./wheelhouse/*.whl
+          ngsolve_version: ${{ inputs.ngsolve_version }}
+          dry_run: ${{ inputs.dry_run }}
+      - uses: pypa/cibuildwheel@v4.2.1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install wheel and test dependencies
+        shell: bash
+        run: |
+          wheels=(wheelhouse/*-cp313-cp313-*.whl)
+          python -m pip install "${wheels[0]}[test]"
+      - run: python -m pytest tests/pytests
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cibw-wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
 
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_28_x86_64
+    outputs:
+      published: ${{ steps.release.outputs.published }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          ref: ${{  github.ref_name }}
-          fetch-tags: 'true'
+          persist-credentials: false
           fetch-depth: 0
-
-      - name: Build sdist
-        run: pipx run --spec build pyproject-build --sdist
-
-      - uses: actions/upload-artifact@v4
+      - uses: PaulSt/ngsolve-release-watcher@main
+        id: release
+        with:
+          ngsolve_version: ${{ inputs.ngsolve_version }}
+          dry_run: ${{ inputs.dry_run }}
+      - run: pipx run build --sdist
+      - uses: actions/upload-artifact@v7
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
+          if-no-files-found: error
 
-  upload_pypi:
+  publish_pypi:
+    if: >-
+      !inputs.dry_run && needs.build_sdist.outputs.published != 'true' &&
+      (startsWith(github.ref, 'refs/tags/v') || inputs.ngsolve_version != '')
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     environment: pypi
-    permissions:
-      id-token: write
-    #if: github.event_name == 'release' && github.event.action == 'published'
-    # or, alternatively, upload to PyPI on every tag starting with 'v' (remove on: release above to use this)
-    #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
-          # unpacks all CIBW artifacts into dist/
           pattern: cibw-*
           path: dist
           merge-multiple: true
-
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
           password: ${{ secrets.PYPI_API_TOKEN_2 }}
-          #packages_dir: ./wheelhouse/        
-          # To test: repository-url: https://test.pypi.org/legacy/
