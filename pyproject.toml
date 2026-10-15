@@ -1,29 +1,24 @@
 [project]
 name = "xfem"
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
 authors = [{name="Christoph Lehrenfeld", email= "lehrenfeld@math.uni-goettingen.de"}]
 description = "(ngs)xfem is an Add-on library to Netgen/NGSolve for unfitted/cut FEM."
 urls = {github="https://github.com/ngsxfem/ngsxfem"}
 readme = "README.md"
 requires-python = ">=3.10"
-#dependencies = [] # ngsolve will be added automatically
+dependencies = ["ngsolve==6.2.2607"]
 classifiers = [
   "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
 ]
 
 [build-system]
-requires = ["setuptools>=45", 
-            "setuptools_scm[toml]>=8", 
-            "scikit-build-core>=0.9.0", 
-            "pybind11_stubgen", 
-            "cmake>=3.26.1", 
-            "numpy", 
-            "ngsolve>=6.2.2606",
-            "toml;  python_version >= '3.11'", 
-            "tomli>=1.1.0; python_version < '3.11'"
-            ]
-
-
+requires = [
+  "ngsolve==6.2.2607",
+  "setuptools>=45",
+  "setuptools_scm>=8",
+  "scikit-build-core>=0.9.0",
+  "pybind11_stubgen",
+]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
@@ -31,43 +26,32 @@ cmake.version = ">=3.26.1"
 ninja.version = ">=1.11"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["python/_version.py"]
-#build-dir = "./build_py/{wheel_tag}" # local build directory - for debugging
 
-experimental = true
-# This adds ngsolve (with exact build-time version) to the dependencies.
-# Uses a local provider to avoid importing ngsolve's native module (which
-# requires libmkl_rt / platform DLLs not present in all build environments).
-metadata.dependencies.provider = "_ngsolve_deps_provider"
-metadata.dependencies.provider-path = "."
-
-[tool.setuptools_scm]  # Section required
+[tool.setuptools_scm]
 write_to = "python/_version.py"
 local_scheme = "no-local-version"
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "scipy", "psutil"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.cibuildwheel]
-#build-verbosity = 1
-manylinux-x86_64-image = "cerbsim/manylinux_2_28_x86_64_cuda_12.8"
+manylinux-x86_64-image = "cerbsim/manylinux_2_28_x86_64_cuda_12.9"
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
-enable = ["cpython-prerelease"]
+test-command = "python -c \"import xfem\""
 skip = """
-  pp*
   *_i686
   *musllinux*
   *win32
 """
 
 [tool.cibuildwheel.windows]
-build = "cp311-* cp312-* cp313-* cp314-*"
+repair-wheel-command = ""
 
 [tool.cibuildwheel.linux]
 repair-wheel-command = "mv {wheel} {dest_dir} && rename linux_x86_64 manylinux_2_28_x86_64.manylinux2014_x86_64 {dest_dir}/*-linux_x86_64*.whl"
-
 
 [tool.cibuildwheel.macos]
 environment = {MACOSX_DEPLOYMENT_TARGET="10.15"}
