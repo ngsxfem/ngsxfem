@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Python3 COMPONENTS Interpreter Development.Module)
+
+if(NOT NGSolve_DIR)
+  execute_process(COMMAND "${Python3_EXECUTABLE}" -m ngsolve.config OUTPUT_VARIABLE NGSolve_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+find_dependency(NGSolve CONFIG)
+include("${CMAKE_CURRENT_LIST_DIR}/@NGSOLVE_ADDON_PACKAGE@Targets.cmake")

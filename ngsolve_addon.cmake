@@ -4,6 +4,7 @@
 # Don't change anything here (unless you know what you are doing!)
 ###############################################################################
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(_NGSOLVE_ADDON_HELPER_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # Set default build type to RelWithDebInfo
 if(NOT CMAKE_BUILD_TYPE)
@@ -31,7 +32,7 @@ macro(add_ngsolve_addon module_name)
   add_library(${module_name} SHARED ${ARGN})
   target_include_directories(${module_name} BEFORE PRIVATE $<TARGET_PROPERTY:ngsolve,INTERFACE_INCLUDE_DIRECTORIES>)
   target_link_libraries(${module_name} PUBLIC ngsolve Python3::Module)
-  set_target_properties(${module_name} PROPERTIES PREFIX "" CXX_STANDARD 20)
+  set_target_properties(${module_name} PROPERTIES PREFIX "" CXX_STANDARD 17)
 
   # Python does not recognize .dll (Windows) and .dylib (MacOS) file endings as modules
   if(WIN32)
@@ -92,17 +93,67 @@ else()
   set(ADDON_INSTALL_DIR_CMAKE ${NETGEN_INSTALL_DIR_CMAKE})
 endif()
 
+function(ngsolve_addon_set_relative_rpath target)
+  if(APPLE)
+    set(_origin "@loader_path")
+  elseif(UNIX)
+    set(_origin "\$ORIGIN")
+  endif()
+  if(_origin)
+    foreach(_path ${ARGN})
+      list(APPEND _rpaths "${_origin}/${_path}")
+    endforeach()
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "${_rpaths}" BUILD_RPATH_USE_ORIGIN TRUE)
+  endif()
+endfunction()
+
+function(add_ngsolve_addon_library target)
+  include(CMakePackageConfigHelpers)
+  cmake_parse_arguments(ARG "" "PACKAGE;EXPORT_NAME"
+    "SOURCES;PUBLIC_HEADERS" ${ARGN})
+  if(NOT ARG_EXPORT_NAME)
+    set(ARG_EXPORT_NAME "${target}")
+  endif()
+  if(SKBUILD)
+    set(_package_destination "${ARG_PACKAGE}")
+  else()
+    set(_package_destination "${ADDON_INSTALL_DIR_PYTHON}/${ARG_PACKAGE}")
+  endif()
+  set(_cmake_destination "${_package_destination}/cmake")
+
+  add_library(${target} SHARED ${ARG_SOURCES})
+  add_library(${ARG_PACKAGE}::${ARG_EXPORT_NAME} ALIAS ${target})
+  target_include_directories(${target} BEFORE PRIVATE $<TARGET_PROPERTY:ngsolve,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_include_directories(${target} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:${_package_destination}/include>)
+  target_link_libraries(${target} PUBLIC ngsolve Python3::Module)
+  set_target_properties(${target} PROPERTIES CXX_STANDARD 17 EXPORT_NAME "${ARG_EXPORT_NAME}" MACOSX_RPATH TRUE)
+  if(SKBUILD AND NOT WIN32)
+    file(RELATIVE_PATH _ngsolve_lib "/${NGSOLVE_INSTALL_DIR_PYTHON}/${ARG_PACKAGE}" "/${NGSOLVE_INSTALL_DIR_LIB}")
+    ngsolve_addon_set_relative_rpath(${target} "${_ngsolve_lib}")
+  elseif(NOT WIN32)
+    set_target_properties(${target} PROPERTIES INSTALL_RPATH "${NGSOLVE_LIBRARY_DIR}")
+  endif()
+
+  install(TARGETS ${target} EXPORT ${ARG_PACKAGE}-targets RUNTIME DESTINATION "${_package_destination}" LIBRARY DESTINATION "${_package_destination}" ARCHIVE DESTINATION "${_package_destination}")
+  install(FILES ${ARG_PUBLIC_HEADERS} DESTINATION "${_package_destination}/include/${ARG_PACKAGE}")
+  install(EXPORT ${ARG_PACKAGE}-targets FILE "${ARG_PACKAGE}Targets.cmake" NAMESPACE "${ARG_PACKAGE}::" DESTINATION "${_cmake_destination}")
+
+  set(NGSOLVE_ADDON_PACKAGE "${ARG_PACKAGE}")
+  configure_package_config_file( "${_NGSOLVE_ADDON_HELPER_DIR}/NGSolveAddonConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${ARG_PACKAGE}Config.cmake" INSTALL_DESTINATION "${_cmake_destination}")
+  set(_version "${SKBUILD_PROJECT_VERSION_FULL}")
+  if(NOT _version)
+    set(_version "${PROJECT_VERSION}")
+  endif()
+  set(_config_files "${CMAKE_CURRENT_BINARY_DIR}/${ARG_PACKAGE}Config.cmake")
+  if(_version)
+    write_basic_package_version_file( "${CMAKE_CURRENT_BINARY_DIR}/${ARG_PACKAGE}ConfigVersion.cmake" VERSION "${_version}" COMPATIBILITY SameMajorVersion)
+    list(APPEND _config_files "${CMAKE_CURRENT_BINARY_DIR}/${ARG_PACKAGE}ConfigVersion.cmake")
+  endif()
+  install(FILES ${_config_files} DESTINATION "${_cmake_destination}")
+endfunction()
+
 macro(ngsolve_generate_stub_files module_name)
-  # Set PYTHONPATH so pybind11_stubgen can import the addon module, and
-  # propagate LD_LIBRARY_PATH so its native .so can load ngsolve shared libs.
-  set(stubgen_generation_code "
-    set(ENV{PYTHONPATH} \"${stubgen_working_dir}\")
-    set(ENV{LD_LIBRARY_PATH} \"${NETGEN_DIR}/${NETGEN_INSTALL_DIR_LIB}:$ENV{LD_LIBRARY_PATH}\")
-    execute_process(
-      WORKING_DIRECTORY \"${stubgen_working_dir}\"
-      COMMAND \"${Python3_EXECUTABLE}\" -m pybind11_stubgen --ignore-all-errors
-              -o \"${CMAKE_CURRENT_BINARY_DIR}/stubs\" ${module_name}
-    )")
+  set(stubgen_generation_code "execute_process(WORKING_DIRECTORY ${stubgen_working_dir} COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen --ignore-all-errors -o ${CMAKE_CURRENT_BINARY_DIR}/stubs ${module_name})")
   set(stubgen_directory "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}/")
   set(stubgen_file "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}.pyi")
   set(stubgen_install_destination ${ADDON_INSTALL_DIR_PYTHON}/${module_name}/)
