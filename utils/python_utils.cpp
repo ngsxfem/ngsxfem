@@ -13,8 +13,6 @@
 #include "../utils/restrictedfespace.hpp"
 #include "../utils/ngsxstd.hpp"
 
-GlobalNgsxfemVariables globxvar;
-
 using namespace ngcomp;
 typedef BitArray BA;
 

@@ -5,6 +5,6 @@ install( FILES
   diffopFixt.hpp
   timecf.hpp
   spacetime_vtk.hpp
-  DESTINATION ${XFEM_INSTALL_DIR_INCLUDE}
+  DESTINATION ${XFEM_INSTALL_DIR_INCLUDE}/spacetime
 )
 

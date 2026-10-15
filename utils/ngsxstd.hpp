@@ -7,6 +7,16 @@
 
 using namespace ngbla;
 
+#ifdef _WIN32
+#ifdef NGSXFEM_EXPORTS
+#define NGSXFEM_API __declspec(dllexport)
+#else
+#define NGSXFEM_API __declspec(dllimport)
+#endif
+#else
+#define NGSXFEM_API
+#endif
+
 enum SWAP_DIMENSIONS_POLICY {FIRST_ALLOWED, FIND_OPTIMAL, ALWAYS_NONE};
 
 // /// domain types: two domains: POS/NEG and the diving interface IF
@@ -120,4 +130,4 @@ public:
     void Output();
 };
 
-extern GlobalNgsxfemVariables globxvar;
+extern NGSXFEM_API GlobalNgsxfemVariables globxvar;
