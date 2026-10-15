@@ -14,7 +14,137 @@ using namespace xintegration;
 
 typedef CoefficientFunction CF;
 typedef GridFunction GF;
-  
+
+namespace xintegration
+{
+  typedef CoefficientFunction CF;
+  typedef GridFunction GF;
+
+  shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomain(py::dict dictionary)
+  {
+    if (!dictionary.contains("levelset"))
+      throw Exception("You need to provide (a) levelset(s).");
+
+    if (!dictionary.contains("domain_type"))
+      throw Exception("You need to provide (a) domain type(s).");
+
+    optional<double> tref = nullopt;
+
+    if (dictionary.contains("tref"))
+      tref = py::cast<double>(dictionary["tref"]);
+
+    py::object lset = dictionary["levelset"];
+    py::object dt_in = dictionary["domain_type"];
+
+    int subdivlvl = 0;
+    if (dictionary.contains("subdivlvl"))
+    {
+      auto subdivlvl_ = py::extract<int>(dictionary["subdivlvl"]);
+      if (!subdivlvl_.check())
+        throw Exception("data type for subdivlvl not admissible.");
+      subdivlvl = subdivlvl_();
+    }
+
+    int order = -1;
+    if (dictionary.contains("order"))
+    {
+      auto order_ = py::extract<int>(dictionary["order"]);
+      if (!order_.check())
+        throw Exception("data type for order not admissible.");
+      order = order_();
+    }
+
+    int time_order = -1;
+    if (dictionary.contains("time_order"))
+    {
+      auto time_order_ = py::extract<int>(dictionary["time_order"]);
+      if (!time_order_.check())
+        throw Exception("data type for time_order not admissible.");
+      time_order= time_order_();
+    }
+
+    SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL;
+    if (dictionary.contains("quad_dir_policy"))
+    {
+      auto quad_dir_policy_ = py::extract<SWAP_DIMENSIONS_POLICY>(dictionary["quad_dir_policy"]);
+      if (!quad_dir_policy_.check())
+        throw Exception("data type for quad_dir_policy not admissible.");
+      quad_dir_policy = quad_dir_policy_();
+    }
+
+    if (py::extract<DOMAIN_TYPE> (dt_in).check())
+    {
+      py::extract<shared_ptr<CF>> pycf(lset);
+      py::extract<int> dt(dt_in);
+      if (!dt.check())
+        throw Exception("dt is not a domain type");
+      shared_ptr<GridFunction> gf_lset = nullptr;
+      shared_ptr<CoefficientFunction> cf_lset = nullptr;
+      tie(cf_lset,gf_lset) = CF2GFForStraightCutRule(pycf(),subdivlvl);
+      return make_shared<LevelsetIntegrationDomain>(cf_lset,gf_lset,DOMAIN_TYPE(dt()),order,time_order,subdivlvl,quad_dir_policy,tref);
+    }
+    else
+    {
+      if (subdivlvl > 0)
+        throw Exception("multi level sets don't work with subdivlvl > 0");
+      if (time_order > -1)
+        throw Exception("multi level sets don't work with time_order > 0");
+
+      py::extract<py::tuple> lset_tuple_(lset);
+      if (!lset_tuple_.check())
+        throw Exception("lset is neither a level set nor a tuple ... need new candidates..");
+      py::tuple lset_tuple(lset_tuple_());
+      for (int i = 0; i < py::len(lset_tuple); i++)
+        if (!(py::extract<shared_ptr<GridFunction>>(lset_tuple[i]).check()))
+          throw Exception("lsets need to be GridFunctions!");
+
+      Array<shared_ptr<GridFunction>> gf_lsets;
+      gf_lsets = makeCArray<shared_ptr<GridFunction>> (lset_tuple);
+
+
+      if (py::isinstance<py::tuple>(dt_in))
+      {
+        Array<DOMAIN_TYPE> dts_ = makeCArray<DOMAIN_TYPE> (py::extract<py::tuple>(dt_in)());
+        Array<Array<DOMAIN_TYPE>> dts(1);
+        dts[0] = dts_;
+        return make_shared<LevelsetIntegrationDomain>(gf_lsets,dts,order,time_order,subdivlvl,quad_dir_policy,tref);
+      }
+
+      py::list dts_list;
+      if (py::hasattr(dt_in, "as_list") && py::isinstance<py::list>(dt_in.attr("as_list")))
+        dts_list = dt_in.attr("as_list");
+      else if (py::isinstance<py::list>(dt_in))
+        dts_list = dt_in;
+      else
+        throw Exception("domain_type is neither a tuple nor a list nor a DomainTypeArray.");
+
+      Array<Array<DOMAIN_TYPE>> dtas(py::len(dts_list));
+      int common_length = -1; //not a list
+      for (int i = 0; i < py::len(dts_list); i++)
+      {
+        auto dta(dts_list[i]);
+
+        // Check for valid input
+        if (!py::isinstance<py::tuple>(dta))
+        {
+          throw Exception("domain_type arrays are incompatible. Maybe you used a list instead of a tuple?");
+        }
+        else
+        {
+          if ((i>0) && (common_length != py::len(dta)))
+            throw Exception("domain_type arrays have different length");
+          else
+            common_length = py::len(dta);
+        }
+
+        // Input valid. Pass input on
+        dtas[i] = makeCArray<DOMAIN_TYPE> (dta);
+      }
+
+      return make_shared<LevelsetIntegrationDomain>(gf_lsets,dtas,order,time_order,subdivlvl,quad_dir_policy,tref);
+    }
+  }
+} // end of namespace
 
 void ExportNgsx_cutint(py::module &m)
 {
