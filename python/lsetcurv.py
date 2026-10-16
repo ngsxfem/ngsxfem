@@ -197,12 +197,17 @@ The computed deformation depends on different options:
                     els[nm][e.nr] = True
         self._bt_normals = []
         for nm in sel:
+            # Exclude elements touching multiple selected boundaries
+            qn_els = BitArray(els[nm])
+            for other in sel:
+                if other != nm:
+                    qn_els &= ~els[other]
             region = mesh.Boundaries(nm)
             nrm = GridFunction(VectorH1(mesh, order=self.order_deform))
             nrm.Set(specialcf.normal(D), definedon=region)
             nc = GridFunction(L2(mesh, order=0, dim=D))
             nc.Set(nrm)
-            self._bt_normals.append((region, nrm, nc, els[nm]))
+            self._bt_normals.append((region, nrm, nc, qn_els))
         # reusable scratch GridFunctions for the additive corrections
         self._bt_qn_tmp = GridFunction(self.qn.space)
         self._bt_def_tmp = GridFunction(self.deform.space)
