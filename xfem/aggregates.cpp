@@ -149,7 +149,7 @@ namespace ngcomp
 
     (*testout) << "element_to_patch = \n" << element_to_patch << endl;
 
-    TableCreator<size_t> creator;
+    TableCreator<size_t> creator(nc);
     for ( ; !creator.Done(); creator++)
       for (auto elnr : Range(ne))
       {
@@ -158,7 +158,7 @@ namespace ngcomp
       }
     patch_leafs = creator.MoveTable();
 
-    TableCreator<size_t> fcreator;
+    TableCreator<size_t> fcreator(nc);
     for ( ; !fcreator.Done(); fcreator++)
       for (auto facnr : Range(nf))
         {
@@ -167,7 +167,7 @@ namespace ngcomp
         }
     patch_facets = fcreator.MoveTable();
 
-    TableCreator<size_t> pcreator;
+    TableCreator<size_t> pcreator(nc);
     for ( ; !pcreator.Done(); pcreator++)
       for (auto pnr : Range(nc))
         {
