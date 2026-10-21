@@ -176,11 +176,11 @@ TSCAL CutIntegral :: T_CutIntegrate (const ngcomp::MeshAccess & ma,
         FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
         {
           SIMD_BaseMappedIntegrationRule & simd_mir = trafo(simd_ir, lh);
-          FlatMatrix<SIMD<TSCAL>> val(simd_mir.Size(), 1, lh);
+          FlatMatrix<SIMD<TSCAL>> val(1, simd_mir.Size(), lh);
           cf -> Evaluate (simd_mir, val);
           SIMD<TSCAL> lsum(0.0);
           for (int i = 0; i < simd_mir.Size(); i++)
-              lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
+              lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(0,i);
           if (element_wise.Size())
             element_wise(el.Nr()) += HSum(lsum);
           AtomicAdd(sum, HSum(lsum));

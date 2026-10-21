@@ -83,13 +83,13 @@ void ExportNgsx_cutint(py::module &m)
 						  	FlatArray<SIMD<double>> simd_wei_arr = CreateSIMD_FlatArray(ns_wei_arr, lh);
   
 						  	SIMD_BaseMappedIntegrationRule &simd_mir = trafo(simd_ir, lh);
-						  	FlatMatrix<SIMD<double>> val(simd_mir.Size(), 1, lh);
+						  	FlatMatrix<SIMD<double>> val(1, simd_mir.Size(), lh);
   
 						  	cf -> Evaluate(simd_mir, val);
   
 						  	SIMD<double> lsum = 0.0;
 						  	for (int i = 0; i < simd_mir.Size(); i++)
-						  		lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(i,0);
+						  		lsum += simd_mir[i].GetMeasure()*simd_wei_arr[i]*val(0,i);
 
                 AtomicAdd(sum,HSum(lsum));
                 if (element_wise)
