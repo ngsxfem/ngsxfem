@@ -326,6 +326,8 @@ namespace ngcomp
       elmat = 0.0;
       for (auto & bfi : bfis)
       {
+        if (!bfi->DefinedOnElement(ei.Nr()) || !bfi->DefinedOn(ma.GetElIndex(ei)))
+          continue;
         auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
         bfi -> CalcElementMatrix(fel, mapped_trafo, elmati, lh);
         elmat += elmati;
@@ -387,6 +389,8 @@ namespace ngcomp
       elmat = 0.0;
       for (auto & bfi : bfis_skeleton)
       {
+        if (!bfi->DefinedOnElement(ei.Nr()) || !bfi->DefinedOn(ma.GetElIndex(ei)))
+          continue;
         auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator>(bfi);
         if (fbfi) {
           auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
@@ -431,6 +435,8 @@ namespace ngcomp
       sumelvec = 0.0;
       for (auto &lfi : integrators)
       {
+        if (!lfi->DefinedOnElement(ei.Nr()) || !lfi->DefinedOn(ma.GetElIndex(ei)))
+          continue;
         auto &mapped_trafo = trafo.AddDeformation(lfi->GetDeformation().get(), lh);
         lfi->CalcElementVector(fel_test, mapped_trafo, elvec, lh);
         sumelvec += elvec;
