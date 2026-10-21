@@ -56,7 +56,7 @@ namespace ngcomp
   /// Interior facets for each element support; supports may overlap.
   Table<size_t> GetInnerPatchFacets(const MeshAccess &ma, const Table<size_t> &patches);
 
-  /// Volume and interior-facet assembly into caller-initialized matrices/vectors.
+  /// Adds volume terms and interior-facet matrices to initialized outputs.
   struct PatchAssembly
   {
     const MeshAccess &ma;
