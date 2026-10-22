@@ -100,7 +100,9 @@ upper: float
 
 threshold: float
   maximum (pointwise) value for d(x)/h in the mapping
+
     Psi(x) = x + d(x) qn(x)
+
   This might be necessary if the geometry is only coarsely approximated to avoid irregular meshes
   after a corresponding mesh deformation.
 
@@ -163,11 +165,11 @@ heapsize : int
         docu_string(R"raw_string(
 Returns a CoefficientFunction that evaluates Gridfunction gf at a shifted location, s.t. the
 original function to gf, gf: x -> f(x) is changed to cf: x -> f(s(x)) where z = s(x) is the shifted
-location that is computed ( pointwise ) from:
+location that is computed ( pointwise ) from::
 
      Psi_back(z) = Psi_forth(x),
-< = >            z = Inv(Psi_back)( Psi_forth(x) )
-< = >            s = Inv(Psi_back) o Psi_forth(x)
+     < = >            z = Inv(Psi_back)( Psi_forth(x) )
+     < = >            s = Inv(Psi_back) o Psi_forth(x)
 
 To compute z = s(x) a fixed point iteration is used.
 

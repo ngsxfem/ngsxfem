@@ -526,17 +526,17 @@ integration domain. It returns a new CutDifferentialSymbol.
 
 Parameters:
 
-levelset_domain (dict) : specifies the level set domain.
-definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
+* levelset_domain (dict) : specifies the level set domain.
+* definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
   the current form shall be defined.
-vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view 
+* vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view 
   of the mesh.
-element_boundary (bool) : Does the integral take place on the boundary of an element-
-element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
+* element_boundary (bool) : Does the integral take place on the boundary of an element?
+* element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
   of an element.
-skeleton (bool) : is it an integral on facets (the skeleton)?
-deformation (GridFunction) : which mesh deformation shall be applied (default : None)
-definedonelements (BitArray) : Set of elements or facets where the integral shall be
+* skeleton (bool) : is it an integral on facets (the skeleton)?
+* deformation (GridFunction) : which mesh deformation shall be applied (default : None)
+* definedonelements (BitArray) : Set of elements or facets where the integral shall be
   defined.
 )raw_string"))
     .def("__rmul__", [](CutDifferentialSymbol & self, double x)
@@ -618,19 +618,19 @@ It returns a new CutDifferentialSymbol.
 
 Parameters:
 
-definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
+* definedon (Region or Array) : specifies on which part of the mesh (in terms of regions)
   the current form shall be defined.
-element_boundary (bool) : Does the integral take place on the boundary of an element-
-element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
+* element_boundary (bool) : Does the integral take place on the boundary of an element?
+* element_vb (VOL/BND/BBND/BBBND) : Where does the integral take place from point of view
   of an element.
-skeleton (bool) : is it an integral on facets (the skeleton)?
-deformation (GridFunction) : which mesh deformation shall be applied (default : None)
-definedonelements (BitArray) : Set of elements or facets where the integral shall be
+* skeleton (bool) : is it an integral on facets (the skeleton)?
+* deformation (GridFunction) : which mesh deformation shall be applied (default : None)
+* definedonelements (BitArray) : Set of elements or facets where the integral shall be
   defined.
-time_order (int) : integration order in time (for space-time) (default : -1).
-tref (float) : turn space integral into space-time integral with fixed time tref.
-downscale (float) : downscale patch integration rule around facet.
-bonus_intorder (int) : bonus integration order (default : 0).
+* time_order (int) : integration order in time (for space-time) (default : -1).
+* tref (float) : turn space integral into space-time integral with fixed time tref.
+* downscale (float) : downscale patch integration rule around facet.
+* bonus_intorder (int) : bonus integration order (default : 0).
 )raw_string"         
          ))
     .def("__rmul__", [](FacetPatchDifferentialSymbol & self, double x)

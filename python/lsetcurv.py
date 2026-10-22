@@ -76,7 +76,9 @@ The computed deformation depends on different options:
     
   threshold: float
     maximum (pointwise) value for d(x)/h in the mapping
+
       Psi(x) = x + d(x) qn(x)
+
     of the mesh transformation. A small value might be necessary if the geometry is only coarsely
     approximated to avoid irregular meshes after a corresponding mesh deformation.
 
@@ -299,13 +301,15 @@ blending : None/string/CoefficientFunction
   on cut elements completely. Using a blending function as a CoefficientFunction allows for a
   transition between the full application of the mapping (value 0) and no application of the mapping
   (value 1). There are predefined blending functions that are selectable via a string:
-   * "quadratic":
-     blending function that is 0 at the zero level set (of lset_p1) and increases quadratically with
-     lset_p1. It is scaled with h, so that value 1 is not reached within cut elements.
-   * "quartic":
-     blending function that is 0 at the zero level set (of lset_p1) and increases like a fourth
-     order polynomial with lset_p1. It is scaled with h, so that value 1 is not reached within cut
-     elements.
+
+  * "quadratic":
+    blending function that is 0 at the zero level set (of lset_p1) and increases quadratically with
+    lset_p1. It is scaled with h, so that value 1 is not reached within cut elements.
+  * "quartic":
+    blending function that is 0 at the zero level set (of lset_p1) and increases like a fourth
+    order polynomial with lset_p1. It is scaled with h, so that value 1 is not reached within cut
+    elements.
+
 dont_project_gfs : bool
   Usually, all stored GridFunctions are projected on the new deformed mesh. This flag
   can be used to avoid the call of the projection step (`ProjectGFs`).

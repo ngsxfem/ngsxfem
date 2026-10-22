@@ -201,10 +201,8 @@ VOL_or_BND : ngsolve.comp.VorB
 
 py::class_<ElementAggregation, shared_ptr<ElementAggregation>>
     (m, "ElementAggregation",R"raw(
-ElementAggregation does the following:  
-  It collects patches of elements that allow to stabilize bad cut elements by at least one
-  good element (the root element).
-)
+ElementAggregation collects patches of elements that allow to stabilize bad cut elements by at
+least one good element (the root element).
 )raw")
     .def(py::init([] (shared_ptr<MeshAccess> ma,
                           py::object proot, 
@@ -372,12 +370,15 @@ marked (in terms of BitArrays) depending on the BitArray-values on the neighbori
 BitArrays are complemented with flags for potential boundary values for the BitArrays. The decision
 on every facet is now based on the values a and b (left and right) where a or b can also be obtained
 from the BitArray boundary values.
-The result is:
-  result =    (a(left) and b(right)) 
-           or (b(left) and a(right)) 
-or 
-  result =    (a(left) or b(right)) 
-           or (b(left) or a(right)) 
+The result is (if use_and is True)::
+
+  result =    (a(left) and b(right))
+           or (b(left) and a(right))
+
+and otherwise::
+
+  result =    (a(left) or b(right))
+           or (b(left) or a(right))
 
 Parameters:
 

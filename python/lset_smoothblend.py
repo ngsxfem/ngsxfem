@@ -32,7 +32,7 @@ class LevelSet_SmoothBlending:
       asking for a zero deformation.
 
     * BLEND_AUTODETECT. Required keys in the dict: { "lset": CF, "order": int, "mesh": mesh,
-                                                    "time_order": int}
+      "time_order": int}
       In this function, the overall structure of the BLEND_FIXED_WIDTH remains the same.
       However, the parameter w does not have to be provided explicitely. Instead, it is evaluted
       by a numerical estimate of all the cut elements inside the current time slice as prescribed

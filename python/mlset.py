@@ -457,7 +457,7 @@ def TensorUnion(*args):
 
     Parameters
     ----------
-    *args : DomainTypeArray
+    \\*args : DomainTypeArray
         Variable list of DomainTypeArray objects of the same
         co-dimension.
 
@@ -499,7 +499,7 @@ def TensorIntersection(*args):
 
     Parameters
     ----------
-    *args : DomainTypeArray
+    \\*args : DomainTypeArray
         Variable list of DomainTypeArray objects.
 
     Returns
