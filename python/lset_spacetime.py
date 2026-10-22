@@ -96,7 +96,9 @@ The computed deformation depends on different options:
     
   threshold: float
     maximum (pointwise) value for d(x)/h in the mapping
+
       Psi(x) = x + d(x) qn(x)
+
     of the mesh transformation. A small value might be necessary if the geometry is only coarsely
     approximated to avoid irregular meshes after a corresponding mesh deformation.
 
@@ -465,11 +467,12 @@ Compute approximated distance between of the isoparametrically obtained geometry
 (should be called in deformed state)
 
         Args:
-            levelset (CoefficientFunction): implicit geometry description, 
-              assumed to be a signed distance function.
-            order (int, optional): integration order in space. Defaults to 5.
-            time_order (int, optional): integration order in time. Defaults to None.
-            heapsize (int, optional): heap size for local memory. Defaults to None.
+
+          * levelset (CoefficientFunction): implicit geometry description,
+            assumed to be a signed distance function.
+          * order (int, optional): integration order in space. Defaults to 5.
+          * time_order (int, optional): integration order in time. Defaults to None.
+          * heapsize (int, optional): heap size for local memory. Defaults to None.
         """
         if order is None:
           order = 2 * self.order_qn

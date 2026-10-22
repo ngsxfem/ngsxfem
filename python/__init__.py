@@ -161,7 +161,7 @@ Deprecated: use "dtref" instead
 def SymbolicBFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicBFI to allow for integrators on level set domains (see also
-SymbolicCutBFI). The dictionary contains the level set function (CoefficientFunciton or
+SymbolicCutBFI). The dictionary contains the level set function (CoefficientFunction or
 GridFunction) and the domain-type (NEG/POS/IF). If the dictionary is not provided, the standard
 SymbolicBFI function from NGSolve will be called.
 
@@ -169,20 +169,28 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": 
-    singe level set : ngsolve.CoefficientFunction
+
+  * "levelset":
+
+    single level set : ngsolve.CoefficientFunction
       CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
       FESpace with scalar continuous piecewise (multi-) linear basis functions.
-    multiple level sets: tuple(ngsolve.GridFunction)
+
+    multiple level sets : tuple(ngsolve.GridFunction)
       Tuple of GridFunctions that describe the geometry.
+
   * "domain_type" :
-    single level set: {NEG,POS,IF} (ENUM) 
+
+    single level set : {NEG,POS,IF} (ENUM)
       Integration on the domain where either:
+
       * the level set function is negative (NEG)
       * the level set function is positive (POS)
       * the level set function is zero     (IF )
-    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
+
+    multiple level sets : {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
       Integration on the domains specified
+
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
@@ -192,6 +200,7 @@ levelset_domain : dictionary
     overwrites "order"-arguments in the integration
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
     Integration direction policy for iterated integrals approach
+
     * first direction is used unless not applicable (FIRST)
     * best direction (in terms of transformation constant) is used (OPTIMAL)
     * subdivision into simplices is always used (FALLBACK)
@@ -253,7 +262,7 @@ Other Parameters :
 def SymbolicLFIWrapper(levelset_domain=None, *args, **kwargs):
     """
 Wrapper around SymbolicLFI to allow for integrators on level set domains (see also
-SymbolicCutLFI). The dictionary contains the level set function (CoefficientFunciton or
+SymbolicCutLFI). The dictionary contains the level set function (CoefficientFunction or
 GridFunction) and the domain-type (NEG/POS/IF). If the dictionary is not provided, the standard
 SymbolicLFI function from NGSolve will be called.
 
@@ -261,20 +270,28 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": 
-    singe level set : ngsolve.CoefficientFunction
+
+  * "levelset":
+
+    single level set : ngsolve.CoefficientFunction
       CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
       FESpace with scalar continuous piecewise (multi-) linear basis functions.
-    multiple level sets: tuple(ngsolve.GridFunction)
+
+    multiple level sets : tuple(ngsolve.GridFunction)
       Tuple of GridFunctions that describe the geometry.
+
   * "domain_type" :
-    single level set: {NEG,POS,IF} (ENUM) 
+
+    single level set : {NEG,POS,IF} (ENUM)
       Integration on the domain where either:
+
       * the level set function is negative (NEG)
       * the level set function is positive (POS)
       * the level set function is zero     (IF )
-    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
+
+    multiple level sets : {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
       Integration on the domains specified
+
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
@@ -284,6 +301,7 @@ levelset_domain : dictionary
     overwrites "order"-arguments in the integration
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
     Integration direction policy for iterated integrals approach
+
     * first direction is used unless not applicable (FIRST)
     * best direction (in terms of transformation constant) is used (OPTIMAL)
     * subdivision into simplices is always used (FALLBACK)
@@ -366,7 +384,7 @@ See documentation of Integrate.
 def Integrate(levelset_domain=None, *args, **kwargs):
     """
 Integrate-wrapper. If a dictionary 'levelset_domain' is provided integration will be done on the
-level set part of the mesh. The dictionary contains the level set function (CoefficientFunciton or
+level set part of the mesh. The dictionary contains the level set function (CoefficientFunction or
 GridFunction) and the domain-type (NEG/POS/IF). If the dictionary is not provided, the standard
 Integrate function from NGSolve will be called.
 
@@ -374,20 +392,28 @@ Parameters
 
 levelset_domain : dictionary
   entries:
-  * "levelset": 
-    singe level set : ngsolve.CoefficientFunction
+
+  * "levelset":
+
+    single level set : ngsolve.CoefficientFunction
       CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
       FESpace with scalar continuous piecewise (multi-) linear basis functions.
-    multiple level sets: tuple(ngsolve.GridFunction)
+
+    multiple level sets : tuple(ngsolve.GridFunction)
       Tuple of GridFunctions that describe the geometry.
+
   * "domain_type" :
-    single level set: {NEG,POS,IF} (ENUM) 
+
+    single level set : {NEG,POS,IF} (ENUM)
       Integration on the domain where either:
+
       * the level set function is negative (NEG)
       * the level set function is positive (POS)
       * the level set function is zero     (IF )
-    multiple level sets: {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
+
+    multiple level sets : {tuple({ENUM}), list(tuple(ENUM)), DomainTypeArray}
       Integration on the domains specified
+
   * "subdivlvl" : int
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
@@ -399,6 +425,7 @@ levelset_domain : dictionary
     defines integration order in time (for space-time integrals only)
   * "quad_dir_policy" : {FIRST, OPTIMAL, FALLBACK} (ENUM)
     Integration direction policy for iterated integrals approach
+
     * first direction is used unless not applicable (FIRST)
     * best direction (in terms of transformation constant) is used (OPTIMAL)
     * subdivision into simplices is always used (FALLBACK)
@@ -771,6 +798,7 @@ def dFacetPatch(**kwargs):
         fixed time tref.
     downscale : double
         Downscale integration rule around facet.
+
     Returns
     -------
       FacetPatchDifferentialSymbol(VOL)
@@ -884,7 +912,7 @@ def dxtref(mesh, order=None, time_order=-1, **kwargs):
     vb : {VOL, BND, BBND}
         Integration on domains volume or boundary. Default: VOL
         (if combined with skeleton VOL means interior facets,
-                                   BND means boundary facets)
+        BND means boundary facets)
     element_boundary : bool
         Integration on each element boundary. Default: False
     element_vb : {VOL, BND, BBND}
