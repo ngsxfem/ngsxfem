@@ -191,7 +191,9 @@ paper:
   needs: []  
 
 paper-appendix:
-  stage: deploy
+  # compiled pdfs of doc/feature-details.md and doc/literature.md; they are
+  # published together with the sphinx documentation (see job pages)
+  stage: test
   image:
     name: schruste/latex
     entrypoint: [""] 
@@ -204,6 +206,8 @@ paper-appendix:
     paths:
       - literature.pdf
       - feature-details.pdf
+  # a failing pdf build should not block the deployment of the documentation
+  allow_failure: true
   needs: []  
         
         
@@ -254,6 +258,9 @@ pages:
     # copy missing files
     - mkdir -p html/doc html/xfem_misc/python
     - cp doc/feature-details.md html/doc/feature-details.md
+    # compiled pdfs (job paper-appendix), available as
+    #   <pages-url>/doc/literature.pdf and <pages-url>/doc/feature-details.pdf
+    - cp literature.pdf feature-details.pdf html/doc/ || echo "no compiled pdfs available"
     - cp INSTALLATION.md html/INSTALLATION.md
     - cp python/ngs_check.py html/xfem_misc/python/ngs_check.py
 
@@ -266,7 +273,8 @@ pages:
       - public
   dependencies:
     - build-on-src-ngs
-  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs]  
+    - paper-appendix
+  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs, paper-appendix]  
 
   #only:
   #  - release # this job will affect only the 'sphinx' branch

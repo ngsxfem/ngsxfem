@@ -11,6 +11,7 @@
      <span class="pub-stat">🎓 <b>15</b> theses</span>
      <span class="pub-stat">💾 <b>30</b> with code / data</span>
    </div>
+   <p class="pub-pdf">📥 <a href="../doc/literature.pdf">Download this list as PDF</a></p>
    <p class="pub-missing">Missing a publication? Please open an <a href="https://github.com/ngsxfem/ngsxfem/issues">issue</a> or a pull request: the list is generated from <a href="https://github.com/ngsxfem/ngsxfem/blob/master/doc/literature.yaml"><code>doc/literature.yaml</code></a>.</p>
    </div>
 
