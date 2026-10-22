@@ -6,7 +6,6 @@ sphinx_mdinclude==0.6.2
 notebook
 numpy
 m2r2==0.3.1
-jupyter_sphinx==0.5.3
 nbsphinx==0.9.7
 sphinxemoji==0.3.1
 pandocfilters

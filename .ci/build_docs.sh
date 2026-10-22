@@ -11,6 +11,7 @@
 # Optional: literature.pdf / feature-details.pdf in the repository root
 # (job paper-appendix); without them the pdf link on the literature page is removed.
 set -e
+set -o pipefail
 export TZ=UTC
 cd "$(dirname "$0")/.."
 
@@ -46,8 +47,14 @@ cp -r doc/graphics doc/sphinx/xfem_misc/
 export NETGEN_DOCUMENTATION_SRC_DIR=$PWD/doc/sphinx
 export NETGEN_DOCUMENTATION_OUT_DIR=$PWD/html
 mkdir -p html
-sphinx-build doc/sphinx html
+sphinx-build doc/sphinx html 2>&1 | tee sphinx-build.log
+# a notebook that could not be executed would silently give a page without outputs: do not deploy that
+if grep -q 'Executing notebook failed' sphinx-build.log; then
+  echo "ERROR: executing a notebook failed (see the warnings above)" >&2
+  exit 1
+fi
 rm -f html/.counter html/*/preview_*.png.html
+python3 .ci/strip_webgl_repr.py html
 cp doc/sphinx/bullets.css html/_static
 
 # copy missing files

@@ -72,7 +72,6 @@ release = get_version()
 
 extensions = [
     "sphinx_mdinclude",
-    "jupyter_sphinx",
     "sphinx.ext.autodoc",
     "myst_nb",
     "sphinx_rtd_dark_mode",   # light/dark switch (sets data-theme="dark" on <html>)
@@ -124,6 +123,10 @@ try:
 except Exception as _err:  # never let the docs build fail because of this
     print("warning: could not regenerate the literature page:", _err)
 
+
+# executing the notebooks takes long in the docs build (Draw() makes a screenshot of each scene, some
+# cells draw animations); the default time limit per cell is 30 s
+nb_execution_timeout = 600
 
 # enable latex rendering in myst-nb
 myst_enable_extensions = ["dollarmath", "amsmath"]
