@@ -147,9 +147,7 @@ namespace ngfem
               const SIMD_BaseMappedIntegrationRule & mir,
               BareSliceMatrix<SIMD<double>> mat) const
   {
-    if (fel.GetNDof() == 0)
-      mat.AddSize(fel.GetNDof(),fel.GetNDof()) = 0.0;
-    else
+    if (fel.GetNDof() > 0)
       diffop->CalcMatrix(fel, mir, mat);
   }
   
@@ -158,9 +156,7 @@ namespace ngfem
               const SIMD_BaseMappedIntegrationRule & mir,
               BareSliceMatrix<SIMD<Complex>> mat) const
   {
-    if (fel.GetNDof() == 0)
-      mat.AddSize(fel.GetNDof(),fel.GetNDof()) = 0.0;
-    else
+    if (fel.GetNDof() > 0)
       diffop->CalcMatrix(fel, mir, mat);
   }
 
