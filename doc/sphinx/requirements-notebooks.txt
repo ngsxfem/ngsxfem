@@ -1,0 +1,12 @@
+# packages needed to execute the notebooks in the docs build (.ci/build_docs.sh)
+ngsolve
+numpy
+scipy
+matplotlib
+ipykernel
+ipywidgets
+# Draw() of ngsolve.webgui renders through anywidget; in the docs build it additionally writes a
+# preview image (playwright + chromium) and needs nest_asyncio to do so inside the notebook kernel
+anywidget
+nest_asyncio
+playwright

@@ -223,8 +223,8 @@ pages:
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
     - git submodule update --init external_dependencies/jupyter
-    - pip3 install ngsolve numpy scipy matplotlib ipykernel ipywidgets webgui_jupyter_widgets
-    - pip3 install -r doc/sphinx/requirements.txt
+    - pip3 install -r doc/sphinx/requirements-notebooks.txt -r doc/sphinx/requirements.txt
+    - python3 -m playwright install --with-deps chromium
     - bash .ci/build_docs.sh
   artifacts:
     paths:

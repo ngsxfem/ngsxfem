@@ -4,8 +4,9 @@
 #
 # Needs
 #  - an installed xfem in ./install (e.g. from the job build-on-pip-ngs),
-#  - ngsolve + the python packages of doc/sphinx/requirements.txt (+ ipykernel,
-#    webgui_jupyter_widgets, scipy, matplotlib for the notebooks),
+#  - ngsolve + the python packages of doc/sphinx/requirements.txt and
+#    doc/sphinx/requirements-notebooks.txt, and chromium for playwright
+#    (python3 -m playwright install --with-deps chromium),
 #  - the submodule external_dependencies/jupyter.
 # Optional: literature.pdf / feature-details.pdf in the repository root
 # (job paper-appendix); without them the pdf link on the literature page is removed.
@@ -13,9 +14,12 @@ set -e
 export TZ=UTC
 cd "$(dirname "$0")/.."
 
-XFEM_INIT=$(find install/lib -path '*/xfem/__init__.py' | head -n 1)
-[ -n "$XFEM_INIT" ] || { echo "no installed xfem found in install/lib" >&2; exit 1; }
-XFEM_PATH=$(realpath "$(dirname "$XFEM_INIT")/..")
+# directory that contains the installed xfem package (can be given from outside)
+if [ -z "$XFEM_PATH" ]; then
+  XFEM_INIT=$(find install/lib -path '*/xfem/__init__.py' | head -n 1)
+  [ -n "$XFEM_INIT" ] || { echo "no installed xfem found in install/lib" >&2; exit 1; }
+  XFEM_PATH=$(realpath "$(dirname "$XFEM_INIT")/..")
+fi
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${XFEM_PATH}
 export PYTHONPATH=${XFEM_PATH}:${PYTHONPATH}
 python3 -c "import ngsolve, xfem; print('ngsolve', ngsolve.__version__, '| xfem from', xfem.__file__)"
@@ -34,7 +38,16 @@ cp demos/mpi/*.py doc/sphinx/xfem_misc/mpi
 cp demos/spacetime/*.py doc/sphinx/xfem_misc/spacetime
 cp demos/spdes/*.py doc/sphinx/xfem_misc/spdes
 cp -r doc/graphics doc/sphinx/xfem_misc/
+
+# Draw() of netgen.webgui: while executing the notebooks, write a preview image and the render data
+# of each scene next to the html page (<out>/<path relative to src>/{preview,render_data}_N.*),
+# so that the pages show the preview and load the interactive scene on click (like docu.ngsolve.org).
+# Needs anywidget, nest_asyncio and playwright (+ chromium), see doc/sphinx/requirements-notebooks.txt.
+export NETGEN_DOCUMENTATION_SRC_DIR=$PWD/doc/sphinx
+export NETGEN_DOCUMENTATION_OUT_DIR=$PWD/html
+mkdir -p html
 sphinx-build doc/sphinx html
+rm -f html/.counter html/*/preview_*.png.html
 cp doc/sphinx/bullets.css html/_static
 
 # copy missing files
