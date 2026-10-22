@@ -32,7 +32,7 @@ macro(add_ngsolve_addon module_name)
   add_library(${module_name} SHARED ${ARGN})
   target_include_directories(${module_name} BEFORE PRIVATE $<TARGET_PROPERTY:ngsolve,INTERFACE_INCLUDE_DIRECTORIES>)
   target_link_libraries(${module_name} PUBLIC ngsolve Python3::Module)
-  set_target_properties(${module_name} PROPERTIES PREFIX "" CXX_STANDARD 17)
+  set_target_properties(${module_name} PROPERTIES PREFIX "" CXX_STANDARD 20)
 
   # Python does not recognize .dll (Windows) and .dylib (MacOS) file endings as modules
   if(WIN32)
@@ -126,7 +126,7 @@ function(add_ngsolve_addon_library target)
   target_include_directories(${target} BEFORE PRIVATE $<TARGET_PROPERTY:ngsolve,INTERFACE_INCLUDE_DIRECTORIES>)
   target_include_directories(${target} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:${_package_destination}/include>)
   target_link_libraries(${target} PUBLIC ngsolve Python3::Module)
-  set_target_properties(${target} PROPERTIES CXX_STANDARD 17 EXPORT_NAME "${ARG_EXPORT_NAME}" MACOSX_RPATH TRUE)
+  set_target_properties(${target} PROPERTIES CXX_STANDARD 20 EXPORT_NAME "${ARG_EXPORT_NAME}" MACOSX_RPATH TRUE)
   if(SKBUILD AND NOT WIN32)
     file(RELATIVE_PATH _ngsolve_lib "/${NGSOLVE_INSTALL_DIR_PYTHON}/${ARG_PACKAGE}" "/${NGSOLVE_INSTALL_DIR_LIB}")
     ngsolve_addon_set_relative_rpath(${target} "${_ngsolve_lib}")
@@ -153,7 +153,16 @@ function(add_ngsolve_addon_library target)
 endfunction()
 
 macro(ngsolve_generate_stub_files module_name)
-  set(stubgen_generation_code "execute_process(WORKING_DIRECTORY ${stubgen_working_dir} COMMAND ${Python3_EXECUTABLE} -m pybind11_stubgen --ignore-all-errors -o ${CMAKE_CURRENT_BINARY_DIR}/stubs ${module_name})")
+  # Set PYTHONPATH so pybind11_stubgen can import the addon module, and
+  # propagate LD_LIBRARY_PATH so its native .so can load ngsolve shared libs.
+  set(stubgen_generation_code "
+    set(ENV{PYTHONPATH} \"${stubgen_working_dir}\")
+    set(ENV{LD_LIBRARY_PATH} \"${NETGEN_DIR}/${NETGEN_INSTALL_DIR_LIB}:$ENV{LD_LIBRARY_PATH}\")
+    execute_process(
+      WORKING_DIRECTORY \"${stubgen_working_dir}\"
+      COMMAND \"${Python3_EXECUTABLE}\" -m pybind11_stubgen --ignore-all-errors
+              -o \"${CMAKE_CURRENT_BINARY_DIR}/stubs\" ${module_name}
+    )")
   set(stubgen_directory "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}/")
   set(stubgen_file "${CMAKE_CURRENT_BINARY_DIR}/stubs/${module_name}.pyi")
   set(stubgen_install_destination ${ADDON_INSTALL_DIR_PYTHON}/${module_name}/)
