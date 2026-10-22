@@ -55,6 +55,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: true
+          fetch-depth: 0   # tags are needed for the version number of the docs (git describe)
       - uses: actions/download-artifact@v7
         continue-on-error: true
         with:
