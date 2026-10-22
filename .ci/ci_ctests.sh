@@ -8,8 +8,8 @@ ls -al .
 
 cd install
 # this adjusts for different python versions and is independent of installation to site- or dist-packages
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
-export PYTHONPATH="$(pwd)/`find -name xfem`/..":$PYTHONPATH
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -path '*/xfem/__init__.py' -printf '%h'`/.."
+export PYTHONPATH="$(pwd)/`find -path '*/xfem/__init__.py' -printf '%h'`/..":$PYTHONPATH
 cd -
 
 echo $PYTHONPATH

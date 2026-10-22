@@ -234,9 +234,9 @@ pages:
   
     # the following exports work independent of python version
     - cd install/lib
-    - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -name xfem`/.."
+    - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -path '*/xfem/__init__.py' -printf '%h'`/.."
     - export PATH="${PATH}:/home/jovyan/.local/bin"
-    - export XFEM_PATH="$(pwd)/`find -name xfem`/.."
+    - export XFEM_PATH="$(pwd)/`find -path '*/xfem/__init__.py' -printf '%h'`/.."
     - export PYTHONPATH=$XFEM_PATH:$PYTHONPATH
     - cd ../..
 
