@@ -198,7 +198,7 @@ namespace ngfem
   // LocalHeap & lh) const
   {
     if (fel.GetNDof() == 0)
-      flux.AddSize(fel.GetNDof(),diffop->Dim()) = 0.0;
+      flux.AddSize(diffop->Dim(), mir.Size()) = 0.0;
     else
       diffop->Apply(fel, mir, x, flux);
   }
@@ -211,7 +211,7 @@ namespace ngfem
   // LocalHeap & lh) const
   {
     if (fel.GetNDof() == 0)
-      flux.AddSize(fel.GetNDof(),diffop->Dim()) = 0.0;
+      flux.AddSize(diffop->Dim(), mir.Size()) = 0.0;
     else
       diffop->Apply(fel, mir, x, flux);
   }
