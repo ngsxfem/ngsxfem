@@ -1,7 +1,9 @@
 name: Documentation (GitHub Pages)
 # Builds the sphinx documentation (.ci/build_docs.sh) and publishes it on GitHub Pages.
-# Started manually; needs "Settings -> Pages -> Source: GitHub Actions" to be enabled once.
+# Needs "Settings -> Pages -> Source: GitHub Actions" (enabled).
 on:
+  push:
+    branches: [master, ci-pages-without-manual-build]
   workflow_dispatch:
 
 permissions:
@@ -14,12 +16,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  configure:
+    runs-on: ubuntu-latest
+    outputs:
+      uid_gid: ${{ steps.get-user.outputs.uid_gid }}
+    steps:
+      - id: get-user
+        run: echo "uid_gid=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"
+
+  pdf:
+    # compiled pdfs of doc/feature-details.md and doc/literature.md (linked from the sphinx pages)
+    needs: configure
+    runs-on: ubuntu-latest
+    container:
+      image: schruste/latex:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - name: compile pdfs
+        run: |
+          cd doc
+          pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md
+          pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs-pdf
+          path: |
+            doc/feature-details.pdf
+            doc/literature.pdf
+
   build:
+    needs: pdf
+    # the pdfs are optional: build the docs also if their compilation failed
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           submodules: true
+      - uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: docs-pdf
+          path: .
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
