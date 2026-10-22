@@ -130,3 +130,9 @@ div.nboutput div.output_area {
     margin-bottom: 0;
 
 }
+
+/* Draw() returns a scene whose text repr ("WebGLScene") is shown below the widget: hide text outputs
+   that follow a widget in the same cell output */
+.cell_output > script[type="application/vnd.jupyter.widget-view+json"] ~ .output.text_plain {
+    display: none;
+}

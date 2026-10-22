@@ -215,3 +215,26 @@ a.pub-badge:hover {
         gap: 0;
     }
 }
+
+/* dark mode (the switch of sphinx-rtd-dark-mode sets data-theme="dark" on <html>) */
+html[data-theme="dark"] .pub-stat { background: #2a2d2f; border-color: #444; }
+html[data-theme="dark"] .pub-missing,
+html[data-theme="dark"] .pub-cat-desc,
+html[data-theme="dark"] .pub-year,
+html[data-theme="dark"] .pub-venue,
+html[data-theme="dark"] .pub-note { color: #b0b0b0; }
+html[data-theme="dark"] .pub-cite { background: #1f2a33; }
+html[data-theme="dark"] .pub-bibtex pre { background: #1e1e1e; border-color: #444; }
+html[data-theme="dark"] .rst-content ul.pub-list li.pub {
+    background: #1e1e1e;
+    border-top-color: #444;
+    border-right-color: #444;
+    border-bottom-color: #444;
+}
+html[data-theme="dark"] .rst-content a.pub-title { color: #e0e0e0; }
+html[data-theme="dark"] .rst-content a.pub-title:hover { color: #4aa3df; }
+html[data-theme="dark"] .pub-badge-type { background: #333; color: #ccc; border-color: #555; }
+html[data-theme="dark"] .rst-content a.pub-badge-doi { background: #1b3447; color: #8cc4ec; border-color: #2c5273; }
+html[data-theme="dark"] .rst-content a.pub-badge-arxiv { background: #411b1b; color: #f08a8a; border-color: #6e2e2e; }
+html[data-theme="dark"] .rst-content a.pub-badge-url { background: #333; color: #ddd; border-color: #555; }
+html[data-theme="dark"] .rst-content a.pub-badge-code { background: #183a26; color: #74d49a; border-color: #2b6a46; }

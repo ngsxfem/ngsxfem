@@ -75,7 +75,11 @@ extensions = [
     "jupyter_sphinx",
     "sphinx.ext.autodoc",
     "myst_nb",
+    "sphinx_rtd_dark_mode",   # light/dark switch (sets data-theme="dark" on <html>)
     ]
+
+# start in light mode; the reader's choice is remembered by the browser
+default_dark_mode = False
 
 templates_path = ['_templates']
 exclude_patterns = ['xfem_misc/literature_entries.rst']  # included by literature.rst
