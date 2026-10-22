@@ -213,68 +213,32 @@ paper-appendix:
         
 pages:
   stage: deploy
-  image: docker.gitlab.gwdg.de/ngsuite/ngs-docker/ngs-docker:src
+  # The documentation is built on top of the pip-ngsolve build (build-on-pip-ngs),
+  # so that it neither depends on the manually triggered source build
+  # (build-on-src-ngs) nor on the ngs-docker image. The steps live in .ci/build_docs.sh.
+  image: python:3.12
   script:
+    - apt-get update
+    - apt-get install -y git
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}
     - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/jupyter
-    - git config --global --add safe.directory /builds/${CI_PROJECT_PATH}/external_dependencies/ngsolve
-    - git submodule
-    - git submodule update --init
-
-    # this export is needed for some sphinx-command
-    - export TZ=UTC
-  
-    # after nbconvert 5.6.1 (i.e. 6+) the templates are missing
-    - python3 -m venv --clear venv
-    - source venv/bin/activate
-    - mkdir -p venv/share
-    - mkdir -p venv/share/jupyter
-    - cp -r ~/.venv/share/jupyter/nbconvert venv/share/jupyter/
+    - git submodule update --init external_dependencies/jupyter
+    - pip3 install ngsolve numpy scipy matplotlib ipykernel ipywidgets webgui_jupyter_widgets
     - pip3 install -r doc/sphinx/requirements.txt
-  
-    # the following exports work independent of python version
-    - cd install/lib
-    - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:"$(pwd)/`find -path '*/xfem/__init__.py' -printf '%h'`/.."
-    - export PATH="${PATH}:/home/jovyan/.local/bin"
-    - export XFEM_PATH="$(pwd)/`find -path '*/xfem/__init__.py' -printf '%h'`/.."
-    - export PYTHONPATH=$XFEM_PATH:$PYTHONPATH
-    - cd ../..
-
-    # generate html-files and copy some stuff
-    - sphinx-apidoc -e -f -o doc/sphinx/xfem_doc $XFEM_PATH/xfem
-    - cp external_dependencies/jupyter/{aggregation,basics,intlset,cutfem,spacetime_fitted,spacetime_unfitted,mlset_basic,mlset_pde,unfmixed}.ipynb doc/sphinx/jupyter
-    - cp external_dependencies/jupyter/helper.py doc/sphinx/jupyter
-    - cp -r external_dependencies/jupyter/graphics doc/sphinx/jupyter
-    - cp demos/*.py doc/sphinx/xfem_misc/
-    - mkdir -p doc/sphinx/xfem_misc/aggregates doc/sphinx/xfem_misc/mpi doc/sphinx/xfem_misc/spacetime doc/sphinx/xfem_misc/spdes
-    - cp demos/aggregates/*.py doc/sphinx/xfem_misc/aggregates
-    - cp demos/mpi/*.py doc/sphinx/xfem_misc/mpi
-    - cp demos/spacetime/*.py doc/sphinx/xfem_misc/spacetime
-    - cp demos/spdes/*.py doc/sphinx/xfem_misc/spdes
-    - cp -r doc/graphics doc/sphinx/xfem_misc/
-    - sphinx-build doc/sphinx html
-    - cp doc/sphinx/bullets.css html/_static
-
-    # copy missing files
-    - mkdir -p html/doc html/xfem_misc/python
-    - cp doc/feature-details.md html/doc/feature-details.md
-    # compiled pdfs (job paper-appendix), available as
-    #   <pages-url>/doc/literature.pdf and <pages-url>/doc/feature-details.pdf
-    - cp literature.pdf feature-details.pdf html/doc/ || echo "no compiled pdfs available"
-    - cp INSTALLATION.md html/INSTALLATION.md
-    - cp python/ngs_check.py html/xfem_misc/python/ngs_check.py
-
-    - rm -f html/.doctrees/nbsphinx/jupyter/*.ipynb
-    - rm -f html/jupyter/*.ipynb
-    - mv html public
-  # <<: *build-config
+    - bash .ci/build_docs.sh
   artifacts:
     paths:
       - public
   dependencies:
-    - build-on-src-ngs
+    - build-on-pip-ngs
     - paper-appendix
-  needs: [build-on-src-ngs, ctests-demos, ctests-pytests, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs, paper-appendix]  
+  needs: [build-on-pip-ngs, ctests-pytests-on-pip-ngs, ctests-demos-on-pip-ngs, paper-appendix]
+  # deploy automatically from the default branch and tags; on other branches the job can be started manually (to test changes of the docs)
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: manual
+      allow_failure: true
 
   #only:
   #  - release # this job will affect only the 'sphinx' branch
