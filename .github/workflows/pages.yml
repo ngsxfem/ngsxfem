@@ -1,0 +1,89 @@
+name: Documentation (GitHub Pages)
+# Builds the sphinx documentation (.ci/build_docs.sh) and publishes it on GitHub Pages.
+# Needs "Settings -> Pages -> Source: GitHub Actions" (enabled).
+on:
+  push:
+    branches: [master, ci-pages-without-manual-build]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    outputs:
+      uid_gid: ${{ steps.get-user.outputs.uid_gid }}
+    steps:
+      - id: get-user
+        run: echo "uid_gid=$(id -u):$(id -g)" >> "$GITHUB_OUTPUT"
+
+  pdf:
+    # compiled pdfs of doc/feature-details.md and doc/literature.md (linked from the sphinx pages)
+    needs: configure
+    runs-on: ubuntu-latest
+    container:
+      image: schruste/latex:latest
+      options: --user ${{ needs.configure.outputs.uid_gid }}
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - name: compile pdfs
+        run: |
+          cd doc
+          pandoc --template latex.template --pdf-engine=lualatex -s -o feature-details.pdf feature-details.md
+          pandoc --template latex.template --pdf-engine=lualatex -s -o literature.pdf literature.md
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs-pdf
+          path: |
+            doc/feature-details.pdf
+            doc/literature.pdf
+
+  build:
+    needs: pdf
+    # the pdfs are optional: build the docs also if their compilation failed
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+          fetch-depth: 0   # tags are needed for the version number of the docs (git describe)
+      - uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: docs-pdf
+          path: .
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: install ngsxfem (on pip ngsolve)
+        run: |
+          pip install ngsolve numpy scipy matplotlib ipykernel ipywidgets webgui_jupyter_widgets
+          pip install -r doc/sphinx/requirements.txt
+          mkdir build install
+          cd build
+          cmake -DBUILD_NGSOLVE=OFF -DBUILD_ON_PIP_NGSOLVE=ON -DCMAKE_INSTALL_PREFIX=../install ..
+          make -j4 install
+      - name: build documentation
+        run: bash .ci/build_docs.sh
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
