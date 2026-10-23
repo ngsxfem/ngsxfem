@@ -149,7 +149,7 @@ namespace ngcomp
 
     (*testout) << "element_to_patch = \n" << element_to_patch << endl;
 
-    TableCreator<size_t> creator;
+    TableCreator<size_t> creator(nc);
     for ( ; !creator.Done(); creator++)
       for (auto elnr : Range(ne))
       {
@@ -158,7 +158,7 @@ namespace ngcomp
       }
     patch_leafs = creator.MoveTable();
 
-    TableCreator<size_t> fcreator;
+    TableCreator<size_t> fcreator(nc);
     for ( ; !fcreator.Done(); fcreator++)
       for (auto facnr : Range(nf))
         {
@@ -167,7 +167,7 @@ namespace ngcomp
         }
     patch_facets = fcreator.MoveTable();
 
-    TableCreator<size_t> pcreator;
+    TableCreator<size_t> pcreator(nc);
     for ( ; !pcreator.Done(); pcreator++)
       for (auto pnr : Range(nc))
         {
@@ -250,6 +250,217 @@ namespace ngcomp
     }
   }
 
+  Table<size_t> GetInnerPatchFacets(const MeshAccess &ma, const Table<size_t> &patches)
+  {
+    TableCreator<size_t> creator(patches.Size());
+    for (; !creator.Done(); creator++)
+      for (size_t p : Range(patches.Size()))
+        for (size_t el : patches[p])
+          for (int facet : ma.GetElFacets(ElementId(VOL, el)))
+          {
+            Array<int> neighbours;
+            ma.GetFacetElements(facet, neighbours);
+            if (neighbours.Size() == 2 && size_t(neighbours[0]) == el
+                && patches[p].Contains(neighbours[1]))
+              creator.Add(p, facet);
+          }
+    return creator.MoveTable();
+  }
+
+  void PatchAssembly::GetDofNrs(const FESpace &fes, Array<DofId> &dofs,
+                                bool free_only) const
+  {
+    dofs.SetSize0();
+    Array<DofId> element_dofs;
+    for (size_t el : elements)
+    {
+      fes.GetDofNrs(ElementId(VOL, el), element_dofs);
+      for (DofId d : element_dofs)
+        if (IsRegularDof(d) && !dofs.Contains(d)
+            && (!free_only || fes.GetFreeDofs()->Test(d)))
+          dofs.Append(d);
+    }
+  }
+
+  template <typename SCAL>
+  void PatchAssembly::AddMatrix(
+      SliceMatrix<SCAL> patchmat,
+      const Array<shared_ptr<BilinearFormIntegrator>> &integrators,
+      const FESpace &fes_trial, const FESpace &fes_test,
+      FlatArray<DofId> patchdofs_trial, FlatArray<DofId> patchdofs_test,
+      LocalHeap &lh) const
+  {
+    if (!patchmat.Height() || !patchmat.Width() || !integrators.Size())
+      return;
+    Array<DofId> dofs_trial, dofs_test, dofs_trial2, dofs_test2,
+                 el2patch_trial, el2patch_test;
+    Array<shared_ptr<BilinearFormIntegrator>> bfis, bfis_skeleton;
+    for (auto &bfi : integrators)
+      if (dynamic_pointer_cast<FacetBilinearFormIntegrator>(bfi))
+        bfis_skeleton.Append(bfi);
+      else
+        bfis.Append(bfi);
+
+    for (size_t el : elements)
+    {
+      HeapReset hr(lh);
+      ElementId ei(VOL, el);
+      fes_trial.GetDofNrs(ei, dofs_trial);
+      fes_test.GetDofNrs(ei, dofs_test);
+      auto & trafo = ma.GetTrafo(ei, lh);
+      auto & fel_trial = fes_trial.GetFE(ei, lh);
+      auto & fel_test = fes_test.GetFE(ei, lh);
+
+      MixedFiniteElement fel(fel_trial, fel_test);
+
+      el2patch_trial.SetSize(dofs_trial.Size());
+      for (auto i : Range(dofs_trial))
+        el2patch_trial[i] = patchdofs_trial.Pos(dofs_trial[i]);
+      el2patch_test.SetSize(dofs_test.Size());
+      for (auto i : Range(dofs_test))
+        el2patch_test[i] = patchdofs_test.Pos(dofs_test[i]);
+
+      FlatMatrix<SCAL> elmat(dofs_test.Size(),dofs_trial.Size(), lh);
+      FlatMatrix<SCAL> elmati(dofs_test.Size(),dofs_trial.Size(), lh);
+
+      elmat = 0.0;
+      for (auto & bfi : bfis)
+      {
+        if (!bfi->DefinedOnElement(ei.Nr()) || !bfi->DefinedOn(ma.GetElIndex(ei)))
+          continue;
+        auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
+        bfi -> CalcElementMatrix(fel, mapped_trafo, elmati, lh);
+        elmat += elmati;
+      }
+
+      for (auto i : Range(dofs_test))
+        for (auto j : Range(dofs_trial))
+          if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION &&
+              el2patch_trial[j] != Array<DofId>::ILLEGAL_POSITION)
+            patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
+    }
+
+    for (size_t fac : facets)
+    {
+      HeapReset hr(lh);
+      Array<int> fac_els;
+      ma.GetFacetElements(fac, fac_els);
+
+      ElementId ei(VOL, fac_els[0]);
+      ElementId ei2(VOL, fac_els[1]);
+      fes_trial.GetDofNrs(ei, dofs_trial);
+      fes_test.GetDofNrs(ei, dofs_test);
+      fes_trial.GetDofNrs(ei2, dofs_trial2);
+      fes_test.GetDofNrs(ei2, dofs_test2);
+      auto & trafo = ma.GetTrafo(ei, lh);
+      auto & trafo2 = ma.GetTrafo(ei2, lh);
+      auto & fel_trial = fes_trial.GetFE(ei, lh);
+      auto & fel_test = fes_test.GetFE(ei, lh);
+      auto & fel_trial2 = fes_trial.GetFE(ei2, lh);
+      auto & fel_test2 = fes_test.GetFE(ei2, lh);
+
+      MixedFiniteElement fel(fel_trial, fel_test);
+      MixedFiniteElement fel2(fel_trial2, fel_test2);
+
+      el2patch_trial.SetSize(dofs_trial.Size()+dofs_trial2.Size());
+      for (auto i : Range(dofs_trial.Size()+dofs_trial2.Size()) )
+      {
+        DofId d = i<dofs_trial.Size() ? dofs_trial[i] : dofs_trial2[i-dofs_trial.Size()];
+        el2patch_trial[i] = patchdofs_trial.Pos(d);
+      }
+      el2patch_test.SetSize(dofs_test.Size()+dofs_test2.Size());
+      for (auto i : Range(dofs_test.Size()+dofs_test2.Size()) )
+      {
+        DofId d = i<dofs_test.Size() ? dofs_test[i] : dofs_test2[i-dofs_test.Size()];
+        el2patch_test[i] = patchdofs_test.Pos(d);
+      }
+
+      FlatMatrix<SCAL> elmat(dofs_test.Size()+dofs_test2.Size(),dofs_trial.Size()+dofs_trial2.Size(), lh);
+      FlatMatrix<SCAL> elmati(dofs_test.Size()+dofs_test2.Size(),dofs_trial.Size()+dofs_trial2.Size(), lh);
+
+      auto fnums = ma.GetElFacets(ei);
+      int facnr1 = fnums.Pos(fac);
+      fnums = ma.GetElFacets(ei2);
+      int facnr2 = fnums.Pos(fac);
+
+      Array<int> vnums; vnums = ma.GetElVertices (ei);
+      Array<int> vnums2; vnums2 = ma.GetElVertices (ei2);
+
+      elmat = 0.0;
+      for (auto & bfi : bfis_skeleton)
+      {
+        if (!bfi->DefinedOnElement(ei.Nr()) || !bfi->DefinedOn(ma.GetElIndex(ei)))
+          continue;
+        auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator>(bfi);
+        if (fbfi) {
+          auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
+          auto & mapped_trafo2 = trafo2.AddDeformation(bfi->GetDeformation().get(), lh);
+          fbfi -> CalcFacetMatrix(fel, facnr1, mapped_trafo, vnums,
+                                  fel2, facnr2, mapped_trafo2, vnums2, elmati, lh);
+          elmat += elmati;
+        }
+        else throw Exception("Cast failed");
+      }
+
+      for (auto i : Range(dofs_test.Size() + dofs_test2.Size()))
+        for (auto j : Range(dofs_trial.Size() + dofs_trial2.Size()))
+          if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION &&
+              el2patch_trial[j] != Array<DofId>::ILLEGAL_POSITION)
+            patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
+    }
+  }
+
+  template <typename SCAL>
+  void PatchAssembly::AddVector(
+      FlatVector<SCAL> patchvec,
+      const Array<shared_ptr<LinearFormIntegrator>> &integrators,
+      const FESpace &fes_test, FlatArray<DofId> patchdofs_test, LocalHeap &lh) const
+  {
+    if (!patchvec.Size() || !integrators.Size())
+      return;
+    Array<DofId> dofs_test, el2patch_test;
+    for (size_t el : elements)
+    {
+      HeapReset hr(lh);
+      ElementId ei(VOL, el);
+      fes_test.GetDofNrs(ei, dofs_test);
+      auto &trafo = ma.GetTrafo(ei, lh);
+      auto &fel_test = fes_test.GetFE(ei, lh);
+      el2patch_test.SetSize(dofs_test.Size());
+      for (auto i : Range(dofs_test))
+        el2patch_test[i] = patchdofs_test.Pos(dofs_test[i]);
+
+      FlatVector<SCAL> elvec(dofs_test.Size(), lh);
+      FlatVector<SCAL> sumelvec(dofs_test.Size(), lh);
+      sumelvec = 0.0;
+      for (auto &lfi : integrators)
+      {
+        if (!lfi->DefinedOnElement(ei.Nr()) || !lfi->DefinedOn(ma.GetElIndex(ei)))
+          continue;
+        auto &mapped_trafo = trafo.AddDeformation(lfi->GetDeformation().get(), lh);
+        lfi->CalcElementVector(fel_test, mapped_trafo, elvec, lh);
+        sumelvec += elvec;
+      }
+      for (auto i : Range(dofs_test))
+        if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION)
+          patchvec(el2patch_test[i]) += sumelvec(i);
+    }
+  }
+
+  template void PatchAssembly::AddMatrix<double>(
+      SliceMatrix<double>, const Array<shared_ptr<BilinearFormIntegrator>> &,
+      const FESpace &, const FESpace &, FlatArray<DofId>, FlatArray<DofId>, LocalHeap &) const;
+  template void PatchAssembly::AddMatrix<Complex>(
+      SliceMatrix<Complex>, const Array<shared_ptr<BilinearFormIntegrator>> &,
+      const FESpace &, const FESpace &, FlatArray<DofId>, FlatArray<DofId>, LocalHeap &) const;
+  template void PatchAssembly::AddVector<double>(
+      FlatVector<double>, const Array<shared_ptr<LinearFormIntegrator>> &,
+      const FESpace &, FlatArray<DofId>, LocalHeap &) const;
+  template void PatchAssembly::AddVector<Complex>(
+      FlatVector<Complex>, const Array<shared_ptr<LinearFormIntegrator>> &,
+      const FESpace &, FlatArray<DofId>, LocalHeap &) const;
+
+
   template <typename TFUNC>
   void PatchLoop (shared_ptr<ElementAggregation> elagg, 
                   bool include_trivial_patches,
@@ -275,188 +486,36 @@ namespace ngcomp
       (*testout) << i << ": " << ret << endl;
     }
 
-    const BitArray & freedofs_test = *fes_test->GetFreeDofs();
+    Array<shared_ptr<BilinearFormIntegrator>> bfis;
+    for (auto icf : bf->icfs)
+      if (icf->dx.vb == VOL)
+        bfis.Append(icf->MakeBilinearFormIntegrator());
+    Array<shared_ptr<LinearFormIntegrator>> lfis;
+    if (lf)
+      for (auto icf : lf->icfs)
+        if (icf->dx.vb == VOL)
+          lfis.Append(icf->MakeLinearFormIntegrator());
     ParallelForRange (Range(npatch), [&] (IntRange r)
     {
-      Array<DofId> patchdofs_trial, patchdofs_test,
-                    patchdofs_trial2, patchdofs_test2,
-                    dofs_trial, dofs_test,
-                    dofs_trial2, dofs_test2,
-                    el2patch_test, el2patch_trial;
+      Array<DofId> patchdofs_trial, patchdofs_test;
       Array<size_t> els_in_patch, facets_in_patch;
       LocalHeap lh = clh.Split ();
       for (auto p : r)
       {
+        HeapReset hr(lh);
         elagg->GetPatch(p, els_in_patch);
         elagg->GetInnerPatchFacets(p, facets_in_patch);
         
-        patchdofs_test.SetSize0();
-        patchdofs_trial.SetSize0();
-        for (size_t el : els_in_patch)
-        {
-          Array<DofId> dofs;
-          fes_trial->GetDofNrs(ElementId(VOL, el), dofs);
-          for (auto d : dofs)
-            if (freedofs_trial.Test(d) && !patchdofs_trial.Contains(d))
-            {
-              patchdofs_trial.Append(d);
-            }
-          fes_test->GetDofNrs(ElementId(VOL, el), dofs);
-          for (auto d : dofs)
-            if (freedofs_test.Test(d) && !patchdofs_test.Contains(d))
-            {
-              patchdofs_test.Append(d);
-            }
-        }
-
-        Array<shared_ptr<BilinearFormIntegrator>> bfis[4]; // VOL, BND, ..
-        Array<shared_ptr<BilinearFormIntegrator>> bfis_skeleton[4];
-        for (auto icf : bf->icfs)
-        {
-          shared_ptr<BilinearFormIntegrator> bfi = icf->MakeBilinearFormIntegrator();
-          auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator> (bfi);
-          auto & dx = icf->dx;
-          if (!fbfi)
-            bfis[dx.vb] += icf->MakeBilinearFormIntegrator ();
-          else
-            bfis_skeleton[dx.vb] += icf->MakeBilinearFormIntegrator();
-        }        
-
-        Array<shared_ptr<LinearFormIntegrator>> lfis[4];
-        if (lf)
-          for (auto icf : lf->icfs)
-          {
-            auto &dx = icf->dx;
-            lfis[dx.vb] += icf->MakeLinearFormIntegrator ();
-          }
-
-
+        PatchAssembly local{*ma, els_in_patch, facets_in_patch};
+        local.GetDofNrs(*fes_trial, patchdofs_trial);
+        local.GetDofNrs(*fes_test, patchdofs_test, true);
         FlatMatrix<> patchmat(patchdofs_test.Size(), patchdofs_trial.Size(), lh);
-        FlatVector<> patchvec(patchdofs_test.Size(), lh);        
+        FlatVector<> patchvec(patchdofs_test.Size(), lh);
         patchmat = 0.0;
         patchvec = 0.0;
-
-        for (size_t el : els_in_patch)
-        {
-          HeapReset hr(lh);
-          ElementId ei(VOL, el);
-          fes_trial->GetDofNrs(ei, dofs_trial);
-          fes_test->GetDofNrs(ei, dofs_test);
-          auto & trafo = ma->GetTrafo(ei, lh);
-          auto & fel_trial = fes_trial->GetFE(ei, lh);
-          auto & fel_test = fes_test->GetFE(ei, lh);
-
-          MixedFiniteElement fel(fel_trial, fel_test);
-
-          el2patch_trial.SetSize(dofs_trial.Size());
-          for (auto i : Range(dofs_trial))
-            el2patch_trial[i] = patchdofs_trial.Pos(dofs_trial[i]);          
-          el2patch_test.SetSize(dofs_test.Size());
-          for (auto i : Range(dofs_test))
-            el2patch_test[i] = patchdofs_test.Pos(dofs_test[i]);   
-
-          FlatMatrix<> elmat(dofs_trial.Size(),dofs_test.Size(), lh);
-          FlatMatrix<> elmati(dofs_trial.Size(),dofs_test.Size(), lh);
-
-          elmat = 0.0;
-          for (auto & bfi : bfis[VOL])
-          {
-            auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
-            bfi -> CalcElementMatrix(fel, mapped_trafo, elmati, lh);
-            elmat += elmati;
-            // bfi -> CalcElementMatrixAdd(fel, trafo, elmat, lh);
-          }        
-
-          for (auto i : Range(dofs_test))
-            for (auto j : Range(dofs_trial))
-              if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION &&
-                  el2patch_trial[j] != Array<DofId>::ILLEGAL_POSITION)
-                patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
-          if (lf)
-          {
-            FlatVector<> elvec(dofs_test.Size(), lh);
-            FlatVector<> sumelvec(dofs_test.Size(), lh);
-            sumelvec = 0.0;
-            for (auto &lfi : lfis[VOL])
-            {
-              auto & mapped_trafo = trafo.AddDeformation(lfi->GetDeformation().get(), lh);
-              lfi->CalcElementVector(fel_test, mapped_trafo, elvec, lh);
-              sumelvec += elvec;
-            }
-
-            for (auto i : Range(dofs_test))
-              if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION)
-                patchvec(el2patch_test[i]) += sumelvec(i);
-          }
-        }
-        
-        for (size_t fac : facets_in_patch)
-        {
-          HeapReset hr(lh);
-          Array<int> fac_els;
-          ma->GetFacetElements(fac, fac_els);
-          
-          ElementId ei(VOL, fac_els[0]);
-          ElementId ei2(VOL, fac_els[1]);
-          fes_trial->GetDofNrs(ei, dofs_trial);
-          fes_test->GetDofNrs(ei, dofs_test);
-          fes_trial->GetDofNrs(ei2, dofs_trial2);
-          fes_test->GetDofNrs(ei2, dofs_test2);
-          auto & trafo = ma->GetTrafo(ei, lh);
-          auto & trafo2 = ma->GetTrafo(ei2, lh);
-          auto & fel_trial = fes_trial->GetFE(ei, lh);
-          auto & fel_test = fes_test->GetFE(ei, lh);
-          auto & fel_trial2 = fes_trial->GetFE(ei2, lh);
-          auto & fel_test2 = fes_test->GetFE(ei2, lh);
-
-          MixedFiniteElement fel(fel_trial, fel_test);
-          MixedFiniteElement fel2(fel_trial2, fel_test2);
-
-          el2patch_trial.SetSize(dofs_trial.Size()+dofs_trial2.Size());
-          for (auto i : Range(dofs_trial.Size()+dofs_trial2.Size()) )
-          {
-            DofId d = i<dofs_trial.Size() ? dofs_trial[i] : dofs_trial2[i-dofs_trial.Size()];
-            el2patch_trial[i] = patchdofs_trial.Pos(d); 
-          }     
-          el2patch_test.SetSize(dofs_test.Size()+dofs_test2.Size());
-          for (auto i : Range(dofs_test.Size()+dofs_test2.Size()) )
-          {
-            DofId d = i<dofs_test.Size() ? dofs_test[i] : dofs_test2[i-dofs_test.Size()];
-            el2patch_test[i] = patchdofs_test.Pos(d); 
-          }     
-
-          FlatMatrix<> elmat(dofs_trial.Size()+dofs_trial2.Size(),dofs_test.Size()+dofs_test2.Size(), lh);
-          FlatMatrix<> elmati(dofs_trial.Size()+dofs_trial2.Size(),dofs_test.Size()+dofs_test2.Size(), lh);
-
-          auto fnums = ma->GetElFacets(ei);
-          int facnr1 = fnums.Pos(fac);             
-          fnums = ma->GetElFacets(ei2);
-          int facnr2 = fnums.Pos(fac);
-
-          Array<int> vnums; vnums = ma->GetElVertices (ei);
-          Array<int> vnums2; vnums2 = ma->GetElVertices (ei2);
-
-          elmat = 0.0;
-          for (auto & bfi : bfis_skeleton[VOL])
-          {
-            auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator>(bfi);
-            if (fbfi) {
-              auto & mapped_trafo = trafo.AddDeformation(bfi->GetDeformation().get(), lh);
-              auto & mapped_trafo2 = trafo2.AddDeformation(bfi->GetDeformation().get(), lh);
-              fbfi -> CalcFacetMatrix(fel, facnr1, mapped_trafo, vnums,
-                                      fel2, facnr2, mapped_trafo2, vnums2, elmati, lh);
-              elmat += elmati;
-            }
-            else throw Exception("Cast failed");
-            // bfi -> CalcElementMatrixAdd(fel, trafo, elmat, lh);
-          }  
-
-          for (auto i : Range(dofs_test.Size() + dofs_test2.Size()))
-            for (auto j : Range(dofs_trial.Size() + dofs_trial2.Size()))
-              if (el2patch_test[i] != Array<DofId>::ILLEGAL_POSITION &&
-                  el2patch_trial[j] != Array<DofId>::ILLEGAL_POSITION)
-                patchmat(el2patch_test[i], el2patch_trial[j]) += elmat(i,j);
-        }
+        local.AddMatrix<double>(patchmat, bfis, *fes_trial, *fes_test,
+                                patchdofs_trial, patchdofs_test, lh);
+        local.AddVector<double>(patchvec, lfis, *fes_test, patchdofs_test, lh);
 
         (*testout) << "patchmat in Patchloop\n" << patchmat << endl;
 

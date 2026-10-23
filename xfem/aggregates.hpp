@@ -1,14 +1,8 @@
 #pragma once
 
 /// from ngsolve
-#include <solve.hpp>
 #include <comp.hpp>
-#include <fem.hpp>
-// #include <integratorcf.hpp>
-#include "../cutint/cutintegral.hpp"
-
-using namespace ngsolve;
-// using namespace cutinfo;
+#include <integratorcf.hpp>
 
 namespace ngcomp
 {
@@ -58,6 +52,34 @@ namespace ngcomp
   };
 
 
+
+  /// Interior facets for each element support; supports may overlap.
+  Table<size_t> GetInnerPatchFacets(const MeshAccess &ma, const Table<size_t> &patches);
+
+  /// Adds volume terms and interior-facet matrices to initialized outputs.
+  struct PatchAssembly
+  {
+    const MeshAccess &ma;
+    FlatArray<size_t> elements, facets;
+
+    /// First-occurrence DOF order; put the root element first for extension embedding.
+    void GetDofNrs(const FESpace &fes, Array<DofId> &dofs,
+                   bool free_only = false) const;
+
+    template <typename SCAL>
+    void AddMatrix(
+        SliceMatrix<SCAL> patchmat,
+        const Array<shared_ptr<BilinearFormIntegrator>> &integrators,
+        const FESpace &fes_trial, const FESpace &fes_test,
+        FlatArray<DofId> patchdofs_trial, FlatArray<DofId> patchdofs_test,
+        LocalHeap &lh) const;
+
+    template <typename SCAL>
+    void AddVector(
+        FlatVector<SCAL> patchvec,
+        const Array<shared_ptr<LinearFormIntegrator>> &integrators,
+        const FESpace &fes_test, FlatArray<DofId> patchdofs_test, LocalHeap &lh) const;
+  };
 
   template <typename TFUNC>
   void PatchLoop (shared_ptr<ElementAggregation> elagg, 
