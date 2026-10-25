@@ -389,7 +389,10 @@ namespace ngcomp
       elmat = 0.0;
       for (auto & bfi : bfis_skeleton)
       {
-        if (!bfi->DefinedOnElement(ei.Nr()) || !bfi->DefinedOn(ma.GetElIndex(ei)))
+        // skeleton integrals: definedonelements refers to facets (as in the
+        // facet loop of BilinearForm::Assemble, e.g. dFacetPatch(definedonelements=...))
+        if (!bfi->DefinedOnElement(fac) || !bfi->DefinedOn(ma.GetElIndex(ei))
+            || !bfi->DefinedOn(ma.GetElIndex(ei2)))
           continue;
         auto fbfi = dynamic_pointer_cast<FacetBilinearFormIntegrator>(bfi);
         if (fbfi) {
