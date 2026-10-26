@@ -1,8 +1,8 @@
 # Release Notes
 
-## 2.1.2607 (unreleased)
+## 2.1.2608 (unreleased)
 
-Requires NGSolve 6.2.2607.
+Requires NGSolve 6.2.2608.
 
 ### Breaking changes
 
