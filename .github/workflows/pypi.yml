@@ -1,5 +1,3 @@
-name: Build and upload to PyPI
-
 # Release flow (decisions: .ci/release_plan.py):
 #  1. ngsolve-release-watcher dispatches this workflow on master with the new
 #     NGSolve version.  If master is not pinned to it, the branch
