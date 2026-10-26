@@ -1,5 +1,17 @@
 name: Build and upload to PyPI
 
+# Release flow (decisions: .ci/release_plan.py):
+#  1. ngsolve-release-watcher dispatches this workflow on master with the new
+#     NGSolve version.  If master is not pinned to it, the branch
+#     `release-candidate` (master + a commit that only bumps the pin) is created,
+#     built and published to PyPI as release candidate 2.1.<ngsolve>rcN; a pull
+#     request release-candidate -> master is opened.
+#  2. Further pushes to `release-candidate` publish rc2, rc3, ...
+#  3. Merging the pull request changes the NGSolve pin on master: that push is
+#     built, tested and published as the release 2.1.<ngsolve> (tag + GitHub release).
+# A failed run can be repeated; manual dispatches default to a dry run.
+name: Build and upload to PyPI
+
 on:
   workflow_dispatch:
     inputs:
@@ -11,7 +23,7 @@ on:
         type: boolean
         default: true
   push:
-    branches: [master]
+    branches: [master, release-candidate]
     tags: ['v*']
   pull_request:
     branches: [master]
@@ -20,12 +32,55 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # pull request runs replace each other; all others queue up and never replace
+  # a pending release run
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: false
 
+env:
+  PACKAGE_VERSION_VARIABLE: SETUPTOOLS_SCM_PRETEND_VERSION_FOR_XFEM
+
 jobs:
+  plan:
+    name: Plan release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # creates the release-candidate branch
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      skip: ${{ steps.plan.outputs.skip }}
+      publish: ${{ steps.plan.outputs.publish }}
+      version: ${{ steps.plan.outputs.version }}
+      ngsolve_version: ${{ steps.plan.outputs.ngsolve_version }}
+      ref: ${{ steps.prepare.outputs.ref || github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - run: python -m pip install packaging
+      - id: plan
+        run: python .ci/release_plan.py plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+          INPUT_NGSOLVE: ${{ inputs.ngsolve_version }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+      - id: prepare
+        if: steps.plan.outputs.prepare == 'true'
+        run: python .ci/release_plan.py prepare
+        env:
+          NGSOLVE_VERSION: ${{ steps.plan.outputs.ngsolve_version }}
+          RC_BRANCH: ${{ steps.plan.outputs.branch }}
+
   build_wheels:
     name: Build and test wheels on ${{ matrix.os }}
+    needs: plan
+    if: needs.plan.outputs.skip != 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -39,12 +94,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          # (pull requests: the default merge commit)
+          ref: ${{ github.event_name != 'pull_request' && needs.plan.outputs.ref || '' }}
           persist-credentials: false
           fetch-depth: 0
-      - uses: PaulSt/ngsolve-release-watcher@main
-        with:
-          ngsolve_version: ${{ inputs.ngsolve_version }}
-          dry_run: ${{ inputs.dry_run }}
+      - name: Set the release (candidate) version
+        if: needs.plan.outputs.version != ''
+        shell: bash
+        run: |
+          echo "$PACKAGE_VERSION_VARIABLE=${{ needs.plan.outputs.version }}" >> "$GITHUB_ENV"
+          echo "CIBW_ENVIRONMENT_PASS_LINUX=$PACKAGE_VERSION_VARIABLE" >> "$GITHUB_ENV"
       - uses: pypa/cibuildwheel@v4.2.1
       - uses: actions/setup-python@v6
         with:
@@ -63,19 +122,19 @@ jobs:
 
   build_sdist:
     name: Build source distribution
+    needs: plan
+    if: needs.plan.outputs.skip != 'true'
     runs-on: ubuntu-latest
-    outputs:
-      published: ${{ steps.release.outputs.published }}
     steps:
       - uses: actions/checkout@v7
         with:
+          # (pull requests: the default merge commit)
+          ref: ${{ github.event_name != 'pull_request' && needs.plan.outputs.ref || '' }}
           persist-credentials: false
           fetch-depth: 0
-      - uses: PaulSt/ngsolve-release-watcher@main
-        id: release
-        with:
-          ngsolve_version: ${{ inputs.ngsolve_version }}
-          dry_run: ${{ inputs.dry_run }}
+      - name: Set the release (candidate) version
+        if: needs.plan.outputs.version != ''
+        run: echo "$PACKAGE_VERSION_VARIABLE=${{ needs.plan.outputs.version }}" >> "$GITHUB_ENV"
       - run: pipx run build --sdist
       - uses: actions/upload-artifact@v7
         with:
@@ -84,10 +143,8 @@ jobs:
           if-no-files-found: error
 
   publish_pypi:
-    if: >-
-      !inputs.dry_run && needs.build_sdist.outputs.published != 'true' &&
-      (startsWith(github.ref, 'refs/tags/v') || inputs.ngsolve_version != '')
-    needs: [build_wheels, build_sdist]
+    if: needs.plan.outputs.publish == 'true'
+    needs: [plan, build_wheels, build_sdist]
     runs-on: ubuntu-latest
     environment: pypi
     steps:
@@ -100,3 +157,52 @@ jobs:
         with:
           skip-existing: true
           password: ${{ secrets.PYPI_API_TOKEN_2 }}
+
+  finalize:
+    name: Tag, pull request / GitHub release
+    # tags pushed by a person (mode "tag") need nothing more
+    if: needs.plan.outputs.publish == 'true' && needs.plan.outputs.mode != 'tag'
+    needs: [plan, publish_pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.plan.outputs.version }}
+      NGSOLVE_VERSION: ${{ needs.plan.outputs.ngsolve_version }}
+      COMMIT: ${{ needs.plan.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+          fetch-depth: 0
+      - name: Tag the published commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+            echo "tag v$VERSION exists already"
+          else
+            git tag -a "v$VERSION" -m "ngsxfem $VERSION (NGSolve $NGSOLVE_VERSION)" "$COMMIT"
+            git push origin "v$VERSION"
+          fi
+      - name: Open the pull request release-candidate -> master
+        if: needs.plan.outputs.mode == 'rc'
+        continue-on-error: true  # needs "Allow GitHub Actions to create pull requests" in the repository settings
+        run: |
+          if [ "$(gh pr list --head release-candidate --base master --state open --json number --jq length)" = 0 ]; then
+            gh pr create --head release-candidate --base master \
+              --title "Release for NGSolve $NGSOLVE_VERSION" \
+              --body "Release candidates for NGSolve $NGSOLVE_VERSION are built from this branch (latest: \`$VERSION\` on PyPI). Merging it publishes the release; the changed NGSolve pin on master triggers it."
+          fi
+      - name: GitHub release
+        if: needs.plan.outputs.mode == 'release'
+        run: |
+          gh release view "v$VERSION" > /dev/null 2>&1 || \
+            gh release create "v$VERSION" --title "v$VERSION" --verify-tag --generate-notes
+          # the merged release-candidate branch is not needed any more
+          git fetch origin release-candidate || exit 0
+          if git merge-base --is-ancestor FETCH_HEAD "$COMMIT"; then
+            git push origin --delete release-candidate
+          fi
