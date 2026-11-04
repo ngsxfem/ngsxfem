@@ -45,6 +45,36 @@ void ExportNgsx(py::module &m)
     .export_values()
     ;
 
+  py::enum_<CUT_QUADRATURE>(m, "CUT_QUADRATURE", docu_string(R"raw_string(
+Quadrature method on cut elements (cf. ngsxfemglobals.cut_quadrature and the
+argument cut_quadrature of dCut). Wherever a CUT_QUADRATURE is expected, the
+strings "standard", "algoim" and "auto" can be used as well.
+
+STANDARD:
+    ngsxfem's standard rules: straight cuts of piecewise linear (multilinear
+    on quads/hexes) level set approximations, subdivision for level set
+    CoefficientFunctions, space-time and multiple level set rules.
+ALGOIM:
+    rules based on the Algoim library (R. I. Saye, https://algoim.github.io/),
+    which represent the level set function as element-wise polynomial of
+    higher degree (level set GridFunctions exactly, other CoefficientFunctions
+    by interpolation, cf. ngsxfemglobals.algoim_lset_order). Used wherever
+    available (single level sets on segments, triangles, quadrilaterals,
+    tetrahedra and hexahedra; on boundary elements only for NEG/POS), the
+    standard rules are used otherwise (multiple level sets, space-time).
+AUTO:
+    as ALGOIM, but only for higher order level sets (GridFunctions of order
+    > 1, general CoefficientFunctions) and only on elements without mesh
+    deformation (with a deformation, the isoparametric approach with a P1
+    level set is assumed), the standard rules otherwise.
+)raw_string"))
+    .value("STANDARD", CUTQUAD_STANDARD)
+    .value("ALGOIM", CUTQUAD_ALGOIM)
+    .value("AUTO", CUTQUAD_AUTO)
+    .def(py::init([](const string & name) { return CutQuadratureFromString(name); }))
+    ;
+  py::implicitly_convertible<py::str, CUT_QUADRATURE>();
+
 
 }
 
