@@ -379,13 +379,25 @@ See documentation of Integrate.
         levelset_domain_local["order"] = order
     if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
         levelset_domain_local["time_order"] = time_order
-    return IntegrateX(levelset_domain = levelset_domain_local,
-                      mesh=mesh, cf=cf,
-                      deformation=deformation,
-                      ip_container=ip_container,
-                      element_wise=element_wise,
-                      heapsize=heapsize
-                      )
+    # cut integration rules can have many integration points (e.g. the Algoim-based
+    # rules in 3D, see cut_quadrature); on a local heap overflow the computation is
+    # repeated with a larger heap
+    n_ip = len(ip_container) if ip_container is not None else 0
+    while True:
+        try:
+            return IntegrateX(levelset_domain = levelset_domain_local,
+                              mesh=mesh, cf=cf,
+                              deformation=deformation,
+                              ip_container=ip_container,
+                              element_wise=element_wise,
+                              heapsize=heapsize
+                              )
+        except Exception as e:
+            if "Local Heap overflow" not in str(e) or heapsize >= 10**9:
+                raise
+            heapsize *= 10
+            if ip_container is not None:
+                del ip_container[n_ip:]
 
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO
@@ -467,7 +479,8 @@ ip_container : list (or None)
   a list to store integration points (for debugging or visualization purposes only!)
 
 heapsize : int
-  heapsize for local computations.
+  heapsize for local computations (increased automatically if necessary for
+  integrals on level set domains).
     """
     if levelset_domain is not None and type(levelset_domain)==dict:
         # print("Integrate-Wrapper: IntegrateX called")
