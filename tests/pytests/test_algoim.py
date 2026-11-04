@@ -549,19 +549,170 @@ def test_mlset_codim2_and_standard():
     assert Integrate(one * dCut(p2, quadrant), mesh) == pytest.approx(1.11 * 1.23, abs=1e-8)
 
 
-def test_fallback_spacetime():
-    """space-time integrals always use the standard rules"""
-    mesh = square_mesh(2, quads=False)
-    fes = SpaceTimeFESpace(H1(mesh, order=1), ScalarTimeFE(1))
-    lset = GridFunction(fes)
-    lset.vec[:] = -1
+# ---------------------------------------------------------------------------
+# space-time integrals (dCut(..., time_order=...)) and fixed reference times
+# ---------------------------------------------------------------------------
+
+def st_lset_gf(mesh, order_space, order_time, cf):
+    """space-time level set GridFunction (cf may depend on the reference time tref)"""
+    lset = GridFunction(SpaceTimeFESpace(H1(mesh, order=order_space), ScalarTimeFE(order_time)))
+    lset.Set(cf)
+    return lset
+
+
+def st_integrate(lset, dt, mesh, cf=1, order=4, time_order=4, method=None):
+    return integrate(lset, dt, mesh, cf=cf, order=order, method=method, time_order=time_order)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_spacetime_planar_2d(quads):
+    """planar in space-time (P1 in space and time): the standard and the Algoim-based rules are exact"""
+    mesh = square_mesh(4, quads)
+    lset = st_lset_gf(mesh, 1, 1, x + 0.3 * y - 0.1 - 0.4 * tref)
+    for dt in [NEG, POS, IF]:
+        vals = [st_integrate(lset, dt, mesh, cf=x * x * tref + y, order=3, time_order=6, method=m)
+                for m in ["standard", "algoim"]]
+        assert vals[1] == pytest.approx(vals[0], abs=1e-13)
+
+
+def test_spacetime_1d():
+    """P1 in space, P2 in time: the interface x = 0.1 + 0.3 t^2 is a graph over the time axis,
+    the Algoim-based rules (that prefer spatial height directions) are exact"""
+    mesh = Make1DMesh(7, mapping=lambda x: 2 * x - 1)
+    lset = st_lset_gf(mesh, 1, 2, x - 0.1 - 0.3 * tref**2)
+    assert st_integrate(lset, NEG, mesh, method="algoim") == pytest.approx(1.2, abs=1e-13)
+    assert st_integrate(lset, IF, mesh, method="algoim") == pytest.approx(1.0, abs=1e-13)
+    for dt in [NEG, POS]:
+        vals = [st_integrate(lset, dt, mesh, cf=x * tref, method=m) for m in ["standard", "algoim"]]
+        assert vals[1] == pytest.approx(vals[0], abs=1e-13)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_spacetime_moving_circle(quads):
+    """moving and growing circle, as space-time GridFunction (order 2 in space and time, exact)
+    and as CoefficientFunction of tref: int_0^1 |Omega(t)| dt and int_0^1 |Gamma(t)| dt"""
+    mesh = square_mesh(8, quads)
+    R0, r1, a = 0.5, 0.1, 0.1
+    cf = (x - a * tref)**2 + y**2 - (R0 + r1 * tref)**2
+    lset = st_lset_gf(mesh, 2, 2, cf)
+    for levelset in [lset, cf]:
+        vol = st_integrate(levelset, NEG, mesh)
+        ifm = st_integrate(levelset, IF, mesh)
+        assert vol == pytest.approx(pi * (R0**2 + R0 * r1 + r1**2 / 3), abs=1e-6)
+        assert ifm == pytest.approx(2 * pi * (R0 + r1 / 2), abs=5e-5)
+    # the standard rules do not support level sets of higher order in space
+    with pytest.raises(Exception, match="piecewise linear"):
+        st_integrate(lset, NEG, mesh, method="standard")
+
+
+def test_spacetime_3d():
+    """3D+t: planar (exact, tetrahedra and hexahedra) and moving sphere"""
     vals = []
-    for method in ["standard", "algoim"]:
-        vals.append(Integrate(levelset_domain={"levelset": lset, "domain_type": NEG,
-                                               "cut_quadrature": method},
-                              cf=1, mesh=mesh, order=0, time_order=0))
-    assert vals[0] == pytest.approx(4, abs=1e-13)
-    assert vals[1] == pytest.approx(vals[0], abs=1e-14)
+    for hexes, n in [(False, 1), (True, 2)]:
+        mesh = cube_mesh(n, hexes)
+        lset = st_lset_gf(mesh, 1, 1, x + 0.3 * y + 0.2 * z - 0.1 - 0.4 * tref)
+        vals.append([st_integrate(lset, dt, mesh, cf=x * tref + z, order=2, time_order=2, method="algoim")
+                     for dt in [NEG, IF]])
+    ref = [st_integrate(lset, dt, mesh, cf=x * tref + z, order=2, time_order=8, method="standard")
+           for dt in [NEG, IF]]
+    assert vals[0] == pytest.approx(ref, abs=1e-13)
+    assert vals[1] == pytest.approx(ref, abs=1e-13)
+
+    mesh = cube_mesh(4, hexes=True)
+    R0, r1, a = 0.5, 0.1, 0.1
+    lset = st_lset_gf(mesh, 2, 2, (x - a * tref)**2 + y**2 + z**2 - (R0 + r1 * tref)**2)
+    vol = st_integrate(lset, NEG, mesh)
+    ifm = st_integrate(lset, IF, mesh)
+    assert vol == pytest.approx(4 / 3 * pi * (R0**3 + 1.5 * R0**2 * r1 + R0 * r1**2 + r1**3 / 4), abs=1e-5)
+    assert ifm == pytest.approx(4 * pi * (R0**2 + R0 * r1 + r1**2 / 3), abs=1e-4)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_spacetime_tref(quads):
+    """fixed reference time: space-time level set at tref = spatial level set at that time"""
+    mesh = square_mesh(8, quads)
+    R0, r1, a = 0.45, 0.1, 0.15  # (the circles do not pass through vertices)
+    cf = (x - a * tref)**2 + y**2 - (R0 + r1 * tref)**2
+    lset = st_lset_gf(mesh, 2, 2, cf)
+    for t in [0, 0.3, 1]:
+        lset_t = lset_gf(mesh, 2, fix_tref(cf, t))
+        for dt in [NEG, IF]:
+            val = Integrate(x * y * y * dCut(lset, dt, tref=t, order=4), mesh)
+            assert val == pytest.approx(Integrate(x * y * y * dCut(lset_t, dt, order=4), mesh), abs=1e-13)
+        R = R0 + r1 * t
+        assert Integrate(CoefficientFunction(1) * dCut(cf, NEG, tref=t, order=4), mesh) \
+            == pytest.approx(pi * R**2, abs=1e-6)
+
+
+def st_skeleton_integral(mesh, lset, dt, method, time_order=4):
+    """measure of the cut part of the interior facets (skeleton) over the time interval"""
+    V = L2(mesh, order=0, dgjumps=True)
+    u, v = V.TnT()
+    one = GridFunction(V)
+    one.Set(1)
+    a = BilinearForm(V, check_unused=False)
+    a += 0.25 * (u + u.Other()) * (v + v.Other()) * dCut(lset, dt, skeleton=True, order=4,
+                                                           time_order=time_order, cut_quadrature=method)
+    a.Assemble()
+    return InnerProduct(one.vec, a.mat * one.vec)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_spacetime_facets_2d(quads):
+    """skeleton integrals in 2D+t, planar in space-time: standard and Algoim-based rules agree"""
+    mesh = square_mesh(4, quads)
+    lset = st_lset_gf(mesh, 1, 1, x + 0.3 * y - 0.1 - 0.4 * tref)
+    for dt in [NEG, POS, IF]:
+        vals = [st_skeleton_integral(mesh, lset, dt, m) for m in ["standard", "algoim"]]
+        assert vals[1] == pytest.approx(vals[0], abs=1e-12)
+
+
+@pytest.mark.parametrize("hexes", [False, True])
+def test_spacetime_facets_3d(hexes):
+    """skeleton integrals in 3D+t, planar in space-time: NEG parts as for the standard rules,
+    interfaces (not supported by the standard rules) vs. a sampled reference"""
+    import numpy as np
+    mesh = cube_mesh(2, hexes)
+    nrm, c0, c1 = np.array([1, 0.3, 0.2]), 0.1, 0.4
+    lset = st_lset_gf(mesh, 1, 1, x + 0.3 * y + 0.2 * z - c0 - c1 * tref)
+    vals = [st_skeleton_integral(mesh, lset, NEG, m) for m in ["standard", "algoim"]]
+    assert vals[1] == pytest.approx(vals[0], abs=1e-12)
+
+    def segment_length(verts, c):
+        """length of {p : nrm . p = c} in the convex facet with vertices verts"""
+        pts = []
+        for i in range(len(verts)):
+            for j in range(i):
+                a, b = nrm @ verts[i] - c, nrm @ verts[j] - c
+                if a * b < 0:
+                    pts.append(verts[i] + a / (a - b) * (verts[j] - verts[i]))
+        return max([np.linalg.norm(p - q) for p in pts for q in pts], default=0.0)
+
+    # (the cut points are on the facet edges; the diagonals of quadrilateral facets are inside)
+    facets = [[np.array(mesh[v].point) for v in mesh[f].vertices] for f in mesh.faces
+              if len(mesh[f].elements) == 2]
+    ts = (np.arange(400) + 0.5) / 400
+    ref = np.mean([sum(segment_length(verts, c0 + c1 * t) for verts in facets) for t in ts])
+    assert st_skeleton_integral(mesh, lset, IF, "algoim") == pytest.approx(ref, abs=1e-5)
+
+
+def test_spacetime_selection():
+    """auto: standard rules for space-time level sets that are P1 in space (also of higher order
+    in time), Algoim-based rules otherwise"""
+    mesh = square_mesh(4, quads=False)
+    cf = x + 0.3 * y - 0.1 - 0.2 * tref**2
+    p1 = st_lset_gf(mesh, 1, 2, cf)
+    p2 = st_lset_gf(mesh, 2, 2, cf)
+    for dt in [NEG, IF]:
+        assert st_integrate(p1, dt, mesh) == st_integrate(p1, dt, mesh, method="standard")
+        assert st_integrate(p2, dt, mesh) == st_integrate(p2, dt, mesh, method="algoim")
+        assert st_integrate(p2, dt, mesh) == pytest.approx(st_integrate(p1, dt, mesh, time_order=12,
+                                                                        method="standard"), abs=1e-10)
+    # CutInfo with space-time level sets of higher order in space
+    ci1, ci2 = CutInfo(mesh, p1, time_order=0), CutInfo(mesh, p2, time_order=0)
+    for cdt in [IF, NEG, POS]:
+        els1, els2 = ci1.GetElementsOfType(cdt), ci2.GetElementsOfType(cdt)
+        assert els2.NumSet() == els1.NumSet() > 0 and (els1 & els2).NumSet() == els1.NumSet()
 
 
 # ---------------------------------------------------------------------------
