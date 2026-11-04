@@ -56,4 +56,10 @@ algoim/multiloop.hpp
 
 ## Modifications with respect to the upstream version
 
-None.
+* `algoim/sparkstack.hpp`: the thread-local stack of `SparkStack<T>` (capacity
+  2^23 elements per type and thread) is allocated with `new T[capacity]` instead
+  of `std::vector<T>(capacity)`. The upstream version value-initialises (and
+  thereby commits) the full buffer, i.e. 64 MB per thread for `double`, as soon
+  as a thread uses Algoim. Without value-initialisation only the pages that are
+  actually used are committed. The semantics of the allocator are unchanged
+  (allocated memory was never guaranteed to be zero).
