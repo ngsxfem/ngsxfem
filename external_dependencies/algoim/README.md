@@ -48,8 +48,8 @@ algoim/multiloop.hpp
   interface in `cutint/algoim_wrapper.hpp`.
 * Algoim needs two LAPACKE routines (`LAPACKE_dgesvd`, `LAPACKE_dggevx`).
   ngsxfem does not link against LAPACK(E) directly. Instead,
-  `cutint/algoim_lapacke/lapacke.h` provides self-contained replacements of
-  exactly these two routines; the directory is put first on the include path of
+  `cutint/algoim_lapacke/lapacke.h` provides replacements of exactly these two
+  routines (based on NGSolve's LAPACK-free dense linear algebra); the directory is put first on the include path of
   `cutint/algoim_wrapper.cpp`.
 * To update Algoim, replace the headers listed above by the new versions, update
   the commit hash in this file and re-apply the modifications listed below.

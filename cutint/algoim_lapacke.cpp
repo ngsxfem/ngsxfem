@@ -2,10 +2,11 @@
   Self-contained replacements of the two LAPACKE routines used by the bundled
   Algoim library, see algoim_lapacke/lapacke.h.
 
-  * LAPACKE_dgesvd: one-sided Jacobi SVD (Hestenes' method). The matrices
-    Algoim decomposes are small (Bernstein-Vandermonde matrices of size
-    degree+1), for which the one-sided Jacobi method is simple, robust and
-    accurate (it even achieves high relative accuracy).
+  * LAPACKE_dgesvd: wrapper of NGSolve's (LAPACK-free) SVD ngbla::CalcSVD.
+    Algoim decomposes Bernstein-Vandermonde matrices of size degree+1, where
+    the degree of the resultants that Algoim computes in 3D can be several
+    hundred, so that an O(n^3) algorithm with a small constant is mandatory.
+    (The decompositions are cached by Algoim.)
   * LAPACKE_dggevx: generalized eigenvalues of a pencil (A,B) by a
     shift-and-invert transformation to the standard eigenvalue problem of
     M = (A - sigma B)^{-1} B (eigenvalues mu = 1/(lambda - sigma), mu = 0 for
@@ -15,9 +16,10 @@
     find real roots in [0,1] of univariate Bernstein polynomials, so the shifts
     are chosen close to (but not exactly at) this interval.
 
-  This file must not include NGSolve or Algoim headers.
+  This file must not include Algoim headers.
 */
 
+#include <bla.hpp>   // NGSolve's dense linear algebra (CalcSVD)
 #include "algoim_lapacke/lapacke.h"
 
 #include <algorithm>
@@ -274,122 +276,41 @@ namespace xintegration
       if (n == 0)
         return 0;
 
-      // W = A (columns are orthogonalized), V = I
-      std::vector<double> W(n*n), V(n*n, 0.0);
+      // NGSolve's SVD (Householder bidiagonalization + QR iteration):
+      // A = U diag(A) V^T, A is overwritten by the singular values (in descending order)
+      ngbla::Matrix<double> A(n, n);
+      ngbla::Matrix<double, ngbla::ColMajor> U(n, n), V(n, n);
       for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
-          W[i*n+j] = a[i*lda+j];
-      for (int i = 0; i < n; i++)
-        V[i*n+i] = 1.0;
+          A(i,j) = a[i*lda+j];
+      ngbla::CalcSVD(A, U, V);
 
-      const int maxsweeps = 60;
-      bool converged = false;
-      for (int sweep = 0; sweep < maxsweeps && !converged; sweep++)
-      {
-        converged = true;
-        for (int p = 0; p < n-1; p++)
-          for (int q = p+1; q < n; q++)
-          {
-            double alpha = 0, beta = 0, gamma = 0;
-            for (int i = 0; i < n; i++)
-            {
-              alpha += W[i*n+p]*W[i*n+p];
-              beta += W[i*n+q]*W[i*n+q];
-              gamma += W[i*n+p]*W[i*n+q];
-            }
-            if (gamma == 0 || std::fabs(gamma) <= eps * std::sqrt(alpha*beta))
-              continue;
-            converged = false;
-            double zeta = (beta - alpha) / (2.0*gamma);
-            double t = std::copysign(1.0, zeta) / (std::fabs(zeta) + std::sqrt(1.0 + zeta*zeta));
-            double c = 1.0 / std::sqrt(1.0 + t*t);
-            double sn = c * t;
-            for (int i = 0; i < n; i++)
-            {
-              double wp = W[i*n+p], wq = W[i*n+q];
-              W[i*n+p] = c*wp - sn*wq;
-              W[i*n+q] = sn*wp + c*wq;
-              double vp = V[i*n+p], vq = V[i*n+q];
-              V[i*n+p] = c*vp - sn*vq;
-              V[i*n+q] = sn*vp + c*vq;
-            }
-          }
-      }
-
-      // singular values = column norms, sorted in descending order
-      std::vector<double> sigma(n);
+      // LAPACK conventions: non-negative singular values in descending order
       std::vector<int> perm(n);
       for (int j = 0; j < n; j++)
       {
-        double nrm = 0;
-        for (int i = 0; i < n; i++)
-          nrm += W[i*n+j]*W[i*n+j];
-        sigma[j] = std::sqrt(nrm);
         perm[j] = j;
+        if (A(j,j) < 0)
+        {
+          A(j,j) = -A(j,j);
+          for (int i = 0; i < n; i++)
+            U(i,j) = -U(i,j);
+        }
       }
-      std::stable_sort(perm.begin(), perm.end(), [&sigma] (int i, int j) { return sigma[i] > sigma[j]; });
-
-      double smax = (n > 0) ? sigma[perm[0]] : 0.0;
-      std::vector<double> U(n*n, 0.0);
-      std::vector<bool> filled(n, false);
+      std::stable_sort(perm.begin(), perm.end(), [&A] (int i, int j) { return A(i,i) > A(j,j); });
       for (int jj = 0; jj < n; jj++)
       {
         int j = perm[jj];
-        s[jj] = sigma[j];
+        s[jj] = A(j,j);
         for (int i = 0; i < n; i++)
-          vt[jj*ldvt+i] = V[i*n+j];
-        if (sigma[j] > n * eps * smax && sigma[j] > 0)
         {
-          for (int i = 0; i < n; i++)
-            U[i*n+jj] = W[i*n+j] / sigma[j];
-          filled[jj] = true;
+          u[i*ldu+jj] = U(i,j);
+          vt[jj*ldvt+i] = V(i,j);
         }
       }
-      // complete U to an orthonormal basis in case of (numerical) rank deficiency:
-      // take the unit vector with the largest component orthogonal to the
-      // columns found so far (its norm is at least sqrt((n-k)/n) for k columns)
-      for (int jj = 0; jj < n; jj++)
-      {
-        if (filled[jj])
-          continue;
-        std::vector<double> best(n), w(n);
-        double bestnrm = -1;
-        for (int e = 0; e < n; e++)
-        {
-          std::fill(w.begin(), w.end(), 0.0);
-          w[e] = 1.0;
-          for (int pass = 0; pass < 2; pass++)
-            for (int kk = 0; kk < n; kk++)
-              if (filled[kk])
-              {
-                double dot = 0;
-                for (int i = 0; i < n; i++)
-                  dot += U[i*n+kk]*w[i];
-                for (int i = 0; i < n; i++)
-                  w[i] -= dot*U[i*n+kk];
-              }
-          double nrm = 0;
-          for (int i = 0; i < n; i++)
-            nrm += w[i]*w[i];
-          nrm = std::sqrt(nrm);
-          if (nrm > bestnrm)
-          {
-            bestnrm = nrm;
-            for (int i = 0; i < n; i++)
-              best[i] = w[i]/nrm;
-          }
-        }
-        for (int i = 0; i < n; i++)
-          U[i*n+jj] = best[i];
-        filled[jj] = true;
-      }
-      for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-          u[i*ldu+j] = U[i*n+j];
       for (int i = 0; i < n-1; i++)
         superb[i] = 0.0;
-      // A is documented to be overwritten (destroyed) on exit; keep LAPACK semantics loose
-      return converged ? 0 : 1;
+      return 0;
     }
 
 

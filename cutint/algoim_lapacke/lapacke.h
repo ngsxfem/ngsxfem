@@ -11,9 +11,10 @@
                        for the real roots of univariate Bernstein polynomials).
 
   ngsxfem does not link against LAPACK(E) itself (on some platforms NGSolve
-  provides LAPACK only internally). This header provides self-contained
-  implementations of the two routines for exactly the arguments Algoim uses
-  (square matrices, row-major layout, no eigenvectors). The directory of this
+  provides LAPACK only internally). This header provides implementations of
+  the two routines for exactly the arguments Algoim uses (square matrices,
+  row-major layout, no eigenvectors) that only rely on NGSolve's own
+  (LAPACK-free) dense linear algebra. The directory of this
   header is put first on the include path of cutint/algoim_wrapper.cpp, the
   only translation unit that includes Algoim.
 
@@ -43,9 +44,8 @@ namespace xintegration
 
     /// Singular value decomposition A = U diag(s) Vt of a square n x n matrix
     /// (only m == n, jobu == jobvt == 'A' is supported). Singular values are
-    /// returned in descending order. On exit, A is overwritten.
-    /// Returns 0 on success, -1 for unsupported arguments and > 0 if the
-    /// iteration did not converge.
+    /// returned in descending order. A is not changed.
+    /// Returns 0 on success and -1 for unsupported arguments.
     lapack_int LAPACKE_dgesvd (int matrix_layout, char jobu, char jobvt,
                                lapack_int m, lapack_int n, double * a, lapack_int lda,
                                double * s, double * u, lapack_int ldu,
