@@ -25,6 +25,19 @@ namespace xintegration
   /// GridFunctions with the standard rules
   [[noreturn]] void StandardRulesRequireP1Levelset ();
 
+  /// true if the Algoim-based rule is used for the multiple level set domain on
+  /// the element (see CUT_QUADRATURE; domain type tuples with more than one
+  /// interface condition are only supported by the standard rules for P1 level sets)
+  bool UseAlgoimMultiLevelsetCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                                      const ElementTransformation & trafo);
+
+  /// classification of an element w.r.t. a level set GridFunction (NEG, POS or
+  /// IF): from the vertex values for P1 level sets (standard rules), otherwise
+  /// from the measures of the negative and positive parts (as in CutInfo)
+  DOMAIN_TYPE ElementDomainType (const shared_ptr<GridFunction> & gf_lset,
+                                 optional<CUT_QUADRATURE> cut_quadrature,
+                                 const ElementTransformation & trafo, LocalHeap & lh);
+
   /// the level set function of a single level set domain (CoefficientFunction
   /// or GridFunction)
   shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom);

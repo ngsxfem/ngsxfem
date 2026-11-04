@@ -84,6 +84,90 @@ namespace xintegration
     return true;
   }
 
+  /// true if the domain has domain type tuples with more than one interface condition
+  static bool HasHigherCodimensionParts (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    for (const auto & dts : lsetintdom.GetDomainTypes())
+    {
+      int ninterfaces = 0;
+      for (auto dt : dts)
+        if (dt == IF)
+          ninterfaces++;
+      if (ninterfaces > 1)
+        return true;
+    }
+    return false;
+  }
+
+  static bool AllP1Levelsets (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    for (auto & gf : lsetintdom.GetLevelsetGFs())
+      if (!IsP1Levelset(gf))
+        return false;
+    return true;
+  }
+
+  bool UseAlgoimMultiLevelsetCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                                      const ElementTransformation & trafo)
+  {
+    const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
+    if (method == CUTQUAD_STANDARD)
+      return false;
+    if ((lsetintdom.GetTimeIntegrationOrder() >= 0) || lsetintdom.HasReferenceTime())
+      return false;
+    bool has_interface = false;
+    for (const auto & dts : lsetintdom.GetDomainTypes())
+      for (auto dt : dts)
+        if (dt == IF)
+          has_interface = true;
+    if (!AlgoimCutRuleAvailable(trafo, has_interface ? IF : NEG))
+      return false;
+    for (auto & gf : lsetintdom.GetLevelsetGFs())
+      if (dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+        return false;
+    const bool all_p1 = AllP1Levelsets(lsetintdom);
+    // parts of higher co-dimension: only the standard rules (for P1 level sets)
+    if (all_p1 && HasHigherCodimensionParts(lsetintdom))
+      return false;
+    if (method == CUTQUAD_ALGOIM)
+      return true;
+    // CUTQUAD_AUTO
+    if (all_p1)
+      return false;
+    InformOnAutomaticAlgoim(lsetintdom);
+    return true;
+  }
+
+  DOMAIN_TYPE ElementDomainType (const shared_ptr<GridFunction> & gf_lset,
+                                 optional<CUT_QUADRATURE> cut_quadrature,
+                                 const ElementTransformation & trafo, LocalHeap & lh)
+  {
+    if (IsP1Levelset(gf_lset) && (cut_quadrature.value_or(globxvar.CUT_QUADRATURE_METHOD) != CUTQUAD_ALGOIM))
+    {
+      Array<DofId> dnums(0, lh);
+      gf_lset->GetFESpace()->GetDofNrs(trafo.GetElementId(), dnums);
+      FlatVector<> elvec(dnums.Size(), lh);
+      gf_lset->GetVector().GetIndirect(dnums, elvec);
+      return CheckIfStraightCut(elvec);
+    }
+    // as in CutInfo: measures of the negative and positive parts
+    double part_vol[] = {0.0, 0.0};
+    for (DOMAIN_TYPE np : {POS, NEG})
+    {
+      LevelsetIntegrationDomain lsetintdom(gf_lset, nullptr, np, 0, -1, 0);
+      lsetintdom.SetCutQuadrature(cut_quadrature);
+      const IntegrationRule * ir;
+      Array<double> wei_arr;
+      tie(ir, wei_arr) = CreateCutIntegrationRule(lsetintdom, trafo, lh);
+      if (ir)
+        for (auto w : wei_arr)
+          part_vol[np] += w;
+    }
+    if (part_vol[NEG] > 0.0)
+      return (part_vol[POS] > 0.0) ? IF : NEG;
+    return POS;
+  }
+
   shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom)
   {
     shared_ptr<CoefficientFunction> lset = lsetintdom.GetLevelsetCF();
@@ -140,6 +224,11 @@ namespace xintegration
     {
       if (lsetintdom.HasReferenceTime())
         throw Exception("No tref-fixing for mlset yet.");
+      if (UseAlgoimMultiLevelsetCutRule(lsetintdom, trafo))
+        return AlgoimMultiLevelsetCutIntegrationRule(lsetintdom, trafo, globxvar.ALGOIM_LSET_ORDER, lh);
+      // the standard rules require piecewise linear level set GridFunctions
+      if ((lsetintdom.GetTimeIntegrationOrder() < 0) && !AllP1Levelsets(lsetintdom))
+        StandardRulesRequireP1Levelset();
       return CreateMultiLevelsetCutIntegrationRule(lsetintdom, trafo, lh);
     }
     else

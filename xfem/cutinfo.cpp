@@ -374,18 +374,11 @@ namespace ngcomp
          // ELEMENT_TYPE eltype = ngel.GetType();
          ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
 
-         Array<DofId> dnums(0,lh);
          int M =lsetintdom.GetLevelsetGFs().Size();
          Array<DOMAIN_TYPE> dts_el(M,lh);
          for (int j = 0; j < M; j++)
-         {
-           auto gflset = lsetintdom.GetLevelsetGFs()[j];
-           gflset->GetFESpace()->GetDofNrs(eltrans.GetElementId(), dnums);
-           FlatVector<> elvec(dnums.Size(), lh);
-           gflset->GetVector().GetIndirect(dnums, elvec);
-
-           dts_el[j] = CheckIfStraightCut(elvec);
-         }
+           dts_el[j] = ElementDomainType(lsetintdom.GetLevelsetGFs()[j], lsetintdom.OptionalCutQuadrature(),
+                                         eltrans, lh);
 
          for (int i = 0; i < lsetintdom.GetDomainTypes().Size(); i++)
          {
