@@ -131,6 +131,9 @@ add_test(NAME pytests_spacetime_diffops_vech1 COMMAND ${NETGEN_PYTHON_EXECUTABLE
 add_test(NAME pytests_elementlayers COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_elementlayers.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_algoim COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_algoim.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 
 install( FILES
   ngsxfem_report.py
