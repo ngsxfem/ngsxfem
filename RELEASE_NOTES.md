@@ -16,6 +16,21 @@ Requires NGSolve 6.2.2608.
 
 ### New features
 
+- **Algoim-based cut quadrature.** The quadrature of the [Algoim](https://algoim.github.io/)
+  library (R. I. Saye, bundled in `external_dependencies/algoim`) can be used on cut
+  elements. It works directly with higher order level set functions (no piecewise linear
+  approximation, no mesh deformation), on segments, triangles, quadrilaterals,
+  tetrahedra and hexahedra. Selection:
+  ```python
+  ngsxfemglobals.cut_quadrature = "algoim"   # or "auto" / "standard" (default)
+  dx = dCut(lset_ho, NEG, cut_quadrature="algoim")   # per integral
+  ci = CutInfo(mesh, lset_ho, cut_quadrature="algoim")
+  ```
+  `"auto"` uses Algoim for higher order level sets on undeformed meshes and the standard
+  rules otherwise. Multiple level sets and space-time integrals always use the standard
+  rules. See `demos/fictdom_algoim.py` and `CUT_QUADRATURE`.
+- `Integrate` on level set domains increases its local heap automatically on overflow.
+
 - **Reusable C++ core library.** The C++ part is split into a shared library
   `xfem_core` and the Python extension module `xfem`, which links against it.
   Other projects (e.g. further NGSolve add-ons) can link against ngsxfem:

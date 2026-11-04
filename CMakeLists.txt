@@ -53,6 +53,11 @@ add_subdirectory(spacetime)
 
 install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
 
+# The bundled Algoim library (external_dependencies/algoim) is compiled into
+# xfem_core; its license has to accompany binary distributions.
+install(FILES external_dependencies/algoim/LICENSE external_dependencies/algoim/README.md
+        DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem/third_party/algoim)
+
 ngsolve_generate_stub_files(xfem)
 
 # uninstall target
