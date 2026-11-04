@@ -247,6 +247,88 @@ namespace xintegration
       return make_tuple(ir, std::move(wei_arr));
     }
 
+    // Space-time rule on the element times [0,1] by time slicing, used for tetrahedra (Algoim's
+    // quadrature in dimension 4 with the simplex constraint is very expensive and not robust: the
+    // elimination steps w.r.t. the level set and the simplex polynomial lead to resultants of high
+    // degree with many roots). The time interval is split at the times where the level set
+    // function changes its sign in a vertex of the element (where the topology of the cut changes,
+    // as for the standard space-time rules); on each sub-interval, the Gauss rule in time (order
+    // time_intorder) is combined with the spatial rules at the fixed times. For interfaces, the
+    // spatial rules directly give the iterated measure int_0^1 int_{Gamma(t)} ds dt.
+    template <int D>
+    tuple<const IntegrationRule *, Array<double>>
+    T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices (const shared_ptr<CoefficientFunction> & cf_lset,
+                                                   const ElementTransformation & trafo,
+                                                   DOMAIN_TYPE dt, int intorder, int time_intorder,
+                                                   int degree_space, int degree_time, int subdivlvl,
+                                                   LocalHeap & lh)
+    {
+      const ELEMENT_TYPE et = trafo.GetElementType();
+
+      // breakpoints in time: roots of the level set function (polynomial in time) in the vertices
+      Array<double> tbreak;
+      tbreak.Append(0.0);
+      {
+        std::vector<double> tnodes;
+        algoim_wrapper::InterpolationPoints(1, degree_time, tnodes);
+        const int nt = tnodes.size();
+        const int nv = ElementTopology::GetNVertices(et);
+        const POINT3D * verts = ElementTopology::GetVertices(et);
+        IntegrationRule ir_vt(nv * nt, lh);
+        for (int v = 0; v < nv; v++)
+          for (int j = 0; j < nt; j++)
+          {
+            ir_vt[v*nt+j] = IntegrationPoint(verts[v][0], verts[v][1], verts[v][2], tnodes[j]);
+            MarkAsSpaceTimeIntegrationPoint(ir_vt[v*nt+j]);
+          }
+        auto & mir_vt = trafo(ir_vt, lh);
+        FlatMatrix<> vals(nv * nt, 1, lh);
+        cf_lset->Evaluate(mir_vt, vals);
+        for (int v = 0; v < nv; v++)
+        {
+          std::vector<double> roots, wts, grads;
+          auto status = algoim_wrapper::CutQuadrature(1, degree_time, &vals(v*nt,0), false, int(IF), 1, 0,
+                                                      roots, wts, grads);
+          if (status == algoim_wrapper::CUT)
+            for (double r : roots)
+              tbreak.Append(r);
+        }
+      }
+      tbreak.Append(1.0);
+      QuickSort(tbreak);
+
+      const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_intorder);
+      Array<IntegrationPoint> points;
+      Array<double> wei_arr;
+      for (int k = 0; k + 1 < tbreak.Size(); k++)
+      {
+        const double t0 = tbreak[k], t1 = tbreak[k+1];
+        if (t1 - t0 < 1e-14)
+          continue;
+        for (auto & ipt : ir_time)
+        {
+          HeapReset hr(lh);
+          const double t = t0 + (t1 - t0) * ipt(0);
+          const double wt = (t1 - t0) * ipt.Weight();
+          auto [ir_t, wei_t] = T_AlgoimCutIntegrationRule<D>(cf_lset, trafo, dt, intorder, degree_space,
+                                                              subdivlvl, t, lh);
+          if (ir_t == nullptr)
+            continue;
+          for (int i = 0; i < ir_t->Size(); i++)
+          {
+            points.Append((*ir_t)[i]); // spatial point, time t in the weight (marked)
+            wei_arr.Append(wei_t[i] * wt);
+          }
+        }
+      }
+      if (points.Size() == 0)
+        return make_tuple(nullptr, Array<double>());
+      auto ir = new (lh) IntegrationRule(points.Size(), lh);
+      for (int i = 0; i < points.Size(); i++)
+        (*ir)[i] = points[i];
+      return make_tuple(ir, std::move(wei_arr));
+    }
+
     template <int D>
     const IntegrationRule *
     T_AlgoimCutFacetIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
@@ -608,6 +690,19 @@ namespace xintegration
     return true;
   }
 
+  /// polynomial degree in time of the space-time level set function (see AlgoimLevelsetDegree)
+  static int AlgoimLevelsetTimeDegree (const shared_ptr<CoefficientFunction> & cf_lset, int cf_degree)
+  {
+    auto gf = dynamic_pointer_cast<GridFunction>(cf_lset);
+    if (gf)
+    {
+      if (auto st_fes = dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+        return max(1, st_fes->GetTimeFE()->Order());
+      return 1; // constant in time
+    }
+    return max(1, cf_degree);
+  }
+
   bool AlgoimSpaceTimeCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt)
   {
     if (!AlgoimCutRuleAvailable(trafo, dt))
@@ -681,6 +776,12 @@ namespace xintegration
     if (!AlgoimSpaceTimeCutRuleAvailable(trafo, dt))
       throw Exception("AlgoimSpaceTimeCutIntegrationRule: element type / domain type combination not supported");
 
+    // tetrahedra: time slicing (see T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices)
+    if (trafo.GetElementType() == ET_TET)
+      return T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices<3>(cf_lset, trafo, dt, intorder, time_intorder,
+                                                              AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh),
+                                                              AlgoimLevelsetTimeDegree(cf_lset, cf_degree),
+                                                              subdivlvl, lh);
     const int degree = AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh, true);
     switch (ElementTopology::GetSpaceDim(trafo.GetElementType()))
     {

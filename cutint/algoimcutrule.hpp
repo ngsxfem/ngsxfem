@@ -44,8 +44,13 @@
   product of the simplex with the time interval). Algoim's quadrature is
   applied in space-time (up to 3D+t, i.e. dimension 4); the time is preferred
   as the variable of the outermost integral (see
-  algoim_wrapper::MultiCutQuadrature). The rules follow the conventions of the
-  standard space-time rules (SpaceTimeCutIntegrationRule).
+  algoim_wrapper::MultiCutQuadrature). Exception: on tetrahedra, Algoim's
+  quadrature in dimension 4 w.r.t. the level set and the simplex constraint is
+  very expensive (and not robust), here the time interval is split at the
+  sign changes of the level set function in the vertices and Gauss rules in
+  time are combined with the spatial rules at fixed times (time slicing). The
+  rules follow the conventions of the standard space-time rules
+  (SpaceTimeCutIntegrationRule).
 */
 
 #include "xintegration.hpp"
@@ -144,8 +149,9 @@ namespace xintegration
   /// interval [0,1] w.r.t. the space-time level set function (a GridFunction on a
   /// SpaceTimeFESpace or a CoefficientFunction that depends on the time variable),
   /// represented by a polynomial on [0,1]^(D+1) (of degree max(order in space,
-  /// order in time) per variable). Algoim's quadrature is applied in space-time,
-  /// the conventions are those of SpaceTimeCutIntegrationRule: the integration
+  /// order in time) per variable). Algoim's quadrature is applied in space-time
+  /// (tetrahedra: time slicing, see above), the conventions are those of
+  /// SpaceTimeCutIntegrationRule: the integration
   /// points are spatial (reference) points, with the reference time in the weight
   /// of the (space-time) integration point, the weights are given in the array.
   /// For interfaces (dt == IF), the weights refer to the iterated measure
