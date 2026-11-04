@@ -901,14 +901,17 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         into a space-time quadrature rule with fixed reference time tref
     cut_quadrature : {"standard", "algoim", "auto"} or CUT_QUADRATURE
         Quadrature method on cut elements for this integral. Default:
-        None, i.e. the global setting ngsxfemglobals.cut_quadrature is
-        used. With "algoim", the quadrature of the Algoim library
-        (R. I. Saye, https://algoim.github.io/) is applied w.r.t. the
-        (higher order) level set function itself, e.g. for a level set
-        GridFunction of order k without isoparametric mapping:
-        dCut(lset_ho, NEG, order=2*k, cut_quadrature="algoim").
-        See CUT_QUADRATURE for details. Note that element markers
-        (CutInfo) should be computed with the same quadrature method.
+        None, i.e. the global setting ngsxfemglobals.cut_quadrature
+        (default: "auto") is used. "standard" requires a piecewise
+        linear level set GridFunction (e.g. isoparametric approach),
+        with "algoim" the quadrature of the Algoim library (R. I. Saye,
+        https://algoim.github.io/) is applied w.r.t. the (higher order)
+        level set function itself, e.g. for a level set GridFunction
+        of order k: dCut(lset_ho, NEG, order=2*k). "auto" chooses
+        "standard" for piecewise linear level set GridFunctions and
+        "algoim" otherwise. See CUT_QUADRATURE for details. Note that
+        element markers (CutInfo) should be computed with the same
+        quadrature method.
     levelset_domain : dict
         description of integration domain through a dictionary 
         (deprecated).

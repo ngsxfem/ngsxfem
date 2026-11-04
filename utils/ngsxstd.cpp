@@ -82,15 +82,6 @@ CUT_QUADRATURE CutQuadratureFromString (const string & name)
   throw Exception("unknown cut quadrature method '" + name + "' (choose from 'standard', 'algoim', 'auto')");
 }
 
-bool IsDeformedElementTransformation (const ngfem::ElementTransformation & trafo)
-{
-  // NGSolve applies mesh deformations (mesh.SetDeformation, integrators with
-  // deformation) through the class ngcomp::ALE_ElementTransformation, which is
-  // not part of NGSolve's public headers. Hence, the (implementation-defined,
-  // but for all relevant compilers name-containing) type name is checked.
-  return string(typeid(trafo).name()).find("ALE_ElementTransformation") != string::npos;
-}
-
 GlobalNgsxfemVariables globxvar;
 
 GlobalNgsxfemVariables::GlobalNgsxfemVariables() {
@@ -112,7 +103,8 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     NAIVE_TIMEINT_SUBDIVS = 10;
     NON_CONV_WARN_MSG_LVL = 3;
     SIMD_EVAL = true;
-    CUT_QUADRATURE_METHOD = CUTQUAD_STANDARD;
+    CUT_QUADRATURE_METHOD = CUTQUAD_AUTO;
+    CUT_QUADRATURE_SET_BY_USER = false;
     ALGOIM_LSET_ORDER = 4;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
