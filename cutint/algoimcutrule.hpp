@@ -36,6 +36,16 @@
   the weights are such that the scaling with the measure of the (boundary)
   element transformation gives the weight w.r.t. the physical point / length
   measure.
+
+  Space-time: the level set function (a GridFunction on a SpaceTimeFESpace or
+  a CoefficientFunction of the reference time variable) is represented on the
+  space-time cell element x [0,1] (reference time) by a polynomial in D+1
+  variables (for triangles / tetrahedra: on [0,1]^(D+1), the prism is the
+  product of the simplex with the time interval). Algoim's quadrature is
+  applied in space-time (up to 3D+t, i.e. dimension 4); the time is preferred
+  as the variable of the outermost integral (see
+  algoim_wrapper::MultiCutQuadrature). The rules follow the conventions of the
+  standard space-time rules (SpaceTimeCutIntegrationRule).
 */
 
 #include "xintegration.hpp"
@@ -77,13 +87,33 @@ namespace xintegration
                                  DOMAIN_TYPE dt, int intorder, int cf_degree, int subdivlvl,
                                  LocalHeap & lh);
 
+  /// Space-time version of AlgoimCutFacetIntegrationRule: cut rule on the facet facetnr
+  /// times the reference time interval [0,1] w.r.t. the space-time level set function (a
+  /// GridFunction on a SpaceTimeFESpace or a CoefficientFunction that depends on the time
+  /// variable), with the conventions of SpaceTimeCutIntegrationRuleUntransformed: points in
+  /// reference coordinates of the facet, the reference time in the weight of the (space-time)
+  /// integration points, the weights in the array (NEG/POS: w.r.t. the reference facet; IF:
+  /// w.r.t. the iterated physical measure int_0^1 int_{Gamma(t) on the facet} dt).
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutFacetIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                          const ElementTransformation & trafo,
+                                          Facet2ElementTrafo & transform, int facetnr,
+                                          DOMAIN_TYPE dt, int intorder, int time_intorder,
+                                          int cf_degree, int subdivlvl, LocalHeap & lh);
+
   /// Polynomial degree that is used to represent the level set function on
   /// the element: the element-wise order of a (scalar) level set GridFunction,
-  /// otherwise cf_degree.
+  /// otherwise cf_degree. For GridFunctions on a SpaceTimeFESpace: the order in
+  /// space, or (spacetime == true) the maximum of the orders in space and time.
   int AlgoimLevelsetDegree (const shared_ptr<CoefficientFunction> & cf_lset,
                             const ElementTransformation & trafo,
                             int cf_degree,
-                            LocalHeap & lh);
+                            LocalHeap & lh,
+                            bool spacetime = false);
+
+  /// Algoim-based space-time cut rules are available for the element types of
+  /// AlgoimCutRuleAvailable (space-time interfaces only on volume elements).
+  bool AlgoimSpaceTimeCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt);
 
   /// Cut integration rule (and weights) for the part of the element given by
   /// dt (NEG: {phi<0}, POS: {phi>0}, IF: {phi=0}) computed with Algoim.
@@ -95,6 +125,9 @@ namespace xintegration
   ///   bounding box [0,1]^D) before Algoim is applied, see
   ///   algoim_wrapper::CutQuadrature (useful on meshes that are coarse
   ///   compared to the curvature of the interface).
+  /// tref: fixed reference time for space-time level set functions (then, the
+  ///   reference time is stored in the weights of the (space-time) integration
+  ///   points, the weights are given in the array only).
   /// Returns (nullptr, empty array) if the part is empty. Uncut elements get the
   /// standard integration rule of the element.
   tuple<const IntegrationRule *, Array<double>>
@@ -104,5 +137,29 @@ namespace xintegration
                             int intorder,
                             int cf_degree,
                             int subdivlvl,
-                            LocalHeap & lh);
+                            LocalHeap & lh,
+                            optional<double> tref = nullopt);
+
+  /// Space-time cut integration rule on the element times the reference time
+  /// interval [0,1] w.r.t. the space-time level set function (a GridFunction on a
+  /// SpaceTimeFESpace or a CoefficientFunction that depends on the time variable),
+  /// represented by a polynomial on [0,1]^(D+1) (of degree max(order in space,
+  /// order in time) per variable). Algoim's quadrature is applied in space-time,
+  /// the conventions are those of SpaceTimeCutIntegrationRule: the integration
+  /// points are spatial (reference) points, with the reference time in the weight
+  /// of the (space-time) integration point, the weights are given in the array.
+  /// For interfaces (dt == IF), the weights refer to the iterated measure
+  /// int_0^1 int_{Gamma(t)} ds dt (as for the standard space-time rules), i.e. the
+  /// weights of the space-time surface rule are multiplied with
+  /// |grad_x phi| / |grad_(x,t) phi| (coarea formula).
+  /// intorder / time_intorder: integration orders in space / time.
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                     const ElementTransformation & trafo,
+                                     DOMAIN_TYPE dt,
+                                     int intorder,
+                                     int time_intorder,
+                                     int cf_degree,
+                                     int subdivlvl,
+                                     LocalHeap & lh);
 }
