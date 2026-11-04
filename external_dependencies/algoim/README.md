@@ -63,3 +63,7 @@ algoim/multiloop.hpp
   as a thread uses Algoim. Without value-initialisation only the pages that are
   actually used are committed. The semantics of the allocator are unchanged
   (allocated memory was never guaranteed to be zero).
+* `algoim/xarray.hpp`: `xarraySlice` got an explicit constructor
+  `xarraySlice(T* ptr, int len)`. `xarraySlice` declares (deleted) copy and move
+  constructors and is therefore no aggregate in C++20 (which NGSolve requires),
+  so that the braced initialisation in `xarray::a()` does not compile without it.
