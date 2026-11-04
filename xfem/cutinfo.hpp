@@ -37,6 +37,11 @@ namespace ngcomp
     /// ratios and element markers (default: ngsxfemglobals.cut_quadrature)
     void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, LocalHeap & lh,
                 optional<CUT_QUADRATURE> cut_quadrature = nullopt);
+    /// as above with a local heap of (initially) heapsize bytes, which is enlarged (by a
+    /// factor of 10, up to 1e9 bytes) on overflow (e.g. for Algoim-based rules with many
+    /// integration points)
+    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, size_t heapsize,
+                optional<CUT_QUADRATURE> cut_quadrature = nullopt);
     
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
 

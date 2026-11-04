@@ -58,6 +58,26 @@ namespace ngcomp
     }
   }
 
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order,
+                              size_t heapsize, optional<CUT_QUADRATURE> cut_quadrature)
+  {
+    while (true)
+    {
+      try
+      {
+        LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
+        Update(cf_lset, subdivlvl, time_order, lh, cut_quadrature);
+        return;
+      }
+      catch (const Exception & e)
+      {
+        if ((string(e.what()).find("Local Heap overflow") == string::npos) || (heapsize >= size_t(1e9)))
+          throw;
+        heapsize *= 10;
+      }
+    }
+  }
+
   void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order, LocalHeap & lh,
                               optional<CUT_QUADRATURE> cut_quadrature)
   {
