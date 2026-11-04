@@ -41,7 +41,9 @@ Requires NGSolve 6.2.2608.
   boundary (`vb=BND`, including interfaces on the boundary), facet (`skeleton=True`) and
   element boundary (`element_boundary=True`) integrals and for multiple level sets
   (`DomainTypeArray`, also on quadrilaterals and hexahedra, `MultiLevelsetCutInfo`).
-  See `demos/fictdom_algoim.py` and `CUT_QUADRATURE`.
+  Algoim also supports prisms, which the standard rules do not support; on prisms (and for
+  multiple level sets on quadrilaterals, hexahedra and prisms) `"auto"` uses Algoim also for
+  piecewise linear level sets. See `demos/fictdom_algoim.py` and `CUT_QUADRATURE`.
 
 - **Algoim-based space-time quadrature** (1D+t, 2D+t, 3D+t) for space-time level sets of
   higher order in space (`GridFunction` on `ScalarTimeFE(k_t) * H1(mesh, order=k_s)`) and
@@ -86,6 +88,9 @@ Requires NGSolve 6.2.2608.
   linear by the standard space-time rules (`SpaceTimeFESpace` does not report the order of
   its spatial space), which gave wrong integrals without notice. They now use the
   Algoim-based rules (`cut_quadrature="auto"`) or raise an exception (`"standard"`).
+  The same holds for level sets in `Discontinuous(H1(mesh, order=k))`, k >= 2.
+- `XFESpace` with a higher order level set in 3D: local heap overflow in the update of its
+  `CutInfo` (fixed heap size).
 
 - Element boundary cut integrals (`element_boundary=True`) of NEG/POS parts on 3D
   elements were scaled wrongly; interfaces on boundary faces in 3D (`dCut(lset, IF,
