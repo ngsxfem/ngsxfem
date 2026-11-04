@@ -1,3 +1,5 @@
 include CMakeLists.txt LICENSE README.md 
 recursive-include . *.in *.hpp *.cpp CMakeLists.txt
 global-exclude external_dependencies/**/*.in external_dependencies/**/*.hpp external_dependencies/**/*.cpp external_dependencies/**/CMakeLists.txt
+# bundled third-party headers that are part of the build (see external_dependencies/algoim/README.md)
+recursive-include external_dependencies/algoim *.hpp LICENSE README.md
