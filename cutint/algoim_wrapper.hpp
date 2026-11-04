@@ -31,7 +31,8 @@ namespace xintegration
     /// Quadrature rule on the part of the cell C given by
     ///   domain == 0 : { phi < 0 },
     ///   domain == 1 : { phi > 0 },
-    ///   domain == 2 : { phi = 0 } (surface quadrature, dim > 1),
+    ///   domain == 2 : { phi = 0 } (surface quadrature; for dim == 1 the
+    ///                 roots of phi with weight 1),
     /// where phi is the tensor-product polynomial (of degree 'degree' in each
     /// direction) that interpolates 'nodal_values' at the points of
     /// InterpolationPoints. (The domain values coincide with ngsxfem's NEG,

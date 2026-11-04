@@ -21,6 +21,27 @@ namespace xintegration
   bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
                          const ElementTransformation & trafo);
 
+  /// throws the exception for level sets that are not piecewise linear
+  /// GridFunctions with the standard rules
+  [[noreturn]] void StandardRulesRequireP1Levelset ();
+
+  /// the level set function of a single level set domain (CoefficientFunction
+  /// or GridFunction)
+  shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom);
+
+  /// true if the Algoim-based rules are used for cut integrals on facets
+  /// (skeleton and element boundary integrals) of the (single level set,
+  /// non-space-time) domain, see CUT_QUADRATURE
+  bool UseAlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                              ELEMENT_TYPE etfacet, int time_order = -1);
+
+  /// Algoim-based cut rule on the facet facetnr of the element (see
+  /// AlgoimCutFacetIntegrationRule for the conventions)
+  const IntegrationRule * AlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                                              const ElementTransformation & trafo,
+                                              Facet2ElementTrafo & transform, int facetnr,
+                                              int intorder, LocalHeap & lh);
+
   template<class SCAL> 
   /**
    * Creates a new FlatArray of SIMD values from a given FlatArray of scalar values.

@@ -17,6 +17,30 @@ namespace xintegration
     return get<1>(CF2GFForStraightCutRule(lset, 0)) != nullptr;
   }
 
+  void StandardRulesRequireP1Levelset ()
+  {
+    throw Exception("The standard cut quadrature (cut_quadrature = 'standard') requires the level set "
+                    "function as a piecewise linear GridFunction, but a higher order GridFunction or a "
+                    "general CoefficientFunction was given. Use cut_quadrature = 'auto' or 'algoim' "
+                    "(Algoim-based quadrature w.r.t. the level set function itself), interpolate the "
+                    "level set function piecewise linearly (InterpolateToP1, e.g. for the isoparametric "
+                    "approach) or set subdivlvl > 0 (only for element integrals).");
+  }
+
+  /// informs the user (once) that the Algoim-based rules are used due to the
+  /// automatic choice (if the method was not chosen explicitly)
+  static void InformOnAutomaticAlgoim (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    if (lsetintdom.OptionalCutQuadrature() || globxvar.CUT_QUADRATURE_SET_BY_USER)
+      return;
+    static std::atomic<bool> informed(false);
+    if (!informed.exchange(true))
+      cout << IM(0) << "ngsxfem: the level set function is not a piecewise linear GridFunction,"
+           << " hence the Algoim-based cut quadrature is used (cut quadrature 'auto')."
+           << " Set ngsxfemglobals.cut_quadrature (or dCut(..., cut_quadrature=...))"
+           << " explicitly to choose the quadrature method (and to suppress this message)." << endl;
+  }
+
   /// Decides whether the Algoim-based cut rule is applied for a single level set
   /// domain on the given element (see CUT_QUADRATURE):
   ///  * STANDARD: never
@@ -56,16 +80,54 @@ namespace xintegration
     // CUTQUAD_AUTO
     if (IsP1Levelset(lset))
       return false;
-    if (!lsetintdom.OptionalCutQuadrature() && !globxvar.CUT_QUADRATURE_SET_BY_USER)
-    {
-      static std::atomic<bool> informed(false);
-      if (!informed.exchange(true))
-        cout << IM(0) << "ngsxfem: the level set function is not a piecewise linear GridFunction,"
-             << " hence the Algoim-based cut quadrature is used (cut quadrature 'auto')."
-             << " Set ngsxfemglobals.cut_quadrature (or dCut(..., cut_quadrature=...))"
-             << " explicitly to choose the quadrature method (and to suppress this message)." << endl;
-    }
+    InformOnAutomaticAlgoim(lsetintdom);
     return true;
+  }
+
+  shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    shared_ptr<CoefficientFunction> lset = lsetintdom.GetLevelsetCF();
+    if (lset == nullptr)
+      lset = lsetintdom.GetLevelsetGF();
+    return lset;
+  }
+
+  bool UseAlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                              ELEMENT_TYPE etfacet, int time_order)
+  {
+    const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
+    if (method == CUTQUAD_STANDARD)
+      return false;
+    if (lsetintdom.IsMultiLevelsetDomain() || (time_order >= 0)
+        || (lsetintdom.GetTimeIntegrationOrder() >= 0) || lsetintdom.HasReferenceTime())
+      return false;
+    if (!AlgoimCutFacetRuleAvailable(etfacet))
+      return false;
+    shared_ptr<CoefficientFunction> lset = SingleLevelset(lsetintdom);
+    if (lset == nullptr)
+      return false;
+    auto gf = dynamic_pointer_cast<GridFunction>(lset);
+    if (gf && dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+      return false;
+    if (method == CUTQUAD_ALGOIM)
+      return true;
+    // CUTQUAD_AUTO
+    if (IsP1Levelset(lset))
+      return false;
+    InformOnAutomaticAlgoim(lsetintdom);
+    return true;
+  }
+
+  const IntegrationRule * AlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                                              const ElementTransformation & trafo,
+                                              Facet2ElementTrafo & transform, int facetnr,
+                                              int intorder, LocalHeap & lh)
+  {
+    // an integration order that is prescribed for the domain (e.g. dCut(..., order=...)) is used
+    const int order = (lsetintdom.GetIntegrationOrder() >= 0) ? lsetintdom.GetIntegrationOrder() : intorder;
+    return AlgoimCutFacetIntegrationRule(SingleLevelset(lsetintdom), trafo, transform, facetnr,
+                                         lsetintdom.GetDomainType(), order, globxvar.ALGOIM_LSET_ORDER,
+                                         lsetintdom.GetNSubdivisionLevels(), lh);
   }
 
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
@@ -113,12 +175,7 @@ namespace xintegration
       // request for the subdivision approach, subdivlvl > 0)
       if ((cflset != nullptr) && (subdivlvl == 0) && (time_intorder < 0) && !lsetintdom.HasReferenceTime()
           && (lsetintdom.GetCutQuadrature() == CUTQUAD_STANDARD))
-        throw Exception("The standard cut quadrature (cut_quadrature = 'standard') requires the level set "
-                        "function as a piecewise linear GridFunction, but a higher order GridFunction or a "
-                        "general CoefficientFunction was given. Use cut_quadrature = 'auto' or 'algoim' "
-                        "(Algoim-based quadrature w.r.t. the level set function itself), interpolate the "
-                        "level set function piecewise linearly (InterpolateToP1, e.g. for the isoparametric "
-                        "approach) or set subdivlvl > 0.");
+        StandardRulesRequireP1Levelset();
 
       if (gflset != nullptr)
       {
