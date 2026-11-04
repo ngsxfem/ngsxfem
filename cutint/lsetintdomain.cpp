@@ -167,17 +167,19 @@ namespace xintegration
       shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
       if (ret == nullptr)
         return make_tuple(cflset, nullptr);
-      // space-time GridFunctions: piecewise linear in space (arbitrary order in time)
-      // (the SpaceTimeFESpace does not report the order of its spatial FESpace)
+      // space-time GridFunctions: piecewise linear in space (arbitrary order in time);
+      // discontinuous GridFunctions: element-wise linear. (SpaceTimeFESpace and
+      // DiscontinuousFESpace do not report the order of the underlying FESpace.)
       shared_ptr<FESpace> fes = ret->GetFESpace();
       bool p1 = false;
       if (auto st_fes = dynamic_pointer_cast<SpaceTimeFESpace>(fes))
         p1 = (st_fes->GetSpaceFESpace()->GetOrder() <= 1)
              && (st_fes->GetSpaceFESpace()->GetClassName() == "H1HighOrderFESpace");
+      else if (auto dc_fes = dynamic_pointer_cast<DiscontinuousFESpace>(fes))
+        p1 = (dc_fes->GetBaseSpace()->GetOrder() <= 1)
+             && (dc_fes->GetBaseSpace()->GetClassName() == "H1HighOrderFESpace");
       else
-        p1 = (fes->GetOrder() <= 1)
-             && (    (fes->GetClassName() == "H1HighOrderFESpace")
-                  || (fes->GetClassName() == "DiscontinuousH1HighOrderFESpace"));
+        p1 = (fes->GetOrder() <= 1) && (fes->GetClassName() == "H1HighOrderFESpace");
       if (p1)
         return make_tuple(nullptr, ret);
       else
