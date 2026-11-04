@@ -44,6 +44,28 @@ interpretes it as a function in the CompoundFESpace of V and V. Updates the valu
 the corresponding second GridFunction.
 )raw_string") );
 
+  // CutInformation::Update with a local heap that is enlarged on overflow (e.g. for the
+  // Algoim-based space-time rules, which can have many integration points)
+  auto update_cutinfo = [] (CutInformation & cut_info, shared_ptr<CF> lset, int subdivlvl,
+                            int time_order, size_t heapsize, optional<CUT_QUADRATURE> cq)
+  {
+    while (true)
+    {
+      try
+      {
+        LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
+        cut_info.Update(lset, subdivlvl, time_order, lh, cq);
+        return;
+      }
+      catch (const Exception & e)
+      {
+        if ((string(e.what()).find("Local Heap overflow") == string::npos) || (heapsize >= size_t(1e9)))
+          throw;
+        heapsize *= 10;
+      }
+    }
+  };
+
   py::class_<CutInformation, shared_ptr<CutInformation>>
     (m, "CutInfo",R"raw(
 A CutInfo stores and organizes cut informations in the mesh with respect to a level set function. 
@@ -51,22 +73,21 @@ Elements (BND / VOL) and facets can be either cut elements or in the positive (P
 (NEG) part of the domain. A CutInfo provides information about the cut configuration in terms of
 BitArrays and Vectors of Ratios. (Internally also domain_types for different mesh nodes are stored.)
 )raw")
-    .def(py::init([] (shared_ptr<MeshAccess> ma,
-                          py::object lset,
-                          int subdivlvl,
-                          int time_order,
-                          int heapsize,
-                          py::object cut_quadrature) -> shared_ptr<CutInformation>
+    .def(py::init([update_cutinfo] (shared_ptr<MeshAccess> ma,
+                                    py::object lset,
+                                    int subdivlvl,
+                                    int time_order,
+                                    int heapsize,
+                                    py::object cut_quadrature) -> shared_ptr<CutInformation>
          {
            auto cut_info = make_shared<CutInformation> (ma);
            if ((!lset.is_none()) && py::extract<shared_ptr<CF>> (lset).check())
            {
              shared_ptr<CF> cflset = py::extract<shared_ptr<CF>>(lset)();
-             LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
              optional<CUT_QUADRATURE> cq = nullopt;
              if (!cut_quadrature.is_none())
                cq = py::cast<CUT_QUADRATURE>(cut_quadrature);
-             cut_info->Update(cflset, subdivlvl, time_order, lh, cq);
+             update_cutinfo(*cut_info, cflset, subdivlvl, time_order, heapsize, cq);
            }
            return cut_info;
          }),
@@ -96,18 +117,17 @@ cut_quadrature : {"standard", "algoim", "auto"} / CUT_QUADRATURE / None
   i.e. ngsxfemglobals.cut_quadrature is used.
 )raw_string")
       )
-    .def("Update", [](CutInformation & self,
-                      shared_ptr<CF> lset,
-                      int subdivlvl,
-                      int time_order,
-                      int heapsize,
-                      py::object cut_quadrature)
+    .def("Update", [update_cutinfo](CutInformation & self,
+                                    shared_ptr<CF> lset,
+                                    int subdivlvl,
+                                    int time_order,
+                                    int heapsize,
+                                    py::object cut_quadrature)
          {
-           LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
            optional<CUT_QUADRATURE> cq = nullopt;
            if (!cut_quadrature.is_none())
              cq = py::cast<CUT_QUADRATURE>(cut_quadrature);
-           self.Update(lset,subdivlvl,time_order,lh,cq);
+           update_cutinfo(self, lset, subdivlvl, time_order, heapsize, cq);
          },
          py::arg("levelset"),
          py::arg("subdivlvl") = 0,
