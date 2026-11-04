@@ -287,6 +287,42 @@ def test_auto():
         == pytest.approx(alg_deformed, abs=1e-14)
 
 
+@pytest.mark.parametrize("quads", [False, True])
+def test_nonaffine_deformation(quads):
+    """P2 level set (exact circle in reference coordinates) on a mesh with the
+    non-affine deformation Phi(x,y) = (x + a y^2, y + b x^2) (exactly represented in
+    VectorH1 of order 2): the rules for the deformed domain converge to the exact
+    area and length of Phi(disk) and Phi(circle)"""
+    import numpy as np
+    r, c, a, b = 0.5, (0.03, -0.02), 0.2, 0.15
+    # det DPhi = 1 - 4ab xy, hence |Phi(disk)| = pi r^2 (1 - 4ab cx cy)
+    area = pi * r**2 * (1 - 4 * a * b * c[0] * c[1])
+    # length of Phi(circle): periodic trapezoidal rule (spectrally accurate)
+    t = np.linspace(0, 2 * pi, 4000, endpoint=False)
+    gx, gy = c[0] + r * np.cos(t), c[1] + r * np.sin(t)
+    dgx, dgy = -r * np.sin(t), r * np.cos(t)
+    length = 2 * pi * np.mean(np.hypot(dgx + 2 * a * gy * dgy, dgy + 2 * b * gx * dgx))
+    one = CoefficientFunction(1)
+    errs = []
+    for n in [8, 16]:
+        mesh = square_mesh(n, quads)
+        lset = lset_gf(mesh, 2, (x - c[0])**2 + (y - c[1])**2 - r**2)
+        deform = GridFunction(VectorH1(mesh, order=2))
+        deform.Set((a * y * y, b * x * x))
+        # default ("auto"): Algoim for the P2 level set, also with deformation
+        neg = Integrate(one * dCut(lset, NEG, order=8, deformation=deform), mesh)
+        itf = Integrate(one * dCut(lset, IF, order=8, deformation=deform), mesh)
+        errs.append([abs(neg - area), abs(itf - length)])
+        # same with mesh.SetDeformation and Integrate with levelset_domain
+        mesh.SetDeformation(deform)
+        assert integrate(lset, NEG, mesh, order=8) == pytest.approx(neg, abs=1e-13)
+        assert integrate(lset, IF, mesh, order=8) == pytest.approx(itf, abs=1e-13)
+        mesh.UnsetDeformation()
+    for i, tol in enumerate([1e-10, 1e-8]):
+        assert errs[-1][i] < tol
+        assert errs[-1][i] < 1e-2 * errs[0][i]
+
+
 def test_fallback_mlset():
     """multiple level sets always use the standard rules"""
     mesh = square_mesh(4, quads=False)
