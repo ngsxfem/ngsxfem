@@ -766,3 +766,77 @@ def test_simd(simd):
                     cf=x * y + 1, mesh=mesh, order=6)
     ngsxfemglobals.SwitchSIMD(old)
     assert val == pytest.approx(ref, abs=1e-13)
+
+
+# ---------------------------------------------------------------------------
+# further level set spaces and element types
+# ---------------------------------------------------------------------------
+
+def test_discontinuous_levelset():
+    """level sets in Discontinuous(H1(order=2)) are not piecewise linear (the space reports order 1)"""
+    mesh = square_mesh(4, quads=False)
+    lset = GridFunction(Discontinuous(H1(mesh, order=2)))
+    lset.Set(x * x + y * y - 0.5)
+    assert integrate(lset, NEG, mesh) == pytest.approx(pi * 0.5, abs=1e-5)
+    with pytest.raises(Exception, match="piecewise linear"):
+        integrate(lset, NEG, mesh, method="standard")
+
+
+def test_xfespace_higher_order_levelset_3d():
+    """XFESpace with a higher order level set (CutInfo of the XFESpace with Algoim-based rules)"""
+    mesh = cube_mesh(3, hexes=False)
+    lset = lset_gf(mesh, 2, x * x + y * y + z * z - 0.5)
+    Vh = H1(mesh, order=2)
+    Vx = XFESpace(Vh, lset)
+    ci = CutInfo(mesh, lset)
+    assert Vx.ndof == GetDofsOfElements(Vh, ci.GetElementsOfType(IF)).NumSet() > 0
+
+
+def prism_mesh(n):
+    return MakeStructured3DMesh(hexes=False, prism=True, nx=n, ny=n, nz=n,
+                                mapping=lambda x, y, z: (2 * x - 1, 2 * y - 1, 2 * z - 1))
+
+
+def test_prisms():
+    """prisms (not supported by the standard rules): planar cuts exact, curved interfaces,
+    facets, space-time and multiple level sets"""
+    mesh, hexmesh = prism_mesh(2), cube_mesh(2, hexes=True)
+    plane = x + 0.3 * y + 0.2 * z - 0.1
+    lset, lset_hex = lset_gf(mesh, 1, plane), lset_gf(hexmesh, 1, plane)
+    for dt in [NEG, POS, IF]:
+        # P1 level set on prisms: "auto" uses Algoim
+        val = integrate(lset, dt, mesh, cf=x * y + z * z, order=3)
+        assert val == pytest.approx(integrate(lset_hex, dt, hexmesh, cf=x * y + z * z, order=3, method="standard"),
+                                    abs=1e-13)
+    ci = CutInfo(mesh, lset)
+    assert ci.GetElementsOfType(IF).NumSet() > 0
+    # space-time skeleton integrals (triangular and quadrilateral facets)
+    st_lset = st_lset_gf(mesh, 1, 1, plane - 0.4 * tref)
+    assert st_skeleton_integral(mesh, st_lset, NEG, "algoim") == pytest.approx(
+        st_skeleton_integral(mesh, st_lset, NEG, "standard"), abs=1e-12)
+    for dt in [NEG, IF]:
+        val = st_integrate(st_lset_gf(mesh, 1, 1, plane - 0.4 * tref), dt, mesh, cf=x * tref + z, order=2, time_order=2)
+        ref = st_integrate(st_lset_gf(hexmesh, 1, 1, plane - 0.4 * tref), dt, hexmesh, cf=x * tref + z, order=2,
+                           time_order=8, method="standard")
+        assert val == pytest.approx(ref, abs=1e-13)
+    lsets = (lset_gf(mesh, 1, x - 0.1), lset_gf(mesh, 1, y + 0.3 * z - 0.2))
+    lsets_hex = (lset_gf(hexmesh, 1, x - 0.1), lset_gf(hexmesh, 1, y + 0.3 * z - 0.2))
+    one = CoefficientFunction(1)
+    assert Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG))), mesh) == pytest.approx(
+        Integrate(one * dCut(lsets_hex, DomainTypeArray((NEG, NEG)), cut_quadrature="algoim"), hexmesh), abs=1e-8)
+
+    mesh = prism_mesh(4)
+    lset = lset_gf(mesh, 2, x * x + y * y + z * z - 0.5)
+    assert integrate(lset, NEG, mesh) == pytest.approx(4 / 3 * pi * 0.5**1.5, abs=5e-6)
+    assert integrate(lset, IF, mesh) == pytest.approx(4 * pi * 0.5, abs=5e-5)
+
+
+def test_mlset_p1_quads_auto():
+    """the standard rules for multiple level sets support triangles and tetrahedra only:
+    "auto" uses Algoim for P1 level sets on quadrilaterals"""
+    mesh = square_mesh(4, quads=True)
+    lsets = (lset_gf(mesh, 1, x - 0.1), lset_gf(mesh, 1, y - 0.2))
+    one = CoefficientFunction(1)
+    assert Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG))), mesh) == pytest.approx(1.1 * 1.2, abs=1e-8)
+    with pytest.raises(Exception, match="only trigs, tets"):
+        Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG)), cut_quadrature="standard"), mesh)
