@@ -598,7 +598,8 @@ namespace ngfem
                       auto F = mir3[i].GetJacobian();
                       auto mapped_tang = F * tetdiffvec2;
                       const double ratio_meas1D = L2Norm(mapped_tang);
-                      ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
+                      if (lsetintdom->GetDomainType() == IF) // length of the interface curve; NEG/POS: facet measure is applied later
+                        ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
                     }
                   } else {
                     throw Exception("Only ET_SEGM, ET_TRIG and ET_QUAD are implemented yet.");
@@ -777,7 +778,8 @@ namespace ngfem
                   auto F = mir3[i].GetJacobian();
                   auto mapped_tang = F * tetdiffvec2;
                   const double ratio_meas1D = L2Norm(mapped_tang);
-                  ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
+                  if (lsetintdom->GetDomainType() == IF) // length of the interface curve; NEG/POS: facet measure is applied later
+                        ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
               }
           }
 
