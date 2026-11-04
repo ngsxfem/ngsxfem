@@ -11,7 +11,8 @@ The domain is [-1,1]^2 while the physical domain is a ring described by a
 function is interpolated into a finite element space of order k (no
 piecewise linear approximation and no mesh deformation). The cut
 integrals are computed w.r.t. this higher order level set function with
-Algoim's quadrature (ngsxfemglobals.cut_quadrature, see below).
+Algoim's quadrature, which ngsxfem uses automatically for level set
+functions that are not piecewise linear GridFunctions (see below).
 
 Compared to the standard approach:
 * No mesh deformation (LevelSetMeshAdaptation) is needed, the level set
@@ -41,9 +42,11 @@ Implementational aspects:
 -------------------------
 * Quadrature on the higher order level set domain with Algoim [3]. The
   quadrature method is selected with ngsxfemglobals.cut_quadrature:
-  "standard", "algoim" or "auto" (Algoim for higher order level sets
-  without mesh deformation). It can also be chosen for single integrals,
-  e.g. dCut(lset, NEG, cut_quadrature="algoim").
+  "auto" (default: standard rules for piecewise linear level set
+  GridFunctions, Algoim otherwise), "standard" or "algoim". It can also
+  be chosen for single integrals, e.g. dCut(lset, NEG,
+  cut_quadrature="algoim"). Here, it is set explicitly to "auto" (which
+  also suppresses the info message on the automatic choice).
 
 * A (sparse) direct solver is applied to solve the arising linear systems.
 
@@ -86,8 +89,8 @@ lambda_nitsche = 10 * order * order
 if len(sys.argv) > 1 and sys.argv[1] == "testmode":
     n_levels = [8, 16]
 
-# Quadrature on cut elements: Algoim for higher order level sets (without mesh
-# deformation), the standard rules for piecewise linear level sets
+# Quadrature on cut elements (this is the default): standard rules for piecewise
+# linear level set GridFunctions, Algoim for higher order level sets
 ngsxfemglobals.cut_quadrature = "auto"
 
 # ----------------------------------- MAIN ------------------------------------
