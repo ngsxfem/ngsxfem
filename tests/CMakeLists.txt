@@ -26,6 +26,9 @@ add_test(NAME py_demo_fictdom COMMAND ${NETGEN_PYTHON_EXECUTABLE}
 add_test(NAME py_demo_lsetcurv_boundary COMMAND ${NETGEN_PYTHON_EXECUTABLE}
   "${PROJECT_SOURCE_DIR}/demos/lsetcurv_boundary.py" "testmode")
 
+add_test(NAME py_demo_fictdom_algoim COMMAND ${NETGEN_PYTHON_EXECUTABLE}
+  "${PROJECT_SOURCE_DIR}/demos/fictdom_algoim.py" "testmode")
+
 add_test(NAME py_demo_fictdom_dg COMMAND ${NETGEN_PYTHON_EXECUTABLE} 
   "${PROJECT_SOURCE_DIR}/demos/fictdom_dg.py" "testmode")
 
