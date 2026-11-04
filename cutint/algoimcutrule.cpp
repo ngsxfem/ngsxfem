@@ -40,7 +40,12 @@ namespace xintegration
       cf_lset->Evaluate(mir_nodes, lsetvals);
 
       // Algoim's quadrature on the reference element
-      const int q = max(1, intorder / 2 + 1);
+      // Algoim uses nested one-dimensional Gauss rules (q points) w.r.t. height functions:
+      // * for a polynomial of degree intorder on a domain bounded by planes, the integrand of
+      //   the outermost integral has degree intorder + D - 1, hence 2q-1 >= intorder + D - 1,
+      // * the (curved) geometry has to be resolved also for low order integrands (e.g. CutInfo
+      //   computes cut ratios with intorder 0), hence q > degree.
+      const int q = max(degree + 1, (intorder + D + 1) / 2);
       std::vector<double> pts, wts, grads;
       auto status = algoim_wrapper::CutQuadrature(D, degree, &lsetvals(0,0), simplex, int(dt), q,
                                                   subdivlvl, pts, wts, grads);
