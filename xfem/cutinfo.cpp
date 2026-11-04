@@ -58,7 +58,8 @@ namespace ngcomp
     }
   }
 
-  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order, LocalHeap & lh)
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order, LocalHeap & lh,
+                              optional<CUT_QUADRATURE> cut_quadrature)
   {
     static Timer timer("CutInformation::Update");
     RegionTimer reg (timer);
@@ -94,7 +95,9 @@ namespace ngcomp
         {
             const IntegrationRule * ir_np;
             Array<double> wei_arr;
-            tie (ir_np, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,time_order, lh, subdivlvl);
+            LevelsetIntegrationDomain lsetintdom(cf_lset, gf_lset, np, 0, time_order, subdivlvl);
+            lsetintdom.SetCutQuadrature(cut_quadrature);
+            tie (ir_np, wei_arr) = CreateCutIntegrationRule(lsetintdom, eltrans, lh);
           // If(time_order > -1 && vb == BND) should have part_vol[NEG] == 0, which will lead to
           // the BND element being marked as POS.
           if (ir_np)
