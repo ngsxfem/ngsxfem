@@ -61,7 +61,9 @@ Requires NGSolve 6.2.2608.
   preferably as the outermost integration variable); on tetrahedra, time slicing at the
   sign changes of the level set in the vertices is combined with the spatial rules at fixed
   times. Space-time level sets that are piecewise linear in space keep the standard rules
-  with `cut_quadrature="auto"`. The Algoim-based space-time rules are considerably more
+  with `cut_quadrature="auto"`. Multiple level sets (`DomainTypeArray`) are supported in
+  space-time and at fixed reference times as well (which the standard rules do not support;
+  3D+t by time slicing), also by `MultiLevelsetCutInfo(mesh, lsets, time_order=...)`. The Algoim-based space-time rules are considerably more
   expensive than the standard (isoparametric) ones (in the space-time demos: about 10-20x
   in 2D+t, 15x in 3D+t).
 
