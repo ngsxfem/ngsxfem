@@ -250,6 +250,142 @@ def test_bnd():
 
 
 # ---------------------------------------------------------------------------
+# facet (skeleton), element boundary and boundary cut integrals
+# ---------------------------------------------------------------------------
+
+def facet_integrals(mesh, lset, method, order=8):
+    """measures of the cut parts of interior facets (skeleton), of element boundaries
+    and of the domain boundary for the domain types NEG and IF"""
+    V = L2(mesh, order=0, dgjumps=True)
+    u, v = V.TnT()
+    one = GridFunction(V)
+    one.Set(1)
+    res = {}
+    for dt in [NEG, IF]:
+        for name, form, kwargs in [("skel", 0.25 * (u + u.Other()) * (v + v.Other()), dict(skeleton=True)),
+                                   ("eb", u * v, dict(element_boundary=True))]:
+            a = BilinearForm(V, check_unused=False)
+            a += form * dCut(lset, dt, order=order, cut_quadrature=method, **kwargs)
+            a.Assemble()
+            res[name, dt] = InnerProduct(one.vec, a.mat * one.vec)
+        res["bnd", dt] = Integrate(CoefficientFunction(1) * dCut(lset, dt, vb=BND, order=order,
+                                                                 cut_quadrature=method), mesh)
+    return res
+
+
+def exact_facet_integrals(mesh, cut):
+    """cut(vertices of a facet) -> (measure of the NEG part, measure of the IF part)"""
+    import numpy as np
+    res = {(k, dt): 0.0 for k in ["skel", "eb", "bnd"] for dt in [NEG, IF]}
+    for f in (mesh.edges if mesh.dim == 2 else mesh.faces):
+        verts = [np.array(mesh[v].point) for v in mesh[f].vertices]
+        nel = len(mesh[f].elements)
+        for dt, val in zip([NEG, IF], cut(verts)):
+            res["skel" if nel == 2 else "bnd", dt] += val
+            res["eb", dt] += nel * val
+    return res
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_facets_2d(quads):
+    """circle (P2 level set): the restriction to edges is exact"""
+    import numpy as np
+    r, c = 0.5, np.array([0.03, -0.02])
+
+    def cut(verts):
+        P, Q = verts
+        d = Q - P
+        a, b, cc = d @ d, 2 * d @ (P - c), (P - c) @ (P - c) - r * r
+        disc = b * b - 4 * a * cc
+        if disc <= 0:
+            return 0.0, 0
+        t1, t2 = (-b - sqrt(disc)) / (2 * a), (-b + sqrt(disc)) / (2 * a)
+        return max(min(t2, 1) - max(t1, 0), 0) * sqrt(a), sum(0 < t < 1 for t in (t1, t2))
+
+    mesh = square_mesh(8, quads, a=0.75)
+    lset = lset_gf(mesh, 2, (x - c[0])**2 + (y - c[1])**2 - r**2)
+    res, ref = facet_integrals(mesh, lset, "algoim"), exact_facet_integrals(mesh, cut)
+    for key in ref:
+        assert res[key] == pytest.approx(ref[key], abs=1e-12)
+    assert ref["bnd", IF] == 0 and ref["skel", IF] > 0
+    # boundary interface (points on the boundary of [-1,1]^2)
+    mesh = square_mesh(4, quads)
+    lset = lset_gf(mesh, 2, x * x + y * y - 1.2)
+    assert Integrate(x * x * y * y * dCut(lset, IF, vb=BND), mesh) == pytest.approx(8 * 0.2, abs=1e-13)
+
+
+@pytest.mark.parametrize("method", ["standard", "algoim"])
+@pytest.mark.parametrize("hexes", [False, True])
+def test_facets_3d_planar(hexes, method):
+    """planar cut: facet, element boundary and boundary integrals are exact"""
+    import numpy as np
+    coefs = (0.31, -1.0, 0.17, 0.1037)
+    phi = lambda p: coefs[0] * p[0] + coefs[1] * p[1] + coefs[2] * p[2] + coefs[3]
+
+    def cut(verts):
+        if len(verts) == 4:  # quadrilateral: order the vertices along its boundary
+            cen = sum(verts) / 4
+            e1 = verts[0] - cen
+            e2 = np.cross(np.cross(verts[1] - verts[0], verts[2] - verts[0]), e1)
+            verts = sorted(verts, key=lambda v: np.arctan2((v - cen) @ e2, (v - cen) @ e1))
+        neg, ifpts = [], []
+        for P, Q in zip(verts, verts[1:] + verts[:1]):
+            if phi(P) < 0:
+                neg.append(P)
+            if (phi(P) < 0) != (phi(Q) < 0):
+                X = P + phi(P) / (phi(P) - phi(Q)) * (Q - P)
+                neg.append(X)
+                ifpts.append(X)
+        area = 0.5 * np.linalg.norm(sum(np.cross(A, B) for A, B in zip(neg, neg[1:] + neg[:1]))) \
+            if len(neg) > 2 else 0.0
+        return area, (np.linalg.norm(ifpts[0] - ifpts[1]) if len(ifpts) == 2 else 0.0)
+
+    mesh = cube_mesh(3, hexes)
+    lset = lset_gf(mesh, 1 if method == "standard" else 2, phi((x, y, z)))
+    res, ref = facet_integrals(mesh, lset, method, order=2), exact_facet_integrals(mesh, cut)
+    for key in ref:
+        assert res[key] == pytest.approx(ref[key], abs=1e-12)
+
+
+def test_facets_3d_sphere():
+    """sphere (P2 level set) on hexahedra: the interface on (interior and boundary)
+    faces converges to the exact arcs"""
+    import numpy as np
+    r, c, n = 1.2, np.array([0.031, -0.022, 0.013]), 8
+
+    def arc(rho, cc, lo, hi):
+        # length of the circle (center cc, radius rho) inside the rectangle [lo,hi]
+        angles = [0.0, 2 * pi]
+        for d in range(2):
+            for bound in (lo[d], hi[d]):
+                s = (bound - cc[d]) / rho
+                if abs(s) <= 1:
+                    a0 = np.arcsin(s) if d == 1 else np.arccos(s)
+                    angles += [a % (2 * pi) for a in (a0, -a0, pi - a0, pi + a0)]
+        angles.sort()
+        return sum(rho * (b - a) for a, b in zip(angles, angles[1:])
+                   if np.all(np.abs(cc + rho * np.array([np.cos((a + b) / 2), np.sin((a + b) / 2)])
+                                    - (lo + hi) / 2) < (hi - lo) / 2))
+
+    def cut(verts):
+        verts = np.array(verts)
+        d = int(np.argmin(np.ptp(verts, axis=0)))  # normal direction of the face
+        other = [k for k in range(3) if k != d]
+        dist = verts[0, d] - c[d]
+        if abs(dist) >= r:
+            return 0.0, 0.0
+        return 0.0, arc(sqrt(r * r - dist * dist), c[other], verts[:, other].min(axis=0),
+                        verts[:, other].max(axis=0))
+
+    mesh = cube_mesh(n, hexes=True)
+    lset = lset_gf(mesh, 2, (x - c[0])**2 + (y - c[1])**2 + (z - c[2])**2 - r**2)
+    res, ref = facet_integrals(mesh, lset, "auto"), exact_facet_integrals(mesh, cut)
+    for key in ["skel", "eb", "bnd"]:
+        assert res[key, IF] == pytest.approx(ref[key, IF], abs=1e-5)
+    assert ref["bnd", IF] > 0
+
+
+# ---------------------------------------------------------------------------
 # automatic selection
 # ---------------------------------------------------------------------------
 

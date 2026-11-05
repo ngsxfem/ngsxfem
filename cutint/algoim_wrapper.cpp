@@ -187,7 +187,7 @@ namespace xintegration
                                   });
           }
           else
-            throw std::invalid_argument("algoim_wrapper::CutQuadrature: no interface quadrature in 1D");
+            throw std::logic_error("algoim_wrapper::CutQuadrature: 1D interfaces are treated separately");
         }
         else
         {
@@ -245,6 +245,24 @@ namespace xintegration
         points.clear();
         weights.clear();
         gradients.clear();
+
+        // one-dimensional interface: the roots of phi in (0,1)
+        if constexpr (N == 1)
+          if (domain == 2)
+          {
+            const int Pr = phi.ext(0);
+            std::vector<real> roots(std::max(Pr - 1, 1));
+            const int nroots = algoim::bernstein::bernsteinUnitIntervalRealRoots(phi.data(), Pr, roots.data());
+            for (int i = 0; i < nroots; i++)
+            {
+              const uvector<real,1> x(roots[i]);
+              points.push_back(roots[i]);
+              weights.push_back(1.0);
+              gradients.push_back(algoim::bernstein::evalBernsteinPolyGradient(phi, x)(0));
+            }
+            return CUT;
+          }
+
         // Uniform subdivision of [0,1]^N into nsub^N boxes (only those that intersect the cell are
         // used), each of them is adaptively subdivided once more if Algoim detects vertical
         // tangents (see HasVerticalTangents). Simplices are always subdivided (at least) once: this keeps the boxes, in
