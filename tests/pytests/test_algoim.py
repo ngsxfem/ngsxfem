@@ -125,10 +125,14 @@ Integrate(lset * dCut(lset, NEG), mesh)
                                                   (2, "ngsxfemglobals.cut_quadrature = 'auto'", False),
                                                   (2, "ngsxfemglobals.cut_quadrature = 'algoim'", False)])
 def test_user_info(order, setting, info):
-    """the automatic choice of Algoim is reported (once), unless chosen explicitly"""
+    """the use of Algoim is reported once per run (with link and reference), the automatic
+    choice is mentioned unless the method was chosen explicitly"""
     script = USER_INFO_SCRIPT.format(order=order, setting=setting)
     out = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, check=True).stdout
-    assert out.count("Algoim-based cut quadrature is used") == (1 if info else 0)
+    uses_algoim = (order > 1) or ("algoim'" in setting)
+    assert out.count("Algoim") == (1 if uses_algoim else 0)
+    assert out.count("uses Algoim by R. I. Saye (https://algoim.github.io/)") == (1 if uses_algoim else 0)
+    assert out.count("chosen automatically") == (1 if info else 0)
 
 
 # ---------------------------------------------------------------------------

@@ -34,18 +34,11 @@ namespace xintegration
       || (et == ET_TET) || (et == ET_HEX);
   }
 
-  /// informs the user (once) that the Algoim-based rules are used due to the
-  /// automatic choice (if the method was not chosen explicitly)
+  /// reports the use of Algoim (once per run, see ReportAlgoimUse) when it is chosen
+  /// automatically; the automatic choice is mentioned unless the method was chosen explicitly
   static void InformOnAutomaticAlgoim (const LevelsetIntegrationDomain & lsetintdom)
   {
-    if (lsetintdom.OptionalCutQuadrature() || globxvar.CUT_QUADRATURE_SET_BY_USER)
-      return;
-    static std::atomic<bool> informed(false);
-    if (!informed.exchange(true))
-      cout << IM(0) << "ngsxfem: the level set function is not a piecewise linear GridFunction,"
-           << " hence the Algoim-based cut quadrature is used (cut quadrature 'auto')."
-           << " Set ngsxfemglobals.cut_quadrature (or dCut(..., cut_quadrature=...))"
-           << " explicitly to choose the quadrature method (and to suppress this message)." << endl;
+    ReportAlgoimUse(!(lsetintdom.OptionalCutQuadrature() || globxvar.CUT_QUADRATURE_SET_BY_USER));
   }
 
   /// Decides whether the Algoim-based cut rule is applied for a single level set
@@ -57,7 +50,8 @@ namespace xintegration
   ///    (in space) GridFunctions (those are treated with the standard rules,
   ///    also with a mesh deformation, i.e. in the isoparametric approach), and
   ///    for element types that the standard rules do not support (prisms). If
-  ///    AUTO is not an explicit choice of the user, the user is informed (once).
+  ///    AUTO is not an explicit choice of the user, this is mentioned in the
+  ///    report of the use of Algoim (once per run, see ReportAlgoimUse).
   bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
                          const ElementTransformation & trafo)
   {
