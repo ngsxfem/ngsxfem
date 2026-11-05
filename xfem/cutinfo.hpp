@@ -105,11 +105,14 @@ namespace ngcomp
   protected:
     shared_ptr<MeshAccess> ma;
     Array<shared_ptr<GridFunction>> lsets;
+    /// time order for space-time level sets (-1: no space-time)
+    int time_order = -1;
     vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_with_contribution;
     vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_of_domain_type;
   public:
     MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, 
-                                 const Array<shared_ptr<GridFunction>> & lsets_in);
+                                 const Array<shared_ptr<GridFunction>> & lsets_in,
+                                 int time_order_in = -1);
     
     void Update(const Array<shared_ptr<GridFunction>> & lsets_in, LocalHeap & lh);
 

@@ -840,3 +840,71 @@ def test_mlset_p1_quads_auto():
     assert Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG))), mesh) == pytest.approx(1.1 * 1.2, abs=1e-8)
     with pytest.raises(Exception, match="only trigs, tets"):
         Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG)), cut_quadrature="standard"), mesh)
+
+
+# ---------------------------------------------------------------------------
+# multiple level sets in space-time and at fixed reference times
+# ---------------------------------------------------------------------------
+
+def mlset_integrate(lsets, dta, mesh, cf=1, **kwargs):
+    return Integrate(CoefficientFunction(cf) * dCut(lsets, DomainTypeArray(dta), **kwargs), mesh)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+@pytest.mark.parametrize("order_space", [1, 2])
+def test_mlset_spacetime_planar(quads, order_space):
+    """moving half planes x < 0.1 + 0.2 t, y < 0.2 - 0.1 t (the standard rules for multiple
+    level sets do not support space-time integrals)"""
+    mesh = square_mesh(4, quads)
+    lsets = (st_lset_gf(mesh, order_space, 1, x - 0.1 - 0.2 * tref),
+             st_lset_gf(mesh, order_space, 1, y - 0.2 + 0.1 * tref))
+    vol = mlset_integrate(lsets, (NEG, NEG), mesh, order=2, time_order=2)
+    assert vol == pytest.approx(1.1 * 1.2 + (0.2 * 1.2 - 0.1 * 1.1) / 2 - 0.02 / 3, abs=1e-8)
+    assert mlset_integrate(lsets, (IF, NEG), mesh, order=2, time_order=2) == pytest.approx(1.15, abs=1e-8)
+    with pytest.raises(Exception, match="no space-time integration with multiple level sets"):
+        mlset_integrate(lsets, (NEG, NEG), mesh, order=2, time_order=2, cut_quadrature="standard")
+
+
+@pytest.mark.parametrize("hexes", [False, True])
+def test_mlset_spacetime_3d(hexes):
+    """3D+t (time slicing): moving half spaces"""
+    mesh = cube_mesh(2, hexes)
+    lsets = (st_lset_gf(mesh, 1, 1, x - 0.1 - 0.2 * tref), st_lset_gf(mesh, 1, 1, y - 0.2 + 0.1 * tref))
+    vol = mlset_integrate(lsets, (NEG, NEG), mesh, order=2, time_order=2)
+    assert vol == pytest.approx(2 * (1.1 * 1.2 + (0.2 * 1.2 - 0.1 * 1.1) / 2 - 0.02 / 3), abs=1e-7)
+    assert mlset_integrate(lsets, (IF, NEG), mesh, order=2, time_order=2) == pytest.approx(2 * 1.15, abs=1e-7)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_mlset_spacetime_half_disk(quads):
+    """moving and growing circle cut by the half plane y < 0: area and arc length"""
+    mesh = square_mesh(8, quads)
+    R0, r1, a = 0.5, 0.1, 0.1
+    lsets = (st_lset_gf(mesh, 2, 2, (x - a * tref)**2 + y**2 - (R0 + r1 * tref)**2),
+             st_lset_gf(mesh, 1, 1, y + 0 * tref))
+    assert mlset_integrate(lsets, (NEG, NEG), mesh, order=4, time_order=4) == pytest.approx(
+        pi / 2 * (R0**2 + R0 * r1 + r1**2 / 3), abs=1e-6)
+    assert mlset_integrate(lsets, (IF, NEG), mesh, order=4, time_order=4) == pytest.approx(
+        pi * (R0 + r1 / 2), abs=5e-5)
+
+
+def test_mlset_tref_and_cutinfo():
+    """fixed reference times (= spatial level sets at that time) and MultiLevelsetCutInfo
+    with time_order"""
+    mesh = square_mesh(8, quads=False)
+    circle = (x - 0.1 * tref)**2 + y**2 - (0.45 + 0.1 * tref)**2
+    lsets = (st_lset_gf(mesh, 2, 2, circle), st_lset_gf(mesh, 1, 1, y + 0 * tref))
+    for t in [0.3, 1]:
+        lsets_t = (lset_gf(mesh, 2, fix_tref(circle, t)), lset_gf(mesh, 1, y))
+        assert mlset_integrate(lsets, (NEG, NEG), mesh, cf=x * y, order=4, tref=t) == pytest.approx(
+            mlset_integrate(lsets_t, (NEG, NEG), mesh, cf=x * y, order=4), abs=1e-14)
+
+    mesh = square_mesh(4, quads=False)
+    counts = []
+    for order_space in [1, 2]:
+        lsets = (st_lset_gf(mesh, order_space, 1, x - 0.1 - 0.2 * tref),
+                 st_lset_gf(mesh, order_space, 1, y - 0.2 + 0.1 * tref))
+        mlci = MultiLevelsetCutInfo(mesh, lsets, time_order=0)
+        counts.append([mlci.GetElementsOfType(DomainTypeArray(dta)).NumSet()
+                       for dta in [(IF, NEG), (NEG, NEG), (IF, IF), (POS, POS)]])
+    assert counts[0] == counts[1] and min(counts[0]) > 0

@@ -307,8 +307,9 @@ namespace ngcomp
   }
 
   MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
-                                                            const Array<shared_ptr<GridFunction>> & lsets_in)
-    : ma(ama), lsets(lsets_in)
+                                                            const Array<shared_ptr<GridFunction>> & lsets_in,
+                                                            int time_order_in)
+    : ma(ama), lsets(lsets_in), time_order(time_order_in)
   {
     ;
   }
@@ -332,7 +333,7 @@ namespace ngcomp
                                                                    LocalHeap & lh) const
   {
 
-    LevelsetIntegrationDomain lsetintdom(lsets, cdt);
+    LevelsetIntegrationDomain lsetintdom(lsets, cdt, -1, time_order);
     elems_of_domain_type->Clear();
     
     int ne = ma->GetNE(vb);
@@ -381,7 +382,7 @@ namespace ngcomp
                                                                VorB vb, 
                                                                LocalHeap & lh) const
   {
-    LevelsetIntegrationDomain lsetintdom(lsets, cdt);
+    LevelsetIntegrationDomain lsetintdom(lsets, cdt, -1, time_order);
     elems_of_domain_type->Clear();
     
     int ne = ma->GetNE(vb);
@@ -398,7 +399,7 @@ namespace ngcomp
          Array<DOMAIN_TYPE> dts_el(M,lh);
          for (int j = 0; j < M; j++)
            dts_el[j] = ElementDomainType(lsetintdom.GetLevelsetGFs()[j], lsetintdom.OptionalCutQuadrature(),
-                                         eltrans, lh);
+                                         eltrans, lh, time_order);
 
          for (int i = 0; i < lsetintdom.GetDomainTypes().Size(); i++)
          {
