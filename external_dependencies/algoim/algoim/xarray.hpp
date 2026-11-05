@@ -69,6 +69,9 @@ namespace algoim
         T* ptr;
         int len;
 
+        // ngsxfem modification: explicit constructor, since a class with user-declared
+        // constructors is no aggregate in C++20 (braced initialisation is used in a())
+        xarraySlice(T* ptr, int len) : ptr(ptr), len(len) {}
         xarraySlice(xarraySlice&) = delete;
         xarraySlice(xarraySlice&&) = delete;
 
