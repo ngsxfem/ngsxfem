@@ -53,17 +53,20 @@ strings "standard", "algoim" and "auto" can be used as well.
 STANDARD:
     ngsxfem's standard rules: straight cuts of piecewise linear (multilinear
     on quads/hexes) level set GridFunctions, also in the isoparametric
-    approach; space-time and multiple level set rules. Other (single) level
-    sets are only accepted with subdivlvl > 0 (piecewise linear interpolation
-    on subdivided simplices), otherwise an exception is raised.
+    approach; space-time rules. Other level sets are only accepted with
+    subdivlvl > 0 (single level sets, piecewise linear interpolation on
+    subdivided simplices), otherwise an exception is raised.
 ALGOIM:
     rules based on the Algoim library (R. I. Saye, https://algoim.github.io/),
-    which represent the level set function as element-wise polynomial of
-    higher degree (level set GridFunctions exactly, other CoefficientFunctions
-    by interpolation, cf. ngsxfemglobals.algoim_lset_order). Used wherever
-    available (single level sets on segments, triangles, quadrilaterals,
-    tetrahedra and hexahedra; on boundary elements only for NEG/POS), the
-    standard rules are used otherwise (multiple level sets, space-time).
+    which represent the level set function(s) as element-wise polynomial(s)
+    of higher degree (level set GridFunctions exactly, other
+    CoefficientFunctions by interpolation, cf. ngsxfemglobals.algoim_lset_order).
+    Available for element integrals (segments, triangles, quadrilaterals,
+    tetrahedra, hexahedra; also on boundary elements, vb=BND), for facet and
+    element boundary integrals (skeleton=True, element_boundary=True) and for
+    multiple level sets (DomainTypeArray, at most one interface condition per
+    domain tuple). The standard rules are used otherwise (space-time, other
+    element types, co-dimension 2 parts of multiple level set domains).
 AUTO (default):
     the standard rules for piecewise linear level set GridFunctions, ALGOIM
     for all other level sets (higher order GridFunctions, general
