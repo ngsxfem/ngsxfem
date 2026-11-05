@@ -6,6 +6,7 @@
 // portability, alignment, and type consistency.
 
 #include <vector>
+#include <memory>
 #include "uvector.hpp"
 
 namespace algoim
@@ -38,8 +39,12 @@ namespace algoim
 
         static T* base()
         {
-            static thread_local std::vector<T> buff(capacity);
-            return buff.data();
+            // ngsxfem modification: allocate without value-initialisation so that the
+            // operating system only commits the pages that are actually used (upstream:
+            // static thread_local std::vector<T> buff(capacity), which touches all
+            // 'capacity' elements of every thread that uses Algoim)
+            static thread_local std::unique_ptr<T[]> buff(new T[capacity]);
+            return buff.get();
         }
 
         static ptrdiff_t& pos()
