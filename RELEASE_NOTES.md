@@ -37,8 +37,8 @@ Requires NGSolve 6.2.2608.
   ```
   `"auto"` (default) uses the standard rules for piecewise linear level set GridFunctions
   (unchanged, also in the isoparametric approach) and Algoim for all other level sets; the
-  user is informed once when Algoim is chosen automatically, and the first use of Algoim is
-  acknowledged in the terminal (with link and reference). Algoim is used for element,
+  use of Algoim is reported once per run in the terminal (with link and reference to cite),
+  mentioning an automatic choice. Algoim is used for element,
   boundary (`vb=BND`, including interfaces on the boundary), facet (`skeleton=True`) and
   element boundary (`element_boundary=True`) integrals and for multiple level sets
   (`DomainTypeArray`, also on quadrilaterals and hexahedra, `MultiLevelsetCutInfo`).

@@ -59,6 +59,11 @@
 
 namespace xintegration
 {
+  /// Reports the use of Algoim in the terminal (with link and reference), once per run, on the
+  /// first Algoim-based cut rule. automatic: Algoim was chosen automatically (cut_quadrature
+  /// "auto" not chosen explicitly), which is mentioned in the (single) message.
+  void ReportAlgoimUse (bool automatic = false);
+
   /// Algoim-based cut rules are available for (volume and boundary) elements of
   /// type SEGM, TRIG, QUAD, TET, HEX, PRISM.
   bool AlgoimCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt);

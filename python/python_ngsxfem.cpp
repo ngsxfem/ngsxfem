@@ -62,16 +62,21 @@ ALGOIM:
     of higher degree (level set GridFunctions exactly, other
     CoefficientFunctions by interpolation, cf. ngsxfemglobals.algoim_lset_order).
     Available for element integrals (segments, triangles, quadrilaterals,
-    tetrahedra, hexahedra; also on boundary elements, vb=BND), for facet and
-    element boundary integrals (skeleton=True, element_boundary=True) and for
-    multiple level sets (DomainTypeArray, at most one interface condition per
-    domain tuple). The standard rules are used otherwise (space-time, other
-    element types, co-dimension 2 parts of multiple level set domains).
+    tetrahedra, hexahedra, prisms; also on boundary elements, vb=BND), for
+    facet and element boundary integrals (skeleton=True, element_boundary=True),
+    for multiple level sets (DomainTypeArray, at most one interface condition
+    per domain tuple), for space-time integrals (time_order >= 0, level sets on
+    SpaceTimeFESpaces or CoefficientFunctions of tref; elements and skeleton
+    facets) and at fixed reference times (tref). The standard rules are used
+    otherwise (e.g. co-dimension 2 parts of multiple level set domains).
 AUTO (default):
-    the standard rules for piecewise linear level set GridFunctions, ALGOIM
-    for all other level sets (higher order GridFunctions, general
-    CoefficientFunctions). If AUTO has not been chosen explicitly, the user
-    is informed (once) when Algoim is used.
+    the standard rules for piecewise linear (in space) level set GridFunctions,
+    ALGOIM for all other level sets (higher order GridFunctions, general
+    CoefficientFunctions) and for cases that the standard rules do not support
+    (prisms; multiple level sets on quadrilaterals, hexahedra, prisms).
+The use of Algoim is reported once per run in the terminal (with a link and
+the reference to cite), which also mentions an automatic choice (AUTO, if not
+chosen explicitly).
 )raw_string"))
     .value("STANDARD", CUTQUAD_STANDARD)
     .value("ALGOIM", CUTQUAD_ALGOIM)
