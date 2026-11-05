@@ -13,6 +13,8 @@
       the corner of the unit hypercube; it is described by a second (linear)
       polynomial in Algoim's multi-polynomial quadrature, and the level set
       function is evaluated (polynomially extended) in the whole hypercube.
+      Prisms are treated in the same way (triangle in the first two
+      coordinates times [0,1]).
       The hypercube is subdivided once (the sub-boxes that intersect the
       simplex are used) to keep the boxes Algoim works on comparable in size
       to the simplex.
@@ -58,7 +60,7 @@
 namespace xintegration
 {
   /// Algoim-based cut rules are available for (volume and boundary) elements of
-  /// type SEGM, TRIG, QUAD, TET, HEX.
+  /// type SEGM, TRIG, QUAD, TET, HEX, PRISM.
   bool AlgoimCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt);
 
   /// Cut rule for a domain described by multiple level sets (the union of the

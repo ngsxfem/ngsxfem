@@ -27,6 +27,13 @@ namespace xintegration
                     "approach) or set subdivlvl > 0 (only for element integrals).");
   }
 
+  /// element types that are supported by the standard rules (P1 level sets)
+  static bool StandardRulesAvailable (ELEMENT_TYPE et)
+  {
+    return (et == ET_POINT) || (et == ET_SEGM) || (et == ET_TRIG) || (et == ET_QUAD)
+      || (et == ET_TET) || (et == ET_HEX);
+  }
+
   /// informs the user (once) that the Algoim-based rules are used due to the
   /// automatic choice (if the method was not chosen explicitly)
   static void InformOnAutomaticAlgoim (const LevelsetIntegrationDomain & lsetintdom)
@@ -48,7 +55,8 @@ namespace xintegration
   ///    domain type (also space-time rules and rules at a fixed reference time)
   ///  * AUTO: as ALGOIM, but only for level sets that are not piecewise linear
   ///    (in space) GridFunctions (those are treated with the standard rules,
-  ///    also with a mesh deformation, i.e. in the isoparametric approach). If
+  ///    also with a mesh deformation, i.e. in the isoparametric approach), and
+  ///    for element types that the standard rules do not support (prisms). If
   ///    AUTO is not an explicit choice of the user, the user is informed (once).
   bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
                          const ElementTransformation & trafo)
@@ -77,7 +85,7 @@ namespace xintegration
       return true;
 
     // CUTQUAD_AUTO
-    if (IsP1Levelset(lset))
+    if (IsP1Levelset(lset) && StandardRulesAvailable(trafo.GetElementType()))
       return false;
     InformOnAutomaticAlgoim(lsetintdom);
     return true;
@@ -130,8 +138,9 @@ namespace xintegration
       return false;
     if (method == CUTQUAD_ALGOIM)
       return true;
-    // CUTQUAD_AUTO
-    if (all_p1)
+    // CUTQUAD_AUTO (the standard rules for multiple level sets support triangles and tetrahedra)
+    const ELEMENT_TYPE et = trafo.GetElementType();
+    if (all_p1 && ((et == ET_TRIG) || (et == ET_TET)))
       return false;
     InformOnAutomaticAlgoim(lsetintdom);
     return true;
