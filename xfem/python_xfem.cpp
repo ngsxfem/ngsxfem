@@ -532,7 +532,8 @@ heapsize : int
 A minimal version of a CutInfo that allows for several levelsets and a list of tuples of domain_types.
 )raw")
     .def(py::init([] (shared_ptr<MeshAccess> ma,
-                          py::object lsets_in)
+                          py::object lsets_in,
+                          int time_order)
          {
            py::extract<py::list> lsets_(lsets_in);
            if (!lsets_.check())
@@ -549,10 +550,11 @@ A minimal version of a CutInfo that allows for several levelsets and a list of t
             lset_b[i]->Update();
             lset_b[i]->GetVectorPtr()->Set(1.0, lset_a[i]->GetVector());
            }
-           return make_shared<MultiLevelsetCutInformation> (ma, lset_b);
+           return make_shared<MultiLevelsetCutInformation> (ma, lset_b, time_order);
          }),
          py::arg("mesh"),
          py::arg("levelset"),
+         py::arg("time_order") = -1,
          docu_string(R"raw_string(
 Creates a MultiLevelsetCutInfo based on a mesh and a tuple of levelsets.
 
@@ -563,6 +565,10 @@ mesh :
 
 levelsets : tuple(ngsolve.GridFunction)
   tuple of GridFunctions w.r.t. which elements are marked 
+
+time_order : int
+  for space-time level sets (GridFunctions on a SpaceTimeFESpace): order in time
+  that is used to decide on the space-time parts of the elements (-1: no space-time)
 )raw_string")
       )
     .def("Mesh", [](MultiLevelsetCutInformation & self)

@@ -27,16 +27,20 @@ namespace xintegration
 
   /// true if the Algoim-based rule is used for the multiple level set domain on
   /// the element (see CUT_QUADRATURE; domain type tuples with more than one
-  /// interface condition are only supported by the standard rules for P1 level sets)
+  /// interface condition are only supported by the standard rules for P1 level
+  /// sets; space-time integrals and fixed reference times only by the
+  /// Algoim-based rules)
   bool UseAlgoimMultiLevelsetCutRule (const LevelsetIntegrationDomain & lsetintdom,
                                       const ElementTransformation & trafo);
 
   /// classification of an element w.r.t. a level set GridFunction (NEG, POS or
   /// IF): from the vertex values for P1 level sets (standard rules), otherwise
-  /// from the measures of the negative and positive parts (as in CutInfo)
+  /// from the measures of the negative and positive parts (as in CutInfo; for
+  /// time_order >= 0: of the space-time parts)
   DOMAIN_TYPE ElementDomainType (const shared_ptr<GridFunction> & gf_lset,
                                  optional<CUT_QUADRATURE> cut_quadrature,
-                                 const ElementTransformation & trafo, LocalHeap & lh);
+                                 const ElementTransformation & trafo, LocalHeap & lh,
+                                 int time_order = -1);
 
   /// the level set function of a single level set domain (CoefficientFunction
   /// or GridFunction)

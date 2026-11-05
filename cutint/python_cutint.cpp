@@ -104,8 +104,6 @@ namespace xintegration
     {
       if (subdivlvl > 0)
         throw Exception("multi level sets don't work with subdivlvl > 0");
-      if (time_order > -1)
-        throw Exception("multi level sets don't work with time_order > 0");
 
       py::extract<py::tuple> lset_tuple_(lset);
       if (!lset_tuple_.check())
