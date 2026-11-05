@@ -20,7 +20,24 @@ namespace xintegration
   typedef CoefficientFunction CF;
   typedef GridFunction GF;
 
+  shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomainWithoutCutQuadrature(py::dict dictionary);
+
   shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomain(py::dict dictionary)
+  {
+    auto lsetintdom = PyDict2LevelsetIntegrationDomainWithoutCutQuadrature(dictionary);
+    if (dictionary.contains("cut_quadrature") && !dictionary["cut_quadrature"].is_none())
+    {
+      try {
+        lsetintdom->SetCutQuadrature(py::cast<CUT_QUADRATURE>(dictionary["cut_quadrature"]));
+      }
+      catch (py::cast_error &) {
+        throw Exception("data type for cut_quadrature not admissible (use CUT_QUADRATURE or 'standard', 'algoim', 'auto').");
+      }
+    }
+    return lsetintdom;
+  }
+
+  shared_ptr<LevelsetIntegrationDomain> PyDict2LevelsetIntegrationDomainWithoutCutQuadrature(py::dict dictionary)
   {
     if (!dictionary.contains("levelset"))
       throw Exception("You need to provide (a) levelset(s).");
@@ -87,8 +104,6 @@ namespace xintegration
     {
       if (subdivlvl > 0)
         throw Exception("multi level sets don't work with subdivlvl > 0");
-      if (time_order > -1)
-        throw Exception("multi level sets don't work with time_order > 0");
 
       py::extract<py::tuple> lset_tuple_(lset);
       if (!lset_tuple_.check())
@@ -328,12 +343,17 @@ levelset_domain : dictionary which provides levelsets, domain_types and integrat
       interpolated piecewise linearly. Based on this approximation, the integration rule is
       constructed. Note: this argument only works on simplices without space-time and without 
       multiple levelsets.
+      With the Algoim-based quadrature (see "cut_quadrature"), subdivlvl is the number of
+      uniform subdivisions of a cut element before Algoim is applied (all element types).
 
     "time_order" : int
       integration order in time for space-time integration
 
     "quad_dir_policy" : int
       policy for the selection of the order of integration directions
+
+    "cut_quadrature" : CUT_QUADRATURE or {"standard", "algoim", "auto"}
+      quadrature method on cut elements (default: ngsxfemglobals.cut_quadrature)
 
 mesh : 
   Mesh to integrate on (on some part) 
@@ -442,12 +462,17 @@ levelset_domain : dictionary which provides levelsets, domain_types and integrat
       interpolated piecewise linearly. Based on this approximation, the integration rule is
       constructed. Note: this argument only works on simplices without space-time and without 
       multiple levelsets.
+      With the Algoim-based quadrature (see "cut_quadrature"), subdivlvl is the number of
+      uniform subdivisions of a cut element before Algoim is applied (all element types).
 
     "time_order" : int
       integration order in time for space-time integration
 
     "quad_dir_policy" : int
       policy for the selection of the order of integration directions
+
+    "cut_quadrature" : CUT_QUADRATURE or {"standard", "algoim", "auto"}
+      quadrature method on cut elements (default: ngsxfemglobals.cut_quadrature)
 
 mesh : 
   Mesh to integrate on (on some part) 

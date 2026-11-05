@@ -654,6 +654,20 @@ namespace xintegration
                                                   quad_untrafo[i].Weight() / mip.GetMeasure());
           }
         }
+        else if (((et == ET_TRIG) || (et == ET_QUAD)) && DIM == 3)
+        {
+          // BND face in a 3D mesh: the interface (IF) is a co-dim-2 curve. Weight such that
+          // mip.GetMeasure()*weight is the physical length element |F t| (t: unit tangent).
+          for (int i = 0; i < quad_untrafo.Size(); i++)
+          {
+            MappedIntegrationPoint<2,3> mip(quad_untrafo[i], trafo);
+            const Vec<3> nref = lset.GetNormal(quad_untrafo[i].Point());
+            const Vec<2> t(nref(1), -nref(0));
+            const double tnorm = L2Norm(t);
+            const double w = (tnorm > 0) ? quad_untrafo[i].Weight() * L2Norm(mip.GetJacobian() * t) / (tnorm * mip.GetMeasure()) : 0.0;
+            (*ir_interface)[i] = IntegrationPoint(quad_untrafo[i].Point(), w);
+          }
+        }
         else if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);

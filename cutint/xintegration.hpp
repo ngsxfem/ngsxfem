@@ -16,6 +16,59 @@ namespace xintegration
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh);
+  /// true if the Algoim-based cut rule is used for the (single level set)
+  /// domain on the element, see CUT_QUADRATURE
+  bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                         const ElementTransformation & trafo);
+
+  /// throws the exception for level sets that are not piecewise linear
+  /// GridFunctions with the standard rules
+  [[noreturn]] void StandardRulesRequireP1Levelset ();
+
+  /// true if the Algoim-based rule is used for the multiple level set domain on
+  /// the element (see CUT_QUADRATURE; domain type tuples with more than one
+  /// interface condition are only supported by the standard rules for P1 level
+  /// sets; space-time integrals and fixed reference times only by the
+  /// Algoim-based rules)
+  bool UseAlgoimMultiLevelsetCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                                      const ElementTransformation & trafo);
+
+  /// classification of an element w.r.t. a level set GridFunction (NEG, POS or
+  /// IF): from the vertex values for P1 level sets (standard rules), otherwise
+  /// from the measures of the negative and positive parts (as in CutInfo; for
+  /// time_order >= 0: of the space-time parts)
+  DOMAIN_TYPE ElementDomainType (const shared_ptr<GridFunction> & gf_lset,
+                                 optional<CUT_QUADRATURE> cut_quadrature,
+                                 const ElementTransformation & trafo, LocalHeap & lh,
+                                 int time_order = -1);
+
+  /// the level set function of a single level set domain (CoefficientFunction
+  /// or GridFunction)
+  shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom);
+
+  /// true if the Algoim-based rules are used for cut integrals on facets
+  /// (skeleton and element boundary integrals) of the (single level set)
+  /// domain, see CUT_QUADRATURE. time_order >= 0: space-time facet rule
+  /// (see AlgoimSpaceTimeCutFacetRule); space-time domains are only treated
+  /// by the caller if it passes the time order.
+  bool UseAlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                              ELEMENT_TYPE etfacet, int time_order = -1);
+
+  /// Algoim-based cut rule on the facet facetnr of the element (see
+  /// AlgoimCutFacetIntegrationRule for the conventions)
+  const IntegrationRule * AlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                                              const ElementTransformation & trafo,
+                                              Facet2ElementTrafo & transform, int facetnr,
+                                              int intorder, LocalHeap & lh);
+
+  /// Algoim-based space-time cut rule on the facet facetnr of the element (see
+  /// AlgoimSpaceTimeCutFacetIntegrationRule for the conventions)
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                               const ElementTransformation & trafo,
+                               Facet2ElementTrafo & transform, int facetnr,
+                               int intorder, int time_intorder, LocalHeap & lh);
+
   template<class SCAL> 
   /**
    * Creates a new FlatArray of SIMD values from a given FlatArray of scalar values.

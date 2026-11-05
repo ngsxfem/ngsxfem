@@ -17,6 +17,8 @@ On these simple (uncut) geometries standard quadrature rules of arbitrary order 
 
 ![Left: Subdivision strategy for cut tetrahedron. Right: Integration points on a cut element.](graphics/cuttet-quadrature.png)
 
+For higher order level set functions (e.g. a level set `GridFunction` of order $k$ or a general `CoefficientFunction`), the quadrature algorithm of [Algoim](https://algoim.github.io/) (R. I. Saye, J. Comput. Phys. 448, 2022) is used (also for facet and boundary integrals and for multiple level sets) (`ngsxfemglobals.cut_quadrature = "auto"` (default) or `"algoim"`, or for single integrals `dCut(..., cut_quadrature=...)`). It computes quadrature rules directly with respect to the zero level of the polynomial level set function on every element (segments, triangles, quadrilaterals, tetrahedra, hexahedra and prisms), so that a higher order accurate geometry handling is obtained without any mesh transformation, see the demo `demos/fictdom_algoim.py`.
+
 ### Geometries described by multiple level sets
 While one level set function may be sufficient for the approximation of a smooth geometry, many geometries do not have -- due to sharp corners or edges -- an implicit description by only one *smooth* level set function. In these cases often multiple level set functions can be used to describe theses geometries. 
 To work with these more complicated domains, `ngsxfem` provides tools to work with these geometries as with simple geometries, for example computing the level set description of the boundary and exterior.  To enable integration on such domains `ngsxfem` generates quadrature rules with respect to every level set which cuts a given element. Furthermore, it provides the analogous tools to the single level-set setting, to mark those elements of the mesh which are relevant to a given geometry.
@@ -27,6 +29,7 @@ To work with these more complicated domains, `ngsxfem` provides tools to work wi
 ### Higher order representation of implicit level-set geometries 
 To obtain higher order accuracy in the handling of the geometry, `ngsxfem` offers a mesh transformation technique in the spirit of isoparametric finite element methods. 
 Thereby the piecewise linear approximation of the level set (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
+Alternatively, the Algoim-based quadrature (see [above](#numerical-integration-on-unfitted-geometries-described-by-one-level-set-function)) can be applied directly to a higher order level set function.
 
 ![Left: Piecewise linear approximation. Right: Higher-order mapped domain](graphics/lsetcurv.jpg)
 
@@ -34,6 +37,8 @@ Thereby the piecewise linear approximation of the level set (which is only of se
 To obtain robust methods for partial differential equations on unfitted moving domain we can formulate space-time discretizations. `ngsxfem` provides the necessary tools to define space-time finite element spaces and to integrate on space-time domains. Furthermore, it extends the tools for higher order accurate geometry handling into the space-time setting.
 
 ![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a linear-in-space space-time level set function on the reference configuration (red).](graphics/spacetime.png)
+
+Alternatively, the Algoim-based quadrature can be applied to space-time level set functions of higher order in space (a `GridFunction` on `ScalarTimeFE(k_t) * H1(mesh, order=k_s)` or a `CoefficientFunction` of the reference time `tref`), e.g. `dCut(lset, NEG, time_order=4)` or `dCut(lset, NEG, tref=1)`, without a space-time mesh deformation. The space-time quadrature rules are computed with Algoim in space-time (2D+t, 3D+t on hexahedra; tetrahedra: Algoim-based spatial rules at the time points of Gauss rules on time intervals between the sign changes of the level set in the vertices) and are higher order accurate, also for interfaces on facets in 3D+t and for multiple level sets.
 
 ### Patches for Element Aggregation or Ghost Penalties
 To stabilize small cut configurations `ngsxfem` allows to apply Ghost Penalty stabilizations which however increases the number of couplings. To reduce the couplings a minimum set of stabilization facets can be obtain by selecting stabilization patches on which stabilization is active. Alternatively an aggregation method can be used to extend shape functions from the stable interior to ill-cut elements. The basis for both is the selection of element aggregation patches and corresponding operations.

@@ -1,13 +1,246 @@
 #include "xintegration.hpp"
+#include <atomic>
 #include "mlsetintegration.hpp"
 #include "straightcutrule.hpp"
 #include "spacetimecutrule.hpp"
+#include "algoimcutrule.hpp"
 #include "../spacetime/SpaceTimeFE.hpp"
 #include "../spacetime/SpaceTimeFESpace.hpp"
 
 
 namespace xintegration
 {
+  /// true if the level set function is suited for ngsxfem's standard
+  /// (straight cut) rules: a piecewise (multi-)linear GridFunction
+  static bool IsP1Levelset (const shared_ptr<CoefficientFunction> & lset)
+  {
+    return get<1>(CF2GFForStraightCutRule(lset, 0)) != nullptr;
+  }
+
+  void StandardRulesRequireP1Levelset ()
+  {
+    throw Exception("The standard cut quadrature (cut_quadrature = 'standard') requires the level set "
+                    "function as a piecewise linear GridFunction, but a higher order GridFunction or a "
+                    "general CoefficientFunction was given. Use cut_quadrature = 'auto' or 'algoim' "
+                    "(Algoim-based quadrature w.r.t. the level set function itself), interpolate the "
+                    "level set function piecewise linearly (InterpolateToP1, e.g. for the isoparametric "
+                    "approach) or set subdivlvl > 0 (only for element integrals).");
+  }
+
+  /// element types that are supported by the standard rules (P1 level sets)
+  static bool StandardRulesAvailable (ELEMENT_TYPE et)
+  {
+    return (et == ET_POINT) || (et == ET_SEGM) || (et == ET_TRIG) || (et == ET_QUAD)
+      || (et == ET_TET) || (et == ET_HEX);
+  }
+
+  /// reports the use of Algoim (once per run, see ReportAlgoimUse) when it is chosen
+  /// automatically; the automatic choice is mentioned unless the method was chosen explicitly
+  static void InformOnAutomaticAlgoim (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    ReportAlgoimUse(!(lsetintdom.OptionalCutQuadrature() || globxvar.CUT_QUADRATURE_SET_BY_USER));
+  }
+
+  /// Decides whether the Algoim-based cut rule is applied for a single level set
+  /// domain on the given element (see CUT_QUADRATURE):
+  ///  * STANDARD: never
+  ///  * ALGOIM: whenever Algoim-based rules are available for the element and
+  ///    domain type (also space-time rules and rules at a fixed reference time)
+  ///  * AUTO: as ALGOIM, but only for level sets that are not piecewise linear
+  ///    (in space) GridFunctions (those are treated with the standard rules,
+  ///    also with a mesh deformation, i.e. in the isoparametric approach), and
+  ///    for element types that the standard rules do not support (prisms). If
+  ///    AUTO is not an explicit choice of the user, this is mentioned in the
+  ///    report of the use of Algoim (once per run, see ReportAlgoimUse).
+  bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                         const ElementTransformation & trafo)
+  {
+    const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
+    if (method == CUTQUAD_STANDARD)
+      return false;
+    const bool spacetime = lsetintdom.GetTimeIntegrationOrder() >= 0;
+    const DOMAIN_TYPE dt = lsetintdom.GetDomainType();
+    if (spacetime ? !AlgoimSpaceTimeCutRuleAvailable(trafo, dt) : !AlgoimCutRuleAvailable(trafo, dt))
+      return false;
+
+    shared_ptr<CoefficientFunction> lset = SingleLevelset(lsetintdom);
+    if (lset == nullptr)
+      return false;
+    auto gf = dynamic_pointer_cast<GridFunction>(lset);
+    // space-time level set GridFunctions can only be evaluated at some time
+    if (gf && dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get())
+        && !spacetime && !lsetintdom.HasReferenceTime())
+      return false;
+    // discontinuous level sets are not supported on boundary elements (as for the standard rules)
+    if (gf && (trafo.VB() == BND) && (gf->GetFESpace()->GetClassName() == "DiscontinuousH1HighOrderFESpace"))
+      return false;
+
+    if (method == CUTQUAD_ALGOIM)
+      return true;
+
+    // CUTQUAD_AUTO
+    if (IsP1Levelset(lset) && StandardRulesAvailable(trafo.GetElementType()))
+      return false;
+    InformOnAutomaticAlgoim(lsetintdom);
+    return true;
+  }
+
+  /// true if the domain has domain type tuples with more than one interface condition
+  static bool HasHigherCodimensionParts (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    for (const auto & dts : lsetintdom.GetDomainTypes())
+    {
+      int ninterfaces = 0;
+      for (auto dt : dts)
+        if (dt == IF)
+          ninterfaces++;
+      if (ninterfaces > 1)
+        return true;
+    }
+    return false;
+  }
+
+  static bool AllP1Levelsets (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    for (auto & gf : lsetintdom.GetLevelsetGFs())
+      if (!IsP1Levelset(gf))
+        return false;
+    return true;
+  }
+
+  bool UseAlgoimMultiLevelsetCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                                      const ElementTransformation & trafo)
+  {
+    const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
+    if (method == CUTQUAD_STANDARD)
+      return false;
+    const bool spacetime = lsetintdom.GetTimeIntegrationOrder() >= 0;
+    bool has_interface = false;
+    for (const auto & dts : lsetintdom.GetDomainTypes())
+      for (auto dt : dts)
+        if (dt == IF)
+          has_interface = true;
+    const DOMAIN_TYPE dt = has_interface ? IF : NEG;
+    if (spacetime ? !AlgoimSpaceTimeCutRuleAvailable(trafo, dt) : !AlgoimCutRuleAvailable(trafo, dt))
+      return false;
+    // space-time level set GridFunctions can only be evaluated at some time
+    if (!spacetime && !lsetintdom.HasReferenceTime())
+      for (auto & gf : lsetintdom.GetLevelsetGFs())
+        if (dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+          return false;
+    const bool all_p1 = AllP1Levelsets(lsetintdom);
+    // parts of higher co-dimension: only the standard rules (for P1 level sets)
+    if (all_p1 && HasHigherCodimensionParts(lsetintdom))
+      return false;
+    if (method == CUTQUAD_ALGOIM)
+      return true;
+    // CUTQUAD_AUTO: the standard rules for multiple level sets support neither space-time
+    // integrals nor fixed reference times
+    if (spacetime || lsetintdom.HasReferenceTime())
+    {
+      InformOnAutomaticAlgoim(lsetintdom);
+      return true;
+    }
+    // CUTQUAD_AUTO (the standard rules for multiple level sets support triangles and tetrahedra)
+    const ELEMENT_TYPE et = trafo.GetElementType();
+    if (all_p1 && ((et == ET_TRIG) || (et == ET_TET)))
+      return false;
+    InformOnAutomaticAlgoim(lsetintdom);
+    return true;
+  }
+
+  DOMAIN_TYPE ElementDomainType (const shared_ptr<GridFunction> & gf_lset,
+                                 optional<CUT_QUADRATURE> cut_quadrature,
+                                 const ElementTransformation & trafo, LocalHeap & lh,
+                                 int time_order)
+  {
+    if (IsP1Levelset(gf_lset) && (cut_quadrature.value_or(globxvar.CUT_QUADRATURE_METHOD) != CUTQUAD_ALGOIM))
+    {
+      Array<DofId> dnums(0, lh);
+      gf_lset->GetFESpace()->GetDofNrs(trafo.GetElementId(), dnums);
+      FlatVector<> elvec(dnums.Size(), lh);
+      gf_lset->GetVector().GetIndirect(dnums, elvec);
+      return CheckIfStraightCut(elvec);
+    }
+    // as in CutInfo: measures of the negative and positive parts
+    double part_vol[] = {0.0, 0.0};
+    for (DOMAIN_TYPE np : {POS, NEG})
+    {
+      LevelsetIntegrationDomain lsetintdom(gf_lset, nullptr, np, 0, time_order, 0);
+      lsetintdom.SetCutQuadrature(cut_quadrature);
+      const IntegrationRule * ir;
+      Array<double> wei_arr;
+      tie(ir, wei_arr) = CreateCutIntegrationRule(lsetintdom, trafo, lh);
+      if (ir)
+        for (auto w : wei_arr)
+          part_vol[np] += w;
+    }
+    if (part_vol[NEG] > 0.0)
+      return (part_vol[POS] > 0.0) ? IF : NEG;
+    return POS;
+  }
+
+  shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    shared_ptr<CoefficientFunction> lset = lsetintdom.GetLevelsetCF();
+    if (lset == nullptr)
+      lset = lsetintdom.GetLevelsetGF();
+    return lset;
+  }
+
+  bool UseAlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                              ELEMENT_TYPE etfacet, int time_order)
+  {
+    const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
+    if (method == CUTQUAD_STANDARD)
+      return false;
+    if (lsetintdom.IsMultiLevelsetDomain() || lsetintdom.HasReferenceTime())
+      return false;
+    // space-time facet rules only where the caller treats them (time_order >= 0)
+    if ((lsetintdom.GetTimeIntegrationOrder() >= 0) && (time_order < 0))
+      return false;
+    if (!AlgoimCutFacetRuleAvailable(etfacet))
+      return false;
+    shared_ptr<CoefficientFunction> lset = SingleLevelset(lsetintdom);
+    if (lset == nullptr)
+      return false;
+    auto gf = dynamic_pointer_cast<GridFunction>(lset);
+    if (gf && dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()) && (time_order < 0))
+      return false;
+    if (method == CUTQUAD_ALGOIM)
+      return true;
+    // CUTQUAD_AUTO
+    if (IsP1Levelset(lset))
+      return false;
+    InformOnAutomaticAlgoim(lsetintdom);
+    return true;
+  }
+
+  const IntegrationRule * AlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                                              const ElementTransformation & trafo,
+                                              Facet2ElementTrafo & transform, int facetnr,
+                                              int intorder, LocalHeap & lh)
+  {
+    // an integration order that is prescribed for the domain (e.g. dCut(..., order=...)) is used
+    const int order = (lsetintdom.GetIntegrationOrder() >= 0) ? lsetintdom.GetIntegrationOrder() : intorder;
+    return AlgoimCutFacetIntegrationRule(SingleLevelset(lsetintdom), trafo, transform, facetnr,
+                                         lsetintdom.GetDomainType(), order, globxvar.ALGOIM_LSET_ORDER,
+                                         lsetintdom.GetNSubdivisionLevels(), lh);
+  }
+
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                               const ElementTransformation & trafo,
+                               Facet2ElementTrafo & transform, int facetnr,
+                               int intorder, int time_intorder, LocalHeap & lh)
+  {
+    const int order = (lsetintdom.GetIntegrationOrder() >= 0) ? lsetintdom.GetIntegrationOrder() : intorder;
+    return AlgoimSpaceTimeCutFacetIntegrationRule(SingleLevelset(lsetintdom), trafo, transform, facetnr,
+                                                  lsetintdom.GetDomainType(), order, time_intorder,
+                                                  globxvar.ALGOIM_LSET_ORDER,
+                                                  lsetintdom.GetNSubdivisionLevels(), lh);
+  }
+
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
@@ -16,8 +249,14 @@ namespace xintegration
     RegionTimer reg (timer);
     if (lsetintdom.IsMultiLevelsetDomain())
     {
+      if (UseAlgoimMultiLevelsetCutRule(lsetintdom, trafo))
+        return AlgoimMultiLevelsetCutIntegrationRule(lsetintdom, trafo, globxvar.ALGOIM_LSET_ORDER, lh);
       if (lsetintdom.HasReferenceTime())
-        throw Exception("No tref-fixing for mlset yet.");
+        throw Exception("No tref-fixing for mlset with the standard rules (use cut_quadrature = 'auto' "
+                        "or 'algoim').");
+      // the standard rules require piecewise linear level set GridFunctions
+      if ((lsetintdom.GetTimeIntegrationOrder() < 0) && !AllP1Levelsets(lsetintdom))
+        StandardRulesRequireP1Levelset();
       return CreateMultiLevelsetCutIntegrationRule(lsetintdom, trafo, lh);
     }
     else
@@ -44,7 +283,29 @@ namespace xintegration
       DOMAIN_TYPE dt = lsetintdom.GetDomainType();
       SWAP_DIMENSIONS_POLICY quad_dir_policy = lsetintdom.GetSwapDimensionPolicy();
       int subdivlvl = lsetintdom.GetNSubdivisionLevels();
-      
+
+      if (UseAlgoimCutRule(lsetintdom, trafo))
+      {
+        if (time_intorder >= 0)
+        {
+          if (lsetintdom.HasReferenceTime())
+            throw Exception("space-time quadrature rule shall not have a fixed reference time.");
+          return AlgoimSpaceTimeCutIntegrationRule(cflset ? cflset : gflset, trafo, dt, max(intorder, 0),
+                                                   time_intorder, globxvar.ALGOIM_LSET_ORDER, subdivlvl, lh);
+        }
+        optional<double> tref;
+        if (lsetintdom.HasReferenceTime())
+          tref = lsetintdom.ReferenceTime();
+        return AlgoimCutIntegrationRule(cflset ? cflset : gflset, trafo, dt, max(intorder, 0),
+                                        globxvar.ALGOIM_LSET_ORDER, subdivlvl, lh, tref);
+      }
+
+      // the standard rules require a piecewise linear (in space) level set GridFunction (or an
+      // explicit request for the subdivision approach, subdivlvl > 0, without time)
+      if ((cflset != nullptr) && (lsetintdom.GetCutQuadrature() == CUTQUAD_STANDARD)
+          && ((subdivlvl == 0) || (time_intorder >= 0) || lsetintdom.HasReferenceTime()))
+        StandardRulesRequireP1Levelset();
+
       if (gflset != nullptr)
       {
         Array<DofId> dnums(0,lh);
@@ -102,7 +363,8 @@ namespace xintegration
       else if (cflset != nullptr)
       {
         if (lsetintdom.HasReferenceTime())
-          throw Exception("No tref-fixing for old quadrature rules (yet).");
+          throw Exception("No tref-fixing for old quadrature rules (yet), the Algoim-based rules are "
+                          "not available for this element / domain type.");
         if (time_intorder < 0) {
           const IntegrationRule * ir = CutIntegrationRule(cflset, trafo, dt, intorder, subdivlvl, lh);
           if(ir != nullptr) {
@@ -112,7 +374,9 @@ namespace xintegration
           }
           else return make_tuple(nullptr, Array<double>());
         }
-        else throw Exception("Space-time requires the levelset as a GridFunction!");
+        else throw Exception("The standard space-time cut rules require the level set function as a "
+                             "piecewise linear (in space) GridFunction, the Algoim-based rules are not "
+                             "available for this element / domain type.");
       }
       else throw Exception("Only null information provided, null integration rule served!");
       

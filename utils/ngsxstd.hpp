@@ -96,10 +96,29 @@ enum TIME_DOMAIN_TYPE {  BOTTOM = 0,
 };
 
 
+/// quadrature method on cut elements, see GlobalNgsxfemVariables::CUT_QUADRATURE_METHOD
+enum CUT_QUADRATURE {
+  /// ngsxfem's standard rules: straight cuts of piecewise (multi-)linear level
+  /// set GridFunctions (and subdivision, space-time and multiple level set
+  /// rules); other level sets are rejected unless subdivlvl > 0
+  CUTQUAD_STANDARD = 0,
+  /// rules based on Algoim (level sets as element-wise polynomials of higher
+  /// degree) wherever available (element, boundary, facet and element
+  /// boundary integrals, multiple level sets), the standard rules otherwise
+  CUTQUAD_ALGOIM = 1,
+  /// standard rules for piecewise linear level set GridFunctions, Algoim
+  /// for all other level sets
+  CUTQUAD_AUTO = 2
+};
+
+/// "standard", "algoim" or "auto" (case insensitive)
+CUT_QUADRATURE CutQuadratureFromString (const string & name);
+
 void IterateRange (int ne, LocalHeap & clh, const function<void(int,LocalHeap&)> & func);
 
 ostream & operator<< (ostream & ost, DOMAIN_TYPE dt);
 ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt);
+ostream & operator<< (ostream & ost, CUT_QUADRATURE cq);
 
 class GlobalNgsxfemVariables {
 public:
@@ -121,6 +140,17 @@ public:
     int NON_CONV_WARN_MSG_LVL;
 
     bool SIMD_EVAL;
+
+    /// quadrature method on cut elements (can be overwritten for single
+    /// integrals, e.g. dCut(..., cut_quadrature=...))
+    CUT_QUADRATURE CUT_QUADRATURE_METHOD;
+    /// true if CUT_QUADRATURE_METHOD has been set explicitly (then, the
+    /// automatic selection does not inform the user)
+    bool CUT_QUADRATURE_SET_BY_USER;
+    /// polynomial degree used by the Algoim-based quadrature to interpolate level
+    /// set functions that are not GridFunctions (GridFunctions are represented
+    /// exactly with their element-wise degree)
+    int ALGOIM_LSET_ORDER;
 
     GlobalNgsxfemVariables();
     
