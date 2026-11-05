@@ -133,6 +133,7 @@ namespace xintegration
           uvector<bool,N> has_disc_p, has_disc;
           uvector<real,N> score = algoim::detail::score_estimate(pset, has_disc_p);
           score /= 2 * max(abs(score));
+          score(N-1) *= algoim::detail::last_axis_score_factor;
           for (int i = 0; i < N; ++i)
             if (!has_disc_p(i))
               score(i) += 1.0;
@@ -146,7 +147,10 @@ namespace xintegration
           ipquad.auto_apply_TS = false;
           ipquad.k = k;
           algoim::detail::eliminate_axis(ipquad.phi, k, ipquad.base.phi);
-          ipquad.base.build(false, has_disc(k));
+          {
+            algoim::detail::LastAxisScoreFactorGuard guard(k == N-1);
+            ipquad.base.build(false, has_disc(k));
+          }
           if (has_disc_p(k))
           {
             ipquad.type = IPQ::OuterAggregate;
@@ -156,6 +160,7 @@ namespace xintegration
                 auto & [kother, base] = ipquad.base_other[i < k ? i : i - 1];
                 kother = i;
                 algoim::detail::eliminate_axis(ipquad.phi, kother, base.phi);
+                algoim::detail::LastAxisScoreFactorGuard guard(kother == N-1);
                 base.build(false, true);
               }
           }
@@ -229,14 +234,26 @@ namespace xintegration
         return (target == 0) ? (val < 0) : (val > 0);
       }
 
+      // Sum of the first sdim components (the coordinates that form the simplex).
+      template <int N, typename T>
+      T SimplexSum (const uvector<T,N> & y, int sdim)
+      {
+        T s = 0;
+        for (int d = 0; d < sdim; d++)
+          s += y(d);
+        return s;
+      }
+
       // Appends the rule for the part of B ∩ C where the level set functions phis[i] satisfy the
       // sign conditions targets[i] (at most one interface condition) to points/weights/gradients,
-      // where B = lo + h [0,1]^N is a box in [0,1]^N and C is the cell (unit hypercube or unit
-      // simplex). If Algoim detects vertical tangents in B (see above), B is subdivided into 2^N
-      // boxes (at most 'levels' times).
+      // where B = lo + diag(h) [0,1]^N is a box in [0,1]^N (with equal sizes h(d) in the simplex
+      // directions d < sdim) and C is the cell: the unit hypercube
+      // (sdim == 0) or the product of the unit simplex in the first sdim coordinates with the unit
+      // hypercube in the remaining ones (e.g. a triangle times a time interval). If Algoim detects
+      // vertical tangents in B (see above), B is subdivided into 2^N boxes (at most 'levels' times).
       template <int N>
       void T_AppendBoxRule (const std::deque<xarray<real,N>> & phis, const std::vector<int> & targets,
-                            bool simplex, const uvector<real,N> & lo, real h, int levels, int q,
+                            int sdim, const uvector<real,N> & lo, const uvector<real,N> & h, int levels, int q,
                             std::vector<double> & points,
                             std::vector<double> & weights,
                             std::vector<double> & gradients)
@@ -244,25 +261,26 @@ namespace xintegration
         using algoim::booluarray;
         const int n = phis.size();
 
-        // the simplex {x_0 + ... + x_{N-1} < 1} is {psi < 0} with psi = y_0 + ... + y_{N-1} - L in
-        // box coordinates y (x = lo + h y); the Bernstein coefficients of (multi-)linear psi are its
-        // values in the corners of the unit cube. The mask restricts the quadrature algorithm to
-        // the sub-cells (of Algoim's M x ... x M grid) that touch the closed simplex. Note that
+        // the simplex {x_0 + ... + x_{sdim-1} < 1} is {psi < 0} with psi = y_0 + ... + y_{sdim-1} - L
+        // in box coordinates y (x = lo + h y); the Bernstein coefficients of (multi-)linear psi are
+        // its values in the corners of the unit cube. The mask restricts the quadrature algorithm
+        // to the sub-cells (of Algoim's M x ... x M grid) that touch the closed simplex. Note that
         // Algoim assigns a root on the boundary of two sub-cells to the upper one (floor), so that
         // roots in a corner of a sub-cell are only taken into account if all sub-cells touching the
         // simplex are included. (lo and h are binary fractions, so all of this is exact.)
-        const real L = (1 - sum(lo)) / h;
+        const bool simplex = (sdim > 0);
+        const real L = (1 - SimplexSum<N>(lo, sdim)) / h(0);
         xarray<real,N> psi(nullptr, uvector<int,N>(2));
         algoim_spark_alloc(real, psi);
         booluarray<N,ALGOIM_M> domain_mask(true);
         if (simplex)
         {
           for (MultiLoop<N> i(0, 2); ~i; ++i)
-            psi.m(i()) = sum(i()) - L;
+            psi.m(i()) = SimplexSum<N>(i(), sdim) - L;
           for (MultiLoop<N> i(0, ALGOIM_M); ~i; ++i)
-            domain_mask(i()) = sum(i()) <= L * ALGOIM_M;
+            domain_mask(i()) = SimplexSum<N>(i(), sdim) <= L * ALGOIM_M;
         }
-        auto inside = [&] (const uvector<real,N> & y) { return !simplex || (sum(y) < L); };
+        auto inside = [&] (const uvector<real,N> & y) { return !simplex || (SimplexSum<N>(y, sdim) < L); };
 
         // level set functions in box coordinates (exact, de Casteljau subdivision); level sets
         // without zero in B ∩ C either violate their sign condition (-> nothing to do) or are
@@ -318,8 +336,8 @@ namespace xintegration
           for (MultiLoop<N> c(0, 2); ~c; ++c)
           {
             const uvector<real,N> lo_child = lo + (h/2) * uvector<real,N>(c());
-            if (!simplex || (sum(lo_child) < 1))
-              T_AppendBoxRule<N>(phis, targets, simplex, lo_child, h/2, levels-1, q, points, weights, gradients);
+            if (!simplex || (SimplexSum<N>(lo_child, sdim) < 1))
+              T_AppendBoxRule<N>(phis, targets, sdim, lo_child, h/2, levels-1, q, points, weights, gradients);
           }
           return;
         }
@@ -340,7 +358,6 @@ namespace xintegration
             // The surface rule contains points on the zero levels of all polynomials; the points on
             // {phi_iface = 0} are those for which this level set is the closest one (in terms of
             // |phi| / |grad phi|). Points on {psi = 0} (simplex) are discarded.
-            const real wscale = std::pow(h, N-1);
             const real tol_face = 1e-12;
             auto dist = [] (const xarray<real,N> & p, const uvector<real,N> & y)
             {
@@ -350,7 +367,7 @@ namespace xintegration
             ipquad.integrate_surf(strategy, q,
                                   [&] (const uvector<real,N> & y, real w, const uvector<real,N> & /*wn*/)
                                   {
-                                    if ((w == 0) || (simplex && (sum(y) > L - tol_face)))
+                                    if ((w == 0) || (simplex && (SimplexSum<N>(y, sdim) > L - tol_face)))
                                       return;
                                     if (phibs.size() > 1)
                                     {
@@ -361,14 +378,17 @@ namespace xintegration
                                       if (!signs_match(y))
                                         return;
                                     }
-                                    // gradient w.r.t. y is h times the gradient w.r.t. x
-                                    uvector<real,N> grad = algoim::bernstein::evalBernsteinPolyGradient(phibs[iface], y);
+                                    // gradient w.r.t. x = lo + diag(h) y, the surface measure w.r.t. x is
+                                    // det(diag(h)) |grad_x| / |grad_y| times the one w.r.t. y
+                                    const uvector<real,N> grad_y = algoim::bernstein::evalBernsteinPolyGradient(phibs[iface], y);
+                                    const uvector<real,N> grad = grad_y / h;
+                                    const real gy = norm(grad_y);
                                     for (int d = 0; d < N; d++)
                                     {
-                                      points.push_back(lo(d) + h * y(d));
+                                      points.push_back(lo(d) + h(d) * y(d));
                                       gradients.push_back(grad(d));
                                     }
-                                    weights.push_back(wscale * w);
+                                    weights.push_back((gy > 0) ? prod(h) * norm(grad) / gy * w : 0.0);
                                   });
           }
           else
@@ -376,14 +396,14 @@ namespace xintegration
         }
         else
         {
-          const real wscale = std::pow(h, N);
+          const real wscale = prod(h);
           ipquad.integrate(strategy, q,
                            [&] (const uvector<real,N> & y, real w)
                            {
                              if ((w == 0) || !inside(y) || !signs_match(y))
                                return;
                              for (int d = 0; d < N; d++)
-                               points.push_back(lo(d) + h * y(d));
+                               points.push_back(lo(d) + h(d) * y(d));
                              weights.push_back(wscale * w);
                            });
         }
@@ -391,7 +411,7 @@ namespace xintegration
 
       template <int N>
       MULTI_STATUS T_MultiCutQuadrature (int n, const int * degrees, const double * const * nodal_values,
-                                         const int * targets_in, bool simplex, int q, int subdivlvl,
+                                         const int * targets_in, int sdim, int q, int subdivlvl,
                                          std::vector<double> & points,
                                          std::vector<double> & weights,
                                          std::vector<double> & gradients)
@@ -401,11 +421,14 @@ namespace xintegration
         weights.clear();
         gradients.clear();
 
+        const bool simplex = (sdim > 0);
         booluarray<N,ALGOIM_M> domain_mask(true); // sub-cells of [0,1]^N that touch the cell
         if (simplex)
           for (MultiLoop<N> i(0, ALGOIM_M); ~i; ++i)
-            domain_mask(i()) = sum(i()) <= ALGOIM_M;
-        const uvector<real,N> center(simplex ? 1.0 / (N+1) : 0.5);
+            domain_mask(i()) = SimplexSum<N>(i(), sdim) <= ALGOIM_M;
+        uvector<real,N> center(0.5); // a point in the cell
+        for (int d = 0; d < sdim; d++)
+          center(d) = 1.0 / (sdim + 1);
 
         std::vector<std::vector<real>> storage(n);
         std::deque<xarray<real,N>> phis; // views on storage (see T_AppendBoxRule)
@@ -473,18 +496,22 @@ namespace xintegration
           }
         }
 
-        // Uniform subdivision of [0,1]^N into nsub^N boxes (only those that intersect the cell are
-        // used), each of them is adaptively subdivided once more if Algoim detects vertical
-        // tangents (see HasVerticalTangents). Simplices are always subdivided (at least) once: this
-        // keeps the boxes, in which Algoim works, comparable in size to the simplex, which
-        // significantly improves the accuracy on coarse meshes (where a curved interface in a large
-        // box tends to have (nearly) vertical tangents w.r.t. all directions). All subdivisions are
-        // affine, hence the rules stay exact for polynomial integrands on planar cuts.
-        const int nsub = (simplex ? 2 : 1) << subdivlvl;
+        // Uniform subdivision of [0,1]^N into boxes (2^subdivlvl per direction; only those that
+        // intersect the cell are used), each of them is adaptively subdivided once more if Algoim
+        // detects vertical tangents (see HasVerticalTangents). Simplices are always subdivided (at
+        // least) once in the simplex directions: this keeps the boxes, in which Algoim works,
+        // comparable in size to the simplex, which significantly improves the accuracy on coarse
+        // meshes (where a curved interface in a large box tends to have (nearly) vertical tangents
+        // w.r.t. all directions). All subdivisions are affine, hence the rules stay exact for
+        // polynomial integrands on planar cuts.
+        uvector<int,N> nsub(1 << subdivlvl);
+        for (int d = 0; d < sdim; d++)
+          nsub(d) *= 2;
+        const uvector<real,N> hsub = real(1) / uvector<real,N>(nsub);
         const int adaptive_levels = 1;
         for (MultiLoop<N> b(0, nsub); ~b; ++b)
-          if (!simplex || (sum(b()) < nsub))
-            T_AppendBoxRule<N>(phis, targets, simplex, (real(1) / nsub) * uvector<real,N>(b()), real(1) / nsub,
+          if (!simplex || (SimplexSum<N>(b(), sdim) < nsub(0)))
+            T_AppendBoxRule<N>(phis, targets, sdim, hsub * uvector<real,N>(b()), hsub,
                                adaptive_levels, q, points, weights, gradients);
         return PARTIAL;
       }
@@ -499,16 +526,18 @@ namespace xintegration
       case 1: T_InterpolationPoints<1>(degree, points); break;
       case 2: T_InterpolationPoints<2>(degree, points); break;
       case 3: T_InterpolationPoints<3>(degree, points); break;
+      case 4: T_InterpolationPoints<4>(degree, points); break;
       default:
-        throw std::invalid_argument("algoim_wrapper::InterpolationPoints: dim has to be 1, 2 or 3");
+        throw std::invalid_argument("algoim_wrapper::InterpolationPoints: dim has to be 1, 2, 3 or 4");
       }
     }
 
     MULTI_STATUS MultiCutQuadrature (int dim, int n, const int * degrees, const double * const * nodal_values,
-                                     const int * domains, bool simplex, int q, int subdivlvl,
+                                     const int * domains, int simplex_dim, int q, int subdivlvl,
                                      std::vector<double> & points,
                                      std::vector<double> & weights,
-                                     std::vector<double> & gradients)
+                                     std::vector<double> & gradients,
+                                     bool last_axis_time)
     {
       int ninterfaces = 0;
       for (int l = 0; l < n; l++)
@@ -522,17 +551,25 @@ namespace xintegration
       }
       if (ninterfaces > 1)
         throw std::invalid_argument("algoim_wrapper::MultiCutQuadrature: at most one interface condition");
+      if ((simplex_dim < 0) || (simplex_dim > dim) || (simplex_dim == 1))
+        throw std::invalid_argument("algoim_wrapper::MultiCutQuadrature: simplex_dim has to be 0 or in [2, dim]");
       if (q < 1)
         q = 1;
       if (subdivlvl < 0)
         subdivlvl = 0;
+      // space-time cells: height functions w.r.t. time (in the last axis) only if time is clearly
+      // the best direction (see LastAxisScoreFactor)
+      algoim::detail::LastAxisScoreFactorGuard guard(false);
+      if (last_axis_time)
+        algoim::detail::last_axis_score_factor = LastAxisScoreFactor;
       switch (dim)
       {
-      case 1: return T_MultiCutQuadrature<1>(n, degrees, nodal_values, domains, simplex, q, subdivlvl, points, weights, gradients);
-      case 2: return T_MultiCutQuadrature<2>(n, degrees, nodal_values, domains, simplex, q, subdivlvl, points, weights, gradients);
-      case 3: return T_MultiCutQuadrature<3>(n, degrees, nodal_values, domains, simplex, q, subdivlvl, points, weights, gradients);
+      case 1: return T_MultiCutQuadrature<1>(n, degrees, nodal_values, domains, simplex_dim, q, subdivlvl, points, weights, gradients);
+      case 2: return T_MultiCutQuadrature<2>(n, degrees, nodal_values, domains, simplex_dim, q, subdivlvl, points, weights, gradients);
+      case 3: return T_MultiCutQuadrature<3>(n, degrees, nodal_values, domains, simplex_dim, q, subdivlvl, points, weights, gradients);
+      case 4: return T_MultiCutQuadrature<4>(n, degrees, nodal_values, domains, simplex_dim, q, subdivlvl, points, weights, gradients);
       default:
-        throw std::invalid_argument("algoim_wrapper::MultiCutQuadrature: dim has to be 1, 2 or 3");
+        throw std::invalid_argument("algoim_wrapper::MultiCutQuadrature: dim has to be 1, 2, 3 or 4");
       }
     }
 
@@ -542,7 +579,7 @@ namespace xintegration
                               std::vector<double> & weights,
                               std::vector<double> & gradients)
     {
-      auto status = MultiCutQuadrature(dim, 1, &degree, &nodal_values, &domain, simplex, q, subdivlvl,
+      auto status = MultiCutQuadrature(dim, 1, &degree, &nodal_values, &domain, simplex ? dim : 0, q, subdivlvl,
                                        points, weights, gradients);
       if (status == PARTIAL)
         return CUT;

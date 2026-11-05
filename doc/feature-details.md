@@ -38,6 +38,8 @@ To obtain robust methods for partial differential equations on unfitted moving d
 
 ![Left: Sketch of a space-time moving domain (1D + time) Right: sketch of an isoparametrically mapped space-time prism cut by the zero level of a linear-in-space space-time level set function on the reference configuration (red).](graphics/spacetime.png)
 
+Alternatively, the Algoim-based quadrature can be applied to space-time level set functions of higher order in space (a `GridFunction` on `ScalarTimeFE(k_t) * H1(mesh, order=k_s)` or a `CoefficientFunction` of the reference time `tref`), e.g. `dCut(lset, NEG, time_order=4)` or `dCut(lset, NEG, tref=1)`, without a space-time mesh deformation. The space-time quadrature rules are computed with Algoim in space-time (2D+t, 3D+t on hexahedra; tetrahedra: Algoim-based spatial rules at the time points of Gauss rules on time intervals between the sign changes of the level set in the vertices) and are higher order accurate, also for interfaces on facets in 3D+t.
+
 ### Patches for Element Aggregation or Ghost Penalties
 To stabilize small cut configurations `ngsxfem` allows to apply Ghost Penalty stabilizations which however increases the number of couplings. To reduce the couplings a minimum set of stabilization facets can be obtain by selecting stabilization patches on which stabilization is active. Alternatively an aggregation method can be used to extend shape functions from the stable interior to ill-cut elements. The basis for both is the selection of element aggregation patches and corresponding operations.
 

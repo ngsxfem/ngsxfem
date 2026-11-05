@@ -220,7 +220,11 @@ namespace ngfem
     Array<double> wei_arr;
     if (UseAlgoimCutFacetRule(*lsetintdom, etfacet, time_order))
     {
-      ir_scr = AlgoimCutFacetRule(*lsetintdom, trafo1, transform1, LocalFacetNr, 2*maxorder, lh);
+      if (time_order < 0)
+        ir_scr = AlgoimCutFacetRule(*lsetintdom, trafo1, transform1, LocalFacetNr, 2*maxorder, lh);
+      else
+        tie(ir_scr, wei_arr) = AlgoimSpaceTimeCutFacetRule(*lsetintdom, trafo1, transform1, LocalFacetNr, 2*maxorder,
+                                                           time_order, lh);
       if (ir_scr == nullptr) return;
     }
     else

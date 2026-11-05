@@ -72,3 +72,10 @@ algoim/multiloop.hpp
   direction in which the polynomial is constant). Such polynomials arise for
   level sets in degenerate positions (e.g. planes parallel to a coordinate
   direction, common factors) and led to quadrature points with NaN coordinates.
+* `algoim/quadrature_multipoly.hpp` (`ImplicitPolyQuadrature::build`): optional
+  preference of the other axes over the last axis as height direction
+  (`detail::last_axis_score_factor`, thread-local, default 1, i.e. the upstream
+  heuristic): the gradient-based part of the score of the last axis is scaled by
+  this factor; base integrals in which the last axis has been eliminated use the
+  default. ngsxfem uses it for space-time cells (time in the last axis), see
+  `cutint/algoim_wrapper.hpp`.

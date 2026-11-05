@@ -40,11 +40,31 @@ Requires NGSolve 6.2.2608.
   user is informed once when Algoim is chosen automatically. Algoim is used for element,
   boundary (`vb=BND`, including interfaces on the boundary), facet (`skeleton=True`) and
   element boundary (`element_boundary=True`) integrals and for multiple level sets
-  (`DomainTypeArray`, also on quadrilaterals and hexahedra, `MultiLevelsetCutInfo`);
-  space-time integrals always use the standard rules. See `demos/fictdom_algoim.py` and
-  `CUT_QUADRATURE`.
+  (`DomainTypeArray`, also on quadrilaterals and hexahedra, `MultiLevelsetCutInfo`).
+  See `demos/fictdom_algoim.py` and `CUT_QUADRATURE`.
 
-- `Integrate` on level set domains increases its local heap automatically on overflow.
+- **Algoim-based space-time quadrature** (1D+t, 2D+t, 3D+t) for space-time level sets of
+  higher order in space (`GridFunction` on `ScalarTimeFE(k_t) * H1(mesh, order=k_s)`) and
+  for `CoefficientFunction`s of the reference time `tref`, e.g.
+  ```python
+  lset = GridFunction(ScalarTimeFE(2) * H1(mesh, order=2))
+  lset.Set(levelset)   # levelset depends on t = told + delta_t * tref
+  dQ = delta_t * dCut(lset, NEG, time_order=4)
+  dOmnew = dCut(lset, NEG, tref=1)
+  ```
+  No space-time mesh deformation (`LevelSetMeshAdaptation_Spacetime`) is needed. Supported
+  are element integrals, skeleton facet integrals (including interfaces on faces in 3D+t,
+  which the standard space-time rules do not support), integrals at a fixed reference time
+  (`tref`) and `CutInfo(..., time_order=...)`. The quadrature works in space-time (time
+  preferably as the outermost integration variable); on tetrahedra, time slicing at the
+  sign changes of the level set in the vertices is combined with the spatial rules at fixed
+  times. Space-time level sets that are piecewise linear in space keep the standard rules
+  with `cut_quadrature="auto"`. The Algoim-based space-time rules are considerably more
+  expensive than the standard (isoparametric) ones (in the space-time demos: about 10-20x
+  in 2D+t, 15x in 3D+t).
+
+- `Integrate` on level set domains and `CutInfo` increase their local heap automatically
+  on overflow.
 
 - **Reusable C++ core library.** The C++ part is split into a shared library
   `xfem_core` and the Python extension module `xfem`, which links against it.
@@ -61,6 +81,11 @@ Requires NGSolve 6.2.2608.
   wheels are now built and tested like the Linux/macOS ones (also for CPython 3.10).
 
 ### Bug fixes
+
+- Space-time level set GridFunctions of higher order in space were treated as piecewise
+  linear by the standard space-time rules (`SpaceTimeFESpace` does not report the order of
+  its spatial space), which gave wrong integrals without notice. They now use the
+  Algoim-based rules (`cut_quadrature="auto"`) or raise an exception (`"standard"`).
 
 - Element boundary cut integrals (`element_boundary=True`) of NEG/POS parts on 3D
   elements were scaled wrongly; interfaces on boundary faces in 3D (`dCut(lset, IF,
