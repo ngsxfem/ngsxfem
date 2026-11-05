@@ -1,4 +1,6 @@
 #include "lsetintdomain.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
 
 namespace xintegration
 {
@@ -163,12 +165,20 @@ namespace xintegration
     else
     {
       shared_ptr<GridFunction> ret = dynamic_pointer_cast<GridFunction>(cflset);
-      if ((ret != nullptr) && (ret->GetFESpace()->GetOrder() <= 1) 
-          && (    (ret->GetFESpace()->GetClassName() == "H1HighOrderFESpace")
-               || (ret->GetFESpace()->GetClassName() == "DiscontinuousH1HighOrderFESpace")
-               || (ret->GetFESpace()->GetClassName() == "SpaceTimeFESpace(H1HighOrderFESpace)")
-             )
-         )
+      if (ret == nullptr)
+        return make_tuple(cflset, nullptr);
+      // space-time GridFunctions: piecewise linear in space (arbitrary order in time)
+      // (the SpaceTimeFESpace does not report the order of its spatial FESpace)
+      shared_ptr<FESpace> fes = ret->GetFESpace();
+      bool p1 = false;
+      if (auto st_fes = dynamic_pointer_cast<SpaceTimeFESpace>(fes))
+        p1 = (st_fes->GetSpaceFESpace()->GetOrder() <= 1)
+             && (st_fes->GetSpaceFESpace()->GetClassName() == "H1HighOrderFESpace");
+      else
+        p1 = (fes->GetOrder() <= 1)
+             && (    (fes->GetClassName() == "H1HighOrderFESpace")
+                  || (fes->GetClassName() == "DiscontinuousH1HighOrderFESpace"));
+      if (p1)
         return make_tuple(nullptr, ret);
       else
         return make_tuple(cflset, nullptr);

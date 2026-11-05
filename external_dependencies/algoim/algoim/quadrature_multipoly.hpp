@@ -428,6 +428,25 @@ namespace algoim
             };
         }
 
+        // ngsxfem modification: optional preference of the other axes over the last axis as
+        // height direction (ngsxfem uses it for space-time domains, where the last axis is the
+        // time axis): the (gradient-based) part of the score of the last axis is multiplied with
+        // this factor (1: original heuristic). It is not applied to base integrals in which the
+        // last axis has been eliminated.
+        inline thread_local real last_axis_score_factor = 1.0;
+
+        // Restores last_axis_score_factor at the end of the scope
+        struct LastAxisScoreFactorGuard
+        {
+            real saved;
+            LastAxisScoreFactorGuard(bool last_axis_eliminated) : saved(last_axis_score_factor)
+            {
+                if (last_axis_eliminated)
+                    last_axis_score_factor = 1.0;
+            }
+            ~LastAxisScoreFactorGuard() { last_axis_score_factor = saved; }
+        };
+
         // Compute the 'score' across all dimensions
         template<int N>
         uvector<real,N> score_estimate(PolySet<N,ALGOIM_M>& phi, uvector<bool,N>& has_disc)
@@ -580,6 +599,7 @@ namespace algoim
                 //    score(0) = 1.0;
                 assert(max(abs(score)) > 0);
                 score /= 2 * max(abs(score));
+                score(N-1) *= detail::last_axis_score_factor; // ngsxfem modification
                 for (int i = 0; i < N; ++i)
                     if (!has_disc(i))
                         score(i) += 1.0;
@@ -589,7 +609,10 @@ namespace algoim
                 // discriminant mask has been found
                 k = argmax(score);
                 detail::eliminate_axis(phi, k, base.phi);
-                base.build(false, this->auto_apply_TS || has_disc(k));
+                {
+                    detail::LastAxisScoreFactorGuard guard(k == N-1); // ngsxfem modification
+                    base.build(false, this->auto_apply_TS || has_disc(k));
+                }
 
                 // If this is the outer integral, and surface quadrature schemes are required, apply
                 // the dimension-aggregated scheme when necessary
@@ -603,6 +626,7 @@ namespace algoim
                         detail::eliminate_axis(phi, kother, base.phi);
                         // In aggregate mode, triggered by non-empty discriminant mask,
                         // base integrals always have T-S suggested
+                        detail::LastAxisScoreFactorGuard guard(kother == N-1); // ngsxfem modification
                         base.build(false, this->auto_apply_TS || true);
                     }
                 }

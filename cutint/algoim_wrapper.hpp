@@ -68,11 +68,34 @@ namespace xintegration
     /// EMPTY, FULL (nothing is computed) or PARTIAL (with the rule as in
     /// CutQuadrature; for an interface, the gradients are those of the level set
     /// with the interface condition).
+    ///
+    /// The cell C is the unit hypercube (simplex_dim == 0) or the product of
+    /// the unit simplex in the first simplex_dim coordinates with the unit
+    /// hypercube in the remaining ones (e.g. a triangle or tetrahedron times a
+    /// time interval); dim <= 4. The subdivisions are as described for
+    /// CutQuadrature, the additional subdivision of simplices only applies to
+    /// the simplex directions.
+    ///
+    /// last_axis_time: the last coordinate is the time of a space-time cell.
+    /// Then, Algoim's choice of the height directions (in all levels of the
+    /// dimension reduction) prefers the spatial directions: the time is used
+    /// as height direction only if it is clearly the steepest direction (by a
+    /// factor LastAxisScoreFactor^{-1}) or if the spatial directions have
+    /// vertical tangents. As for the standard space-time rules, time is then
+    /// mostly the variable of the outermost integral. The height functions in
+    /// time direction are often close to singular, e.g. if an interface
+    /// changes its direction of motion in the cell, whereas the spatial height
+    /// functions are smooth (and exact for level sets that are linear in
+    /// space).
     MULTI_STATUS MultiCutQuadrature (int dim, int n, const int * degrees, const double * const * nodal_values,
-                                     const int * domains, bool simplex, int q, int subdivlvl,
+                                     const int * domains, int simplex_dim, int q, int subdivlvl,
                                      std::vector<double> & points,
                                      std::vector<double> & weights,
-                                     std::vector<double> & gradients);
+                                     std::vector<double> & gradients,
+                                     bool last_axis_time = false);
+
+    /// factor for the score of the time axis, see MultiCutQuadrature
+    constexpr double LastAxisScoreFactor = 0.25;
 
     CUT_STATUS CutQuadrature (int dim, int degree, const double * nodal_values, bool simplex,
                               int domain, int q, int subdivlvl,

@@ -43,8 +43,10 @@ namespace xintegration
   shared_ptr<CoefficientFunction> SingleLevelset (const LevelsetIntegrationDomain & lsetintdom);
 
   /// true if the Algoim-based rules are used for cut integrals on facets
-  /// (skeleton and element boundary integrals) of the (single level set,
-  /// non-space-time) domain, see CUT_QUADRATURE
+  /// (skeleton and element boundary integrals) of the (single level set)
+  /// domain, see CUT_QUADRATURE. time_order >= 0: space-time facet rule
+  /// (see AlgoimSpaceTimeCutFacetRule); space-time domains are only treated
+  /// by the caller if it passes the time order.
   bool UseAlgoimCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
                               ELEMENT_TYPE etfacet, int time_order = -1);
 
@@ -54,6 +56,14 @@ namespace xintegration
                                               const ElementTransformation & trafo,
                                               Facet2ElementTrafo & transform, int facetnr,
                                               int intorder, LocalHeap & lh);
+
+  /// Algoim-based space-time cut rule on the facet facetnr of the element (see
+  /// AlgoimSpaceTimeCutFacetIntegrationRule for the conventions)
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutFacetRule (const LevelsetIntegrationDomain & lsetintdom,
+                               const ElementTransformation & trafo,
+                               Facet2ElementTrafo & transform, int facetnr,
+                               int intorder, int time_intorder, LocalHeap & lh);
 
   template<class SCAL> 
   /**

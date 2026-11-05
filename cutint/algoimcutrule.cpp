@@ -1,5 +1,7 @@
 #include "algoimcutrule.hpp"
 #include "algoim_wrapper.hpp"
+#include "../spacetime/SpaceTimeFE.hpp"
+#include "../spacetime/SpaceTimeFESpace.hpp"
 
 namespace xintegration
 {
@@ -37,6 +39,134 @@ namespace xintegration
       }
     }
 
+    // Values of the level set function in Algoim's interpolation points of [0,1]^N (for degree):
+    // the first DS coordinates are reference coordinates of the element (of its facet facetnr, if
+    // transform != nullptr), the last coordinate is the reference time if N > DS. The points are
+    // space-time integration points (the time in the weight), at the fixed time tref if N == DS.
+    template <int N>
+    FlatVector<> LevelsetValuesAtNodes (const shared_ptr<CoefficientFunction> & cf_lset,
+                                        const ElementTransformation & trafo,
+                                        Facet2ElementTrafo * transform, int facetnr, int DS,
+                                        int degree, optional<double> tref, LocalHeap & lh)
+    {
+      std::vector<double> xi;
+      algoim_wrapper::InterpolationPoints(N, degree, xi);
+      const int nnodes = xi.size() / N;
+      IntegrationRule ir_nodes(nnodes, lh);
+      for (int i = 0; i < nnodes; i++)
+      {
+        Vec<3> p = 0.0;
+        for (int d = 0; d < DS; d++)
+          p(d) = xi[i*N+d];
+        ir_nodes[i] = IntegrationPoint(p, 0.0);
+      }
+      IntegrationRule & ir_vol = transform ? (*transform)(facetnr, ir_nodes, lh) : ir_nodes;
+      // (the facet transformation maps only the first point of a rule on a point facet)
+      if (transform && (transform->FacetType(facetnr) == ET_POINT))
+        for (int i = 1; i < nnodes; i++)
+          ir_vol[i].Point() = ir_vol[0].Point();
+      if ((N > DS) || tref)
+        for (int i = 0; i < nnodes; i++)
+        {
+          ir_vol[i].SetWeight((N > DS) ? xi[i*N+N-1] : *tref);
+          MarkAsSpaceTimeIntegrationPoint(ir_vol[i]);
+        }
+      auto & mir_nodes = trafo(ir_vol, lh);
+      FlatMatrix<> lsetvals(nnodes, 1, lh);
+      cf_lset->Evaluate(mir_nodes, lsetvals);
+      return FlatVector<>(nnodes, &lsetvals(0,0));
+    }
+
+    // Algoim uses nested one-dimensional Gauss rules (q points) w.r.t. height functions:
+    // * for a polynomial of degree intorder on a domain (of dimension dim) bounded by planes, the
+    //   integrand of the outermost integral has degree intorder + dim - 1, hence
+    //   2q-1 >= intorder + dim - 1,
+    // * the (curved) geometry has to be resolved also for low order integrands (e.g. CutInfo
+    //   computes cut ratios with intorder 0), hence q > degree.
+    inline int AlgoimGaussPoints (int degree, int intorder, int dim)
+    {
+      return max(degree + 1, (intorder + dim + 1) / 2);
+    }
+
+    // Space-time rule on the element (spatial dimension D) times the reference time interval
+    // [0,1], with the conventions of SpaceTimeCutIntegrationRule: spatial points, the reference
+    // time in the weight of the integration point (marked as space-time point), weights in the
+    // array. Interfaces: the measure is the iterated one (int_0^1 int_{Gamma(t)} ds dt), the
+    // space-time surface weights w.r.t. (x,t) are multiplied by |grad_x phi| / |grad_(x,t) phi|
+    // (coarea formula) and the spatial transformation factor |F^{-T} n_x|.
+    template <int D>
+    tuple<const IntegrationRule *, Array<double>>
+    T_AlgoimSpaceTimeCutIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                         const ElementTransformation & trafo,
+                                         DOMAIN_TYPE dt, int intorder, int time_intorder,
+                                         int degree, int subdivlvl, LocalHeap & lh)
+    {
+      constexpr int N = D + 1;
+      const ELEMENT_TYPE et = trafo.GetElementType();
+      const int sdim = ((et == ET_TRIG) || (et == ET_TET)) ? D : 0;
+      FlatVector<> lsetvals = LevelsetValuesAtNodes<N>(cf_lset, trafo, nullptr, 0, D, degree, nullopt, lh);
+
+      const int q = AlgoimGaussPoints(degree, max(intorder, time_intorder), N);
+      std::vector<double> pts, wts, grads;
+      const double * valptr = &lsetvals(0);
+      const int domain = int(dt);
+      auto status = algoim_wrapper::MultiCutQuadrature(N, 1, &degree, &valptr, &domain, sdim, q, subdivlvl,
+                                                       pts, wts, grads, true);
+      if (status == algoim_wrapper::EMPTY)
+        return make_tuple(nullptr, Array<double>());
+
+      if (status == algoim_wrapper::FULL)
+      {
+        // tensor product of the standard rules in space and time
+        const IntegrationRule & ir_space = SelectIntegrationRule(et, intorder);
+        const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_intorder);
+        auto ir = new (lh) IntegrationRule(ir_space.Size() * ir_time.Size(), lh);
+        Array<double> wei_arr(ir->Size());
+        int cnt = 0;
+        for (auto & ipt : ir_time)
+          for (auto & ips : ir_space)
+          {
+            (*ir)[cnt] = IntegrationPoint(ips.Point(), ipt(0));
+            MarkAsSpaceTimeIntegrationPoint((*ir)[cnt]);
+            wei_arr[cnt] = ips.Weight() * ipt.Weight();
+            cnt++;
+          }
+        return make_tuple(ir, std::move(wei_arr));
+      }
+
+      const int npts = wts.size();
+      if (npts == 0)
+        return make_tuple(nullptr, Array<double>());
+      auto ir = new (lh) IntegrationRule(npts, lh);
+      Array<double> wei_arr(npts);
+      for (int i = 0; i < npts; i++)
+      {
+        Vec<3> x = 0.0;
+        for (int d = 0; d < D; d++)
+          x(d) = pts[i*N+d];
+        const double t = pts[i*N+D];
+        double w = wts[i];
+        IntegrationPoint ip(x, t);
+        MarkAsSpaceTimeIntegrationPoint(ip);
+        if (dt == IF)
+        {
+          Vec<D> gx;
+          double g2 = sqr(grads[i*N+D]);
+          for (int d = 0; d < D; d++)
+          {
+            gx(d) = grads[i*N+d];
+            g2 += sqr(gx(d));
+          }
+          // |grad_x phi| / |grad phi| * |F^{-T} grad_x phi| / |grad_x phi|
+          const double gxnorm = L2Norm(gx);
+          w = (gxnorm > 0) ? w * gxnorm / sqrt(g2) * InterfaceWeightFactor<D,D>(ip, trafo, gx) : 0.0;
+        }
+        (*ir)[i] = ip;
+        wei_arr[i] = w;
+      }
+      return make_tuple(ir, std::move(wei_arr));
+    }
+
     template <int D>
     tuple<const IntegrationRule *, Array<double>>
     T_AlgoimCutIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
@@ -45,6 +175,7 @@ namespace xintegration
                                 int intorder,
                                 int degree,
                                 int subdivlvl,
+                                optional<double> tref,
                                 LocalHeap & lh)
     {
       const ELEMENT_TYPE et = trafo.GetElementType();
@@ -52,31 +183,14 @@ namespace xintegration
 
       // level set values in the interpolation points in [0,1]^D (for simplices,
       // these points are also outside of the reference element, where the
-      // level set function is evaluated by polynomial extension)
-      std::vector<double> xi;
-      algoim_wrapper::InterpolationPoints(D, degree, xi);
-      const int nnodes = xi.size() / D;
-      IntegrationRule ir_nodes(nnodes, lh);
-      for (int i = 0; i < nnodes; i++)
-      {
-        Vec<3> p = 0.0;
-        for (int d = 0; d < D; d++)
-          p(d) = xi[i*D+d];
-        ir_nodes[i] = IntegrationPoint(p, 0.0);
-      }
-      auto & mir_nodes = trafo(ir_nodes, lh);
-      FlatMatrix<> lsetvals(nnodes, 1, lh);
-      cf_lset->Evaluate(mir_nodes, lsetvals);
+      // level set function is evaluated by polynomial extension); at the
+      // reference time tref (space-time level sets), if given
+      FlatVector<> lsetvals = LevelsetValuesAtNodes<D>(cf_lset, trafo, nullptr, 0, D, degree, tref, lh);
 
       // Algoim's quadrature on the reference element
-      // Algoim uses nested one-dimensional Gauss rules (q points) w.r.t. height functions:
-      // * for a polynomial of degree intorder on a domain bounded by planes, the integrand of
-      //   the outermost integral has degree intorder + D - 1, hence 2q-1 >= intorder + D - 1,
-      // * the (curved) geometry has to be resolved also for low order integrands (e.g. CutInfo
-      //   computes cut ratios with intorder 0), hence q > degree.
-      const int q = max(degree + 1, (intorder + D + 1) / 2);
+      const int q = AlgoimGaussPoints(degree, intorder, D);
       std::vector<double> pts, wts, grads;
-      auto status = algoim_wrapper::CutQuadrature(D, degree, &lsetvals(0,0), simplex, int(dt), q,
+      auto status = algoim_wrapper::CutQuadrature(D, degree, &lsetvals(0), simplex, int(dt), q,
                                                   subdivlvl, pts, wts, grads);
 
       if (status != algoim_wrapper::CUT)
@@ -88,7 +202,16 @@ namespace xintegration
         Array<double> wei_arr(ir.Size());
         for (int i = 0; i < ir.Size(); i++)
           wei_arr[i] = ir[i].Weight();
-        return make_tuple(&ir, std::move(wei_arr));
+        if (!tref)
+          return make_tuple(&ir, std::move(wei_arr));
+        // fixed reference time: copy of the rule with the time in the weights
+        auto ir_t = new (lh) IntegrationRule(ir.Size(), lh);
+        for (int i = 0; i < ir.Size(); i++)
+        {
+          (*ir_t)[i] = IntegrationPoint(ir[i].Point(), *tref);
+          MarkAsSpaceTimeIntegrationPoint((*ir_t)[i]);
+        }
+        return make_tuple(ir_t, std::move(wei_arr));
       }
 
       const int npts = wts.size();
@@ -107,15 +230,102 @@ namespace xintegration
           Vec<D> g;
           for (int d = 0; d < D; d++)
             g(d) = grads[i*D+d];
-          const IntegrationPoint ip(x, 0.0);
+          IntegrationPoint ip(x, tref ? *tref : 0.0);
+          if (tref)
+            MarkAsSpaceTimeIntegrationPoint(ip);
           if (trafo.SpaceDim() == D)
             w *= InterfaceWeightFactor<D,D>(ip, trafo, g);
           else if constexpr (D < 3)
             w *= InterfaceWeightFactor<D,D+1>(ip, trafo, g);
         }
-        (*ir)[i] = IntegrationPoint(x, w);
+        // with a fixed reference time, the weight of the point is the time (weights in the array)
+        (*ir)[i] = IntegrationPoint(x, tref ? *tref : w);
+        if (tref)
+          MarkAsSpaceTimeIntegrationPoint((*ir)[i]);
         wei_arr[i] = w;
       }
+      return make_tuple(ir, std::move(wei_arr));
+    }
+
+    // Space-time rule on the element times [0,1] by time slicing, used for tetrahedra (Algoim's
+    // quadrature in dimension 4 with the simplex constraint is very expensive and not robust: the
+    // elimination steps w.r.t. the level set and the simplex polynomial lead to resultants of high
+    // degree with many roots). The time interval is split at the times where the level set
+    // function changes its sign in a vertex of the element (where the topology of the cut changes,
+    // as for the standard space-time rules); on each sub-interval, the Gauss rule in time (order
+    // time_intorder) is combined with the spatial rules at the fixed times. For interfaces, the
+    // spatial rules directly give the iterated measure int_0^1 int_{Gamma(t)} ds dt.
+    template <int D>
+    tuple<const IntegrationRule *, Array<double>>
+    T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices (const shared_ptr<CoefficientFunction> & cf_lset,
+                                                   const ElementTransformation & trafo,
+                                                   DOMAIN_TYPE dt, int intorder, int time_intorder,
+                                                   int degree_space, int degree_time, int subdivlvl,
+                                                   LocalHeap & lh)
+    {
+      const ELEMENT_TYPE et = trafo.GetElementType();
+
+      // breakpoints in time: roots of the level set function (polynomial in time) in the vertices
+      Array<double> tbreak;
+      tbreak.Append(0.0);
+      {
+        std::vector<double> tnodes;
+        algoim_wrapper::InterpolationPoints(1, degree_time, tnodes);
+        const int nt = tnodes.size();
+        const int nv = ElementTopology::GetNVertices(et);
+        const POINT3D * verts = ElementTopology::GetVertices(et);
+        IntegrationRule ir_vt(nv * nt, lh);
+        for (int v = 0; v < nv; v++)
+          for (int j = 0; j < nt; j++)
+          {
+            ir_vt[v*nt+j] = IntegrationPoint(verts[v][0], verts[v][1], verts[v][2], tnodes[j]);
+            MarkAsSpaceTimeIntegrationPoint(ir_vt[v*nt+j]);
+          }
+        auto & mir_vt = trafo(ir_vt, lh);
+        FlatMatrix<> vals(nv * nt, 1, lh);
+        cf_lset->Evaluate(mir_vt, vals);
+        for (int v = 0; v < nv; v++)
+        {
+          std::vector<double> roots, wts, grads;
+          auto status = algoim_wrapper::CutQuadrature(1, degree_time, &vals(v*nt,0), false, int(IF), 1, 0,
+                                                      roots, wts, grads);
+          if (status == algoim_wrapper::CUT)
+            for (double r : roots)
+              tbreak.Append(r);
+        }
+      }
+      tbreak.Append(1.0);
+      QuickSort(tbreak);
+
+      const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_intorder);
+      Array<IntegrationPoint> points;
+      Array<double> wei_arr;
+      for (int k = 0; k + 1 < tbreak.Size(); k++)
+      {
+        const double t0 = tbreak[k], t1 = tbreak[k+1];
+        if (t1 - t0 < 1e-14)
+          continue;
+        for (auto & ipt : ir_time)
+        {
+          HeapReset hr(lh);
+          const double t = t0 + (t1 - t0) * ipt(0);
+          const double wt = (t1 - t0) * ipt.Weight();
+          auto [ir_t, wei_t] = T_AlgoimCutIntegrationRule<D>(cf_lset, trafo, dt, intorder, degree_space,
+                                                              subdivlvl, t, lh);
+          if (ir_t == nullptr)
+            continue;
+          for (int i = 0; i < ir_t->Size(); i++)
+          {
+            points.Append((*ir_t)[i]); // spatial point, time t in the weight (marked)
+            wei_arr.Append(wei_t[i] * wt);
+          }
+        }
+      }
+      if (points.Size() == 0)
+        return make_tuple(nullptr, Array<double>());
+      auto ir = new (lh) IntegrationRule(points.Size(), lh);
+      for (int i = 0; i < points.Size(); i++)
+        (*ir)[i] = points[i];
       return make_tuple(ir, std::move(wei_arr));
     }
 
@@ -131,25 +341,11 @@ namespace xintegration
       const bool simplex = (etfacet == ET_TRIG);
 
       // level set values in the interpolation points (in facet coordinates)
-      std::vector<double> xi;
-      algoim_wrapper::InterpolationPoints(D, degree, xi);
-      const int nnodes = xi.size() / D;
-      IntegrationRule ir_nodes(nnodes, lh);
-      for (int i = 0; i < nnodes; i++)
-      {
-        Vec<3> p = 0.0;
-        for (int d = 0; d < D; d++)
-          p(d) = xi[i*D+d];
-        ir_nodes[i] = IntegrationPoint(p, 0.0);
-      }
-      IntegrationRule & ir_nodes_vol = transform(facetnr, ir_nodes, lh);
-      auto & mir_nodes = trafo(ir_nodes_vol, lh);
-      FlatMatrix<> lsetvals(nnodes, 1, lh);
-      cf_lset->Evaluate(mir_nodes, lsetvals);
+      FlatVector<> lsetvals = LevelsetValuesAtNodes<D>(cf_lset, trafo, &transform, facetnr, D, degree, nullopt, lh);
 
-      const int q = max(degree + 1, (intorder + D + 1) / 2);
+      const int q = AlgoimGaussPoints(degree, intorder, D);
       std::vector<double> pts, wts, grads;
-      auto status = algoim_wrapper::CutQuadrature(D, degree, &lsetvals(0,0), simplex, int(dt), q,
+      auto status = algoim_wrapper::CutQuadrature(D, degree, &lsetvals(0), simplex, int(dt), q,
                                                   subdivlvl, pts, wts, grads);
       if (status != algoim_wrapper::CUT)
       {
@@ -189,6 +385,104 @@ namespace xintegration
         (*ir)[i] = IntegrationPoint(x, w);
       }
       return ir;
+    }
+
+    // Space-time cut rule on the facet facetnr (of dimension DF) of the element times the
+    // reference time interval, with the conventions of SpaceTimeCutIntegrationRuleUntransformed:
+    // points in reference coordinates of the facet with the reference time in the weight of the
+    // integration point, weights in the array:
+    //  * NEG/POS: weights w.r.t. the reference facet (times the time weight),
+    //  * IF: weights w.r.t. the iterated physical measure int_0^1 int_{Gamma(t) on the facet} dt,
+    //    i.e. the weight of the space-time curve / surface times |grad_x phi| / |grad_(x,t) phi|
+    //    times the physical measure of the spatial interface (points on 1D facets: 1, curves
+    //    on 2D facets: |F J t|, t the unit tangent in facet coordinates).
+    template <int DF>
+    tuple<const IntegrationRule *, Array<double>>
+    T_AlgoimSpaceTimeCutFacetIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                              const ElementTransformation & trafo,
+                                              Facet2ElementTrafo & transform, int facetnr,
+                                              DOMAIN_TYPE dt, int intorder, int time_intorder,
+                                              int degree, int subdivlvl, LocalHeap & lh)
+    {
+      constexpr int N = DF + 1;
+      const ELEMENT_TYPE etfacet = transform.FacetType(facetnr);
+      const int sdim = (etfacet == ET_TRIG) ? 2 : 0;
+      FlatVector<> lsetvals = LevelsetValuesAtNodes<N>(cf_lset, trafo, &transform, facetnr, DF, degree,
+                                                       nullopt, lh);
+
+      const int q = AlgoimGaussPoints(degree, max(intorder, time_intorder), N);
+      std::vector<double> pts, wts, grads;
+      const double * valptr = &lsetvals(0);
+      const int domain = int(dt);
+      auto status = algoim_wrapper::MultiCutQuadrature(N, 1, &degree, &valptr, &domain, sdim, q, subdivlvl,
+                                                       pts, wts, grads, true);
+      if (status == algoim_wrapper::EMPTY)
+        return make_tuple(nullptr, Array<double>());
+
+      if (status == algoim_wrapper::FULL)
+      {
+        // tensor product of the standard rules on the facet and in time
+        IntegrationRule ir_point(1, lh);
+        ir_point[0] = IntegrationPoint(0.0, 0.0, 0.0, 1.0);
+        const IntegrationRule & ir_space = (DF == 0) ? ir_point : SelectIntegrationRule(etfacet, intorder);
+        const IntegrationRule & ir_time = SelectIntegrationRule(ET_SEGM, time_intorder);
+        auto ir = new (lh) IntegrationRule(ir_space.Size() * ir_time.Size(), lh);
+        Array<double> wei_arr(ir->Size());
+        int cnt = 0;
+        for (auto & ipt : ir_time)
+          for (auto & ips : ir_space)
+          {
+            (*ir)[cnt] = IntegrationPoint(ips.Point(), ipt(0));
+            MarkAsSpaceTimeIntegrationPoint((*ir)[cnt]);
+            wei_arr[cnt] = ips.Weight() * ipt.Weight();
+            cnt++;
+          }
+        return make_tuple(ir, std::move(wei_arr));
+      }
+
+      const int npts = wts.size();
+      if (npts == 0)
+        return make_tuple(nullptr, Array<double>());
+      auto ir = new (lh) IntegrationRule(npts, lh);
+      Array<double> wei_arr(npts);
+      for (int i = 0; i < npts; i++)
+      {
+        Vec<3> x = 0.0;
+        for (int d = 0; d < DF; d++)
+          x(d) = pts[i*N+d];
+        const double t = pts[i*N+DF];
+        double w = wts[i];
+        if ((dt == IF) && (DF > 0))
+        {
+          Vec<DF> gx;
+          double g2 = sqr(grads[i*N+DF]);
+          for (int d = 0; d < DF; d++)
+          {
+            gx(d) = grads[i*N+d];
+            g2 += sqr(gx(d));
+          }
+          const double gxnorm = L2Norm(gx);
+          w = (gxnorm > 0) ? w * gxnorm / sqrt(g2) : 0.0;
+          if constexpr (DF == 2)
+            if (gxnorm > 0)
+            {
+              // curve on a 2D facet: physical length element |F J t|
+              Vec<2> tang(gx(1) / gxnorm, -gx(0) / gxnorm);
+              IntegrationPoint ip_facet(x, t), ip_vol;
+              transform(facetnr, ip_facet, ip_vol);
+              ip_vol.SetWeight(t);
+              MarkAsSpaceTimeIntegrationPoint(ip_vol);
+              FlatMatrix<> J = transform.GetJacobian(facetnr, lh);
+              Vec<3> tvol = J * tang;
+              MappedIntegrationPoint<3,3> mip(ip_vol, trafo);
+              w *= L2Norm(mip.GetJacobian() * tvol);
+            }
+        }
+        (*ir)[i] = IntegrationPoint(x, t);
+        MarkAsSpaceTimeIntegrationPoint((*ir)[i]);
+        wei_arr[i] = w;
+      }
+      return make_tuple(ir, std::move(wei_arr));
     }
   }
 
@@ -230,6 +524,34 @@ namespace xintegration
     }
   }
 
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutFacetIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                          const ElementTransformation & trafo,
+                                          Facet2ElementTrafo & transform, int facetnr,
+                                          DOMAIN_TYPE dt, int intorder, int time_intorder,
+                                          int cf_degree, int subdivlvl, LocalHeap & lh)
+  {
+    static Timer timer("AlgoimSpaceTimeCutFacetIntegrationRule");
+    RegionTimer reg (timer);
+
+    const ELEMENT_TYPE etfacet = transform.FacetType(facetnr);
+    // the interface meets a point facet only at isolated times (zero iterated measure)
+    if ((etfacet == ET_POINT) && (dt == IF))
+      return make_tuple(nullptr, Array<double>());
+    const int degree = AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh, true);
+    switch (etfacet)
+    {
+    case ET_POINT: return T_AlgoimSpaceTimeCutFacetIntegrationRule<0>(cf_lset, trafo, transform, facetnr, dt, intorder, time_intorder, degree, subdivlvl, lh);
+    case ET_SEGM: return T_AlgoimSpaceTimeCutFacetIntegrationRule<1>(cf_lset, trafo, transform, facetnr, dt, intorder, time_intorder, degree, subdivlvl, lh);
+    case ET_TRIG: case ET_QUAD:
+      if (trafo.SpaceDim() != 3)
+        throw Exception("AlgoimSpaceTimeCutFacetIntegrationRule: 2D facets only for 3D volume elements");
+      return T_AlgoimSpaceTimeCutFacetIntegrationRule<2>(cf_lset, trafo, transform, facetnr, dt, intorder, time_intorder, degree, subdivlvl, lh);
+    default:
+      throw Exception("AlgoimSpaceTimeCutFacetIntegrationRule: facet type not supported");
+    }
+  }
+
   namespace
   {
     template <int D>
@@ -253,26 +575,13 @@ namespace xintegration
       {
         degrees[l] = AlgoimLevelsetDegree(gflsets[l], trafo, cf_degree, lh);
         maxdegree = max(maxdegree, degrees[l]);
-        std::vector<double> xi;
-        algoim_wrapper::InterpolationPoints(D, degrees[l], xi);
-        const int nnodes = xi.size() / D;
-        IntegrationRule ir_nodes(nnodes, lh);
-        for (int i = 0; i < nnodes; i++)
-        {
-          Vec<3> p = 0.0;
-          for (int d = 0; d < D; d++)
-            p(d) = xi[i*D+d];
-          ir_nodes[i] = IntegrationPoint(p, 0.0);
-        }
-        auto & mir_nodes = trafo(ir_nodes, lh);
-        FlatMatrix<> lsetvals(nnodes, 1, lh);
-        gflsets[l]->Evaluate(mir_nodes, lsetvals);
-        values[l].assign(&lsetvals(0,0), &lsetvals(0,0) + nnodes);
+        FlatVector<> lsetvals = LevelsetValuesAtNodes<D>(gflsets[l], trafo, nullptr, 0, D, degrees[l], nullopt, lh);
+        values[l].assign(&lsetvals(0), &lsetvals(0) + lsetvals.Size());
         valptrs[l] = values[l].data();
       }
 
       // rules for all parts (domain type tuples), the union is returned
-      const int q = max(maxdegree + 1, (intorder + D + 1) / 2);
+      const int q = AlgoimGaussPoints(maxdegree, intorder, D);
       ArrayMem<const IntegrationRule*, 10> ir_parts;
       for (const Array<DOMAIN_TYPE> & dts : lsetintdom.GetDomainTypes())
       {
@@ -294,7 +603,7 @@ namespace xintegration
 
         std::vector<double> pts, wts, grads;
         auto status = algoim_wrapper::MultiCutQuadrature(D, M, degrees.Data(), valptrs.Data(), domains.Data(),
-                                                         simplex, q, lsetintdom.GetNSubdivisionLevels(),
+                                                         simplex ? D : 0, q, lsetintdom.GetNSubdivisionLevels(),
                                                          pts, wts, grads);
         if (status == algoim_wrapper::EMPTY)
           continue;
@@ -381,14 +690,43 @@ namespace xintegration
     return true;
   }
 
+  /// polynomial degree in time of the space-time level set function (see AlgoimLevelsetDegree)
+  static int AlgoimLevelsetTimeDegree (const shared_ptr<CoefficientFunction> & cf_lset, int cf_degree)
+  {
+    auto gf = dynamic_pointer_cast<GridFunction>(cf_lset);
+    if (gf)
+    {
+      if (auto st_fes = dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+        return max(1, st_fes->GetTimeFE()->Order());
+      return 1; // constant in time
+    }
+    return max(1, cf_degree);
+  }
+
+  bool AlgoimSpaceTimeCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt)
+  {
+    if (!AlgoimCutRuleAvailable(trafo, dt))
+      return false;
+    // space-time interfaces only on volume elements
+    return (dt != IF) || (trafo.SpaceDim() == ElementTopology::GetSpaceDim(trafo.GetElementType()));
+  }
+
   int AlgoimLevelsetDegree (const shared_ptr<CoefficientFunction> & cf_lset,
                             const ElementTransformation & trafo,
                             int cf_degree,
-                            LocalHeap & lh)
+                            LocalHeap & lh,
+                            bool spacetime)
   {
     auto gf = dynamic_pointer_cast<GridFunction>(cf_lset);
     if (gf && (gf->Dimension() == 1))
     {
+      if (auto st_fes = dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+      {
+        int order = st_fes->GetSpaceFESpace()->GetFE(trafo.GetElementId(), lh).Order();
+        if (spacetime)
+          order = max(order, st_fes->GetTimeFE()->Order());
+        return max(1, order);
+      }
       const FiniteElement & fel = gf->GetFESpace()->GetFE(trafo.GetElementId(), lh);
       return max(1, fel.Order());
     }
@@ -402,7 +740,8 @@ namespace xintegration
                             int intorder,
                             int cf_degree,
                             int subdivlvl,
-                            LocalHeap & lh)
+                            LocalHeap & lh,
+                            optional<double> tref)
   {
     static Timer timer("AlgoimCutIntegrationRule");
     RegionTimer reg (timer);
@@ -413,11 +752,44 @@ namespace xintegration
     const int degree = AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh);
     switch (ElementTopology::GetSpaceDim(trafo.GetElementType()))
     {
-    case 1: return T_AlgoimCutIntegrationRule<1>(cf_lset, trafo, dt, intorder, degree, subdivlvl, lh);
-    case 2: return T_AlgoimCutIntegrationRule<2>(cf_lset, trafo, dt, intorder, degree, subdivlvl, lh);
-    case 3: return T_AlgoimCutIntegrationRule<3>(cf_lset, trafo, dt, intorder, degree, subdivlvl, lh);
+    case 1: return T_AlgoimCutIntegrationRule<1>(cf_lset, trafo, dt, intorder, degree, subdivlvl, tref, lh);
+    case 2: return T_AlgoimCutIntegrationRule<2>(cf_lset, trafo, dt, intorder, degree, subdivlvl, tref, lh);
+    case 3: return T_AlgoimCutIntegrationRule<3>(cf_lset, trafo, dt, intorder, degree, subdivlvl, tref, lh);
     default:
       throw Exception("AlgoimCutIntegrationRule: dimension not supported");
+    }
+  }
+
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimSpaceTimeCutIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                     const ElementTransformation & trafo,
+                                     DOMAIN_TYPE dt,
+                                     int intorder,
+                                     int time_intorder,
+                                     int cf_degree,
+                                     int subdivlvl,
+                                     LocalHeap & lh)
+  {
+    static Timer timer("AlgoimSpaceTimeCutIntegrationRule");
+    RegionTimer reg (timer);
+
+    if (!AlgoimSpaceTimeCutRuleAvailable(trafo, dt))
+      throw Exception("AlgoimSpaceTimeCutIntegrationRule: element type / domain type combination not supported");
+
+    // tetrahedra: time slicing (see T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices)
+    if (trafo.GetElementType() == ET_TET)
+      return T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices<3>(cf_lset, trafo, dt, intorder, time_intorder,
+                                                              AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh),
+                                                              AlgoimLevelsetTimeDegree(cf_lset, cf_degree),
+                                                              subdivlvl, lh);
+    const int degree = AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh, true);
+    switch (ElementTopology::GetSpaceDim(trafo.GetElementType()))
+    {
+    case 1: return T_AlgoimSpaceTimeCutIntegrationRule<1>(cf_lset, trafo, dt, intorder, time_intorder, degree, subdivlvl, lh);
+    case 2: return T_AlgoimSpaceTimeCutIntegrationRule<2>(cf_lset, trafo, dt, intorder, time_intorder, degree, subdivlvl, lh);
+    case 3: return T_AlgoimSpaceTimeCutIntegrationRule<3>(cf_lset, trafo, dt, intorder, time_intorder, degree, subdivlvl, lh);
+    default:
+      throw Exception("AlgoimSpaceTimeCutIntegrationRule: dimension not supported");
     }
   }
 }
