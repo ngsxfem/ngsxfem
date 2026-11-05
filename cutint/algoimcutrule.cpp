@@ -9,19 +9,23 @@ namespace xintegration
   static_assert(NEG == 0 && POS == 1 && IF == 2,
                 "algoim_wrapper::CutQuadrature expects NEG = 0, POS = 1, IF = 2");
 
+  void ReportAlgoimUse (bool automatic)
+  {
+    static std::atomic<bool> reported(false);
+    if (reported.exchange(true))
+      return;
+    cout << IM(0) << "ngsxfem: the quadrature on cut elements uses Algoim by R. I. Saye "
+         << "(https://algoim.github.io/)";
+    if (automatic)
+      cout << IM(0) << ", chosen automatically (cut_quadrature 'auto': for level sets that are not "
+           << "piecewise linear GridFunctions and for cases that the standard rules do not support; "
+           << "set ngsxfemglobals.cut_quadrature or dCut(..., cut_quadrature=...) to choose explicitly)";
+    cout << IM(0) << ". If you publish results, please also cite R. I. Saye, J. Comput. Phys. 448, "
+         << "110720, 2022, https://doi.org/10.1016/j.jcp.2021.110720" << endl;
+  }
+
   namespace
   {
-    // Acknowledges the use of Algoim in the terminal (once per process, on the first
-    // Algoim-based cut rule).
-    void AcknowledgeAlgoim ()
-    {
-      static std::atomic<bool> acknowledged(false);
-      if (!acknowledged.exchange(true))
-        cout << IM(0) << "ngsxfem: the quadrature on cut elements uses Algoim by R. I. Saye "
-             << "(https://algoim.github.io/). If you publish results, please also cite "
-             << "R. I. Saye, J. Comput. Phys. 448, 110720, 2022, "
-             << "https://doi.org/10.1016/j.jcp.2021.110720" << endl;
-    }
 
     // Factor that turns the weight of an interface quadrature point x w.r.t. the
     // reference measure of {phi = 0} (g: gradient of phi at x in reference
@@ -522,7 +526,7 @@ namespace xintegration
   {
     static Timer timer("AlgoimCutFacetIntegrationRule");
     RegionTimer reg (timer);
-    AcknowledgeAlgoim();
+    ReportAlgoimUse();
 
     const ELEMENT_TYPE etfacet = transform.FacetType(facetnr);
     if (etfacet == ET_POINT)
@@ -561,7 +565,7 @@ namespace xintegration
   {
     static Timer timer("AlgoimSpaceTimeCutFacetIntegrationRule");
     RegionTimer reg (timer);
-    AcknowledgeAlgoim();
+    ReportAlgoimUse();
 
     const ELEMENT_TYPE etfacet = transform.FacetType(facetnr);
     // the interface meets a point facet only at isolated times (zero iterated measure)
@@ -693,7 +697,7 @@ namespace xintegration
   {
     static Timer timer("AlgoimMultiLevelsetCutIntegrationRule");
     RegionTimer reg (timer);
-    AcknowledgeAlgoim();
+    ReportAlgoimUse();
     switch (ElementTopology::GetSpaceDim(trafo.GetElementType()))
     {
     case 1: return T_AlgoimMultiLevelsetCutIntegrationRule<1>(lsetintdom, trafo, cf_degree, lh);
@@ -776,7 +780,7 @@ namespace xintegration
   {
     static Timer timer("AlgoimCutIntegrationRule");
     RegionTimer reg (timer);
-    AcknowledgeAlgoim();
+    ReportAlgoimUse();
 
     if (!AlgoimCutRuleAvailable(trafo, dt))
       throw Exception("AlgoimCutIntegrationRule: element type / domain type combination not supported");
@@ -804,7 +808,7 @@ namespace xintegration
   {
     static Timer timer("AlgoimSpaceTimeCutIntegrationRule");
     RegionTimer reg (timer);
-    AcknowledgeAlgoim();
+    ReportAlgoimUse();
 
     if (!AlgoimSpaceTimeCutRuleAvailable(trafo, dt))
       throw Exception("AlgoimSpaceTimeCutIntegrationRule: element type / domain type combination not supported");
