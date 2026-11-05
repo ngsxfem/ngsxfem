@@ -5,7 +5,8 @@ w.r.t. the higher order level set function itself (no piecewise linear
 approximation, no isoparametric mapping).
 """
 import pytest
-from contextlib import contextmanager
+import subprocess
+import sys
 from math import pi, sqrt
 from ngsolve import *
 from ngsolve.meshes import Make1DMesh, MakeStructured2DMesh, MakeStructured3DMesh
@@ -15,27 +16,11 @@ ngsglobals.msg_level = 0
 
 
 @pytest.fixture(autouse=True)
-def restore_globals():
+def default_globals():
     """Every test starts (and ends) with the default global settings."""
-    cq, order = ngsxfemglobals.cut_quadrature, ngsxfemglobals.algoim_lset_order
-    ngsxfemglobals.cut_quadrature = "standard"
-    ngsxfemglobals.algoim_lset_order = 4
+    ngsxfemglobals.SetDefaults()
     yield
-    ngsxfemglobals.cut_quadrature = cq
-    ngsxfemglobals.algoim_lset_order = order
-
-
-@contextmanager
-def no_simd():
-    """The standard rules for higher order level sets (CF path, P1 interpolation
-    on simplices) currently crash with SIMD evaluation; this is independent of
-    Algoim. The comparisons with these rules use non-SIMD evaluation."""
-    old = ngsxfemglobals.simd_eval
-    ngsxfemglobals.SwitchSIMD(False)
-    try:
-        yield
-    finally:
-        ngsxfemglobals.SwitchSIMD(old)
+    ngsxfemglobals.SetDefaults()
 
 
 def square_mesh(n, quads, a=1):
@@ -68,7 +53,7 @@ def integrate(lset, dt, mesh, cf=1, order=4, method=None, **kwargs):
 # ---------------------------------------------------------------------------
 
 def test_options():
-    assert ngsxfemglobals.cut_quadrature == CUT_QUADRATURE.STANDARD
+    assert ngsxfemglobals.cut_quadrature == CUT_QUADRATURE.AUTO
     for name, value in [("algoim", CUT_QUADRATURE.ALGOIM), ("Auto", CUT_QUADRATURE.AUTO),
                         ("STANDARD", CUT_QUADRATURE.STANDARD)]:
         ngsxfemglobals.cut_quadrature = name
@@ -85,23 +70,65 @@ def test_options():
 def test_global_and_local_option():
     """the per-integral option overrides the global one"""
     mesh = square_mesh(4, quads=False)
-    lset = lset_gf(mesh, 2, x * x + y * y - 0.25)
+    lset_p1 = lset_gf(mesh, 1, x * x + y * y - 0.25)
+    lset_p2 = lset_gf(mesh, 2, x * x + y * y - 0.25)
     one = CoefficientFunction(1)
-    with no_simd():
-        std = integrate(lset, NEG, mesh)
-    alg = integrate(lset, NEG, mesh, method="algoim")
+    std = integrate(lset_p1, NEG, mesh, method="standard")
+    alg = integrate(lset_p2, NEG, mesh, method="algoim")
     assert abs(alg - pi / 4) < 1e-4 < abs(std - pi / 4)
 
     ngsxfemglobals.cut_quadrature = "algoim"
-    assert integrate(lset, NEG, mesh) == pytest.approx(alg, abs=1e-14)
-    with no_simd():
-        assert integrate(lset, NEG, mesh, method="standard") == pytest.approx(std, abs=1e-14)
-        # dCut
-        assert Integrate(one * dCut(lset, NEG, order=4, cut_quadrature="standard"), mesh) \
-            == pytest.approx(std, abs=1e-14)
+    assert integrate(lset_p2, NEG, mesh) == pytest.approx(alg, abs=1e-14)
+    with pytest.raises(Exception):
+        integrate(lset_p2, NEG, mesh, method="standard")
+    with pytest.raises(Exception):
+        Integrate(one * dCut(lset_p2, NEG, order=4, cut_quadrature="standard"), mesh)
     ngsxfemglobals.cut_quadrature = "standard"
-    assert Integrate(one * dCut(lset, NEG, order=4, cut_quadrature="algoim"), mesh) \
+    with pytest.raises(Exception):
+        integrate(lset_p2, NEG, mesh)
+    assert integrate(lset_p1, NEG, mesh) == pytest.approx(std, abs=1e-14)
+    assert integrate(lset_p2, NEG, mesh, method="algoim") == pytest.approx(alg, abs=1e-14)
+    assert Integrate(one * dCut(lset_p2, NEG, order=4, cut_quadrature="algoim"), mesh) \
         == pytest.approx(alg, abs=1e-14)
+
+
+def test_standard_requires_p1():
+    """the standard rules reject higher order level sets (unless subdivlvl > 0)"""
+    mesh = square_mesh(4, quads=False)
+    levelset = (x - 0.03)**2 + (y + 0.02)**2 - 0.25
+    lset_p2 = lset_gf(mesh, 2, levelset)
+    for lset in [lset_p2, levelset]:
+        with pytest.raises(Exception, match="piecewise linear"):
+            integrate(lset, NEG, mesh, method="standard")
+        with pytest.raises(Exception, match="piecewise linear"):
+            CutInfo(mesh, lset, cut_quadrature="standard")
+    # explicit subdivision approach (piecewise linear interpolation on subdivided simplices)
+    val = Integrate(levelset_domain={"levelset": lset_p2, "domain_type": NEG, "subdivlvl": 2,
+                                     "cut_quadrature": "standard"}, cf=1, mesh=mesh, order=2)
+    assert val == pytest.approx(pi / 4, abs=3e-2)
+
+
+USER_INFO_SCRIPT = """
+from ngsolve import *
+from ngsolve.meshes import MakeStructured2DMesh
+from xfem import *
+{setting}
+mesh = MakeStructured2DMesh(nx=4, ny=4)
+lset = GridFunction(H1(mesh, order={order}))
+lset.Set((x - 0.5)**2 + (y - 0.5)**2 - 0.1)
+Integrate(lset * dCut(lset, NEG), mesh)
+Integrate(lset * dCut(lset, NEG), mesh)
+"""
+
+
+@pytest.mark.parametrize("order, setting, info", [(2, "", True), (1, "", False),
+                                                  (2, "ngsxfemglobals.cut_quadrature = 'auto'", False),
+                                                  (2, "ngsxfemglobals.cut_quadrature = 'algoim'", False)])
+def test_user_info(order, setting, info):
+    """the automatic choice of Algoim is reported (once), unless chosen explicitly"""
+    script = USER_INFO_SCRIPT.format(order=order, setting=setting)
+    out = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, check=True).stdout
+    assert out.count("Algoim-based cut quadrature is used") == (1 if info else 0)
 
 
 # ---------------------------------------------------------------------------
@@ -241,20 +268,59 @@ def test_auto():
     ngsxfemglobals.algoim_lset_order = 2
     assert integrate(levelset, NEG, mesh, method="auto") == pytest.approx(alg, abs=1e-14)
 
-    # mesh deformation (isoparametric approach) -> standard rules
+    # with mesh deformation: P1 level set (isoparametric approach) -> standard rules,
+    # higher order level set -> algoim
     one = CoefficientFunction(1)
     deform = GridFunction(VectorH1(mesh, order=2))
     deform.Set((0.01 * x * y, 0.02 * x))
-    with no_simd():
+    mesh.SetDeformation(deform)
+    std_deformed = integrate(lset_p1, NEG, mesh, method="standard")
+    alg_deformed = integrate(lset_p2, NEG, mesh, method="algoim")
+    assert integrate(lset_p1, NEG, mesh, method="auto") == pytest.approx(std_deformed, abs=1e-14)
+    assert integrate(lset_p2, NEG, mesh, method="auto") == pytest.approx(alg_deformed, abs=1e-14)
+    assert abs(alg_deformed - alg) > 1e-6
+    mesh.UnsetDeformation()
+    # same with the deformation argument of dCut
+    assert Integrate(one * dCut(lset_p1, NEG, order=4, deformation=deform), mesh) \
+        == pytest.approx(std_deformed, abs=1e-14)
+    assert Integrate(one * dCut(lset_p2, NEG, order=4, deformation=deform), mesh) \
+        == pytest.approx(alg_deformed, abs=1e-14)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_nonaffine_deformation(quads):
+    """P2 level set (exact circle in reference coordinates) on a mesh with the
+    non-affine deformation Phi(x,y) = (x + a y^2, y + b x^2) (exactly represented in
+    VectorH1 of order 2): the rules for the deformed domain converge to the exact
+    area and length of Phi(disk) and Phi(circle)"""
+    import numpy as np
+    r, c, a, b = 0.5, (0.03, -0.02), 0.2, 0.15
+    # det DPhi = 1 - 4ab xy, hence |Phi(disk)| = pi r^2 (1 - 4ab cx cy)
+    area = pi * r**2 * (1 - 4 * a * b * c[0] * c[1])
+    # length of Phi(circle): periodic trapezoidal rule (spectrally accurate)
+    t = np.linspace(0, 2 * pi, 4000, endpoint=False)
+    gx, gy = c[0] + r * np.cos(t), c[1] + r * np.sin(t)
+    dgx, dgy = -r * np.sin(t), r * np.cos(t)
+    length = 2 * pi * np.mean(np.hypot(dgx + 2 * a * gy * dgy, dgy + 2 * b * gx * dgx))
+    one = CoefficientFunction(1)
+    errs = []
+    for n in [8, 16]:
+        mesh = square_mesh(n, quads)
+        lset = lset_gf(mesh, 2, (x - c[0])**2 + (y - c[1])**2 - r**2)
+        deform = GridFunction(VectorH1(mesh, order=2))
+        deform.Set((a * y * y, b * x * x))
+        # default ("auto"): Algoim for the P2 level set, also with deformation
+        neg = Integrate(one * dCut(lset, NEG, order=8, deformation=deform), mesh)
+        itf = Integrate(one * dCut(lset, IF, order=8, deformation=deform), mesh)
+        errs.append([abs(neg - area), abs(itf - length)])
+        # same with mesh.SetDeformation and Integrate with levelset_domain
         mesh.SetDeformation(deform)
-        std_deformed = integrate(lset_p2, NEG, mesh)
-        assert integrate(lset_p2, NEG, mesh, method="auto") == pytest.approx(std_deformed, abs=1e-14)
-        assert abs(integrate(lset_p2, NEG, mesh, method="algoim") - std_deformed) > 1e-6
+        assert integrate(lset, NEG, mesh, order=8) == pytest.approx(neg, abs=1e-13)
+        assert integrate(lset, IF, mesh, order=8) == pytest.approx(itf, abs=1e-13)
         mesh.UnsetDeformation()
-        # same with the deformation argument of dCut
-        std_deformed = Integrate(one * dCut(lset_p2, NEG, order=4, deformation=deform), mesh)
-        assert Integrate(one * dCut(lset_p2, NEG, order=4, deformation=deform, cut_quadrature="auto"),
-                         mesh) == pytest.approx(std_deformed, abs=1e-14)
+    for i, tol in enumerate([1e-10, 1e-8]):
+        assert errs[-1][i] < tol
+        assert errs[-1][i] < 1e-2 * errs[0][i]
 
 
 def test_fallback_mlset():

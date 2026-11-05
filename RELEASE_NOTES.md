@@ -6,6 +6,14 @@ Requires NGSolve 6.2.2608.
 
 ### Breaking changes
 
+- **Level sets that are not piecewise linear GridFunctions** (higher order GridFunctions,
+  general CoefficientFunctions) are no longer silently interpolated piecewise linearly
+  on cut elements: by default (`ngsxfemglobals.cut_quadrature = "auto"`) the
+  Algoim-based quadrature w.r.t. the level set function itself is used (more accurate,
+  different results). With `cut_quadrature = "standard"` such level sets raise an
+  exception, unless `subdivlvl > 0` (subdivision approach) is used. For the previous
+  behaviour, interpolate the level set function with `InterpolateToP1`.
+
 - **Installed header location changed.** Headers are no longer installed flat
   into the NGSolve include directory but into the Python package, keeping the
   source layout: `<site-packages>/xfem/include/{cutint,xfem,spacetime,lsetcurving,utils}/`.
@@ -17,18 +25,22 @@ Requires NGSolve 6.2.2608.
 ### New features
 
 - **Algoim-based cut quadrature.** The quadrature of the [Algoim](https://algoim.github.io/)
-  library (R. I. Saye, bundled in `external_dependencies/algoim`) can be used on cut
-  elements. It works directly with higher order level set functions (no piecewise linear
-  approximation, no mesh deformation), on segments, triangles, quadrilaterals,
-  tetrahedra and hexahedra. Selection:
+  library (R. I. Saye, bundled in `external_dependencies/algoim`) is used on cut
+  elements for level set functions that are not piecewise linear GridFunctions. It works
+  directly with higher order level set functions (no piecewise linear approximation, no
+  mesh deformation), on segments, triangles, quadrilaterals, tetrahedra and hexahedra.
+  Selection:
   ```python
-  ngsxfemglobals.cut_quadrature = "algoim"   # or "auto" / "standard" (default)
+  ngsxfemglobals.cut_quadrature = "auto"   # default; or "standard" / "algoim"
   dx = dCut(lset_ho, NEG, cut_quadrature="algoim")   # per integral
   ci = CutInfo(mesh, lset_ho, cut_quadrature="algoim")
   ```
-  `"auto"` uses Algoim for higher order level sets on undeformed meshes and the standard
-  rules otherwise. Multiple level sets and space-time integrals always use the standard
-  rules. See `demos/fictdom_algoim.py` and `CUT_QUADRATURE`.
+  `"auto"` (default) uses the standard rules for piecewise linear level set GridFunctions
+  (unchanged, also in the isoparametric approach) and Algoim for all other level sets; the
+  user is informed once when Algoim is chosen automatically. Multiple level sets and
+  space-time integrals always use the standard rules. See `demos/fictdom_algoim.py` and
+  `CUT_QUADRATURE`.
+
 - `Integrate` on level set domains increases its local heap automatically on overflow.
 
 - **Reusable C++ core library.** The C++ part is split into a shared library
