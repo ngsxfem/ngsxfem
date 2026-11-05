@@ -33,7 +33,10 @@ namespace ngcomp
                                                       nullptr, nullptr, nullptr};
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
-    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, LocalHeap & lh);
+    /// cut_quadrature: quadrature method that is used to compute the cut
+    /// ratios and element markers (default: ngsxfemglobals.cut_quadrature)
+    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, LocalHeap & lh,
+                optional<CUT_QUADRATURE> cut_quadrature = nullopt);
     
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
 

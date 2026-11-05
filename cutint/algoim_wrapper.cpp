@@ -51,12 +51,15 @@ namespace xintegration
       // in our tests (2D and 3D, all element types)
       const algoim::QuadStrategy strategy = algoim::AlwaysGL;
 
-      // true if Algoim detected (possible) vertical tangents in its quadrature hierarchy, i.e.
-      // a discriminant with non-empty mask for a chosen height direction (then, the integrands
-      // of the base integrals have square-root type singularities and the Gauss rules converge
-      // only algebraically w.r.t. q)
+      // true if Algoim detected (possible) vertical tangents of the interface in the box, i.e. a
+      // discriminant with non-empty mask, w.r.t. any coordinate direction (on the top level) or
+      // w.r.t. a height direction chosen on a lower level. If vertical tangents are present for
+      // a chosen height direction, the integrands of the base integrals have square-root type
+      // singularities and the Gauss rules converge only algebraically w.r.t. q. If they are
+      // present for other directions, the interface is strongly curved relative to the box,
+      // which typically comes with nearly vertical tangents for the chosen direction.
       template <int N>
-      bool HasVerticalTangents (const algoim::ImplicitPolyQuadrature<N> & ipquad)
+      bool HasVerticalTangentsInHierarchy (const algoim::ImplicitPolyQuadrature<N> & ipquad)
       {
         if constexpr (N == 1)
           return false;
@@ -64,7 +67,22 @@ namespace xintegration
         {
           if (ipquad.k < 0 || ipquad.k == N)
             return false;
-          return ipquad.base.auto_apply_TS || HasVerticalTangents<N-1>(ipquad.base);
+          return ipquad.base.auto_apply_TS || HasVerticalTangentsInHierarchy<N-1>(ipquad.base);
+        }
+      }
+
+      template <int N>
+      bool HasVerticalTangents (algoim::ImplicitPolyQuadrature<N> & ipquad)
+      {
+        if constexpr (N == 1)
+          return false;
+        else
+        {
+          if (ipquad.k < 0 || ipquad.k == N)
+            return false;
+          uvector<bool,N> has_disc;
+          algoim::detail::score_estimate(ipquad.phi, has_disc);
+          return any(has_disc) || HasVerticalTangentsInHierarchy<N>(ipquad);
         }
       }
 
@@ -229,7 +247,7 @@ namespace xintegration
         gradients.clear();
         // Uniform subdivision of [0,1]^N into nsub^N boxes (only those that intersect the cell are
         // used), each of them is adaptively subdivided once more if Algoim detects vertical
-        // tangents. Simplices are always subdivided (at least) once: this keeps the boxes, in
+        // tangents (see HasVerticalTangents). Simplices are always subdivided (at least) once: this keeps the boxes, in
         // which Algoim works, comparable in size to the simplex, which significantly improves the
         // accuracy on coarse meshes (where a curved interface in a large box tends to have
         // (nearly) vertical tangents w.r.t. all directions). All subdivisions are affine, hence

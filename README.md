@@ -27,7 +27,7 @@ A simple doxygen collection of `NGSolve`, `ngsxfem` and `ngstrefftz` C++ API can
 The main features of `ngsxfem` are:
 
 * Tools to work on a subset of the triangulation, the \"active mesh\" only
-* Numerical integration on geometries that are (implicitly) described through level set functions.
+* Numerical integration on geometries that are (implicitly) described through level set functions (optionally with the high order quadrature of [Algoim](https://algoim.github.io/) w.r.t. higher order level set functions).
 * Higher order representation of level set geometries
 * Space-Time Finite Elements for the treatment of moving domain problems
 * All these features combined with the usual flexibility and power of [NGSolve](https://ngsolve.org).
@@ -77,6 +77,10 @@ Additional contributions:
 * Pedro Costa Klein (CI, docu)
 * Maximilian Zienecker (SIMD, CI)
 
+# Third-party software
+
+`ngsxfem` bundles a subset of [Algoim](https://algoim.github.io/) by Robert I. Saye (Lawrence Berkeley National Laboratory), which provides the optional high order quadrature on cut elements (`ngsxfemglobals.cut_quadrature = "algoim"`, `dCut(..., cut_quadrature="algoim")`). Algoim is distributed under a modified BSD license, see [external_dependencies/algoim](external_dependencies/algoim) for the license, the bundled version and the (few) modifications.
+
 # Community guidelines
 If you observe any problems with the software / examples / documentation / installation or want to contribute, you can get in touch with us through either:
 * the [github issue tracker](https://github.com/ngsxfem/ngsxfem/issues) 
@@ -91,5 +95,14 @@ C. Lehrenfeld, F. Heimann, J. Preuß and H. von Wahl
 ngsxfem: Add-on to NGSolve for geometrically unfitted finite element discretizations
 Journal of Open Source Software, 6(64), 3237,
 https://doi.org/10.21105/joss.03237
+```
+
+If you use the Algoim-based quadrature (`cut_quadrature="algoim"` or `"auto"`), please also cite
+
+```
+R. I. Saye
+High-order quadrature on multi-component domains implicitly defined by multivariate polynomials
+Journal of Computational Physics, 448, 110720, 2022,
+https://doi.org/10.1016/j.jcp.2021.110720
 ```
 

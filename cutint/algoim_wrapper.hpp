@@ -45,8 +45,11 @@ namespace xintegration
     ///
     /// Algoim is applied on sub-boxes of [0,1]^dim: [0,1]^dim is uniformly
     /// subdivided subdivlvl times (once more for simplices) and every sub-box,
-    /// in which Algoim detects vertical tangents (w.r.t. the height directions
-    /// it chooses), is subdivided once more. (The subdivisions are affine.)
+    /// in which Algoim detects vertical tangents of the interface (w.r.t. any
+    /// coordinate direction), is subdivided once more. (The subdivisions are
+    /// affine.) On meshes that are coarse compared to the curvature of the
+    /// interface, (nearly) vertical tangents can still limit the convergence
+    /// w.r.t. q in single cells; subdivlvl > 0 helps in this case.
     ///
     /// If phi has (provably) no zero in C, nothing is computed and
     /// UNCUT_NEGATIVE / UNCUT_POSITIVE is returned. Otherwise CUT is returned

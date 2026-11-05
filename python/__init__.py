@@ -195,6 +195,8 @@ levelset_domain : dictionary
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
+    With the Algoim-based quadrature (see "cut_quadrature"), subdivlvl is the number of
+    uniform subdivisions of a cut element before Algoim is applied (all element types).
   * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
@@ -204,6 +206,8 @@ levelset_domain : dictionary
     * first direction is used unless not applicable (FIRST)
     * best direction (in terms of transformation constant) is used (OPTIMAL)
     * subdivision into simplices is always used (FALLBACK)
+  * "cut_quadrature" : {"standard", "algoim", "auto"} (or CUT_QUADRATURE)
+    Quadrature method on cut elements (default: ngsxfemglobals.cut_quadrature)
 
 Other Parameters :
 
@@ -296,6 +300,8 @@ levelset_domain : dictionary
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
+    With the Algoim-based quadrature (see "cut_quadrature"), subdivlvl is the number of
+    uniform subdivisions of a cut element before Algoim is applied (all element types).
   * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration
@@ -305,6 +311,8 @@ levelset_domain : dictionary
     * first direction is used unless not applicable (FIRST)
     * best direction (in terms of transformation constant) is used (OPTIMAL)
     * subdivision into simplices is always used (FALLBACK)
+  * "cut_quadrature" : {"standard", "algoim", "auto"} (or CUT_QUADRATURE)
+    Quadrature method on cut elements (default: ngsxfemglobals.cut_quadrature)
 
 Other Parameters :
 
@@ -371,13 +379,25 @@ See documentation of Integrate.
         levelset_domain_local["order"] = order
     if not "time_order" in levelset_domain_local or levelset_domain_local["time_order"] == -1:
         levelset_domain_local["time_order"] = time_order
-    return IntegrateX(levelset_domain = levelset_domain_local,
-                      mesh=mesh, cf=cf,
-                      deformation=deformation,
-                      ip_container=ip_container,
-                      element_wise=element_wise,
-                      heapsize=heapsize
-                      )
+    # cut integration rules can have many integration points (e.g. the Algoim-based
+    # rules in 3D, see cut_quadrature); on a local heap overflow the computation is
+    # repeated with a larger heap
+    n_ip = len(ip_container) if ip_container is not None else 0
+    while True:
+        try:
+            return IntegrateX(levelset_domain = levelset_domain_local,
+                              mesh=mesh, cf=cf,
+                              deformation=deformation,
+                              ip_container=ip_container,
+                              element_wise=element_wise,
+                              heapsize=heapsize
+                              )
+        except Exception as e:
+            if "Local Heap overflow" not in str(e) or heapsize >= 10**9:
+                raise
+            heapsize *= 10
+            if ip_container is not None:
+                del ip_container[n_ip:]
 
 
 ##### THIS IS ANOTHER WRAPPER (original IntegrateX-interface is pretty ugly...) TODO
@@ -418,6 +438,8 @@ levelset_domain : dictionary
     On simplex meshes a subtriangulation is created on which the level set function lset is
     interpolated piecewise linearly. Based on this approximation, the integration rule is
     constructed. Note: this argument only works on simplices.
+    With the Algoim-based quadrature (see "cut_quadrature"), subdivlvl is the number of
+    uniform subdivisions of a cut element before Algoim is applied (all element types).
   * "order" : int
     (default: entry does not exist or value -1)
     overwrites "order"-arguments in the integration (affects only spatial integration)
@@ -429,6 +451,8 @@ levelset_domain : dictionary
     * first direction is used unless not applicable (FIRST)
     * best direction (in terms of transformation constant) is used (OPTIMAL)
     * subdivision into simplices is always used (FALLBACK)
+  * "cut_quadrature" : {"standard", "algoim", "auto"} (or CUT_QUADRATURE)
+    Quadrature method on cut elements (default: ngsxfemglobals.cut_quadrature)
 
 mesh :
   Mesh to integrate on (on some part)
@@ -455,7 +479,8 @@ ip_container : list (or None)
   a list to store integration points (for debugging or visualization purposes only!)
 
 heapsize : int
-  heapsize for local computations.
+  heapsize for local computations (increased automatically if necessary for
+  integrals on level set domains).
     """
     if levelset_domain is not None and type(levelset_domain)==dict:
         # print("Integrate-Wrapper: IntegrateX called")
@@ -810,7 +835,7 @@ def dFacetPatch(**kwargs):
 
 
 def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
-         levelset_domain=None, **kwargs):
+         levelset_domain=None, cut_quadrature=None, **kwargs):
     """
     Differential symbol for cut integration.
 
@@ -827,7 +852,11 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
         Number of additional subdivision used on cut elements to
         generate the cut quadrature rule. Note: subdivlvl >0 only
         makes sense if you don't provide a P1 level set function
-        and no isoparametric mapping is used.
+        and no isoparametric mapping is used. With the Algoim-based
+        quadrature (see cut_quadrature), subdivlvl is the number of
+        uniform subdivisions of a cut element before Algoim is
+        applied (helps on meshes that are coarse compared to the
+        curvature of the interface).
     definedon : Region
         Domain description on where the integrator is defined.
         When vb=BND, pass mesh.Boundaries("name") to restrict to a
@@ -870,6 +899,16 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
     tref : float
         turns a spatial integral resulting in spatial integration rules
         into a space-time quadrature rule with fixed reference time tref
+    cut_quadrature : {"standard", "algoim", "auto"} or CUT_QUADRATURE
+        Quadrature method on cut elements for this integral. Default:
+        None, i.e. the global setting ngsxfemglobals.cut_quadrature is
+        used. With "algoim", the quadrature of the Algoim library
+        (R. I. Saye, https://algoim.github.io/) is applied w.r.t. the
+        (higher order) level set function itself, e.g. for a level set
+        GridFunction of order k without isoparametric mapping:
+        dCut(lset_ho, NEG, order=2*k, cut_quadrature="algoim").
+        See CUT_QUADRATURE for details. Note that element markers
+        (CutInfo) should be computed with the same quadrature method.
     levelset_domain : dict
         description of integration domain through a dictionary 
         (deprecated).
@@ -891,6 +930,8 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
     if "tref" in kwargs:
         lsetdom["tref"] = kwargs["tref"]
         del kwargs["tref"]
+    if cut_quadrature is not None and "cut_quadrature" not in lsetdom.keys():
+        lsetdom["cut_quadrature"] = cut_quadrature
 
     return _dCut_raw(lsetdom, **kwargs)
 
