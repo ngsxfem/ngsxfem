@@ -52,8 +52,10 @@ strings "standard", "algoim" and "auto" can be used as well.
 
 STANDARD:
     ngsxfem's standard rules: straight cuts of piecewise linear (multilinear
-    on quads/hexes) level set approximations, subdivision for level set
-    CoefficientFunctions, space-time and multiple level set rules.
+    on quads/hexes) level set GridFunctions, also in the isoparametric
+    approach; space-time and multiple level set rules. Other (single) level
+    sets are only accepted with subdivlvl > 0 (piecewise linear interpolation
+    on subdivided simplices), otherwise an exception is raised.
 ALGOIM:
     rules based on the Algoim library (R. I. Saye, https://algoim.github.io/),
     which represent the level set function as element-wise polynomial of
@@ -62,11 +64,11 @@ ALGOIM:
     available (single level sets on segments, triangles, quadrilaterals,
     tetrahedra and hexahedra; on boundary elements only for NEG/POS), the
     standard rules are used otherwise (multiple level sets, space-time).
-AUTO:
-    as ALGOIM, but only for higher order level sets (GridFunctions of order
-    > 1, general CoefficientFunctions) and only on elements without mesh
-    deformation (with a deformation, the isoparametric approach with a P1
-    level set is assumed), the standard rules otherwise.
+AUTO (default):
+    the standard rules for piecewise linear level set GridFunctions, ALGOIM
+    for all other level sets (higher order GridFunctions, general
+    CoefficientFunctions). If AUTO has not been chosen explicitly, the user
+    is informed (once) when Algoim is used.
 )raw_string"))
     .value("STANDARD", CUTQUAD_STANDARD)
     .value("ALGOIM", CUTQUAD_ALGOIM)

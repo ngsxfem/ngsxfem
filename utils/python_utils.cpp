@@ -261,12 +261,15 @@ eps_spacetime_fes_node : double
     Default: 1e-9
 
 cut_quadrature : CUT_QUADRATURE or {"standard", "algoim", "auto"}
-    Quadrature method on cut elements, see CUT_QUADRATURE. "algoim" uses the
-    Algoim library (R. I. Saye, https://algoim.github.io/) for high order
-    accurate quadrature w.r.t. the (higher order) level set function itself,
-    "auto" uses Algoim only for higher order level sets on undeformed meshes.
-    Can be overwritten for single integrals, e.g. dCut(..., cut_quadrature=...),
-    and for CutInfo. Default: "standard"
+    Quadrature method on cut elements, see CUT_QUADRATURE. "standard" are
+    ngsxfem's rules for piecewise linear level set GridFunctions (e.g. in the
+    isoparametric approach), "algoim" uses the Algoim library (R. I. Saye,
+    https://algoim.github.io/) for high order accurate quadrature w.r.t. the
+    (higher order) level set function itself, "auto" uses the standard rules
+    for piecewise linear level set GridFunctions and Algoim for all other
+    level sets (and informs the user once, unless the method has been set
+    explicitly). Can be overwritten for single integrals, e.g.
+    dCut(..., cut_quadrature=...), and for CutInfo. Default: "auto"
 
 algoim_lset_order : int
     Polynomial degree that the Algoim-based quadrature uses to interpolate
@@ -291,7 +294,11 @@ algoim_lset_order : int
           .def_readwrite("simd_eval", &GlobalNgsxfemVariables::SIMD_EVAL)
           .def_property("cut_quadrature",
                         [](GlobalNgsxfemVariables & self) { return self.CUT_QUADRATURE_METHOD; },
-                        [](GlobalNgsxfemVariables & self, CUT_QUADRATURE cq) { self.CUT_QUADRATURE_METHOD = cq; })
+                        [](GlobalNgsxfemVariables & self, CUT_QUADRATURE cq)
+                        {
+                          self.CUT_QUADRATURE_METHOD = cq;
+                          self.CUT_QUADRATURE_SET_BY_USER = true;
+                        })
           .def_readwrite("algoim_lset_order", &GlobalNgsxfemVariables::ALGOIM_LSET_ORDER)
           .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
           .def("Output", &GlobalNgsxfemVariables::Output)
