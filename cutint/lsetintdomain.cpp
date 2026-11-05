@@ -149,6 +149,10 @@ namespace xintegration
     ost << "Policy on Quads/Hexes: \n " << lsetintdom.GetSwapDimensionPolicy() << endl;
     if (lsetintdom.HasReferenceTime())
       ost << "Fixed reference time : \n " << lsetintdom.ReferenceTime() << endl;
+    ost << "Cut quadrature: \n " << lsetintdom.GetCutQuadrature();
+    if (!lsetintdom.OptionalCutQuadrature())
+      ost << " (global setting)";
+    ost << endl;
     return ost;
   }
 

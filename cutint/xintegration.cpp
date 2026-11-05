@@ -2,12 +2,57 @@
 #include "mlsetintegration.hpp"
 #include "straightcutrule.hpp"
 #include "spacetimecutrule.hpp"
+#include "algoimcutrule.hpp"
 #include "../spacetime/SpaceTimeFE.hpp"
 #include "../spacetime/SpaceTimeFESpace.hpp"
 
 
 namespace xintegration
 {
+  /// Decides whether the Algoim-based cut rule is applied for a single level set
+  /// domain on the given element (see CUT_QUADRATURE):
+  ///  * STANDARD: never
+  ///  * ALGOIM: whenever Algoim-based rules are available for the element and
+  ///    domain type (not for space-time rules, fixed reference times and
+  ///    space-time level sets)
+  ///  * AUTO: as ALGOIM, but only for higher order level sets (level set
+  ///    GridFunctions of order > 1 or general CoefficientFunctions) and only
+  ///    if the element transformation is not deformed (otherwise the
+  ///    isoparametric approach with a P1 level set is assumed)
+  bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                         const ElementTransformation & trafo)
+  {
+    const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
+    if (method == CUTQUAD_STANDARD)
+      return false;
+    if ((lsetintdom.GetTimeIntegrationOrder() >= 0) || lsetintdom.HasReferenceTime())
+      return false;
+    if (!AlgoimCutRuleAvailable(trafo, lsetintdom.GetDomainType()))
+      return false;
+
+    shared_ptr<CoefficientFunction> lset = lsetintdom.GetLevelsetCF();
+    if (lset == nullptr)
+      lset = lsetintdom.GetLevelsetGF();
+    if (lset == nullptr)
+      return false;
+    auto gf = dynamic_pointer_cast<GridFunction>(lset);
+    if (gf && dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+      return false;
+    // discontinuous level sets are not supported on boundary elements (as for the standard rules)
+    if (gf && (trafo.VB() == BND) && (gf->GetFESpace()->GetClassName() == "DiscontinuousH1HighOrderFESpace"))
+      return false;
+
+    if (method == CUTQUAD_ALGOIM)
+      return true;
+
+    // CUTQUAD_AUTO
+    if (IsDeformedElementTransformation(trafo))
+      return false;
+    if (gf)
+      return gf->GetFESpace()->GetOrder() > 1;
+    return true; // level set given as general CoefficientFunction
+  }
+
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh)
@@ -44,7 +89,11 @@ namespace xintegration
       DOMAIN_TYPE dt = lsetintdom.GetDomainType();
       SWAP_DIMENSIONS_POLICY quad_dir_policy = lsetintdom.GetSwapDimensionPolicy();
       int subdivlvl = lsetintdom.GetNSubdivisionLevels();
-      
+
+      if (UseAlgoimCutRule(lsetintdom, trafo))
+        return AlgoimCutIntegrationRule(cflset ? cflset : gflset, trafo, dt, max(intorder, 0),
+                                        globxvar.ALGOIM_LSET_ORDER, subdivlvl, lh);
+
       if (gflset != nullptr)
       {
         Array<DofId> dnums(0,lh);

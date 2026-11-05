@@ -16,6 +16,11 @@ namespace xintegration
   tuple<const IntegrationRule *, Array<double>> CreateCutIntegrationRule(const LevelsetIntegrationDomain & lsetintdom,
                                                                          const ElementTransformation & trafo,
                                                                          LocalHeap & lh);
+  /// true if the Algoim-based cut rule is used for the (single level set)
+  /// domain on the element, see CUT_QUADRATURE
+  bool UseAlgoimCutRule (const LevelsetIntegrationDomain & lsetintdom,
+                         const ElementTransformation & trafo);
+
   template<class SCAL> 
   /**
    * Creates a new FlatArray of SIMD values from a given FlatArray of scalar values.

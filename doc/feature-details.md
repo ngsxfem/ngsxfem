@@ -17,6 +17,8 @@ On these simple (uncut) geometries standard quadrature rules of arbitrary order 
 
 ![Left: Subdivision strategy for cut tetrahedron. Right: Integration points on a cut element.](graphics/cuttet-quadrature.png)
 
+Alternatively, for higher order level set functions (e.g. a level set `GridFunction` of order $k$), the quadrature algorithm of [Algoim](https://algoim.github.io/) (R. I. Saye, J. Comput. Phys. 448, 2022) can be used (`ngsxfemglobals.cut_quadrature = "algoim"` or `"auto"`, or for single integrals `dCut(..., cut_quadrature="algoim")`). It computes quadrature rules directly with respect to the zero level of the polynomial level set function on every element (segments, triangles, quadrilaterals, tetrahedra and hexahedra), so that a higher order accurate geometry handling is obtained without any mesh transformation, see the demo `demos/fictdom_algoim.py`.
+
 ### Geometries described by multiple level sets
 While one level set function may be sufficient for the approximation of a smooth geometry, many geometries do not have -- due to sharp corners or edges -- an implicit description by only one *smooth* level set function. In these cases often multiple level set functions can be used to describe theses geometries. 
 To work with these more complicated domains, `ngsxfem` provides tools to work with these geometries as with simple geometries, for example computing the level set description of the boundary and exterior.  To enable integration on such domains `ngsxfem` generates quadrature rules with respect to every level set which cuts a given element. Furthermore, it provides the analogous tools to the single level-set setting, to mark those elements of the mesh which are relevant to a given geometry.
@@ -27,6 +29,7 @@ To work with these more complicated domains, `ngsxfem` provides tools to work wi
 ### Higher order representation of implicit level-set geometries 
 To obtain higher order accuracy in the handling of the geometry, `ngsxfem` offers a mesh transformation technique in the spirit of isoparametric finite element methods. 
 Thereby the piecewise linear approximation of the level set (which is only of second order) is mapped onto a higher order accurate approximation of the true geometry.
+Alternatively, the Algoim-based quadrature (see [above](#numerical-integration-on-unfitted-geometries-described-by-one-level-set-function)) can be applied directly to a higher order level set function.
 
 ![Left: Piecewise linear approximation. Right: Higher-order mapped domain](graphics/lsetcurv.jpg)
 

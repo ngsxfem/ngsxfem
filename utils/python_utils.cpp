@@ -260,6 +260,19 @@ eps_spacetime_fes_node : double
     as coincidence.
     Default: 1e-9
 
+cut_quadrature : CUT_QUADRATURE or {"standard", "algoim", "auto"}
+    Quadrature method on cut elements, see CUT_QUADRATURE. "algoim" uses the
+    Algoim library (R. I. Saye, https://algoim.github.io/) for high order
+    accurate quadrature w.r.t. the (higher order) level set function itself,
+    "auto" uses Algoim only for higher order level sets on undeformed meshes.
+    Can be overwritten for single integrals, e.g. dCut(..., cut_quadrature=...),
+    and for CutInfo. Default: "standard"
+
+algoim_lset_order : int
+    Polynomial degree that the Algoim-based quadrature uses to interpolate
+    level set functions that are not GridFunctions (GridFunctions are
+    represented exactly with their element-wise degree). Default: 4
+
 
  )raw_string"))
           .def_readwrite("eps_spacetime_lset_perturbation", &GlobalNgsxfemVariables::EPS_STCR_LSET_PERTUBATION)
@@ -276,6 +289,10 @@ eps_spacetime_fes_node : double
           .def_readwrite("naive_timeint_subdivs", &GlobalNgsxfemVariables::NAIVE_TIMEINT_SUBDIVS)
           .def_readwrite("non_conv_warn_msg_lvl", &GlobalNgsxfemVariables::NON_CONV_WARN_MSG_LVL)
           .def_readwrite("simd_eval", &GlobalNgsxfemVariables::SIMD_EVAL)
+          .def_property("cut_quadrature",
+                        [](GlobalNgsxfemVariables & self) { return self.CUT_QUADRATURE_METHOD; },
+                        [](GlobalNgsxfemVariables & self, CUT_QUADRATURE cq) { self.CUT_QUADRATURE_METHOD = cq; })
+          .def_readwrite("algoim_lset_order", &GlobalNgsxfemVariables::ALGOIM_LSET_ORDER)
           .def("MultiplyAllEps", &GlobalNgsxfemVariables::MultiplyAllEps)
           .def("Output", &GlobalNgsxfemVariables::Output)
           .def("SetDefaults", &GlobalNgsxfemVariables::SetDefaults)

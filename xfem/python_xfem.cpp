@@ -55,14 +55,18 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
                           py::object lset,
                           int subdivlvl,
                           int time_order,
-                          int heapsize) -> shared_ptr<CutInformation>
+                          int heapsize,
+                          py::object cut_quadrature) -> shared_ptr<CutInformation>
          {
            auto cut_info = make_shared<CutInformation> (ma);
            if ((!lset.is_none()) && py::extract<shared_ptr<CF>> (lset).check())
            {
              shared_ptr<CF> cflset = py::extract<shared_ptr<CF>>(lset)();
              LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-             cut_info->Update(cflset, subdivlvl, time_order, lh);
+             optional<CUT_QUADRATURE> cq = nullopt;
+             if (!cut_quadrature.is_none())
+               cq = py::cast<CUT_QUADRATURE>(cut_quadrature);
+             cut_info->Update(cflset, subdivlvl, time_order, lh, cq);
            }
            return cut_info;
          }),
@@ -70,7 +74,9 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
          py::arg("levelset") = py::none(),
          py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
-         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+         py::arg("heapsize") = 1000000,
+         py::arg("cut_quadrature") = py::none(),
+         docu_string(R"raw_string(
 Creates a CutInfo based on a level set function and a mesh.
 
 Parameters
@@ -83,21 +89,32 @@ levelset : ngsolve.CoefficientFunction / None
 time_order : int
   order in time that is used in the integration in time to check for cuts and the ratios. This is
   only relevant for space-time discretizations.
+
+cut_quadrature : {"standard", "algoim", "auto"} / CUT_QUADRATURE / None
+  quadrature method that is used to decide on cut elements and to compute cut ratios. Should
+  be the same as for the integrals that are restricted to the marked elements. Default: None,
+  i.e. ngsxfemglobals.cut_quadrature is used.
 )raw_string")
       )
     .def("Update", [](CutInformation & self,
                       shared_ptr<CF> lset,
                       int subdivlvl,
                       int time_order,
-                      int heapsize)
+                      int heapsize,
+                      py::object cut_quadrature)
          {
            LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-           self.Update(lset,subdivlvl,time_order,lh);
+           optional<CUT_QUADRATURE> cq = nullopt;
+           if (!cut_quadrature.is_none())
+             cq = py::cast<CUT_QUADRATURE>(cut_quadrature);
+           self.Update(lset,subdivlvl,time_order,lh,cq);
          },
          py::arg("levelset"),
          py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
-         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+         py::arg("heapsize") = 1000000,
+         py::arg("cut_quadrature") = py::none(),
+         docu_string(R"raw_string(
 Updates a CutInfo based on a level set function.
 
 Parameters
@@ -111,6 +128,10 @@ subdivlvl : int
 time_order : int
   order in time that is used in the integration in time to check for cuts and the ratios. This is
   only relevant for space-time discretizations.
+
+cut_quadrature : {"standard", "algoim", "auto"} / CUT_QUADRATURE / None
+  quadrature method that is used to decide on cut elements and to compute cut ratios.
+  Default: None, i.e. ngsxfemglobals.cut_quadrature is used.
 
 
 )raw_string")
