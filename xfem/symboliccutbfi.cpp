@@ -531,7 +531,12 @@ namespace ngfem
 
                   const IntegrationRule * ir_facet_tmp = nullptr;
 
-                  if(etfacet == ET_SEGM){
+                  if (UseAlgoimCutFacetRule(*lsetintdom, etfacet)) {
+                    ir_facet_tmp = AlgoimCutFacetRule(*lsetintdom, trafo, transform, k, order_sum, lh);
+                    if (ir_facet_tmp == nullptr) continue;
+                  } else if (lsetintdom->GetLevelsetGF() == nullptr) {
+                    StandardRulesRequireP1Levelset();
+                  } else if(etfacet == ET_SEGM){
                     IntegrationPoint ipl(0,0,0,0);
                     IntegrationPoint ipr(1,0,0,0);
                     const IntegrationPoint & facet_ip_l = transform( k, ipl);
@@ -593,7 +598,8 @@ namespace ngfem
                       auto F = mir3[i].GetJacobian();
                       auto mapped_tang = F * tetdiffvec2;
                       const double ratio_meas1D = L2Norm(mapped_tang);
-                      ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
+                      if (lsetintdom->GetDomainType() == IF) // length of the interface curve; NEG/POS: facet measure is applied later
+                        ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
                     }
                   } else {
                     throw Exception("Only ET_SEGM, ET_TRIG and ET_QUAD are implemented yet.");
@@ -701,7 +707,12 @@ namespace ngfem
           //if(etfacet != ET_SEGM) throw Exception("Only ET_SEGM support yet!");
           const IntegrationRule * ir_facet_tmp = nullptr;
 
-          if(etfacet == ET_SEGM){
+          if (UseAlgoimCutFacetRule(*lsetintdom, etfacet)) {
+            ir_facet_tmp = AlgoimCutFacetRule(*lsetintdom, trafo, transform, k, order_sum, lh);
+            if (ir_facet_tmp == nullptr) continue;
+          } else if (lsetintdom->GetLevelsetGF() == nullptr) {
+            StandardRulesRequireP1Levelset();
+          } else if(etfacet == ET_SEGM){
               IntegrationPoint ipl(0,0,0,0);
               IntegrationPoint ipr(1,0,0,0);
               const IntegrationPoint & facet_ip_l = transform( k, ipl);
@@ -767,7 +778,8 @@ namespace ngfem
                   auto F = mir3[i].GetJacobian();
                   auto mapped_tang = F * tetdiffvec2;
                   const double ratio_meas1D = L2Norm(mapped_tang);
-                  ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
+                  if (lsetintdom->GetDomainType() == IF) // length of the interface curve; NEG/POS: facet measure is applied later
+                        ip.SetWeight((*ir_facet_tmp)[i].Weight() * ratio_meas1D);
               }
           }
 
@@ -935,129 +947,138 @@ namespace ngfem
     const IntegrationRule * ir_scr = nullptr;
 
     Array<double> wei_arr;
-    auto gflset = lsetintdom->GetLevelsetGF();
-    if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
-
-    Array<DofId> dnums(0,lh);
-    gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
-    FlatVector<> elvec(dnums.Size(),lh);
-    gflset->GetVector().GetIndirect(dnums,elvec);
-    
-    shared_ptr<SpaceTimeFESpace> st_FE = nullptr;
-    shared_ptr<NodalTimeFE> time_FE = nullptr;
-    if(time_order > -1){
-      st_FE = dynamic_pointer_cast<SpaceTimeFESpace >(gflset->GetFESpace());
-      if(st_FE == nullptr) 
-        throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-      time_FE = dynamic_pointer_cast< NodalTimeFE>(st_FE->GetTimeFE());
-      if(time_FE == nullptr) 
-        throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-    }
-
-    int NV = ElementTopology::GetNVertices(etfacet); // number of vertices of et_facet
-
-    if (Dim(etfacet) == 2) 
+    if (UseAlgoimCutFacetRule(*lsetintdom, etfacet, time_order))
     {
-      //if (lsetintdom->GetDomainType() != IF) throw Exception("No Neg/pos facet ints in 3D yet");
-      // so far only : Codim 2 special case (3D -> 1D)
-      //if (time_order > -1) throw Exception("This is not possible for space_time");
-      
-      static Timer t("symbolicCutBFI - CoDim2", NoTracing);
-      RegionTimer reg (t);
-
-      IVec<4> int_tuple = 
-        SwitchET<ET_HEX,ET_TET,ET_PRISM,ET_PYRAMID> (eltype1, [&LocalFacetNr1, &ElVertices1] (auto et)
-         { return ET_trait<et>::GetFaceSort(LocalFacetNr1,ElVertices1); });
-
-      // for(int i=0; i<NV; i++)
-      //     if(abs(lset_fv[i]) < globxvar.EPS_INTERPOLATE_TO_P1 ) throw Exception("lset val 0 in SymbolicCutFacetBilinearFormIntegrator");
-
-      FlatVector<> lset_fv(NV,lh);
-      if(time_order < 0) {
-        for (int i = 0; i < NV; i++)
-          lset_fv(i) = elvec[int_tuple[i]];
-        ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-      }
-      else {
-        int M = time_FE->GetNDof(); //time nodes
-        int L = dnums.Size()/M; // dofs (or verts) per vol element 
-        FlatVector<> cf_lset_at_element(NV*M, lh);
-        FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
-
-        for (int i = 0; i < NV; i++)
-          cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
-
-        tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
-      }
-      if(ir_scr == nullptr) return;
-      //cout << "ir_scr: " << *ir_scr << endl;
-      if (lsetintdom->GetDomainType() == IF) // correct measure for 3D -> 1D case ( codim1 - adjustment is done automatically)
-      {
-        if (time_order > -1)
-          throw Exception("correcting the IF-measure in space-time case is still missing");
-        vector<double> lset(NV);
-        for(int i=0; i<NV; i++) 
-          lset[i] = lset_fv(i);
-        LevelsetWrapper lsw(lset, etfacet);
-        Vec<3> tetdiffvec2(0.);
-
-        IntegrationRule & ir_scr_intet2 = transform1( LocalFacetNr1, (*ir_scr), lh);
-        MappedIntegrationRule<3,3> mir3(ir_scr_intet2,trafo1,lh);
-        int npoints = ir_scr->Size();
-
-        for (int i = 0; i < npoints; i++)
-        {
-            IntegrationPoint & ip = (*ir_scr)[i];
-            Vec<3> normal = lsw.GetNormal(ip.Point());
-            Vec<2> tang = {normal[1],-normal[0]};
-
-            tetdiffvec2 = transform1.GetJacobian( LocalFacetNr1, lh) * tang;
-            auto F = mir3[i].GetJacobian();
-            auto mapped_tang = F * tetdiffvec2;
-            const double ratio_meas1D = L2Norm(mapped_tang);
-            ip.SetWeight((*ir_scr)[i].Weight() * ratio_meas1D);
-        }
-      }
-    }
-    else if (Dim(etfacet) == 1) 
-    {
-
-        IVec<2> int_tuple = 
-          SwitchET<ET_TRIG,ET_QUAD> (eltype1, [&LocalFacetNr1, &ElVertices1] (auto et) { return ET_trait<et>::GetEdgeSort(LocalFacetNr1,ElVertices1); });
-
-        if(time_order < 0) {
-            Vec<2> lset_vals_edge = {elvec[int_tuple[0]],elvec[int_tuple[1]]}; 
-            ir_scr = StraightCutIntegrationRuleUntransformed(lset_vals_edge, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-        }
-        else {
-            int M = time_FE->GetNDof(); //time nodes
-            int L = dnums.Size()/M; // dofs (or verts) per vol element 
-            FlatVector<> cf_lset_at_element(NV*M, lh);
-            FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
-
-            for (int i = 0; i < NV; i++)
-              cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
-
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
-        }
-        if (ir_scr == nullptr) return;
-    }
-    else if (Dim(etfacet) == 0) {
-      FlatVector <> lset_on_facet(elvec.Size()/2,lh);
-      lset_on_facet = elvec.Slice(LocalFacetNr1,2);
-      //LocalFacetNr1
-        if(time_order < 0) {
-            ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-        }
-        else {
-          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
-        }
-        if (ir_scr == nullptr) return;
-
-        //throw Exception("no 1D cut facet integration provided yet");
+      ir_scr = AlgoimCutFacetRule(*lsetintdom, trafo1, transform1, LocalFacetNr1, 2*maxorder, lh);
+      if (ir_scr == nullptr) return;
     }
     else
-      throw Exception("no 1D cut facet integration provided yet");
+    {
+      auto gflset = lsetintdom->GetLevelsetGF();
+      if(gflset == nullptr) StandardRulesRequireP1Levelset();
+
+      Array<DofId> dnums(0,lh);
+      gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
+      FlatVector<> elvec(dnums.Size(),lh);
+      gflset->GetVector().GetIndirect(dnums,elvec);
+    
+      shared_ptr<SpaceTimeFESpace> st_FE = nullptr;
+      shared_ptr<NodalTimeFE> time_FE = nullptr;
+      if(time_order > -1){
+        st_FE = dynamic_pointer_cast<SpaceTimeFESpace >(gflset->GetFESpace());
+        if(st_FE == nullptr) 
+          throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+        time_FE = dynamic_pointer_cast< NodalTimeFE>(st_FE->GetTimeFE());
+        if(time_FE == nullptr) 
+          throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+      }
+
+      int NV = ElementTopology::GetNVertices(etfacet); // number of vertices of et_facet
+
+      if (Dim(etfacet) == 2) 
+      {
+        //if (lsetintdom->GetDomainType() != IF) throw Exception("No Neg/pos facet ints in 3D yet");
+        // so far only : Codim 2 special case (3D -> 1D)
+        //if (time_order > -1) throw Exception("This is not possible for space_time");
+      
+        static Timer t("symbolicCutBFI - CoDim2", NoTracing);
+        RegionTimer reg (t);
+
+        IVec<4> int_tuple = 
+          SwitchET<ET_HEX,ET_TET,ET_PRISM,ET_PYRAMID> (eltype1, [&LocalFacetNr1, &ElVertices1] (auto et)
+           { return ET_trait<et>::GetFaceSort(LocalFacetNr1,ElVertices1); });
+
+        // for(int i=0; i<NV; i++)
+        //     if(abs(lset_fv[i]) < globxvar.EPS_INTERPOLATE_TO_P1 ) throw Exception("lset val 0 in SymbolicCutFacetBilinearFormIntegrator");
+
+        FlatVector<> lset_fv(NV,lh);
+        if(time_order < 0) {
+          for (int i = 0; i < NV; i++)
+            lset_fv(i) = elvec[int_tuple[i]];
+          ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+        }
+        else {
+          int M = time_FE->GetNDof(); //time nodes
+          int L = dnums.Size()/M; // dofs (or verts) per vol element 
+          FlatVector<> cf_lset_at_element(NV*M, lh);
+          FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
+
+          for (int i = 0; i < NV; i++)
+            cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
+
+          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+        }
+        if(ir_scr == nullptr) return;
+        //cout << "ir_scr: " << *ir_scr << endl;
+        if (lsetintdom->GetDomainType() == IF) // correct measure for 3D -> 1D case ( codim1 - adjustment is done automatically)
+        {
+          if (time_order > -1)
+            throw Exception("correcting the IF-measure in space-time case is still missing");
+          vector<double> lset(NV);
+          for(int i=0; i<NV; i++) 
+            lset[i] = lset_fv(i);
+          LevelsetWrapper lsw(lset, etfacet);
+          Vec<3> tetdiffvec2(0.);
+
+          IntegrationRule & ir_scr_intet2 = transform1( LocalFacetNr1, (*ir_scr), lh);
+          MappedIntegrationRule<3,3> mir3(ir_scr_intet2,trafo1,lh);
+          int npoints = ir_scr->Size();
+
+          for (int i = 0; i < npoints; i++)
+          {
+              IntegrationPoint & ip = (*ir_scr)[i];
+              Vec<3> normal = lsw.GetNormal(ip.Point());
+              Vec<2> tang = {normal[1],-normal[0]};
+
+              tetdiffvec2 = transform1.GetJacobian( LocalFacetNr1, lh) * tang;
+              auto F = mir3[i].GetJacobian();
+              auto mapped_tang = F * tetdiffvec2;
+              const double ratio_meas1D = L2Norm(mapped_tang);
+              ip.SetWeight((*ir_scr)[i].Weight() * ratio_meas1D);
+          }
+        }
+      }
+      else if (Dim(etfacet) == 1) 
+      {
+
+          IVec<2> int_tuple = 
+            SwitchET<ET_TRIG,ET_QUAD> (eltype1, [&LocalFacetNr1, &ElVertices1] (auto et) { return ET_trait<et>::GetEdgeSort(LocalFacetNr1,ElVertices1); });
+
+          if(time_order < 0) {
+              Vec<2> lset_vals_edge = {elvec[int_tuple[0]],elvec[int_tuple[1]]}; 
+              ir_scr = StraightCutIntegrationRuleUntransformed(lset_vals_edge, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+          }
+          else {
+              int M = time_FE->GetNDof(); //time nodes
+              int L = dnums.Size()/M; // dofs (or verts) per vol element 
+              FlatVector<> cf_lset_at_element(NV*M, lh);
+              FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
+
+              for (int i = 0; i < NV; i++)
+                cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
+
+              tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+          }
+          if (ir_scr == nullptr) return;
+      }
+      else if (Dim(etfacet) == 0) {
+        FlatVector <> lset_on_facet(elvec.Size()/2,lh);
+        lset_on_facet = elvec.Slice(LocalFacetNr1,2);
+        //LocalFacetNr1
+          if(time_order < 0) {
+              ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+          }
+          else {
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+          }
+          if (ir_scr == nullptr) return;
+
+          //throw Exception("no 1D cut facet integration provided yet");
+      }
+      else
+        throw Exception("no 1D cut facet integration provided yet");
+
+    }
 
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_scr), lh);
 
@@ -1363,123 +1384,132 @@ namespace ngfem
     // IntegrationRule & ir_facet_surf = stransform(ir_facet, lh);  // not yet used ???
    
     Array<double> wei_arr;
-    auto gflset = lsetintdom->GetLevelsetGF();
-    if(gflset == nullptr) throw Exception("No gf in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix :(");
-
-    Array<DofId> dnums(0,lh);
-    gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
-    FlatVector<> elvec(dnums.Size(),lh);
-    gflset->GetVector().GetIndirect(dnums,elvec);
-
-    shared_ptr<SpaceTimeFESpace> st_FE = nullptr;
-    shared_ptr<NodalTimeFE> time_FE = nullptr;
-    if(time_order > -1){
-      st_FE = dynamic_pointer_cast<SpaceTimeFESpace >(gflset->GetFESpace());
-      if(st_FE == nullptr) 
-        throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-      time_FE = dynamic_pointer_cast< NodalTimeFE>(st_FE->GetTimeFE());
-      if(time_FE == nullptr) 
-        throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
-    }
-
-    int NV = ElementTopology::GetNVertices(etfacet); // number of vertices of et_facet
-
-    if (Dim(etfacet) == 2) 
+    if (UseAlgoimCutFacetRule(*lsetintdom, etfacet, time_order))
     {
-      
-      static Timer t("symbolicCutBFI - CoDim2", NoTracing);
-      RegionTimer reg (t);
-
-      IVec<4> int_tuple = 
-        SwitchET<ET_HEX,ET_TET,ET_PRISM,ET_PYRAMID> (etvol, [&LocalFacetNr1, &ElVertices1] (auto et)
-         { return ET_trait<et>::GetFaceSort(LocalFacetNr1,ElVertices1); });
-
-      FlatVector<> lset_fv(NV,lh);
-      if(time_order < 0) {
-        for (int i = 0; i < NV; i++)
-          lset_fv(i) = elvec[int_tuple[i]];
-        ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-      }
-      else {
-        int M = time_FE->GetNDof(); //time nodes
-        int L = dnums.Size()/M; // dofs (or verts) per vol element 
-        FlatVector<> cf_lset_at_element(NV*M, lh);
-        FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
-
-        for (int i = 0; i < NV; i++)
-          cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
-
-        tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
-      }
-      if(ir_scr == nullptr) return;
-      //cout << "ir_scr: " << *ir_scr << endl;
-      if (lsetintdom->GetDomainType() == IF) // correct measure for 3D -> 1D case ( codim1 - adjustment is done automatically)
-      {
-        if (time_order > -1)
-          throw Exception("correcting the IF-measure in space-time case is still missing");
-        vector<double> lset(NV);
-        for(int i=0; i<NV; i++) 
-          lset[i] = lset_fv(i);
-        LevelsetWrapper lsw(lset, etfacet);
-        Vec<3> tetdiffvec2(0.);
-
-        IntegrationRule & ir_scr_intet2 = transform1( LocalFacetNr1, (*ir_scr), lh);
-        MappedIntegrationRule<3,3> mir3(ir_scr_intet2,trafo1,lh);
-        int npoints = ir_scr->Size();
-
-        for (int i = 0; i < npoints; i++)
-        {
-            IntegrationPoint & ip = (*ir_scr)[i];
-            Vec<3> normal = lsw.GetNormal(ip.Point());
-            Vec<2> tang = {normal[1],-normal[0]};
-
-            tetdiffvec2 = transform1.GetJacobian( LocalFacetNr1, lh) * tang;
-            auto F = mir3[i].GetJacobian();
-            auto mapped_tang = F * tetdiffvec2;
-            const double ratio_meas1D = L2Norm(mapped_tang);
-            ip.SetWeight((*ir_scr)[i].Weight() * ratio_meas1D);
-        }
-      }
-    }
-    else if (Dim(etfacet) == 1) 
-    {
-
-        IVec<2> int_tuple = 
-          SwitchET<ET_TRIG,ET_QUAD> (etvol, [&LocalFacetNr1, &ElVertices1] (auto et) { return ET_trait<et>::GetEdgeSort(LocalFacetNr1,ElVertices1); });
-
-        if(time_order < 0) {
-            Vec<2> lset_vals_edge = {elvec[int_tuple[0]],elvec[int_tuple[1]]}; 
-            ir_scr = StraightCutIntegrationRuleUntransformed(lset_vals_edge, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-        }
-        else {
-            int M = time_FE->GetNDof(); //time nodes
-            int L = dnums.Size()/M; // dofs (or verts) per vol element 
-            FlatVector<> cf_lset_at_element(NV*M, lh);
-            FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
-
-            for (int i = 0; i < NV; i++)
-              cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
-
-            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
-        }
-        if (ir_scr == nullptr) return;
-    }
-    else if (Dim(etfacet) == 0) {
-      FlatVector <> lset_on_facet(elvec.Size()/2,lh);
-      lset_on_facet = elvec.Slice(LocalFacetNr1,2);
-      //LocalFacetNr1
-        if(time_order < 0) {
-            ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
-        }
-        else {
-          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
-        }
-        if (ir_scr == nullptr) return;
-
-        //throw Exception("no 1D cut facet integration provided yet");
+      ir_scr = AlgoimCutFacetRule(*lsetintdom, trafo1, transform1, LocalFacetNr1, 2*maxorder, lh);
+      if (ir_scr == nullptr) return;
     }
     else
-      throw Exception("no 1D cut facet integration provided yet");
+    {
+      auto gflset = lsetintdom->GetLevelsetGF();
+      if(gflset == nullptr) StandardRulesRequireP1Levelset();
+
+      Array<DofId> dnums(0,lh);
+      gflset->GetFESpace()->GetDofNrs(trafo1.GetElementId(),dnums);
+      FlatVector<> elvec(dnums.Size(),lh);
+      gflset->GetVector().GetIndirect(dnums,elvec);
+
+      shared_ptr<SpaceTimeFESpace> st_FE = nullptr;
+      shared_ptr<NodalTimeFE> time_FE = nullptr;
+      if(time_order > -1){
+        st_FE = dynamic_pointer_cast<SpaceTimeFESpace >(gflset->GetFESpace());
+        if(st_FE == nullptr) 
+          throw Exception("Unable to cast SpaceTimeFESpace in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+        time_FE = dynamic_pointer_cast< NodalTimeFE>(st_FE->GetTimeFE());
+        if(time_FE == nullptr) 
+          throw Exception("Unable to cast time finite element in SymbolicCutFacetBilinearFormIntegrator::T_CalcFacetMatrix");
+      }
+
+      int NV = ElementTopology::GetNVertices(etfacet); // number of vertices of et_facet
+
+      if (Dim(etfacet) == 2) 
+      {
+      
+        static Timer t("symbolicCutBFI - CoDim2", NoTracing);
+        RegionTimer reg (t);
+
+        IVec<4> int_tuple = 
+          SwitchET<ET_HEX,ET_TET,ET_PRISM,ET_PYRAMID> (etvol, [&LocalFacetNr1, &ElVertices1] (auto et)
+           { return ET_trait<et>::GetFaceSort(LocalFacetNr1,ElVertices1); });
+
+        FlatVector<> lset_fv(NV,lh);
+        if(time_order < 0) {
+          for (int i = 0; i < NV; i++)
+            lset_fv(i) = elvec[int_tuple[i]];
+          ir_scr = StraightCutIntegrationRuleUntransformed(lset_fv, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+        }
+        else {
+          int M = time_FE->GetNDof(); //time nodes
+          int L = dnums.Size()/M; // dofs (or verts) per vol element 
+          FlatVector<> cf_lset_at_element(NV*M, lh);
+          FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
+
+          for (int i = 0; i < NV; i++)
+            cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
+
+          tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+        }
+        if(ir_scr == nullptr) return;
+        //cout << "ir_scr: " << *ir_scr << endl;
+        if (lsetintdom->GetDomainType() == IF) // correct measure for 3D -> 1D case ( codim1 - adjustment is done automatically)
+        {
+          if (time_order > -1)
+            throw Exception("correcting the IF-measure in space-time case is still missing");
+          vector<double> lset(NV);
+          for(int i=0; i<NV; i++) 
+            lset[i] = lset_fv(i);
+          LevelsetWrapper lsw(lset, etfacet);
+          Vec<3> tetdiffvec2(0.);
+
+          IntegrationRule & ir_scr_intet2 = transform1( LocalFacetNr1, (*ir_scr), lh);
+          MappedIntegrationRule<3,3> mir3(ir_scr_intet2,trafo1,lh);
+          int npoints = ir_scr->Size();
+
+          for (int i = 0; i < npoints; i++)
+          {
+              IntegrationPoint & ip = (*ir_scr)[i];
+              Vec<3> normal = lsw.GetNormal(ip.Point());
+              Vec<2> tang = {normal[1],-normal[0]};
+
+              tetdiffvec2 = transform1.GetJacobian( LocalFacetNr1, lh) * tang;
+              auto F = mir3[i].GetJacobian();
+              auto mapped_tang = F * tetdiffvec2;
+              const double ratio_meas1D = L2Norm(mapped_tang);
+              ip.SetWeight((*ir_scr)[i].Weight() * ratio_meas1D);
+          }
+        }
+      }
+      else if (Dim(etfacet) == 1) 
+      {
+
+          IVec<2> int_tuple = 
+            SwitchET<ET_TRIG,ET_QUAD> (etvol, [&LocalFacetNr1, &ElVertices1] (auto et) { return ET_trait<et>::GetEdgeSort(LocalFacetNr1,ElVertices1); });
+
+          if(time_order < 0) {
+              Vec<2> lset_vals_edge = {elvec[int_tuple[0]],elvec[int_tuple[1]]}; 
+              ir_scr = StraightCutIntegrationRuleUntransformed(lset_vals_edge, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+          }
+          else {
+              int M = time_FE->GetNDof(); //time nodes
+              int L = dnums.Size()/M; // dofs (or verts) per vol element 
+              FlatVector<> cf_lset_at_element(NV*M, lh);
+              FlatMatrix<> cf_lset_at_element_as_mat(M,NV,&cf_lset_at_element(0));
+
+              for (int i = 0; i < NV; i++)
+                cf_lset_at_element_as_mat.Col(i) = elvec.Slice(int_tuple[i],L);
+
+              tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(cf_lset_at_element, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+          }
+          if (ir_scr == nullptr) return;
+      }
+      else if (Dim(etfacet) == 0) {
+        FlatVector <> lset_on_facet(elvec.Size()/2,lh);
+        lset_on_facet = elvec.Slice(LocalFacetNr1,2);
+        //LocalFacetNr1
+          if(time_order < 0) {
+              ir_scr = StraightCutIntegrationRuleUntransformed(lset_on_facet, etfacet, lsetintdom->GetDomainType(), 2*maxorder, FIND_OPTIMAL, lh);
+          }
+          else {
+            tie( ir_scr, wei_arr) = SpaceTimeCutIntegrationRuleUntransformed(lset_on_facet, etfacet, time_FE.get(), lsetintdom->GetDomainType(), time_order, 2*maxorder, FIND_OPTIMAL,lh);
+          }
+          if (ir_scr == nullptr) return;
+
+          //throw Exception("no 1D cut facet integration provided yet");
+      }
+      else
+        throw Exception("no 1D cut facet integration provided yet");
+
+    }
 
     IntegrationRule & ir_facet_vol1 = transform1(LocalFacetNr1, (*ir_scr), lh);
     MarkAsSpaceTimeIntegrationRule(ir_facet_vol1);

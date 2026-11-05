@@ -32,16 +32,40 @@
   gives the physical weight. For interface rules (dt == IF) this means that the
   weight of a reference surface quadrature point x with reference normal n is
   multiplied by |F^{-T}(x) n|, F the Jacobian of the element transformation.
+  On boundary elements, the interface has co-dimension 2 in physical space;
+  the weights are such that the scaling with the measure of the (boundary)
+  element transformation gives the weight w.r.t. the physical point / length
+  measure.
 */
 
 #include "xintegration.hpp"
 
 namespace xintegration
 {
-  /// Algoim-based cut rules are available for volume elements of type
-  /// SEGM (only dt != IF), TRIG, QUAD, TET, HEX and for boundary elements
-  /// (only dt != IF).
+  /// Algoim-based cut rules are available for (volume and boundary) elements of
+  /// type SEGM, TRIG, QUAD, TET, HEX.
   bool AlgoimCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt);
+
+  /// Algoim-based cut rules on facets are available for facets of type POINT,
+  /// SEGM, TRIG, QUAD.
+  bool AlgoimCutFacetRuleAvailable (ELEMENT_TYPE etfacet);
+
+  /// Cut rule on the facet facetnr of the element (trafo, transform: the map from
+  /// the facet to the element) computed with Algoim w.r.t. the level set function
+  /// restricted to the facet. Points are given in reference coordinates of the facet,
+  /// with the weight conventions of the cut facet integrators (cf.
+  /// StraightCutIntegrationRuleUntransformed):
+  ///  * NEG/POS: weights w.r.t. the reference facet (to be scaled with the measure of
+  ///    the facet),
+  ///  * IF: weights w.r.t. the physical measure of the interface on the facet
+  ///    (points on 1D facets: weight 1, curves on 2D facets: physical length element).
+  /// Returns nullptr if the part is empty.
+  const IntegrationRule *
+  AlgoimCutFacetIntegrationRule (const shared_ptr<CoefficientFunction> & cf_lset,
+                                 const ElementTransformation & trafo,
+                                 Facet2ElementTrafo & transform, int facetnr,
+                                 DOMAIN_TYPE dt, int intorder, int cf_degree, int subdivlvl,
+                                 LocalHeap & lh);
 
   /// Polynomial degree that is used to represent the level set function on
   /// the element: the element-wise order of a (scalar) level set GridFunction,
