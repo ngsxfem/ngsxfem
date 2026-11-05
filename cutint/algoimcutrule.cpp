@@ -230,6 +230,141 @@ namespace xintegration
     }
   }
 
+  namespace
+  {
+    template <int D>
+    tuple<const IntegrationRule *, Array<double>>
+    T_AlgoimMultiLevelsetCutIntegrationRule (const LevelsetIntegrationDomain & lsetintdom,
+                                             const ElementTransformation & trafo,
+                                             int cf_degree, LocalHeap & lh)
+    {
+      const ELEMENT_TYPE et = trafo.GetElementType();
+      const bool simplex = (et == ET_TRIG) || (et == ET_TET);
+      const auto & gflsets = lsetintdom.GetLevelsetGFs();
+      const int M = gflsets.Size();
+      const int intorder = max(lsetintdom.GetIntegrationOrder(), 0);
+
+      // level set values in the interpolation points (per level set, depending on its degree)
+      Array<int> degrees(M);
+      std::vector<std::vector<double>> values(M);
+      Array<const double*> valptrs(M);
+      int maxdegree = 1;
+      for (int l = 0; l < M; l++)
+      {
+        degrees[l] = AlgoimLevelsetDegree(gflsets[l], trafo, cf_degree, lh);
+        maxdegree = max(maxdegree, degrees[l]);
+        std::vector<double> xi;
+        algoim_wrapper::InterpolationPoints(D, degrees[l], xi);
+        const int nnodes = xi.size() / D;
+        IntegrationRule ir_nodes(nnodes, lh);
+        for (int i = 0; i < nnodes; i++)
+        {
+          Vec<3> p = 0.0;
+          for (int d = 0; d < D; d++)
+            p(d) = xi[i*D+d];
+          ir_nodes[i] = IntegrationPoint(p, 0.0);
+        }
+        auto & mir_nodes = trafo(ir_nodes, lh);
+        FlatMatrix<> lsetvals(nnodes, 1, lh);
+        gflsets[l]->Evaluate(mir_nodes, lsetvals);
+        values[l].assign(&lsetvals(0,0), &lsetvals(0,0) + nnodes);
+        valptrs[l] = values[l].data();
+      }
+
+      // rules for all parts (domain type tuples), the union is returned
+      const int q = max(maxdegree + 1, (intorder + D + 1) / 2);
+      ArrayMem<const IntegrationRule*, 10> ir_parts;
+      for (const Array<DOMAIN_TYPE> & dts : lsetintdom.GetDomainTypes())
+      {
+        Array<int> domains(M);
+        int iface = -1, ninterfaces = 0;
+        for (int l = 0; l < M; l++)
+        {
+          domains[l] = int(dts[l]);
+          if (dts[l] == IF)
+          {
+            iface = l;
+            ninterfaces++;
+          }
+        }
+        if (ninterfaces > 1)
+          throw Exception("Algoim-based cut rules for multiple level sets: domains with more than one "
+                          "interface condition (co-dimension > 1) are not supported (only for piecewise "
+                          "linear level set GridFunctions with cut_quadrature = 'standard')");
+
+        std::vector<double> pts, wts, grads;
+        auto status = algoim_wrapper::MultiCutQuadrature(D, M, degrees.Data(), valptrs.Data(), domains.Data(),
+                                                         simplex, q, lsetintdom.GetNSubdivisionLevels(),
+                                                         pts, wts, grads);
+        if (status == algoim_wrapper::EMPTY)
+          continue;
+        if (status == algoim_wrapper::FULL)
+        {
+          ir_parts.Append(&SelectIntegrationRule(et, intorder));
+          continue;
+        }
+        const int npts = wts.size();
+        if (npts == 0)
+          continue;
+        auto ir = new (lh) IntegrationRule(npts, lh);
+        for (int i = 0; i < npts; i++)
+        {
+          Vec<D> x;
+          for (int d = 0; d < D; d++)
+            x(d) = pts[i*D+d];
+          double w = wts[i];
+          if (iface >= 0)
+          {
+            Vec<D> g;
+            for (int d = 0; d < D; d++)
+              g(d) = grads[i*D+d];
+            const IntegrationPoint ip(x, 0.0);
+            if (trafo.SpaceDim() == D)
+              w *= InterfaceWeightFactor<D,D>(ip, trafo, g);
+            else if constexpr (D < 3)
+              w *= InterfaceWeightFactor<D,D+1>(ip, trafo, g);
+          }
+          (*ir)[i] = IntegrationPoint(x, w);
+        }
+        ir_parts.Append(ir);
+      }
+
+      int size = 0;
+      for (auto part : ir_parts)
+        size += part->Size();
+      if (size == 0)
+        return make_tuple(nullptr, Array<double>());
+      auto sum_ir = new (lh) IntegrationRule(size, lh);
+      Array<double> sum_wei_arr(size);
+      int cnt = 0;
+      for (auto part : ir_parts)
+        for (auto ip : *part)
+        {
+          (*sum_ir)[cnt] = ip;
+          sum_wei_arr[cnt] = ip.Weight();
+          cnt++;
+        }
+      return make_tuple(sum_ir, std::move(sum_wei_arr));
+    }
+  }
+
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimMultiLevelsetCutIntegrationRule (const LevelsetIntegrationDomain & lsetintdom,
+                                         const ElementTransformation & trafo,
+                                         int cf_degree, LocalHeap & lh)
+  {
+    static Timer timer("AlgoimMultiLevelsetCutIntegrationRule");
+    RegionTimer reg (timer);
+    switch (ElementTopology::GetSpaceDim(trafo.GetElementType()))
+    {
+    case 1: return T_AlgoimMultiLevelsetCutIntegrationRule<1>(lsetintdom, trafo, cf_degree, lh);
+    case 2: return T_AlgoimMultiLevelsetCutIntegrationRule<2>(lsetintdom, trafo, cf_degree, lh);
+    case 3: return T_AlgoimMultiLevelsetCutIntegrationRule<3>(lsetintdom, trafo, cf_degree, lh);
+    default:
+      throw Exception("AlgoimMultiLevelsetCutIntegrationRule: dimension not supported");
+    }
+  }
+
   bool AlgoimCutFacetRuleAvailable (ELEMENT_TYPE etfacet)
   {
     return (etfacet == ET_POINT) || (etfacet == ET_SEGM) || (etfacet == ET_TRIG) || (etfacet == ET_QUAD);

@@ -386,13 +386,16 @@ namespace algoim
                 algoim_spark_alloc(real, p_k);
                 bernstein::elevatedDerivative(p, k, p_k);
                 auto disc_mask = intersectionMask(p, mask, p_k, mask);
-                if (!maskEmpty(disc_mask))
+                // ngsxfem modification: no discriminant if p is constant in direction k (p_k == 0,
+                // the discriminant vanishes identically)
+                if (!maskEmpty(disc_mask) && (p_k.maxNorm() > 0))
                 {
                     // note: computed disc might have lower degree than the following
                     uvector<int,N-1> R = discriminantExtent(p.ext(), k);
                     xarray<real,N-1> disc(nullptr, R);
                     algoim_spark_alloc(real, disc);
-                    if (discriminant(p, k, disc))
+                    // ngsxfem modification: skip discriminants that vanish identically
+                    if (discriminant(p, k, disc) && (disc.maxNorm() > 0))
                     {
                         bernstein::normalise(disc);
                         psi.push_back(disc, collapseMask(disc_mask, k));
@@ -414,7 +417,9 @@ namespace algoim
                     uvector<int,N-1> R = resultantExtent(p.ext(), q.ext(), k);
                     xarray<real,N-1> res(nullptr, R);
                     algoim_spark_alloc(real, res);
-                    if (resultant(p, q, k, res))
+                    // ngsxfem modification: skip resultants that vanish identically (e.g.
+                    // polynomials with a common factor)
+                    if (resultant(p, q, k, res) && (res.maxNorm() > 0))
                     {
                         bernstein::normalise(res);
                         psi.push_back(res, collapseMask(mask, k));

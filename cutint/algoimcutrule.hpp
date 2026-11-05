@@ -46,6 +46,16 @@ namespace xintegration
   /// type SEGM, TRIG, QUAD, TET, HEX.
   bool AlgoimCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt);
 
+  /// Cut rule for a domain described by multiple level sets (the union of the
+  /// parts given by the domain type tuples of lsetintdom; at most one interface
+  /// condition per tuple) computed with Algoim (Algoim's multi-polynomial
+  /// quadrature w.r.t. all level sets that cut the element). Conventions as for
+  /// AlgoimCutIntegrationRule.
+  tuple<const IntegrationRule *, Array<double>>
+  AlgoimMultiLevelsetCutIntegrationRule (const LevelsetIntegrationDomain & lsetintdom,
+                                         const ElementTransformation & trafo,
+                                         int cf_degree, LocalHeap & lh);
+
   /// Algoim-based cut rules on facets are available for facets of type POINT,
   /// SEGM, TRIG, QUAD.
   bool AlgoimCutFacetRuleAvailable (ELEMENT_TYPE etfacet);

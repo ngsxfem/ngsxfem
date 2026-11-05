@@ -459,16 +459,94 @@ def test_nonaffine_deformation(quads):
         assert errs[-1][i] < 1e-2 * errs[0][i]
 
 
-def test_fallback_mlset():
-    """multiple level sets always use the standard rules"""
-    mesh = square_mesh(4, quads=False)
-    lsets = tuple(lset_gf(mesh, 1, cf) for cf in [x - 0.1, y - 0.2])
+# ---------------------------------------------------------------------------
+# multiple level sets
+# ---------------------------------------------------------------------------
+
+def mlset_gfs(mesh, order, cfs):
+    return tuple(lset_gf(mesh, order, cf) for cf in cfs)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_mlset_planar(quads):
+    """triangle described by three half planes: algoim (also on quads, P1 and P2
+    level sets) agrees with the standard rules (on triangles); the generic
+    perturbation of multiple level sets (relative size 1e-9) limits the accuracy"""
+    cfs = [y - 0.71, 2.1 * x - y - 0.03, -1.9 * x - y + 0.02]
+    tri = DomainTypeArray((NEG, NEG, NEG))
+    mesh_ref = square_mesh(7, quads=False)
+    mesh = square_mesh(7, quads)
+    for dom in [tri, tri.Boundary(), ~tri]:
+        ref = Integrate((x * x + y) * dCut(mlset_gfs(mesh_ref, 1, cfs), dom, order=4,
+                                           cut_quadrature="standard"), mesh_ref)
+        for order in [1, 2]:
+            val = Integrate((x * x + y) * dCut(mlset_gfs(mesh, order, cfs), dom, order=4,
+                                               cut_quadrature="algoim"), mesh)
+            assert val == pytest.approx(ref, abs=1e-8)
+
+
+@pytest.mark.parametrize("quads", [False, True])
+def test_mlset_half_disk(quads):
+    """half disk (P2 circle and a line through the points with vertical tangents)"""
+    r, c = 0.5, (0.03, -0.02)
+    errs = []
+    for n in [8, 16]:
+        mesh = square_mesh(n, quads)
+        lsets = mlset_gfs(mesh, 2, [(x - c[0])**2 + (y - c[1])**2 - r**2, c[1] - y])
+        half = DomainTypeArray((NEG, NEG))
+        one = CoefficientFunction(1)
+        area = Integrate(one * dCut(lsets, half, order=8), mesh)  # "auto" -> algoim
+        bnd = Integrate(one * dCut(lsets, half.Boundary(), order=8), mesh)
+        errs.append((abs(area - pi * r**2 / 2), abs(bnd - (pi * r + 2 * r))))
+    assert errs[-1][0] < 1e-8 and errs[-1][1] < 1e-7
+    assert errs[-1][1] < errs[0][1]
+
+
+def test_mlset_hemisphere():
+    r, c = 0.5, (0.0123, -0.0217, 0.0311)
+    one = CoefficientFunction(1)
+    for hexes in [False, True]:
+        mesh = cube_mesh(8, hexes)
+        lsets = mlset_gfs(mesh, 2, [(x - c[0])**2 + (y - c[1])**2 + (z - c[2])**2 - r**2, c[2] - z])
+        half = DomainTypeArray((NEG, NEG))
+        assert Integrate(one * dCut(lsets, half, order=6), mesh) == pytest.approx(2 / 3 * pi * r**3, abs=1e-6)
+        assert Integrate(one * dCut(lsets, half.Boundary(), order=6), mesh) == pytest.approx(3 * pi * r**2, abs=1e-5)
+
+
+def test_mlset_cutinfo():
+    """MultiLevelsetCutInfo with P2 level sets is consistent with the integrals"""
+    r, c = 0.5, (0.03, -0.02)
+    mesh = square_mesh(8, quads=False)
+    lsets = mlset_gfs(mesh, 2, [(x - c[0])**2 + (y - c[1])**2 - r**2, c[1] - y])
+    half = DomainTypeArray((NEG, NEG))
+    mlci = MultiLevelsetCutInfo(mesh, lsets)
+    contrib = mlci.GetElementsWithContribution(half)
+    inside = mlci.GetElementsOfType(half)
+    vol = Integrate(levelset_domain={"levelset": lsets, "domain_type": half.as_list},
+                    cf=1, mesh=mesh, order=4, element_wise=True)
+    vol_el = Integrate(1, mesh, element_wise=True)
+    assert sum(inside) > 0
+    for i in range(mesh.ne):
+        assert (vol[i] > 0) == contrib[i]
+        if inside[i]:
+            assert vol[i] == pytest.approx(vol_el[i], abs=1e-12)
+
+
+def test_mlset_codim2_and_standard():
+    mesh = square_mesh(8, quads=False)
+    corner = DomainTypeArray((IF, IF))
     quadrant = DomainTypeArray((NEG, NEG))
     one = CoefficientFunction(1)
-    std = Integrate(one * dCut(lsets, quadrant, order=2), mesh)
-    ngsxfemglobals.cut_quadrature = "algoim"
-    assert Integrate(one * dCut(lsets, quadrant, order=2), mesh) == pytest.approx(std, abs=1e-14)
-    assert std == pytest.approx(1.1 * 1.2, abs=1e-13)
+    # corner points of P1 level sets: standard rules (also if algoim is requested)
+    p1 = mlset_gfs(mesh, 1, [x - 0.11, y - 0.23])
+    assert Integrate(one * dCut(p1, corner, cut_quadrature="algoim"), mesh) == pytest.approx(1.0)
+    # higher order level sets: co-dimension 2 is not supported, standard rules reject them
+    p2 = mlset_gfs(mesh, 2, [x - 0.11, y - 0.23])
+    with pytest.raises(Exception, match="co-dimension"):
+        Integrate(one * dCut(p2, corner), mesh)
+    with pytest.raises(Exception, match="piecewise linear"):
+        Integrate(one * dCut(p2, quadrant, cut_quadrature="standard"), mesh)
+    assert Integrate(one * dCut(p2, quadrant), mesh) == pytest.approx(1.11 * 1.23, abs=1e-8)
 
 
 def test_fallback_spacetime():

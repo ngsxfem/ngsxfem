@@ -67,3 +67,8 @@ algoim/multiloop.hpp
   `xarraySlice(T* ptr, int len)`. `xarraySlice` declares (deleted) copy and move
   constructors and is therefore no aggregate in C++20 (which NGSolve requires),
   so that the braced initialisation in `xarray::a()` does not compile without it.
+* `algoim/quadrature_multipoly.hpp` (`detail::eliminate_axis`): discriminants and
+  resultants that vanish identically are skipped (also no discriminant w.r.t. a
+  direction in which the polynomial is constant). Such polynomials arise for
+  level sets in degenerate positions (e.g. planes parallel to a coordinate
+  direction, common factors) and led to quadrature points with NaN coordinates.

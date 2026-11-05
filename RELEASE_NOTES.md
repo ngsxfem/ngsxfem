@@ -37,7 +37,10 @@ Requires NGSolve 6.2.2608.
   ```
   `"auto"` (default) uses the standard rules for piecewise linear level set GridFunctions
   (unchanged, also in the isoparametric approach) and Algoim for all other level sets; the
-  user is informed once when Algoim is chosen automatically. Multiple level sets and
+  user is informed once when Algoim is chosen automatically. Algoim is used for element,
+  boundary (`vb=BND`, including interfaces on the boundary), facet (`skeleton=True`) and
+  element boundary (`element_boundary=True`) integrals and for multiple level sets
+  (`DomainTypeArray`, also on quadrilaterals and hexahedra, `MultiLevelsetCutInfo`);
   space-time integrals always use the standard rules. See `demos/fictdom_algoim.py` and
   `CUT_QUADRATURE`.
 
@@ -58,6 +61,10 @@ Requires NGSolve 6.2.2608.
   wheels are now built and tested like the Linux/macOS ones (also for CPython 3.10).
 
 ### Bug fixes
+
+- Element boundary cut integrals (`element_boundary=True`) of NEG/POS parts on 3D
+  elements were scaled wrongly; interfaces on boundary faces in 3D (`dCut(lset, IF,
+  vb=BND)`) gave NaN.
 
 - `LevelSetMeshAdaptation` with `boundary_tangential`: elements that touch
   several selected boundaries (corners) are excluded from the `qn` projection.

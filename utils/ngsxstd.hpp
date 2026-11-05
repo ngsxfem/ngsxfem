@@ -100,10 +100,11 @@ enum TIME_DOMAIN_TYPE {  BOTTOM = 0,
 enum CUT_QUADRATURE {
   /// ngsxfem's standard rules: straight cuts of piecewise (multi-)linear level
   /// set GridFunctions (and subdivision, space-time and multiple level set
-  /// rules); other (single) level sets are rejected unless subdivlvl > 0
+  /// rules); other level sets are rejected unless subdivlvl > 0
   CUTQUAD_STANDARD = 0,
-  /// rules based on Algoim (level set as element-wise polynomial of higher
-  /// degree) wherever available, the standard rules otherwise
+  /// rules based on Algoim (level sets as element-wise polynomials of higher
+  /// degree) wherever available (element, boundary, facet and element
+  /// boundary integrals, multiple level sets), the standard rules otherwise
   CUTQUAD_ALGOIM = 1,
   /// standard rules for piecewise linear level set GridFunctions, Algoim
   /// for all other level sets

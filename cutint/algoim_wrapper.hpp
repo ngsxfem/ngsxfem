@@ -19,8 +19,12 @@ namespace xintegration
 {
   namespace algoim_wrapper
   {
-    /// classification of the unit hypercube w.r.t. the zero level of phi
+    /// classification of the cell w.r.t. the zero level of phi
     enum CUT_STATUS { UNCUT_NEGATIVE = -1, CUT = 0, UNCUT_POSITIVE = 1 };
+
+    /// classification of the cell w.r.t. a part defined by several level sets:
+    /// empty, a proper part of the cell (cut), or the whole cell
+    enum MULTI_STATUS { EMPTY = -2, PARTIAL = 0, FULL = 2 };
 
     /// Interpolation points (in [0,1]^dim) for a tensor-product polynomial of
     /// degree 'degree' in each coordinate direction, (degree+1)^dim points.
@@ -57,6 +61,19 @@ namespace xintegration
     /// and points (n*dim), weights (n) and - for domain == 2 - the gradient of
     /// phi at the points (n*dim, not normalized) are filled. Surface weights
     /// are with respect to the surface measure in [0,1]^dim.
+    /// Quadrature rule for the part of the cell C where n level set functions
+    /// phi_l (interpolating nodal_values[l] with degree degrees[l], see
+    /// CutQuadrature) satisfy the sign conditions domains[l] (0: phi_l < 0,
+    /// 1: phi_l > 0, 2: phi_l = 0; at most one interface condition). Returns
+    /// EMPTY, FULL (nothing is computed) or PARTIAL (with the rule as in
+    /// CutQuadrature; for an interface, the gradients are those of the level set
+    /// with the interface condition).
+    MULTI_STATUS MultiCutQuadrature (int dim, int n, const int * degrees, const double * const * nodal_values,
+                                     const int * domains, bool simplex, int q, int subdivlvl,
+                                     std::vector<double> & points,
+                                     std::vector<double> & weights,
+                                     std::vector<double> & gradients);
+
     CUT_STATUS CutQuadrature (int dim, int degree, const double * nodal_values, bool simplex,
                               int domain, int q, int subdivlvl,
                               std::vector<double> & points,
