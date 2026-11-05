@@ -11,6 +11,8 @@ add_ngsolve_addon_library(xfem_core
       ../cutint/xintegration.cpp
       ../cutint/cutintegral.cpp
       ../cutint/algoim_lapacke.cpp
+      ../cutint/algoim_wrapper.cpp
+      ../cutint/algoimcutrule.cpp
       ../lsetcurving/calcpointshift.cpp
       ../lsetcurving/lsetrefine.cpp
       ../lsetcurving/projshift.cpp
