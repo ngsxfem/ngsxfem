@@ -120,24 +120,33 @@ namespace xintegration
     const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
     if (method == CUTQUAD_STANDARD)
       return false;
-    if ((lsetintdom.GetTimeIntegrationOrder() >= 0) || lsetintdom.HasReferenceTime())
-      return false;
+    const bool spacetime = lsetintdom.GetTimeIntegrationOrder() >= 0;
     bool has_interface = false;
     for (const auto & dts : lsetintdom.GetDomainTypes())
       for (auto dt : dts)
         if (dt == IF)
           has_interface = true;
-    if (!AlgoimCutRuleAvailable(trafo, has_interface ? IF : NEG))
+    const DOMAIN_TYPE dt = has_interface ? IF : NEG;
+    if (spacetime ? !AlgoimSpaceTimeCutRuleAvailable(trafo, dt) : !AlgoimCutRuleAvailable(trafo, dt))
       return false;
-    for (auto & gf : lsetintdom.GetLevelsetGFs())
-      if (dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
-        return false;
+    // space-time level set GridFunctions can only be evaluated at some time
+    if (!spacetime && !lsetintdom.HasReferenceTime())
+      for (auto & gf : lsetintdom.GetLevelsetGFs())
+        if (dynamic_cast<SpaceTimeFESpace*>(gf->GetFESpace().get()))
+          return false;
     const bool all_p1 = AllP1Levelsets(lsetintdom);
     // parts of higher co-dimension: only the standard rules (for P1 level sets)
     if (all_p1 && HasHigherCodimensionParts(lsetintdom))
       return false;
     if (method == CUTQUAD_ALGOIM)
       return true;
+    // CUTQUAD_AUTO: the standard rules for multiple level sets support neither space-time
+    // integrals nor fixed reference times
+    if (spacetime || lsetintdom.HasReferenceTime())
+    {
+      InformOnAutomaticAlgoim(lsetintdom);
+      return true;
+    }
     // CUTQUAD_AUTO (the standard rules for multiple level sets support triangles and tetrahedra)
     const ELEMENT_TYPE et = trafo.GetElementType();
     if (all_p1 && ((et == ET_TRIG) || (et == ET_TET)))
@@ -148,7 +157,8 @@ namespace xintegration
 
   DOMAIN_TYPE ElementDomainType (const shared_ptr<GridFunction> & gf_lset,
                                  optional<CUT_QUADRATURE> cut_quadrature,
-                                 const ElementTransformation & trafo, LocalHeap & lh)
+                                 const ElementTransformation & trafo, LocalHeap & lh,
+                                 int time_order)
   {
     if (IsP1Levelset(gf_lset) && (cut_quadrature.value_or(globxvar.CUT_QUADRATURE_METHOD) != CUTQUAD_ALGOIM))
     {
@@ -162,7 +172,7 @@ namespace xintegration
     double part_vol[] = {0.0, 0.0};
     for (DOMAIN_TYPE np : {POS, NEG})
     {
-      LevelsetIntegrationDomain lsetintdom(gf_lset, nullptr, np, 0, -1, 0);
+      LevelsetIntegrationDomain lsetintdom(gf_lset, nullptr, np, 0, time_order, 0);
       lsetintdom.SetCutQuadrature(cut_quadrature);
       const IntegrationRule * ir;
       Array<double> wei_arr;
@@ -245,10 +255,11 @@ namespace xintegration
     RegionTimer reg (timer);
     if (lsetintdom.IsMultiLevelsetDomain())
     {
-      if (lsetintdom.HasReferenceTime())
-        throw Exception("No tref-fixing for mlset yet.");
       if (UseAlgoimMultiLevelsetCutRule(lsetintdom, trafo))
         return AlgoimMultiLevelsetCutIntegrationRule(lsetintdom, trafo, globxvar.ALGOIM_LSET_ORDER, lh);
+      if (lsetintdom.HasReferenceTime())
+        throw Exception("No tref-fixing for mlset with the standard rules (use cut_quadrature = 'auto' "
+                        "or 'algoim').");
       // the standard rules require piecewise linear level set GridFunctions
       if ((lsetintdom.GetTimeIntegrationOrder() < 0) && !AllP1Levelsets(lsetintdom))
         StandardRulesRequireP1Levelset();
