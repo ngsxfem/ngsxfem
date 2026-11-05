@@ -39,6 +39,19 @@ namespace xintegration
       }
     }
 
+    // Number of coordinates that form the simplex of the reference element (triangle, tetrahedron,
+    // prism = triangle x interval), see algoim_wrapper::MultiCutQuadrature; 0 for segments,
+    // quadrilaterals and hexahedra (the reference element is the unit hypercube).
+    inline int SimplexDim (ELEMENT_TYPE et)
+    {
+      switch (et)
+      {
+      case ET_TRIG: case ET_PRISM: return 2;
+      case ET_TET: return 3;
+      default: return 0;
+      }
+    }
+
     // Values of the level set function in Algoim's interpolation points of [0,1]^N (for degree):
     // the first DS coordinates are reference coordinates of the element (of its facet facetnr, if
     // transform != nullptr), the last coordinate is the reference time if N > DS. The points are
@@ -103,7 +116,7 @@ namespace xintegration
     {
       constexpr int N = D + 1;
       const ELEMENT_TYPE et = trafo.GetElementType();
-      const int sdim = ((et == ET_TRIG) || (et == ET_TET)) ? D : 0;
+      const int sdim = SimplexDim(et);
       FlatVector<> lsetvals = LevelsetValuesAtNodes<N>(cf_lset, trafo, nullptr, 0, D, degree, nullopt, lh);
 
       const int q = AlgoimGaussPoints(degree, max(intorder, time_intorder), N);
@@ -179,7 +192,7 @@ namespace xintegration
                                 LocalHeap & lh)
     {
       const ELEMENT_TYPE et = trafo.GetElementType();
-      const bool simplex = (et == ET_TRIG) || (et == ET_TET);
+      const int sdim = SimplexDim(et);
 
       // level set values in the interpolation points in [0,1]^D (for simplices,
       // these points are also outside of the reference element, where the
@@ -190,13 +203,14 @@ namespace xintegration
       // Algoim's quadrature on the reference element
       const int q = AlgoimGaussPoints(degree, intorder, D);
       std::vector<double> pts, wts, grads;
-      auto status = algoim_wrapper::CutQuadrature(D, degree, &lsetvals(0), simplex, int(dt), q,
-                                                  subdivlvl, pts, wts, grads);
+      const double * valptr = &lsetvals(0);
+      const int domain = int(dt);
+      auto status = algoim_wrapper::MultiCutQuadrature(D, 1, &degree, &valptr, &domain, sdim, q, subdivlvl,
+                                                       pts, wts, grads);
 
-      if (status != algoim_wrapper::CUT)
+      if (status != algoim_wrapper::PARTIAL)
       {
-        const DOMAIN_TYPE element_domain = (status == algoim_wrapper::UNCUT_NEGATIVE) ? NEG : POS;
-        if (element_domain != dt)
+        if (status == algoim_wrapper::EMPTY)
           return make_tuple(nullptr, Array<double>());
         const IntegrationRule & ir = SelectIntegrationRule(et, intorder);
         Array<double> wei_arr(ir.Size());
@@ -561,7 +575,7 @@ namespace xintegration
                                              int cf_degree, LocalHeap & lh)
     {
       const ELEMENT_TYPE et = trafo.GetElementType();
-      const bool simplex = (et == ET_TRIG) || (et == ET_TET);
+      const int sdim = SimplexDim(et);
       const auto & gflsets = lsetintdom.GetLevelsetGFs();
       const int M = gflsets.Size();
       const int intorder = max(lsetintdom.GetIntegrationOrder(), 0);
@@ -603,7 +617,7 @@ namespace xintegration
 
         std::vector<double> pts, wts, grads;
         auto status = algoim_wrapper::MultiCutQuadrature(D, M, degrees.Data(), valptrs.Data(), domains.Data(),
-                                                         simplex ? D : 0, q, lsetintdom.GetNSubdivisionLevels(),
+                                                         sdim, q, lsetintdom.GetNSubdivisionLevels(),
                                                          pts, wts, grads);
         if (status == algoim_wrapper::EMPTY)
           continue;
@@ -682,7 +696,8 @@ namespace xintegration
   bool AlgoimCutRuleAvailable (const ElementTransformation & trafo, DOMAIN_TYPE dt)
   {
     const ELEMENT_TYPE et = trafo.GetElementType();
-    if (!((et == ET_SEGM) || (et == ET_TRIG) || (et == ET_QUAD) || (et == ET_TET) || (et == ET_HEX)))
+    if (!((et == ET_SEGM) || (et == ET_TRIG) || (et == ET_QUAD) || (et == ET_TET) || (et == ET_HEX)
+          || (et == ET_PRISM)))
       return false;
     // interfaces: on volume elements and on boundary elements (co-dimension 2)
     if (dt == IF)
@@ -776,8 +791,8 @@ namespace xintegration
     if (!AlgoimSpaceTimeCutRuleAvailable(trafo, dt))
       throw Exception("AlgoimSpaceTimeCutIntegrationRule: element type / domain type combination not supported");
 
-    // tetrahedra: time slicing (see T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices)
-    if (trafo.GetElementType() == ET_TET)
+    // tetrahedra and prisms: time slicing (see T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices)
+    if ((trafo.GetElementType() == ET_TET) || (trafo.GetElementType() == ET_PRISM))
       return T_AlgoimSpaceTimeCutIntegrationRuleTimeSlices<3>(cf_lset, trafo, dt, intorder, time_intorder,
                                                               AlgoimLevelsetDegree(cf_lset, trafo, cf_degree, lh),
                                                               AlgoimLevelsetTimeDegree(cf_lset, cf_degree),
