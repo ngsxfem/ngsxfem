@@ -2010,6 +2010,7 @@ namespace ngfem
     for (int l = 0; l < n; l++) {
       int packet = l / sw;
       int lane   = l % sw;
+      ir_to[l] = IntegrationPoint();   // a volume point (ir_to is not initialized)
       for (int d = 0; d < D; d++)
         ir_to[l](d) = simd_ir_to[packet](d)[lane];
       ir_to[l].SetWeight(simd_mir_from[packet].GetWeight()[lane]
