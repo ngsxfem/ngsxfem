@@ -34,6 +34,16 @@ namespace xintegration
       || (et == ET_TET) || (et == ET_HEX);
   }
 
+  /// true if the (single level set) domain holds its level set as a piecewise linear
+  /// GridFunction (the GridFunction of a domain is the one for the standard rules, see
+  /// CF2GFForStraightCutRule; other level sets are held as CoefficientFunction). No
+  /// shared pointers are copied.
+  static bool HasP1LevelsetGF (const LevelsetIntegrationDomain & lsetintdom)
+  {
+    const auto & gfs = lsetintdom.GetLevelsetGFs();
+    return (gfs.Size() == 1) && (gfs[0] != nullptr);
+  }
+
   /// reports the use of Algoim (once per run, see ReportAlgoimUse) when it is chosen
   /// automatically; the automatic choice is mentioned unless the method was chosen explicitly
   static void InformOnAutomaticAlgoim (const LevelsetIntegrationDomain & lsetintdom)
@@ -57,6 +67,11 @@ namespace xintegration
   {
     const CUT_QUADRATURE method = lsetintdom.GetCutQuadrature();
     if (method == CUTQUAD_STANDARD)
+      return false;
+    // The common case first (this function is called for every element): a level set
+    // GridFunction of the domain is piecewise linear (see CF2GFForStraightCutRule), AUTO
+    // keeps the standard rules for it. No further (more expensive) tests are needed.
+    if ((method == CUTQUAD_AUTO) && HasP1LevelsetGF(lsetintdom) && StandardRulesAvailable(trafo.GetElementType()))
       return false;
     const bool spacetime = lsetintdom.GetTimeIntegrationOrder() >= 0;
     const DOMAIN_TYPE dt = lsetintdom.GetDomainType();
@@ -195,6 +210,9 @@ namespace xintegration
     if (method == CUTQUAD_STANDARD)
       return false;
     if (lsetintdom.IsMultiLevelsetDomain() || lsetintdom.HasReferenceTime())
+      return false;
+    // the common case first, as in UseAlgoimCutRule
+    if ((method == CUTQUAD_AUTO) && HasP1LevelsetGF(lsetintdom))
       return false;
     // space-time facet rules only where the caller treats them (time_order >= 0)
     if ((lsetintdom.GetTimeIntegrationOrder() >= 0) && (time_order < 0))
