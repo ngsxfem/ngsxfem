@@ -612,7 +612,19 @@ namespace algoim::bernstein
             SVD result{base, base + P*P, base + 2*P*P};
 
             static_assert(std::is_same_v<real, double>, "Algoim's default LAPACK code assumes real == double; a custom SVD solver is required when real != double");
-            int info = LAPACKE_dgesvd(LAPACK_ROW_MAJOR, 'A', 'A', P, P, A, P, result.sigma, result.U, P, result.Vt, P, superb);
+            // ngsxfem modification: a failed decomposition (the SVD routine of ngsxfem throws, e.g.
+            // for matrices with non-finite entries, which arise for very large P) must not stay in
+            // the cache, otherwise later calls would silently use the (zero-initialised) entry
+            int info;
+            try
+            {
+                info = LAPACKE_dgesvd(LAPACK_ROW_MAJOR, 'A', 'A', P, P, A, P, result.sigma, result.U, P, result.Vt, P, superb);
+            }
+            catch (...)
+            {
+                cache.erase(P);
+                throw;
+            }
             assert(info == 0 && "LAPACKE_dgesvd call failed (algoim::bernstein::BernsteinVandermondeSVD::get)");
             return result;
         }

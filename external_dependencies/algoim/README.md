@@ -67,6 +67,12 @@ algoim/multiloop.hpp
   `xarraySlice(T* ptr, int len)`. `xarraySlice` declares (deleted) copy and move
   constructors and is therefore no aggregate in C++20 (which NGSolve requires),
   so that the braced initialisation in `xarray::a()` does not compile without it.
+* `algoim/bernstein.hpp` (`BernsteinVandermondeSVD::get`): if the SVD routine throws
+  (the replacement in `cutint/algoim_lapacke.cpp` does so for matrices with
+  non-finite entries, which arise for polynomial degrees beyond about 1000), the
+  cache entry for this size is removed again. Upstream inserts the entry before the
+  decomposition, so that later calls in the same thread would silently use a
+  zero-initialised decomposition.
 * `algoim/quadrature_multipoly.hpp` (`detail::eliminate_axis`): discriminants and
   resultants that vanish identically are skipped (also no discriminant w.r.t. a
   direction in which the polynomial is constant). Such polynomials arise for

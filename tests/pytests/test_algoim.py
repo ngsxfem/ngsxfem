@@ -242,6 +242,23 @@ def test_cf_levelset():
     assert cf == pytest.approx(pi, abs=1e-4)
 
 
+def test_degree_overflow_3d():
+    """3D, level set polynomial of degree 4 on a mesh that is coarse compared to the curvature:
+    Algoim's dimension reduction leads to polynomials of a degree beyond 1000, which is
+    reported as an exception - also when the integral is computed again (no cached state of
+    the failed attempt) - and can be cured by a lower degree or by subdivisions"""
+    mesh = cube_mesh(2, hexes=True)
+    levelset = sqrt(x**2 + y**2 + z**2) - 0.6
+    for i in range(2):
+        with pytest.raises(Exception, match="too high"):
+            integrate(levelset, NEG, mesh, order=2, method="algoim")
+    ngsxfemglobals.algoim_lset_order = 3
+    assert integrate(levelset, NEG, mesh, order=2, method="algoim") == pytest.approx(4 / 3 * pi * 0.6**3, abs=5e-2)
+    ngsxfemglobals.algoim_lset_order = 4
+    assert Integrate(CoefficientFunction(1) * dCut(levelset, NEG, order=2, subdivlvl=2, cut_quadrature="algoim"),
+                     mesh) == pytest.approx(4 / 3 * pi * 0.6**3, abs=5e-3)
+
+
 def test_bnd():
     """NEG/POS integrals on boundary elements: exact for a P2 level set"""
     mesh = square_mesh(4, quads=False)

@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace xintegration
@@ -280,9 +281,25 @@ namespace xintegration
       // A = U diag(A) V^T, A is overwritten by the singular values (in descending order)
       ngbla::Matrix<double> A(n, n);
       ngbla::Matrix<double, ngbla::ColMajor> U(n, n), V(n, n);
+      bool finite = true;
       for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
+        {
           A(i,j) = a[i*lda+j];
+          finite = finite && std::isfinite(A(i,j));
+        }
+      // Algoim decomposes Bernstein-Vandermonde matrices of size degree+1 of the polynomials
+      // (resultants, discriminants) of its dimension reduction. Beyond a degree of about 1000
+      // the binomial coefficients overflow and the matrix has non-finite entries.
+      if (!finite)
+        throw ngcore::Exception("Algoim-based cut quadrature: the elimination of a coordinate direction led to a "
+                                "polynomial of degree " + std::to_string(n-1) + ", which is too high (overflow). "
+                                "This happens for level set polynomials of high degree (in 3D: degree >= 4) on "
+                                "elements where the interface has vertical tangents w.r.t. several coordinate "
+                                "directions, typically on meshes that are coarse compared to the curvature of the "
+                                "interface. Remedies: a lower degree of the level set (order of the level set "
+                                "GridFunction, ngsxfemglobals.algoim_lset_order for CoefficientFunctions), a finer "
+                                "mesh, or subdivlvl > 0.");
       ngbla::CalcSVD(A, U, V);
 
       // LAPACK conventions: non-negative singular values in descending order
