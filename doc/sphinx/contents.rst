@@ -31,6 +31,8 @@
 
    xfem_misc/feature-details
 
+   xfem_misc/cut-quadrature
+
 .. toctree::
    :caption: Installation
 

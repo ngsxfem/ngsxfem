@@ -173,8 +173,9 @@ levelset_domain : dictionary
   * "levelset":
 
     single level set : ngsolve.CoefficientFunction
-      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+      CoefficientFunction that describes the geometry. A GridFunction of an FESpace with scalar
+      continuous piecewise (multi-) linear basis functions is treated with the standard rules,
+      other level set functions with the Algoim-based quadrature (see "cut_quadrature").
 
     multiple level sets : tuple(ngsolve.GridFunction)
       Tuple of GridFunctions that describe the geometry.
@@ -278,8 +279,9 @@ levelset_domain : dictionary
   * "levelset":
 
     single level set : ngsolve.CoefficientFunction
-      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+      CoefficientFunction that describes the geometry. A GridFunction of an FESpace with scalar
+      continuous piecewise (multi-) linear basis functions is treated with the standard rules,
+      other level set functions with the Algoim-based quadrature (see "cut_quadrature").
 
     multiple level sets : tuple(ngsolve.GridFunction)
       Tuple of GridFunctions that describe the geometry.
@@ -416,8 +418,9 @@ levelset_domain : dictionary
   * "levelset":
 
     single level set : ngsolve.CoefficientFunction
-      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+      CoefficientFunction that describes the geometry. A GridFunction of an FESpace with scalar
+      continuous piecewise (multi-) linear basis functions is treated with the standard rules,
+      other level set functions with the Algoim-based quadrature (see "cut_quadrature").
 
     multiple level sets : tuple(ngsolve.GridFunction)
       Tuple of GridFunctions that describe the geometry.
@@ -841,9 +844,12 @@ def dCut(levelset, domain_type, order=None, subdivlvl=None, time_order=-1,
 
     Parameters
     ----------
-    levelset : ngsolve.GridFunction
-        The level set fct. describing the geometry 
-        (desirable: P1 approximation).
+    levelset : ngsolve.CoefficientFunction (or a tuple of GridFunctions)
+        The level set fct. describing the geometry. A piecewise
+        linear (P1) GridFunction is treated with the standard rules
+        (e.g. in the isoparametric approach), other level set
+        functions (higher order GridFunctions, CoefficientFunctions)
+        with the Algoim-based quadrature, see cut_quadrature.
     domain_type : {POS, IF, NEG, mlset.DomainTypeArray}
         The domain type of interest.
     order : int

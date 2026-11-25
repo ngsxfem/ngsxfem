@@ -13,6 +13,11 @@ Requires NGSolve 6.2.2608.
   different results). With `cut_quadrature = "standard"` such level sets raise an
   exception, unless `subdivlvl > 0` (subdivision approach) is used. For the previous
   behaviour, interpolate the level set function with `InterpolateToP1`.
+  With `subdivlvl > 0` such level sets used the subdivision approach (piecewise linear
+  interpolation on a subdivided element). With `"auto"` they now use Algoim on a
+  subdivided element (more accurate, but more expensive for many subdivision levels); the
+  subdivision approach is still available with `cut_quadrature = "standard"`.
+  See `doc/cut-quadrature.md` for an overview of which quadrature is used when.
 
 - **Installed header location changed.** Headers are no longer installed flat
   into the NGSolve include directory but into the Python package, keeping the
@@ -70,6 +75,12 @@ Requires NGSolve 6.2.2608.
 
 - `Integrate` on level set domains and `CutInfo` increase their local heap automatically
   on overflow.
+
+- In 3D, level set polynomials of degree 4 and higher (e.g. general `CoefficientFunction`s
+  with the default `ngsxfemglobals.algoim_lset_order = 4`) can exceed what the Algoim-based
+  quadrature can treat on meshes that are coarse compared to the curvature of the interface.
+  This is reported as an exception that names the remedies (lower degree, finer mesh,
+  `subdivlvl > 0`).
 
 - **Reusable C++ core library.** The C++ part is split into a shared library
   `xfem_core` and the Python extension module `xfem`, which links against it.

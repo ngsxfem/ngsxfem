@@ -314,10 +314,12 @@ void ExportNgsx_cutint(py::module &m)
         py::arg("element_wise")=false,
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
-Integrate on a level set domains. The accuracy of the integration is 'order' w.r.t. a (multi-)linear
-approximation of the level set function. At first, this implies that the accuracy will, in general,
-only be second order. However, if the isoparametric approach is used (cf. lsetcurving functionality)
-this will be improved.
+Integrate on a level set domains. For a piecewise (multi-)linear level set GridFunction the standard
+rules are used: the accuracy of the integration is 'order' w.r.t. this (multi-)linear level set
+function, i.e. in general only second order w.r.t. a smooth geometry, unless the isoparametric
+approach is used (cf. lsetcurving functionality). For all other level set functions (higher order
+GridFunctions, general CoefficientFunctions) the Algoim-based quadrature w.r.t. the level set
+function itself is used by default, see "cut_quadrature" and CUT_QUADRATURE.
 
 Parameters
 
@@ -325,8 +327,9 @@ levelset_domain : dictionary which provides levelsets, domain_types and integrat
   important keys are "levelset", "domain_type", "order", the remainder are additional:
 
     "levelset" : ngsolve.CoefficientFunction or a list thereof
-      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+      CoefficientFunction that describes the geometry. A GridFunction of an FESpace with scalar
+      continuous piecewise (multi-) linear basis functions is treated with the standard rules,
+      other level set functions with the Algoim-based quadrature (see "cut_quadrature").
 
 
     "order" : int
@@ -433,10 +436,7 @@ heapsize : int
         py::arg("heapsize")=1000000,
         docu_string(R"raw_string(
 Determine minimum and maximum on integration points on a level set domain. The sampling uses the same
-integration rule as in Integrate and is determined by 'order' w.r.t. a (multi-)linear
-approximation of the level set function. At first, this implies that the accuracy will, in general,
-only be second order. However, if the isoparametric approach is used (cf. lsetcurving functionality)
-this will be improved.
+integration rule as in Integrate (see there and "cut_quadrature" for the quadrature on cut elements).
 
 Parameters
 
@@ -444,8 +444,9 @@ levelset_domain : dictionary which provides levelsets, domain_types and integrat
   important keys are "levelset", "domain_type", "order", the remainder are additional:
 
     "levelset" : ngsolve.CoefficientFunction or a list thereof
-      CoefficientFunction that describes the geometry. In the best case lset is a GridFunction of an
-      FESpace with scalar continuous piecewise (multi-) linear basis functions.
+      CoefficientFunction that describes the geometry. A GridFunction of an FESpace with scalar
+      continuous piecewise (multi-) linear basis functions is treated with the standard rules,
+      other level set functions with the Algoim-based quadrature (see "cut_quadrature").
 
 
     "order" : int
