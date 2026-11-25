@@ -1,6 +1,6 @@
 # Release Notes
 
-## 2.1.2608 (unreleased)
+## 2.1.2609 (unreleased)
 
 Requires NGSolve 6.2.2608.
 
@@ -18,14 +18,6 @@ Requires NGSolve 6.2.2608.
   subdivided element (more accurate, but more expensive for many subdivision levels); the
   subdivision approach is still available with `cut_quadrature = "standard"`.
   See `doc/cut-quadrature.md` for an overview of which quadrature is used when.
-
-- **Installed header location changed.** Headers are no longer installed flat
-  into the NGSolve include directory but into the Python package, keeping the
-  source layout: `<site-packages>/xfem/include/{cutint,xfem,spacetime,lsetcurving,utils}/`.
-  Code that includes ngsxfem headers needs to be adapted, e.g.
-  `#include <xfem/aggregates.hpp>`, `#include <cutint/lsetintdomain.hpp>`.
-  The recommended way is to use the new CMake package (see below).
-- `NoDeformation(mesh, ...)`: `mesh` is now a required argument.
 
 ### New features
 
@@ -82,6 +74,37 @@ Requires NGSolve 6.2.2608.
   This is reported as an exception that names the remedies (lower degree, finer mesh,
   `subdivlvl > 0`).
 
+### Bug fixes
+
+- Space-time level set GridFunctions of higher order in space were treated as piecewise
+  linear by the standard space-time rules (`SpaceTimeFESpace` does not report the order of
+  its spatial space), which gave wrong integrals without notice. They now use the
+  Algoim-based rules (`cut_quadrature="auto"`) or raise an exception (`"standard"`).
+  The same holds for level sets in `Discontinuous(H1(mesh, order=k))`, k >= 2.
+
+- `XFESpace` with a higher order level set in 3D: local heap overflow in the update of its
+  `CutInfo` (fixed heap size).
+
+- Element boundary cut integrals (`element_boundary=True`) of NEG/POS parts on 3D
+  elements were scaled wrongly; interfaces on boundary faces in 3D (`dCut(lset, IF,
+  vb=BND)`) gave NaN.
+
+## 2.1.2608
+
+Requires NGSolve 6.2.2608.
+
+### Breaking changes
+
+- **Installed header location changed.** Headers are no longer installed flat
+  into the NGSolve include directory but into the Python package, keeping the
+  source layout: `<site-packages>/xfem/include/{cutint,xfem,spacetime,lsetcurving,utils}/`.
+  Code that includes ngsxfem headers needs to be adapted, e.g.
+  `#include <xfem/aggregates.hpp>`, `#include <cutint/lsetintdomain.hpp>`.
+  The recommended way is to use the new CMake package (see below).
+- `NoDeformation(mesh, ...)`: `mesh` is now a required argument.
+
+### New features
+
 - **Reusable C++ core library.** The C++ part is split into a shared library
   `xfem_core` and the Python extension module `xfem`, which links against it.
   Other projects (e.g. further NGSolve add-ons) can link against ngsxfem:
@@ -97,18 +120,6 @@ Requires NGSolve 6.2.2608.
   wheels are now built and tested like the Linux/macOS ones (also for CPython 3.10).
 
 ### Bug fixes
-
-- Space-time level set GridFunctions of higher order in space were treated as piecewise
-  linear by the standard space-time rules (`SpaceTimeFESpace` does not report the order of
-  its spatial space), which gave wrong integrals without notice. They now use the
-  Algoim-based rules (`cut_quadrature="auto"`) or raise an exception (`"standard"`).
-  The same holds for level sets in `Discontinuous(H1(mesh, order=k))`, k >= 2.
-- `XFESpace` with a higher order level set in 3D: local heap overflow in the update of its
-  `CutInfo` (fixed heap size).
-
-- Element boundary cut integrals (`element_boundary=True`) of NEG/POS parts on 3D
-  elements were scaled wrongly; interfaces on boundary faces in 3D (`dCut(lset, IF,
-  vb=BND)`) gave NaN.
 
 - `LevelSetMeshAdaptation` with `boundary_tangential`: elements that touch
   several selected boundaries (corners) are excluded from the `qn` projection.
