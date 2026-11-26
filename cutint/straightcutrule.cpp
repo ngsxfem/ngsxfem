@@ -577,6 +577,32 @@ namespace xintegration
       }
   }
 
+  // Same for a boundary element of co-dimension 1 (DS = DR-1, e.g. a BND trig in a 3D mesh):
+  // F = dx/dxi is DR x DS, GetJacobianInverse() is the pseudo-inverse (F^T F)^{-1} F^T.
+  // |F (F^T F)^{-1} n_ref| = |F t_ref| / sqrt(det F^T F), so weight * mip.GetMeasure() is the
+  // physical measure of the cut (a line piece on the boundary face).
+  template<unsigned int DS, unsigned int DR>
+  void TransformQuadUntrafoToIRInterfaceBnd(const IntegrationRule & quad_untrafo, const ElementTransformation & trafo, const LevelsetWrapper &lset, IntegrationRule * ir_interface, bool spacetime_mode, double tval){
+      for (int i = 0; i < quad_untrafo.Size(); ++i)
+      {
+          const double myweight = quad_untrafo[i].Weight();
+          if(spacetime_mode) {
+              quad_untrafo[i].SetWeight(tval);
+              MarkAsSpaceTimeIntegrationPoint(quad_untrafo[i]);
+          }
+
+          const MappedIntegrationPoint<DS,DR> mip(quad_untrafo[i],trafo);
+          const Mat<DS,DR> Finv = mip.GetJacobianInverse();
+          const FlatVec<3> p = quad_untrafo[i].Point();
+          const Vec<3> nref = lset.GetNormal(p);
+          const FlatVector<const double> fv = nref.Range(0,DS);
+          const Vec<DR> normal = Trans(Finv) * fv;
+          const double weight = myweight * L2Norm(normal);
+
+          (*ir_interface)[i] = IntegrationPoint (p, weight);
+      }
+  }
+
   // integration rules that are returned assume that a scaling with mip.GetMeasure() gives the
   // correct weight on the "physical" domain (note that this is not a natural choice for interface integrals)
   const IntegrationRule * StraightCutIntegrationRule(const FlatVector<> & cf_lset_at_element,
@@ -655,19 +681,8 @@ namespace xintegration
           }
         }
         else if (((et == ET_TRIG) || (et == ET_QUAD)) && DIM == 3)
-        {
-          // BND face in a 3D mesh: the interface (IF) is a co-dim-2 curve. Weight such that
-          // mip.GetMeasure()*weight is the physical length element |F t| (t: unit tangent).
-          for (int i = 0; i < quad_untrafo.Size(); i++)
-          {
-            MappedIntegrationPoint<2,3> mip(quad_untrafo[i], trafo);
-            const Vec<3> nref = lset.GetNormal(quad_untrafo[i].Point());
-            const Vec<2> t(nref(1), -nref(0));
-            const double tnorm = L2Norm(t);
-            const double w = (tnorm > 0) ? quad_untrafo[i].Weight() * L2Norm(mip.GetJacobian() * t) / (tnorm * mip.GetMeasure()) : 0.0;
-            (*ir_interface)[i] = IntegrationPoint(quad_untrafo[i].Point(), w);
-          }
-        }
+          // BND face in a 3D mesh: the interface is a line on the boundary face.
+          TransformQuadUntrafoToIRInterfaceBnd<2,3>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else TransformQuadUntrafoToIRInterface<3>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
@@ -777,7 +792,8 @@ namespace xintegration
         auto lset = getLseti_onrefgeom( dt_is_if_indices[0] );
 
         auto myir = new (lh) IntegrationRule(myir_untrafo->Size(), lh);
-        if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        if (et == ET_TRIG && DIM == 3) TransformQuadUntrafoToIRInterfaceBnd<2,3>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
+        else if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
         else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
         else TransformQuadUntrafoToIRInterface<3>(*myir_untrafo, trafo, lset, myir, spacetime_mode, tval);
         ir = myir;
