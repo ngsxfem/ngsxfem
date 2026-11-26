@@ -89,8 +89,8 @@ lambda_nitsche = 10 * order * order
 if len(sys.argv) > 1 and sys.argv[1] == "testmode":
     n_levels = [8, 16]
 
-# Quadrature on cut elements (this is the default): standard rules for piecewise
-# linear level set GridFunctions, Algoim for higher order level sets
+# Quadrature on cut elements (this is the default): standard rules for
+# piecewise linear level set GridFunctions, Algoim for higher order level sets
 ngsxfemglobals.cut_quadrature = "auto"
 
 # ----------------------------------- MAIN ------------------------------------
@@ -161,9 +161,11 @@ def solve(n, lset_order):
 
 
 errors = {1: [], order: []}
+mesh_type = "quadrilateral" if quad_mesh else "triangular"
 print("L2 errors with level set of order 1 (standard rules) and of order "
-      "{0} (Algoim) on {1} meshes:".format(order, "quadrilateral" if quad_mesh else "triangular"))
-print("{:>5} {:>12} {:>6} {:>12} {:>6}".format("n", "P1-lset", "eoc", "P{}-lset".format(order), "eoc"))
+      "{0} (Algoim) on {1} meshes:".format(order, mesh_type))
+print("{:>5} {:>12} {:>6} {:>12} {:>6}".format(
+    "n", "P1-lset", "eoc", "P{}-lset".format(order), "eoc"))
 for i, n in enumerate(n_levels):
     line = "{:5d}".format(n)
     for lset_order in errors:
@@ -174,7 +176,7 @@ for i, n in enumerate(n_levels):
     print(line)
 
 if len(sys.argv) > 1 and sys.argv[1] == "testmode":
-    # higher order convergence with Algoim (and much more accurate than with P1)
+    # higher order convergence with Algoim (much more accurate than with P1)
     assert errors[order][-1] < 1e-3
     assert errors[order][-1] < 0.05 * errors[1][-1]
     assert errors[order][0] / errors[order][-1] > 2**(order + 0.5)
