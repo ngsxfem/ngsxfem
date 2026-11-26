@@ -57,6 +57,31 @@ ostream & operator<< (ostream & ost, COMBINED_DOMAIN_TYPE cdt)
   return ost;
 }
 
+ostream & operator<< (ostream & ost, CUT_QUADRATURE cq)
+{
+  switch (cq)
+    {
+    case CUTQUAD_STANDARD: ost << "STANDARD"; break;
+    case CUTQUAD_ALGOIM: ost << "ALGOIM"; break;
+    case CUTQUAD_AUTO: ost << "AUTO"; break;
+    };
+  return ost;
+}
+
+CUT_QUADRATURE CutQuadratureFromString (const string & name)
+{
+  string lname = name;
+  for (auto & c : lname)
+    c = tolower(c);
+  if (lname == "standard")
+    return CUTQUAD_STANDARD;
+  if (lname == "algoim")
+    return CUTQUAD_ALGOIM;
+  if (lname == "auto")
+    return CUTQUAD_AUTO;
+  throw Exception("unknown cut quadrature method '" + name + "' (choose from 'standard', 'algoim', 'auto')");
+}
+
 GlobalNgsxfemVariables globxvar;
 
 GlobalNgsxfemVariables::GlobalNgsxfemVariables() {
@@ -78,6 +103,9 @@ void GlobalNgsxfemVariables::SetDefaults()  {
     NAIVE_TIMEINT_SUBDIVS = 10;
     NON_CONV_WARN_MSG_LVL = 3;
     SIMD_EVAL = true;
+    CUT_QUADRATURE_METHOD = CUTQUAD_AUTO;
+    CUT_QUADRATURE_SET_BY_USER = false;
+    ALGOIM_LSET_ORDER = 4;
     cout << IM(3) << "All NGSXFEM eps values have been set to their default values" << endl;
 }
 
@@ -105,6 +133,9 @@ void GlobalNgsxfemVariables::Output(){
     cout << "NAIVE_TIMEINT_ORDER = " << NAIVE_TIMEINT_ORDER << endl;
     cout << "NAIVE_TIMEINT_SUBDIVS = " << NAIVE_TIMEINT_SUBDIVS << endl;
     cout << "NON_CONV_WARN_MSG_LVL = " << NON_CONV_WARN_MSG_LVL << endl;
+    cout << "SIMD_EVAL = " << SIMD_EVAL << endl;
+    cout << "CUT_QUADRATURE_METHOD = " << CUT_QUADRATURE_METHOD << endl;
+    cout << "ALGOIM_LSET_ORDER = " << ALGOIM_LSET_ORDER << endl;
 }
 void GlobalNgsxfemVariables::SwitchSIMD(bool simd){
   SIMD_EVAL=simd;

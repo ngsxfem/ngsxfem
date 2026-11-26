@@ -19,6 +19,8 @@ namespace xintegration
     int subdivlvl = 0;
     SWAP_DIMENSIONS_POLICY quad_dir_policy = FIND_OPTIMAL;
     optional<double> tref;
+    /// quadrature method for this domain (if not set: ngsxfemglobals)
+    optional<CUT_QUADRATURE> cut_quadrature;
   public:
     LevelsetIntegrationDomain( const Array<shared_ptr<CoefficientFunction>> & cfs_lset_in,
                                const Array<shared_ptr<GridFunction>> & gfs_lset_in,
@@ -159,6 +161,24 @@ namespace xintegration
     SWAP_DIMENSIONS_POLICY GetSwapDimensionPolicy () const
     {
       return quad_dir_policy;
+    }
+
+    /// quadrature method that is set for this domain (if any)
+    optional<CUT_QUADRATURE> OptionalCutQuadrature () const
+    {
+      return cut_quadrature;
+    }
+
+    /// quadrature method for this domain: the one that is set for this domain
+    /// or the global one (ngsxfemglobals.cut_quadrature)
+    CUT_QUADRATURE GetCutQuadrature () const
+    {
+      return cut_quadrature.value_or(globxvar.CUT_QUADRATURE_METHOD);
+    }
+
+    void SetCutQuadrature (optional<CUT_QUADRATURE> cq)
+    {
+      cut_quadrature = cq;
     }
     
   private:

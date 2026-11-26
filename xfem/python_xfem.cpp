@@ -52,17 +52,20 @@ Elements (BND / VOL) and facets can be either cut elements or in the positive (P
 BitArrays and Vectors of Ratios. (Internally also domain_types for different mesh nodes are stored.)
 )raw")
     .def(py::init([] (shared_ptr<MeshAccess> ma,
-                          py::object lset,
-                          int subdivlvl,
-                          int time_order,
-                          int heapsize) -> shared_ptr<CutInformation>
+                      py::object lset,
+                      int subdivlvl,
+                      int time_order,
+                      int heapsize,
+                      py::object cut_quadrature) -> shared_ptr<CutInformation>
          {
            auto cut_info = make_shared<CutInformation> (ma);
            if ((!lset.is_none()) && py::extract<shared_ptr<CF>> (lset).check())
            {
              shared_ptr<CF> cflset = py::extract<shared_ptr<CF>>(lset)();
-             LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-             cut_info->Update(cflset, subdivlvl, time_order, lh);
+             optional<CUT_QUADRATURE> cq = nullopt;
+             if (!cut_quadrature.is_none())
+               cq = py::cast<CUT_QUADRATURE>(cut_quadrature);
+             cut_info->Update(cflset, subdivlvl, time_order, size_t(heapsize), cq);
            }
            return cut_info;
          }),
@@ -70,7 +73,9 @@ BitArrays and Vectors of Ratios. (Internally also domain_types for different mes
          py::arg("levelset") = py::none(),
          py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
-         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+         py::arg("heapsize") = 1000000,
+         py::arg("cut_quadrature") = py::none(),
+         docu_string(R"raw_string(
 Creates a CutInfo based on a level set function and a mesh.
 
 Parameters
@@ -83,21 +88,31 @@ levelset : ngsolve.CoefficientFunction / None
 time_order : int
   order in time that is used in the integration in time to check for cuts and the ratios. This is
   only relevant for space-time discretizations.
+
+cut_quadrature : {"standard", "algoim", "auto"} / CUT_QUADRATURE / None
+  quadrature method that is used to decide on cut elements and to compute cut ratios. Should
+  be the same as for the integrals that are restricted to the marked elements. Default: None,
+  i.e. ngsxfemglobals.cut_quadrature is used.
 )raw_string")
       )
     .def("Update", [](CutInformation & self,
                       shared_ptr<CF> lset,
                       int subdivlvl,
                       int time_order,
-                      int heapsize)
+                      int heapsize,
+                      py::object cut_quadrature)
          {
-           LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
-           self.Update(lset,subdivlvl,time_order,lh);
+           optional<CUT_QUADRATURE> cq = nullopt;
+           if (!cut_quadrature.is_none())
+             cq = py::cast<CUT_QUADRATURE>(cut_quadrature);
+           self.Update(lset, subdivlvl, time_order, size_t(heapsize), cq);
          },
          py::arg("levelset"),
          py::arg("subdivlvl") = 0,
          py::arg("time_order") = -1,
-         py::arg("heapsize") = 1000000,docu_string(R"raw_string(
+         py::arg("heapsize") = 1000000,
+         py::arg("cut_quadrature") = py::none(),
+         docu_string(R"raw_string(
 Updates a CutInfo based on a level set function.
 
 Parameters
@@ -111,6 +126,10 @@ subdivlvl : int
 time_order : int
   order in time that is used in the integration in time to check for cuts and the ratios. This is
   only relevant for space-time discretizations.
+
+cut_quadrature : {"standard", "algoim", "auto"} / CUT_QUADRATURE / None
+  quadrature method that is used to decide on cut elements and to compute cut ratios.
+  Default: None, i.e. ngsxfemglobals.cut_quadrature is used.
 
 
 )raw_string")
@@ -513,7 +532,8 @@ heapsize : int
 A minimal version of a CutInfo that allows for several levelsets and a list of tuples of domain_types.
 )raw")
     .def(py::init([] (shared_ptr<MeshAccess> ma,
-                          py::object lsets_in)
+                          py::object lsets_in,
+                          int time_order)
          {
            py::extract<py::list> lsets_(lsets_in);
            if (!lsets_.check())
@@ -530,10 +550,11 @@ A minimal version of a CutInfo that allows for several levelsets and a list of t
             lset_b[i]->Update();
             lset_b[i]->GetVectorPtr()->Set(1.0, lset_a[i]->GetVector());
            }
-           return make_shared<MultiLevelsetCutInformation> (ma, lset_b);
+           return make_shared<MultiLevelsetCutInformation> (ma, lset_b, time_order);
          }),
          py::arg("mesh"),
          py::arg("levelset"),
+         py::arg("time_order") = -1,
          docu_string(R"raw_string(
 Creates a MultiLevelsetCutInfo based on a mesh and a tuple of levelsets.
 
@@ -544,6 +565,10 @@ mesh :
 
 levelsets : tuple(ngsolve.GridFunction)
   tuple of GridFunctions w.r.t. which elements are marked 
+
+time_order : int
+  for space-time level sets (GridFunctions on a SpaceTimeFESpace): order in time
+  that is used to decide on the space-time parts of the elements (-1: no space-time)
 )raw_string")
       )
     .def("Mesh", [](MultiLevelsetCutInformation & self)

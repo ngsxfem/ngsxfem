@@ -300,8 +300,7 @@ namespace ngcomp
     if (private_cutinfo)
     {
       cout << IM(4) << " Calling cutinfo-Update from within XFESpace-Update " << endl;
-      LocalHeapMem<100000> lh("T_XFESpace<D>::Update(private_cutinfo)");
-      cutinfo->Update(coef_lset,0,-1,lh);
+      cutinfo->Update(coef_lset, 0, -1, size_t(100000));
     }
     static Timer timer("XFESpace::Update"); RegionTimer reg (timer);
 

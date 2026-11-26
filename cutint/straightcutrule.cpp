@@ -680,8 +680,8 @@ namespace xintegration
                                                   quad_untrafo[i].Weight() / mip.GetMeasure());
           }
         }
-        else if (et == ET_TRIG && DIM == 3)
-          // BND trig in a 3D mesh: the interface is a line on the boundary face.
+        else if (((et == ET_TRIG) || (et == ET_QUAD)) && DIM == 3)
+          // BND face in a 3D mesh: the interface is a line on the boundary face.
           TransformQuadUntrafoToIRInterfaceBnd<2,3>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else if (DIM == 1) TransformQuadUntrafoToIRInterface<1>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
         else if (DIM == 2) TransformQuadUntrafoToIRInterface<2>(quad_untrafo, trafo, lset, ir_interface, spacetime_mode, tval);
@@ -720,10 +720,12 @@ namespace xintegration
     auto et = trafo.GetElementType();
     int M = cf_lsets_at_element.Width();
 
-    if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM)){
-      cout << IM(1) << "Element Type: " << et << endl;
-      throw Exception("only trigs, tets for now");
-    }
+    if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM))
+      throw Exception("The standard cut quadrature for multiple level sets supports only segments, triangles "
+                      "and tetrahedra (element type here: " + ToString(et) + "). On other element types, "
+                      "domains with at most one interface condition are available with the Algoim-based "
+                      "rules (cut_quadrature = 'auto' or 'algoim'); domains with more than one interface "
+                      "condition (co-dimension > 1) are not supported there.");
 
     IntegrationRule quad_untrafo;
 

@@ -33,7 +33,15 @@ namespace ngcomp
                                                       nullptr, nullptr, nullptr};
   public:
     CutInformation (shared_ptr<MeshAccess> ama);
-    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, LocalHeap & lh);
+    /// cut_quadrature: quadrature method that is used to compute the cut
+    /// ratios and element markers (default: ngsxfemglobals.cut_quadrature)
+    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, LocalHeap & lh,
+                optional<CUT_QUADRATURE> cut_quadrature = nullopt);
+    /// as above with a local heap of (initially) heapsize bytes, which is enlarged (by a
+    /// factor of 10, up to 1e9 bytes) on overflow (e.g. for Algoim-based rules with many
+    /// integration points)
+    void Update(shared_ptr<CoefficientFunction> lset, int subdivlvl, int time_order, size_t heapsize,
+                optional<CUT_QUADRATURE> cut_quadrature = nullopt);
     
     shared_ptr<MeshAccess> GetMesh () const { return ma; }
 
@@ -97,11 +105,14 @@ namespace ngcomp
   protected:
     shared_ptr<MeshAccess> ma;
     Array<shared_ptr<GridFunction>> lsets;
+    /// time order for space-time level sets (-1: no space-time)
+    int time_order = -1;
     vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_with_contribution;
     vector<tuple<shared_ptr<BitArray>, Array<Array<DOMAIN_TYPE>>, VorB >> collect_elements_of_domain_type;
   public:
     MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama, 
-                                 const Array<shared_ptr<GridFunction>> & lsets_in);
+                                 const Array<shared_ptr<GridFunction>> & lsets_in,
+                                 int time_order_in = -1);
     
     void Update(const Array<shared_ptr<GridFunction>> & lsets_in, LocalHeap & lh);
 

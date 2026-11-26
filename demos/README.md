@@ -7,6 +7,7 @@ The python files in this directory provide several examples that demonstrate the
 | [lsetgeoms.py](lsetgeoms.py) | Examples of smooth domains described by level set functions and their geometrical approximation. |
 | [unf_interf_prob.py](unf_interf_prob.py) | Stationary scalar unfitted interface problem with an unfitted isoparametric FEM discretization and Nitsche. |
 | [fictdom.py](fictdom.py) | Poisson problem on an unfitted (smooth) domain described by a level set function, discretized with CutFEM, Ghost Penalties and Nitsche. |
+| [fictdom_algoim.py](fictdom_algoim.py) | As fictdom.py, but the higher order geometry approximation uses the quadrature of the [Algoim](https://algoim.github.io/) library w.r.t. a higher order level set function (no mesh deformation, also on quadrilateral meshes). |
 | [fictdom_dg.py](fictdom_dg.py) | Poisson problem on an unfitted (smooth) domain described by a level set function, discretized with Cut-DG (interior penalty), Ghost Penalties and Nitsche. |
 | [fictdom_mlset.py](fictdom_mlset.py) | Poisson problem on an unfitted domain described by multiple level sets, discretized with CutFEM and Nitsche. |
 | [stokescutfem.py](stokescutfem.py) | Stationary Stokes interface problem with an unfitted isoparametric Taylor-Hood-Nitsche discretization |

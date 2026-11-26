@@ -58,7 +58,28 @@ namespace ngcomp
     }
   }
 
-  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order, LocalHeap & lh)
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order,
+                              size_t heapsize, optional<CUT_QUADRATURE> cut_quadrature)
+  {
+    while (true)
+    {
+      try
+      {
+        LocalHeap lh (heapsize, "CutInfo::Update-heap", true);
+        Update(cf_lset, subdivlvl, time_order, lh, cut_quadrature);
+        return;
+      }
+      catch (const Exception & e)
+      {
+        if ((string(e.what()).find("Local Heap overflow") == string::npos) || (heapsize >= size_t(1e9)))
+          throw;
+        heapsize *= 10;
+      }
+    }
+  }
+
+  void CutInformation::Update(shared_ptr<CoefficientFunction> cf_lset, int subdivlvl, int time_order, LocalHeap & lh,
+                              optional<CUT_QUADRATURE> cut_quadrature)
   {
     static Timer timer("CutInformation::Update");
     RegionTimer reg (timer);
@@ -94,7 +115,9 @@ namespace ngcomp
         {
             const IntegrationRule * ir_np;
             Array<double> wei_arr;
-            tie (ir_np, wei_arr) = CreateCutIntegrationRule(cf_lset, gf_lset, eltrans, np, 0,time_order, lh, subdivlvl);
+            LevelsetIntegrationDomain lsetintdom(cf_lset, gf_lset, np, 0, time_order, subdivlvl);
+            lsetintdom.SetCutQuadrature(cut_quadrature);
+            tie (ir_np, wei_arr) = CreateCutIntegrationRule(lsetintdom, eltrans, lh);
           // If(time_order > -1 && vb == BND) should have part_vol[NEG] == 0, which will lead to
           // the BND element being marked as POS.
           if (ir_np)
@@ -284,8 +307,9 @@ namespace ngcomp
   }
 
   MultiLevelsetCutInformation::MultiLevelsetCutInformation (shared_ptr<MeshAccess> ama,
-                                                            const Array<shared_ptr<GridFunction>> & lsets_in)
-    : ma(ama), lsets(lsets_in)
+                                                            const Array<shared_ptr<GridFunction>> & lsets_in,
+                                                            int time_order_in)
+    : ma(ama), lsets(lsets_in), time_order(time_order_in)
   {
     ;
   }
@@ -309,7 +333,7 @@ namespace ngcomp
                                                                    LocalHeap & lh) const
   {
 
-    LevelsetIntegrationDomain lsetintdom(lsets, cdt);
+    LevelsetIntegrationDomain lsetintdom(lsets, cdt, -1, time_order);
     elems_of_domain_type->Clear();
     
     int ne = ma->GetNE(vb);
@@ -358,7 +382,7 @@ namespace ngcomp
                                                                VorB vb, 
                                                                LocalHeap & lh) const
   {
-    LevelsetIntegrationDomain lsetintdom(lsets, cdt);
+    LevelsetIntegrationDomain lsetintdom(lsets, cdt, -1, time_order);
     elems_of_domain_type->Clear();
     
     int ne = ma->GetNE(vb);
@@ -371,18 +395,11 @@ namespace ngcomp
          // ELEMENT_TYPE eltype = ngel.GetType();
          ElementTransformation & eltrans = ma->GetTrafo (ei, lh);
 
-         Array<DofId> dnums(0,lh);
          int M =lsetintdom.GetLevelsetGFs().Size();
          Array<DOMAIN_TYPE> dts_el(M,lh);
          for (int j = 0; j < M; j++)
-         {
-           auto gflset = lsetintdom.GetLevelsetGFs()[j];
-           gflset->GetFESpace()->GetDofNrs(eltrans.GetElementId(), dnums);
-           FlatVector<> elvec(dnums.Size(), lh);
-           gflset->GetVector().GetIndirect(dnums, elvec);
-
-           dts_el[j] = CheckIfStraightCut(elvec);
-         }
+           dts_el[j] = ElementDomainType(lsetintdom.GetLevelsetGFs()[j], lsetintdom.OptionalCutQuadrature(),
+                                         eltrans, lh, time_order);
 
          for (int i = 0; i < lsetintdom.GetDomainTypes().Size(); i++)
          {

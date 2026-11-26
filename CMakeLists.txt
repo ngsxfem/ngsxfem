@@ -24,7 +24,7 @@ include_directories ("${PROJECT_BINARY_DIR}")
 if(SKBUILD_PROJECT_VERSION)
   set(NGSXFEM_VERSION ${SKBUILD_PROJECT_VERSION})
 else()
-  set(NGSXFEM_VERSION "2.1.2607.dev0")
+  set(NGSXFEM_VERSION "2.2.2608.dev0")
   file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/python/_version.py "__version__ = \"${NGSXFEM_VERSION}\"\n")
 endif()
 
@@ -52,6 +52,11 @@ add_subdirectory(spacetime)
 
 
 install(TARGETS xfem DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem)
+
+# The bundled Algoim library (external_dependencies/algoim) is compiled into
+# xfem_core; its license has to accompany binary distributions.
+install(FILES external_dependencies/algoim/LICENSE external_dependencies/algoim/README.md
+        DESTINATION ${XFEM_INSTALL_DIR_PYTHON}/xfem/third_party/algoim)
 
 ngsolve_generate_stub_files(xfem)
 

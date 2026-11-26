@@ -1,5 +1,6 @@
 install( FILES
   fictdom.py
+  fictdom_algoim.py
   fictdom_dg.py
   fictdom_mlset.py
   lsetgeoms.py

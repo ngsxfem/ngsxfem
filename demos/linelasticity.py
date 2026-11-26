@@ -95,7 +95,7 @@ ds = {dtt: dCut(lsetsp1, dtt, definedonelements=els_if_singe[dtt])
 dw = dFacetPatch(definedonelements=facets_gp)
 
 
-def eps:
+def eps(u):
     return Sym(Grad(u))
 
 

@@ -45,6 +45,46 @@ void ExportNgsx(py::module &m)
     .export_values()
     ;
 
+  py::enum_<CUT_QUADRATURE>(m, "CUT_QUADRATURE", docu_string(R"raw_string(
+Quadrature method on cut elements (cf. ngsxfemglobals.cut_quadrature and the
+argument cut_quadrature of dCut). Wherever a CUT_QUADRATURE is expected, the
+strings "standard", "algoim" and "auto" can be used as well.
+
+STANDARD:
+    ngsxfem's standard rules: straight cuts of piecewise linear (multilinear
+    on quads/hexes) level set GridFunctions, also in the isoparametric
+    approach; space-time rules. Other level sets are only accepted with
+    subdivlvl > 0 (single level sets, piecewise linear interpolation on
+    subdivided simplices), otherwise an exception is raised.
+ALGOIM:
+    rules based on the Algoim library (R. I. Saye, https://algoim.github.io/),
+    which represent the level set function(s) as element-wise polynomial(s)
+    of higher degree (level set GridFunctions exactly, other
+    CoefficientFunctions by interpolation, cf. ngsxfemglobals.algoim_lset_order).
+    Available for element integrals (segments, triangles, quadrilaterals,
+    tetrahedra, hexahedra, prisms; also on boundary elements, vb=BND), for
+    facet and element boundary integrals (skeleton=True, element_boundary=True),
+    for multiple level sets (DomainTypeArray, at most one interface condition
+    per domain tuple), for space-time integrals (time_order >= 0, level sets on
+    SpaceTimeFESpaces or CoefficientFunctions of tref; elements and skeleton
+    facets) and at fixed reference times (tref). The standard rules are used
+    otherwise (e.g. co-dimension 2 parts of multiple level set domains).
+AUTO (default):
+    the standard rules for piecewise linear (in space) level set GridFunctions,
+    ALGOIM for all other level sets (higher order GridFunctions, general
+    CoefficientFunctions) and for cases that the standard rules do not support
+    (prisms; multiple level sets on quadrilaterals, hexahedra, prisms).
+The use of Algoim is reported once per run in the terminal (with a link and
+the reference to cite), which also mentions an automatic choice (AUTO, if not
+chosen explicitly).
+)raw_string"))
+    .value("STANDARD", CUTQUAD_STANDARD)
+    .value("ALGOIM", CUTQUAD_ALGOIM)
+    .value("AUTO", CUTQUAD_AUTO)
+    .def(py::init([](const string & name) { return CutQuadratureFromString(name); }))
+    ;
+  py::implicitly_convertible<py::str, CUT_QUADRATURE>();
+
 
 }
 

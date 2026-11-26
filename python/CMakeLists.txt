@@ -10,6 +10,9 @@ add_ngsolve_addon_library(xfem_core
       ../cutint/mlsetintegration.cpp
       ../cutint/xintegration.cpp
       ../cutint/cutintegral.cpp
+      ../cutint/algoim_lapacke.cpp
+      ../cutint/algoim_wrapper.cpp
+      ../cutint/algoimcutrule.cpp
       ../lsetcurving/calcpointshift.cpp
       ../lsetcurving/lsetrefine.cpp
       ../lsetcurving/projshift.cpp
@@ -38,6 +41,10 @@ add_ngsolve_addon_library(xfem_core
       ../xfem/aggregates.cpp
 )
 target_include_directories(xfem_core PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>)
+# The bundled Algoim library (external_dependencies/algoim) includes <lapacke.h>;
+# ngsxfem provides the two required routines itself (cutint/algoim_lapacke), this
+# directory has to come before any other include directory that may contain a lapacke.h
+target_include_directories(xfem_core BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/cutint/algoim_lapacke)
 target_compile_definitions(xfem_core PRIVATE NGSXFEM_EXPORTS
       PUBLIC $<$<BOOL:${SPACETIME_SANITY_CHECKS}>:SPACETIME_SANITY_CHECKS>)
 set_target_properties(xfem_core PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
