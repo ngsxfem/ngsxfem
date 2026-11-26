@@ -239,3 +239,80 @@ def test_bfi_definedon_bitarray():
     # Both should give the same total; assert consistent
     val2 = sum(f_cut.vec)
     assert abs(val2 - val) < 1e-2, f"definedonelements mismatch: {val2} vs {val}"
+
+
+# ---------------------------------------------------------------------------
+# IF+BND in 3-D (co-dimension 2: lines on the boundary faces)
+# ---------------------------------------------------------------------------
+
+PLANE_A, PLANE_C = np.array([0.3, 0.2, 0.93]), 0.5671   # plane misses all cube vertices
+
+
+def _plane_cube_polygon(a, c):
+    """Ordered vertices of the polygon {a.x = c} ∩ [0,1]^3."""
+    import itertools
+    V = np.array(list(itertools.product([0, 1], repeat=3)), float)
+    P = []
+    for i, j in itertools.combinations(range(8), 2):
+        if np.sum(np.abs(V[i] - V[j])) == 1:
+            fi, fj = a @ V[i] - c, a @ V[j] - c
+            if fi * fj < 0:
+                P.append(V[i] + fi / (fi - fj) * (V[j] - V[i]))
+    P = np.array(P)
+    m = P.mean(axis=0)
+    n = a / np.linalg.norm(a)
+    e1 = np.cross(n, np.eye(3)[np.argmin(np.abs(n))]); e1 /= np.linalg.norm(e1)
+    e2 = np.cross(n, e1)
+    return P[np.argsort(np.arctan2((P - m) @ e2, (P - m) @ e1))]
+
+
+def _polygon_line_integrals(P):
+    """Perimeter and the line integral of the (linear) function x of a closed polygon."""
+    seg = np.roll(P, -1, axis=0) - P
+    mid = 0.5 * (np.roll(P, -1, axis=0) + P)
+    lens = np.linalg.norm(seg, axis=1)
+    return lens.sum(), (lens * mid[:, 0]).sum()
+
+
+def _plane_lset(mesh):
+    lset = GridFunction(H1(mesh, order=1))
+    InterpolateToP1(PLANE_A[0] * x + PLANE_A[1] * y + PLANE_A[2] * z - PLANE_C, lset)
+    return lset
+
+
+def test_integrate_if_bnd_3d_length():
+    """3-D: dCut(lset, IF, vb=BND) is the length measure of the contact line on the boundary.
+
+    Planar level set in the unit cube: the line is a polygon on the cube faces, its length and
+    the line integral of x are known exactly.
+    """
+    mesh = make_3d_mesh(maxh=0.25)
+    lset = _plane_lset(mesh)
+    length, int_x = _polygon_line_integrals(_plane_cube_polygon(PLANE_A, PLANE_C))
+
+    val = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND), mesh)
+    val_x = Integrate(x * dCut(lset, IF, vb=BND), mesh)
+    assert abs(val - length) < 1e-10, f"line length expected {length}, got {val}"
+    assert abs(val_x - int_x) < 1e-10, f"∫x dγ expected {int_x}, got {val_x}"
+
+
+def test_integrate_if_bnd_3d_deformed():
+    """3-D IF+BND with a mesh deformation (affine: faces not axis-parallel, sheared metric).
+
+    With deformation d = A x - x the physical domain is A([0,1]^3) and the line is the image of
+    the reference polygon, so the exact length is sum |A (P_k+1 - P_k)|.
+    """
+    mesh = make_3d_mesh(maxh=0.25)
+    lset = _plane_lset(mesh)
+    A = np.array([[1.1, 0.2, -0.1], [0.15, 0.9, 0.25], [-0.2, 0.1, 1.05]])
+    X = (x, y, z)
+    deform = GridFunction(VectorH1(mesh, order=1))
+    deform.Set(CoefficientFunction(tuple(sum(A[i, j] * X[j] for j in range(3)) - X[i]
+                                         for i in range(3))))
+    length, int_x = _polygon_line_integrals(_plane_cube_polygon(PLANE_A, PLANE_C) @ A.T)
+
+    dl = dCut(lset, IF, vb=BND, deformation=deform)
+    val = Integrate(CoefficientFunction(1) * dl, mesh)
+    val_x = Integrate(x * dl, mesh)
+    assert abs(val - length) < 1e-10, f"line length expected {length}, got {val}"
+    assert abs(val_x - int_x) < 1e-10, f"∫x dγ expected {int_x}, got {val_x}"
