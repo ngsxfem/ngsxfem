@@ -11,6 +11,10 @@ Flow:
      A pull request release-candidate -> master collects them.
   3. Merging it changes the pin on master: that push is built and published as
      the release 2.1.<ngsolve> (and tagged).
+  4. Every other push to master is published as a development version: the
+     version comes from setuptools_scm (next version after the latest tag
+     + .dev<commits since the tag>, e.g. 2.2.2608rc2.dev3 after v2.2.2608rc1).
+     A new major.minor is started with a manually pushed tag (e.g. v2.2.2608rc1).
 
 Everything is decided from the pin in pyproject.toml, the tags and PyPI, so a
 failed run can simply be repeated.
@@ -123,7 +127,10 @@ def plan(event, ref_name, head_ref, input_ngsolve, dry_run, pin_now, pin_before,
         ngsolve, mode = pin_now, "rc"
     elif event == "push" and ref_name == MASTER:
         if pin_before is None or pin_before == pin_now:
-            return done("master: NGSolve pin unchanged, build and test only")
+            # development build: no version is set here, setuptools_scm derives it from the
+            # latest tag and the number of commits since then (e.g. 2.2.2608rc2.dev3)
+            out.update(mode="dev", publish="true")
+            return done("master: NGSolve pin unchanged, development build (version from the git tags)")
         ngsolve, mode = pin_now, "release"
     else:
         return done("build and test only")

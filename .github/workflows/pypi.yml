@@ -7,6 +7,9 @@
 #  2. Further pushes to `release-candidate` publish rc2, rc3, ...
 #  3. Merging the pull request changes the NGSolve pin on master: that push is
 #     built, tested and published as the release 2.1.<ngsolve> (tag + GitHub release).
+#  4. Every other push to master is published as a development version
+#     (<next version after the latest tag>.dev<commits since the tag>, from setuptools_scm).
+#     A manually pushed tag v<version> is published as tagged.
 # A failed run can be repeated; manual dispatches default to a dry run.
 name: Build and upload to PyPI
 
@@ -158,8 +161,10 @@ jobs:
 
   finalize:
     name: Tag, pull request / GitHub release
-    # tags pushed by a person (mode "tag") need nothing more
-    if: needs.plan.outputs.publish == 'true' && needs.plan.outputs.mode != 'tag'
+    # tags pushed by a person (mode "tag") and development builds (mode "dev") need nothing more
+    if: >-
+      needs.plan.outputs.publish == 'true' &&
+      (needs.plan.outputs.mode == 'rc' || needs.plan.outputs.mode == 'release')
     needs: [plan, publish_pypi]
     runs-on: ubuntu-latest
     permissions:
