@@ -705,10 +705,12 @@ namespace xintegration
     auto et = trafo.GetElementType();
     int M = cf_lsets_at_element.Width();
 
-    if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM)){
-      cout << IM(1) << "Element Type: " << et << endl;
-      throw Exception("only trigs, tets for now");
-    }
+    if ((et != ET_TRIG) && (et != ET_TET) && (et != ET_SEGM))
+      throw Exception("The standard cut quadrature for multiple level sets supports only segments, triangles "
+                      "and tetrahedra (element type here: " + ToString(et) + "). On other element types, "
+                      "domains with at most one interface condition are available with the Algoim-based "
+                      "rules (cut_quadrature = 'auto' or 'algoim'); domains with more than one interface "
+                      "condition (co-dimension > 1) are not supported there.");
 
     IntegrationRule quad_untrafo;
 

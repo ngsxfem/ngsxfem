@@ -859,8 +859,12 @@ def test_mlset_p1_quads_auto():
     lsets = (lset_gf(mesh, 1, x - 0.1), lset_gf(mesh, 1, y - 0.2))
     one = CoefficientFunction(1)
     assert Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG))), mesh) == pytest.approx(1.1 * 1.2, abs=1e-8)
-    with pytest.raises(Exception, match="only trigs, tets"):
+    with pytest.raises(Exception, match="supports only segments, triangles and tetrahedra"):
         Integrate(one * dCut(lsets, DomainTypeArray((NEG, NEG)), cut_quadrature="standard"), mesh)
+    # co-dimension 2 on quadrilaterals: neither standard rules nor Algoim, for any setting
+    for cq in ["auto", "standard", "algoim"]:
+        with pytest.raises(Exception, match="co-dimension > 1"):
+            Integrate(one * dCut(lsets, DomainTypeArray((IF, IF)), cut_quadrature=cq), mesh)
 
 
 # ---------------------------------------------------------------------------
