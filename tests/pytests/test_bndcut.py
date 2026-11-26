@@ -316,3 +316,63 @@ def test_integrate_if_bnd_3d_deformed():
     val_x = Integrate(x * dl, mesh)
     assert abs(val - length) < 1e-10, f"line length expected {length}, got {val}"
     assert abs(val_x - int_x) < 1e-10, f"∫x dγ expected {int_x}, got {val_x}"
+
+
+def test_integrate_if_bnd_3d_hex():
+    """3-D IF+BND on a hexahedral mesh: the boundary elements are quads (planar level set, Q1)."""
+    from ngsolve.meshes import MakeStructured3DMesh
+    mesh = MakeStructured3DMesh(hexes=True, nx=5, ny=4, nz=3)
+    lset = GridFunction(H1(mesh, order=1))
+    lset.Set(PLANE_A[0] * x + PLANE_A[1] * y + PLANE_A[2] * z - PLANE_C)
+    length, int_x = _polygon_line_integrals(_plane_cube_polygon(PLANE_A, PLANE_C))
+
+    val = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND), mesh)
+    val_x = Integrate(x * dCut(lset, IF, vb=BND), mesh)
+    assert abs(val - length) < 1e-10, f"line length expected {length}, got {val}"
+    assert abs(val_x - int_x) < 1e-10, f"∫x dγ expected {int_x}, got {val_x}"
+
+
+@pytest.mark.parametrize("hexes", [False, True])
+def test_integrate_if_bnd_3d_deformed_nonaffine(hexes):
+    """3-D IF+BND with a non-affine (quadratic) deformation, as for isoparametric unfitted FEM.
+
+    lset = z - c, d = (0, b y^2, a y (1-y)). The reference line z = c is mapped to
+    (x, y + b y^2, c + a y (1-y)) on the faces x = 0 and x = 1 and to straight segments of
+    length 1 on y = 0 (d = 0) and y = 1 (d = const).
+    """
+    from ngsolve.meshes import MakeStructured3DMesh
+    a, b, c = 0.3, 0.25, 0.437
+    mesh = MakeStructured3DMesh(hexes=True, nx=4, ny=4, nz=4) if hexes else make_3d_mesh(maxh=0.25)
+    lset = GridFunction(H1(mesh, order=1))
+    lset.Set(z - c)
+    deform = GridFunction(VectorH1(mesh, order=2))
+    deform.Set(CoefficientFunction((0, b * y * y, a * y * (1 - y))))
+    s, w = np.polynomial.legendre.leggauss(40)
+    yq, wq = 0.5 * (s + 1), 0.5 * w
+    length = 2 + 2 * np.sum(wq * np.sqrt((1 + 2 * b * yq)**2 + a**2 * (1 - 2 * yq)**2))
+
+    val = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND, deformation=deform, order=12), mesh)
+    assert abs(val - length) < 1e-10, f"line length expected {length}, got {val}"
+
+
+def test_integrate_if_bnd_3d_spacetime():
+    """3-D IF+BND with a space-time level set z - c - 0.1 t: the line has length 4 at all t,
+    the space-time integral over the reference time interval [0,1] is 4."""
+    mesh = make_3d_mesh(maxh=0.3)
+    c = 0.437
+    lset = GridFunction(SpaceTimeFESpace(H1(mesh, order=1), ScalarTimeFE(1)))
+    SpaceTimeInterpolateToP1(z - c - 0.1 * tref, tref, lset)
+    val = Integrate(CoefficientFunction(1) * dCut(lset, IF, vb=BND, time_order=2), mesh)
+    assert abs(val - 4) < 1e-10, f"space-time line measure expected 4, got {val}"
+
+
+def test_integrate_if_bnd_3d_mlset():
+    """3-D multi-level-set IF+BND: line z = c restricted to x < 1/2 (faces x=0, y=0, y=1)."""
+    from xfem.mlset import DomainTypeArray
+    mesh = make_3d_mesh(maxh=0.3)
+    l1 = GridFunction(H1(mesh, order=1))
+    l1.Set(z - 0.437)
+    l2 = GridFunction(H1(mesh, order=1))
+    l2.Set(x - 0.5)
+    val = Integrate(CoefficientFunction(1) * dCut((l1, l2), DomainTypeArray((IF, NEG)), vb=BND), mesh)
+    assert abs(val - 2) < 1e-10, f"line length expected 2, got {val}"
