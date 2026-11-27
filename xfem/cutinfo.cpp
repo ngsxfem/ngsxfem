@@ -613,6 +613,19 @@ namespace ngcomp
     return ret;
 }
 
+  // MPI: a dof is marked if it is marked on some rank. Collective.
+  static void ConsistentDofs (const FESpace & fes, BitArray & dofs)
+  {
+    auto pardofs = fes.GetParallelDofs();
+    if (!pardofs) return;
+    Array<int> marked(dofs.Size());
+    for (size_t i : Range(marked))
+      marked[i] = dofs.Test(i);
+    pardofs->AllReduceDofData (marked, NG_MPI_MAX);
+    for (size_t i : Range(marked))
+      if (marked[i]) dofs.SetBit(i);
+  }
+
   shared_ptr<BitArray> GetDofsOfElements(shared_ptr<FESpace> fes,
                                          shared_ptr<BitArray> a,
                                          LocalHeap & lh)
@@ -635,6 +648,7 @@ namespace ngcomp
           ret->SetBitAtomic(dof);
       }
     });
+    ConsistentDofs (*fes, *ret);
     return ret;
   }
 
@@ -660,6 +674,7 @@ namespace ngcomp
           ret->SetBitAtomic(dof);
       }
     });
+    ConsistentDofs (*fes, *ret);
     return ret;
   }
 

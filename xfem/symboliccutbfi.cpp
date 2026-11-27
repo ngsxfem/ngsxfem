@@ -1215,6 +1215,7 @@ namespace ngfem
       } catch (ExceptionNOSIMD e) {
         cout << e.What() << endl
              << "switching to non-SIMD evaluation (in CalcFacetMatrix)" << endl;
+        elmat = SCAL(0.0);   // partly filled by the SIMD evaluation
       }
     }
 
@@ -1692,6 +1693,8 @@ namespace ngfem
     
     BaseMappedIntegrationRule & mir1 = trafo1(*ir_facet_vol1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(*ir_facet_vol2, lh);
+    mir1.SetOtherMIR (&mir2);   // for Other() of coefficients
+    mir2.SetOtherMIR (&mir1);
 
     ProxyUserData ud;
     const_cast<ElementTransformation&>(trafo1).userdata = &ud;
@@ -2010,6 +2013,7 @@ namespace ngfem
     for (int l = 0; l < n; l++) {
       int packet = l / sw;
       int lane   = l % sw;
+      ir_to[l] = IntegrationPoint();   // a volume point (ir_to is not initialized)
       for (int d = 0; d < D; d++)
         ir_to[l](d) = simd_ir_to[packet](d)[lane];
       ir_to[l].SetWeight(simd_mir_from[packet].GetWeight()[lane]
@@ -2333,12 +2337,15 @@ namespace ngfem
       } catch (ExceptionNOSIMD e) {
         cout << IM(6) << e.What() << endl
              << "switching to non-SIMD evaluation (in T_CalcFacetMatrix)" << endl;
+        elmat = 0.0;   // partly filled by the SIMD evaluation
       }
     }
     
     // non-SIMD case
     BaseMappedIntegrationRule & mir1 = trafo1(*ir1, lh);
     BaseMappedIntegrationRule & mir2 = trafo2(*ir2, lh);
+    mir1.SetOtherMIR (&mir2);   // for Other() of coefficients, as in the SIMD case
+    mir2.SetOtherMIR (&mir1);
 
     for (int k1 : Range(trial_proxies))
       for (int l1 : Range(test_proxies))
