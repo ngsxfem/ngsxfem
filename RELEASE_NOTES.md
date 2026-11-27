@@ -89,6 +89,9 @@ Requires NGSolve 6.2.2608.
   elements were scaled wrongly; interfaces on boundary faces in 3D (`dCut(lset, IF,
   vb=BND)`) gave NaN.
 
+- `CompoundProlongation` (used by `xfem.cutmg`, tutorial `cutmg.ipynb`): segmentation fault
+  in `Update` with NGSolve 6.2.2601 and newer.
+
 ## 2.1.2608
 
 Requires NGSolve 6.2.2608.
