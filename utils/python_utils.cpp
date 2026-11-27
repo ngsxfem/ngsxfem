@@ -454,7 +454,11 @@ for prototype and testing...
      .def(py::init(
           [](const FESpace *fes) -> shared_ptr<CompoundProlongation>
           {
-            return make_shared<CompoundProlongation> (dynamic_cast<const CompoundFESpace*>(fes));
+            // start without prolongations, they are added with AddProlongation. (Since
+            // NGSolve 6.2.2601 the constructor without this array takes the prolongations
+            // of the component spaces, so that the added ones had no component space.)
+            Array<shared_ptr<Prolongation>> no_prols;
+            return make_shared<CompoundProlongation> (dynamic_cast<const CompoundFESpace*>(fes), no_prols);
           }),
           py::arg("compoundFESpace"))
       .def("Update", &CompoundProlongation::Update, py::arg("fespace"))
