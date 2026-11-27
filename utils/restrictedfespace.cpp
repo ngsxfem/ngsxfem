@@ -47,6 +47,17 @@ namespace ngcomp
     }
     else
       active_dofs->Set();
+
+    // MPI: a dof is active if it is active on some rank
+    if (auto pardofs = space->GetParallelDofs())
+      {
+        Array<int> active(ndof);
+        for (int i : Range(ndof))
+          active[i] = active_dofs->Test(i);
+        pardofs->AllReduceDofData (active, NG_MPI_MAX);
+        for (int i : Range(ndof))
+          if (active[i]) active_dofs->SetBit(i);
+      }
     CompressedFESpace::Update();
   }
 
