@@ -1,6 +1,6 @@
 # Release Notes
 
-## 2.2.2608 (unreleased)
+## 2.2.2608
 
 Requires NGSolve 6.2.2608.
 
