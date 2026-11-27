@@ -92,6 +92,16 @@ Requires NGSolve 6.2.2608.
 - `CompoundProlongation` (used by `xfem.cutmg`, tutorial `cutmg.ipynb`): segmentation fault
   in `Update` with NGSolve 6.2.2601 and newer.
 
+- Ghost penalty (`dFacetPatch`) with a coefficient evaluated in the neighbour element
+  (`.Other()`): the scalar evaluation (`ngsxfemglobals.simd_eval = False`, or the
+  automatic fallback if a coefficient has no SIMD evaluation, e.g. a GridFunction on
+  another mesh) raised "other mir not set"; the fallback used undefined integration points.
+
+- MPI: `GetDofsOfElements`, `GetDofsOfFacets` and `Restrict` mark a dof on a subdomain
+  interface on all ranks if it is marked on one of them. Before, CutFEM with MPI could
+  give wrong results or crash (seen in 3D). Facet terms across subdomain interfaces (ghost
+  penalty) still need support from NGSolve.
+
 ## 2.1.2608
 
 Requires NGSolve 6.2.2608.

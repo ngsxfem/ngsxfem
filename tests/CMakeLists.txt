@@ -47,6 +47,9 @@ add_test(NAME pytests_simd_lfblf COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
 add_test(NAME pytests_simd_cutint COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_simd_cutint.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
+add_test(NAME pytests_facetpatch_coefficient COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
+  "${PROJECT_SOURCE_DIR}/tests/pytests/test_facetpatch_coefficient.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
+
 add_test(NAME pytests_xfes_ndof COMMAND ${NETGEN_PYTHON_EXECUTABLE} -m pytest
   "${PROJECT_SOURCE_DIR}/tests/pytests/test_xfes_ndof.py" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/tests")
 
