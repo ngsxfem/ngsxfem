@@ -30,7 +30,7 @@ n_outer = specialcf.normal(mesh.dim)
 k_t = 2
 k_s = 2
 fes1 = H1(mesh, order=k_s,dirichlet=[1])
-fes_lset_slice = H1(mesh, order=1, dirichlet=[])
+fes_lset_slice = H1(mesh, order=1)
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
 lset_order_time = 2

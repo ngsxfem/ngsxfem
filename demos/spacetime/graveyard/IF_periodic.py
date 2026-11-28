@@ -33,8 +33,8 @@ h = specialcf.mesh_size
 # FE Spaces
 k_t = 2
 k_s = 2
-fes1 = Periodic(H1(mesh,order=k_s,dirichlet=[]))
-fes_lset_slice = H1(mesh, order=1, dirichlet=[])
+fes1 = Periodic(H1(mesh,order=k_s))
+fes_lset_slice = H1(mesh, order=1)
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
 

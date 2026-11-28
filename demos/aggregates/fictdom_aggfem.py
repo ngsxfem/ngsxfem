@@ -102,7 +102,7 @@ els_neg = ci.GetElementsOfType(NEG)
 els_if = ci.GetElementsOfType(IF)
 
 # Set up FE-Space
-Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=False)
+Vhbase = H1(mesh, order=order, dgjumps=False)
 Vh = Restrict(Vhbase, els_hasneg)
 
 gfu = GridFunction(Vh)

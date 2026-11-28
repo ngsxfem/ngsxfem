@@ -104,7 +104,7 @@ hasif = ci.GetElementsOfType(IF)
 # facets used for stabilization:
 ba_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasif)
 
-Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True)
+Vhbase = H1(mesh, order=order, dgjumps=True)
 Vh = Restrict(Vhbase, hasneg)
 
 gfu = GridFunction(Vh)

@@ -21,7 +21,7 @@ def test_calc_linearized():
     ci = CutInfo(mesh,lsetp1)
     hasneg = ci.GetElementsOfType(HASNEG)
 
-    Vh = H1(mesh, order = 2, dirichlet=[])    
+    Vh = H1(mesh, order = 2)    
     active_dofs = GetDofsOfElements(Vh,hasneg)
     Vh = Compress(Vh,active_dofs)
     

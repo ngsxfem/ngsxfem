@@ -94,7 +94,7 @@ def main():
     
 
 def GetActiveDof(mesh,HASPOSNEG,order):
-        Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)
+        Vh = H1(mesh, order = order, dgjumps = True)
         lsetp1 = GridFunction(Vh)
         InterpolateToP1(levelset,lsetp1)
         ci = CutInfo(mesh,lsetp1)
@@ -378,7 +378,7 @@ class LinearMGIterator:
         self.nref = kwargs['nref']
 
         # levelset fe space
-        VhL = H1(mesh, order = 1, dirichlet=[], dgjumps = True)
+        VhL = H1(mesh, order = 1, dgjumps = True)
         lsetp1 = GridFunction(VhL)
         InterpolateToP1(levelset,lsetp1)
 

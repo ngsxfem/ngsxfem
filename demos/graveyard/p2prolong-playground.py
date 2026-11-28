@@ -34,12 +34,12 @@ polorder = 2
 order = 1
 nref = 2
 
-Vh = H1(mesh, order = polorder, dirichlet=[], dgjumps = True)
+Vh = H1(mesh, order = polorder, dgjumps = True)
 lsetp1 = GridFunction(Vh)
 InterpolateToP1(levelset,lsetp1)
 
 def GetActiveDof(mesh):
-    Vh = H1(mesh, order = polorder, dirichlet=[], dgjumps = True)
+    Vh = H1(mesh, order = polorder, dgjumps = True)
     lsetp1 = GridFunction(Vh)
     InterpolateToP1(levelset,lsetp1)
     ci = CutInfo(mesh,lsetp1)

@@ -79,8 +79,8 @@ with TaskManager():
     mesh.SetDeformation(deformation)
 
 # Background FESpaces
-    Vh = VectorH1(mesh, order=order, dirichlet=[])
-    Qh = H1(mesh, order=order - 1, dirichlet=[])
+    Vh = VectorH1(mesh, order=order)
+    Qh = H1(mesh, order=order - 1)
     ci = CutInfo(mesh, lset_approx)
     ba_IF = ci.GetElementsOfType(IF)
     VhG = Restrict(Vh, ba_IF)

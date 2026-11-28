@@ -19,8 +19,8 @@ mesh = Mesh (ngmesh)
 for i in range(6):
     mesh.Refine()
 
-fes1 = H1(mesh, order=1, dirichlet=[])
-fes_lset_slice = H1(mesh, order=1, dirichlet=[])
+fes1 = H1(mesh, order=1)
+fes_lset_slice = H1(mesh, order=1)
 k_t = 1
 k_s = 1
 lset_order_time = 2

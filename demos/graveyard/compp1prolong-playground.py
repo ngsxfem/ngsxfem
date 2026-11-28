@@ -38,12 +38,12 @@ prolongPos = P1Prolongation(mesh)
 order = 1
 nref = 2
 
-Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)
+Vh = H1(mesh, order = order, dgjumps = True)
 lsetp1 = GridFunction(Vh)
 InterpolateToP1(levelset,lsetp1)
 
 def GetActiveDof(mesh,HASPOSNEG):
-    Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)
+    Vh = H1(mesh, order = order, dgjumps = True)
     lsetp1 = GridFunction(Vh)
     InterpolateToP1(levelset,lsetp1)
     ci = CutInfo(mesh,lsetp1)

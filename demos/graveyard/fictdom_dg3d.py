@@ -98,7 +98,7 @@ ba_gp_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasif)
 # Facets with parts inside the domain
 ba_fd_facets = GetFacetsWithNeighborTypes(mesh, a=hasneg, b=hasneg)
 
-Vhbase = L2(mesh, order=order, dirichlet=[], dgjumps=True)
+Vhbase = L2(mesh, order=order, dgjumps=True)
 Vh = Restrict(Vhbase, hasneg)
 
 gfu = GridFunction(Vh)

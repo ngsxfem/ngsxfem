@@ -73,7 +73,7 @@ deformation = lsetmeshadap.CalcDeformation(levelset)
 lset_approx = lsetmeshadap.lset_p1
 
 # Background FESpace
-Vh = H1(mesh, order=order, dirichlet=[])
+Vh = H1(mesh, order=order)
 
 ci = CutInfo(mesh, lset_approx)
 ba_IF = ci.GetElementsOfType(IF)

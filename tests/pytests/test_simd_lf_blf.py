@@ -60,7 +60,7 @@ def test_lf_blf(maxh, order):
     ci = CutInfo(mesh, lsetp1)
     hasneg = ci.GetElementsOfType(HASNEG)
 
-    Vhbase = H1(mesh, order=order, dirichlet=[], dgjumps=True, dim=mesh.dim)
+    Vhbase = H1(mesh, order=order, dgjumps=True, dim=mesh.dim)
     Vh = Restrict(Vhbase, hasneg)
 
     u, v = Vh.TrialFunction(), Vh.TestFunction()
@@ -247,7 +247,7 @@ def test_calc_linearized():
     ci = CutInfo(mesh,lsetp1)
     hasneg = ci.GetElementsOfType(HASNEG)
 
-    Vh = H1(mesh, order = 2, dirichlet=[])    
+    Vh = H1(mesh, order = 2)    
     active_dofs = GetDofsOfElements(Vh,hasneg)
     Vh = Compress(Vh,active_dofs)
     
@@ -313,7 +313,7 @@ def test_calc_linearized():
     ci = CutInfo(mesh,lsetp1)
     hasneg = ci.GetElementsOfType(HASNEG)
 
-    Vh = H1(mesh, order = 2, dirichlet=[])    
+    Vh = H1(mesh, order = 2)    
     active_dofs = GetDofsOfElements(Vh,hasneg)
     Vh = Compress(Vh,active_dofs)
     

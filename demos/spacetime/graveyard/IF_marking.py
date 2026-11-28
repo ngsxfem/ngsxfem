@@ -53,7 +53,7 @@ r11 = x - q_coeff - rho
 D_const = 2/3
 levelset= CoefficientFunction(sqrt(r11*r11) - 0.5*D_const)
 
-fes_lset_slice = H1(mesh, order=1, dirichlet=[])
+fes_lset_slice = H1(mesh, order=1)
 lset_p1_slice = GridFunction(fes_lset_slice)
 
 t_old = 0

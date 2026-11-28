@@ -97,7 +97,7 @@ els_if = ci.GetElementsOfType(IF)
 # Facets with parts inside the domain
 ba_fd_facets = GetFacetsWithNeighborTypes(mesh, a=els_hasneg, b=els_hasneg)
 
-Vhbase = L2(mesh, order=order, dirichlet=[], dgjumps=True)
+Vhbase = L2(mesh, order=order, dgjumps=True)
 Vh = Restrict(Vhbase, els_hasneg)
 
 gfu = GridFunction(Vh)

@@ -39,7 +39,7 @@ def main():
 
 
     # levelset fe space
-    VhL = H1(mesh, order = order, dirichlet=[], dgjumps = True)
+    VhL = H1(mesh, order = order, dgjumps = True)
     lsetp1 = GridFunction(VhL)
     InterpolateToP1(levelset,lsetp1)
     ci = CutInfo(mesh, lsetp1)   
@@ -214,7 +214,7 @@ class GaussSeid(BaseMatrix):
         return self.smoother.height
 
 def GetActiveDof(mesh,HASPOSNEG):
-        Vh = H1(mesh, order = order, dirichlet=[], dgjumps = True)
+        Vh = H1(mesh, order = order, dgjumps = True)
         lsetp1 = GridFunction(Vh)
         InterpolateToP1(levelset,lsetp1)
         ci = CutInfo(mesh,lsetp1)

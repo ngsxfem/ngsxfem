@@ -50,7 +50,7 @@ mesh = Mesh(unit_square.GenerateMesh(maxh=0.1, quad_dominated=False))
 n = specialcf.normal(mesh.dim)
 h = specialcf.mesh_size
 
-V = H1(mesh, order=order, dirichlet=[], dgjumps=False)
+V = H1(mesh, order=order, dgjumps=False)
 # V = H1(mesh, order=order, dirichlet=".*")
 tfe = ScalarTimeFE(k_t)
 st_fes = tfe * V
