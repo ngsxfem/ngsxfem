@@ -4,6 +4,15 @@
 
 Requires NGSolve 6.2.2608.
 
+### Bug fixes
+
+- **`xfem.cutmg` with current NGSolve master.** NGSolve now checks the vector sizes when
+  operators are applied from Python. The multigrid (`MultiGridCL`) applied the matrices,
+  smoothers and the coarse grid inverse of the coarser levels to vectors of the finest
+  level; it now works on the leading part of the vectors that belongs to the level.
+- Demos and tests no longer pass `dirichlet=[]` to spaces (rejected by NGSolve master
+  since 2026-11-27; it has the same meaning as no `dirichlet` argument).
+
 ## 2.2.2608
 
 Requires NGSolve 6.2.2608.

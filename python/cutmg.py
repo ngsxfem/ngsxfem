@@ -28,16 +28,20 @@ class MultiGridCL(BaseMatrix):
 	    self.level = self.l # current level
 	
 	def Mult(self,rhs,u):            
+	    # the vectors have the size of the finest level, level l works on
+	    # the leading ndof(l) entries (the prolongation stores coarse data there)
+	    n = self.mats[self.level].height
+	    rhs_l, u_l = rhs.Range(0,n), u.Range(0,n)
 	    error   = self.errors[self.level]
 	    defect  = self.defects[self.level]
 	
 	    if self.level == 0 :
-	        u.data = self.inv*rhs
+	        u_l.data = self.inv*rhs_l
 	        return
 	#smoothing
-	    self.smoothers[self.level].Smooth(u,rhs,self.nu)
+	    self.smoothers[self.level].Smooth(u_l,rhs_l,self.nu)
 	#compute defect
-	    defect.data = rhs - self.mats[self.level]*u
+	    defect.Range(0,n).data = rhs_l - self.mats[self.level]*u_l
 	#restrict defect
 	    self.prol.Restrict(self.level,defect)
 	    error[:] = 0
@@ -46,9 +50,9 @@ class MultiGridCL(BaseMatrix):
 	    self.Mult(defect,error)
 	    self.level += 1
 	    self.prol.Prolongate(self.level,error)
-	    u.data += error
+	    u_l.data += error.Range(0,n)
 	#smoothing
-	    self.smoothers[self.level].SmoothBack(u,rhs,self.nu)
+	    self.smoothers[self.level].SmoothBack(u_l,rhs_l,self.nu)
 	    return u
 	
 	def Height(self):
