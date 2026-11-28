@@ -58,7 +58,7 @@ def test_nxfem(quad, order):
   
   # extended FESpace 
   
-  Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+  Vh = H1(mesh, order=order, dirichlet=".*")
   Vhx = XFESpace(Vh, lsetp1)
   VhG = FESpace([Vh,Vhx])
   

@@ -155,7 +155,7 @@ lsetp1 = lsetmeshadap.lset_p1
 ci = CutInfo(mesh, lsetp1)
 
 # Finite element space
-Vhbase = VectorH1(mesh, order=order, dirichlet=[1, 2, 3, 4])
+Vhbase = VectorH1(mesh, order=order, dirichlet=".*")
 Qhbase = H1(mesh, order=order - 1)
 
 Vhneg = Compress(Vhbase, GetDofsOfElements(Vhbase,

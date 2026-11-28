@@ -141,7 +141,7 @@ deformation = lsetmeshadap.CalcDeformation(levelset)
 lsetp1 = lsetmeshadap.lset_p1
 ci = CutInfo(mesh,lsetp1)
 
-Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+Vh = H1(mesh, order=order, dirichlet=".*")
 Vhx = XFESpace(Vh, ci)
 VhG = FESpace([Vh, Vhx])
 Qh = H1(mesh, order=order-1)

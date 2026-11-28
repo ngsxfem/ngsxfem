@@ -45,7 +45,7 @@ def main():
     ci = CutInfo(mesh, lsetp1)   
     
 
-    Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+    Vh = H1(mesh, order=order, dirichlet=".*")
     VhNeg = Compress( Vh, active_dofs = GetActiveDof(mesh, HASNEG) )
     VhPos = Compress( Vh, active_dofs = GetActiveDof(mesh, HASPOS) )
 

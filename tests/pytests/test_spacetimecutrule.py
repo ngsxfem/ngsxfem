@@ -78,7 +78,7 @@ def test_spacetime_model_spacetime(pitfal1, pitfal2, pitfal3):
     ngmesh = square.GenerateMesh(maxh=0.05, quad_dominated=False)
     mesh = Mesh (ngmesh)
     
-    fes1 = V=H1(mesh, order=1, dirichlet=[1,2,3,4])
+    fes1 = V=H1(mesh, order=1, dirichlet=".*")
     k_t = 1
     tfe = ScalarTimeFE(k_t) 
     

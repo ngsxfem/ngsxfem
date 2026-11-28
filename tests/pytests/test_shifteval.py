@@ -17,7 +17,7 @@ def test_shifteval(dimension):
     mesh = MakeStructured3DMesh(hexes = False, nx=8, ny=8, nz=8)
     
   # H1-conforming finite element space
-  fes = H1(mesh, order=3, dirichlet=[1,2,3,4])
+  fes = H1(mesh, order=3, dirichlet=".*")
   fes_dfm = H1(mesh, order=3, dim=dimension)
   
   gfu_new = GridFunction(fes)

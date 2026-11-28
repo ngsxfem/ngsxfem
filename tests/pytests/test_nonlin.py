@@ -58,7 +58,7 @@ def test_nonlin():
     lsetp1 = GridFunction(H1(mesh,order=1))
     InterpolateToP1(levelset,lsetp1)
 
-    Vh = H1(mesh, order=1, dirichlet=[1,2,3,4], dgjumps=True)
+    Vh = H1(mesh, order=1, dirichlet=".*", dgjumps=True)
 
     ci = CutInfo(mesh, lsetp1)
 

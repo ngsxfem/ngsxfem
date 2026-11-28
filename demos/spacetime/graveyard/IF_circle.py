@@ -29,7 +29,7 @@ n_outer = specialcf.normal(mesh.dim)
 # FE Spaces
 k_t = 2
 k_s = 2
-fes1 = H1(mesh, order=k_s,dirichlet=[1])
+fes1 = H1(mesh, order=k_s,dirichlet=".*")
 fes_lset_slice = H1(mesh, order=1)
 fes_dfm_slice = H1(mesh, order=k_s, dim=mesh.dim)
 
@@ -37,7 +37,7 @@ lset_order_time = 2
 time_order = 4
 tfe = ScalarTimeFE(k_t) 
 
-st_fes = SpaceTimeFESpace(fes1,tfe,dirichlet=[1])
+st_fes = SpaceTimeFESpace(fes1,tfe,dirichlet=".*")
 VhG_ic = FESpace([fes1,fes1])
 VhG = FESpace([st_fes,st_fes])
 

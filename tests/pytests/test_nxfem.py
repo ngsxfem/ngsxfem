@@ -48,7 +48,7 @@ def test_nxfem(integration_quadtrig_newold,order):
     
     # extended FESpace 
     
-    Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+    Vh = H1(mesh, order=order, dirichlet=".*")
     Vhx = XFESpace(Vh, lsetp1)
     VhG = FESpace([Vh,Vhx])
     print("unknowns in extended FESpace:", VhG.ndof)

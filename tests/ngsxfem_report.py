@@ -14,7 +14,7 @@ def test_fes_timing(dimension=2,stdfes=True,quad_dominated=False, order=1):
     else:
         mesh = Mesh (unit_cube.GenerateMesh(maxh=0.2,quad_dominated=quad_dominated))
 
-    Vhs = H1(mesh, order=order, dirichlet=[1,2,3,4])
+    Vhs = H1(mesh, order=order, dirichlet=".*")
 
     lsetp1 = GridFunction(H1(mesh,order=1))
     InterpolateToP1((sqrt(sqrt(x*x+y*y)) - 1.0),lsetp1)

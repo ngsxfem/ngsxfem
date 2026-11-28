@@ -45,7 +45,7 @@ def main():
     mgiter = LinearMGIterator(nref=nref,nu=1)    
     #lsetp1 = mgiter.getLset()            
 
-    Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+    Vh = H1(mesh, order=order, dirichlet=".*")
     (lsetmeshadap, deformation, lsetp1 ) = CreateLsetMeshAdapt(order)
     ci = CutInfo(mesh,lsetp1)
 
@@ -385,7 +385,7 @@ class LinearMGIterator:
         ci = CutInfo(mesh, lsetp1)   
         
         # cut fe space
-        Vh = H1(mesh, order=1, dirichlet=[1,2,3,4])
+        Vh = H1(mesh, order=1, dirichlet=".*")
         VhNeg = Compress( Vh, active_dofs = GetActiveDof(mesh, HASNEG, order=1) )
         VhPos = Compress( Vh, active_dofs = GetActiveDof(mesh, HASPOS, order=1) )
 

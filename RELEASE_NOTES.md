@@ -11,7 +11,9 @@ Requires NGSolve 6.2.2608.
   smoothers and the coarse grid inverse of the coarser levels to vectors of the finest
   level; it now works on the leading part of the vectors that belongs to the level.
 - Demos and tests no longer pass `dirichlet=[]` to spaces (rejected by NGSolve master
-  since 2026-11-27; it has the same meaning as no `dirichlet` argument).
+  since 2026-11-27; it has the same meaning as no `dirichlet` argument), and they name
+  the Dirichlet boundaries (`dirichlet=".*"`) instead of numbering them (`[1,2,3,4]`).
+  The jupyter tutorials do the same.
 
 ## 2.2.2608
 

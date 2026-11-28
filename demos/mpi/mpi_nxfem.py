@@ -83,7 +83,7 @@ mesh.SetDeformation(deformation)
 ci = CutInfo(mesh, lsetp1)
 
 # Extended finite element space
-Vh = H1(mesh, order=order, dirichlet=[1, 2, 3, 4])
+Vh = H1(mesh, order=order, dirichlet=".*")
 Vhx = XFESpace(Vh, ci)
 
 VhG = FESpace([Vh, Vhx])

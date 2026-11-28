@@ -58,7 +58,7 @@ def main():
             (lsetmeshadap, deformation, lsetp1 ) = CreateLsetMeshAdapt(order)
             ci = CutInfo(mesh,lsetp1)
             #cut space
-            Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+            Vh = H1(mesh, order=order, dirichlet=".*")
             VhNeg = Compress( Vh, active_dofs = GetDofsOfElements(Vh,ci.GetElementsOfType(HASNEG)))
             VhPos = Compress( Vh, active_dofs = GetDofsOfElements(Vh,ci.GetElementsOfType(HASPOS)))
             CutVh = FESpace( [VhNeg, VhPos], flags={"dgjumps": True} )
@@ -97,7 +97,7 @@ def main():
 
 
 
-    #Vh = H1(mesh, order=order, dirichlet=[1,2,3,4])
+    #Vh = H1(mesh, order=order, dirichlet=".*")
     #(lsetmeshadap, deformation, lsetp1 ) = CreateLsetMeshAdapt(order)
     #ci = CutInfo(mesh,lsetp1)
 

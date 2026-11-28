@@ -20,7 +20,7 @@ h = specialcf.mesh_size
 # FE Spaces
 k_t = 1
 k_s = 1
-fes1 = H1(mesh,order=k_s,dirichlet=[1,2,3,4])
+fes1 = H1(mesh,order=k_s,dirichlet=".*")
 
 lset_order_time = 2
 tfe = ScalarTimeFE(k_t) 
